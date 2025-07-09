@@ -1,0 +1,89 @@
+[Error] Failed to load resource: the server responded with a status of 403 () (basil, line 0)
+[Error] Blocked a frame with origin "https://js.stripe.com" from accessing a frame with origin "https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev". Protocols, domains, and ports must match.
+	(anonymous function) (classifier.js:1:415439)
+	(anonymous function) (classifier.js:1:415041)
+	Promise
+	Ps (classifier.js:1:414801)
+	(anonymous function) (classifier.js:1:3141994)
+	(anonymous function) (classifier.js:1:3140672)
+	Promise
+	zge (classifier.js:1:3140421)
+	Uge (classifier.js:1:3144371)
+	(anonymous function) (classifier.js:1:3144387)
+	(anonymous function) (classifier.js:1:3144391)
+	Global Code (classifier.js:1:3144395)
+[Error] Blocked a frame with origin "https://js.stripe.com" from accessing a frame with origin "https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev". Protocols, domains, and ports must match.
+	(anonymous function) (content.js:1:846875)
+	(anonymous function) (content.js:1:846480)
+	Promise
+	o (content.js:1:846240)
+	(anonymous function) (content.js:1:1975982)
+	(anonymous function) (content.js:1:1975203)
+	Promise
+	UZ (content.js:1:1974952)
+	(anonymous function) (content.js:1:1980068)
+	(anonymous function) (content.js:1:1980080)
+	(anonymous function) (content.js:1:1980084)
+	Global Code (content.js:1:1980088)
+[Error] Blocked a frame with origin "https://js.stripe.com" from accessing a frame with origin "https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev". Protocols, domains, and ports must match.
+	(anonymous function) (classifier.js:1:415439)
+	(anonymous function) (classifier.js:1:415041)
+	Promise
+	Ps (classifier.js:1:414801)
+	(anonymous function) (classifier.js:1:3141994)
+	(anonymous function) (classifier.js:1:3140672)
+	Promise
+	zge (classifier.js:1:3140421)
+	Uge (classifier.js:1:3144371)
+	(anonymous function) (classifier.js:1:3144387)
+	(anonymous function) (classifier.js:1:3144391)
+	Global Code (classifier.js:1:3144395)
+[Error] Blocked a frame with origin "https://js.stripe.com" from accessing a frame with origin "https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev". Protocols, domains, and ports must match.
+	(anonymous function) (content.js:1:846875)
+	(anonymous function) (content.js:1:846480)
+	Promise
+	o (content.js:1:846240)
+	(anonymous function) (content.js:1:1975982)
+	(anonymous function) (content.js:1:1975203)
+	Promise
+	UZ (content.js:1:1974952)
+	(anonymous function) (content.js:1:1980068)
+	(anonymous function) (content.js:1:1980080)
+	(anonymous function) (content.js:1:1980084)
+	Global Code (content.js:1:1980088)
+[Error] Blocked a frame with origin "https://m.stripe.network" from accessing a frame with origin "https://js.stripe.com". Protocols, domains, and ports must match.
+	(anonymous function) (classifier.js:1:415439)
+	(anonymous function) (classifier.js:1:415041)
+	Promise
+	Ps (classifier.js:1:414801)
+	(anonymous function) (classifier.js:1:3141994)
+	(anonymous function) (classifier.js:1:3140672)
+	Promise
+	zge (classifier.js:1:3140421)
+	Uge (classifier.js:1:3144371)
+	(anonymous function) (classifier.js:1:3144387)
+	(anonymous function) (classifier.js:1:3144391)
+	Global Code (classifier.js:1:3144395)
+[Error] Blocked a frame with origin "https://m.stripe.network" from accessing a frame with origin "https://js.stripe.com". Protocols, domains, and ports must match.
+	(anonymous function) (content.js:1:846875)
+	(anonymous function) (content.js:1:846480)
+	Promise
+	o (content.js:1:846240)
+	(anonymous function) (content.js:1:1975982)
+	(anonymous function) (content.js:1:1975203)
+	Promise
+	UZ (content.js:1:1974952)
+	(anonymous function) (content.js:1:1980068)
+	(anonymous function) (content.js:1:1980080)
+	(anonymous function) (content.js:1:1980084)
+	Global Code (content.js:1:1980088)
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.
+[Error] Failed to load resource: You do not have permission to access the requested resource.

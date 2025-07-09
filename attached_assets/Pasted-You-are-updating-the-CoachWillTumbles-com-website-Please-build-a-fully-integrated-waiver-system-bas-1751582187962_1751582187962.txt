@@ -1,0 +1,47 @@
+You are updating the CoachWillTumbles.com website. Please build a fully integrated waiver system based on the finalized "Waiver & Adventure Agreement" below.
+
+✅ Functionality Requirements:
+
+Waiver Display & E-Sign Workflow
+Display the waiver in a scrollable modal during the booking process.
+Use the finalized waiver content provided below.
+Include required fields:
+Athlete Name
+Parent/Signer Name
+Relationship to Athlete
+Signature (E-sign box)
+Date (auto-filled)
+Emergency Contact Number
+Ensure the signer must scroll through the entire waiver before the “Sign” button activates.
+Integration with Booking Flow
+Pull the following info directly from the active booking session to pre-fill fields:
+Athlete Name
+Parent Name
+Emergency Contact
+Relationship (default to “Parent/Guardian” unless specified)
+Waiver must be completed before session is finalized.
+PDF Generation
+After signing, generate a PDF copy of the completed waiver.
+Include the full waiver text with fields filled in.
+Ensure signature is rendered visibly on the document.
+Use a styled, professional PDF layout matching site branding.
+Email Delivery
+Send the signed waiver PDF to the parent’s email on file.
+Subject: CoachWillTumbles - Signed Waiver for {athleteName}
+Body should thank them for joining the journey and remind them to stretch before class.
+Athlete Profile Integration
+Store the signed PDF under the athlete’s profile.
+Allow admins to view/download the waiver at any time.
+Add a "Waiver on File" status tag to each athlete in the admin dashboard.
+Admin Tools
+Add the ability to resend the waiver email manually.
+Add an alert for “Missing Waiver” if athlete does not have a signed waiver on file.
+Tech Requirements
+Use your existing React frontend and Tailwind styling.
+Use Supabase or your current backend solution for storage and retrieval.
+For e-signature, use a React-compatible e-signature library like react-signature-canvas.
+For PDF generation, use a reliable library such as pdf-lib or jsPDF.
+For email, integrate with Resend or your current transactional email system.
+📄 Waiver Content
+
+(Use the exact waiver text from the finalized version provided in this conversation.)

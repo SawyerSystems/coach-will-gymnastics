@@ -1,0 +1,37 @@
+About Task: Update the text content of the About Page on the Coach Will Tumbles site. Preserve layout, colors, section order, and visual style. Do not change component names, CSS classes, spacing, or structure.
+
+🟪 Replace Section Texts As Follows:
+✅ Top Introduction (under "Meet Coach Will"):
+<h1>Meet Coach Will</h1>
+<p>Nearing a decade of experience coaching gymnastics, Coach Will blends skill-building with positivity, personal growth, and fun. From preschoolers to teen competitors, every athlete gets the tools to grow strong—in body and mind.</p>
+✅ Coaching Philosophy Cards:
+Fun First:
+<p>Gymnastics should be exciting. I create a positive environment where kids are excited to learn new skills every week.</p>
+Individual Focus:
+<p>Every athlete gets personalized attention and drills tailored to their age, skill level, and learning style.</p>
+Progressive Development:
+<p>Skills build on skills. We focus on mastering each movement so your child gains confidence with every step.</p>
+✅ Experience & Qualifications Cards:
+Certified Gymnastics Coach:
+<p>USA Gymnastics certified with training in developmental progressions and safety.</p>
+Nearing 10 Years Experience:
+<p>Extensive experience coaching athletes of all ages—from first timers to returning gymnasts.</p>
+Competition Background:
+<p>Has worked with athletes preparing for shows and competitions in multiple states and formats.</p>
+Youth Development Focus:
+<p>Specialized in building confidence and consistency in young athletes.</p>
+✅ Certifications & Training Section:
+Leave it the same unless you're updating it later. You could update the text if you want to emphasize trust, like:
+<p>All certifications are up-to-date and focused on athlete safety, positive reinforcement, and technical mastery.</p>
+✅ What Parents Say (Testimonial Section):
+Leave as-is unless you're adding new testimonials. But feel free to edit the star ratings if you want to match design.
+✅ Final CTA Section (Bottom Call to Action):
+<h2>Ready to Meet Coach Will?</h2>
+<p>Schedule your athlete’s first lesson today and see why families trust Coach Will’s approach to gymnastics and growth.</p>
+<Button>Book a Lesson</Button>
+
+✅ Output Instructions for Replit:
+* Edit the file used for the About page, likely About.jsx or pages/about.jsx
+* Only change the inner content of each JSX tag—don’t touch layout or classes.
+* Ensure content is responsive and matches existing style.
+

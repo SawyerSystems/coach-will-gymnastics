@@ -1,0 +1,175 @@
+
+> Build a **Stripe webhook handler** in the Express backend to update the `payment_status` field in the database independently of the `booking_status` (which tracks session attendance). This ensures financial state and attendance are tracked separately. The webhook must verify Stripe’s signature and securely update bookings using metadata passed in the Checkout Session.
+
+---
+
+### 🗃️ **Database Schema Updates**
+
+#### Update your `bookings` table:
+
+Add two separate fields:
+
+```sql
+ALTER TABLE bookings ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'unpaid';
+ALTER TABLE bookings ADD COLUMN attendance_status TEXT NOT NULL DEFAULT 'pending';
+```
+
+| Field               | Description                                               |
+| ------------------- | --------------------------------------------------------- |
+| `payment_status`    | Tracks the Stripe payment state                           |
+| `attendance_status` | Tracks the session's real-world outcome (manual by admin) |
+
+---
+
+### 🧠 Allowed Values:
+
+**`payment_status` values:**
+
+* `unpaid` → Booking created, not paid
+* `paid` → Stripe confirmed payment
+* `failed` → Stripe error or declined
+* `refunded` (optional future logic)
+
+**`attendance_status` values** (set manually later):
+
+* `pending` → Not marked yet
+* `confirmed` → Confirmed by admin
+* `completed` → Athlete attended
+* `cancelled` → Cancelled by admin/parent
+* `no-show` → Did not attend
+* `manual` → Bypassed payment flow
+
+---
+
+### 🔧 **Backend: Express.js Logic**
+
+#### Add a secure webhook route:
+
+```ts
+POST /api/stripe/webhook
+```
+
+1. Use `raw-body` middleware to receive the raw Stripe payload:
+
+```ts
+import bodyParser from 'body-parser';
+
+app.post('/api/stripe/webhook', bodyParser.raw({ type: 'application/json' }), webhookHandler);
+```
+
+2. Validate signature using Stripe's secret:
+
+```ts
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const sig = req.headers['stripe-signature'];
+const event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+```
+
+3. Handle supported event types:
+
+```ts
+switch (event.type) {
+  case 'checkout.session.completed':
+    // Lookup booking by event.data.object.metadata.bookingId
+    // Update payment_status = 'paid'
+    break;
+
+  case 'checkout.session.async_payment_failed':
+  case 'checkout.session.payment_failed':
+    // Update payment_status = 'failed' and store error message in log table or column
+    break;
+}
+```
+
+4. Always return 200 OK unless signature fails:
+
+```ts
+res.status(200).json({ received: true });
+```
+
+---
+
+### 🔐 Security Best Practices
+
+* Validate webhook with `stripe.webhooks.constructEvent()`
+* Use environment variable for `STRIPE_WEBHOOK_SECRET`
+* Only process events with matching metadata (`bookingId`)
+* Prevent duplicate updates by checking if `payment_status` is already set to `paid`
+
+---
+
+### 📦 Stripe Checkout Metadata (Frontend)
+
+When creating the checkout session from the frontend, make sure to **pass the booking ID** as metadata:
+
+```ts
+metadata: {
+  bookingId: booking.id
+}
+```
+
+---
+
+### 🧼 Error Handling (Backend)
+
+* If booking ID is missing or doesn’t exist, log warning
+* If booking is already paid, do not re-update
+* Log all payment failures to a separate table or console for review
+
+---
+
+### 🧪 Optional Logging Table
+
+```sql
+CREATE TABLE payment_logs (
+  id SERIAL PRIMARY KEY,
+  booking_id INTEGER REFERENCES bookings(id),
+  stripe_event TEXT,
+  error_message TEXT,
+  created_at TIMESTAMP DEFAULT now()
+);
+```
+
+---
+
+### 🧩 State Separation Logic
+
+* Do **not** update `attendance_status` in the webhook
+* All attendance status updates are manual (in admin panel)
+* The two statuses must never overwrite each other
+
+---
+
+### 💻 Admin Panel Display (Frontend React)
+
+#### Update Booking Table UI:
+
+* Display two status tags:
+
+  * **Payment Status:** yellow/red/green tags (paid, failed, unpaid)
+  * **Attendance Status:** separate tag (pending, completed, no-show, etc.)
+
+#### Colors (Tailwind Examples):
+
+| Status Type        | Value       | Tag Color       |
+| ------------------ | ----------- | --------------- |
+| payment\_status    | `paid`      | `bg-green-500`  |
+| payment\_status    | `failed`    | `bg-red-500`    |
+| payment\_status    | `unpaid`    | `bg-yellow-400` |
+| attendance\_status | `pending`   | `bg-gray-300`   |
+| attendance\_status | `completed` | `bg-blue-500`   |
+| attendance\_status | `no-show`   | `bg-red-300`    |
+
+---
+
+### 🧑‍🎓 User Flow Summary (End-to-End)
+
+1. Parent fills booking form → record created with `payment_status: "unpaid"`, `attendance_status: "pending"`
+2. Parent pays via Stripe → `bookingId` stored in Stripe session metadata
+3. Stripe triggers webhook → backend marks `payment_status: "paid"`
+4. Admin views booking list:
+
+   * Sees payment status (auto-updated)
+   * Sees attendance status (manually updated post-class)
+
+---

@@ -1,0 +1,132 @@
+
+
+🔁 GLOBAL FRONTEND REFACTORING 
+📱 Tailwind Media Queries + Layout Adjustments
+* Use @media (min-width: 768px) breakpoints for default desktop layouts.
+* Apply the following responsive utilities site-wide:
+    * Use px-4 py-3 on containers at sm: and px-6 py-4 at md: or higher.
+    * Update all text-sm elements to text-base for mobile readability.
+    * Add leading-relaxed or leading-normal to text blocks for line height on small screens.
+    * Apply w-full, block, and rounded-lg for form elements on mobile.
+🧭 NavBar Improvements
+* Convert mobile nav into a hamburger menu.
+    * Use Disclosure from @headlessui/react or custom useState() toggle.
+    * Ensure clickable links use text-lg, py-2 px-4, and w-full.
+* Add spacing between site title and buttons in nav using gap-y-2, space-y-2, and pt-4.
+* Ensure nav buttons inside mobile drawer have bg-opacity hover states and don’t touch edges.
+🧭 Scroll Reset on Page Navigation
+* In App.jsx or Layout.jsx, add scroll restoration:
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+useEffect(() => {
+  window.scrollTo(0, 0);
+}, [useLocation()]);
+
+📲 Booking Modal (Mobile View Logic)
+➕ Behavior
+* On mobile (<768px), convert modals to full-screen overlays:
+const isMobile = window.innerWidth < 768;
+* Use fixed top-0 left-0 w-full h-full with z-50 bg-white for modal container.
+* Add overflow-y-scroll for long forms on smaller viewports.
+* Modal must contain a sticky header with a close button (absolute right-4 top-4).
+✅ Accessibility
+* Use role="dialog" and aria-modal="true".
+* Trap focus using react-focus-lock or @headlessui/react/Dialog.
+
+💨 Add Skeleton Shimmers to Pages w/ Data Fetching
+🎯 Pages:
+* Admin Dashboard
+* Blog
+* Bookings
+* Athlete Management
+🛠 Skeleton Component:
+<div className="animate-pulse space-y-4">
+  <div className="h-4 bg-gray-300 rounded w-3/4" />
+  <div className="h-4 bg-gray-300 rounded w-1/2" />
+  <div className="h-4 bg-gray-300 rounded w-full" />
+</div>
+⚙️ Usage:
+* Wrap in conditional rendering:
+{isLoading ? <Skeleton /> : <RealComponent data={data} />}
+
+📄 Admin Dashboard: Responsive Cleanup
+➕ Booking/Athlete Cards
+* Change metrics to 2x2 mobile grid:
+<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+  <StatCard ... />
+</div>
+* Use truncate, text-sm, and simplified data.
+* Cards should be clickable on mobile to reveal full info in a modal or expandable section.
+🧹 Filter Tabs:
+* Convert horizontal filters to scrollable pills:
+<div className="flex overflow-x-auto gap-2">
+  {tabs.map(t => (
+    <button className="whitespace-nowrap px-3 py-2 bg-gray-200 rounded-full">{t.label}</button>
+  ))}
+</div>
+
+📜 Certifications & Training (Gamification)
+🎮 Add "Badge Unlock" Style:
+<Badge icon="🎖️" title="USA Gymnastics Certified" status="Unlocked" />
+* Include hover effect that shows: "Tap for details".
+* Optional gamification: lock some certifications behind tooltips that say "Earned through years of training."
+
+🧩 CTA Section Fixes
+❗ White-on-White Text Fix
+* Update CTA button text color: use text-black or text-gray-900 for all white buttons.
+* Ensure CTA background contrast meets WCAG AA:
+<button className="bg-white text-gray-900 hover:bg-gray-200">
+  Start Your Journey
+</button>
+➕ Add Blog CTA
+* Duplicate CTA structure from Tips page:
+<div className="bg-gradient-to-r from-purple-400 to-blue-500 text-white py-12 text-center">
+  <h2 className="text-2xl font-bold">Explore More Tips & Training</h2>
+  <p className="mt-2">Stay on top of training advice for your young athlete</p>
+  <button className="mt-4 bg-white text-purple-600 px-6 py-2 rounded-full">View More Tips</button>
+</div>
+
+📚 Booking Management (Mobile)
+✅ Card Redesign
+* Collapse bookings into simple mobile cards:
+<div className="border p-4 rounded-lg shadow-md">
+  <div className="font-bold text-lg">{booking.athleteName}</div>
+  <div className="text-sm text-gray-600">{booking.date} • {booking.time}</div>
+  <button className="text-blue-600 mt-2">View Details</button>
+</div>
+* Clicking opens modal or accordion for full info.
+
+📄 Form Elements (Mobile Touch UX)
+* Inputs: min-h-[48px], text-base, px-4, rounded-lg
+* Tap targets (e.g. buttons, inputs) must be min-w-[44px] min-h-[44px]
+* Use aria-label for all form fields
+* Add client-side validation (required, minLength, etc.) and show user-friendly error text with text-red-500.
+
+🛡 Security Best Practices
+* Escape all user input server-side
+* Apply DOMPurify for any HTML rendered from user input (e.g. blogs/comments)
+* Restrict admin routes with token-based auth (JWT)
+* Use HTTPS and cookie flags: HttpOnly, Secure, SameSite=Strict
+* Prevent modal focus escape and enforce ARIA roles
+
+🧠 State Management Plan
+* Booking Modal: local useState()
+* Auth & Admin Pages: use useContext() or useReducer()
+* Async Data: react-query or useSWR for caching + background refresh
+* Loading state: fallback UI using useEffect + isLoading flags
+
+🧪 Edge Cases & Error Handling
+* Modal fails to load → fallback to in-page form
+* Admin metrics fail → show “N/A” with text-red-500
+* Long names/emails → truncate and show on hover/focus
+* Empty API returns → show placeholder text "No bookings found"
+
+✅ Completion Criteria
+*  All modals usable one-handed on phones
+*  Nav spacing and button contrast is fixed
+*  Booking, Blog, Tips CTA colors are fixed
+*  Dashboard has 2x2 metrics and compact cards
+*  Filters scroll horizontally with no cutoffs
+*  Skeletons appear on load and fade in smoothly
+*  Gamified Cert section visually updated

@@ -1,0 +1,73 @@
+Blog and Tips
+Task Objective:
+Update both the /blog and /tips pages to align with the adventure-themed, family-trusted brand tone used across the homepage and booking pages. Keep the tone parent-friendly, growth-centered, and skill-focused, while adding subtle interactive elements that encourage return visits.
+
+⸻
+
+🔧 General Updates (Both Pages)
+
+Brand Language + CTA Updates:
+	•	Replace generic headers like Gymnastics Blog with:
+	•	✅ The Journey Journal (for blog)
+	•	✅ Skill Scrolls & Side Quests (for tips page)
+	•	Add descriptions:
+	•	For Blog: “Insights, strategies, and real stories to help your athlete grow in and out the gym.”
+	•	For Tips: “Master new skills with clear drills and coaching tips – each lesson helps unlock your athlete’s next milestone.”
+
+Design Tweaks:
+	•	Apply the same Tailwind color scheme and rounded button styles used on the homepage.
+	•	Update card hover effects to softly scale and glow (match CTA behavior on homepage).
+	•	Add an adventure-style breadcrumb trail like:
+Home → Resources → Side Quests
+
+⸻
+
+🗂 Blog-Specific Prompts
+
+Search + Categories:
+	•	Ensure all blog posts are searchable and filterable by:
+	•	Skill level (Beginner, Intermediate, Advanced)
+	•	Category (e.g. Mindset, Injury Prevention, Behind-the-Scenes, Stretching)
+
+Blog Card Design:
+	•	Add a color-coded category tag (like “🧠 Mindset” or “💪 Conditioning”) to each card.
+	•	Add time-to-read and optionally include a small progress bar during reading.
+	•	Cards should reflect the same style as lesson cards.
+
+Post Page Updates:
+	•	Add a “Continue the Journey” section at the bottom of each post:
+	•	Related blog posts
+	•	Related tips from /tips
+	•	A soft CTA like “Book a lesson to practice what you’ve learned”
+
+Footer CTA Update:
+	•	Change Subscribe box to:
+“Want expert coaching tips and updates straight to your inbox? Join our weekly ‘Progress Pulse’ newsletter.”
+
+⸻
+
+🧪 Tips & Drills Page
+
+Card Terminology + Layout:
+	•	Rename cards with adventure-style headers:
+	•	e.g., 🌀 Unlock: Cartwheel Mastery, 🔥 Quest: Stronger Core, etc.
+	•	Add level progression bar or badge for each tip
+	•	Add “Skill Level” badge with Tailwind color tags:
+Beginner (lime green), Intermediate (sky blue), Advanced (orange)
+
+Categories Update:
+	•	Rename Categories to:
+	•	Floor Skills → Ground Quests
+	•	Vault & Tumbling → Launch Missions
+	•	Beam → Balance Trials
+	•	Add new category: Mind Gym (Mental Drills & Visualization)
+	•	Add Side Quests category (Strength, Flexibility, Breathing)
+
+Practice Reminder Update:
+	•	Change last CTA to:
+“Every rep is a step forward. Your athlete’s next breakthrough is one practice away. Let’s keep leveling up.”
+
+Practice Guidelines Button:
+	•	Style it as a side quest card with a scroll icon 📜 and update the button to:
+“View Parent Practice Tips”
+

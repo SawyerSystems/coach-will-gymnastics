@@ -1,0 +1,1966 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Bold;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red70\green137\blue204;\red24\green24\blue24;\red193\green193\blue193;
+\red85\green129\blue224;}
+{\*\expandedcolortbl;;\cssrgb\c33725\c61176\c83922;\cssrgb\c12157\c12157\c12157;\cssrgb\c80000\c80000\c80000;
+\cssrgb\c40392\c58824\c90196;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 # CoachWillTumbles - Complete Technical Blueprint
+\f1\b0 \cf4 \cb1 \strokec4 \
+\
+
+\f0\b \cf2 \cb3 \strokec2 ## 1. HIGH-LEVEL OVERVIEW
+\f1\b0 \cf4 \cb1 \strokec4 \
+\
+
+\f0\b \cf2 \cb3 \strokec2 ### Mission & Branding
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3 CoachWillTumbles is an adventure-themed gymnastics coaching platform designed for parents booking private gymnastics lessons for their children. The brand emphasizes gymnastics as a "lifelong adventure" with quest-based terminology throughout the user experience.\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 **Target Users:**
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Primary: Parents of young gymnasts (ages 4-18)\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Secondary: Gymnastics coach (admin interface)\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Tertiary: Young athletes (supervised usage)\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 ### Adventure-Themed Branding Elements:
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Lessons called "Journeys" (Quick Journey, Dual Quest, Deep Dive, Partner Progression)\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Skills presented as "Side Quests" (Flexibility, Strength, Agility, Meditation, Mental Blocks)\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Blog renamed to "Adventure Stories"\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Tips page called "Training Adventures"\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  Focus areas organized by apparatus with skill progression paths\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 ### Tech Stack & Architecture Rationale
+\f1\b0 \cf4 \cb1 \strokec4 \
+\
+
+\f0\b \cf2 \cb3 \strokec2 **Frontend: React + Vite + Tailwind**
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **React 18+**
+\f1\b0 \cf4 \strokec4 : Component-based architecture with hooks\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Vite**
+\f1\b0 \cf4 \strokec4 : Fast build tool with HMR for development\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Tailwind CSS**
+\f1\b0 \cf4 \strokec4 : Utility-first CSS with adventure-themed color palette\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **shadcn/ui**
+\f1\b0 \cf4 \strokec4 : Consistent component library built on Radix UI\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Wouter**
+\f1\b0 \cf4 \strokec4 : Lightweight routing library\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **TanStack Query**
+\f1\b0 \cf4 \strokec4 : Server state management with intelligent caching\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 **Backend: Express (TypeScript)**
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Express.js**
+\f1\b0 \cf4 \strokec4 : RESTful API server\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **TypeScript**
+\f1\b0 \cf4 \strokec4 : Type safety across the stack\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Session Management**
+\f1\b0 \cf4 \strokec4 : Express-session with secure cookies\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Middleware**
+\f1\b0 \cf4 \strokec4 : CORS, authentication, request logging\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 **Database: Supabase PostgreSQL with Drizzle ORM**
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Supabase**
+\f1\b0 \cf4 \strokec4 : Hosted PostgreSQL with real-time capabilities\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Drizzle ORM**
+\f1\b0 \cf4 \strokec4 : Type-safe database operations\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **postgres-js**
+\f1\b0 \cf4 \strokec4 : Database driver for connection pooling\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 **Authentication: Custom Email-Code Flow**
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Admin**
+\f1\b0 \cf4 \strokec4 : Password-based with bcrypt hashing\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Parent**
+\f1\b0 \cf4 \strokec4 : Email verification with 6-digit codes\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **No Supabase Auth**
+\f1\b0 \cf4 \strokec4 : Custom implementation for full control\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf2 \cb3 \strokec2 **External Services:**
+\f1\b0 \cf4 \cb1 \strokec4 \
+\pard\pardeftab720\partightenfactor0
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Stripe**
+\f1\b0 \cf4 \strokec4 : Payment processing with checkout sessions\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Resend**
+\f1\b0 \cf4 \strokec4 : Email delivery with template system\cb1 \
+\cf5 \cb3 \strokec5 -\cf4 \strokec4  
+\f0\b \cf2 \strokec2 **Deployment**
+\f1\b0 \cf4 \strokec4 : Replit (current), failed Render attempt due to session cookie domain issues\cb1 \
+\
+\pard\pardeftab720\partightenfactor0
+\cf4 \cb3 **Key Design Decisions:**\cb1 \
+\cb3 - **Adventure Theme**: All copy uses quest/journey metaphors\cb1 \
+\cb3 - **Parent-Centric**: Booking flows designed for parents, not athletes\cb1 \
+\cb3 - **Mobile-First**: Responsive design with 48px touch targets\cb1 \
+\cb3 - **Performance**: Lazy loading, caching, and performance monitoring\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 2. FRONTEND (React / Vite)\cb1 \
+\
+\cb3 ### Core Routing Structure\cb1 \
+\
+\cb3 **Public Routes:**\cb1 \
+\cb3 - `/` - Home page with hero, skills showcase, and adventure messaging\cb1 \
+\cb3 - `/about` - Coach qualifications with gamified certification badges\cb1 \
+\cb3 - `/booking` - Lesson booking with customer identification\cb1 \
+\cb3 - `/blog` - Adventure Stories with filtering and search\cb1 \
+\cb3 - `/blog/:id` - Individual blog post details\cb1 \
+\cb3 - `/tips` - Training Adventures with difficulty levels\cb1 \
+\cb3 - `/tips/:id` - Individual tip details with multi-section content\cb1 \
+\cb3 - `/contact` - Contact information and FAQ\cb1 \
+\
+\cb3 **Protected Routes:**\cb1 \
+\cb3 - `/admin` - Admin dashboard (requires admin session)\cb1 \
+\cb3 - `/admin/login` - Admin authentication\cb1 \
+\cb3 - `/parent/login` - Parent email-code authentication\cb1 \
+\cb3 - `/parent-dashboard` - Parent portal for managing bookings and athletes\cb1 \
+\cb3 - `/booking-success` - Post-payment confirmation page\cb1 \
+\
+\cb3 ### Page Components & Data Flow\cb1 \
+\
+\cb3 #### Home Page (`/`)\cb1 \
+\cb3 **Layout:**\cb1 \
+\cb3 - Hero section with adventure-themed messaging\cb1 \
+\cb3 - Skills showcase organized by apparatus (Vault, Bars, Beam, Floor)\cb1 \
+\cb3 - Side Quests section featuring specialized training areas\cb1 \
+\cb3 - Call-to-action sections with journey-focused language\cb1 \
+\
+\cb3 **Data Fetched:**\cb1 \
+\cb3 - `useQuery(['/api/stripe/products'])` - Live lesson pricing\cb1 \
+\cb3 - No authentication required\cb1 \
+\
+\cb3 **Key Interactions:**\cb1 \
+\cb3 - "Start Their Journey" button triggers customer identification modal\cb1 \
+\cb3 - Skill selection opens booking modal with pre-selected focus areas\cb1 \
+\cb3 - Adventure theme throughout with non-transactional language\cb1 \
+\
+\cb3 #### Booking Page (`/booking`)\cb1 \
+\cb3 **Layout:**\cb1 \
+\cb3 - Lesson type cards with adventure names and descriptions\cb1 \
+\cb3 - Customer identification modal for returning parents\cb1 \
+\cb3 - Enhanced booking modal with multi-step wizard\cb1 \
+\
+\cb3 **Data Fetched:**\cb1 \
+\cb3 - `useQuery(['/api/stripe/products'])` - Lesson pricing\cb1 \
+\cb3 - `useQuery(['/api/parent-auth/status'])` - Parent authentication status\cb1 \
+\
+\cb3 **Main Interactions:**\cb1 \
+\cb3 - Customer identification \uc0\u8594  BookingLoginModal \u8594  EnhancedBookingModal\cb1 \
+\cb3 - Three booking flows: new-user, athlete-modal, parent-portal\cb1 \
+\cb3 - Lesson selection with adventure-themed descriptions\cb1 \
+\
+\cb3 #### Parent Dashboard (`/parent-dashboard`)\cb1 \
+\cb3 **Layout:**\cb1 \
+\cb3 - Tab-based interface with elevated styling\cb1 \
+\cb3 - Upcoming Sessions, Booking History, Athletes, Profile tabs\cb1 \
+\cb3 - Mobile-optimized with 2-row grid layout\cb1 \
+\
+\cb3 **Data Fetched:**\cb1 \
+\cb3 - `useQuery(['/api/parent-auth/status'])` - Authentication status\cb1 \
+\cb3 - `useQuery(['/api/parent/bookings'])` - Parent's booking history\cb1 \
+\cb3 - `useQuery(['/api/parent/info'])` - Parent profile information\cb1 \
+\cb3 - `useQuery(['/api/parent/athletes'])` - Associated athletes\cb1 \
+\
+\cb3 **Key Features:**\cb1 \
+\cb3 - Reschedule bookings with available time slots\cb1 \
+\cb3 - Cancel bookings with refund policies\cb1 \
+\cb3 - Edit athlete profiles with photo uploads\cb1 \
+\cb3 - Update focus areas for future sessions\cb1 \
+\cb3 - View waiver status and complete missing waivers\cb1 \
+\
+\cb3 #### Admin Dashboard (`/admin`)\cb1 \
+\cb3 **Layout:**\cb1 \
+\cb3 - 8 main tabs in responsive grid layout\cb1 \
+\cb3 - Protected by `isAdminAuthenticated` middleware\cb1 \
+\cb3 - Each tab has dedicated management components\cb1 \
+\
+\cb3 **Data Fetched:**\cb1 \
+\cb3 - `useQuery(['/api/auth/status'])` - Admin authentication\cb1 \
+\cb3 - `useQuery(['/api/bookings'])` - All bookings with filtering\cb1 \
+\cb3 - `useQuery(['/api/athletes'])` - All athlete profiles\cb1 \
+\cb3 - `useQuery(['/api/blog-posts'])` - Content management\cb1 \
+\cb3 - `useQuery(['/api/tips'])` - Tips management\cb1 \
+\cb3 - `useQuery(['/api/availability'])` - Schedule management\cb1 \
+\
+\cb3 **8 Admin Tabs:**\cb1 \
+\cb3 1. **Bookings**: Full CRUD with status updates, filtering, quick actions\cb1 \
+\cb3 2. **Upcoming Sessions**: Next 7 days with attendance marking\cb1 \
+\cb3 3. **Athletes**: Profile management with birthday tracking\cb1 \
+\cb3 4. **Content**: Blog and tips management with rich text editing\cb1 \
+\cb3 5. **Schedule**: Weekly availability and exception management\cb1 \
+\cb3 6. **Parent Communication**: UI-only message threads (no backend)\cb1 \
+\cb3 7. **Payments**: Stripe integration with revenue tracking\cb1 \
+\cb3 8. **Analytics**: Booking trends and conversion metrics\cb1 \
+\
+\cb3 ### Component Architecture\cb1 \
+\
+\cb3 #### BookingWizard System\cb1 \
+\cb3 **Flow Types:**\cb1 \
+\cb3 - `new-user`: 8 steps for first-time parents\cb1 \
+\cb3 - `athlete-modal`: 8 steps for existing parents with athlete selection\cb1 \
+\cb3 - `parent-portal`: 8 steps for logged-in parents\cb1 \
+\
+\cb3 **Step Components:**\cb1 \
+\cb3 1. **LessonTypeStep**: Adventure-themed lesson selection\cb1 \
+\cb3 2. **AthleteSelectStep**: Existing athlete selection or new athlete form\cb1 \
+\cb3 3. **FocusAreasStep**: Apparatus-specific skill selection\cb1 \
+\cb3 4. **ScheduleStep**: Available time slot selection\cb1 \
+\cb3 5. **ParentInfoStep**: Contact and emergency information\cb1 \
+\cb3 6. **SafetyStep**: Pickup/dropoff authorization\cb1 \
+\cb3 7. **WaiverStep**: Digital waiver completion\cb1 \
+\cb3 8. **PaymentStep**: Stripe checkout integration\cb1 \
+\
+\cb3 #### State Management\cb1 \
+\cb3 **BookingFlowContext**: Manages booking wizard state and navigation\cb1 \
+\cb3 **TanStack Query Config**: Intelligent caching with different stale times:\cb1 \
+\cb3 - Default: 5 minutes\cb1 \
+\cb3 - Content: 15 minutes\cb1 \
+\cb3 - Stripe products: 1 hour\cb1 \
+\cb3 - Authentication: 30 seconds\cb1 \
+\
+\cb3 ### Performance Optimizations\cb1 \
+\cb3 - **Lazy Loading**: All page components loaded on demand\cb1 \
+\cb3 - **Image Optimization**: Intersection observer for lazy image loading\cb1 \
+\cb3 - **Prefetching**: Hover prefetching on navigation links\cb1 \
+\cb3 - **Caching**: Aggressive caching with React Query\cb1 \
+\cb3 - **Bundle Splitting**: Vite automatic code splitting\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 3. BOOKING WIZARD \'97 12-STEP FLOW\cb1 \
+\
+\cb3 ### Flow Configuration by User Type\cb1 \
+\
+\cb3 #### New User Flow (8 Steps)\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 'new-user': [\cb1 \
+\cb3   'lessonType',      // Adventure-themed lesson selection\cb1 \
+\cb3   'athleteInfoForm', // New athlete details with photo upload\cb1 \
+\cb3   'focusAreas',      // Apparatus-specific skill selection\cb1 \
+\cb3   'schedule',        // Available time slot selection\cb1 \
+\cb3   'parentInfoForm',  // Parent contact information\cb1 \
+\cb3   'safety',          // Pickup/dropoff authorization\cb1 \
+\cb3   'waiver',          // Digital waiver completion\cb1 \
+\cb3   'payment'          // Stripe checkout session\cb1 \
+\cb3 ]\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Existing Parent Flow (8 Steps)\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 'parent-portal': [\cb1 \
+\cb3   'lessonType',      // Lesson type selection\cb1 \
+\cb3   'athleteSelect',   // Choose from existing athletes\cb1 \
+\cb3   'focusAreas',      // Skill focus areas\cb1 \
+\cb3   'schedule',        // Time slot selection\cb1 \
+\cb3   'parentConfirm',   // Confirm parent information\cb1 \
+\cb3   'safety',          // Safety verification\cb1 \
+\cb3   'waiver',          // Waiver completion\cb1 \
+\cb3   'payment'          // Payment processing\cb1 \
+\cb3 ]\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Athlete Modal Flow (8 Steps)\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 'athlete-modal': [\cb1 \
+\cb3   'lessonType',           // Lesson selection\cb1 \
+\cb3   'athleteSelectIfSemi',  // Multi-athlete selection for semi-private\cb1 \
+\cb3   'focusAreas',           // Focus area selection\cb1 \
+\cb3   'schedule',             // Time slot selection\cb1 \
+\cb3   'parentConfirm',        // Parent information confirmation\cb1 \
+\cb3   'safety',               // Safety verification\cb1 \
+\cb3   'waiver',               // Waiver completion\cb1 \
+\cb3   'payment'               // Payment processing\cb1 \
+\cb3 ]\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Step Details & Data Flow\cb1 \
+\
+\cb3 #### Step 1: Lesson Type Selection\cb1 \
+\cb3 **Purpose**: Choose adventure-themed lesson type\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Quick Journey (30 min individual)\cb1 \
+\cb3 - Dual Quest (30 min semi-private)\cb1 \
+\cb3 - Deep Dive (60 min individual)\cb1 \
+\cb3 - Partner Progression (60 min semi-private)\cb1 \
+\
+\cb3 **Validation**: Required lesson type selection\cb1 \
+\cb3 **State**: Stored in BookingFlowContext, not persisted until payment\cb1 \
+\
+\cb3 #### Step 2: Athlete Selection/Creation\cb1 \
+\cb3 **Purpose**: Identify or create athlete profiles\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Existing athletes (dropdown with photos)\cb1 \
+\cb3 - New athlete form (name, birthdate, experience, photo)\cb1 \
+\cb3 - Semi-private: multiple athlete selection\cb1 \
+\
+\cb3 **Validation**: Athlete information required, age validation\cb1 \
+\cb3 **State**: Temporarily stored in context\cb1 \
+\
+\cb3 #### Step 3: Focus Areas\cb1 \
+\cb3 **Purpose**: Select apparatus-specific training focus\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Apparatus selection (Vault, Bars, Beam, Floor, Side Quests)\cb1 \
+\cb3 - Skill-specific focus areas per apparatus\cb1 \
+\cb3 - Multi-select with visual skill badges\cb1 \
+\
+\cb3 **Validation**: At least one focus area required\cb1 \
+\cb3 **State**: Array of focus area IDs in context\cb1 \
+\
+\cb3 #### Step 4: Schedule Selection\cb1 \
+\cb3 **Purpose**: Choose available time slots\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Date picker (blocks past dates)\cb1 \
+\cb3 - Time slot dropdown (filtered by availability)\cb1 \
+\cb3 - Automatic filtering of booked/blocked times\cb1 \
+\
+\cb3 **Validation**: Future date/time required, availability check\cb1 \
+\cb3 **State**: Date and time stored in context\cb1 \
+\
+\cb3 #### Step 5: Parent Information\cb1 \
+\cb3 **Purpose**: Collect/confirm parent contact details\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Parent name, email, phone\cb1 \
+\cb3 - Emergency contact information\cb1 \
+\cb3 - Pre-filled for existing parents\cb1 \
+\
+\cb3 **Validation**: Required contact information, email format\cb1 \
+\cb3 **State**: Parent data in context\cb1 \
+\
+\cb3 #### Step 6: Safety Verification\cb1 \
+\cb3 **Purpose**: Authorize pickup/dropoff persons\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Pickup person name and relationship\cb1 \
+\cb3 - Dropoff person name and relationship\cb1 \
+\cb3 - Emergency contact authorization\cb1 \
+\
+\cb3 **Validation**: Required safety information\cb1 \
+\cb3 **State**: Safety data in context\cb1 \
+\
+\cb3 #### Step 7: Waiver Completion\cb1 \
+\cb3 **Purpose**: Digital waiver signing\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Electronic signature canvas\cb1 \
+\cb3 - Waiver text agreement\cb1 \
+\cb3 - Date and parent signature\cb1 \
+\
+\cb3 **Validation**: Signature required, agreement checkbox\cb1 \
+\cb3 **State**: Waiver data and signature blob\cb1 \
+\
+\cb3 #### Step 8: Payment Processing\cb1 \
+\cb3 **Purpose**: Stripe checkout session creation\cb1 \
+\cb3 **Fields**: \cb1 \
+\cb3 - Booking summary display\cb1 \
+\cb3 - Payment amount (reservation fee)\cb1 \
+\cb3 - Stripe checkout redirect\cb1 \
+\
+\cb3 **Validation**: Payment processing required\cb1 \
+\cb3 **Persistence**: All booking data saved to Supabase on successful payment\cb1 \
+\
+\cb3 ### Stripe Integration Flow\cb1 \
+\
+\cb3 #### Payment Processing\cb1 \
+\cb3 1. **Checkout Session Creation**: `/api/stripe/create-checkout-session`\cb1 \
+\cb3 2. **Session Data**: Booking details stored in session metadata\cb1 \
+\cb3 3. **Redirect**: User redirected to Stripe checkout\cb1 \
+\cb3 4. **Webhook**: `checkout.session.completed` creates booking\cb1 \
+\cb3 5. **Success Page**: Booking retrieved via `stripe_session_id`\cb1 \
+\
+\cb3 #### Payment Flow Details\cb1 \
+\cb3 - **Reservation Fee**: Charged upfront via Stripe\cb1 \
+\cb3 - **Balance Payment**: Collected at time of lesson\cb1 \
+\cb3 - **Refund Policy**: Automated through Stripe API\cb1 \
+\cb3 - **Receipt**: Automatic email with booking confirmation\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 4. PARENT PORTAL\cb1 \
+\
+\cb3 ### Email-Code Authentication Flow\cb1 \
+\
+\cb3 #### Step 1: Email Submission\cb1 \
+\cb3 **Endpoint**: `POST /api/parent-auth/send-code`\cb1 \
+\cb3 **Process**: \cb1 \
+\cb3 1. Parent enters email address\cb1 \
+\cb3 2. System generates 6-digit code\cb1 \
+\cb3 3. Code sent via Resend email template\cb1 \
+\cb3 4. Code stored in database with expiry (15 minutes)\cb1 \
+\
+\cb3 #### Step 2: Code Verification\cb1 \
+\cb3 **Endpoint**: `POST /api/parent-auth/verify-code`\cb1 \
+\cb3 **Process**: \cb1 \
+\cb3 1. Parent enters 6-digit code\cb1 \
+\cb3 2. Code validated against database\cb1 \
+\cb3 3. Session created with secure cookie\cb1 \
+\cb3 4. Parent redirected to dashboard\cb1 \
+\
+\cb3 #### Step 3: Session Management\cb1 \
+\cb3 **Session Config**: \cb1 \
+\cb3 - Express-session with secure cookies\cb1 \
+\cb3 - Domain: `.coachwilltumbles.com` (production)\cb1 \
+\cb3 - Secure: true, sameSite: 'none'\cb1 \
+\cb3 - MaxAge: 7 days\cb1 \
+\
+\cb3 ### Dashboard Widgets & Features\cb1 \
+\
+\cb3 #### Upcoming Sessions Widget\cb1 \
+\cb3 **Data Source**: `useQuery(['/api/parent/bookings'])`\cb1 \
+\cb3 **Display**: \cb1 \
+\cb3 - Next 7 days of confirmed bookings\cb1 \
+\cb3 - Session date, time, and athlete\cb1 \
+\cb3 - Quick actions: reschedule, cancel, update focus areas\cb1 \
+\
+\cb3 #### Athlete Management Widget\cb1 \
+\cb3 **Data Source**: `useQuery(['/api/parent/athletes'])`\cb1 \
+\cb3 **Features**: \cb1 \
+\cb3 - Athlete profiles with photos\cb1 \
+\cb3 - Birthday tracking with notifications\cb1 \
+\cb3 - Age calculation and experience tracking\cb1 \
+\cb3 - Edit modal with form validation\cb1 \
+\
+\cb3 #### Booking History Widget\cb1 \
+\cb3 **Data Source**: `useQuery(['/api/parent/bookings'])`\cb1 \
+\cb3 **Features**: \cb1 \
+\cb3 - Sortable booking history\cb1 \
+\cb3 - Status filtering (confirmed, completed, cancelled)\cb1 \
+\cb3 - Payment status tracking\cb1 \
+\cb3 - Reschedule functionality\cb1 \
+\
+\cb3 #### Waiver Status Widget\cb1 \
+\cb3 **Data Source**: Embedded in booking queries\cb1 \
+\cb3 **Features**: \cb1 \
+\cb3 - Waiver completion status per athlete\cb1 \
+\cb3 - Digital waiver completion links\cb1 \
+\cb3 - Waiver archive access\cb1 \
+\
+\cb3 ### CRUD Rules & Permissions\cb1 \
+\
+\cb3 #### Parents Can Edit:\cb1 \
+\cb3 - Their own profile information\cb1 \
+\cb3 - Emergency contact details\cb1 \
+\cb3 - Athlete profiles (name, birthdate, experience)\cb1 \
+\cb3 - Focus areas for future bookings\cb1 \
+\cb3 - Booking preferences\cb1 \
+\
+\cb3 #### Parents Cannot Edit:\cb1 \
+\cb3 - Completed booking details\cb1 \
+\cb3 - Payment information\cb1 \
+\cb3 - Session attendance records\cb1 \
+\cb3 - Other parents' data\cb1 \
+\cb3 - Admin-only fields\cb1 \
+\
+\cb3 #### Session Restrictions:\cb1 \
+\cb3 - Cannot reschedule less than 24 hours before session\cb1 \
+\cb3 - Cannot cancel without fees less than 4 hours before\cb1 \
+\cb3 - Cannot edit athlete information during active booking\cb1 \
+\
+\cb3 ### Logout & Session Expiry\cb1 \
+\
+\cb3 #### Manual Logout:\cb1 \
+\cb3 **Endpoint**: `POST /api/parent-auth/logout`\cb1 \
+\cb3 **Process**: Session destroyed, cookies cleared, redirect to login\cb1 \
+\
+\cb3 #### Automatic Expiry:\cb1 \
+\cb3 - **Session Duration**: 7 days maximum\cb1 \
+\cb3 - **Inactivity**: 24 hours of inactivity\cb1 \
+\cb3 - **Token Refresh**: Automatic on page load if session valid\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 5. ADMIN DASHBOARD\cb1 \
+\
+\cb3 ### Authentication & Security\cb1 \
+\
+\cb3 #### Admin Login\cb1 \
+\cb3 **Endpoint**: `POST /api/auth/login`\cb1 \
+\cb3 **Credentials**: Email and password (hashed with bcrypt)\cb1 \
+\cb3 **Session**: Secure cookie with admin privileges\cb1 \
+\
+\cb3 #### Middleware Protection\cb1 \
+\cb3 **isAdminAuthenticated**: Protects all admin routes\cb1 \
+\cb3 **Session Validation**: Checks admin session on each request\cb1 \
+\cb3 **Role-Based Access**: Admin-only endpoints blocked for non-admins\cb1 \
+\
+\cb3 ### Sidebar Tabs (In Order)\cb1 \
+\
+\cb3 #### 1. Bookings Tab\cb1 \
+\cb3 **Component**: `AdminBookingManager`\cb1 \
+\cb3 **Data Table Columns**:\cb1 \
+\cb3 - Booking ID, Date, Time\cb1 \
+\cb3 - Parent Name, Athlete Name\cb1 \
+\cb3 - Lesson Type, Status\cb1 \
+\cb3 - Payment Status, Amount\cb1 \
+\cb3 - Actions (Edit, Cancel, Reschedule)\cb1 \
+\
+\cb3 **CRUD Actions**:\cb1 \
+\cb3 - **Update Status**: Confirmed, Completed, Cancelled\cb1 \
+\cb3 - **Update Payment**: Pending, Paid, Refunded\cb1 \
+\cb3 - **Update Attendance**: Present, Absent, Partial\cb1 \
+\cb3 - **Quick Reschedule**: Available time slot dropdown\cb1 \
+\cb3 - **Manual Booking**: Create new booking with full form\cb1 \
+\
+\cb3 **Filtering Options**:\cb1 \
+\cb3 - Status filter (All, Confirmed, Completed, Cancelled)\cb1 \
+\cb3 - Date range filter\cb1 \
+\cb3 - Payment status filter\cb1 \
+\cb3 - Sort by: Most Recent, Oldest, Session Date \uc0\u8593 /\u8595 \cb1 \
+\
+\cb3 #### 2. Upcoming Sessions Tab\cb1 \
+\cb3 **Component**: `UpcomingSessionsManager`\cb1 \
+\cb3 **Display**: Next 7 days of confirmed bookings\cb1 \
+\cb3 **Features**:\cb1 \
+\cb3 - Today/Tomorrow labels\cb1 \
+\cb3 - Quick attendance marking\cb1 \
+\cb3 - Session details modal\cb1 \
+\cb3 - Contact parent buttons\cb1 \
+\
+\cb3 #### 3. Athletes Tab\cb1 \
+\cb3 **Component**: `AthleteManager`\cb1 \
+\cb3 **Data Table Columns**:\cb1 \
+\cb3 - Athlete name, age, birthdate\cb1 \
+\cb3 - Parent information\cb1 \
+\cb3 - Experience level\cb1 \
+\cb3 - Photo thumbnail\cb1 \
+\cb3 - Birthday alerts (30-day lookahead)\cb1 \
+\
+\cb3 **CRUD Actions**:\cb1 \
+\cb3 - **Create Athlete**: Full form with photo upload\cb1 \
+\cb3 - **Edit Athlete**: Update details and photo\cb1 \
+\cb3 - **Delete Athlete**: Only if no active bookings\cb1 \
+\cb3 - **View History**: All bookings for athlete\cb1 \
+\
+\cb3 **Special Features**:\cb1 \
+\cb3 - Birthday tracking with countdown\cb1 \
+\cb3 - Free lesson suggestions for birthdays\cb1 \
+\cb3 - Consolidated data across all bookings\cb1 \
+\
+\cb3 #### 4. Content Tab\cb1 \
+\cb3 **Component**: `ContentManager`\cb1 \
+\cb3 **Sub-tabs**: Blog Posts, Tips\cb1 \
+\
+\cb3 **Blog Posts**:\cb1 \
+\cb3 - **Create**: Rich text editor, category, publish date\cb1 \
+\cb3 - **Edit**: Full editing capabilities\cb1 \
+\cb3 - **Delete**: Confirmation modal\cb1 \
+\cb3 - **Publish**: Toggle published status\cb1 \
+\
+\cb3 **Tips**:\cb1 \
+\cb3 - **Create**: Multi-section tips with difficulty levels\cb1 \
+\cb3 - **Edit**: Section-based editing\cb1 \
+\cb3 - **Delete**: Confirmation and cascade rules\cb1 \
+\cb3 - **Categories**: Apparatus-based organization\cb1 \
+\
+\cb3 #### 5. Schedule Tab\cb1 \
+\cb3 **Component**: `ScheduleManager`\cb1 \
+\cb3 **Features**:\cb1 \
+\cb3 - **Weekly Hours**: Set available hours per day\cb1 \
+\cb3 - **Exceptions**: Block specific dates/times\cb1 \
+\cb3 - **Visual Calendar**: Monthly view with availability\cb1 \
+\cb3 - **Bulk Actions**: Set recurring availability\cb1 \
+\
+\cb3 **Data Management**:\cb1 \
+\cb3 - Availability slots with time ranges\cb1 \
+\cb3 - Exception dates with reasons\cb1 \
+\cb3 - Automatic conflict detection\cb1 \
+\
+\cb3 #### 6. Parent Communication Tab\cb1 \
+\cb3 **Component**: `ParentCommunicationManager`\cb1 \
+\cb3 **Status**: UI-only (no backend implementation)\cb1 \
+\cb3 **Features**:\cb1 \
+\cb3 - Message thread mockups\cb1 \
+\cb3 - Template system design\cb1 \
+\cb3 - Bulk messaging interface\cb1 \
+\cb3 - Email open tracking visualization\cb1 \
+\
+\cb3 #### 7. Payments Tab\cb1 \
+\cb3 **Component**: `PaymentsManager`\cb1 \
+\cb3 **Stripe Integration**:\cb1 \
+\cb3 - **Revenue Tracking**: Daily, weekly, monthly totals\cb1 \
+\cb3 - **Transaction History**: All payments with details\cb1 \
+\cb3 - **Refund Management**: Process refunds through Stripe\cb1 \
+\cb3 - **Payment Methods**: Saved payment methods per parent\cb1 \
+\
+\cb3 **Features**:\cb1 \
+\cb3 - Real-time sync with Stripe\cb1 \
+\cb3 - Payment status reconciliation\cb1 \
+\cb3 - Revenue analytics charts\cb1 \
+\cb3 - Export functionality\cb1 \
+\
+\cb3 #### 8. Analytics Tab\cb1 \
+\cb3 **Component**: `AnalyticsManager`\cb1 \
+\cb3 **Metrics Tracked**:\cb1 \
+\cb3 - **Booking Trends**: Monthly booking counts\cb1 \
+\cb3 - **Focus Area Popularity**: Most requested skills\cb1 \
+\cb3 - **Conversion Rates**: Booking completion rates\cb1 \
+\cb3 - **Revenue Metrics**: Average booking value\cb1 \
+\cb3 - **Parent Retention**: Repeat booking rates\cb1 \
+\
+\cb3 **Visualizations**:\cb1 \
+\cb3 - Line charts for trends\cb1 \
+\cb3 - Bar charts for popularity\cb1 \
+\cb3 - Pie charts for distribution\cb1 \
+\cb3 - KPI cards for key metrics\cb1 \
+\
+\cb3 ### Protected Routes Implementation\cb1 \
+\cb3 **Middleware**: `isAdminAuthenticated`\cb1 \
+\cb3 **Route Protection**: All `/api/admin/*` routes\cb1 \
+\cb3 **Session Validation**: Checks admin session cookie\cb1 \
+\cb3 **Error Handling**: 401 Unauthorized for invalid sessions\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 6. BACKEND (Express)\cb1 \
+\
+\cb3 ### Middleware Stack\cb1 \
+\
+\cb3 #### Core Middleware\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 app.use(express.json());           // JSON body parsing\cb1 \
+\cb3 app.use(express.urlencoded());     // URL-encoded form data\cb1 \
+\cb3 app.use(cors(\{                     // CORS configuration\cb1 \
+\cb3   origin: process.env.FRONTEND_URL,\cb1 \
+\cb3   credentials: true\cb1 \
+\cb3 \}));\cb1 \
+\cb3 app.use(session(\{                  // Session management\cb1 \
+\cb3   secret: process.env.SESSION_SECRET,\cb1 \
+\cb3   resave: false,\cb1 \
+\cb3   saveUninitialized: false,\cb1 \
+\cb3   cookie: \{\cb1 \
+\cb3     secure: process.env.NODE_ENV === 'production',\cb1 \
+\cb3     domain: process.env.NODE_ENV === 'production' ? '.coachwilltumbles.com' : undefined,\cb1 \
+\cb3     sameSite: 'none',\cb1 \
+\cb3     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days\cb1 \
+\cb3   \}\cb1 \
+\cb3 \}));\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Authentication Middleware\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 // Admin authentication\cb1 \
+\cb3 const isAdminAuthenticated = (req, res, next) => \{\cb1 \
+\cb3   if (req.session.adminId) \{\cb1 \
+\cb3     return next();\cb1 \
+\cb3   \}\cb1 \
+\cb3   return res.status(401).json(\{ error: 'Admin authentication required' \});\cb1 \
+\cb3 \};\cb1 \
+\
+\cb3 // Parent authentication\cb1 \
+\cb3 const isParentAuthenticated = (req, res, next) => \{\cb1 \
+\cb3   if (req.session.parentId) \{\cb1 \
+\cb3     return next();\cb1 \
+\cb3   \}\cb1 \
+\cb3   return res.status(401).json(\{ error: 'Parent authentication required' \});\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### REST API Endpoints\cb1 \
+\
+\cb3 #### Authentication Routes\cb1 \
+\
+\cb3 **Admin Authentication**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/auth/login\cb1 \
+\cb3 Body: \{ email: string, password: string \}\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ success: boolean, admin: AdminData \}\cb1 \
+\cb3 Side Effects: Session creation, login logging\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/auth/status\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: None (checks session)\cb1 \
+\cb3 Response: \{ authenticated: boolean, admin?: AdminData \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/auth/logout\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: Admin session required\cb1 \
+\cb3 Response: \{ success: boolean \}\cb1 \
+\cb3 Side Effects: Session destruction, logout logging\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 **Parent Authentication**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/parent-auth/send-code\cb1 \
+\cb3 Body: \{ email: string \}\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ success: boolean, message: string \}\cb1 \
+\cb3 Side Effects: Email sending, code storage, logging\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/parent-auth/verify-code\cb1 \
+\cb3 Body: \{ email: string, code: string \}\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ success: boolean, parent: ParentData \}\cb1 \
+\cb3 Side Effects: Session creation, code cleanup, logging\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/parent-auth/status\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: None (checks session)\cb1 \
+\cb3 Response: \{ authenticated: boolean, parent?: ParentData \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Booking Routes\cb1 \
+\
+\cb3 **Public Booking Routes**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/bookings\cb1 \
+\cb3 Body: BookingCreateData\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ booking: BookingData \}\cb1 \
+\cb3 Side Effects: Booking creation, email sending, Stripe session creation\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/booking-by-session/:sessionId\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ booking: BookingData \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 **Admin Booking Routes**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/bookings\cb1 \
+\cb3 Query: \{ status?, dateFrom?, dateTo?, parentId? \}\cb1 \
+\cb3 Auth: Admin required\cb1 \
+\cb3 Response: \{ bookings: BookingData[] \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 PATCH /api/bookings/:id\cb1 \
+\cb3 Body: Partial<BookingUpdateData>\cb1 \
+\cb3 Auth: Admin required\cb1 \
+\cb3 Response: \{ booking: BookingData \}\cb1 \
+\cb3 Side Effects: Booking update, email notifications\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 PATCH /api/bookings/:id/cancel\cb1 \
+\cb3 Body: \{ reason?: string \}\cb1 \
+\cb3 Auth: Admin or Parent (ownership check)\cb1 \
+\cb3 Response: \{ booking: BookingData \}\cb1 \
+\cb3 Side Effects: Booking cancellation, refund processing, email notifications\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 **Parent Booking Routes**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/parent/bookings\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: Parent required\cb1 \
+\cb3 Response: \{ bookings: BookingData[] \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 PATCH /api/parent/bookings/:id/reschedule\cb1 \
+\cb3 Body: \{ newDate: string, newTime: string \}\cb1 \
+\cb3 Auth: Parent required (ownership check)\cb1 \
+\cb3 Response: \{ booking: BookingData \}\cb1 \
+\cb3 Side Effects: Booking update, availability check, email notifications\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Parent Management Routes\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/parent/info\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: Parent required\cb1 \
+\cb3 Response: \{ parent: ParentData \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/parent/athletes\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: Parent required\cb1 \
+\cb3 Response: \{ athletes: AthleteData[] \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 PATCH /api/parent/athletes/:id\cb1 \
+\cb3 Body: Partial<AthleteUpdateData>\cb1 \
+\cb3 Auth: Parent required (ownership check)\cb1 \
+\cb3 Response: \{ athlete: AthleteData \}\cb1 \
+\cb3 Side Effects: Athlete update, photo upload handling\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Content Management Routes\cb1 \
+\
+\cb3 **Blog Posts**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/blog-posts\cb1 \
+\cb3 Query: \{ published?, category?, search? \}\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ posts: BlogPostData[] \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/blog-posts\cb1 \
+\cb3 Body: BlogPostCreateData\cb1 \
+\cb3 Auth: Admin required\cb1 \
+\cb3 Response: \{ post: BlogPostData \}\cb1 \
+\cb3 Side Effects: Post creation, email notifications for published posts\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 **Tips**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/tips\cb1 \
+\cb3 Query: \{ difficulty?, apparatus?, search? \}\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ tips: TipData[] \}\cb1 \
+\cb3 Side Effects: None\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/tips\cb1 \
+\cb3 Body: TipCreateData\cb1 \
+\cb3 Auth: Admin required\cb1 \
+\cb3 Response: \{ tip: TipData \}\cb1 \
+\cb3 Side Effects: Tip creation, email notifications\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Stripe Integration Routes\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/stripe/create-checkout-session\cb1 \
+\cb3 Body: \{ bookingData: BookingData \}\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ sessionId: string, url: string \}\cb1 \
+\cb3 Side Effects: Stripe session creation, booking metadata storage\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 POST /api/stripe/webhook\cb1 \
+\cb3 Body: Stripe webhook payload\cb1 \
+\cb3 Auth: Stripe signature verification\cb1 \
+\cb3 Response: \{ received: boolean \}\cb1 \
+\cb3 Side Effects: Booking confirmation, email sending, payment processing\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ```typescript\cb1 \
+\cb3 GET /api/stripe/products\cb1 \
+\cb3 Body: None\cb1 \
+\cb3 Auth: None\cb1 \
+\cb3 Response: \{ products: StripeProductData[] \}\cb1 \
+\cb3 Side Effects: None (cached response)\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Database Operations (Drizzle ORM)\cb1 \
+\
+\cb3 #### Connection Configuration\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 const db = drizzle(postgres(process.env.DATABASE_URL), \{\cb1 \
+\cb3   schema: \{\cb1 \
+\cb3     parents,\cb1 \
+\cb3     athletes,\cb1 \
+\cb3     bookings,\cb1 \
+\cb3     booking_athletes,\cb1 \
+\cb3     focus_areas,\cb1 \
+\cb3     booking_focus_areas,\cb1 \
+\cb3     waivers,\cb1 \
+\cb3     admins,\cb1 \
+\cb3     email_logs\cb1 \
+\cb3   \}\cb1 \
+\cb3 \});\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Common Query Patterns\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 // Get bookings with related data\cb1 \
+\cb3 const getBookingsWithRelations = async () => \{\cb1 \
+\cb3   return await db.select(\{\cb1 \
+\cb3     booking: bookings,\cb1 \
+\cb3     parent: parents,\cb1 \
+\cb3     athletes: athletes,\cb1 \
+\cb3     focusAreas: focus_areas\cb1 \
+\cb3   \})\cb1 \
+\cb3   .from(bookings)\cb1 \
+\cb3   .leftJoin(parents, eq(bookings.parentId, parents.id))\cb1 \
+\cb3   .leftJoin(booking_athletes, eq(bookings.id, booking_athletes.bookingId))\cb1 \
+\cb3   .leftJoin(athletes, eq(booking_athletes.athleteId, athletes.id))\cb1 \
+\cb3   .leftJoin(booking_focus_areas, eq(bookings.id, booking_focus_areas.bookingId))\cb1 \
+\cb3   .leftJoin(focus_areas, eq(booking_focus_areas.focusAreaId, focus_areas.id));\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Error Handling & Logging\cb1 \
+\
+\cb3 #### Error Middleware\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 app.use((err: any, req: Request, res: Response, next: NextFunction) => \{\cb1 \
+\cb3   console.error('Error:', err);\cb1 \
+\cb3   \cb1 \
+\cb3   const status = err.status || 500;\cb1 \
+\cb3   const message = err.message || 'Internal Server Error';\cb1 \
+\cb3   \cb1 \
+\cb3   res.status(status).json(\{ \cb1 \
+\cb3     error: message,\cb1 \
+\cb3     ...(process.env.NODE_ENV === 'development' && \{ stack: err.stack \})\cb1 \
+\cb3   \});\cb1 \
+\cb3 \});\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Request Logging\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 app.use((req, res, next) => \{\cb1 \
+\cb3   const start = Date.now();\cb1 \
+\cb3   \cb1 \
+\cb3   res.on('finish', () => \{\cb1 \
+\cb3     const duration = Date.now() - start;\cb1 \
+\cb3     console.log(`$\{req.method\} $\{req.path\} - $\{res.statusCode\} - $\{duration\}ms`);\cb1 \
+\cb3   \});\cb1 \
+\cb3   \cb1 \
+\cb3   next();\cb1 \
+\cb3 \});\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 7. EMAIL AUTOMATION (Resend)\cb1 \
+\
+\cb3 ### Email Template System\cb1 \
+\
+\cb3 | Template | Trigger Event | Data Injected | Recipient | Logged |\cb1 \
+\cb3 |----------|---------------|---------------|-----------|--------|\cb1 \
+\cb3 | Welcome | First parent login | `\{parentName\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Booking Confirmation | Stripe `checkout.session.completed` | `\{parentName, sessionDate, athleteName, lessonType\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Booking Cancellation | Booking cancelled | `\{parentName, sessionDate, athleteName, reason\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Reschedule Confirmation | Booking rescheduled | `\{parentName, oldDate, newDate, athleteName\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Waiver Reminder | Booking without waiver after 12h | `\{parentName, athleteName, waiverLink\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Session Reminder | 24h before session | `\{parentName, athleteName, sessionDate, focusAreas\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Training Follow-Up | 2h after session | `\{parentName, athleteName, sessionDate, feedback\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | Birthday Celebration | Daily cron at 09:00 | `\{parentName, athleteName, birthdayDate\}` | Parent | \uc0\u9989  |\cb1 \
+\cb3 | New Content Alert | Blog/tip published | `\{parentName, contentTitle, contentLink, contentType\}` | All opted-in parents | \uc0\u9989  |\cb1 \
+\cb3 | Payment Reminder | Payment failed | `\{parentName, athleteName, sessionDate, paymentLink\}` | Parent | \uc0\u9989  |\cb1 \
+\
+\cb3 ### Email Template Structure\cb1 \
+\
+\cb3 #### Template Components\cb1 \
+\cb3 - **Header**: Adventure-themed branding with logo\cb1 \
+\cb3 - **Content**: Personalized message with dynamic data\cb1 \
+\cb3 - **Footer**: Contact information and unsubscribe link\cb1 \
+\cb3 - **Styling**: Consistent with website theme\cb1 \
+\
+\cb3 #### Template Examples\cb1 \
+\
+\cb3 **Booking Confirmation Template**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 export const BookingConfirmationEmail = (\{\cb1 \
+\cb3   parentName,\cb1 \
+\cb3   athleteName,\cb1 \
+\cb3   sessionDate,\cb1 \
+\cb3   sessionTime,\cb1 \
+\cb3   lessonType,\cb1 \
+\cb3   focusAreas\cb1 \
+\cb3 \}: BookingConfirmationProps) => (\cb1 \
+\cb3   <Html>\cb1 \
+\cb3     <Head />\cb1 \
+\cb3     <Body>\cb1 \
+\cb3       <Container>\cb1 \
+\cb3         <Heading>Your Adventure Awaits! \uc0\u55356 \u57258 </Heading>\cb1 \
+\cb3         <Text>Hi \{parentName\},</Text>\cb1 \
+\cb3         <Text>\cb1 \
+\cb3           Great news! \{athleteName\}'s \{lessonType\} session is confirmed for \{sessionDate\} at \{sessionTime\}.\cb1 \
+\cb3         </Text>\cb1 \
+\cb3         <Text>Focus Areas: \{focusAreas.join(', ')\}</Text>\cb1 \
+\cb3         <Button href=\{`$\{process.env.FRONTEND_URL\}/parent-dashboard`\}>\cb1 \
+\cb3           View in Dashboard\cb1 \
+\cb3         </Button>\cb1 \
+\cb3       </Container>\cb1 \
+\cb3     </Body>\cb1 \
+\cb3   </Html>\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Email Delivery System\cb1 \
+\
+\cb3 #### Resend Configuration\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 const resend = new Resend(process.env.RESEND_API_KEY);\cb1 \
+\
+\cb3 const sendEmail = async (\cb1 \
+\cb3   template: EmailTemplate,\cb1 \
+\cb3   recipient: string,\cb1 \
+\cb3   data: EmailData\cb1 \
+\cb3 ) => \{\cb1 \
+\cb3   try \{\cb1 \
+\cb3     const result = await resend.emails.send(\{\cb1 \
+\cb3       from: 'Coach Will <coach@coachwilltumbles.com>',\cb1 \
+\cb3       to: recipient,\cb1 \
+\cb3       subject: template.subject,\cb1 \
+\cb3       html: template.render(data),\cb1 \
+\cb3     \});\cb1 \
+\cb3     \cb1 \
+\cb3     // Log email in database\cb1 \
+\cb3     await logEmail(\{\cb1 \
+\cb3       recipient,\cb1 \
+\cb3       template: template.name,\cb1 \
+\cb3       status: 'sent',\cb1 \
+\cb3       messageId: result.id,\cb1 \
+\cb3       sentAt: new Date()\cb1 \
+\cb3     \});\cb1 \
+\cb3     \cb1 \
+\cb3     return result;\cb1 \
+\cb3   \} catch (error) \{\cb1 \
+\cb3     await logEmail(\{\cb1 \
+\cb3       recipient,\cb1 \
+\cb3       template: template.name,\cb1 \
+\cb3       status: 'failed',\cb1 \
+\cb3       error: error.message,\cb1 \
+\cb3       sentAt: new Date()\cb1 \
+\cb3     \});\cb1 \
+\cb3     throw error;\cb1 \
+\cb3   \}\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Email Triggers\cb1 \
+\
+\cb3 **Booking Confirmation Trigger**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 // Stripe webhook handler\cb1 \
+\cb3 app.post('/api/stripe/webhook', async (req, res) => \{\cb1 \
+\cb3   const event = req.body;\cb1 \
+\cb3   \cb1 \
+\cb3   if (event.type === 'checkout.session.completed') \{\cb1 \
+\cb3     const session = event.data.object;\cb1 \
+\cb3     \cb1 \
+\cb3     // Create booking from session metadata\cb1 \
+\cb3     const booking = await createBookingFromSession(session);\cb1 \
+\cb3     \cb1 \
+\cb3     // Send confirmation email\cb1 \
+\cb3     await sendEmail(\cb1 \
+\cb3       BookingConfirmationEmail,\cb1 \
+\cb3       booking.parent.email,\cb1 \
+\cb3       \{\cb1 \
+\cb3         parentName: booking.parent.name,\cb1 \
+\cb3         athleteName: booking.athletes[0].name,\cb1 \
+\cb3         sessionDate: booking.date,\cb1 \
+\cb3         sessionTime: booking.time,\cb1 \
+\cb3         lessonType: booking.lessonType,\cb1 \
+\cb3         focusAreas: booking.focusAreas\cb1 \
+\cb3       \}\cb1 \
+\cb3     );\cb1 \
+\cb3   \}\cb1 \
+\cb3 \});\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 **Automated Reminders**\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 // Cron job for daily reminders\cb1 \
+\cb3 const sendDailyReminders = async () => \{\cb1 \
+\cb3   const tomorrow = new Date();\cb1 \
+\cb3   tomorrow.setDate(tomorrow.getDate() + 1);\cb1 \
+\cb3   \cb1 \
+\cb3   const upcomingSessions = await getBookingsByDate(tomorrow);\cb1 \
+\cb3   \cb1 \
+\cb3   for (const booking of upcomingSessions) \{\cb1 \
+\cb3     await sendEmail(\cb1 \
+\cb3       SessionReminderEmail,\cb1 \
+\cb3       booking.parent.email,\cb1 \
+\cb3       \{\cb1 \
+\cb3         parentName: booking.parent.name,\cb1 \
+\cb3         athleteName: booking.athletes[0].name,\cb1 \
+\cb3         sessionDate: booking.date,\cb1 \
+\cb3         sessionTime: booking.time,\cb1 \
+\cb3         focusAreas: booking.focusAreas\cb1 \
+\cb3       \}\cb1 \
+\cb3     );\cb1 \
+\cb3   \}\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Email Logging & Analytics\cb1 \
+\
+\cb3 #### Email Log Schema\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 const emailLogs = pgTable('email_logs', \{\cb1 \
+\cb3   id: serial('id').primaryKey(),\cb1 \
+\cb3   recipient: text('recipient').notNull(),\cb1 \
+\cb3   template: text('template').notNull(),\cb1 \
+\cb3   status: text('status').notNull(), // 'sent', 'failed', 'delivered', 'opened'\cb1 \
+\cb3   messageId: text('message_id'),\cb1 \
+\cb3   error: text('error'),\cb1 \
+\cb3   sentAt: timestamp('sent_at').notNull(),\cb1 \
+\cb3   deliveredAt: timestamp('delivered_at'),\cb1 \
+\cb3   openedAt: timestamp('opened_at'),\cb1 \
+\cb3   clickedAt: timestamp('clicked_at')\cb1 \
+\cb3 \});\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Email Analytics\cb1 \
+\cb3 - **Delivery Rate**: Percentage of emails delivered\cb1 \
+\cb3 - **Open Rate**: Percentage of emails opened\cb1 \
+\cb3 - **Click Rate**: Percentage of emails with link clicks\cb1 \
+\cb3 - **Bounce Rate**: Percentage of failed deliveries\cb1 \
+\cb3 - **Unsubscribe Rate**: Percentage of unsubscribes\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 8. DATABASE SCHEMA (Supabase)\cb1 \
+\
+\cb3 ### Core Tables\cb1 \
+\
+\cb3 #### Parents Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE parents (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   email TEXT NOT NULL UNIQUE,\cb1 \
+\cb3   name TEXT NOT NULL,\cb1 \
+\cb3   phone TEXT,\cb1 \
+\cb3   emergency_contact_name TEXT,\cb1 \
+\cb3   emergency_contact_phone TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   updated_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Athletes Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE athletes (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   parent_id INTEGER REFERENCES parents(id) ON DELETE CASCADE,\cb1 \
+\cb3   first_name TEXT NOT NULL,\cb1 \
+\cb3   last_name TEXT NOT NULL,\cb1 \
+\cb3   date_of_birth DATE NOT NULL,\cb1 \
+\cb3   experience_level TEXT NOT NULL,\cb1 \
+\cb3   medical_notes TEXT,\cb1 \
+\cb3   photo_url TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   updated_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Lesson Types Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE lesson_types (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   name TEXT NOT NULL,\cb1 \
+\cb3   description TEXT,\cb1 \
+\cb3   duration_minutes INTEGER NOT NULL,\cb1 \
+\cb3   max_athletes INTEGER NOT NULL,\cb1 \
+\cb3   price_cents INTEGER NOT NULL,\cb1 \
+\cb3   stripe_product_id TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Bookings Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE bookings (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   parent_id INTEGER REFERENCES parents(id) ON DELETE CASCADE,\cb1 \
+\cb3   lesson_type_id INTEGER REFERENCES lesson_types(id),\cb1 \
+\cb3   session_date DATE NOT NULL,\cb1 \
+\cb3   session_time TIME NOT NULL,\cb1 \
+\cb3   status TEXT NOT NULL CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),\cb1 \
+\cb3   payment_status TEXT NOT NULL CHECK (payment_status IN ('pending', 'paid', 'refunded')),\cb1 \
+\cb3   attendance_status TEXT CHECK (attendance_status IN ('present', 'absent', 'partial')),\cb1 \
+\cb3   total_amount_cents INTEGER NOT NULL,\cb1 \
+\cb3   stripe_session_id TEXT,\cb1 \
+\cb3   stripe_payment_intent_id TEXT,\cb1 \
+\cb3   special_requests TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   updated_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Booking Athletes Junction Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE booking_athletes (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   booking_id INTEGER REFERENCES bookings(id) ON DELETE CASCADE,\cb1 \
+\cb3   athlete_id INTEGER REFERENCES athletes(id) ON DELETE CASCADE,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   UNIQUE(booking_id, athlete_id)\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Normalized Lookup Tables\cb1 \
+\
+\cb3 #### Apparatus Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE apparatus (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   name TEXT NOT NULL UNIQUE,\cb1 \
+\cb3   description TEXT,\cb1 \
+\cb3   sort_order INTEGER,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Focus Areas Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE focus_areas (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   name TEXT NOT NULL,\cb1 \
+\cb3   description TEXT,\cb1 \
+\cb3   apparatus_id INTEGER REFERENCES apparatus(id) ON DELETE CASCADE,\cb1 \
+\cb3   difficulty_level TEXT CHECK (difficulty_level IN ('beginner', 'intermediate', 'advanced')),\cb1 \
+\cb3   sort_order INTEGER,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Booking Focus Areas Junction Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE booking_focus_areas (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   booking_id INTEGER REFERENCES bookings(id) ON DELETE CASCADE,\cb1 \
+\cb3   focus_area_id INTEGER REFERENCES focus_areas(id) ON DELETE CASCADE,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   UNIQUE(booking_id, focus_area_id)\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Side Quests Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE side_quests (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   name TEXT NOT NULL UNIQUE,\cb1 \
+\cb3   description TEXT,\cb1 \
+\cb3   category TEXT NOT NULL, -- 'flexibility', 'strength', 'agility', 'meditation', 'mental_blocks'\cb1 \
+\cb3   sort_order INTEGER,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Booking Side Quests Junction Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE booking_side_quests (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   booking_id INTEGER REFERENCES bookings(id) ON DELETE CASCADE,\cb1 \
+\cb3   side_quest_id INTEGER REFERENCES side_quests(id) ON DELETE CASCADE,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   UNIQUE(booking_id, side_quest_id)\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Content Management Tables\cb1 \
+\
+\cb3 #### Blog Posts Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE blog_posts (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   title TEXT NOT NULL,\cb1 \
+\cb3   slug TEXT NOT NULL UNIQUE,\cb1 \
+\cb3   content TEXT NOT NULL,\cb1 \
+\cb3   excerpt TEXT,\cb1 \
+\cb3   category TEXT NOT NULL,\cb1 \
+\cb3   published BOOLEAN DEFAULT FALSE,\cb1 \
+\cb3   featured_image_url TEXT,\cb1 \
+\cb3   published_at TIMESTAMP,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   updated_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Tips Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE tips (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   title TEXT NOT NULL,\cb1 \
+\cb3   slug TEXT NOT NULL UNIQUE,\cb1 \
+\cb3   difficulty_level TEXT NOT NULL CHECK (difficulty_level IN ('beginner', 'intermediate', 'advanced')),\cb1 \
+\cb3   apparatus TEXT NOT NULL,\cb1 \
+\cb3   sections JSONB NOT NULL, -- Array of sections with title and content\cb1 \
+\cb3   featured_image_url TEXT,\cb1 \
+\cb3   published BOOLEAN DEFAULT FALSE,\cb1 \
+\cb3   published_at TIMESTAMP,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   updated_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Administrative Tables\cb1 \
+\
+\cb3 #### Admins Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE admins (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   email TEXT NOT NULL UNIQUE,\cb1 \
+\cb3   name TEXT NOT NULL,\cb1 \
+\cb3   password_hash TEXT NOT NULL,\cb1 \
+\cb3   role TEXT DEFAULT 'admin',\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW(),\cb1 \
+\cb3   last_login TIMESTAMP\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Email Logs Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE email_logs (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   recipient TEXT NOT NULL,\cb1 \
+\cb3   template TEXT NOT NULL,\cb1 \
+\cb3   status TEXT NOT NULL CHECK (status IN ('sent', 'failed', 'delivered', 'opened', 'clicked')),\cb1 \
+\cb3   message_id TEXT,\cb1 \
+\cb3   error TEXT,\cb1 \
+\cb3   sent_at TIMESTAMP NOT NULL,\cb1 \
+\cb3   delivered_at TIMESTAMP,\cb1 \
+\cb3   opened_at TIMESTAMP,\cb1 \
+\cb3   clicked_at TIMESTAMP\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Availability Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE availability (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),\cb1 \
+\cb3   start_time TIME NOT NULL,\cb1 \
+\cb3   end_time TIME NOT NULL,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Availability Exceptions Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE availability_exceptions (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   exception_date DATE NOT NULL,\cb1 \
+\cb3   start_time TIME,\cb1 \
+\cb3   end_time TIME,\cb1 \
+\cb3   reason TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Waiver System Tables\cb1 \
+\
+\cb3 #### Waivers Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE waivers (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   booking_id INTEGER REFERENCES bookings(id) ON DELETE CASCADE,\cb1 \
+\cb3   athlete_id INTEGER REFERENCES athletes(id) ON DELETE CASCADE,\cb1 \
+\cb3   parent_signature TEXT NOT NULL, -- Base64 encoded signature\cb1 \
+\cb3   signed_at TIMESTAMP NOT NULL,\cb1 \
+\cb3   ip_address TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Archived Waivers Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE archived_waivers (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   athlete_name TEXT NOT NULL,\cb1 \
+\cb3   parent_name TEXT NOT NULL,\cb1 \
+\cb3   signed_date DATE NOT NULL,\cb1 \
+\cb3   signature_url TEXT,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Auth Codes Table\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE TABLE auth_codes (\cb1 \
+\cb3   id SERIAL PRIMARY KEY,\cb1 \
+\cb3   email TEXT NOT NULL,\cb1 \
+\cb3   code TEXT NOT NULL,\cb1 \
+\cb3   expires_at TIMESTAMP NOT NULL,\cb1 \
+\cb3   used BOOLEAN DEFAULT FALSE,\cb1 \
+\cb3   created_at TIMESTAMP DEFAULT NOW()\cb1 \
+\cb3 );\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Database Relationships & Constraints\cb1 \
+\
+\cb3 #### Primary Relationships\cb1 \
+\cb3 - **Parents \uc0\u8594  Athletes**: One-to-many (parent can have multiple children)\cb1 \
+\cb3 - **Parents \uc0\u8594  Bookings**: One-to-many (parent can have multiple bookings)\cb1 \
+\cb3 - **Bookings \uc0\u8594  Athletes**: Many-to-many (semi-private lessons)\cb1 \
+\cb3 - **Bookings \uc0\u8594  Focus Areas**: Many-to-many (multiple focus areas per booking)\cb1 \
+\cb3 - **Bookings \uc0\u8594  Side Quests**: Many-to-many (multiple side quests per booking)\cb1 \
+\
+\cb3 #### Cascade Rules\cb1 \
+\cb3 - **Parent Deletion**: Cascades to athletes and bookings\cb1 \
+\cb3 - **Booking Deletion**: Cascades to booking_athletes, booking_focus_areas, booking_side_quests\cb1 \
+\cb3 - **Athlete Deletion**: Blocked if active bookings exist\cb1 \
+\
+\cb3 #### Indexes for Performance\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 CREATE INDEX idx_bookings_session_date ON bookings(session_date);\cb1 \
+\cb3 CREATE INDEX idx_bookings_parent_id ON bookings(parent_id);\cb1 \
+\cb3 CREATE INDEX idx_athletes_parent_id ON athletes(parent_id);\cb1 \
+\cb3 CREATE INDEX idx_email_logs_recipient ON email_logs(recipient);\cb1 \
+\cb3 CREATE INDEX idx_auth_codes_email ON auth_codes(email);\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 9. AUTHENTICATION MECHANICS\cb1 \
+\
+\cb3 ### Admin Authentication\cb1 \
+\
+\cb3 #### Password Security\cb1 \
+\cb3 - **Hashing**: bcrypt with salt rounds (12)\cb1 \
+\cb3 - **Storage**: Hashed passwords in `admins` table\cb1 \
+\cb3 - **Validation**: Compare against stored hash\cb1 \
+\
+\cb3 #### Session Management\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 // Session configuration\cb1 \
+\cb3 const sessionConfig = \{\cb1 \
+\cb3   secret: process.env.SESSION_SECRET,\cb1 \
+\cb3   resave: false,\cb1 \
+\cb3   saveUninitialized: false,\cb1 \
+\cb3   cookie: \{\cb1 \
+\cb3     secure: process.env.NODE_ENV === 'production',\cb1 \
+\cb3     httpOnly: true,\cb1 \
+\cb3     maxAge: 24 * 60 * 60 * 1000, // 24 hours\cb1 \
+\cb3     sameSite: 'strict',\cb1 \
+\cb3     domain: process.env.NODE_ENV === 'production' ? '.coachwilltumbles.com' : undefined\cb1 \
+\cb3   \}\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Login Flow\cb1 \
+\cb3 1. **Email/Password Submission**: `POST /api/auth/login`\cb1 \
+\cb3 2. **Credential Verification**: bcrypt compare\cb1 \
+\cb3 3. **Session Creation**: Store adminId in session\cb1 \
+\cb3 4. **Response**: Success with admin data\cb1 \
+\
+\cb3 ### Parent Authentication\cb1 \
+\
+\cb3 #### Email-Code System\cb1 \
+\cb3 - **Code Generation**: 6-digit random code\cb1 \
+\cb3 - **Code Storage**: Database with 15-minute expiry\cb1 \
+\cb3 - **Code Delivery**: Resend email template\cb1 \
+\
+\cb3 #### Authentication Flow\cb1 \
+\cb3 1. **Email Submission**: `POST /api/parent-auth/send-code`\cb1 \
+\cb3 2. **Code Generation**: Random 6-digit code\cb1 \
+\cb3 3. **Email Delivery**: Resend template with code\cb1 \
+\cb3 4. **Code Verification**: `POST /api/parent-auth/verify-code`\cb1 \
+\cb3 5. **Session Creation**: Store parentId in session\cb1 \
+\
+\cb3 #### Session Configuration\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 const parentSessionConfig = \{\cb1 \
+\cb3   secret: process.env.SESSION_SECRET,\cb1 \
+\cb3   resave: false,\cb1 \
+\cb3   saveUninitialized: false,\cb1 \
+\cb3   cookie: \{\cb1 \
+\cb3     secure: process.env.NODE_ENV === 'production',\cb1 \
+\cb3     httpOnly: true,\cb1 \
+\cb3     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days\cb1 \
+\cb3     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',\cb1 \
+\cb3     domain: process.env.NODE_ENV === 'production' ? '.coachwilltumbles.com' : undefined\cb1 \
+\cb3   \}\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Session Persistence Strategy\cb1 \
+\
+\cb3 #### Development Environment\cb1 \
+\cb3 - **Domain**: localhost\cb1 \
+\cb3 - **Secure**: false\cb1 \
+\cb3 - **SameSite**: 'lax'\cb1 \
+\cb3 - **Storage**: Memory store (MemoryStore)\cb1 \
+\
+\cb3 #### Production Environment\cb1 \
+\cb3 - **Domain**: .coachwilltumbles.com\cb1 \
+\cb3 - **Secure**: true\cb1 \
+\cb3 - **SameSite**: 'none'\cb1 \
+\cb3 - **Storage**: Persistent store (Redis/PostgreSQL)\cb1 \
+\
+\cb3 #### Session Cleanup\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 // Cleanup expired auth codes\cb1 \
+\cb3 const cleanupExpiredCodes = async () => \{\cb1 \
+\cb3   await db.delete(authCodes)\cb1 \
+\cb3     .where(lt(authCodes.expiresAt, new Date()));\cb1 \
+\cb3 \};\cb1 \
+\
+\cb3 // Cleanup old sessions\cb1 \
+\cb3 const cleanupOldSessions = async () => \{\cb1 \
+\cb3   // Implementation depends on session store\cb1 \
+\cb3   // Memory store: automatic cleanup\cb1 \
+\cb3   // Persistent store: manual cleanup required\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 10. DEPLOYMENT & ENV CONFIG\cb1 \
+\
+\cb3 ### Required Environment Variables\cb1 \
+\
+\cb3 #### Database Configuration\cb1 \
+\cb3 ```env\cb1 \
+\cb3 DATABASE_URL=postgresql://user:password@host:port/database\cb1 \
+\cb3 SUPABASE_URL=https://project.supabase.co\cb1 \
+\cb3 SUPABASE_ANON_KEY=your-anon-key\cb1 \
+\cb3 SUPABASE_SERVICE_KEY=your-service-key\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Authentication\cb1 \
+\cb3 ```env\cb1 \
+\cb3 SESSION_SECRET=your-session-secret-key\cb1 \
+\cb3 ADMIN_EMAIL=admin@coachwilltumbles.com\cb1 \
+\cb3 ADMIN_PASSWORD=your-admin-password\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Stripe Integration\cb1 \
+\cb3 ```env\cb1 \
+\cb3 STRIPE_PUBLISHABLE_KEY=pk_test_...\cb1 \
+\cb3 STRIPE_SECRET_KEY=sk_test_...\cb1 \
+\cb3 STRIPE_WEBHOOK_SECRET=whsec_...\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Email System\cb1 \
+\cb3 ```env\cb1 \
+\cb3 RESEND_API_KEY=re_...\cb1 \
+\cb3 FROM_EMAIL=coach@coachwilltumbles.com\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Application Configuration\cb1 \
+\cb3 ```env\cb1 \
+\cb3 NODE_ENV=production\cb1 \
+\cb3 PORT=5000\cb1 \
+\cb3 FRONTEND_URL=https://coachwilltumbles.com\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### CORS & Cookie Configuration\cb1 \
+\
+\cb3 #### Development Settings\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 const corsOptions = \{\cb1 \
+\cb3   origin: 'http://localhost:3000',\cb1 \
+\cb3   credentials: true,\cb1 \
+\cb3   optionsSuccessStatus: 200\cb1 \
+\cb3 \};\cb1 \
+\
+\cb3 const cookieOptions = \{\cb1 \
+\cb3   secure: false,\cb1 \
+\cb3   sameSite: 'lax',\cb1 \
+\cb3   domain: undefined,\cb1 \
+\cb3   httpOnly: true,\cb1 \
+\cb3   maxAge: 24 * 60 * 60 * 1000\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Production Settings\cb1 \
+\cb3 ```typescript\cb1 \
+\cb3 const corsOptions = \{\cb1 \
+\cb3   origin: ['https://coachwilltumbles.com', 'https://www.coachwilltumbles.com'],\cb1 \
+\cb3   credentials: true,\cb1 \
+\cb3   optionsSuccessStatus: 200\cb1 \
+\cb3 \};\cb1 \
+\
+\cb3 const cookieOptions = \{\cb1 \
+\cb3   secure: true,\cb1 \
+\cb3   sameSite: 'none',\cb1 \
+\cb3   domain: '.coachwilltumbles.com',\cb1 \
+\cb3   httpOnly: true,\cb1 \
+\cb3   maxAge: 7 * 24 * 60 * 60 * 1000\cb1 \
+\cb3 \};\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Build Process\cb1 \
+\
+\cb3 #### Frontend Build\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 npm run build:frontend\cb1 \
+\cb3 # Executes: vite build\cb1 \
+\cb3 # Output: dist/public/\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Backend Build\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 npm run build:backend\cb1 \
+\cb3 # Executes: esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist\cb1 \
+\cb3 # Output: dist/index.js\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Combined Build\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 npm run build\cb1 \
+\cb3 # Executes: npm run build:frontend && npm run build:backend\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Deployment Configurations\cb1 \
+\
+\cb3 #### Replit Configuration\cb1 \
+\cb3 ```toml\cb1 \
+\cb3 # .replit\cb1 \
+\cb3 modules = ["nodejs-20", "web", "postgresql-16"]\cb1 \
+\cb3 run = "npm run dev"\cb1 \
+\
+\cb3 [deployment]\cb1 \
+\cb3 deploymentTarget = "autoscale"\cb1 \
+\cb3 build = ["npm", "run", "build"]\cb1 \
+\cb3 run = ["npm", "run", "start"]\cb1 \
+\
+\cb3 [[ports]]\cb1 \
+\cb3 localPort = 5000\cb1 \
+\cb3 externalPort = 80\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Render Configuration (Failed Attempt)\cb1 \
+\cb3 ```yaml\cb1 \
+\cb3 # render.yaml\cb1 \
+\cb3 services:\cb1 \
+\cb3   - type: web\cb1 \
+\cb3     name: coachwilltumbles\cb1 \
+\cb3     env: node\cb1 \
+\cb3     buildCommand: npm run build\cb1 \
+\cb3     startCommand: npm run start\cb1 \
+\cb3     envVars:\cb1 \
+\cb3       - key: NODE_ENV\cb1 \
+\cb3         value: production\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 **Render Issues Encountered:**\cb1 \
+\cb3 - Cookie domain conflicts with .onrender.com\cb1 \
+\cb3 - Session persistence issues\cb1 \
+\cb3 - CORS configuration problems\cb1 \
+\cb3 - Build timeout issues\cb1 \
+\
+\cb3 ### Port Forwarding & HTTPS\cb1 \
+\
+\cb3 #### Local Development\cb1 \
+\cb3 - **Port**: 5000\cb1 \
+\cb3 - **Protocol**: HTTP\cb1 \
+\cb3 - **Access**: http://localhost:5000\cb1 \
+\
+\cb3 #### Replit Production\cb1 \
+\cb3 - **Port**: 5000 (internal)\cb1 \
+\cb3 - **External Port**: 80/443\cb1 \
+\cb3 - **Protocol**: HTTPS (automatic)\cb1 \
+\cb3 - **Access**: https://project.replit.app\cb1 \
+\
+\cb3 #### Custom Domain\cb1 \
+\cb3 - **Domain**: coachwilltumbles.com\cb1 \
+\cb3 - **SSL**: Automatic via Replit\cb1 \
+\cb3 - **Subdomain**: www.coachwilltumbles.com\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## 11. REBUILD GUIDE\cb1 \
+\
+\cb3 ### Step 1: Initial Setup\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 # Clone repository\cb1 \
+\cb3 git clone https://github.com/your-org/coachwilltumbles.git\cb1 \
+\cb3 cd coachwilltumbles\cb1 \
+\
+\cb3 # Install dependencies\cb1 \
+\cb3 npm install\cb1 \
+\
+\cb3 # Verify package.json scripts\cb1 \
+\cb3 npm run --silent\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Step 2: Database Setup\cb1 \
+\
+\cb3 #### Create Supabase Project\cb1 \
+\cb3 1. Visit https://supabase.com\cb1 \
+\cb3 2. Create new project\cb1 \
+\cb3 3. Note project URL and API keys\cb1 \
+\cb3 4. Access SQL Editor\cb1 \
+\
+\cb3 #### Run Database Schema\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 -- Execute complete schema from database_schema.sql\cb1 \
+\cb3 -- This includes all tables, relationships, and indexes\cb1 \
+\cb3 -- Run in order: core tables, lookup tables, junction tables\cb1 \
+\
+\cb3 -- Verify tables created\cb1 \
+\cb3 SELECT table_name FROM information_schema.tables \cb1 \
+\cb3 WHERE table_schema = 'public';\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Seed Initial Data\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 -- Insert lesson types\cb1 \
+\cb3 INSERT INTO lesson_types (name, description, duration_minutes, max_athletes, price_cents) VALUES\cb1 \
+\cb3 ('Quick Journey', '30-minute individual session', 30, 1, 4000),\cb1 \
+\cb3 ('Dual Quest', '30-minute semi-private session', 30, 2, 2500),\cb1 \
+\cb3 ('Deep Dive', '60-minute individual session', 60, 1, 6000),\cb1 \
+\cb3 ('Partner Progression', '60-minute semi-private session', 60, 2, 4000);\cb1 \
+\
+\cb3 -- Insert apparatus\cb1 \
+\cb3 INSERT INTO apparatus (name, description, sort_order) VALUES\cb1 \
+\cb3 ('Vault', 'Explosive power and spatial awareness', 1),\cb1 \
+\cb3 ('Uneven Bars', 'Upper body strength and coordination', 2),\cb1 \
+\cb3 ('Balance Beam', 'Balance and precision', 3),\cb1 \
+\cb3 ('Floor Exercise', 'Tumbling and dance', 4),\cb1 \
+\cb3 ('Side Quests', 'Specialized training areas', 5);\cb1 \
+\
+\cb3 -- Insert focus areas (truncated for brevity)\cb1 \
+\cb3 INSERT INTO focus_areas (name, apparatus_id, difficulty_level, sort_order) VALUES\cb1 \
+\cb3 ('Basic Jumps', 1, 'beginner', 1),\cb1 \
+\cb3 ('Handstand Training', 1, 'beginner', 2),\cb1 \
+\cb3 -- ... continue for all focus areas\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Create Admin Account\cb1 \
+\cb3 ```sql\cb1 \
+\cb3 -- Insert admin user (password should be hashed)\cb1 \
+\cb3 INSERT INTO admins (email, name, password_hash) VALUES\cb1 \
+\cb3 ('admin@coachwilltumbles.com', 'Coach Will', '$2b$12$...');\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Step 3: Environment Configuration\cb1 \
+\
+\cb3 #### Create .env file\cb1 \
+\cb3 ```env\cb1 \
+\cb3 # Database\cb1 \
+\cb3 DATABASE_URL=postgresql://user:pass@host:5432/db\cb1 \
+\cb3 SUPABASE_URL=https://project.supabase.co\cb1 \
+\cb3 SUPABASE_ANON_KEY=your-anon-key\cb1 \
+\
+\cb3 # Authentication\cb1 \
+\cb3 SESSION_SECRET=your-session-secret-minimum-32-chars\cb1 \
+\cb3 ADMIN_EMAIL=admin@coachwilltumbles.com\cb1 \
+\cb3 ADMIN_PASSWORD=your-secure-password\cb1 \
+\
+\cb3 # Stripe\cb1 \
+\cb3 STRIPE_PUBLISHABLE_KEY=pk_test_...\cb1 \
+\cb3 STRIPE_SECRET_KEY=sk_test_...\cb1 \
+\cb3 STRIPE_WEBHOOK_SECRET=whsec_...\cb1 \
+\
+\cb3 # Email\cb1 \
+\cb3 RESEND_API_KEY=re_...\cb1 \
+\cb3 FROM_EMAIL=coach@coachwilltumbles.com\cb1 \
+\
+\cb3 # Application\cb1 \
+\cb3 NODE_ENV=development\cb1 \
+\cb3 PORT=5000\cb1 \
+\cb3 FRONTEND_URL=http://localhost:3000\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Step 4: Development Server\cb1 \
+\
+\cb3 #### Start Development Server\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 # Start development server\cb1 \
+\cb3 npm run dev\cb1 \
+\
+\cb3 # Verify server starts\cb1 \
+\cb3 # Should see: Server running on port 5000\cb1 \
+\cb3 # Should see: Database connection established\cb1 \
+\cb3 # Should see: Vite dev server running\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Test Core Functionality\cb1 \
+\cb3 1. **Frontend Access**: Visit http://localhost:5000\cb1 \
+\cb3 2. **Admin Login**: Visit http://localhost:5000/admin/login\cb1 \
+\cb3 3. **Booking Flow**: Test complete booking process\cb1 \
+\cb3 4. **Parent Portal**: Test parent authentication\cb1 \
+\cb3 5. **API Endpoints**: Test with curl/Postman\cb1 \
+\
+\cb3 ### Step 5: Stripe Configuration\cb1 \
+\
+\cb3 #### Create Stripe Products\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 # Create products via Stripe CLI or dashboard\cb1 \
+\cb3 stripe products create --name "Quick Journey" --description "30-minute individual session"\cb1 \
+\cb3 stripe prices create --product prod_xxx --unit-amount 4000 --currency usd\cb1 \
+\
+\cb3 # Or use API\cb1 \
+\cb3 curl -X POST https://api.stripe.com/v1/products \\\cb1 \
+\cb3   -H "Authorization: Bearer sk_test_..." \\\cb1 \
+\cb3   -d name="Quick Journey" \\\cb1 \
+\cb3   -d description="30-minute individual session"\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Set Webhook Endpoint\cb1 \
+\cb3 1. Stripe Dashboard \uc0\u8594  Webhooks\cb1 \
+\cb3 2. Add endpoint: https://yourapp.com/api/stripe/webhook\cb1 \
+\cb3 3. Select events: checkout.session.completed\cb1 \
+\cb3 4. Note webhook secret\cb1 \
+\
+\cb3 ### Step 6: Email Configuration\cb1 \
+\
+\cb3 #### Configure Resend\cb1 \
+\cb3 1. Sign up at https://resend.com\cb1 \
+\cb3 2. Verify domain (coachwilltumbles.com)\cb1 \
+\cb3 3. Create API key\cb1 \
+\cb3 4. Test email delivery\cb1 \
+\
+\cb3 #### Test Email Templates\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 # Use API endpoint to test emails\cb1 \
+\cb3 curl -X POST http://localhost:5000/api/test-email \\\cb1 \
+\cb3   -H "Content-Type: application/json" \\\cb1 \
+\cb3   -d '\{"template": "welcome", "recipient": "test@example.com"\}'\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Step 7: Production Deployment (Replit)\cb1 \
+\
+\cb3 #### Environment Variables\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 # Set in Replit Secrets\cb1 \
+\cb3 DATABASE_URL=your-production-db-url\cb1 \
+\cb3 STRIPE_SECRET_KEY=sk_live_...\cb1 \
+\cb3 SESSION_SECRET=your-production-secret\cb1 \
+\cb3 NODE_ENV=production\cb1 \
+\cb3 FRONTEND_URL=https://coachwilltumbles.com\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 #### Build & Deploy\cb1 \
+\cb3 ```bash\cb1 \
+\cb3 # Build production assets\cb1 \
+\cb3 npm run build\cb1 \
+\
+\cb3 # Start production server\cb1 \
+\cb3 npm start\cb1 \
+\
+\cb3 # Verify deployment\cb1 \
+\cb3 curl https://yourapp.replit.app/api/health\cb1 \
+\cb3 ```\cb1 \
+\
+\cb3 ### Step 8: Domain Configuration\cb1 \
+\
+\cb3 #### Custom Domain Setup\cb1 \
+\cb3 1. Configure DNS to point to Replit\cb1 \
+\cb3 2. Update CORS settings for production domain\cb1 \
+\cb3 3. Update session cookie domain\cb1 \
+\cb3 4. Test cross-domain cookies\cb1 \
+\
+\cb3 #### SSL Certificate\cb1 \
+\cb3 - Automatic via Replit\cb1 \
+\cb3 - Verify HTTPS redirect\cb1 \
+\cb3 - Test secure cookie functionality\cb1 \
+\
+\cb3 ### Step 9: Go-Live Checklist\cb1 \
+\
+\cb3 #### Pre-Launch Testing\cb1 \
+\cb3 - [ ] Complete booking flow test\cb1 \
+\cb3 - [ ] Payment processing test\cb1 \
+\cb3 - [ ] Email delivery test\cb1 \
+\cb3 - [ ] Admin dashboard access\cb1 \
+\cb3 - [ ] Parent portal access\cb1 \
+\cb3 - [ ] Mobile responsiveness\cb1 \
+\cb3 - [ ] Performance testing\cb1 \
+\
+\cb3 #### Production Configuration\cb1 \
+\cb3 - [ ] Stripe webhook configured\cb1 \
+\cb3 - [ ] Email DNS records set\cb1 \
+\cb3 - [ ] Session cookies secure\cb1 \
+\cb3 - [ ] Database backups enabled\cb1 \
+\cb3 - [ ] Monitoring configured\cb1 \
+\cb3 - [ ] Error logging active\cb1 \
+\
+\cb3 #### Launch Verification\cb1 \
+\cb3 - [ ] All endpoints responding\cb1 \
+\cb3 - [ ] Payments processing correctly\cb1 \
+\cb3 - [ ] Emails delivering\cb1 \
+\cb3 - [ ] Admin functions working\cb1 \
+\cb3 - [ ] Parent authentication working\cb1 \
+\cb3 - [ ] Mobile experience optimal\cb1 \
+\
+\cb3 ### Step 10: Post-Launch Monitoring\cb1 \
+\
+\cb3 #### Key Metrics to Monitor\cb1 \
+\cb3 - Booking completion rate\cb1 \
+\cb3 - Payment success rate\cb1 \
+\cb3 - Email delivery rate\cb1 \
+\cb3 - Page load times\cb1 \
+\cb3 - Error rates\cb1 \
+\cb3 - User retention\cb1 \
+\
+\cb3 #### Regular Maintenance\cb1 \
+\cb3 - Database cleanup (expired codes)\cb1 \
+\cb3 - Email log rotation\cb1 \
+\cb3 - Session cleanup\cb1 \
+\cb3 - Security updates\cb1 \
+\cb3 - Content updates\cb1 \
+\
+\cb3 ---\cb1 \
+\
+\cb3 ## Best Practices & Recommendations\cb1 \
+\
+\cb3 ### Security Considerations\cb1 \
+\cb3 - **Input Validation**: All user inputs validated with Zod\cb1 \
+\cb3 - **SQL Injection Prevention**: Parameterized queries only\cb1 \
+\cb3 - **XSS Protection**: React automatic escaping\cb1 \
+\cb3 - **CSRF Protection**: Session-based authentication\cb1 \
+\cb3 - **Rate Limiting**: Implement for auth endpoints\cb1 \
+\cb3 - **Secure Headers**: Add security headers middleware\cb1 \
+\
+\cb3 ### Performance Optimization\cb1 \
+\cb3 - **Database Indexing**: Index frequently queried columns\cb1 \
+\cb3 - **Query Optimization**: Use joins instead of N+1 queries\cb1 \
+\cb3 - **Caching**: Implement Redis for session storage\cb1 \
+\cb3 - **CDN**: Use CDN for static assets\cb1 \
+\cb3 - **Image Optimization**: Compress and resize images\cb1 \
+\cb3 - **Bundle Splitting**: Lazy load non-critical code\cb1 \
+\
+\cb3 ### Monitoring & Logging\cb1 \
+\cb3 - **Error Tracking**: Implement Sentry or similar\cb1 \
+\cb3 - **Performance Monitoring**: Track response times\cb1 \
+\cb3 - **Business Metrics**: Monitor booking conversion rates\cb1 \
+\cb3 - **Uptime Monitoring**: External uptime checks\cb1 \
+\cb3 - **Log Aggregation**: Centralized logging system\cb1 \
+\
+\cb3 ### Backup Strategy\cb1 \
+\cb3 - **Database Backups**: Daily automated backups\cb1 \
+\cb3 - **File Storage**: Backup uploaded images\cb1 \
+\cb3 - **Configuration**: Backup environment variables\cb1 \
+\cb3 - **Code Repository**: Multiple repository mirrors\cb1 \
+\cb3 - **Disaster Recovery**: Documented recovery procedures\cb1 \
+\
+\cb3 This blueprint provides a comprehensive foundation for rebuilding CoachWillTumbles from scratch while maintaining all existing functionality and architectural decisions.\cb1 \
+}

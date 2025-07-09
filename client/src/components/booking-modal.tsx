@@ -1,0 +1,1018 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useStripe, useElements, PaymentElement, Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { UpdatedWaiverModal } from "./updated-waiver-modal";
+import { TwoStepFocusAreas } from "./two-step-focus-areas";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+// Initialize Stripe
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+}
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, Clock, User, Users, Star, CheckCircle, ArrowLeft, ArrowRight, CreditCard, Dumbbell, Trophy, Zap, AlertTriangle, FileText } from "lucide-react";
+import { LESSON_TYPES, FOCUS_AREAS, EXPERIENCE_LEVELS, AGES } from "@/lib/constants";
+import { useCreateBooking } from "@/hooks/use-booking";
+import { useAvailableTimes } from "@/hooks/use-available-times";
+import { useStripePricing } from "@/hooks/use-stripe-products";
+import { insertBookingSchema } from "@shared/schema";
+
+interface BookingModalProps {
+  isOpen?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  onBack?: () => void;
+  initialLessonType?: string;
+  prefilledCustomer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    emergencyContactName: string;
+    emergencyContactPhone: string;
+    waiverSigned: boolean;
+    waiverSignedAt: string | null;
+    waiverSignatureName: string | null;
+  } | null;
+  prefilledAthletes?: {
+    id: string;
+    name: string;
+    dateOfBirth: string;
+    allergies?: string;
+    experience: 'beginner' | 'intermediate' | 'advanced';
+  }[] | null;
+  suggestedFocusAreas?: string[];
+  isReturningCustomer?: boolean;
+}
+
+const formSchema = insertBookingSchema;
+
+type FormData = z.infer<typeof formSchema>;
+
+export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, initialLessonType, prefilledCustomer, prefilledAthletes, suggestedFocusAreas, isReturningCustomer }: BookingModalProps) {
+  const modalOpen = isOpen ?? open ?? false;
+  const handleClose = onClose ?? (() => onOpenChange?.(false));
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
+  
+
+  const [selectedLessonType, setSelectedLessonType] = useState<keyof typeof LESSON_TYPES | null>(null);
+  const [waiverSigned, setWaiverSigned] = useState(false);
+  const [waiverData, setWaiverData] = useState<any>(null);
+  const [showWaiverModal, setShowWaiverModal] = useState(false);
+  const [parentAuth, setParentAuth] = useState<{ loggedIn: boolean; parentId?: number; parentEmail?: string } | null>(null);
+  const createBooking = useCreateBooking();
+  const { getLessonPrice } = useStripePricing();
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      lessonType: "quick-journey",
+      athlete1Name: "",
+      athlete1DateOfBirth: "",
+      athlete1Allergies: "",
+      athlete1Experience: "beginner",
+      athlete2Name: "",
+      athlete2DateOfBirth: "",
+      athlete2Allergies: "",
+      athlete2Experience: "beginner",
+      preferredDate: "",
+      preferredTime: "",
+      focusAreas: [],
+      parentFirstName: "",
+      parentLastName: "",
+      parentEmail: "",
+      parentPhone: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      amount: "40",
+      status: "pending",
+      bookingMethod: "online",
+      waiverSigned: false,
+      paymentStatus: "unpaid",
+      reservationFeePaid: false,
+      paidAmount: "0.00",
+      specialRequests: "",
+      adminNotes: "",
+    },
+  });
+
+  // Check parent authentication status using useQuery
+  const { data: parentAuthData } = useQuery<{ loggedIn: boolean; parentId?: number; email?: string }>({
+    queryKey: ['/api/parent-auth/status'],
+    enabled: modalOpen,
+  });
+
+  // Update local parent auth state when data changes
+  useEffect(() => {
+    if (parentAuthData) {
+      setParentAuth(parentAuthData);
+    }
+  }, [parentAuthData]);
+
+  const watchedLessonType = form.watch("lessonType");
+  const watchedFocusAreas = form.watch("focusAreas");
+  const watchedDate = form.watch("preferredDate");
+
+  // Get lesson duration for availability checking
+  const getLessonDuration = (lessonType: string) => {
+    const lesson = LESSON_TYPES[lessonType as keyof typeof LESSON_TYPES];
+    return lesson?.duration === '60 minutes' ? 60 : 30;
+  };
+
+  // Fetch available time slots when date or lesson type changes
+  const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableTimes(
+    watchedDate || null, 
+    watchedLessonType || null
+  );
+
+  const lessonTypeData = LESSON_TYPES[watchedLessonType];
+  const maxFocusAreas = lessonTypeData.maxFocusAreas;
+
+  // Handle prefilled customer and auto-populate parent information
+  useEffect(() => {
+    if (prefilledCustomer) {
+      form.setValue("parentFirstName", prefilledCustomer.firstName);
+      form.setValue("parentLastName", prefilledCustomer.lastName);
+      form.setValue("parentEmail", prefilledCustomer.email);
+      form.setValue("parentPhone", prefilledCustomer.phone);
+      form.setValue("emergencyContactName", prefilledCustomer.emergencyContactName);
+      form.setValue("emergencyContactPhone", prefilledCustomer.emergencyContactPhone);
+      form.setValue("waiverSigned", prefilledCustomer.waiverSigned);
+      
+      // If waiver is already signed, set the waiver state to true
+      if (prefilledCustomer.waiverSigned) {
+        setWaiverSigned(true);
+      }
+    }
+  }, [prefilledCustomer, form]);
+
+  // Handle prefilled athletes and auto-populate form
+  useEffect(() => {
+    if (prefilledAthletes && prefilledAthletes.length > 0) {
+      const athlete = prefilledAthletes[0];
+      form.setValue("athlete1Name", athlete.name);
+      form.setValue("athlete1DateOfBirth", athlete.dateOfBirth);
+      form.setValue("athlete1Allergies", athlete.allergies || "");
+      form.setValue("athlete1Experience", athlete.experience);
+      
+      // Skip to step 3 (Schedule) since athlete info is pre-filled
+      setCurrentStep(3);
+    }
+  }, [prefilledAthletes, form]);
+
+  const handleLessonTypeChange = (lessonType: keyof typeof LESSON_TYPES) => {
+    setSelectedLessonType(lessonType);
+    form.setValue("lessonType", lessonType);
+    form.setValue("amount", LESSON_TYPES[lessonType].price.toString());
+  };
+
+  const handleFocusAreaToggle = (area: string, checked: boolean) => {
+    const currentAreas = form.getValues("focusAreas");
+    if (checked && currentAreas.length < maxFocusAreas) {
+      form.setValue("focusAreas", [...currentAreas, area]);
+    } else if (!checked) {
+      form.setValue("focusAreas", currentAreas.filter(a => a !== area));
+    }
+  };
+
+  const validateCurrentStep = () => {
+    const values = form.getValues();
+    
+    switch (currentStep) {
+      case 1: // Lesson Type
+        return !!values.lessonType;
+      case 2: // Athletes
+        return !!values.athlete1Name && !!values.athlete1DateOfBirth && !!values.athlete1Experience;
+      case 3: // Schedule
+        return !!values.preferredDate && !!values.preferredTime && values.focusAreas?.length > 0;
+      case 4: // Parent Info - skip validation if parent is logged in
+        if (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer)) {
+          return true; // Skip validation if parent is already authenticated
+        }
+        return !!values.parentFirstName && !!values.parentLastName && !!values.parentEmail && 
+               !!values.parentPhone && !!values.emergencyContactName && !!values.emergencyContactPhone;
+      case 5: // Waiver
+        return waiverSigned || !!waiverData;
+      default:
+        return true;
+    }
+  };
+
+  const nextStep = () => {
+    // Check if current step is valid before advancing
+    if (!validateCurrentStep()) {
+      toast({
+        title: "Please complete all required fields",
+        description: "All fields in this step must be filled before continuing.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (currentStep < 6) {
+      let nextStepNumber = currentStep + 1;
+      
+      // Skip parent info step (step 4) if parent is already logged in OR has prefilled data
+      if (currentStep === 3 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+        nextStepNumber = 5; // Skip directly to waiver step
+      }
+      // Skip waiver step (step 5) if waiver is already signed  
+      else if (nextStepNumber === 5 && waiverSigned) {
+        nextStepNumber = 6; // Skip directly to payment
+      }
+      // Skip waiver step if currently on it and waiver is signed
+      else if (currentStep === 5 && waiverSigned) {
+        nextStepNumber = 6; // Skip directly to payment
+      }
+      
+      setCurrentStep(nextStepNumber);
+    }
+  };
+
+  // Validation helper for step 4
+  const isStep4Valid = () => {
+    const values = form.getValues();
+    const required = [
+      values.parentFirstName?.trim(),
+      values.parentLastName?.trim(), 
+      values.parentEmail?.trim(),
+      values.parentPhone?.trim(),
+      values.emergencyContactName?.trim(),
+      values.emergencyContactPhone?.trim()
+    ];
+    return required.every(field => field && field.length > 0);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      let prevStepNumber = currentStep - 1;
+      
+      // Skip parent info step (step 4) when going backwards if parent is logged in
+      if (currentStep === 5 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+        prevStepNumber = 3; // Skip back to schedule step
+      }
+      
+      setCurrentStep(prevStepNumber);
+    }
+  };
+
+  // Automatically skip parent info step if parent is already logged in
+  useEffect(() => {
+    if (currentStep === 4 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+      setCurrentStep(5); // Skip to waiver step
+    }
+  }, [currentStep, parentAuth?.loggedIn, prefilledCustomer, isReturningCustomer]);
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      // First create the booking
+      const booking = await createBooking.mutateAsync(data);
+      
+      // Use the actual lesson amount from the form data
+      const lessonAmount = data.amount || getLessonPrice(data.lessonType);
+      
+      // Create payment intent with actual lesson price
+      const response = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: lessonAmount,
+          bookingId: booking.id,
+          lessonType: data.lessonType
+        }),
+      });
+      
+      const { clientSecret } = await response.json();
+      
+      // Store booking and payment details for checkout
+      localStorage.setItem('currentBooking', JSON.stringify({
+        bookingId: booking.id,
+        clientSecret,
+        lessonType: data.lessonType,
+        totalAmount: data.amount,
+        lessonFee: lessonAmount,
+        athlete1Name: data.athlete1Name,
+        preferredDate: data.preferredDate,
+        preferredTime: data.preferredTime
+      }));
+      
+      // Close modal and redirect to payment
+      if (onOpenChange) {
+        onOpenChange(false);
+      } else {
+        handleClose();
+      }
+      setCurrentStep(1);
+      form.reset();
+      
+      // Navigate to checkout page using proper routing
+      setLocation('/checkout');
+      
+    } catch (error) {
+      console.error("Booking failed:", error);
+    }
+  };
+
+  const getStepIcon = (step: number) => {
+    const isActive = currentStep === step;
+    const isCompleted = currentStep > step;
+    
+    let baseClasses = "rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200";
+    let classes = "";
+    
+    if (isCompleted) {
+      classes = "w-6 h-6 md:w-8 md:h-8 bg-green-500 text-white";
+    } else if (isActive) {
+      classes = "w-8 h-8 md:w-10 md:h-10 bg-blue-600 text-white shadow-lg";
+    } else {
+      classes = "w-6 h-6 md:w-8 md:h-8 bg-gray-300 text-gray-600";
+    }
+    
+    return (
+      <div className={`${baseClasses} ${classes}`}>
+        {isCompleted ? "✓" : step}
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={modalOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full h-full max-w-full max-h-full p-0 md:max-w-4xl md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border">
+        <DialogHeader className="px-4 pt-4 md:px-0 md:pt-0">
+          <DialogTitle className="text-xl md:text-2xl font-bold text-gray-800">Book Your Gymnastics Lesson</DialogTitle>
+          <DialogDescription className="text-sm md:text-base">
+            Complete this form to book your private or semi-private gymnastics lesson with Coach Will.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Responsive Step Indicator */}
+        <div className="mb-6 md:mb-8 px-4 md:px-0">
+          <div className="steps-container flex justify-between items-center w-full max-w-full overflow-visible gap-1 md:gap-4">
+            {[
+              { step: 1, label: "Lesson", fullLabel: "Lesson Type" },
+              { step: 2, label: "Athletes", fullLabel: "Athletes" },
+              { step: 3, label: "Schedule", fullLabel: "Schedule" },
+              { step: 4, label: "Parent", fullLabel: "Parent Info" },
+              { step: 5, label: "Waiver", fullLabel: "Waiver" },
+              { step: 6, label: "Payment", fullLabel: "Payment" }
+            ].filter(stepData => {
+              // Hide parent info step if parent is logged in
+              if (stepData.step === 4 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+                return false;
+              }
+              return true;
+            }).map((stepData, index, filteredSteps) => (
+              <div key={stepData.step} className="step flex-1 flex flex-col items-center text-center">
+                {getStepIcon(stepData.step)}
+                <span className={`text-xs md:text-sm font-medium mt-1 md:mt-2 transition-all duration-200 ${
+                  currentStep >= stepData.step ? 'text-gray-800' : 'text-gray-500'
+                } ${currentStep === stepData.step ? 'font-bold' : ''}`}>
+                  <span className="md:hidden">{stepData.label}</span>
+                  <span className="hidden md:inline">{stepData.fullLabel}</span>
+                </span>
+                {index < filteredSteps.length - 1 && (
+                  <div className="hidden md:block absolute top-4 left-1/2 w-full h-px bg-gray-300 transform translate-x-1/2 z-0"></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 px-4 md:px-0">
+            {/* Step 1: Lesson Type Selection */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Select Lesson Type</h3>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800 font-medium">
+                    <strong>Payment Information:</strong> A $10 reservation fee is required to secure your lesson and will be applied toward the total cost. The remaining balance is due before your lesson begins.
+                  </p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {Object.entries(LESSON_TYPES).map(([key, lesson]) => (
+                    <Card 
+                      key={key}
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        selectedLessonType === key ? 'ring-2 ring-blue-600' : ''
+                      }`}
+                      onClick={() => handleLessonTypeChange(key as keyof typeof LESSON_TYPES)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-bold text-gray-800">{lesson.name}</h4>
+                            <p className="text-sm text-gray-600 mb-2">{lesson.description}</p>
+                            <div className="flex items-center space-x-4 text-xs text-gray-600">
+                              <span className="flex items-center">
+                                {lesson.athletes === 1 ? <User className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
+                                {lesson.athletes} athlete{lesson.athletes > 1 ? 's' : ''}
+                              </span>
+                              <span>Up to {lesson.maxFocusAreas} focus areas</span>
+                            </div>
+                          </div>
+                          <div className="text-2xl font-bold text-blue-600">${getLessonPrice(key).toFixed(2)}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Athlete Information */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Athlete Information</h3>
+                
+                {/* Athlete 1 */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-700">Athlete 1</h4>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="athlete1Name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter athlete name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="athlete1DateOfBirth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="athlete1Allergies"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Allergies/Medical</FormLabel>
+                          <FormControl>
+                            <Input placeholder="None" {...field} value={field.value ?? ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="athlete1Experience"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Experience Level</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select level" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {EXPERIENCE_LEVELS.map((level) => (
+                                <SelectItem key={level} value={level}>
+                                  {level.charAt(0).toUpperCase() + level.slice(1)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Athlete 2 (for semi-private lessons) */}
+                {(selectedLessonType === "dual-quest" || selectedLessonType === "partner-progression") && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-700">Athlete 2</h4>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="athlete2Name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Enter athlete name" 
+                                value={field.value || ""} 
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                disabled={field.disabled}
+                                name={field.name}
+                                ref={field.ref}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="athlete2DateOfBirth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date of Birth</FormLabel>
+                            <FormControl>
+                              <Input type="date" value={field.value || ""} onChange={field.onChange} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="athlete2Allergies"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Allergies/Medical</FormLabel>
+                            <FormControl>
+                              <Input placeholder="None" {...field} value={field.value ?? ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="athlete2Experience"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Experience Level</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || undefined}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select age" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {AGES.map((age) => (
+                                  <SelectItem key={age} value={age}>
+                                    {age} years old
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="athlete2Experience"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Experience Level</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select level" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {EXPERIENCE_LEVELS.map((level) => (
+                                  <SelectItem key={level} value={level}>
+                                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 3: Schedule & Focus Areas */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Schedule & Focus Areas</h3>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="preferredDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          Preferred Date
+                        </FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="preferredTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          <Clock className="h-4 w-4 mr-2" />
+                          Preferred Time
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select time" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {!watchedDate ? (
+                              <SelectItem value="__no_date" disabled>
+                                Please select a date first
+                              </SelectItem>
+                            ) : slotsLoading ? (
+                              <SelectItem value="__loading" disabled>
+                                Loading available times...
+                              </SelectItem>
+                            ) : availableSlots.length === 0 ? (
+                              <SelectItem value="__no_slots" disabled>
+                                No available times for this date
+                              </SelectItem>
+                            ) : (
+                              availableSlots.map((time: string) => (
+                                <SelectItem key={time} value={time}>
+                                  {time}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <TwoStepFocusAreas
+                  selectedFocusAreas={watchedFocusAreas}
+                  onFocusAreasChange={form.setValue.bind(null, 'focusAreas')}
+                  maxSelections={maxFocusAreas}
+                />
+              </div>
+            )}
+
+            {/* Step 4: Parent/Guardian Information - Skip if parent is logged in */}
+            {(() => {
+              const shouldSkipParentInfo = parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer);
+
+              
+              if (currentStep !== 4 || shouldSkipParentInfo) {
+                return null;
+              }
+              
+              return (
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Parent/Guardian Information</h3>
+                
+                  {/* Parent/Guardian Information */}
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-gray-800">Contact Information</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="parentFirstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter first name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="parentLastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter last name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="parentEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="Enter email address" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="parentPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input type="tel" placeholder="Enter phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <h4 className="font-bold text-gray-800 mt-6">Emergency Contact</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="emergencyContactName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Emergency Contact Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter emergency contact name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="emergencyContactPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Emergency Contact Phone</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="Enter emergency contact phone" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Step 5: Waiver */}
+            {currentStep === 5 && (
+              <div className="space-y-6">
+                {waiverSigned ? (
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Waiver Status</h3>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
+                        <div>
+                          <h4 className="font-semibold text-green-800">Waiver Already Signed</h4>
+                          <p className="text-green-700 text-sm mt-1">
+                            Great news! You've already signed the liability waiver for this athlete. You can proceed directly to payment.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Liability Waiver</h3>
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+                      <div className="flex items-start space-x-3">
+                        <AlertTriangle className="h-6 w-6 text-amber-600 mt-1" />
+                        <div>
+                          <h4 className="font-semibold text-amber-800">Waiver Required</h4>
+                          <p className="text-amber-700 text-sm mt-1 mb-4">
+                            Before we can proceed with your booking, we need you to review and sign our liability waiver and adventure agreement.
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={() => setShowWaiverModal(true)}
+                            className="bg-amber-500 hover:bg-amber-600 text-white"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Sign Waiver & Agreement
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 6: Payment */}
+            {currentStep === 6 && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Payment Information</h3>
+                
+                {/* Booking Summary */}
+                <Card className="bg-gray-50">
+                  <CardContent className="p-6">
+                    <h4 className="font-bold text-gray-800 mb-4">Booking Summary</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Lesson Type:</span>
+                        <span className="font-medium">{lessonTypeData.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Athletes:</span>
+                        <span className="font-medium">
+                          {form.watch("athlete1Name")}
+                          {lessonTypeData.athletes === 2 && form.watch("athlete2Name") && 
+                            `, ${form.watch("athlete2Name")}`
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Date & Time:</span>
+                        <span className="font-medium">
+                          {form.watch("preferredDate")} at {form.watch("preferredTime")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Focus Areas:</span>
+                        <span className="font-medium">
+                          {watchedFocusAreas.join(", ")}
+                        </span>
+                      </div>
+                      <hr className="my-4" />
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Total:</span>
+                        <span className="text-blue-600">${LESSON_TYPES[form.getValues("lessonType")]?.price}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Payment Information */}
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-6">
+                    <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                      <CreditCard className="h-5 w-5 mr-2 text-green-600" />
+                      Secure Payment Processing
+                    </h4>
+                    <div className="bg-white p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-gray-700">Lesson Fee:</span>
+                        <span className="font-bold text-green-600">${LESSON_TYPES[form.getValues("lessonType")]?.price}</span>
+                      </div>
+                      <div className="border-t pt-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold">Total Due Now:</span>
+                          <span className="text-lg font-bold text-blue-600">${getLessonPrice(form.getValues("lessonType")).toFixed(2)}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
+                          Pay reservation fee to secure your lesson booking.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Secure Payment:</strong> Payment processing powered by Stripe. 
+                        Your card information is encrypted and secure.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className={currentStep === 1 ? "invisible" : ""}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              
+              <div className="flex space-x-4">
+                {currentStep < 6 ? (
+                  <Button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={
+                      (currentStep === 1 && !selectedLessonType) || 
+                      (currentStep === 2 && form.getValues("focusAreas").length === 0) ||
+                      (currentStep === 4 && !isStep4Valid()) ||
+                      (currentStep === 5 && !waiverSigned)
+                    }
+                    className="gym-gradient-blue text-white hover:scale-105 transform transition-all duration-200"
+                  >
+                    {currentStep === 5 ? "Continue to Payment" : "Next"}
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={createBooking.isPending}
+                    className="gym-gradient-teal text-white px-8 hover:scale-105 transform transition-all duration-200 shadow-lg"
+                  >
+                    {createBooking.isPending ? (
+                      "Processing..."
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Complete Booking
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+      
+      {/* Updated Waiver Modal */}
+      <UpdatedWaiverModal
+        isOpen={showWaiverModal}
+        onClose={() => setShowWaiverModal(false)}
+        onWaiverSigned={(waiverData) => {
+          setWaiverData(waiverData);
+          setWaiverSigned(true);
+          setShowWaiverModal(false);
+          // Advance to next step (payment)
+          setCurrentStep(6);
+          toast({
+            title: "Waiver Signed Successfully",
+            description: "Thank you for completing the waiver. You can now proceed to payment.",
+          });
+        }}
+        bookingData={{
+          athleteName: form.watch("athlete1Name"),
+          parentName: `${form.watch("parentFirstName")} ${form.watch("parentLastName")}`,
+          emergencyContactNumber: form.watch("emergencyContactPhone"),
+          relationshipToAthlete: "Parent/Guardian",
+        }}
+      />
+    </Dialog>
+  );
+}
