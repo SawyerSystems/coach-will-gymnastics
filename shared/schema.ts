@@ -341,14 +341,14 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   altPickupPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]).nullable().optional(),
   // Athletes array for booking creation
   athletes: z.array(z.object({
-    athleteId: z.number(),
+    athleteId: z.number().nullable().optional(), // Optional for new athletes, can be null
     slotOrder: z.number(),
     name: z.string(),
     dateOfBirth: z.string(),
     allergies: z.string().optional(),
     experience: z.string(),
     photo: z.string().optional(),
-  })),
+  })).optional(),
 });
 
 export const insertBookingAthleteSchema = createInsertSchema(bookingAthletes).omit({
@@ -501,7 +501,7 @@ export type Booking = typeof bookings.$inferSelect & {
   athlete2Allergies?: string | null;
   athlete2Experience?: string | null;
   athletes?: Array<{
-    athleteId: number;
+    athleteId?: number | null; // Optional for new athletes, can be null
     slotOrder: number;
     name: string;
     dateOfBirth: string;

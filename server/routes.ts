@@ -38,8 +38,9 @@ function validateFocusAreas(focusAreas: string[], lessonType: string): { isValid
   
   const config = LESSON_LIMITS[lessonType as keyof typeof LESSON_LIMITS] || { max: 2, duration: "30 minutes" };
   
+  // Focus areas are optional - allow empty array
   if (focusAreas.length === 0) {
-    return { isValid: false, message: "At least one focus area is required" };
+    return { isValid: true }; // Changed from false to true - focus areas are optional
   }
   
   if (focusAreas.length > config.max) {
@@ -3072,12 +3073,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Database test endpoint
+  // DEPRECATED: Database test endpoint - no longer needed with Supabase client
+  /*
   app.get("/api/db-test", async (req, res) => {
     try {
       const { sql, supabase } = await import("./db");
       
-      if (sql) {
+      if (sql && typeof sql === 'function') {
         // Test basic postgres connection
         const result = await sql`SELECT current_database(), current_user, version()`;
         console.log('Database connection test:', result[0]);
@@ -3110,11 +3112,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  */
 
-  // Migration endpoint to create tables
+  // DEPRECATED: Migration endpoint - no longer needed with Supabase
+  /*
   app.post("/api/migrate", async (req, res) => {
     try {
       const { sql } = await import("./db");
+      
+      if (!sql) {
+        return res.json({
+          success: false,
+          message: "Migration endpoint not available with Supabase client. Use Supabase dashboard or SQL editor instead."
+        });
+      }
       
       console.log('Creating tables in Supabase...');
       
@@ -3378,6 +3389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, message: "Migration failed", error: error.message });
     }
   });
+  */
 
   // Get available time slots for a specific date and duration
   app.get("/api/available-slots", async (req, res) => {
