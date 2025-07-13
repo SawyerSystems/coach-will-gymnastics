@@ -1,10 +1,9 @@
-import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { useEffect, useState } from 'react';
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { useEffect, useState } from 'react';
 import { useLocation } from "wouter";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
@@ -70,7 +69,7 @@ const CheckoutForm = ({ bookingDetails }: { bookingDetails: any }) => {
                 <p><span className="font-medium">Athlete:</span> {bookingDetails?.athlete1Name}</p>
                 <p><span className="font-medium">Date:</span> {bookingDetails?.preferredDate}</p>
                 <p><span className="font-medium">Time:</span> {bookingDetails?.preferredTime}</p>
-                <p><span className="font-medium">Total:</span> $10.00 (Reservation Fee)</p>
+                <p><span className="font-medium">Total:</span> ${bookingDetails?.reservationFee || '0.50'} (Reservation Fee)</p>
               </div>
             </div>
 
@@ -81,7 +80,7 @@ const CheckoutForm = ({ bookingDetails }: { bookingDetails: any }) => {
                 className="w-full" 
                 disabled={!stripe || isLoading}
               >
-                {isLoading ? "Processing..." : "Pay $10 Reservation Fee"}
+                {isLoading ? "Processing..." : `Pay $${bookingDetails?.reservationFee || '0.50'} Reservation Fee`}
               </Button>
             </form>
           </CardContent>

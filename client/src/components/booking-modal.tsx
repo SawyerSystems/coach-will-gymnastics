@@ -432,7 +432,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Select Lesson Type</h3>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                   <p className="text-sm text-blue-800 font-medium">
-                    <strong>Payment Information:</strong> A $10 reservation fee is required to secure your lesson and will be applied toward the total cost. The remaining balance is due before your lesson begins.
+                    <strong>Payment Information:</strong> A $0.50 reservation fee is required to secure your lesson and will be applied toward the total cost. The remaining balance is due before your lesson begins.
                   </p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">

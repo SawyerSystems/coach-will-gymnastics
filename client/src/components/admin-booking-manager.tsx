@@ -1,25 +1,23 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useAvailableTimes } from "@/hooks/use-available-times";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Eye, Filter, Calendar, Clock, User, Phone, Mail, AlertCircle, Trash2, FileText, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
+import { calculateAge } from "@/lib/dateUtils";
+import { apiRequest } from "@/lib/queryClient";
 import type { Booking, InsertBooking } from "@shared/schema";
-import { LESSON_TYPES, GYMNASTICS_EVENTS } from "@/lib/constants";
-import { validateFocusAreas } from "@/components/booking-steps/FocusAreasStep";
-import { calculateAge, formatDate } from "@/lib/dateUtils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileText, FileX, Filter, HelpCircle, Plus, Trash2, User, X, XCircle } from "lucide-react";
+import { useState } from "react";
 
 // Helper function to get status badge variant and color
 export const getStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
@@ -47,51 +45,168 @@ export const getStatusBadgeProps = (status: string): { variant: "default" | "sec
   }
 };
 
-// Helper function for payment status badge styling
-export const getPaymentStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
+// Enhanced helper function for payment status with automatic status support
+export const getPaymentStatusBadgeProps = (status: string): { 
+  variant: "default" | "secondary" | "destructive" | "outline"; 
+  className?: string; 
+  icon?: React.ReactNode;
+  text?: string;
+} => {
   switch (status) {
-    case "paid":
-      return { variant: "default", className: "bg-green-500 text-white hover:bg-green-600" };
-    case "unpaid":
-      return { variant: "secondary", className: "bg-yellow-400 text-black hover:bg-yellow-500" };
-    case "failed":
-      return { variant: "destructive", className: "bg-red-500 text-white hover:bg-red-600" };
-    case "refunded":
-      return { variant: "outline", className: "bg-gray-100 text-gray-700 hover:bg-gray-200" };
     case "reservation-pending":
-      return { variant: "secondary", className: "bg-orange-200 text-orange-800 hover:bg-orange-300" };
+      return { 
+        variant: "outline", 
+        className: "border-yellow-300 text-yellow-700 bg-yellow-50",
+        icon: <Clock className="h-3 w-3" />,
+        text: "Payment Pending"
+      };
     case "reservation-paid":
-      return { variant: "default", className: "bg-blue-500 text-white hover:bg-blue-600" };
-    case "reservation-failed":
-      return { variant: "destructive", className: "bg-red-400 text-white hover:bg-red-500" };
+      return { 
+        variant: "outline", 
+        className: "border-green-300 text-green-700 bg-green-50",
+        icon: <CheckCircle className="h-3 w-3" />,
+        text: "Paid ✓"
+      };
     case "session-paid":
-      return { variant: "default", className: "bg-green-600 text-white hover:bg-green-700" };
-    case "reservation-refunded":
-      return { variant: "outline", className: "bg-gray-200 text-gray-600 hover:bg-gray-300" };
-    case "session-refunded":
-      return { variant: "outline", className: "bg-gray-300 text-gray-700 hover:bg-gray-400" };
+      return { 
+        variant: "outline", 
+        className: "border-green-300 text-green-700 bg-green-50",
+        icon: <CheckCircle className="h-3 w-3" />,
+        text: "Full Payment ✓"
+      };
+    case "reservation-failed":
+      return { 
+        variant: "outline", 
+        className: "border-red-300 text-red-700 bg-red-50",
+        icon: <XCircle className="h-3 w-3" />,
+        text: "Payment Failed"
+      };
+    case "reservation-expired":
+      return { 
+        variant: "outline", 
+        className: "border-gray-300 text-gray-700 bg-gray-50",
+        icon: <Clock className="h-3 w-3" />,
+        text: "Expired"
+      };
+    case "unpaid":
+      return { 
+        variant: "outline", 
+        className: "border-orange-300 text-orange-700 bg-orange-50",
+        icon: <AlertCircle className="h-3 w-3" />,
+        text: "Unpaid"
+      };
+    case "paid": // Legacy status
+      return { 
+        variant: "outline", 
+        className: "border-green-300 text-green-700 bg-green-50",
+        icon: <CheckCircle className="h-3 w-3" />,
+        text: "Paid ✓"
+      };
+    case "failed": // Legacy status
+      return { 
+        variant: "outline", 
+        className: "border-red-300 text-red-700 bg-red-50",
+        icon: <XCircle className="h-3 w-3" />,
+        text: "Failed"
+      };
+    case "refunded":
+      return { 
+        variant: "outline", 
+        className: "border-gray-300 text-gray-700 bg-gray-50",
+        icon: <X className="h-3 w-3" />,
+        text: "Refunded"
+      };
     default:
-      return { variant: "secondary" };
+      return { 
+        variant: "outline", 
+        className: "border-gray-300 text-gray-700 bg-gray-50",
+        icon: <HelpCircle className="h-3 w-3" />,
+        text: status || "Unknown"
+      };
   }
 };
 
-// Helper function for attendance status badge styling
-export const getAttendanceStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
+// Enhanced helper function for attendance status with automatic status support
+export const getAttendanceStatusBadgeProps = (status: string): { 
+  variant: "default" | "secondary" | "destructive" | "outline"; 
+  className?: string; 
+  icon?: React.ReactNode;
+  text?: string;
+} => {
   switch (status) {
-    case "completed":
-      return { variant: "default", className: "bg-blue-500 text-white hover:bg-blue-600" };
-    case "confirmed":
-      return { variant: "default", className: "bg-green-500 text-white hover:bg-green-600" };
     case "pending":
-      return { variant: "secondary", className: "bg-gray-300 text-black hover:bg-gray-400" };
-    case "manual":
-      return { variant: "outline", className: "bg-orange-100 text-orange-700 hover:bg-orange-200" };
+      return { 
+        variant: "outline", 
+        className: "border-blue-300 text-blue-700 bg-blue-50",
+        icon: <Clock className="h-3 w-3" />,
+        text: "Scheduled"
+      };
+    case "confirmed":
+      return { 
+        variant: "outline", 
+        className: "border-green-300 text-green-700 bg-green-50",
+        icon: <CheckCircle className="h-3 w-3" />,
+        text: "Confirmed ✓"
+      };
+    case "completed":
+      return { 
+        variant: "outline", 
+        className: "border-green-300 text-green-700 bg-green-50",
+        icon: <CheckCircle2 className="h-3 w-3" />,
+        text: "Completed ✓"
+      };
     case "no-show":
-      return { variant: "destructive", className: "bg-red-300 text-black hover:bg-red-400" };
+      return { 
+        variant: "outline", 
+        className: "border-red-300 text-red-700 bg-red-50",
+        icon: <XCircle className="h-3 w-3" />,
+        text: "No Show"
+      };
     case "cancelled":
-      return { variant: "destructive", className: "bg-red-500 text-white hover:bg-red-600" };
+      return { 
+        variant: "outline", 
+        className: "border-gray-300 text-gray-700 bg-gray-50",
+        icon: <X className="h-3 w-3" />,
+        text: "Cancelled"
+      };
+    case "manual":
+      return { 
+        variant: "outline", 
+        className: "border-blue-300 text-blue-700 bg-blue-50",
+        icon: <User className="h-3 w-3" />,
+        text: "Manual Entry"
+      };
     default:
-      return { variant: "secondary" };
+      return { 
+        variant: "outline", 
+        className: "border-gray-300 text-gray-700 bg-gray-50",
+        icon: <HelpCircle className="h-3 w-3" />,
+        text: status || "Pending"
+      };
+  }
+};
+
+// Enhanced helper function for waiver status
+export const getWaiverStatusBadgeProps = (waiverSigned: boolean): { 
+  variant: "default" | "secondary" | "destructive" | "outline"; 
+  className?: string; 
+  icon?: React.ReactNode;
+  text?: string;
+} => {
+  if (waiverSigned) {
+    return { 
+      variant: "outline", 
+      className: "border-green-300 text-green-700 bg-green-50",
+      icon: <FileCheck className="h-3 w-3" />,
+      text: "Waiver Signed ✓"
+    };
+  } else {
+    return { 
+      variant: "outline", 
+      className: "border-orange-300 text-orange-700 bg-orange-50",
+      icon: <FileX className="h-3 w-3" />,
+      text: "Waiver Required"
+    };
   }
 };
 
@@ -188,9 +303,11 @@ interface ManualBookingFormData {
   athlete1Name: string;
   athlete1Age: number;
   athlete1Experience: string;
+  athlete1Gender?: string;
   athlete2Name?: string;
   athlete2Age?: number;
   athlete2Experience?: string;
+  athlete2Gender?: string;
   preferredDate: string;
   preferredTime: string;
   focusAreas: string[];
@@ -255,17 +372,11 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
 
       const formattedData: InsertBooking = {
         lessonType: bookingData.lessonType as any,
-        athlete1Name: bookingData.athlete1Name,
-        athlete1DateOfBirth: athlete1DOB.toISOString().split('T')[0],
-        athlete1Allergies: bookingData.allergies1 || "",
-        athlete1Experience: bookingData.athlete1Experience as any,
-        athlete2Name: bookingData.athlete2Name || "",
-        athlete2DateOfBirth: athlete2DOB ? athlete2DOB.toISOString().split('T')[0] : "",
-        athlete2Allergies: bookingData.allergies2 || "",
-        athlete2Experience: bookingData.athlete2Experience as any || "beginner",
-        preferredDate: bookingData.preferredDate,
+        preferredDate: new Date(bookingData.preferredDate),
         preferredTime: bookingData.preferredTime,
-        focusAreas: bookingData.focusAreas,
+        focusAreaIds: bookingData.focusAreas.map(() => 1), // Map to focus area IDs (placeholder)
+        apparatusIds: [],
+        sideQuestIds: [],
         parentFirstName: bookingData.parentFirstName,
         parentLastName: bookingData.parentLastName,
         parentEmail: bookingData.parentEmail,
@@ -273,10 +384,11 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
         emergencyContactName: bookingData.emergencyContactName,
         emergencyContactPhone: bookingData.emergencyContactPhone,
         amount: bookingData.amount,
-        status: "confirmed",
+        status: "confirmed" as any,
+        attendanceStatus: "pending" as any,
         bookingMethod: bookingData.bookingMethod as any,
         waiverSigned: false,
-        paymentStatus: "reservation-pending",
+        paymentStatus: "reservation-pending" as any,
         reservationFeePaid: false,
         paidAmount: "0.00",
         specialRequests: "",
@@ -289,6 +401,31 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
         pickupPersonRelationship: "Parent",
         pickupPersonPhone: bookingData.parentPhone,
         safetyVerificationSigned: false,
+        // Include gender info in athletes array for proper athlete creation
+        athletes: [
+          {
+            athleteId: null,
+            slotOrder: 1,
+            name: bookingData.athlete1Name,
+            dateOfBirth: athlete1DOB.toISOString().split('T')[0],
+            allergies: bookingData.allergies1 || "",
+            experience: bookingData.athlete1Experience,
+            gender: (bookingData.athlete1Gender && ["Male", "Female", "Other", "Prefer not to say"].includes(bookingData.athlete1Gender)) 
+              ? bookingData.athlete1Gender as "Male" | "Female" | "Other" | "Prefer not to say" 
+              : undefined,
+          },
+          ...(bookingData.athlete2Name ? [{
+            athleteId: null,
+            slotOrder: 2,
+            name: bookingData.athlete2Name,
+            dateOfBirth: athlete2DOB ? athlete2DOB.toISOString().split('T')[0] : "",
+            allergies: bookingData.allergies2 || "",
+            experience: bookingData.athlete2Experience || "beginner",
+            gender: (bookingData.athlete2Gender && ["Male", "Female", "Other", "Prefer not to say"].includes(bookingData.athlete2Gender)) 
+              ? bookingData.athlete2Gender as "Male" | "Female" | "Other" | "Prefer not to say" 
+              : undefined,
+          }] : [])
+        ]
       };
 
       const response = await apiRequest("POST", "/api/bookings", formattedData);
@@ -614,7 +751,20 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
                         <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
                           {athlete.name}
                         </div>
-                      )) || <div className="text-muted-foreground">No athletes</div>}
+                      )) || (
+                        // Fallback to legacy athlete data
+                        <div className="space-y-1">
+                          {booking.athlete1Name && (
+                            <div className="font-medium">{booking.athlete1Name}</div>
+                          )}
+                          {booking.athlete2Name && (
+                            <div className="text-sm text-muted-foreground">{booking.athlete2Name}</div>
+                          )}
+                          {!booking.athlete1Name && !booking.athlete2Name && (
+                            <div className="text-muted-foreground">No athletes</div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -635,7 +785,7 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
                       <div className="text-sm font-medium">${booking.amount}</div>
                       {booking.paymentStatus === 'paid' && booking.reservationFeePaid && (
                         <div className="text-xs text-gray-500">
-                          (Res. fee: $10)
+                          (Res. fee: $0.50)
                         </div>
                       )}
                     </div>
@@ -704,7 +854,7 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
                           </Select>
                           {booking.reservationFeePaid && booking.paymentStatus !== 'reservation-failed' && booking.paymentStatus !== 'failed' && (
                             <div className="text-xs text-green-600 font-medium">
-                              Reservation: ${parseFloat(booking.paidAmount || "10").toFixed(2)} ✓
+                              Reservation: ${parseFloat(booking.paidAmount || "0.50").toFixed(2)} ✓
                             </div>
                           )}
                         </div>
@@ -799,9 +949,11 @@ function ManualBookingForm({
     athlete1Name: prefilledData?.athlete1Name || "",
     athlete1Age: prefilledData?.athlete1DateOfBirth ? calculateAge(prefilledData.athlete1DateOfBirth) : 6,
     athlete1Experience: prefilledData?.athlete1Experience || "beginner",
+    athlete1Gender: "",
     athlete2Name: "",
     athlete2Age: 6,
     athlete2Experience: "beginner",
+    athlete2Gender: "",
     preferredDate: "",
     preferredTime: "",
     focusAreas: [],
@@ -918,6 +1070,7 @@ function ManualBookingForm({
       athlete1Name: athlete.name || `${athlete.firstName} ${athlete.lastName}`,
       athlete1Age: calculateAge(athlete.dateOfBirth),
       athlete1Experience: athlete.experience || 'beginner',
+      athlete1Gender: athlete.gender || '',
       allergies1: athlete.allergies || '',
       parentFirstName: parent?.firstName || '',
       parentLastName: parent?.lastName || '',
@@ -981,6 +1134,7 @@ function ManualBookingForm({
                     athlete1Name: '',
                     athlete1Age: 6,
                     athlete1Experience: 'beginner',
+                    athlete1Gender: '',
                     allergies1: '',
                     parentFirstName: '',
                     parentLastName: '',
@@ -1175,6 +1329,10 @@ function ManualBookingForm({
                       <p className="text-blue-900 capitalize">{selectedExistingAthlete.experience}</p>
                     </div>
                     <div>
+                      <Label className="text-sm font-medium text-blue-800">Gender</Label>
+                      <p className="text-blue-900">{selectedExistingAthlete.gender || 'Not specified'}</p>
+                    </div>
+                    <div>
                       <Label className="text-sm font-medium text-blue-800">Allergies/Medical Notes</Label>
                       <p className="text-blue-900">{selectedExistingAthlete.allergies || 'None specified'}</p>
                     </div>
@@ -1259,6 +1417,23 @@ function ManualBookingForm({
                   </Select>
                 </div>
                 <div>
+                  <Label htmlFor="athlete1Gender">Gender</Label>
+                  <Select 
+                    value={formData.athlete1Gender || ""} 
+                    onValueChange={(value) => setFormData({ ...formData, athlete1Gender: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="allergies1">Allergies/Medical Notes</Label>
                   <Textarea
                     id="allergies1"
@@ -1312,6 +1487,23 @@ function ManualBookingForm({
                             <SelectItem value="beginner">Beginner</SelectItem>
                             <SelectItem value="intermediate">Intermediate</SelectItem>
                             <SelectItem value="advanced">Advanced</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="athlete2Gender">Gender</Label>
+                        <Select 
+                          value={formData.athlete2Gender || ""} 
+                          onValueChange={(value) => setFormData({ ...formData, athlete2Gender: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1507,7 +1699,9 @@ function ManualBookingForm({
         <Button type="button" variant="outline" onClick={() => setFormData({ 
           ...formData, 
           athlete1Name: "", 
+          athlete1Gender: "",
           athlete2Name: "", 
+          athlete2Gender: "",
           parentFirstName: "", 
           parentLastName: "", 
           parentEmail: "", 
@@ -1600,7 +1794,7 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="font-medium">{booking.athlete1Name}</div>
             <div className="text-sm text-gray-600">
-              Age: {calculateAge(booking.athlete1DateOfBirth)} | Experience: {booking.athlete1Experience}
+              Age: {calculateAge(booking.athlete1DateOfBirth || '')} | Experience: {booking.athlete1Experience}
             </div>
             {booking.athlete1Allergies && (
               <div className="text-sm text-red-600 mt-1">

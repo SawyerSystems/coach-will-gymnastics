@@ -16,6 +16,10 @@ export default defineConfig({
         ]
       : []),
   ],
+  optimizeDeps: {
+    exclude: ["drizzle-zod"],
+    include: ["react", "react-dom", "@tanstack/react-query"]
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -30,8 +34,11 @@ export default defineConfig({
   },
   server: {
     fs: {
-      strict: true,
-      deny: ["**/.*"],
+      strict: false,
+      allow: [
+        path.resolve(import.meta.dirname),
+      ]
     },
+    middlewareMode: true,
   },
 });

@@ -27,13 +27,13 @@ export function useStripePricing() {
   };
 
   const getReservationFee = (lessonType: string): number => {
-    if (!stripeProducts?.data) return 10; // Fallback to $10
+    if (!stripeProducts?.data) return 0.50; // Fallback to Stripe minimum
     
     const productName = lessonTypeToProductName[lessonType];
-    if (!productName) return 10;
+    if (!productName) return 0.50; // Fallback to Stripe minimum
     
     const matchingProduct = stripeProducts.data.find(product => product.name === productName);
-    if (!matchingProduct?.default_price) return 10;
+    if (!matchingProduct?.default_price) return 0.50; // Fallback to Stripe minimum
     
     return matchingProduct.default_price.unit_amount / 100; // Convert cents to dollars
   };

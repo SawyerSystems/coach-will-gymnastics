@@ -1,0 +1,217 @@
+#!/usr/bin/env node
+
+import { SupabaseStorage } from './server/storage.ts';
+import { AttendanceStatusEnum, PaymentStatusEnum } from './shared/schema.ts';
+
+async function fixBooking83() {
+  console.log('🔧 Manual webhook fix for booking ID 83...');
+  
+  const storage = new SupabaseStorage();
+  const bookingId = 83;
+  
+  try {
+    // Get the booking
+    const booking = await storage.getBooking(bookingId);
+    if (!booking) {
+      console.error('❌ Booking 83 not found');
+      return;
+    }
+    
+    console.log('📋 Current booking data:', {
+      id: booking.id,
+      athlete1Name: booking.athlete1Name,
+      paidAmount: booking.paidAmount,
+      paymentStatus: booking.paymentStatus,
+      parentEmail: booking.parentEmail
+    });
+    
+    // 1. Update payment status and amount
+    console.log('💰 Updating payment status and amount...');
+    await storage.updateBookingPaymentStatus(bookingId, PaymentStatusEnum.RESERVATION_PAID);
+    await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.CONFIRMED);
+    
+    // 2. Update paid amount (Quick Journey is $40)
+    await storage.updateBooking(bookingId, {
+      reservationFeePaid: true,
+      paidAmount: "40.00"
+    });
+    
+    console.log('✅ Updated payment: Status → reservation-paid, Amount → $40.00');
+    
+    // 3. Create parent profile if needed
+    console.log('👨‍👩‍👧 Creating/finding parent profile...');
+    let parentRecord = await storage.identifyParent(booking.parentEmail, booking.parentPhone);
+    
+    if (!parentRecord) {
+      parentRecord = await storage.createParent({
+        firstName: booking.parentFirstName,
+        lastName: booking.parentLastName,
+        email: booking.parentEmail,
+        phone: booking.parentPhone,
+        emergencyContactName: booking.emergencyContactName || '',
+        emergencyContactPhone: booking.emergencyContactPhone || '',
+        waiverSigned: booking.waiverSigned || false,
+        waiverSignedAt: booking.waiverSignedAt || null,
+        waiverSignatureName: booking.waiverSignatureName || null
+      });
+      console.log(`✅ Created parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
+    } else {
+      console.log(`✅ Using existing parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
+    }
+    
+    // 4. Check if there's a recent waiver that might contain the athlete name
+    console.log('🏃‍♂️ Finding athlete information...');
+    
+    const { supabase } = await import('./server/supabase-client.ts');
+    const { data: recentWaivers } = await supabase
+      .from('waivers')
+      .select('*')
+      .order('signed_at', { ascending: false })
+      .limit(5);
+    
+    console.log('📄 Recent waivers found:', recentWaivers?.length || 0);
+    
+    // Look for a waiver signed around the same time as the booking
+    const bookingTime = new Date(booking.createdAt);
+    const waiver = recentWaivers?.find(w => {
+      const waiverTime = new Date(w.signed_at);
+      const timeDiff = Math.abs(waiverTime - bookingTime) / (1000 * 60); // minutes
+      return timeDiff < 30; // Within 30 minutes
+    });
+    
+    if (waiver) {
+      console.log('✅ Found matching waiver:', {
+        athleteName: waiver.athlete_name,
+        signerName: waiver.signer_name,
+        timeDiff: Math.abs(new Date(waiver.signed_at) - bookingTime) / (1000 * 60)
+      });
+      
+      // Create athlete profile
+      const [firstName, ...lastNameParts] = waiver.athlete_name.split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+      
+      // Check if athlete already exists
+      const existingAthletes = await storage.getAllAthletes();
+      const existingAthlete = existingAthletes.find(a => 
+        a.name === waiver.athlete_name && a.parentId === parentRecord.id
+      );
+      
+      let athleteId;
+      if (!existingAthlete) {
+        const newAthlete = await storage.createAthlete({
+          parentId: parentRecord.id,
+          name: waiver.athlete_name,
+          firstName,
+          lastName,
+          dateOfBirth: '2010-07-15', // Default date - should be updated later
+          gender: null,
+          experience: 'beginner',
+          allergies: null
+        });
+        athleteId = newAthlete.id;
+        console.log(`✅ Created athlete profile for ${waiver.athlete_name} (ID: ${athleteId})`);
+      } else {
+        athleteId = existingAthlete.id;
+        console.log(`✅ Using existing athlete profile for ${waiver.athlete_name} (ID: ${athleteId})`);
+      }
+      
+      // Update booking with athlete name and parent ID
+      await storage.updateBooking(bookingId, {
+        athlete1Name: waiver.athlete_name,
+        parentId: parentRecord.id
+      });
+      
+      console.log(`✅ Updated booking with athlete name: ${waiver.athlete_name}`);
+      
+      // Create booking-athlete relationship
+      const { data: existingRelation } = await supabase
+        .from('booking_athletes')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .eq('athlete_id', athleteId)
+        .single();
+      
+      if (!existingRelation) {
+        const { error } = await supabase
+          .from('booking_athletes')
+          .insert({
+            booking_id: bookingId,
+            athlete_id: athleteId
+          });
+        
+        if (error) {
+          console.error('❌ Error creating booking-athlete relationship:', error);
+        } else {
+          console.log(`✅ Created booking-athlete relationship: booking ${bookingId} ↔ athlete ${athleteId}`);
+        }
+      } else {
+        console.log(`✅ Booking-athlete relationship already exists`);
+      }
+      
+    } else {
+      console.log('⚠️ No matching waiver found. Using athlete from existing records...');
+      
+      // Get the existing athlete we saw in the logs
+      const existingAthletes = await storage.getAllAthletes();
+      console.log('🔍 Found existing athletes:', existingAthletes.map(a => ({ id: a.id, name: a.name, parentId: a.parentId })));
+      
+      // Use the existing athlete if available
+      if (existingAthletes.length > 0) {
+        const athlete = existingAthletes[0]; // Use the first one (Alfred S.)
+        
+        // Update booking with athlete name and parent ID
+        await storage.updateBooking(bookingId, {
+          athlete1Name: athlete.name,
+          parentId: parentRecord.id
+        });
+        
+        console.log(`✅ Updated booking with existing athlete name: ${athlete.name}`);
+        
+        // Create booking-athlete relationship
+        const { data: existingRelation } = await supabase
+          .from('booking_athletes')
+          .select('*')
+          .eq('booking_id', bookingId)
+          .eq('athlete_id', athlete.id)
+          .single();
+        
+        if (!existingRelation) {
+          const { error } = await supabase
+            .from('booking_athletes')
+            .insert({
+              booking_id: bookingId,
+              athlete_id: athlete.id
+            });
+          
+          if (error) {
+            console.error('❌ Error creating booking-athlete relationship:', error);
+          } else {
+            console.log(`✅ Created booking-athlete relationship: booking ${bookingId} ↔ athlete ${athlete.id}`);
+          }
+        } else {
+          console.log(`✅ Booking-athlete relationship already exists`);
+        }
+      }
+    }
+    
+    // 5. Verify the fix
+    console.log('🔍 Verifying the fix...');
+    const updatedBooking = await storage.getBookingWithRelations(bookingId);
+    console.log('✅ Final booking state:', {
+      id: updatedBooking.id,
+      athlete1Name: updatedBooking.athlete1Name,
+      paidAmount: updatedBooking.paidAmount,
+      paymentStatus: updatedBooking.paymentStatus,
+      parentId: updatedBooking.parentId,
+      athletes: updatedBooking.athletes?.length || 0
+    });
+    
+    console.log('🎉 Manual webhook fix completed!');
+    
+  } catch (error) {
+    console.error('❌ Error during manual fix:', error);
+  }
+}
+
+// Run the fix
+fixBooking83().then(() => process.exit(0)).catch(console.error);

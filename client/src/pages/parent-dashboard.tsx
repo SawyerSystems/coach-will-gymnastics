@@ -15,9 +15,10 @@ import { toast } from '@/hooks/use-toast';
 import { calculateAge, formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Customer } from '@shared/schema';
+import { PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Calendar, Clock, DollarSign, LogOut, MapPin, Star, Trophy, User, Users } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, FileCheck, FileX, HelpCircle, LogOut, MapPin, Star, Trophy, User, Users, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -510,14 +511,88 @@ function ParentDashboard() {
                               </Badge>
                             </div>
 
-                            {/* Payment Status */}
+                            {/* Payment Status - Enhanced Automatic Display */}
                             <div className="flex items-center gap-2">
-                              <DollarSign className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm">
-                                {booking.paymentStatus === 'paid' || booking.paymentStatus === 'session-paid' ? 'Paid' : 
-                                 booking.paymentStatus === 'reservation-paid' ? 'Reservation Paid' : 
-                                 'Unpaid'}
-                              </span>
+                              {booking.paymentStatus === 'reservation-pending' && <Clock className="w-4 h-4 text-yellow-600" />}
+                              {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-4 h-4 text-green-600" />}
+                              {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-4 h-4 text-red-600" />}
+                              {booking.paymentStatus === PaymentStatusEnum.RESERVATION_EXPIRED && <Clock className="w-4 h-4 text-gray-600" />}
+                              {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-4 h-4 text-orange-600" />}
+                              {!booking.paymentStatus && <HelpCircle className="w-4 h-4 text-gray-600" />}
+                              
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  booking.paymentStatus === 'session-paid' ? 'border-green-300 text-green-700 bg-green-50' :
+                                  booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50' :
+                                  booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
+                                  booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50' :
+                                  booking.paymentStatus === PaymentStatusEnum.RESERVATION_EXPIRED ? 'border-gray-300 text-gray-700 bg-gray-50' :
+                                  booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50' :
+                                  'border-gray-300 text-gray-700 bg-gray-50'
+                                }
+                              >
+                                {booking.paymentStatus === 'session-paid' ? 'Full Payment ✓' : 
+                                 booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
+                                 booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
+                                 booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
+                                 booking.paymentStatus === PaymentStatusEnum.RESERVATION_EXPIRED ? 'Expired' :
+                                 booking.paymentStatus === 'unpaid' ? 'Unpaid' :
+                                 booking.paymentStatus || 'Unknown'}
+                              </Badge>
+                              {booking.paymentStatus === 'reservation-pending' && (
+                                <span className="text-xs text-gray-500">(Auto-expires 24hr)</span>
+                              )}
+                            </div>
+
+                            {/* Attendance Status - Enhanced Automatic Display */}
+                            <div className="flex items-center gap-2">
+                              {booking.attendanceStatus === 'pending' && <Clock className="w-4 h-4 text-blue-600" />}
+                              {booking.attendanceStatus === 'confirmed' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                              {booking.attendanceStatus === 'completed' && <CheckCircle2 className="w-4 h-4 text-green-600" />}
+                              {booking.attendanceStatus === 'no-show' && <XCircle className="w-4 h-4 text-red-600" />}
+                              {booking.attendanceStatus === 'cancelled' && <X className="w-4 h-4 text-gray-600" />}
+                              {!booking.attendanceStatus && <HelpCircle className="w-4 h-4 text-gray-600" />}
+                              
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  booking.attendanceStatus === 'completed' ? 'border-green-300 text-green-700 bg-green-50' :
+                                  booking.attendanceStatus === 'confirmed' ? 'border-green-300 text-green-700 bg-green-50' :
+                                  booking.attendanceStatus === 'pending' ? 'border-blue-300 text-blue-700 bg-blue-50' :
+                                  booking.attendanceStatus === 'no-show' ? 'border-red-300 text-red-700 bg-red-50' :
+                                  booking.attendanceStatus === 'cancelled' ? 'border-gray-300 text-gray-700 bg-gray-50' :
+                                  'border-gray-300 text-gray-700 bg-gray-50'
+                                }
+                              >
+                                {booking.attendanceStatus === 'completed' ? 'Completed ✓' :
+                                 booking.attendanceStatus === 'confirmed' ? 'Confirmed ✓' :
+                                 booking.attendanceStatus === 'pending' ? 'Scheduled' :
+                                 booking.attendanceStatus === 'no-show' ? 'No Show' :
+                                 booking.attendanceStatus === 'cancelled' ? 'Cancelled' :
+                                 booking.attendanceStatus || 'Pending'}
+                              </Badge>
+                              {booking.paymentStatus === 'reservation-paid' && booking.attendanceStatus === 'pending' && (
+                                <span className="text-xs text-gray-500">(Auto-confirms on payment)</span>
+                              )}
+                            </div>
+
+                            {/* Waiver Status - Enhanced Display */}
+                            <div className="flex items-center gap-2">
+                              {booking.waiverSigned ? (
+                                <FileCheck className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <FileX className="w-4 h-4 text-orange-600" />
+                              )}
+                              <Badge 
+                                variant="outline"
+                                className={booking.waiverSigned ? 'border-green-300 text-green-700 bg-green-50' : 'border-orange-300 text-orange-700 bg-orange-50'}
+                              >
+                                {booking.waiverSigned ? 'Waiver Signed ✓' : 'Waiver Required'}
+                              </Badge>
+                              {!booking.waiverSigned && booking.paymentStatus === 'reservation-paid' && (
+                                <span className="text-xs text-red-500">(Required before session)</span>
+                              )}
                             </div>
 
                             {booking.focusAreas && booking.focusAreas.length > 0 && (
@@ -875,6 +950,34 @@ function ParentDashboard() {
                       <p className="mt-1 text-gray-900 bg-orange-50 p-3 rounded-lg">{athlete.allergies}</p>
                     </div>
                   )}
+
+                  {/* Parent Information */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Parent Information</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Parent Name</label>
+                        <p className="mt-1 text-gray-900">{parentInfo?.firstName} {parentInfo?.lastName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Email</label>
+                        <p className="mt-1 text-gray-900">{parentInfo?.email}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Phone</label>
+                        <p className="mt-1 text-gray-900">{parentInfo?.phone}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Emergency Contact</label>
+                        <p className="mt-1 text-gray-900">
+                          {parentInfo?.emergencyContactName ? 
+                            `${parentInfo.emergencyContactName} - ${parentInfo.emergencyContactPhone}` : 
+                            'Not provided'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Waiver Status */}
                   <div className="border-t pt-4">

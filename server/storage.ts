@@ -1353,7 +1353,7 @@ export class SupabaseStorage implements IStorage {
       last_name: insertAthlete.lastName,
       parent_id: insertAthlete.parentId,
       date_of_birth: insertAthlete.dateOfBirth,
-      gender: insertAthlete.gender || null,
+      // gender: insertAthlete.gender || null, // Temporarily disabled until column is added
       allergies: insertAthlete.allergies,
       experience: insertAthlete.experience,
       photo: insertAthlete.photo || null
@@ -2989,11 +2989,34 @@ export class SupabaseStorage implements IStorage {
       `)
       .eq('booking_id', id);
 
+    // Get related athletes
+    const { data: athletesData } = await supabase
+      .from('booking_athletes')
+      .select(`
+        athlete_id,
+        slot_order,
+        athletes!inner(id, name, date_of_birth, gender, allergies, experience, parent_id)
+      `)
+      .eq('booking_id', id)
+      .order('slot_order', { ascending: true });
+
     return {
       ...booking,
       apparatus: apparatusData?.map(item => ({ id: (item.apparatus as any).id, name: (item.apparatus as any).name })) || [],
       focusAreas: focusAreasData?.map(item => ({ id: (item.focus_areas as any).id, name: (item.focus_areas as any).name })) || [] as any,
-      sideQuests: sideQuestsData?.map(item => ({ id: (item.side_quests as any).id, name: (item.side_quests as any).name })) || []
+      sideQuests: sideQuestsData?.map(item => ({ id: (item.side_quests as any).id, name: (item.side_quests as any).name })) || [],
+      athletes: athletesData?.map(item => {
+        const athlete = item.athletes as any;
+        return {
+          id: athlete.id,
+          name: athlete.name,
+          dateOfBirth: athlete.date_of_birth,
+          gender: athlete.gender,
+          allergies: athlete.allergies,
+          experience: athlete.experience,
+          parentId: athlete.parent_id
+        };
+      }) || []
     } as BookingWithRelations;
   }
 
@@ -3006,7 +3029,7 @@ export class SupabaseStorage implements IStorage {
     
     if (bookingIds.length === 0) return [];
 
-    const [apparatusData, focusAreasData, sideQuestsData] = await Promise.all([
+    const [apparatusData, focusAreasData, sideQuestsData, athletesData] = await Promise.all([
       supabase.from('booking_apparatus')
         .select(`booking_id, apparatus_id, apparatus!inner(id, name)`)
         .in('booking_id', bookingIds),
@@ -3015,7 +3038,11 @@ export class SupabaseStorage implements IStorage {
         .in('booking_id', bookingIds),
       supabase.from('booking_side_quests')
         .select(`booking_id, side_quest_id, side_quests!inner(id, name)`)
+        .in('booking_id', bookingIds),
+      supabase.from('booking_athletes')
+        .select(`booking_id, athlete_id, slot_order, athletes!inner(id, name, date_of_birth, gender, allergies, experience, parent_id)`)
         .in('booking_id', bookingIds)
+        .order('slot_order', { ascending: true })
     ]);
 
     // Group relations by booking ID
@@ -3037,12 +3064,28 @@ export class SupabaseStorage implements IStorage {
       return acc;
     }, {} as Record<number, Array<{ id: number; name: string }>>);
 
+    const athletesByBooking = (athletesData.data || []).reduce((acc, item) => {
+      if (!acc[item.booking_id]) acc[item.booking_id] = [];
+      const athlete = item.athletes as any;
+      acc[item.booking_id].push({
+        id: athlete.id,
+        name: athlete.name,
+        dateOfBirth: athlete.date_of_birth,
+        gender: athlete.gender,
+        allergies: athlete.allergies,
+        experience: athlete.experience,
+        parentId: athlete.parent_id
+      });
+      return acc;
+    }, {} as Record<number, Array<{ id: number; name: string; dateOfBirth: string; gender: string | null; allergies: string | null; experience: string; parentId: number }>>);
+
     // Combine bookings with relations
     return bookings.map(booking => ({
       ...booking,
       apparatus: apparatusByBooking[booking.id] || [],
       focusAreas: focusAreasByBooking[booking.id] || [],
-      sideQuests: sideQuestsByBooking[booking.id] || []
+      sideQuests: sideQuestsByBooking[booking.id] || [],
+      athletes: athletesByBooking[booking.id] || []
     })) as BookingWithRelations[];
   }
 

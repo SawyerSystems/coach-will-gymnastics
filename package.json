@@ -5,9 +5,9 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "NODE_ENV=development tsx --require dotenv/config server/index.ts",
+    "dev": "NODE_ENV=development PORT=5001 tsx --require dotenv/config server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node --require dotenv/config dist/index.js",
+    "start": "NODE_ENV=production PORT=5001 node --require dotenv/config dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push"
   },
@@ -73,6 +73,7 @@
     "memoizee": "^0.4.17",
     "memorystore": "^1.6.7",
     "next-themes": "^0.4.6",
+    "node-fetch": "^3.3.2",
     "openid-client": "^6.6.2",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",

@@ -26,6 +26,7 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "reservation-pending", 
   "reservation-paid", 
   "reservation-failed", 
+  "reservation-expired", 
   "session-paid", 
   "reservation-refunded", 
   "session-refunded"
@@ -64,6 +65,7 @@ export enum PaymentStatusEnum {
   RESERVATION_PENDING = "reservation-pending",
   RESERVATION_PAID = "reservation-paid",
   RESERVATION_FAILED = "reservation-failed",
+  RESERVATION_EXPIRED = "reservation-expired",
   SESSION_PAID = "session-paid",
   RESERVATION_REFUNDED = "reservation-refunded",
   SESSION_REFUNDED = "session-refunded"

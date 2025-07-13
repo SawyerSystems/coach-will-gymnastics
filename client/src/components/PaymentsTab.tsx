@@ -1,19 +1,18 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, TrendingUp, Clock, AlertCircle, Calendar, Filter, ExternalLink, Check, X, RefreshCw } from "lucide-react";
-import { format } from "date-fns";
-import type { Booking } from "@shared/schema";
 import { formatDate } from "@/lib/dateUtils";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Booking } from "@shared/schema";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { AlertCircle, Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
+import { useState } from "react";
 
 // Extended payment status types
 export type ExtendedPaymentStatus = 
@@ -122,7 +121,7 @@ export function PaymentsTab() {
   // Filter bookings based on search and filters
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = !searchTerm || 
-      booking.athlete1Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (booking.athlete1Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.parentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.parentFirstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.parentLastName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -386,7 +385,7 @@ export function PaymentsTab() {
                       displayPaidAmount = totalPrice; // Show full amount as paid
                     } else if (booking.paymentStatus === "reservation-paid") {
                       // For reservation paid, show reservation amount in Paid Amount
-                      displayPaidAmount = paidAmount > 0 ? paidAmount : 10; // Default $10 reservation
+                      displayPaidAmount = paidAmount > 0 ? paidAmount : 0.50; // Default Stripe minimum reservation
                       balanceDue = totalPrice - displayPaidAmount; // Remaining balance after reservation
                     } else if (booking.paymentStatus === "unpaid" || booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed") {
                       displayPaidAmount = 0; // Nothing paid yet

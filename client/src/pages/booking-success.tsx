@@ -114,9 +114,10 @@ export default function BookingSuccess() {
       )
     : "";
 
-  const lessonPrice = lessonInfo?.price || 0;
-  const reservationFee = 10;
-  const remainingBalance = lessonPrice - reservationFee;
+  // Calculate payment amounts correctly
+  const totalLessonPrice = parseFloat(booking?.amount || '0');
+  const actualPaidAmount = parseFloat(booking?.paidAmount || '0.50'); // Default to Stripe minimum if not set
+  const remainingBalance = totalLessonPrice - actualPaidAmount;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 py-12 px-4">
@@ -147,7 +148,9 @@ export default function BookingSuccess() {
                   <User className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-600">Athletes</p>
-                    <p className="font-semibold">{athleteNames.join(", ")}</p>
+                    <p className="font-semibold">
+                      {athleteNames.length > 0 ? athleteNames.join(", ") : "Athlete information not available"}
+                    </p>
                   </div>
                 </div>
 
@@ -191,11 +194,11 @@ export default function BookingSuccess() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Lesson Total:</span>
-                <span className="font-medium">${lessonPrice}</span>
+                <span className="font-medium">${totalLessonPrice}</span>
               </div>
               <div className="flex justify-between text-sm text-green-700">
                 <span>Reservation Fee Paid:</span>
-                <span className="font-medium">-${reservationFee}</span>
+                <span className="font-medium">-${actualPaidAmount}</span>
               </div>
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">Remaining Balance:</span>
