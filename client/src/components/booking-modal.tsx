@@ -1,54 +1,50 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { useStripe, useElements, PaymentElement, Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { UpdatedWaiverModal } from "./updated-waiver-modal";
-import { TwoStepFocusAreas } from "./two-step-focus-areas";
-import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useAvailableTimes } from "@/hooks/use-available-times";
+import { useCreateBooking } from "@/hooks/use-booking";
+import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
+import { EXPERIENCE_LEVELS, GENDER_OPTIONS, LESSON_TYPES } from "@/lib/constants";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { BookingStatusEnum, insertBookingSchema, PaymentStatusEnum } from "@shared/schema";
+import { loadStripe } from '@stripe/stripe-js';
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CheckCircle, Clock, CreditCard, FileText, User, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
+import { z } from "zod";
+import { TwoStepFocusAreas } from "./two-step-focus-areas";
+import { UpdatedWaiverModal } from "./updated-waiver-modal";
 
 // Initialize Stripe
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
   throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock, User, Users, Star, CheckCircle, ArrowLeft, ArrowRight, CreditCard, Dumbbell, Trophy, Zap, AlertTriangle, FileText } from "lucide-react";
-import { LESSON_TYPES, FOCUS_AREAS, EXPERIENCE_LEVELS, AGES, GENDER_OPTIONS } from "@/lib/constants";
-import { useCreateBooking } from "@/hooks/use-booking";
-import { useAvailableTimes } from "@/hooks/use-available-times";
-import { useStripePricing } from "@/hooks/use-stripe-products";
-import { insertBookingSchema } from "@shared/schema";
 
 interface BookingModalProps {
   isOpen?: boolean;
@@ -104,19 +100,11 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
     resolver: zodResolver(formSchema),
     defaultValues: {
       lessonType: "quick-journey",
-      athlete1Name: "",
-      athlete1DateOfBirth: "",
-      athlete1Allergies: "",
-      athlete1Experience: "beginner",
-      athlete1Gender: "",
-      athlete2Name: "",
-      athlete2DateOfBirth: "",
-      athlete2Allergies: "",
-      athlete2Experience: "beginner",
-      athlete2Gender: "",
-      preferredDate: "",
+      preferredDate: new Date(),
       preferredTime: "",
-      focusAreas: [],
+      focusAreaIds: [],
+      apparatusIds: [],
+      sideQuestIds: [],
       parentFirstName: "",
       parentLastName: "",
       parentEmail: "",
@@ -124,14 +112,24 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       emergencyContactName: "",
       emergencyContactPhone: "",
       amount: "40",
-      status: "pending",
+      status: BookingStatusEnum.PENDING,
       bookingMethod: "online",
       waiverSigned: false,
-      paymentStatus: "unpaid",
+      paymentStatus: PaymentStatusEnum.UNPAID,
       reservationFeePaid: false,
       paidAmount: "0.00",
       specialRequests: "",
       adminNotes: "",
+      athletes: [
+        {
+          slotOrder: 1,
+          name: "",
+          dateOfBirth: "",
+          allergies: "",
+          experience: "beginner",
+          gender: "Prefer not to say"
+        }
+      ]
     },
   });
 
@@ -149,7 +147,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   }, [parentAuthData]);
 
   const watchedLessonType = form.watch("lessonType");
-  const watchedFocusAreas = form.watch("focusAreas");
+  const watchedFocusAreaIds = form.watch("focusAreaIds");
   const watchedDate = form.watch("preferredDate");
 
   // Get lesson duration for availability checking
@@ -160,7 +158,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
   // Fetch available time slots when date or lesson type changes
   const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableTimes(
-    watchedDate || null, 
+    watchedDate ? watchedDate.toISOString().split('T')[0] : null, 
     watchedLessonType || null
   );
 
@@ -189,10 +187,17 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   useEffect(() => {
     if (prefilledAthletes && prefilledAthletes.length > 0) {
       const athlete = prefilledAthletes[0];
-      form.setValue("athlete1Name", athlete.name);
-      form.setValue("athlete1DateOfBirth", athlete.dateOfBirth);
-      form.setValue("athlete1Allergies", athlete.allergies || "");
-      form.setValue("athlete1Experience", athlete.experience);
+      const athletes = form.getValues("athletes");
+      if (athletes && athletes.length > 0) {
+        athletes[0] = {
+          ...athletes[0],
+          name: athlete.name,
+          dateOfBirth: athlete.dateOfBirth,
+          allergies: athlete.allergies || "",
+          experience: athlete.experience,
+        };
+        form.setValue("athletes", athletes);
+      }
       
       // Skip to step 3 (Schedule) since athlete info is pre-filled
       setCurrentStep(3);
@@ -206,11 +211,11 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   };
 
   const handleFocusAreaToggle = (area: string, checked: boolean) => {
-    const currentAreas = form.getValues("focusAreas");
+    const currentAreas = form.getValues("focusAreaIds");
     if (checked && currentAreas.length < maxFocusAreas) {
-      form.setValue("focusAreas", [...currentAreas, area]);
+      form.setValue("focusAreaIds", [...currentAreas, parseInt(area)]);
     } else if (!checked) {
-      form.setValue("focusAreas", currentAreas.filter(a => a !== area));
+      form.setValue("focusAreaIds", currentAreas.filter(id => id !== parseInt(area)));
     }
   };
 
@@ -221,9 +226,9 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       case 1: // Lesson Type
         return !!values.lessonType;
       case 2: // Athletes
-        return !!values.athlete1Name && !!values.athlete1DateOfBirth && !!values.athlete1Experience;
+        return !!values.athletes?.[0]?.name && !!values.athletes?.[0]?.dateOfBirth && !!values.athletes?.[0]?.experience;
       case 3: // Schedule
-        return !!values.preferredDate && !!values.preferredTime && values.focusAreas?.length > 0;
+        return !!values.preferredDate && !!values.preferredTime && values.focusAreaIds?.length > 0;
       case 4: // Parent Info - skip validation if parent is logged in
         if (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer)) {
           return true; // Skip validation if parent is already authenticated
@@ -332,7 +337,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
         lessonType: data.lessonType,
         totalAmount: data.amount,
         lessonFee: lessonAmount,
-        athlete1Name: data.athlete1Name,
+        athlete1Name: data.athletes?.[0]?.name || "",
         preferredDate: data.preferredDate,
         preferredTime: data.preferredTime
       }));
@@ -472,7 +477,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                   <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="athlete1Name"
+                      name="athletes.0.name"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Name</FormLabel>
@@ -485,7 +490,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     />
                     <FormField
                       control={form.control}
-                      name="athlete1DateOfBirth"
+                      name="athletes.0.dateOfBirth"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Date of Birth</FormLabel>
@@ -498,7 +503,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     />
                     <FormField
                       control={form.control}
-                      name="athlete1Gender"
+                      name="athletes.0.gender"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Gender</FormLabel>
@@ -522,7 +527,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     />
                     <FormField
                       control={form.control}
-                      name="athlete1Experience"
+                      name="athletes.0.experience"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Experience Level</FormLabel>
@@ -548,7 +553,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                   <div className="grid md:grid-cols-1 gap-4">
                     <FormField
                       control={form.control}
-                      name="athlete1Allergies"
+                      name="athletes.0.allergies"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Allergies/Medical</FormLabel>
@@ -569,7 +574,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     <div className="grid md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="athlete2Name"
+                        name="athletes.1.name"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Name</FormLabel>
@@ -590,7 +595,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       />
                       <FormField
                         control={form.control}
-                        name="athlete2DateOfBirth"
+                        name="athletes.1.dateOfBirth"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Date of Birth</FormLabel>
@@ -603,7 +608,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       />
                       <FormField
                         control={form.control}
-                        name="athlete2Gender"
+                        name="athletes.1.gender"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Gender</FormLabel>
@@ -627,7 +632,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       />
                       <FormField
                         control={form.control}
-                        name="athlete2Experience"
+                        name="athletes.1.experience"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Experience Level</FormLabel>
@@ -653,7 +658,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     <div className="grid md:grid-cols-1 gap-4">
                       <FormField
                         control={form.control}
-                        name="athlete2Allergies"
+                        name="athletes.1.allergies"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Allergies/Medical</FormLabel>
@@ -686,7 +691,11 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           Preferred Date
                         </FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="date" 
+                            value={field.value ? field.value.toISOString().split('T')[0] : ''} 
+                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -736,8 +745,8 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                 </div>
 
                 <TwoStepFocusAreas
-                  selectedFocusAreas={watchedFocusAreas}
-                  onFocusAreasChange={form.setValue.bind(null, 'focusAreas')}
+                  selectedFocusAreas={watchedFocusAreaIds.map(id => id.toString())}
+                  onFocusAreasChange={(areas: string[]) => form.setValue('focusAreaIds', areas.map(id => parseInt(id)))}
                   maxSelections={maxFocusAreas}
                 />
               </div>
@@ -910,22 +919,22 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       <div className="flex justify-between">
                         <span>Athletes:</span>
                         <span className="font-medium">
-                          {form.watch("athlete1Name")}
-                          {lessonTypeData.athletes === 2 && form.watch("athlete2Name") && 
-                            `, ${form.watch("athlete2Name")}`
+                          {form.watch("athletes")?.[0]?.name}
+                          {lessonTypeData.athletes === 2 && form.watch("athletes")?.[1]?.name && 
+                            `, ${form.watch("athletes")?.[1]?.name}`
                           }
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Date & Time:</span>
                         <span className="font-medium">
-                          {form.watch("preferredDate")} at {form.watch("preferredTime")}
+                          {form.watch("preferredDate")?.toLocaleDateString()} at {form.watch("preferredTime")}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Focus Areas:</span>
                         <span className="font-medium">
-                          {watchedFocusAreas.join(", ")}
+                          {watchedFocusAreaIds.join(", ")}
                         </span>
                       </div>
                       <hr className="my-4" />
@@ -990,7 +999,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     onClick={nextStep}
                     disabled={
                       (currentStep === 1 && !selectedLessonType) || 
-                      (currentStep === 2 && form.getValues("focusAreas").length === 0) ||
+                      (currentStep === 2 && form.getValues("focusAreaIds").length === 0) ||
                       (currentStep === 4 && !isStep4Valid()) ||
                       (currentStep === 5 && !waiverSigned)
                     }
@@ -1037,7 +1046,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
           });
         }}
         bookingData={{
-          athleteName: form.watch("athlete1Name"),
+          athleteName: form.watch("athletes")?.[0]?.name || "",
           parentName: `${form.watch("parentFirstName")} ${form.watch("parentLastName")}`,
           emergencyContactNumber: form.watch("emergencyContactPhone"),
           relationshipToAthlete: "Parent/Guardian",

@@ -1,5 +1,7 @@
 import express, { NextFunction, type Request, Response } from "express";
 import session from "express-session";
+import fs from "fs";
+import path from "path";
 import { isAdminAuthenticated } from "./auth";
 import { registerRoutes } from "./routes";
 import { log, serveStatic, setupVite } from "./vite";
@@ -277,6 +279,31 @@ app.use((req, res, next) => {
         console.log(`✅ Cleared ${authCodesCleared} auth codes`);
       }
 
+      // Clear test waiver files
+      let waiversCleared = 0;
+      try {
+        const waiversDir = path.join(process.cwd(), 'data', 'waivers');
+        if (fs.existsSync(waiversDir)) {
+          const files = fs.readdirSync(waiversDir);
+          const waiverFiles = files.filter(file => file.startsWith('waiver_') && file.endsWith('.pdf'));
+          
+          for (const file of waiverFiles) {
+            const filePath = path.join(waiversDir, file);
+            try {
+              fs.unlinkSync(filePath);
+              waiversCleared++;
+            } catch (fileError) {
+              console.warn(`⚠️  Could not delete waiver file ${file}:`, fileError);
+            }
+          }
+          console.log(`✅ Cleared ${waiversCleared} waiver files`);
+        } else {
+          console.log('📁 No waivers directory found');
+        }
+      } catch (waiverError) {
+        console.warn('⚠️  Could not clear waiver files:', waiverError);
+      }
+
       const summary = {
         success: true,
         message: 'All test data cleared successfully',
@@ -284,7 +311,8 @@ app.use((req, res, next) => {
           bookings: bookingsCleared,
           athletes: athletesCleared,
           parents: parentsCleared,
-          authCodes: authCodesCleared
+          authCodes: authCodesCleared,
+          waivers: waiversCleared
         }
       };
 
@@ -698,7 +726,7 @@ app.use((req, res, next) => {
 
       // Test Stripe integration
       try {
-        const stripeResponse = await fetch('http://localhost:5000/api/stripe/products');
+        const stripeResponse = await fetch('http://localhost:5001/api/stripe/products');
         const stripeData = await stripeResponse.json();
         checks.push({ test: 'Stripe Integration', passed: stripeResponse.ok && stripeData.data });
         if (stripeResponse.ok && stripeData.data) passed++;
@@ -712,7 +740,7 @@ app.use((req, res, next) => {
 
       // Test content APIs
       try {
-        const contentResponse = await fetch('http://localhost:5000/api/site-content');
+        const contentResponse = await fetch('http://localhost:5001/api/site-content');
         checks.push({ test: 'Content API', passed: contentResponse.ok });
         if (contentResponse.ok) passed++;
       } catch {
@@ -816,7 +844,7 @@ app.use((req, res, next) => {
             table: test.table,
             description: test.description,
             success: false,
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       }

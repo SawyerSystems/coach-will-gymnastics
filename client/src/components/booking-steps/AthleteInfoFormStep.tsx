@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { PlusCircle, Trash2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { GENDER_OPTIONS } from "@/lib/constants";
+import { AlertCircle, PlusCircle, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function AthleteInfoFormStep() {
   const { state, updateState } = useBookingFlow();
@@ -50,6 +52,7 @@ export function AthleteInfoFormStep() {
       dateOfBirth: '',
       allergies: '',
       experience: 'beginner' as const,
+      gender: '',
     };
     updateState({ athleteInfo: [...state.athleteInfo, newAthlete] });
   };
@@ -76,6 +79,18 @@ export function AthleteInfoFormStep() {
       handleAddAthlete();
     }
   }, []); // Only run on mount
+
+  // Ensure all athletes have the gender field (migration)
+  useEffect(() => {
+    const needsUpdate = state.athleteInfo.some(athlete => !athlete.hasOwnProperty('gender'));
+    if (needsUpdate) {
+      const updated = state.athleteInfo.map(athlete => ({
+        ...athlete,
+        gender: (athlete as any).gender || '',
+      }));
+      updateState({ athleteInfo: updated });
+    }
+  }, [state.athleteInfo.length]); // Run when athletes are added/removed
 
   const maxAthletes = state.lessonType.includes('semi-private') ? 2 : 1;
 
@@ -128,6 +143,25 @@ export function AthleteInfoFormStep() {
                   className="min-h-[48px]"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`gender-${index}`}>Gender</Label>
+              <Select 
+                value={(athlete as any).gender || ""} 
+                onValueChange={(value) => handleAthleteChange(index, 'gender', value)}
+              >
+                <SelectTrigger className="min-h-[48px]">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDER_OPTIONS.map((gender) => (
+                    <SelectItem key={gender} value={gender}>
+                      {gender}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

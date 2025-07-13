@@ -1284,7 +1284,7 @@ export class SupabaseStorage implements IStorage {
       firstName: athlete.first_name,
       lastName: athlete.last_name,
       dateOfBirth: athlete.date_of_birth,
-      gender: athlete.gender || null,
+      gender: athlete.gender || null, // Will be null until column is added
       allergies: athlete.allergies,
       experience: athlete.experience,
       photo: athlete.photo,
@@ -1353,6 +1353,7 @@ export class SupabaseStorage implements IStorage {
       last_name: insertAthlete.lastName,
       parent_id: insertAthlete.parentId,
       date_of_birth: insertAthlete.dateOfBirth,
+      gender: insertAthlete.gender || null,
       allergies: insertAthlete.allergies,
       experience: insertAthlete.experience,
       photo: insertAthlete.photo || null
@@ -1514,8 +1515,9 @@ export class SupabaseStorage implements IStorage {
             firstName: athleteData.name.split(' ')[0],
             lastName: athleteData.name.split(' ').slice(1).join(' ') || '',
             dateOfBirth: athleteData.dateOfBirth,
+            gender: athleteData.gender,
             allergies: athleteData.allergies,
-            experience: athleteData.experience,
+            experience: athleteData.experience as "beginner" | "intermediate" | "advanced",
             photo: athleteData.photo
           });
           athleteId = newAthlete.id;

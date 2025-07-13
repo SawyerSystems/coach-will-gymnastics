@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { EnhancedBookingModal } from '@/components/enhanced-booking-modal';
+import { ParentWaiverManagement } from '@/components/parent-waiver-management';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, User, Users, MapPin, LogOut, AlertCircle, Star, Trophy, DollarSign } from 'lucide-react';
-import { format } from 'date-fns';
-import { calculateAge, formatDate } from '@/lib/dateUtils';
-import { toast } from '@/hooks/use-toast';
-import { EnhancedBookingModal } from '@/components/enhanced-booking-modal';
-import { useAvailableTimes } from '@/hooks/use-available-times';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
-import { ParentWaiverManagement } from '@/components/parent-waiver-management';
-import type { Booking, Athlete, Customer } from '@shared/schema';
+import { useAvailableTimes } from '@/hooks/use-available-times';
+import { toast } from '@/hooks/use-toast';
+import { calculateAge, formatDate } from '@/lib/dateUtils';
+import { apiRequest } from '@/lib/queryClient';
+import type { Athlete, Booking, Customer } from '@shared/schema';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { AlertCircle, Calendar, Clock, DollarSign, LogOut, MapPin, Star, Trophy, User, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'wouter';
 
 // RescheduleForm component
 function RescheduleForm({ booking, onSubmit, onCancel }: { 
@@ -514,7 +514,9 @@ function ParentDashboard() {
                             <div className="flex items-center gap-2">
                               <DollarSign className="w-4 h-4 text-gray-500" />
                               <span className="text-sm">
-                                {booking.displayPaymentStatus || booking.paymentStatus || 'Unpaid'}
+                                {booking.paymentStatus === 'paid' || booking.paymentStatus === 'session-paid' ? 'Paid' : 
+                                 booking.paymentStatus === 'reservation-paid' ? 'Reservation Paid' : 
+                                 'Unpaid'}
                               </span>
                             </div>
 

@@ -345,6 +345,7 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
     slotOrder: z.number(),
     name: z.string(),
     dateOfBirth: z.string(),
+    gender: z.enum(["Male", "Female", "Other", "Prefer not to say"]).optional(),
     allergies: z.string().optional(),
     experience: z.string(),
     photo: z.string().optional(),

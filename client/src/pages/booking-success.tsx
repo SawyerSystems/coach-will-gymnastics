@@ -1,19 +1,19 @@
-import { useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  CheckCircle,
-  Calendar,
-  User,
-  Clock,
-  DollarSign,
-  Mail,
-  Loader2,
-} from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LESSON_TYPES } from "@/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { LESSON_TYPES } from "@/lib/constants";
+import {
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Loader2,
+    Mail,
+    User,
+} from "lucide-react";
+import { useEffect } from "react";
+import { Link } from "wouter";
 
 export default function BookingSuccess() {
   const urlParams = new URLSearchParams(window.location.search);

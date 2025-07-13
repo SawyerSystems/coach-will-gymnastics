@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       // Get bookings for this parent with athlete information
-      const parentBookingsQuery = await storage.supabase
+      const parentBookingsQuery = await supabase
         .from('bookings')
         .select(`
           *,
@@ -348,8 +348,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Transform the data to include athletes array and proper payment status
-      const bookingsWithAthletes = parentBookingsQuery.data?.map(booking => {
-        const athletes = booking.booking_athletes?.map(ba => ba.athletes) || [];
+      const bookingsWithAthletes = parentBookingsQuery.data?.map((booking: any) => {
+        const athletes = booking.booking_athletes?.map((ba: any) => ba.athletes) || [];
         
         // Map payment status to user-friendly display
         let displayPaymentStatus = booking.payment_status;
@@ -1025,49 +1025,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       
-      // Find booking by session ID with related athlete information
-      const booking = await storage.getBookingWithRelations(parseInt(sessionId)) || 
-                      (await storage.getAllBookings()).find(b => b.stripeSessionId === sessionId);
+      // Find booking by session ID - session IDs are strings, not numbers
+      const allBookings = await storage.getAllBookings();
+      const booking = allBookings.find(b => b.stripeSessionId === sessionId);
       
       if (!booking) {
         return res.status(404).json({ message: "Booking not found" });
       }
+      
+      console.log('Found booking:', {
+        id: booking.id,
+        idType: typeof booking.id,
+        stripeSessionId: booking.stripeSessionId,
+        athlete1Name: booking.athlete1Name
+      });
       
       // If it's a legacy booking, return as-is
       if (booking.athlete1Name) {
         return res.json(booking);
       }
       
-      // For normalized bookings, get athlete information
-      const bookingAthletes = await storage.supabase
-        .from('booking_athletes')
-        .select(`
-          athlete_id,
-          slot_order,
-          athletes:athlete_id (
-            id,
-            name,
-            first_name,
-            last_name,
-            date_of_birth,
-            allergies,
-            experience,
-            gender
-          )
-        `)
-        .eq('booking_id', booking.id)
-        .order('slot_order');
-        
-      const athletes = bookingAthletes.data?.map(ba => ba.athletes) || [];
+      // For normalized bookings, get athlete information via storage layer
+      const bookingWithAthletes = await storage.getBookingWithRelations(booking.id);
       
-      // Return booking with athlete information
-      res.json({
-        ...booking,
-        athletes: athletes
-      });
+      if (bookingWithAthletes) {
+        return res.json(bookingWithAthletes);
+      }
+      
+      // Fallback - return booking without detailed athlete info
+      res.json(booking);
     } catch (error: any) {
       console.error("Error fetching booking by session:", error);
       res.status(500).json({ message: "Error fetching booking: " + error.message });
+    }
+  });
+
+  // Test email endpoint for Thomas Sawyer
+  app.post("/api/test-email-thomas", async (req, res) => {
+    try {
+      await sendSessionConfirmation(
+        "thomas.sawyer@gmail.com",
+        "Thomas Sawyer",
+        "Alex Sawyer",
+        "Monday, July 15, 2025",
+        "10:00 AM"
+      );
+      res.json({ message: "Test email sent successfully to Thomas Sawyer" });
+    } catch (error: any) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ message: "Error sending email: " + error.message });
     }
   });
 
@@ -1181,6 +1187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     firstName,
                     lastName,
                     dateOfBirth: booking.athlete1DateOfBirth,
+                    gender: undefined, // Legacy bookings don't have gender data
                     experience: validExperience,
                     allergies: booking.athlete1Allergies || null
                   });
@@ -1213,6 +1220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     firstName,
                     lastName,
                     dateOfBirth: booking.athlete2DateOfBirth,
+                    gender: undefined, // Legacy bookings don't have gender data
                     experience: validExperience,
                     allergies: booking.athlete2Allergies || null
                   });
@@ -1392,8 +1400,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5000'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5000'}/booking`,
+        success_url: `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5001'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5001'}/booking`,
         metadata: {
           booking_id: bookingId.toString(),
           is_reservation_fee: isReservationFee ? 'true' : 'false',
@@ -1486,8 +1494,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
         ],
         mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/booking`,
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5001'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5001'}/booking`,
         metadata: {
           bookingId: bookingId.toString(),
           type: 'reservation_payment'
@@ -1495,7 +1503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Create parent login link with proper redirect
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5001';
       const parentLoginLink = `${baseUrl}/parent-login?redirect=dashboard&booking_id=${bookingId}`;
       
       // Render all email templates first
@@ -1903,7 +1911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send cancellation email if booking was cancelled
       if (status === 'cancelled') {
         try {
-          const rescheduleLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/booking`;
+          const rescheduleLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5173'}/booking`;
           await sendSessionCancellation(
             existingBooking.parentEmail,
             existingBooking.parentFirstName,
@@ -2752,7 +2760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send new blog post notification email (optional for development)
       try {
-        const blogLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/blog`;
+        const blogLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5173'}/blog`;
         // Note: In production, you would send this to all subscribers
         // For now, we'll just log it since we don't have a subscriber list
         console.log(`New blog post created: "${post.title}" - would send email notification`);
@@ -2811,7 +2819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send new tip notification email (optional for development)
       try {
-        const tipLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/tips`;
+        const tipLink =            `${process.env.REPLIT_DOMAINS || 'http://localhost:5173'}/tips`;
         // Note: In production, you would send this to all subscribers
         // For now, we'll just log it since we don't have a subscriber list
         console.log(`New tip created: "${tip.title}" - would send email notification`);
@@ -2922,7 +2930,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result = await sendSessionCancellation(
             email,
             "Test Parent",
-            `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/booking`
+            `${process.env.REPLIT_DOMAINS || 'http://localhost:5173'}/booking`
           );
           break;
           

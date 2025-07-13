@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { LESSON_TYPES } from '@/lib/constants';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 export type BookingFlowType = 'parent-portal' | 'athlete-modal' | 'new-user';
 
@@ -9,6 +8,7 @@ interface AthleteInfo {
   dateOfBirth: string;
   allergies: string;
   experience: 'beginner' | 'intermediate' | 'advanced';
+  gender?: string;
 }
 
 interface BookingAthlete {

@@ -1,14 +1,14 @@
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CreditCard, AlertCircle, Info } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { LESSON_TYPES } from "@/lib/constants";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useLocation } from "wouter";
-import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useStripePricing } from "@/hooks/useStripePricing";
+import { LESSON_TYPES } from "@/lib/constants";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { AlertCircle, CreditCard, Info, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 
 export function PaymentStep() {
   const { state } = useBookingFlow();
@@ -82,7 +82,7 @@ export function PaymentStep() {
       };
 
       // Handle athlete data based on flow
-      let athletes = [];
+      let athletes: any[] = [];
       if (state.flowType === 'new-user' && state.athleteInfo.length > 0) {
         // New athletes
         athletes = state.athleteInfo.map((athlete, index) => ({
@@ -92,6 +92,7 @@ export function PaymentStep() {
           dateOfBirth: athlete.dateOfBirth,
           allergies: athlete.allergies || '',
           experience: athlete.experience,
+          gender: (athlete as any).gender || '',
         }));
       } else if (state.selectedAthletes.length > 0 && existingAthletes) {
         // Existing athletes - use fetched data
@@ -102,6 +103,7 @@ export function PaymentStep() {
           dateOfBirth: athlete.dateOfBirth,
           allergies: athlete.allergies || '',
           experience: athlete.experience || 'intermediate',
+          gender: athlete.gender || '',
         }));
       }
 

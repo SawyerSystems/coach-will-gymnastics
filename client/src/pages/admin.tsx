@@ -1,78 +1,57 @@
-import { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { PaymentsTab } from "@/components/PaymentsTab";
+import { AdminBookingManager } from "@/components/admin-booking-manager";
+import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
+import { AdminWaiverManagement } from "@/components/admin-waiver-management";
+import { ContentSection, SectionBasedContentEditor } from "@/components/section-based-content-editor";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription,
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogFooter 
-} from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { apiRequest } from "@/lib/queryClient";
+import { Textarea } from "@/components/ui/textarea";
+import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability } from "@/hooks/use-availability";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Calendar, 
-  DollarSign, 
-  Users, 
-  User,
-  FileText, 
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Download,
-  Clock,
-  CheckCircle,
-  X,
-  Settings,
-  CalendarDays,
-  CalendarX,
-  MessageSquare,
-  BarChart,
-  Filter,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  RefreshCw,
-  Upload,
-  FileImage,
-  File,
-  MessageCircle,
-  Mail,
-  Cake,
-  Star,
-  Check,
-  AlertCircle,
-  Search
-} from "lucide-react";
-import type { Booking, BlogPost, Tip, InsertBlogPost, Availability, AvailabilityException, InsertAvailability, InsertAvailabilityException, Athlete, InsertAthlete, Customer } from "@shared/schema";
-import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability, useAvailabilityExceptions, useCreateAvailabilityException, useDeleteAvailabilityException } from "@/hooks/use-availability";
-import { AdminBookingManager, getStatusBadgeProps } from "@/components/admin-booking-manager";
-import { SectionBasedContentEditor, ContentSection } from "@/components/section-based-content-editor";
-import { PaymentsTab } from "@/components/PaymentsTab";
-import { AdminWaiverManagement } from "@/components/admin-waiver-management";
-import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
-import { calculateAge, formatDate } from "@/lib/dateUtils";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
+import { calculateAge, formatDate } from "@/lib/dateUtils";
+import { apiRequest } from "@/lib/queryClient";
+import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Customer, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Tip } from "@shared/schema";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    AlertCircle,
+    ArrowUpDown,
+    BarChart,
+    Calendar,
+    CalendarX,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Edit,
+    Eye,
+    Mail,
+    MessageCircle,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Search,
+    Trash2,
+    User,
+    Users,
+    X
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Admin() {
   const [, setLocation] = useLocation();
@@ -103,7 +82,7 @@ export default function Admin() {
   });
   
   const [newException, setNewException] = useState<InsertAvailabilityException>({
-    date: "",
+    date: new Date(),
     startTime: "09:00",
     endTime: "17:00",
     isAvailable: false,
@@ -383,7 +362,7 @@ export default function Admin() {
       setIsDeleteConfirmOpen(false);
       toast({ 
         title: "Data cleared successfully", 
-        description: `Cleared ${data.cleared.bookings} bookings, ${data.cleared.athletes} athletes, ${data.cleared.parents} parents`
+        description: `Cleared ${data.cleared.bookings} bookings, ${data.cleared.athletes} athletes, ${data.cleared.parents} parents, ${data.cleared.waivers || 0} waiver files`
       });
     },
     onError: (error: any) => {
@@ -2020,10 +1999,10 @@ export default function Admin() {
                               <Label>Date</Label>
                               <Input
                                 type="date"
-                                value={newException.date}
+                                value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : newException.date}
                                 onChange={(e) => setNewException({
                                   ...newException,
-                                  date: e.target.value
+                                  date: new Date(e.target.value)
                                 })}
                               />
                               {newException.date && (
@@ -3210,6 +3189,7 @@ export default function Admin() {
                     <li>All athletes</li>
                     <li>All parents</li>
                     <li>All authentication codes</li>
+                    <li>All test waiver files</li>
                   </ul>
                   <p className="font-semibold text-red-600">This action cannot be undone!</p>
                 </div>
