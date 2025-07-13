@@ -44,7 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, User, Users, Star, CheckCircle, ArrowLeft, ArrowRight, CreditCard, Dumbbell, Trophy, Zap, AlertTriangle, FileText } from "lucide-react";
-import { LESSON_TYPES, FOCUS_AREAS, EXPERIENCE_LEVELS, AGES } from "@/lib/constants";
+import { LESSON_TYPES, FOCUS_AREAS, EXPERIENCE_LEVELS, AGES, GENDER_OPTIONS } from "@/lib/constants";
 import { useCreateBooking } from "@/hooks/use-booking";
 import { useAvailableTimes } from "@/hooks/use-available-times";
 import { useStripePricing } from "@/hooks/use-stripe-products";
@@ -108,10 +108,12 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       athlete1DateOfBirth: "",
       athlete1Allergies: "",
       athlete1Experience: "beginner",
+      athlete1Gender: "",
       athlete2Name: "",
       athlete2DateOfBirth: "",
       athlete2Allergies: "",
       athlete2Experience: "beginner",
+      athlete2Gender: "",
       preferredDate: "",
       preferredTime: "",
       focusAreas: [],
@@ -467,7 +469,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                 {/* Athlete 1 */}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-gray-700">Athlete 1</h4>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="athlete1Name"
@@ -496,13 +498,24 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     />
                     <FormField
                       control={form.control}
-                      name="athlete1Allergies"
+                      name="athlete1Gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Allergies/Medical</FormLabel>
-                          <FormControl>
-                            <Input placeholder="None" {...field} value={field.value ?? ""} />
-                          </FormControl>
+                          <FormLabel>Gender</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {GENDER_OPTIONS.map((gender) => (
+                                <SelectItem key={gender} value={gender}>
+                                  {gender}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -532,13 +545,28 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       )}
                     />
                   </div>
+                  <div className="grid md:grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="athlete1Allergies"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Allergies/Medical</FormLabel>
+                          <FormControl>
+                            <Input placeholder="None" {...field} value={field.value ?? ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {/* Athlete 2 (for semi-private lessons) */}
                 {(selectedLessonType === "dual-quest" || selectedLessonType === "partner-progression") && (
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-700">Athlete 2</h4>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="athlete2Name"
@@ -575,33 +603,20 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       />
                       <FormField
                         control={form.control}
-                        name="athlete2Allergies"
+                        name="athlete2Gender"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Allergies/Medical</FormLabel>
-                            <FormControl>
-                              <Input placeholder="None" {...field} value={field.value ?? ""} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="athlete2Experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Experience Level</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || undefined}>
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select age" />
+                                  <SelectValue placeholder="Select gender" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {AGES.map((age) => (
-                                  <SelectItem key={age} value={age}>
-                                    {age} years old
+                                {GENDER_OPTIONS.map((gender) => (
+                                  <SelectItem key={gender} value={gender}>
+                                    {gender}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -630,6 +645,21 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                                 ))}
                               </SelectContent>
                             </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="athlete2Allergies"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Allergies/Medical</FormLabel>
+                            <FormControl>
+                              <Input placeholder="None" {...field} value={field.value ?? ""} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

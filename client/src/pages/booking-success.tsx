@@ -95,9 +95,17 @@ export default function BookingSuccess() {
   const lessonInfo = booking
     ? LESSON_TYPES[booking.lessonType as keyof typeof LESSON_TYPES]
     : null;
+    
+  // Handle both legacy and normalized athlete data
   const athleteNames = [];
-  if (booking?.athlete1Name) athleteNames.push(booking.athlete1Name);
-  if (booking?.athlete2Name) athleteNames.push(booking.athlete2Name);
+  if (booking?.athletes && booking.athletes.length > 0) {
+    // Normalized data
+    athleteNames.push(...booking.athletes.map((athlete: any) => athlete.name));
+  } else {
+    // Legacy data
+    if (booking?.athlete1Name) athleteNames.push(booking.athlete1Name);
+    if (booking?.athlete2Name) athleteNames.push(booking.athlete2Name);
+  }
 
   const formattedDate = booking?.preferredDate
     ? format(

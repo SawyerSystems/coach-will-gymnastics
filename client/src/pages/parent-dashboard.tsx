@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, User, Users, MapPin, LogOut, AlertCircle, Star, Trophy } from 'lucide-react';
+import { Calendar, Clock, User, Users, MapPin, LogOut, AlertCircle, Star, Trophy, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateAge, formatDate } from '@/lib/dateUtils';
 import { toast } from '@/hooks/use-toast';
@@ -294,10 +294,16 @@ function ParentDashboard() {
     },
   });
 
-  const upcomingBookings = bookings.filter(b => 
-    new Date(b.preferredDate) >= new Date() && 
-    b.status !== 'cancelled'
-  );
+  const upcomingBookings = bookings.filter(b => {
+    const bookingDate = new Date(b.preferredDate);
+    const today = new Date();
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(today.getDate() + 7);
+    
+    return bookingDate >= today && 
+           bookingDate <= sevenDaysFromNow && 
+           b.status !== 'cancelled';
+  });
 
   const pastBookings = bookings.filter(b => 
     new Date(b.preferredDate) < new Date() || 
@@ -477,9 +483,17 @@ function ParentDashboard() {
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4 text-gray-500" />
-                              <span className="font-medium">{booking.athlete1Name}</span>
-                              {booking.athlete2Name && (
-                                <span className="font-medium">& {booking.athlete2Name}</span>
+                              {booking.athletes && booking.athletes.length > 0 ? (
+                                <span className="font-medium">
+                                  {booking.athletes.map((athlete: any) => athlete.name).join(' & ')}
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="font-medium">{booking.athlete1Name}</span>
+                                  {booking.athlete2Name && (
+                                    <span className="font-medium">& {booking.athlete2Name}</span>
+                                  )}
+                                </>
                               )}
                             </div>
 
@@ -496,6 +510,14 @@ function ParentDashboard() {
                               </Badge>
                             </div>
 
+                            {/* Payment Status */}
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm">
+                                {booking.displayPaymentStatus || booking.paymentStatus || 'Unpaid'}
+                              </span>
+                            </div>
+
                             {booking.focusAreas && booking.focusAreas.length > 0 && (
                               <div className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-gray-500" />
@@ -510,7 +532,7 @@ function ParentDashboard() {
                             <Badge 
                               variant={booking.status === 'confirmed' ? 'default' : 'secondary'}
                             >
-                              {booking.status}
+                              {booking.status === 'confirmed' ? 'Confirmed' : booking.status}
                             </Badge>
 
                             {booking.status !== 'cancelled' && (

@@ -1434,13 +1434,9 @@ export class SupabaseStorage implements IStorage {
 
   // Bookings
   async createBooking(insertBooking: InsertBooking): Promise<Booking> {
-    // Map camelCase to snake_case for database
+    // Map camelCase to snake_case for database (normalized schema)
     const dbBooking: any = {
       lesson_type: insertBooking.lessonType,
-      athlete1_name: insertBooking.athletes?.[0]?.name || '',
-      athlete1_date_of_birth: insertBooking.athletes?.[0]?.dateOfBirth || '',
-      athlete1_allergies: insertBooking.athletes?.[0]?.allergies || '',
-      athlete1_experience: insertBooking.athletes?.[0]?.experience || 'beginner',
       parent_first_name: insertBooking.parentFirstName,
       parent_last_name: insertBooking.parentLastName,
       parent_email: insertBooking.parentEmail,
@@ -1449,23 +1445,28 @@ export class SupabaseStorage implements IStorage {
       emergency_contact_phone: insertBooking.emergencyContactPhone,
       preferred_date: insertBooking.preferredDate,
       preferred_time: insertBooking.preferredTime,
-      focus_areas: insertBooking.focusAreaIds?.map(String) || [],
+      // Note: focus_areas are now handled via booking_focus_areas junction table, not as a column
       amount: insertBooking.amount,
       status: insertBooking.status || 'pending',
       payment_status: insertBooking.paymentStatus || 'unpaid',
       booking_method: insertBooking.bookingMethod || 'online'
     };
 
-    // Optional fields for athlete2
-    if (insertBooking.athletes?.[1]) {
-      dbBooking.athlete2_name = insertBooking.athletes[1].name;
-      dbBooking.athlete2_date_of_birth = insertBooking.athletes[1].dateOfBirth;
-      dbBooking.athlete2_allergies = insertBooking.athletes[1].allergies || '';
-      dbBooking.athlete2_experience = insertBooking.athletes[1].experience || 'beginner';
-    }
+    // Optional safety verification fields
+    if (insertBooking.dropoffPersonName) dbBooking.dropoff_person_name = insertBooking.dropoffPersonName;
     if (insertBooking.dropoffPersonRelationship) dbBooking.dropoff_person_relationship = insertBooking.dropoffPersonRelationship;
+    if (insertBooking.dropoffPersonPhone) dbBooking.dropoff_person_phone = insertBooking.dropoffPersonPhone;
+    if (insertBooking.pickupPersonName) dbBooking.pickup_person_name = insertBooking.pickupPersonName;
     if (insertBooking.pickupPersonRelationship) dbBooking.pickup_person_relationship = insertBooking.pickupPersonRelationship;
+    if (insertBooking.pickupPersonPhone) dbBooking.pickup_person_phone = insertBooking.pickupPersonPhone;
+    if (insertBooking.altPickupPersonName) dbBooking.alt_pickup_person_name = insertBooking.altPickupPersonName;
     if (insertBooking.altPickupPersonRelationship) dbBooking.alt_pickup_person_relationship = insertBooking.altPickupPersonRelationship;
+    if (insertBooking.altPickupPersonPhone) dbBooking.alt_pickup_person_phone = insertBooking.altPickupPersonPhone;
+    if (insertBooking.safetyVerificationSigned) dbBooking.safety_verification_signed = insertBooking.safetyVerificationSigned;
+    if (insertBooking.safetyVerificationSignedAt) dbBooking.safety_verification_signed_at = insertBooking.safetyVerificationSignedAt;
+    if (insertBooking.specialRequests) dbBooking.special_requests = insertBooking.specialRequests;
+    if (insertBooking.adminNotes) dbBooking.admin_notes = insertBooking.adminNotes;
+    if (insertBooking.stripeSessionId) dbBooking.stripe_session_id = insertBooking.stripeSessionId;
 
     const { data, error } = await supabase
       .from('bookings')
@@ -1480,21 +1481,109 @@ export class SupabaseStorage implements IStorage {
 
     if (!data) throw new Error('No data returned from booking creation');
 
-    return this.mapBookingFromDb(data);
+    const booking = this.mapBookingFromDb(data);
+    
+    // Create athlete records and booking_athletes relationships if athletes provided
+    if (insertBooking.athletes && insertBooking.athletes.length > 0) {
+      for (let i = 0; i < insertBooking.athletes.length; i++) {
+        const athleteData = insertBooking.athletes[i];
+        
+        // Create athlete if athleteId is not provided
+        let athleteId = athleteData.athleteId;
+        
+        if (!athleteId) {
+          // For new user flow, parent might not exist yet - create parent first
+          let parent = await this.identifyParent(insertBooking.parentEmail, insertBooking.parentPhone);
+          
+          if (!parent) {
+            // Create parent account
+            parent = await this.createParent({
+              firstName: insertBooking.parentFirstName,
+              lastName: insertBooking.parentLastName,
+              email: insertBooking.parentEmail,
+              phone: insertBooking.parentPhone,
+              emergencyContactName: insertBooking.emergencyContactName,
+              emergencyContactPhone: insertBooking.emergencyContactPhone,
+              waiverSigned: false
+            });
+          }
+          
+          const newAthlete = await this.createAthlete({
+            parentId: parent.id,
+            name: athleteData.name,
+            firstName: athleteData.name.split(' ')[0],
+            lastName: athleteData.name.split(' ').slice(1).join(' ') || '',
+            dateOfBirth: athleteData.dateOfBirth,
+            allergies: athleteData.allergies,
+            experience: athleteData.experience,
+            photo: athleteData.photo
+          });
+          athleteId = newAthlete.id;
+        }
+        
+        // Create booking_athletes relationship
+        await supabase
+          .from('booking_athletes')
+          .insert({
+            booking_id: booking.id,
+            athlete_id: athleteId,
+            slot_order: athleteData.slotOrder || (i + 1)
+          });
+      }
+    }
+
+    // Create focus area relationships if provided
+    if (insertBooking.focusAreaIds && insertBooking.focusAreaIds.length > 0) {
+      const focusAreaInserts = insertBooking.focusAreaIds.map(focusAreaId => ({
+        booking_id: booking.id,
+        focus_area_id: focusAreaId
+      }));
+      
+      await supabase
+        .from('booking_focus_areas')
+        .insert(focusAreaInserts);
+    }
+
+    // Create apparatus relationships if provided  
+    if (insertBooking.apparatusIds && insertBooking.apparatusIds.length > 0) {
+      const apparatusInserts = insertBooking.apparatusIds.map(apparatusId => ({
+        booking_id: booking.id,
+        apparatus_id: apparatusId
+      }));
+      
+      await supabase
+        .from('booking_apparatus')
+        .insert(apparatusInserts);
+    }
+
+    // Create side quest relationships if provided
+    if (insertBooking.sideQuestIds && insertBooking.sideQuestIds.length > 0) {
+      const sideQuestInserts = insertBooking.sideQuestIds.map(sideQuestId => ({
+        booking_id: booking.id,
+        side_quest_id: sideQuestId
+      }));
+      
+      await supabase
+        .from('booking_side_quests')
+        .insert(sideQuestInserts);
+    }
+
+    return booking;
   }
 
   private mapBookingFromDb(data: any): Booking {
     return {
       id: data.id,
       lessonType: data.lesson_type,
-      athlete1Name: data.athlete1_name,
-      athlete1DateOfBirth: data.athlete1_date_of_birth,
-      athlete1Allergies: data.athlete1_allergies || null,
-      athlete1Experience: data.athlete1_experience,
-      athlete2Name: data.athlete2_name,
-      athlete2DateOfBirth: data.athlete2_date_of_birth,
-      athlete2Allergies: data.athlete2_allergies,
-      athlete2Experience: data.athlete2_experience,
+      // Legacy athlete fields for backward compatibility - these will be empty for normalized bookings
+      athlete1Name: '',
+      athlete1DateOfBirth: '',
+      athlete1Allergies: null,
+      athlete1Experience: '',
+      athlete2Name: null,
+      athlete2DateOfBirth: null,
+      athlete2Allergies: null,
+      athlete2Experience: null,
       parentFirstName: data.parent_first_name,
       parentLastName: data.parent_last_name,
       parentEmail: data.parent_email,
@@ -1506,28 +1595,28 @@ export class SupabaseStorage implements IStorage {
       focusAreas: data.focus_areas || [],
       amount: data.amount,
       status: data.status,
-      paymentStatus: data.payment_status || 'unpaid',
-      bookingMethod: data.booking_method || 'online',
+      paymentStatus: data.payment_status,
+      attendanceStatus: data.attendance_status,
+      bookingMethod: data.booking_method,
       waiverSigned: data.waiver_signed || false,
-      waiverSignedAt: data.waiver_signed_at ? new Date(data.waiver_signed_at) : null,
-      waiverSignatureName: data.waiver_signature_name || null,
-      attendanceStatus: data.attendance_status || 'pending',
+      waiverSignedAt: data.waiver_signed_at,
+      waiverSignatureName: data.waiver_signature_name,
       reservationFeePaid: data.reservation_fee_paid || false,
-      paidAmount: data.paid_amount || '0.00',
-      specialRequests: data.special_requests || null,
-      adminNotes: data.admin_notes || null,
-      dropoffPersonName: data.dropoff_person_name || null,
-      dropoffPersonRelationship: data.dropoff_person_relationship || null,
-      dropoffPersonPhone: data.dropoff_person_phone || null,
-      pickupPersonName: data.pickup_person_name || null,
-      pickupPersonRelationship: data.pickup_person_relationship || null,
-      pickupPersonPhone: data.pickup_person_phone || null,
-      altPickupPersonName: data.alt_pickup_person_name || null,
-      altPickupPersonRelationship: data.alt_pickup_person_relationship || null,
-      altPickupPersonPhone: data.alt_pickup_person_phone || null,
+      paidAmount: data.paid_amount || "0.00",
+      specialRequests: data.special_requests,
+      adminNotes: data.admin_notes,
+      dropoffPersonName: data.dropoff_person_name,
+      dropoffPersonRelationship: data.dropoff_person_relationship,
+      dropoffPersonPhone: data.dropoff_person_phone,
+      pickupPersonName: data.pickup_person_name,
+      pickupPersonRelationship: data.pickup_person_relationship,
+      pickupPersonPhone: data.pickup_person_phone,
+      altPickupPersonName: data.alt_pickup_person_name,
+      altPickupPersonRelationship: data.alt_pickup_person_relationship,
+      altPickupPersonPhone: data.alt_pickup_person_phone,
       safetyVerificationSigned: data.safety_verification_signed || false,
-      safetyVerificationSignedAt: data.safety_verification_signed_at ? new Date(data.safety_verification_signed_at) : null,
-      stripeSessionId: data.stripe_session_id || null,
+      safetyVerificationSignedAt: data.safety_verification_signed_at,
+      stripeSessionId: data.stripe_session_id,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

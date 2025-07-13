@@ -599,6 +599,9 @@ export const insertArchivedWaiverSchema = createInsertSchema(archivedWaivers).om
   updatedAt: true,
 });
 
+export type ArchivedWaiver = typeof archivedWaivers.$inferSelect;
+export type InsertArchivedWaiver = z.infer<typeof insertArchivedWaiverSchema>;
+
 // Helper functions for focus area mapping
 export function mapFocusAreaNamesToIds(focusAreaNames: string[]): number[] {
   // This is a placeholder - in a real app, you would need to query the database

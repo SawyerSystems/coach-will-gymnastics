@@ -28,7 +28,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // Focus area validation helper
-function validateFocusAreas(focusAreas: string[], lessonType: string): { isValid: boolean; message?: string } {
+function validateFocusAreas(focusAreaIds: number[], lessonType: string): { isValid: boolean; message?: string } {
   const LESSON_LIMITS = {
     "quick-journey": { max: 2, duration: "30 minutes" },
     "dual-quest": { max: 2, duration: "30 minutes" },
@@ -39,26 +39,21 @@ function validateFocusAreas(focusAreas: string[], lessonType: string): { isValid
   const config = LESSON_LIMITS[lessonType as keyof typeof LESSON_LIMITS] || { max: 2, duration: "30 minutes" };
   
   // Focus areas are optional - allow empty array
-  if (focusAreas.length === 0) {
-    return { isValid: true }; // Changed from false to true - focus areas are optional
+  if (focusAreaIds.length === 0) {
+    return { isValid: true };
   }
   
-  if (focusAreas.length > config.max) {
+  if (focusAreaIds.length > config.max) {
     const limitMessage = config.duration.includes('30') 
       ? "30-minute lessons can only have up to 2 focus areas"
       : "60-minute lessons can only have up to 4 focus areas";
     return { isValid: false, message: limitMessage };
   }
   
-  // Validate focus area format and content
-  for (const area of focusAreas) {
-    if (typeof area !== 'string' || area.trim().length === 0) {
-      return { isValid: false, message: "Invalid focus area format" };
-    }
-    
-    // Sanitize input to prevent injection
-    if (area.includes('<') || area.includes('>') || area.includes('script')) {
-      return { isValid: false, message: "Invalid characters in focus area" };
+  // Validate that all IDs are positive numbers
+  for (const id of focusAreaIds) {
+    if (!Number.isInteger(id) || id <= 0) {
+      return { isValid: false, message: "Invalid focus area ID" };
     }
   }
   
@@ -324,13 +319,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const allBookings = await storage.getAllBookings();
-      const parentBookings = allBookings.filter(booking => {
-        // Find bookings by email from session
-        return booking.parentEmail === req.session.parentEmail;
-      });
+      // Get bookings for this parent with athlete information
+      const parentBookingsQuery = await storage.supabase
+        .from('bookings')
+        .select(`
+          *,
+          booking_athletes!inner (
+            athlete_id,
+            slot_order,
+            athletes:athlete_id (
+              id,
+              name,
+              first_name,
+              last_name,
+              date_of_birth,
+              allergies,
+              experience,
+              gender,
+              parent_id
+            )
+          )
+        `)
+        .eq('parent_email', req.session.parentEmail)
+        .order('created_at', { ascending: false });
+        
+      if (parentBookingsQuery.error) {
+        throw parentBookingsQuery.error;
+      }
       
-      res.json(parentBookings);
+      // Transform the data to include athletes array and proper payment status
+      const bookingsWithAthletes = parentBookingsQuery.data?.map(booking => {
+        const athletes = booking.booking_athletes?.map(ba => ba.athletes) || [];
+        
+        // Map payment status to user-friendly display
+        let displayPaymentStatus = booking.payment_status;
+        if (booking.payment_status === 'reservation_paid') {
+          displayPaymentStatus = 'Reservation: Paid';
+        } else if (booking.payment_status === 'fully_paid') {
+          displayPaymentStatus = 'Fully Paid';
+        }
+        
+        // Map booking status for confirmed sessions
+        let displayStatus = booking.status;
+        if (booking.status === 'pending' && booking.payment_status === 'reservation_paid') {
+          displayStatus = 'confirmed';
+        }
+        
+        return {
+          ...booking,
+          athletes,
+          displayPaymentStatus,
+          status: displayStatus,
+          // Legacy fields for backward compatibility
+          athlete1Name: athletes[0]?.name || '',
+          athlete2Name: athletes[1]?.name || '',
+        };
+      }) || [];
+      
+      res.json(bookingsWithAthletes);
     } catch (error) {
       console.error('Error fetching parent bookings:', error);
       res.status(500).json({ message: 'Failed to fetch bookings' });
@@ -979,15 +1025,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       
-      // Find booking by session ID
-      const bookings = await storage.getAllBookings();
-      const booking = bookings.find(b => b.stripeSessionId === sessionId);
+      // Find booking by session ID with related athlete information
+      const booking = await storage.getBookingWithRelations(parseInt(sessionId)) || 
+                      (await storage.getAllBookings()).find(b => b.stripeSessionId === sessionId);
       
       if (!booking) {
         return res.status(404).json({ message: "Booking not found" });
       }
       
-      res.json(booking);
+      // If it's a legacy booking, return as-is
+      if (booking.athlete1Name) {
+        return res.json(booking);
+      }
+      
+      // For normalized bookings, get athlete information
+      const bookingAthletes = await storage.supabase
+        .from('booking_athletes')
+        .select(`
+          athlete_id,
+          slot_order,
+          athletes:athlete_id (
+            id,
+            name,
+            first_name,
+            last_name,
+            date_of_birth,
+            allergies,
+            experience,
+            gender
+          )
+        `)
+        .eq('booking_id', booking.id)
+        .order('slot_order');
+        
+      const athletes = bookingAthletes.data?.map(ba => ba.athletes) || [];
+      
+      // Return booking with athlete information
+      res.json({
+        ...booking,
+        athletes: athletes
+      });
     } catch (error: any) {
       console.error("Error fetching booking by session:", error);
       res.status(500).json({ message: "Error fetching booking: " + error.message });
@@ -1509,7 +1586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertBookingSchema.parse(req.body);
       
       // Validate focus areas
-      const focusAreaValidation = validateFocusAreas(validatedData.focusAreaIds.map(String), validatedData.lessonType);
+      const focusAreaValidation = validateFocusAreas(validatedData.focusAreaIds, validatedData.lessonType);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -1577,7 +1654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookingData = req.body;
       
       // Validate focus areas
-      const focusAreaValidation = validateFocusAreas(bookingData.focusAreas, bookingData.lessonType);
+      const focusAreaValidation = validateFocusAreas(bookingData.focusAreaIds || [], bookingData.lessonType);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -1634,7 +1711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookingData = insertBookingSchema.parse(req.body);
       
       // Validate focus areas
-      const focusAreaValidation = validateFocusAreas(bookingData.focusAreaIds.map(String), bookingData.lessonType);
+      const focusAreaValidation = validateFocusAreas(bookingData.focusAreaIds, bookingData.lessonType);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -1767,7 +1844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Validate focus areas
-        const focusAreaValidation = validateFocusAreas(focusAreas, currentBooking.lessonType);
+        const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], currentBooking.lessonType);
         if (!focusAreaValidation.isValid) {
           return res.status(400).json({
             message: "Focus area validation failed",
