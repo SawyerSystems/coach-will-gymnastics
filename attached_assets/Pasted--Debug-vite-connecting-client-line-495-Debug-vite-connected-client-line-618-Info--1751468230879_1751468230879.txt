@@ -1,0 +1,51 @@
+[Debug] [vite] connecting... (client, line 495)
+[Debug] [vite] connected. (client, line 618)
+[Info] Successfully preconnected to https://api.stripe.com/
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔍 STEP 1 RENDERING - Lesson Type Selection (booking-modal.tsx, line 395)
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔍 STEP 1 RENDERING - Lesson Type Selection (booking-modal.tsx, line 395)
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 Checking parent auth status... (booking-modal.tsx, line 118)
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 👤 Parent auth data: – Object (booking-modal.tsx, line 122)
+Object
+[Log] ✅ Parent is logged in, fetching parent data... (booking-modal.tsx, line 125)
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] Parent auth check failed: – SyntaxError: The string did not match the expected pattern. (booking-modal.tsx, line 146)
+SyntaxError: The string did not match the expected pattern.
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object
+[Log] 🔍 BookingModal DEBUG: – Object (booking-modal.tsx, line 70)
+Object
+[Log] 🔧 Step 4 render check: – Object (booking-modal.tsx, line 1186)
+Object

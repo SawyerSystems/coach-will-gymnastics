@@ -1,0 +1,44 @@
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+export interface WaiverStatus {
+  hasWaiver: boolean;
+  waiverSigned: boolean;
+  waiverSignedAt?: string;
+  waiverSignatureName?: string;
+  bookingId?: number;
+}
+
+export function useWaiverStatus(athleteName: string, dateOfBirth?: string) {
+  return useQuery<WaiverStatus>({
+    queryKey: ["/api/check-athlete-waiver", athleteName],
+    queryFn: async () => {
+      const response = await apiRequest("POST", "/api/check-athlete-waiver", {
+        athleteName,
+        dateOfBirth
+      });
+      return response.json();
+    },
+    enabled: !!athleteName,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useAthleteWaiverStatus(athleteId: number) {
+  return useQuery<WaiverStatus>({
+    queryKey: ["/api/athletes", athleteId, "waiver-status"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/athletes/${athleteId}/waiver-status`);
+      return response.json();
+    },
+    enabled: !!athleteId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useMissingWaivers() {
+  return useQuery({
+    queryKey: ["/api/athletes/missing-waivers"],
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}

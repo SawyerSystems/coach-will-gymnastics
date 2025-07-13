@@ -1,0 +1,34 @@
+“We’ve migrated these columns to native DATE/TIME in Postgres:
+- bookings.preferred_date (DATE)
+- bookings.preferred_time (TIME)
+- availability.start_time/end_time (TIME)
+- availability_exceptions.date (DATE), start_time/end_time (TIME)
+- slot_reservations.date (DATE), start_time (TIME)
+Please update our backend and frontend accordingly:
+Zod Schemas & TS Types
+Replace any z.string() validations on those fields with z.coerce.date() (for DATE) or z.string().refine(str=>/^\d{2}:\d{2}$/…)/a proper time parser.
+Update our TypeScript interfaces so those properties are Date (or a string in "HH:MM" format for TIME) rather than string.
+API Handlers
+In booking, availability, exception, and slot-reservation endpoints, parse incoming date/time payloads into Date/string (for TIME) and send them straight to Supabase—no manual cast.
+On fetch, return ISO strings for DATE (YYYY-MM-DD) and "HH:MM:SS" for TIME.
+Frontend Forms & State
+Swap any free‑text inputs for date pickers/time pickers (e.g. <input type="date">, <input type="time">).
+Ensure the form state values map to ISO "YYYY-MM-DD" and "HH:MM:SS" strings when submitting.
+Remove any custom string→Date casting utilities now that the DB types are correct.
+Tests & Samples
+Update any test fixtures or sample data that used text dates/times to use proper formatted values.
+Fully test booking creation, availability editing, exception scheduling, and slot reservation flows to confirm the UI and API talk to the new DATE/TIME columns correctly.”
+“We need full Pacific‑time support (America/Los_Angeles) across the stack and to fix the invalid date display for blogs and tips. Please:
+Server‑side timezone
+Set the default timezone for our Node process and Supabase client to America/Los_Angeles (e.g. process.env.TZ = 'America/Los_Angeles' or Supabase query option ?timezone=America/Los_Angeles).
+Ensure all date/timestamp fields retrieved from the DB (especially published_at in blog_posts and tips) are treated as UTC and converted to Pacific before further processing.
+API handlers
+In /api/blog-posts and /api/tips routes, parse the published_at timestamp into a JavaScript Date and re‑serialize it using date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).
+Replace any direct new Date(row.published_at) → .toString() calls with the above locale‑aware formatting.
+Frontend display
+Update the React components that render blog and tip dates to use the Intl API or a timezone‑aware library (e.g. date.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' })).
+Ensure date pickers, schedule views, and all date displays consistently show Pacific dates/times, even during DST transitions.
+Configuration & testing
+Add or update any necessary env vars (TZ=America/Los_Angeles).
+Write a small integration test that fetches a known published_at UTC timestamp and asserts the API returns the correct Pacific‑time string.
+Fully verify that all dates in your booking flows, availability, blog posts, and tips now render correctly in Pacific Time (PDT/PST) without “Invalid Date” errors.”

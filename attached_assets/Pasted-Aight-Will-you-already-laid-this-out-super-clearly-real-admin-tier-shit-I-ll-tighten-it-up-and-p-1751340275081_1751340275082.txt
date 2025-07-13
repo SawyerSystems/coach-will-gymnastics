@@ -1,0 +1,142 @@
+Aight Will, you already laid this out super clearly — real admin-tier shit. I’ll tighten it up and prep a Replit AI-ready prompt that’ll *rebuild* those lost admin dashboard features step by step without confusion or guessing.
+
+Let’s call this **Phase 1** of restoration. Here's your full developer-grade prompt:
+
+---
+
+### ✅ **Prompt for Replit AI (Admin Dashboard Feature Restoration)**
+
+> **Goal**: Rebuild all previously working admin dashboard features after the recent authentication upgrade. All views and logic must remain behind authenticated admin access. Use React (w/ Vite + Tailwind) on frontend, Express + Drizzle + PostgreSQL backend. Admin panel should follow existing layout and UX theme.
+
+---
+
+## 🧩 Tabs & Features to Implement (with specifics):
+
+### **1. Bookings Tab**
+
+* 🔧 **Edit Bookings**: Add ability to update time, date, athlete, lesson type, and status. Form validation required.
+* 🔍 **Filter Options**:
+
+  * By most recent, oldest
+  * By session date (ascending/descending)
+* ➕ **Manual Booking Modal**:
+
+  * Reuse frontend logic from parent booking modal
+  * Include focus area selection logic and validation
+* 🕓 **Quick Reschedule Button**:
+
+  * Popup modal with calendar
+  * On confirm → updates DB and auto-triggers email/SMS to parent (based on stored preference)
+
+---
+
+### **2. Upcoming Sessions Tab**
+
+* 🗓️ Show all upcoming sessions, default sorted by date
+* 🔔 Add a "Today’s Sessions" sub-section that dynamically shows sessions for current day at top
+* 📎 Sorting: Default to ascending; allow user to change to descending
+
+---
+
+### **3. Athletes Tab**
+
+* 🎂 Highlight athletes with birthdays within 7 days
+* 📝 Athlete Detail View:
+
+  * Editable: name, age, focus areas, parent contact
+  * Upload photo (JPG/PNG) → preview thumbnail with enlarge modal
+  * PDF/IMG upload for waiver & medical docs (with icons + delete button + confirm modal)
+* ❌ Delete Athlete:
+
+  * Only if no bookings exist
+  * Confirm modal required
+  * If booking exists → show reason + disable delete
+
+---
+
+### **4. Content Tab (Blog + Tips Subtabs)**
+
+* ➕ Add / Edit / Delete Blog or Tip posts
+* 📄 Posts support multiple rich text sections
+
+  * Each section allows optional image (PNG, JPG)
+  * Store text and images together in a structured JSON format
+* 🏷️ Tips > includes “Drills” category
+
+---
+
+### **5. Schedule Tab**
+
+* 📆 Weekly availability selector (Sunday–Saturday with hourly blocks)
+* ⛔ Block off specific time slots or entire days
+* Backend stores as availability matrix
+* Booking form should read from this and gray out unavailable times
+
+---
+
+### **6. Parent Communication Tab (Optional MVP)**
+
+* 📩 DM Inbox-style interface
+
+  * One thread per parent
+  * Messages stored tied to bookings
+* ✍️ Reply templates (dropdown options): reschedule, policy reminder, thank-you
+* 🧭 Toggle between SMS/Email based on parent’s preferred contact
+
+---
+
+### **7. Payments / Stripe Tab**
+
+* 💳 Pull and display session-based Stripe payment status:
+
+  * Paid, pending, refunded
+* 💰 Add manual refund logic (triggers Stripe API)
+* 🧾 View historical payment logs and link to Stripe dashboard
+
+---
+
+### **8. Analytics Tab**
+
+* 📊 Show:
+
+  * Total bookings (week/month)
+  * Top requested skills
+  * Conversion rate: inquiry → confirmed + paid
+* 🎨 Visuals:
+
+  * Bar chart (weekly bookings), Pie chart (skills), Counters
+  * Use Chart.js or Tailwind UI chart library
+* 🔌 Backend:
+
+  * Write SQL queries with Drizzle to fetch needed data
+
+---
+
+## 🧱 Tech Stack (Assume)
+
+* Frontend: React (Vite), TailwindCSS, Chart.js
+* Backend: Express.js, PostgreSQL, Drizzle ORM
+* Auth: Session-based w/ bcrypt, cookie (HttpOnly)
+* Stripe: Integrated via backend using secret key
+* File Storage: Local or Supabase bucket
+
+---
+
+## 🔐 Security
+
+* Protect all `/admin` routes w/ session check middleware
+* Sanitize all inputs (frontend + backend)
+* Validate file uploads (type + size)
+
+---
+
+## 🧠 User Flow Summary
+
+1. Admin logs in → session set → accesses dashboard.
+2. Navigates tabs, manages bookings, uploads docs, views payments, edits athlete profiles.
+3. All UI is responsive and accessible on mobile/tablet.
+4. Errors or edge cases (invalid data, unauthorized deletes, failed Stripe requests) return clear error messages with fallback UI.
+
+---
+
+You want to go ahead and [generate the full Replit feature prompt now](f) or [add enhancements like push notifications, export options, or AI recommendations](f)? I can also [research Stripe refund edge cases or analytics formulas](dr) if needed.

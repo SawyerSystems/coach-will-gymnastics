@@ -1,0 +1,101 @@
+Implement a comprehensive booking status system. This feature adds lifecycle status tracking to each booking and provides admin controls to manually override or update statuses. The system must be fully integrated across the backend, frontend admin dashboard, and user interface for visibility and accuracy.
+🗃️ Database / Models (Backend)
+Booking Table Update:
+
+Add a new field: status TEXT NOT NULL DEFAULT 'pending'
+Possible values:
+"pending" → submitted, unpaid
+"paid" → Stripe payment succeeded
+"confirmed" → payment received, confirmed by admin
+"manual" → manually entered, not paid
+"manual-paid" → manually entered and confirmed as paid
+"completed" → session completed
+"no-show" → user didn’t attend
+"failed" → Stripe payment failed
+"cancelled" → cancelled by admin or user
+Migration SQL Example:
+
+ALTER TABLE bookings ADD COLUMN status TEXT NOT NULL DEFAULT 'pending';
+🔧 Backend API (Express.js)
+Routes to Add/Update:
+
+POST /api/bookings
+On booking creation (not paid), set status to "pending"
+POST /api/stripe/webhook
+On checkout.session.completed, update status to "paid"
+Use metadata to locate booking ID
+On checkout.session.failed, update status to "failed"
+PATCH /api/bookings/:id/status
+Authenticated route for admin only
+Accepts new status value
+Validate that it matches one of the allowed strings
+Update booking record
+Log update for audit trail (optional)
+GET /api/bookings
+Return full list of bookings with status for admin dashboard
+🛡️ Backend Logic / Validations
+Only authenticated admins can update status
+Prevent invalid transitions (e.g., can’t go from cancelled → completed)
+Sanitize incoming values (no injection)
+Reject unsupported status strings
+Log status transitions (optional future upgrade)
+💻 Frontend (React / Admin Dashboard)
+Booking Card or Row Display:
+
+Display status as a visual tag:
+Use Tailwind classes for color coding:
+"pending" → yellow-400
+"paid" → blue-400
+"confirmed" → green-500
+"manual" → gray-500
+"manual-paid" → lime-500
+"completed" → emerald-600
+"no-show" → red-400
+"failed" → red-600
+"cancelled" → gray-300 (line-through text)
+Status Dropdown Component:
+
+In admin dashboard, add dropdown next to each booking entry:
+Show current status
+Allow admin to change it
+Use select dropdown or popover menu
+Behavior:
+
+When admin selects a new status:
+Optimistically update the UI
+Send PATCH to /api/bookings/:id/status
+Show toast “Status updated” or error message
+🎯 Frontend State Management
+Booking list managed via global state or server fetch (useContext, Redux, or SWR)
+Track update loading per-row with isUpdatingStatus[id]
+Handle 401 errors by redirecting to login
+✅ UX Feedback
+Toast notifications:
+“Status updated successfully”
+“Update failed — please try again”
+Disabled dropdown with spinner during update
+Highlight rows that were recently updated (optional)
+🧼 Client/Server Validation
+Client: check if status is one of the allowed values before sending
+Server: hard validation and rejection of bad or malformed values
+🧑‍🦯 Accessibility & Responsiveness
+Dropdown must be keyboard accessible
+Use semantic <select> or button + listbox component
+Responsive layout for mobile view in admin dashboard
+Use screen reader labels for each dropdown if custom component is used
+🔒 Security Practices
+Only allow PATCH from logged-in admin accounts
+Sanitize inputs
+Prevent downgrade or unauthorized changes by verifying roles
+Secure cookies/session config (HttpOnly, SameSite)
+🧪 Edge Case Handling
+Attempt to change status on deleted/cancelled bookings → return error
+If status already matches, don’t re-update
+If Stripe webhook is duplicated (e.g. retry), ignore if status already "paid"
+🧭 User Flow Summary
+Parent submits booking → stored as pending
+Stripe payment succeeds → booking auto-marked paid
+Admin logs in → sees full dashboard of bookings with status tags
+Admin manually changes status (e.g. manual → manual-paid) via dropdown
+Booking updates in DB and frontend
+Parent arrives → after class, admin marks it as completed or no-show

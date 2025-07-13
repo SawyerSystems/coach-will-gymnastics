@@ -1,0 +1,75 @@
+[Error] Failed to load resource: the server responded with a status of 403 () (basil, line 0)
+[Error] `DialogContent` requires a `DialogTitle` for the component to be accessible for screen reader users.
+
+If you want to hide the `DialogTitle`, you can wrap it with our VisuallyHidden component.
+
+For more information, see https://radix-ui.com/primitives/docs/components/dialog
+	(anonymous function) (chunk-GDMFBG4U.js:325)
+	commitHookEffectListMount (chunk-RPCDYKBN.js:16915)
+	commitPassiveMountOnFiber (chunk-RPCDYKBN.js:18156)
+	commitPassiveMountEffects_complete (chunk-RPCDYKBN.js:18129)
+	commitPassiveMountEffects_begin (chunk-RPCDYKBN.js:18119)
+	commitPassiveMountEffects (chunk-RPCDYKBN.js:18109)
+	flushPassiveEffectsImpl (chunk-RPCDYKBN.js:19490)
+	flushPassiveEffects (chunk-RPCDYKBN.js:19447)
+	commitRootImpl (chunk-RPCDYKBN.js:19416)
+	commitRoot (chunk-RPCDYKBN.js:19277)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18895)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
+[Error] Warning: Cannot update a component (`BookingFlowProvider`) while rendering a different component (`AthleteInfoFormStep`). To locate the bad setState() call inside `AthleteInfoFormStep`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+AthleteInfoFormStep@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/booking-steps/AthleteInfoFormStep.tsx:28:48
+div
+div
+BookingWizard@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/BookingWizard.tsx:31:40
+BookingFlowProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/contexts/BookingFlowContext.tsx:69:5
+div
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+DismissableLayer@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-X7UKVCRS.js:59:34
+Primitive.div.SlotClone@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:79:11
+Primitive.div.Slot@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:56:11
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+FocusScope@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-ZXUAUSDH.js:29:9
+@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GDMFBG4U.js:235:11
+@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GDMFBG4U.js:158:57
+Presence@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PRG2ZDFF.js:25:31
+DialogContent@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GDMFBG4U.js:149:63
+Primitive.div.SlotClone@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:79:11
+Primitive.div.Slot@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:56:11
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+Portal@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-X7UKVCRS.js:258:9
+Presence@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PRG2ZDFF.js:25:31
+DialogPortalProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+DialogPortal@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GDMFBG4U.js:111:36
+_c3@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/dialog.tsx:52:10
+DialogProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+Dialog@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GDMFBG4U.js:59:27
+EnhancedBookingModal@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/enhanced-booking-modal.tsx:27:10
+CustomerIdentificationEnhanced@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/customer-identification-enhanced.tsx:23:10
+div
+Home@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/pages/home.tsx:43:61
+Route@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:14
+Switch@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:380:27
+Router@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/App.tsx:42:33
+TooltipProviderProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+TooltipProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:64:43
+QueryClientProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App
+	printWarning (chunk-RPCDYKBN.js:521)
+	error (chunk-RPCDYKBN.js:505)
+	warnAboutRenderPhaseUpdatesInDEV (chunk-RPCDYKBN.js:19793)
+	scheduleUpdateOnFiber (chunk-RPCDYKBN.js:18546)
+	dispatchSetState (chunk-RPCDYKBN.js:12403)
+	updateState (BookingFlowContext.tsx:76)
+	handleAddAthlete (AthleteInfoFormStep.tsx:37)
+	AthleteInfoFormStep (AthleteInfoFormStep.tsx:49)
+	renderWithHooks (chunk-RPCDYKBN.js:11548)
+	mountIndeterminateComponent (chunk-RPCDYKBN.js:14926)
+	beginWork$1 (chunk-RPCDYKBN.js:19753)
+	performUnitOfWork (chunk-RPCDYKBN.js:19198)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)
+[Error] Failed to load resource: the server responded with a status of 400 (Bad Request) (new-user-flow, line 0)

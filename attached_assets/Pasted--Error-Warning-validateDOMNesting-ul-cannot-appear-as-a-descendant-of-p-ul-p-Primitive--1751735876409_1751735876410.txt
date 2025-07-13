@@ -1,0 +1,80 @@
+[Error] Warning: validateDOMNesting(...): <ul> cannot appear as a descendant of <p>.
+ul
+p
+Primitive.p@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+DialogDescription@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4PK2AE4B.js:283:11
+_c9@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/dialog.tsx:182:10
+div
+DialogHeader@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/dialog.tsx:106:23
+div
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+DismissableLayer@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVWVM6IE.js:59:34
+Primitive.div.SlotClone@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:79:11
+Primitive.div.Slot@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:56:11
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+FocusScope@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-C6RDZTVH.js:29:9
+@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4PK2AE4B.js:235:11
+@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4PK2AE4B.js:158:57
+Presence@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VERXE52W.js:25:31
+DialogContent@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4PK2AE4B.js:149:63
+Primitive.div.SlotClone@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:79:11
+Primitive.div.Slot@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVLBUYTV.js:56:11
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+Portal@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-EVWVM6IE.js:258:9
+Presence@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VERXE52W.js:25:31
+DialogPortalProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+DialogPortal@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4PK2AE4B.js:111:36
+_c3@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/dialog.tsx:52:10
+DialogProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+Dialog@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4PK2AE4B.js:59:27
+div
+div
+_c9@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/card.tsx:114:10
+div
+_c@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/card.tsx:20:9
+div
+div
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+Presence@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VERXE52W.js:25:31
+TabsContent@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js:175:80
+_c5@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/tabs.tsx:72:10
+div
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+TabsProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+Tabs@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js:52:11
+div
+_c9@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/card.tsx:114:10
+div
+_c@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/card.tsx:20:9
+div
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+Presence@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-VERXE52W.js:25:31
+TabsContent@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js:175:80
+_c5@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/components/ui/tabs.tsx:72:10
+div
+Primitive.div@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BOL2CCOG.js:42:11
+TabsProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+Tabs@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js:52:11
+div
+div
+Admin@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/pages/admin.tsx:72:38
+Route@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:323:14
+Switch@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js:380:27
+Suspense
+Router@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/App.tsx:85:33
+TooltipProviderProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js:38:13
+TooltipProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js:64:43
+QueryClientProvider@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js:2805:9
+App@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/src/App.tsx:203:12
+	printWarning (chunk-RPCDYKBN.js:521)
+	error (chunk-RPCDYKBN.js:505)
+	validateDOMNesting (chunk-RPCDYKBN.js:8256)
+	createInstance (chunk-RPCDYKBN.js:8328)
+	completeWork (chunk-RPCDYKBN.js:16290)
+	completeUnitOfWork (chunk-RPCDYKBN.js:19224)
+	performUnitOfWork (chunk-RPCDYKBN.js:19206)
+	workLoopSync (chunk-RPCDYKBN.js:19137)
+	renderRootSync (chunk-RPCDYKBN.js:19116)
+	performSyncWorkOnRoot (chunk-RPCDYKBN.js:18874)
+	flushSyncCallbacks (chunk-RPCDYKBN.js:9119)
+	(anonymous function) (chunk-RPCDYKBN.js:18627)

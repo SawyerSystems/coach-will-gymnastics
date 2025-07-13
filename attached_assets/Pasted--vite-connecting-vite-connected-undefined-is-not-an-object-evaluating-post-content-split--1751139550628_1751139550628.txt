@@ -1,0 +1,31 @@
+[vite] connecting...
+[vite] connected.
+undefined is not an object (evaluating 'post.content.split')
+renderWithHooks@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:11548:35
+updateFunctionComponent@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:14582:43
+callCallback2@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:3674:27
+dispatchEvent@[native code]
+invokeGuardedCallbackDev@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:3699:37
+invokeGuardedCallback@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:3733:44
+beginWork$1@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19765:36
+performUnitOfWork@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19198:31
+workLoopSync@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19137:30
+renderRootSync@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19116:27
+performSyncWorkOnRoot@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:18874:42
+flushSyncCallbacks@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:9119:38
+@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:18627:39
+undefined is not an object (evaluating 'post.content.split')
+renderWithHooks@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:11548:35
+updateFunctionComponent@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:14582:43
+callCallback2@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:3674:27
+dispatchEvent@[native code]
+invokeGuardedCallbackDev@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:3699:37
+invokeGuardedCallback@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:3733:44
+beginWork$1@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19765:36
+performUnitOfWork@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19198:31
+workLoopSync@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19137:30
+renderRootSync@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:19116:27
+recoverFromConcurrentError@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:18736:42
+performSyncWorkOnRoot@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:18879:54
+flushSyncCallbacks@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:9119:38
+@https://1ee93227-7f72-4972-ae94-fa1ae08a6a22-00-3tl6gv7xl2x3x.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js:18627:39
