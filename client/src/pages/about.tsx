@@ -1,11 +1,11 @@
+import { Footer } from "@/components/Footer";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Award, Users, Heart, Star } from "lucide-react";
-import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Footer } from "@/components/Footer";
+import { useQuery } from "@tanstack/react-query";
+import { Award, CheckCircle, Heart, Star, Users } from "lucide-react";
+import { Link } from "wouter";
 
 export default function About() {
   // Fetch dynamic site content
@@ -49,7 +49,7 @@ export default function About() {
                 {aboutData.bio}
               </p>
               <div className="grid grid-cols-2 gap-4 mb-8">
-                {aboutData.certifications.map((cert, index) => {
+                {aboutData.certifications.map((cert: any, index: number) => {
                   const certConfig = [
                     { color: "purple", icon: Award, label: "ACHIEVEMENT UNLOCKED" },
                     { color: "red", icon: Heart, label: "SAFETY CERTIFIED" }, 

@@ -1,17 +1,25 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import type { 
-  User, InsertUser, 
-  Parent, InsertParent,
-  Athlete, InsertAthlete,
-  Booking, InsertBooking, 
-  BlogPost, InsertBlogPost, 
-  Tip, InsertTip, 
-  Availability, InsertAvailability, 
-  AvailabilityException, InsertAvailabilityException,
-  Admin, InsertAdmin,
-  ParentAuthCode, InsertParentAuthCode
-} from "@shared/schema";
+import type {
+    Admin,
+    Athlete,
+    Availability,
+    AvailabilityException,
+    BlogPost,
+    Booking,
+    InsertAdmin,
+    InsertAthlete,
+    InsertAvailability,
+    InsertAvailabilityException,
+    InsertBlogPost,
+    InsertBooking,
+    InsertParent,
+    InsertParentAuthCode,
+    InsertTip,
+    Parent,
+    ParentAuthCode,
+    Tip
+} from "../shared/schema";
 import { IStorage } from "./storage";
 
 const DATA_DIR = join(process.cwd(), 'data');
@@ -24,7 +32,7 @@ const ADMINS_FILE = join(DATA_DIR, 'admins.json');
 const AUTH_CODES_FILE = join(DATA_DIR, 'auth-codes.json');
 
 export class PersistentMemStorage implements IStorage {
-  private users: Map<number, User> = new Map();
+  // private users: Map<number, User> = new Map(); // User type not available
   private parents: Map<number, Parent> = new Map();
   private athletes: Map<number, Athlete> = new Map();
   private bookings: Map<number, Booking> = new Map();
@@ -215,29 +223,29 @@ export class PersistentMemStorage implements IStorage {
     });
   }
 
-  // Users
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      createdAt: new Date(),
-      passwordHash: insertUser.passwordHash ?? null,
-      role: insertUser.role ?? "user"
-    };
-    this.users.set(id, user);
-    return user;
-  }
-
-  // Parents
+  //   // Users
+  //   async getUser(id: number): Promise<User | undefined> {
+  //     return this.users.get(id);
+  //   }
+  // 
+  //   async getUserByUsername(username: string): Promise<User | undefined> {
+  //     return Array.from(this.users.values()).find(user => user.username === username);
+  //   }
+  // 
+  //   async createUser(insertUser: InsertUser): Promise<User> {
+  //     const id = this.currentUserId++;
+  //     const user: User = { 
+  //       ...insertUser, 
+  //       id, 
+  //       createdAt: new Date(),
+  //       passwordHash: insertUser.passwordHash ?? null,
+  //       role: insertUser.role ?? "user"
+  //     };
+  //     this.users.set(id, user);
+  //     return user;
+  //   }
+  // 
+  //   // Parents
   async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
     return Array.from(this.parents.values()).find(parent => 
       parent.email.toLowerCase() === email.toLowerCase() || 
@@ -286,27 +294,6 @@ export class PersistentMemStorage implements IStorage {
 
   async getParentAthletes(parentId: number): Promise<Athlete[]> {
     return Array.from(this.athletes.values()).filter(athlete => athlete.parentId === parentId);
-  }
-
-  // Parent methods (preferred terminology - delegate to parent methods for compatibility)
-  async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
-    return this.identifyParent(email, phone);
-  }
-
-  async createParent(insertParent: InsertParent): Promise<Parent> {
-    return this.createParent(insertParent);
-  }
-
-  async updateParent(id: number, updateData: Partial<InsertParent>): Promise<Parent | undefined> {
-    return this.updateParent(id, updateData);
-  }
-
-  async deleteParent(id: number): Promise<boolean> {
-    return this.deleteParent(id);
-  }
-
-  async getParentAthletes(parentId: number): Promise<Athlete[]> {
-    return this.getParentAthletes(parentId);
   }
 
   async getParentById(id: number): Promise<Parent | undefined> {
@@ -732,5 +719,170 @@ export class PersistentMemStorage implements IStorage {
 
   async cleanupExpiredReservations(): Promise<void> {
     // For now, do nothing - will implement full database version later
+  }
+
+  // Missing method stubs for IStorage interface compliance
+  async getAllParents(): Promise<Parent[]> {
+    return Array.from(this.parents.values());
+  }
+
+  async createWaiver(waiver: any): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async getWaiver(id: number): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async getWaiverByAthleteId(athleteId: number): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async getWaiverByBookingId(bookingId: number): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async getAllWaivers(): Promise<any[]> {
+    return [];
+  }
+
+  async updateWaiver(id: number, waiver: any): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async updateWaiverPdfPath(id: number, pdfPath: string): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async updateWaiverEmailSent(id: number): Promise<any> {
+    throw new Error("Waiver functionality not implemented in legacy storage");
+  }
+
+  async getAllArchivedWaivers(): Promise<any[]> {
+    return [];
+  }
+
+  async getArchivedWaiver(id: number): Promise<any> {
+    throw new Error("Archived waiver functionality not implemented in legacy storage");
+  }
+
+  async createArchivedWaiver(waiver: any): Promise<any> {
+    throw new Error("Archived waiver functionality not implemented in legacy storage");
+  }
+
+  async deleteArchivedWaiver(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getBookingLogs(bookingId: number): Promise<any[]> {
+    return [];
+  }
+
+  async createBookingLog(log: any): Promise<any> {
+    throw new Error("Booking log functionality not implemented in legacy storage");
+  }
+
+  async getPaymentLogs(bookingId: number): Promise<any[]> {
+    return [];
+  }
+
+  async createPaymentLog(log: any): Promise<any> {
+    throw new Error("Payment log functionality not implemented in legacy storage");
+  }
+
+  async getParentBookingLogs(parentId: number): Promise<any[]> {
+    return [];
+  }
+
+  async getParentPaymentLogs(parentId: number): Promise<any[]> {
+    return [];
+  }
+
+  async getParentArchivedWaivers(parentId: number): Promise<any[]> {
+    return [];
+  }
+
+  async getAllFocusAreas(): Promise<any[]> {
+    return [];
+  }
+
+  async createFocusArea(focusArea: any): Promise<any> {
+    throw new Error("Focus area functionality not implemented in legacy storage");
+  }
+
+  async updateFocusArea(id: number, focusArea: any): Promise<any> {
+    throw new Error("Focus area functionality not implemented in legacy storage");
+  }
+
+  async deleteFocusArea(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getAllApparatus(): Promise<any[]> {
+    return [];
+  }
+
+  async createApparatus(apparatus: any): Promise<any> {
+    throw new Error("Apparatus functionality not implemented in legacy storage");
+  }
+
+  async updateApparatus(id: number, apparatus: any): Promise<any> {
+    throw new Error("Apparatus functionality not implemented in legacy storage");
+  }
+
+  async deleteApparatus(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getAllSideQuests(): Promise<any[]> {
+    return [];
+  }
+
+  async createSideQuest(sideQuest: any): Promise<any> {
+    throw new Error("Side quest functionality not implemented in legacy storage");
+  }
+
+  async updateSideQuest(id: number, sideQuest: any): Promise<any> {
+    throw new Error("Side quest functionality not implemented in legacy storage");
+  }
+
+  async deleteSideQuest(id: number): Promise<boolean> {
+    return false;
+  }
+
+  async getBookingWithRelations(id: number): Promise<any> {
+    return this.getBooking(id);
+  }
+
+  async getAllBookingsWithRelations(): Promise<any[]> {
+    return this.getAllBookings();
+  }
+
+  async createBookingWithAthletes(booking: any): Promise<any> {
+    return this.createBooking(booking);
+  }
+
+  async updateBookingWithAthletes(id: number, booking: any): Promise<any> {
+    return this.updateBooking(id, booking);
+  }
+
+  async deleteParentAuthCode(email: string): Promise<boolean> {
+    return false; // Not implemented in persistent storage
+  }
+
+  async archiveWaiver(waiverId: number): Promise<boolean> {
+    return false; // Not implemented in persistent storage
+  }
+
+  async getFocusAreasByApparatus(apparatusId: number): Promise<any[]> {
+    return []; // Not implemented in persistent storage
+  }
+
+  async createBookingWithRelations(bookingData: any): Promise<any> {
+    return this.createBooking(bookingData);
+  }
+
+  async updateBookingRelations(bookingId: number, relationData: any): Promise<boolean> {
+    return false; // Not implemented in persistent storage
   }
 }

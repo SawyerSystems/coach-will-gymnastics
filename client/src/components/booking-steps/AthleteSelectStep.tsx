@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useQuery } from "@tanstack/react-query";
 import { PlusCircle } from "lucide-react";
 import { useEffect } from "react";
 
@@ -16,14 +16,14 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
   
   const { data: parentData } = useQuery({
     queryKey: ['/api/parent-auth/status'],
-  });
+  }) as { data: any };
 
   const parentId = state.parentId || parentData?.parentId;
 
   const { data: athletes = [] } = useQuery({
     queryKey: [`/api/parents/${parentId}/athletes`],
     enabled: !!parentId,
-  });
+  }) as { data: any[] };
 
   // Auto-skip for non-semi-private lessons
   useEffect(() => {

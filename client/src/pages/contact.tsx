@@ -1,35 +1,35 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Footer } from "@/components/Footer";
-import { 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Clock, 
-  Send, 
-  CheckCircle,
-  Instagram,
-  Facebook,
-  Youtube,
-  MessageCircle
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+    CheckCircle,
+    Clock,
+    Facebook,
+    Instagram,
+    Mail,
+    MapPin,
+    MessageCircle,
+    Phone,
+    Send,
+    Youtube
 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -371,7 +371,7 @@ export default function Contact() {
                 answer: "Absolutely. We have a designated viewing area in the lobby where parents can comfortably watch and cheer from a distance.",
                 category: "General"
               }
-            ]).map((faq, index) => (
+            ]).map((faq: any, index: number) => (
               <Card key={index} className="p-6 hover:shadow-lg transition-shadow duration-300">
                 <CardContent className="pt-6">
                   <h3 className="text-lg font-bold text-gray-800 mb-3">{faq.question}</h3>

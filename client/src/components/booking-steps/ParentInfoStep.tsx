@@ -1,14 +1,18 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { CheckCircle, User, Phone, Mail, Contact, Edit2 } from "lucide-react";
+import { CheckCircle, Contact, Edit2, User } from "lucide-react";
+import { useState } from "react";
 
-export function ParentInfoStep() {
+interface ParentInfoStepProps {
+  isPrefilled?: boolean;
+}
+
+export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   const { state, updateState, nextStep } = useBookingFlow();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(!isPrefilled);
 
   console.log("ParentInfoStep state:", {
     parentId: state.parentId,

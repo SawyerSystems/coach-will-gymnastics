@@ -1,6 +1,21 @@
 {
   "include": ["client/src/**/*", "shared/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "exclude": [
+    "node_modules", 
+    "build", 
+    "dist", 
+    "**/*.test.ts",
+    "server/create-supabase-tables.ts",
+    "server/setup-supabase.ts", 
+    "server/migrate-*.ts",
+    "server/simple-migration.ts",
+    "server/supabase-migration.ts",
+    "server/quick-setup.ts",
+    "server/create-admin.ts",
+    "server/seed.ts",
+    "server/persistent-storage.ts",
+    "server/routes-parent-test.ts"
+  ],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",

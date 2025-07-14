@@ -113,8 +113,13 @@ parentAuthRouter.post('/request-code', async (req, res) => {
 
       // Also try to store in database if available
       try {
-        await storage.createParentAuthCode(email, code, new Date(expiresAt));
-      } catch (dbError) {
+        await storage.createParentAuthCode({
+          email,
+          code,
+          expiresAt: new Date(expiresAt),
+          used: false,
+        });
+      } catch (dbError: any) {
         console.log('Database auth code storage failed, using session only:', dbError.message);
       }
 
@@ -214,8 +219,13 @@ parentAuthRouter.post('/send-code', async (req, res) => {
 
       // Also try to store in database if available
       try {
-        await storage.createParentAuthCode(email, code, new Date(expiresAt));
-      } catch (dbError) {
+        await storage.createParentAuthCode({
+          email,
+          code,
+          expiresAt: new Date(expiresAt),
+          used: false,
+        });
+      } catch (dbError: any) {
         console.log('Database auth code storage failed, using session only:', dbError.message);
       }
 

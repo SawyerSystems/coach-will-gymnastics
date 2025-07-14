@@ -140,3 +140,8 @@ VideoBanner_*
 # Backup files
 *.bak
 *.backup
+.env
+.env.local
+.env.*.local
+.env.COMPROMISED
+.env.backup.COMPROMISED
