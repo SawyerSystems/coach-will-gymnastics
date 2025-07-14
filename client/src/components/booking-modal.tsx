@@ -53,7 +53,7 @@ interface BookingModalProps {
   onOpenChange?: (open: boolean) => void;
   onBack?: () => void;
   initialLessonType?: string;
-  prefilledCustomer?: {
+  prefilledParent?: {
     id: string;
     firstName: string;
     lastName: string;
@@ -73,14 +73,14 @@ interface BookingModalProps {
     experience: 'beginner' | 'intermediate' | 'advanced';
   }[] | null;
   suggestedFocusAreas?: string[];
-  isReturningCustomer?: boolean;
+  isReturningParent?: boolean;
 }
 
 const formSchema = insertBookingSchema;
 
 type FormData = z.infer<typeof formSchema>;
 
-export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, initialLessonType, prefilledCustomer, prefilledAthletes, suggestedFocusAreas, isReturningCustomer }: BookingModalProps) {
+export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, initialLessonType, prefilledParent, prefilledAthletes, suggestedFocusAreas, isReturningParent }: BookingModalProps) {
   const modalOpen = isOpen ?? open ?? false;
   const handleClose = onClose ?? (() => onOpenChange?.(false));
   const [, setLocation] = useLocation();
@@ -165,23 +165,23 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const lessonTypeData = LESSON_TYPES[watchedLessonType];
   const maxFocusAreas = lessonTypeData.maxFocusAreas;
 
-  // Handle prefilled customer and auto-populate parent information
+  // Handle prefilled parent and auto-populate parent information
   useEffect(() => {
-    if (prefilledCustomer) {
-      form.setValue("parentFirstName", prefilledCustomer.firstName);
-      form.setValue("parentLastName", prefilledCustomer.lastName);
-      form.setValue("parentEmail", prefilledCustomer.email);
-      form.setValue("parentPhone", prefilledCustomer.phone);
-      form.setValue("emergencyContactName", prefilledCustomer.emergencyContactName);
-      form.setValue("emergencyContactPhone", prefilledCustomer.emergencyContactPhone);
-      form.setValue("waiverSigned", prefilledCustomer.waiverSigned);
+    if (prefilledParent) {
+      form.setValue("parentFirstName", prefilledParent.firstName);
+      form.setValue("parentLastName", prefilledParent.lastName);
+      form.setValue("parentEmail", prefilledParent.email);
+      form.setValue("parentPhone", prefilledParent.phone);
+      form.setValue("emergencyContactName", prefilledParent.emergencyContactName);
+      form.setValue("emergencyContactPhone", prefilledParent.emergencyContactPhone);
+      form.setValue("waiverSigned", prefilledParent.waiverSigned);
       
       // If waiver is already signed, set the waiver state to true
-      if (prefilledCustomer.waiverSigned) {
+      if (prefilledParent.waiverSigned) {
         setWaiverSigned(true);
       }
     }
-  }, [prefilledCustomer, form]);
+  }, [prefilledParent, form]);
 
   // Handle prefilled athletes and auto-populate form
   useEffect(() => {
@@ -230,7 +230,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       case 3: // Schedule
         return !!values.preferredDate && !!values.preferredTime && values.focusAreaIds?.length > 0;
       case 4: // Parent Info - skip validation if parent is logged in
-        if (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer)) {
+        if (parentAuth?.loggedIn || (prefilledParent && isReturningParent)) {
           return true; // Skip validation if parent is already authenticated
         }
         return !!values.parentFirstName && !!values.parentLastName && !!values.parentEmail && 
@@ -257,7 +257,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       let nextStepNumber = currentStep + 1;
       
       // Skip parent info step (step 4) if parent is already logged in OR has prefilled data
-      if (currentStep === 3 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+      if (currentStep === 3 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
         nextStepNumber = 5; // Skip directly to waiver step
       }
       // Skip waiver step (step 5) if waiver is already signed  
@@ -292,7 +292,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       let prevStepNumber = currentStep - 1;
       
       // Skip parent info step (step 4) when going backwards if parent is logged in
-      if (currentStep === 5 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+      if (currentStep === 5 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
         prevStepNumber = 3; // Skip back to schedule step
       }
       
@@ -302,10 +302,10 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
   // Automatically skip parent info step if parent is already logged in
   useEffect(() => {
-    if (currentStep === 4 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+    if (currentStep === 4 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
       setCurrentStep(5); // Skip to waiver step
     }
-  }, [currentStep, parentAuth?.loggedIn, prefilledCustomer, isReturningCustomer]);
+  }, [currentStep, parentAuth?.loggedIn, prefilledParent, isReturningParent]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -403,7 +403,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
               { step: 6, label: "Payment", fullLabel: "Payment" }
             ].filter(stepData => {
               // Hide parent info step if parent is logged in
-              if (stepData.step === 4 && (parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer))) {
+              if (stepData.step === 4 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
                 return false;
               }
               return true;
@@ -754,7 +754,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
             {/* Step 4: Parent/Guardian Information - Skip if parent is logged in */}
             {(() => {
-              const shouldSkipParentInfo = parentAuth?.loggedIn || (prefilledCustomer && isReturningCustomer);
+              const shouldSkipParentInfo = parentAuth?.loggedIn || (prefilledParent && isReturningParent);
 
               
               if (currentStep !== 4 || shouldSkipParentInfo) {

@@ -12,10 +12,12 @@ import { formatPublishedAtToPacific } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
 import { sendGenericEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendSessionCancellation, sendSessionConfirmation, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
+import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
 import { SupabaseStorage } from "./storage";
 import { supabase } from "./supabase-client";
 import { timeSlotLocksRouter } from "./time-slot-locks";
+import { LessonUtils, ResponseUtils, ValidationUtils } from "./utils";
 
 // Helper function to get the base URL for the application
 function getBaseUrl(): string {
@@ -39,22 +41,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // Focus area validation helper
 function validateFocusAreas(focusAreaIds: number[], lessonType: string): { isValid: boolean; message?: string } {
-  const LESSON_LIMITS = {
-    "quick-journey": { max: 2, duration: "30 minutes" },
-    "dual-quest": { max: 2, duration: "30 minutes" },
-    "deep-dive": { max: 4, duration: "60 minutes" },
-    "partner-progression": { max: 4, duration: "60 minutes" }
-  };
-  
-  const config = LESSON_LIMITS[lessonType as keyof typeof LESSON_LIMITS] || { max: 2, duration: "30 minutes" };
+  const duration = LessonUtils.getDurationMinutes(lessonType);
+  const max = duration === 60 ? 4 : 2;
   
   // Focus areas are optional - allow empty array
   if (focusAreaIds.length === 0) {
     return { isValid: true };
   }
   
-  if (focusAreaIds.length > config.max) {
-    const limitMessage = config.duration.includes('30') 
+  if (focusAreaIds.length > max) {
+    const limitMessage = duration === 30 
       ? "30-minute lessons can only have up to 2 focus areas"
       : "60-minute lessons can only have up to 4 focus areas";
     return { isValid: false, message: limitMessage };
@@ -100,11 +96,11 @@ function timeToMinutes(timeStr: string): number {
 
 // Helper function to check if a booking time conflicts with availability
 async function checkBookingAvailability(date: string, startTime: string, duration: number): Promise<{ available: boolean; reason?: string }> {
-  console.log(`[DEBUG] Checking availability for ${date}, time: ${startTime} (duration: ${duration}min)`);
+  logger.debug(`Checking availability for ${date}, time: ${startTime} (duration: ${duration}min)`);
   const bookingDate = new Date(date);
   const dayOfWeek = bookingDate.getDay();
   const startTime24 = convertTo24Hour(startTime);
-  console.log(`[DEBUG] Converted time ${startTime} to 24-hour: ${startTime24}`);
+  logger.debug(`Converted time ${startTime} to 24-hour: ${startTime24}`);
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = startMinutes + duration;
   
@@ -187,12 +183,12 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
   const bookingDate = new Date(date);
   const dayOfWeek = bookingDate.getDay();
   
-  console.log(`[DEBUG] === BOOKING CUTOFF SYSTEM ===`);
-  console.log(`[DEBUG] Date: ${date}, Day: ${dayOfWeek}, Lesson Duration: ${lessonDuration} minutes`);
+  logger.debug(`=== BOOKING CUTOFF SYSTEM ===`);
+  logger.debug(`Date: ${date}, Day: ${dayOfWeek}, Lesson Duration: ${lessonDuration} minutes`);
   
   // Get weekly availability for this day
   const dayAvailability = await storage.getAllAvailability();
-  console.log(`[DEBUG] All availability slots:`, dayAvailability.map(slot => ({
+  logger.debug(`All availability slots:`, dayAvailability.map(slot => ({
     dayOfWeek: slot.dayOfWeek,
     isAvailable: slot.isAvailable,
     startTime: slot.startTime,
@@ -202,11 +198,10 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
   const availableSlots = dayAvailability.filter(slot => 
     slot.dayOfWeek === dayOfWeek && slot.isAvailable
   );
-  
-  console.log(`[DEBUG] Available slots for day ${dayOfWeek}:`, availableSlots.length);
-  
+   logger.debug(`Available slots for day ${dayOfWeek}:`, availableSlots.length);
+
   if (availableSlots.length === 0) {
-    console.log(`[DEBUG] No available slots found for dayOfWeek ${dayOfWeek}`);
+    logger.debug(`No available slots found for dayOfWeek ${dayOfWeek}`);
     return [];
   }
   
@@ -227,11 +222,11 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
     const slotStart = timeToMinutes(slot.startTime);
     const slotEnd = timeToMinutes(slot.endTime);
     
-    console.log(`[DEBUG] Processing availability slot: ${slot.startTime}-${slot.endTime} (${slotStart}-${slotEnd} minutes)`);
+    logger.debug(` Processing availability slot: ${slot.startTime}-${slot.endTime} (${slotStart}-${slotEnd} minutes)`);
     
     // BOOKING CUTOFF CALCULATION: Latest start time ensures lesson finishes within slot
     const latestStartTime = slotEnd - lessonDuration;
-    console.log(`[DEBUG] Cutoff calculation: Slot ends at ${slotEnd}min, lesson takes ${lessonDuration}min, so latest start is ${latestStartTime}min (${Math.floor(latestStartTime / 60)}:${(latestStartTime % 60).toString().padStart(2, '0')})`);
+    logger.debug(` Cutoff calculation: Slot ends at ${slotEnd}min, lesson takes ${lessonDuration}min, so latest start is ${latestStartTime}min (${Math.floor(latestStartTime / 60)}:${(latestStartTime % 60).toString().padStart(2, '0')})`);
     
     // Generate 30-minute intervals within this slot, respecting the cutoff
     for (let minutes = slotStart; minutes <= latestStartTime; minutes += 30) {
@@ -293,21 +288,21 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
       // If no conflicts and not in the past, add this time
       if (!conflictsWithBooking && !conflictsWithReservation && !conflictsWithBlock && !isPastTime) {
         availableTimes.push(timeStr);
-        console.log(`[DEBUG] ✓ Added available time: ${timeStr} (lesson ends at ${Math.floor(endMinutes / 60)}:${(endMinutes % 60).toString().padStart(2, '0')})`);
+        logger.debug(` ✓ Added available time: ${timeStr} (lesson ends at ${Math.floor(endMinutes / 60)}:${(endMinutes % 60).toString().padStart(2, '0')})`);
       } else {
         const reasons = [];
         if (conflictsWithBooking) reasons.push("booking conflict");
         if (conflictsWithReservation) reasons.push("reservation conflict");
         if (conflictsWithBlock) reasons.push("blocked time");
         if (isPastTime) reasons.push("past time");
-        console.log(`[DEBUG] ✗ Rejected time: ${timeStr} (${reasons.join(", ")})`);
+        logger.debug(` ✗ Rejected time: ${timeStr} (${reasons.join(", ")})`);
       }
     }
   }
   
-  console.log(`[DEBUG] === FINAL RESULTS ===`);
-  console.log(`[DEBUG] Total available times: ${availableTimes.length}`);
-  console.log(`[DEBUG] Available times: ${availableTimes.join(", ") || "NONE"}`);
+  logger.debug(` === FINAL RESULTS ===`);
+  logger.debug(` Total available times: ${availableTimes.length}`);
+  logger.debug(` Available times: ${availableTimes.join(", ") || "NONE"}`);
   
   return availableTimes.sort();
 }
@@ -363,20 +358,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Map payment status to user-friendly display
         let displayPaymentStatus = booking.payment_status;
-        if (booking.payment_status === 'reservation-paid') {
+        if (booking.payment_status === PaymentStatusEnum.RESERVATION_PAID) {
           displayPaymentStatus = 'Reservation: Paid';
-        } else if (booking.payment_status === 'session-paid') {
+        } else if (booking.payment_status === PaymentStatusEnum.SESSION_PAID) {
           displayPaymentStatus = 'Session: Paid';
-        } else if (booking.payment_status === 'reservation-pending') {
+        } else if (booking.payment_status === PaymentStatusEnum.RESERVATION_PENDING) {
           displayPaymentStatus = 'Reservation: Pending';
-        } else if (booking.payment_status === 'reservation-failed') {
+        } else if (booking.payment_status === PaymentStatusEnum.RESERVATION_FAILED) {
           displayPaymentStatus = 'Reservation: Failed';
         }
         
         // Map booking status for confirmed sessions
         let displayStatus = booking.status;
-        if (booking.status === 'pending' && booking.payment_status === 'reservation-paid') {
-          displayStatus = 'confirmed';
+        if (booking.status === BookingStatusEnum.PENDING && booking.payment_status === PaymentStatusEnum.RESERVATION_PAID) {
+          displayStatus = BookingStatusEnum.CONFIRMED;
         }
         
         return {
@@ -466,8 +461,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/test/parent-login', async (req, res) => {
     const { email } = req.body;
     
-    if (!email) {
-      return res.status(400).json({ error: 'Email required' });
+    // Validate email
+    if (!email || !ValidationUtils.isValidEmail(email)) {
+      return res.status(400).json(ResponseUtils.error('Valid email required'));
     }
     
     try {
@@ -500,8 +496,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/test/create-fixed-auth-code', isAdminAuthenticated, async (req, res) => {
     const { email, code } = req.body;
     
-    if (!email || !code) {
-      return res.status(400).json({ error: 'Email and code are required' });
+    // Validate input
+    if (!email || !code || !ValidationUtils.isValidEmail(email)) {
+      return res.status(400).json(ResponseUtils.error('Valid email and code are required'));
     }
     
     try {
@@ -530,18 +527,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get available time slots for a specific date and lesson type
   app.get("/api/available-times/:date/:lessonType", async (req, res) => {
+    const perfTimer = logger.performance.api.request('GET', `/api/available-times/${req.params.date}/${req.params.lessonType}`);
+    
     try {
       const { date, lessonType } = req.params;
       const lessonDuration = getLessonDurationMinutes(lessonType);
       
-      console.log(`[DEBUG] Available times API called for ${date}, ${lessonType} (${lessonDuration}min)`);
+      logger.debug(`Available times API called for ${date}, ${lessonType} (${lessonDuration}min)`);
       
       const availableTimes = await getAvailableTimeSlots(date, lessonDuration);
       
       res.json({ availableTimes });
+      perfTimer.end(200);
     } catch (error: any) {
       console.error('Error getting available times:', error);
       res.status(500).json({ error: "Failed to get available times" });
+      perfTimer.end(500);
     }
   });
   
@@ -550,8 +551,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, phone } = req.body;
       
-      if (!email || !phone) {
-        return res.status(400).json({ error: "Email and phone are required" });
+      // Validate input
+      if (!email || !phone || !ValidationUtils.isValidEmail(email) || !ValidationUtils.isValidPhone(phone)) {
+        return res.status(400).json(ResponseUtils.error("Valid email and phone are required"));
       }
       
       // Look for existing bookings with matching email and phone
@@ -628,8 +630,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Customer identification route (legacy compatibility)
-  app.post("/api/identify-customer", async (req, res) => {
+  // Parent identification route (legacy compatibility)
+  app.post("/api/identify-parent", async (req, res) => {
     try {
       const { email, phone } = req.body;
       
@@ -639,21 +641,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Look for existing bookings with matching email and phone
       const existingBookings = await storage.getAllBookings();
-      const customerBookings = existingBookings.filter(
+      const parentBookings = existingBookings.filter(
         booking => booking.parentEmail === email && booking.parentPhone === phone
       );
       
-      if (customerBookings.length === 0) {
+      if (parentBookings.length === 0) {
         return res.json({ found: false });
       }
       
-      // Get the most recent booking to use as customer info
-      const latestBooking = customerBookings.sort((a, b) => 
+      // Get the most recent booking to use as parent info
+      const latestBooking = parentBookings.sort((a, b) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )[0];
       
-      // Create customer object from booking data
-      const customer = {
+      // Create parent object from booking data
+      const parent = {
         id: `email-${email}`, // Use email as identifier
         firstName: latestBooking.parentFirstName,
         lastName: latestBooking.parentLastName,
@@ -670,7 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const athletes = [];
       const athleteMap = new Map();
       
-      customerBookings.forEach(booking => {
+      parentBookings.forEach(booking => {
         // Athlete 1
         const athlete1Key = `${booking.athlete1Name}-${booking.athlete1DateOfBirth}`;
         if (!athleteMap.has(athlete1Key)) {
@@ -705,15 +707,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         found: true,
-        customer,
+        parent,
         athletes,
         lastFocusAreas,
-        totalBookings: customerBookings.length,
+        totalBookings: parentBookings.length,
       });
       
     } catch (error: any) {
-      console.error("Error identifying customer:", error);
-      res.status(500).json({ error: "Failed to identify customer" });
+      console.error("Error identifying parent:", error);
+      res.status(500).json({ error: "Failed to identify parent" });
     }
   });
 
@@ -765,40 +767,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Customer management routes (legacy compatibility)
-  app.post("/api/customers", async (req, res) => {
+  // Parent management routes (legacy compatibility)
+  app.post("/api/parents", async (req, res) => {
     try {
-      const customerData = req.body;
-      const customer = await storage.createCustomer(customerData);
-      res.json(customer);
+      const parentData = req.body;
+      const parent = await storage.createParent(parentData);
+      res.json(parent);
     } catch (error: any) {
-      console.error("Error creating customer:", error);
-      res.status(500).json({ error: "Failed to create customer" });
+      console.error("Error creating parent:", error);
+      res.status(500).json({ error: "Failed to create parent" });
     }
   });
 
-  app.put("/api/customers/:id", async (req, res) => {
+  app.put("/api/parents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
-      const customer = await storage.updateCustomer(id, updateData);
-      if (!customer) {
-        return res.status(404).json({ error: "Customer not found" });
+      const parent = await storage.updateParent(id, updateData);
+      if (!parent) {
+        return res.status(404).json({ error: "Parent not found" });
       }
-      res.json(customer);
+      res.json(parent);
     } catch (error: any) {
-      console.error("Error updating customer:", error);
-      res.status(500).json({ error: "Failed to update customer" });
+      console.error("Error updating parent:", error);
+      res.status(500).json({ error: "Failed to update parent" });
     }
   });
 
-  app.get("/api/customers/:id/athletes", async (req, res) => {
+  app.get("/api/parents/:id/athletes", async (req, res) => {
     try {
-      const customerId = parseInt(req.params.id);
-      const athletes = await storage.getCustomerAthletes(customerId);
+      const parentId = parseInt(req.params.id);
+      const athletes = await storage.getParentAthletes(parentId);
       res.json(athletes);
     } catch (error: any) {
-      console.error("Error fetching customer athletes:", error);
+      console.error("Error fetching parent athletes:", error);
       res.status(500).json({ error: "Failed to fetch athletes" });
     }
   });
@@ -807,9 +809,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/athletes", isAdminAuthenticated, async (req, res) => {
     try {
       const athletes = await storage.getAllAthletes();
-      console.log(`[DEBUG] Retrieved ${athletes.length} athletes from storage`);
+      logger.debug(` Retrieved ${athletes.length} athletes from storage`);
       if (athletes.length > 0) {
-        console.log(`[DEBUG] First athlete:`, athletes[0]);
+        logger.debug(` First athlete:`, athletes[0]);
       }
       res.json(athletes);
     } catch (error: any) {
@@ -861,7 +863,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check if athlete has active bookings
         const hasActiveBookings = athleteBookings.some((booking: any) => 
-          booking && ['confirmed', 'pending', 'paid', 'manual', 'manual-paid'].includes(booking.status)
+          booking && [
+            BookingStatusEnum.CONFIRMED, 
+            BookingStatusEnum.PENDING, 
+            BookingStatusEnum.PAID, 
+            BookingStatusEnum.MANUAL, 
+            BookingStatusEnum.MANUAL_PAID
+          ].includes(booking.status)
         );
         
         // Check if athlete has signed waiver
@@ -928,14 +936,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updateData = req.body;
       
-      console.log(`[PATCH] Updating athlete ${id} with data:`, updateData);
+      logger.debug(`[PATCH] Updating athlete ${id} with data:`, updateData);
       
       const athlete = await storage.updateAthlete(id, updateData);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
       }
       
-      console.log(`[PATCH] Updated athlete result:`, athlete);
+      logger.debug(`[PATCH] Updated athlete result:`, athlete);
       res.json(athlete);
     } catch (error: any) {
       console.error("Error updating athlete (PATCH):", error);
@@ -955,13 +963,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const athlete = await storage.updateAthlete(id, { photo });
       if (!athlete) {
-        return res.status(404).json({ error: "Athlete not found" });
+        return res.status(404).json(ResponseUtils.error("Athlete not found"));
       }
       
-      res.json({ success: true, athlete });
+      res.json(ResponseUtils.success(athlete, "Athlete photo updated successfully"));
     } catch (error: any) {
       console.error("Error updating athlete photo:", error);
-      res.status(500).json({ error: "Failed to update athlete photo" });
+      res.status(500).json(ResponseUtils.error("Failed to update athlete photo"));
     }
   });
 
@@ -1003,7 +1011,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if athlete has any active (non-cancelled) bookings
       const bookingHistory = await storage.getAthleteBookingHistory(id);
-      const activeBookings = bookingHistory.filter(booking => booking.status !== "cancelled");
+      const activeBookings = bookingHistory.filter(booking => booking.status !== BookingStatusEnum.CANCELLED);
       if (activeBookings.length > 0) {
         return res.status(400).json({ 
           error: "Cannot delete athlete with active bookings",
@@ -1039,14 +1047,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = req.params;
       
-      console.log(`[DEBUG] Looking for booking with session ID: ${sessionId}`);
+      logger.debug(` Looking for booking with session ID: ${sessionId}`);
       
       // Find booking by session ID - session IDs are strings, not numbers
       const allBookings = await storage.getAllBookings();
       const booking = allBookings.find(b => b.stripeSessionId === sessionId);
       
       if (!booking) {
-        console.log(`[DEBUG] No booking found with session ID: ${sessionId}`);
+        logger.debug(` No booking found with session ID: ${sessionId}`);
         return res.status(404).json({ message: "Booking not found" });
       }
       
@@ -1063,7 +1071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const bookingWithAthletes = await storage.getBookingWithRelations(booking.id);
         if (bookingWithAthletes && bookingWithAthletes.athletes && bookingWithAthletes.athletes.length > 0) {
-          console.log(`[DEBUG] Returning booking with ${bookingWithAthletes.athletes.length} athletes`);
+          logger.debug(` Returning booking with ${bookingWithAthletes.athletes.length} athletes`);
           return res.json(bookingWithAthletes);
         }
       } catch (relationError) {
@@ -1562,7 +1570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await storage.updateBooking(bookingId, { 
           stripeSessionId: session.id,
-          paymentStatus: 'reservation-pending'
+          paymentStatus: PaymentStatusEnum.RESERVATION_PENDING
         });
       } catch (updateError) {
         console.error('Failed to update booking with session ID:', updateError);
@@ -1736,6 +1744,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Bookings routes
   app.post("/api/bookings", async (req, res) => {
+    const perfTimer = logger.performance.api.request('POST', '/api/bookings');
+    
     try {
       console.log("Booking request body:", JSON.stringify(req.body, null, 2));
       
@@ -1793,13 +1803,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Do not send confirmation email immediately
       
       res.json(booking);
+      perfTimer.end(200);
     } catch (error) {
       if (error instanceof z.ZodError) {
         console.error("Booking validation errors:", error.errors);
         res.status(400).json({ message: "Invalid booking data", errors: error.errors });
+        perfTimer.end(400);
       } else {
         console.error("Booking creation error:", error);
         res.status(500).json({ message: "Failed to create booking" });
+        perfTimer.end(500);
       }
     }
   });
@@ -1838,8 +1851,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const booking = await storage.createBooking({
         ...bookingData,
         bookingMethod: 'manual',
-        status: 'manual',
-        paymentStatus: 'pending'
+        status: BookingStatusEnum.MANUAL,
+        paymentStatus: PaymentStatusEnum.UNPAID
       });
       
       // Send email to parent with auth link
@@ -1946,7 +1959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use getAllBookingsWithRelations to include athlete data
       const bookings = await storage.getAllBookingsWithRelations();
-      console.log(`[DEBUG] Retrieved ${bookings.length} bookings with relations from storage`);
+      logger.debug(` Retrieved ${bookings.length} bookings with relations from storage`);
       res.json(bookings);
     } catch (error) {
       console.error("[DEBUG] Error fetching bookings:", error);
@@ -2025,7 +2038,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       
-      const validStatuses = ["pending", "paid", "confirmed", "manual", "manual-paid", "completed", "no-show", "failed", "cancelled"];
+      const validStatuses = [
+        BookingStatusEnum.PENDING,
+        BookingStatusEnum.PAID,
+        BookingStatusEnum.CONFIRMED,
+        BookingStatusEnum.MANUAL,
+        BookingStatusEnum.MANUAL_PAID,
+        BookingStatusEnum.COMPLETED,
+        BookingStatusEnum.NO_SHOW,
+        BookingStatusEnum.FAILED,
+        BookingStatusEnum.CANCELLED
+      ];
       if (!validStatuses.includes(status)) {
         res.status(400).json({ message: `Invalid status. Valid statuses are: ${validStatuses.join(", ")}` });
         return;
@@ -2590,7 +2613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               updates.push({
                 bookingId: booking.id,
                 oldStatus: booking.paymentStatus,
-                newStatus: 'reservation-paid',
+                newStatus: PaymentStatusEnum.RESERVATION_PAID,
                 amount: amountPaid,
                 reason: shouldSync.reason
               });
@@ -2601,7 +2624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               updates.push({
                 bookingId: booking.id,
                 oldStatus: booking.paymentStatus,
-                newStatus: 'reservation-pending',
+                newStatus: PaymentStatusEnum.RESERVATION_PENDING,
                 reason: shouldSync.reason
               });
             }
@@ -2788,8 +2811,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update booking status to cancelled
       const updatedBooking = await storage.updateBooking(bookingId, { 
-        status: 'cancelled',
-        attendanceStatus: 'cancelled'
+        status: BookingStatusEnum.CANCELLED,
+        attendanceStatus: AttendanceStatusEnum.CANCELLED
       });
       
       // Send cancellation email
@@ -4666,7 +4689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Delete any parent named Thomas Sawyer
       const parentResult = await supabase
-        .from('customers')
+        .from('parents')
         .delete()
         .or('first_name.eq.Thomas,last_name.eq.Sawyer')
         .select();

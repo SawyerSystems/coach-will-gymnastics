@@ -1,28 +1,23 @@
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type Customer, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertCustomer, type InsertFocusArea, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { supabase } from "./supabase-client";
 
 
 export interface IStorage {
-  // Users (legacy - not implemented)
-  // getUser(id: number): Promise<User | undefined>;
-  // getUserByUsername(username: string): Promise<User | undefined>;
-  // createUser(user: InsertUser): Promise<User>;
-
   // Parents (preferred terminology)
-  getAllParents(): Promise<Customer[]>;
-  identifyParent(email: string, phone: string): Promise<Customer | undefined>;
-  createParent(parent: InsertCustomer): Promise<Customer>;
-  updateParent(id: number, parent: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  getAllParents(): Promise<Parent[]>;
+  identifyParent(email: string, phone: string): Promise<Parent | undefined>;
+  createParent(parent: InsertParent): Promise<Parent>;
+  updateParent(id: number, parent: Partial<InsertParent>): Promise<Parent | undefined>;
   deleteParent(id: number): Promise<boolean>;
   getParentAthletes(parentId: number): Promise<Athlete[]>;
-  getParentById(id: number): Promise<Customer | undefined>;
+  getParentById(id: number): Promise<Parent | undefined>;
 
-  // Customers (legacy compatibility)
-  identifyCustomer(email: string, phone: string): Promise<Customer | undefined>;
-  createCustomer(customer: InsertCustomer): Promise<Customer>;
-  updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
-  deleteCustomer(id: number): Promise<boolean>;
-  getCustomerAthletes(customerId: number): Promise<Athlete[]>;
+  // Parents (legacy compatibility)
+  identifyParent(email: string, phone: string): Promise<Parent | undefined>;
+  createParent(parent: InsertParent): Promise<Parent>;
+  updateParent(id: number, parent: Partial<InsertParent>): Promise<Parent | undefined>;
+  deleteParent(id: number): Promise<boolean>;
+  getParentAthletes(parentId: number): Promise<Athlete[]>;
 
   // Athletes
   getAllAthletes(): Promise<Athlete[]>;
@@ -142,13 +137,13 @@ export interface IStorage {
   ): Promise<BookingWithRelations | undefined>;
 }
 
-export class MemStorage implements Omit<IStorage, 'getUser' | 'getUserByUsername' | 'createUser'> {
+export class MemStorage implements IStorage {
   private bookings: Map<number, Booking>;
   private blogPosts: Map<number, BlogPost>;
   private tips: Map<number, Tip>;
   private availability: Map<number, Availability>;
   private availabilityExceptions: Map<number, AvailabilityException>;
-  private parents: Map<number, Customer>;
+  private parents: Map<number, Parent>;
   private athletes: Map<number, Athlete>;
   private admins: Map<number, Admin>;
   private parentAuthCodes: Map<string, ParentAuthCode>;
@@ -536,51 +531,31 @@ With the right setup and approach, home practice can accelerate your child's gym
     });
   }
 
-  // Customer management (stub implementations for compatibility)
-  async identifyCustomer(email: string, phone: string): Promise<Customer | undefined> {
+  // Parent management (stub implementations for compatibility)
+  async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
     // Stub implementation - actual logic is in routes using booking data
     return undefined;
   }
 
-  async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    throw new Error("Customer management not implemented in MemStorage");
+  async createParent(parent: InsertParent): Promise<Parent> {
+    throw new Error("Parent management not implemented in MemStorage");
   }
 
-  async updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
-    throw new Error("Customer management not implemented in MemStorage");
-  }
-
-  async deleteCustomer(id: number): Promise<boolean> {
-    throw new Error("Customer management not implemented in MemStorage");
-  }
-
-  async getCustomerAthletes(customerId: number): Promise<Athlete[]> {
-    throw new Error("Customer management not implemented in MemStorage");
-  }
-
-  // Parent methods (preferred terminology - stub implementations for compatibility)
-  async getAllParents(): Promise<Customer[]> {
-    return [];
-  }
-
-  async identifyParent(email: string, phone: string): Promise<Customer | undefined> {
-    return this.identifyCustomer(email, phone);
-  }
-
-  async createParent(parent: InsertCustomer): Promise<Customer> {
-    return this.createCustomer(parent);
-  }
-
-  async updateParent(id: number, parent: Partial<InsertCustomer>): Promise<Customer | undefined> {
-    return this.updateCustomer(id, parent);
+  async updateParent(id: number, parent: Partial<InsertParent>): Promise<Parent | undefined> {
+    throw new Error("Parent management not implemented in MemStorage");
   }
 
   async deleteParent(id: number): Promise<boolean> {
-    return this.deleteCustomer(id);
+    throw new Error("Parent management not implemented in MemStorage");
   }
 
   async getParentAthletes(parentId: number): Promise<Athlete[]> {
-    return this.getCustomerAthletes(parentId);
+    throw new Error("Parent management not implemented in MemStorage");
+  }
+
+  // Parent methods (preferred terminology - get all parents)
+  async getAllParents(): Promise<Parent[]> {
+    return [];
   }
 
   // Athlete management (stub implementations for compatibility)
@@ -616,9 +591,9 @@ With the right setup and approach, home practice can accelerate your child's gym
       id,
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: "pending",
-      paymentStatus: "unpaid",
-      attendanceStatus: "pending",
+      status: BookingStatusEnum.PENDING,
+      paymentStatus: PaymentStatusEnum.UNPAID,
+      attendanceStatus: AttendanceStatusEnum.PENDING,
       // Convert Date to string format for compatibility
       preferredDate: insertBooking.preferredDate instanceof Date ? 
         insertBooking.preferredDate.toISOString().split('T')[0] : 
@@ -970,7 +945,7 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
 
   // Parent auth methods - Not implemented in MemStorage
-  async getParentById(id: number): Promise<Customer | undefined> {
+  async getParentById(id: number): Promise<Parent | undefined> {
     return undefined;
   }
 
@@ -1175,7 +1150,7 @@ With the right setup and approach, home practice can accelerate your child's gym
 // Supabase Storage Implementation
 export class SupabaseStorage implements IStorage {
   // Parent methods (preferred terminology)
-  async getAllParents(): Promise<Customer[]> {
+  async getAllParents(): Promise<Parent[]> {
     const { data, error } = await supabase
       .from('parents')
       .select('*')
@@ -1189,7 +1164,7 @@ export class SupabaseStorage implements IStorage {
     return data || [];
   }
 
-  async identifyParent(email: string, phone: string): Promise<Customer | undefined> {
+  async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
     const { data, error } = await supabase
       .from('parents')
       .select('*')
@@ -1204,7 +1179,7 @@ export class SupabaseStorage implements IStorage {
     return data || undefined;
   }
 
-  async createParent(insertParent: InsertCustomer): Promise<Customer> {
+  async createParent(insertParent: InsertParent): Promise<Parent> {
     // Map camelCase to snake_case for Supabase
     const supabaseData = {
       first_name: insertParent.firstName,
@@ -1232,7 +1207,7 @@ export class SupabaseStorage implements IStorage {
     return data;
   }
 
-  async updateParent(id: number, updateData: Partial<InsertCustomer>): Promise<Customer | undefined> {
+  async updateParent(id: number, updateData: Partial<InsertParent>): Promise<Parent | undefined> {
     const { data, error } = await supabase
       .from('parents')
       .update(updateData)
@@ -1291,27 +1266,6 @@ export class SupabaseStorage implements IStorage {
       createdAt: new Date(athlete.created_at),
       updatedAt: new Date(athlete.updated_at)
     }));
-  }
-
-  // Customer methods (legacy compatibility)
-  async identifyCustomer(email: string, phone: string): Promise<Customer | undefined> {
-    return this.identifyParent(email, phone);
-  }
-
-  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
-    return this.createParent(insertCustomer);
-  }
-
-  async updateCustomer(id: number, updateData: Partial<InsertCustomer>): Promise<Customer | undefined> {
-    return this.updateParent(id, updateData);
-  }
-
-  async deleteCustomer(id: number): Promise<boolean> {
-    return this.deleteParent(id);
-  }
-
-  async getCustomerAthletes(customerId: number): Promise<Athlete[]> {
-    return this.getParentAthletes(customerId);
   }
 
   // Athletes
@@ -1881,8 +1835,8 @@ export class SupabaseStorage implements IStorage {
       console.log('✅ Successfully fetched tips:', data?.length || 0);
       return data || [];
     } catch (error) {
-      console.error('❌ Error fetching tips:', error);
-      throw error;
+      console.error('Error fetching tips:', error);
+      return [];
     }
   }
 
@@ -2474,7 +2428,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Parent auth methods
-  async getParentById(id: number): Promise<Customer | undefined> {
+  async getParentById(id: number): Promise<Parent | undefined> {
     const { data, error } = await supabase
       .from('parents')
       .select('*')

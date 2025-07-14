@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import type { 
   User, InsertUser, 
-  Customer, InsertCustomer,
+  Parent, InsertParent,
   Athlete, InsertAthlete,
   Booking, InsertBooking, 
   BlogPost, InsertBlogPost, 
@@ -18,14 +18,14 @@ const DATA_DIR = join(process.cwd(), 'data');
 const AVAILABILITY_FILE = join(DATA_DIR, 'availability.json');
 const EXCEPTIONS_FILE = join(DATA_DIR, 'exceptions.json');
 const BOOKINGS_FILE = join(DATA_DIR, 'bookings.json');
-const CUSTOMERS_FILE = join(DATA_DIR, 'customers.json');
+const CUSTOMERS_FILE = join(DATA_DIR, 'parents.json');
 const ATHLETES_FILE = join(DATA_DIR, 'athletes.json');
 const ADMINS_FILE = join(DATA_DIR, 'admins.json');
 const AUTH_CODES_FILE = join(DATA_DIR, 'auth-codes.json');
 
 export class PersistentMemStorage implements IStorage {
   private users: Map<number, User> = new Map();
-  private customers: Map<number, Customer> = new Map();
+  private parents: Map<number, Parent> = new Map();
   private athletes: Map<number, Athlete> = new Map();
   private bookings: Map<number, Booking> = new Map();
   private blogPosts: Map<number, BlogPost> = new Map();
@@ -36,7 +36,7 @@ export class PersistentMemStorage implements IStorage {
   private parentAuthCodes: Map<number, ParentAuthCode> = new Map();
   
   private currentUserId: number = 1;
-  private currentCustomerId: number = 1;
+  private currentParentId: number = 1;
   private currentAthleteId: number = 1;
   private currentBookingId: number = 1;
   private currentBlogPostId: number = 1;
@@ -77,7 +77,7 @@ export class PersistentMemStorage implements IStorage {
     const availabilityData = await this.loadData<Availability>(AVAILABILITY_FILE);
     const exceptionsData = await this.loadData<AvailabilityException>(EXCEPTIONS_FILE);
     const bookingsData = await this.loadData<Booking>(BOOKINGS_FILE);
-    const customersData = await this.loadData<Customer>(CUSTOMERS_FILE);
+    const parentsData = await this.loadData<Parent>(CUSTOMERS_FILE);
     const athletesData = await this.loadData<Athlete>(ATHLETES_FILE);
 
     // If no availability data exists, create default schedule
@@ -117,15 +117,15 @@ export class PersistentMemStorage implements IStorage {
       this.currentBookingId = Math.max(this.currentBookingId, booking.id + 1);
     });
 
-    // Load customers
-    customersData.forEach(customer => {
-      this.customers.set(customer.id, { 
-        ...customer, 
-        createdAt: new Date(customer.createdAt),
-        updatedAt: new Date(customer.updatedAt),
-        waiverSignedAt: customer.waiverSignedAt ? new Date(customer.waiverSignedAt) : null
+    // Load parents
+    parentsData.forEach(parent => {
+      this.parents.set(parent.id, { 
+        ...parent, 
+        createdAt: new Date(parent.createdAt),
+        updatedAt: new Date(parent.updatedAt),
+        waiverSignedAt: parent.waiverSignedAt ? new Date(parent.waiverSignedAt) : null
       });
-      this.currentCustomerId = Math.max(this.currentCustomerId, customer.id + 1);
+      this.currentParentId = Math.max(this.currentParentId, parent.id + 1);
     });
 
     // Load athletes
@@ -169,8 +169,8 @@ export class PersistentMemStorage implements IStorage {
     await this.saveData(BOOKINGS_FILE, data);
   }
 
-  private async saveCustomers() {
-    const data = Array.from(this.customers.values());
+  private async saveParents() {
+    const data = Array.from(this.parents.values());
     await this.saveData(CUSTOMERS_FILE, data);
   }
 
@@ -237,80 +237,80 @@ export class PersistentMemStorage implements IStorage {
     return user;
   }
 
-  // Customers
-  async identifyCustomer(email: string, phone: string): Promise<Customer | undefined> {
-    return Array.from(this.customers.values()).find(customer => 
-      customer.email.toLowerCase() === email.toLowerCase() || 
-      customer.phone === phone
+  // Parents
+  async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
+    return Array.from(this.parents.values()).find(parent => 
+      parent.email.toLowerCase() === email.toLowerCase() || 
+      parent.phone === phone
     );
   }
 
-  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
-    const id = this.currentCustomerId++;
-    const customer: Customer = { 
-      ...insertCustomer, 
+  async createParent(insertParent: InsertParent): Promise<Parent> {
+    const id = this.currentParentId++;
+    const parent: Parent = { 
+      ...insertParent, 
       id, 
       createdAt: new Date(),
       updatedAt: new Date(),
-      waiverSigned: insertCustomer.waiverSigned ?? false,
-      waiverSignedAt: insertCustomer.waiverSignedAt ?? null,
-      waiverSignatureName: insertCustomer.waiverSignatureName ?? null
+      waiverSigned: insertParent.waiverSigned ?? false,
+      waiverSignedAt: insertParent.waiverSignedAt ?? null,
+      waiverSignatureName: insertParent.waiverSignatureName ?? null
     };
-    this.customers.set(id, customer);
-    await this.saveCustomers();
-    return customer;
+    this.parents.set(id, parent);
+    await this.saveParents();
+    return parent;
   }
 
-  async updateCustomer(id: number, updateData: Partial<InsertCustomer>): Promise<Customer | undefined> {
-    const existing = this.customers.get(id);
+  async updateParent(id: number, updateData: Partial<InsertParent>): Promise<Parent | undefined> {
+    const existing = this.parents.get(id);
     if (!existing) return undefined;
     
-    const updated: Customer = { 
+    const updated: Parent = { 
       ...existing, 
       ...updateData, 
       id, 
       updatedAt: new Date() 
     };
-    this.customers.set(id, updated);
-    await this.saveCustomers();
+    this.parents.set(id, updated);
+    await this.saveParents();
     return updated;
   }
 
-  async deleteCustomer(id: number): Promise<boolean> {
-    const deleted = this.customers.delete(id);
+  async deleteParent(id: number): Promise<boolean> {
+    const deleted = this.parents.delete(id);
     if (deleted) {
-      await this.saveCustomers();
+      await this.saveParents();
     }
     return deleted;
   }
 
-  async getCustomerAthletes(customerId: number): Promise<Athlete[]> {
-    return Array.from(this.athletes.values()).filter(athlete => athlete.parentId === customerId);
+  async getParentAthletes(parentId: number): Promise<Athlete[]> {
+    return Array.from(this.athletes.values()).filter(athlete => athlete.parentId === parentId);
   }
 
-  // Parent methods (preferred terminology - delegate to customer methods for compatibility)
-  async identifyParent(email: string, phone: string): Promise<Customer | undefined> {
-    return this.identifyCustomer(email, phone);
+  // Parent methods (preferred terminology - delegate to parent methods for compatibility)
+  async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
+    return this.identifyParent(email, phone);
   }
 
-  async createParent(insertParent: InsertCustomer): Promise<Customer> {
-    return this.createCustomer(insertParent);
+  async createParent(insertParent: InsertParent): Promise<Parent> {
+    return this.createParent(insertParent);
   }
 
-  async updateParent(id: number, updateData: Partial<InsertCustomer>): Promise<Customer | undefined> {
-    return this.updateCustomer(id, updateData);
+  async updateParent(id: number, updateData: Partial<InsertParent>): Promise<Parent | undefined> {
+    return this.updateParent(id, updateData);
   }
 
   async deleteParent(id: number): Promise<boolean> {
-    return this.deleteCustomer(id);
+    return this.deleteParent(id);
   }
 
   async getParentAthletes(parentId: number): Promise<Athlete[]> {
-    return this.getCustomerAthletes(parentId);
+    return this.getParentAthletes(parentId);
   }
 
-  async getParentById(id: number): Promise<Customer | undefined> {
-    return this.customers.get(id);
+  async getParentById(id: number): Promise<Parent | undefined> {
+    return this.parents.get(id);
   }
 
   // Athletes

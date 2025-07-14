@@ -1,44 +1,35 @@
-import { useState } from "react";
-import type { Customer, Athlete } from "@shared/schema";
-import { Link } from "wouter";
+import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
+import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CustomerIdentificationEnhanced } from "@/components/customer-identification-enhanced";
-import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
-import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import cwtLogo from "@assets/CWT_Circle_LogoSPIN.png";
-import { 
-  Play, 
-  Calendar, 
-  User, 
-  Users, 
-  Clock, 
-  Star, 
-  Shield, 
-  Dumbbell, 
-  TrendingUp, 
-  CheckCircle,
-  Trophy,
-  Heart,
-  Target,
-  Zap,
-  Award,
-  Brain,
-  Activity,
-  Compass
-} from "lucide-react";
-import { LESSON_TYPES } from "@/lib/constants";
 import { useStripePricing } from "@/hooks/use-stripe-products";
-import { Footer } from "@/components/Footer";
+import { apiRequest } from "@/lib/queryClient";
+import type { Athlete, Parent } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import {
+    Activity,
+    Brain,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Dumbbell,
+    Shield,
+    Star,
+    Target,
+    TrendingUp,
+    Trophy,
+    Zap
+} from "lucide-react";
+import { useState } from "react";
+import { Link } from "wouter";
 
 export default function Home() {
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [showParentModal, setShowParentModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [customerData, setCustomerData] = useState<Customer | null>(null);
+  const [parentData, setParentData] = useState<Parent | null>(null);
   const [selectedAthletes, setSelectedAthletes] = useState<Athlete[]>([]);
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const [isNewParent, setIsNewParent] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const { getLessonPrice } = useStripePricing();
 
@@ -67,15 +58,15 @@ export default function Home() {
     enabled: parentAuth?.loggedIn || false,
   });
 
-  const handleCustomerConfirmed = (data: {
-    customer: Customer;
+  const handleParentConfirmed = (data: {
+    parent: Parent;
     selectedAthletes: Athlete[];
-    isNewCustomer: boolean;
+    isNewParent: boolean;
   }) => {
-    setCustomerData(data.customer);
+    setParentData(data.parent);
     setSelectedAthletes(data.selectedAthletes);
-    setIsNewCustomer(data.isNewCustomer);
-    setShowCustomerModal(false);
+    setIsNewParent(data.isNewParent);
+    setShowParentModal(false);
     setShowBookingModal(true);
   };
 
@@ -89,7 +80,7 @@ export default function Home() {
     if (parentAuth?.loggedIn) {
       // If we have parent info from the API, use it
       if (parentInfo && !parentInfoError) {
-        const customerDataToSet = {
+        const parentDataToSet = {
           id: parentInfo.id,
           firstName: parentInfo.firstName,
           lastName: parentInfo.lastName,
@@ -104,13 +95,13 @@ export default function Home() {
           updatedAt: parentInfo.updatedAt
         };
         
-        setCustomerData(customerDataToSet);
+        setParentData(parentDataToSet);
         setSelectedAthletes(parentAthletes || []);
-        setIsNewCustomer(false);
+        setIsNewParent(false);
         setShowBookingModal(true);
       } else {
-        // Fallback: Create basic customer data from parent auth session
-        const fallbackCustomerData = {
+        // Fallback: Create basic parent data from parent auth session
+        const fallbackParentData = {
           id: parentAuth.parentId || 0,
           firstName: '',
           lastName: '',
@@ -125,14 +116,14 @@ export default function Home() {
           updatedAt: new Date()
         };
         
-        setCustomerData(fallbackCustomerData);
+        setParentData(fallbackParentData);
         setSelectedAthletes(parentAthletes || []);
-        setIsNewCustomer(false);
+        setIsNewParent(false);
         setShowBookingModal(true);
       }
     } else {
-      // Show customer identification modal for non-logged in users
-      setShowCustomerModal(true);
+      // Show parent identification modal for non-logged in users
+      setShowParentModal(true);
     }
   };
 
@@ -687,18 +678,18 @@ export default function Home() {
 
       <Footer />
 
-      <CustomerIdentificationEnhanced 
-        isOpen={showCustomerModal} 
-        onClose={() => setShowCustomerModal(false)}
-        onParentConfirmed={handleCustomerConfirmed}
+      <ParentIdentificationEnhanced 
+        isOpen={showParentModal} 
+        onClose={() => setShowParentModal(false)}
+        onParentConfirmed={handleParentConfirmed}
       />
       
       <EnhancedBookingModal
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
-        customerData={customerData || undefined}
+        parentData={parentData || undefined}
         selectedAthletes={selectedAthletes}
-        isNewCustomer={isNewCustomer}
+        isNewParent={isNewParent}
       />
     </div>
   );

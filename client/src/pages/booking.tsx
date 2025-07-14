@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import type { Customer, Athlete } from "@shared/schema";
-import { CustomerIdentificationEnhanced } from "@/components/customer-identification-enhanced";
+import type { Parent, Athlete } from "@shared/schema";
+import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
 import { BookingModal } from "@/components/booking-modal";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Footer } from "@/components/Footer";
 
 export default function Booking() {
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [showParentModal, setShowParentModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [customerData, setCustomerData] = useState<Customer | null>(null);
+  const [parentData, setParentData] = useState<Parent | null>(null);
   const [selectedAthletes, setSelectedAthletes] = useState<Athlete[]>([]);
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
+  const [isNewParent, setIsNewParent] = useState(false);
   
   // Check parent authentication status
   const { data: parentAuth } = useQuery({
@@ -59,20 +59,20 @@ export default function Booking() {
   
   // Debug log state changes
   useEffect(() => {
-    console.log("Booking state updated:", { showBookingModal, customerData, selectedAthletes, isNewCustomer });
-  }, [showBookingModal, customerData, selectedAthletes, isNewCustomer]);
+    console.log("Booking state updated:", { showBookingModal, parentData, selectedAthletes, isNewParent });
+  }, [showBookingModal, parentData, selectedAthletes, isNewParent]);
   const { getLessonPrice } = useStripePricing();
 
-  const handleCustomerConfirmed = (data: {
-    customer: Customer;
+  const handleParentConfirmed = (data: {
+    parent: Parent;
     selectedAthletes: Athlete[];
-    isNewCustomer: boolean;
+    isNewParent: boolean;
   }) => {
-    console.log("handleCustomerConfirmed called with:", data);
-    setCustomerData(data.customer);
+    console.log("handleParentConfirmed called with:", data);
+    setParentData(data.parent);
     setSelectedAthletes(data.selectedAthletes);
-    setIsNewCustomer(data.isNewCustomer);
-    setShowCustomerModal(false);
+    setIsNewParent(data.isNewParent);
+    setShowParentModal(false);
     setShowBookingModal(true);
     console.log("Should now show booking modal");
   };
@@ -98,7 +98,7 @@ export default function Booking() {
       
       // If we have parent info from the API, use it
       if (parentInfo && !parentInfoError) {
-        const customerDataToSet = {
+        const parentDataToSet = {
           id: parentInfo.id,
           firstName: parentInfo.firstName,
           lastName: parentInfo.lastName,
@@ -113,15 +113,15 @@ export default function Booking() {
           updatedAt: parentInfo.updatedAt
         };
         
-        console.log("Using parent info from API:", customerDataToSet);
-        setCustomerData(customerDataToSet);
+        console.log("Using parent info from API:", parentDataToSet);
+        setParentData(parentDataToSet);
         setSelectedAthletes(parentAthletes || []);
-        setIsNewCustomer(false);
+        setIsNewParent(false);
         setShowBookingModal(true);
       } else {
-        // Fallback: Create basic customer data from parent auth session
+        // Fallback: Create basic parent data from parent auth session
         console.log("Parent info API failed, using fallback from session data");
-        const fallbackCustomerData = {
+        const fallbackParentData = {
           id: parentAuth.parentId,
           firstName: '',
           lastName: '',
@@ -136,15 +136,15 @@ export default function Booking() {
           updatedAt: new Date()
         };
         
-        setCustomerData(fallbackCustomerData);
+        setParentData(fallbackParentData);
         setSelectedAthletes(parentAthletes || []);
-        setIsNewCustomer(false);
+        setIsNewParent(false);
         setShowBookingModal(true);
       }
     } else {
-      // Show customer identification modal for non-logged in users
-      console.log("Showing customer identification modal - not logged in");
-      setShowCustomerModal(true);
+      // Show parent identification modal for non-logged in users
+      console.log("Showing parent identification modal - not logged in");
+      setShowParentModal(true);
     }
   };
 
@@ -249,7 +249,7 @@ export default function Booking() {
                     
                     <Button 
                       className={`w-full ${buttonClasses[lesson.color as keyof typeof buttonClasses]} text-white py-3 rounded-full font-medium transform transition-all duration-200`}
-                      onClick={() => setShowCustomerModal(true)}
+                      onClick={() => setShowParentModal(true)}
                     >
                       Start This Path
                     </Button>
@@ -437,13 +437,13 @@ export default function Booking() {
         </div>
       </section>
 
-      <CustomerIdentificationEnhanced 
-        isOpen={showCustomerModal} 
+      <ParentIdentificationEnhanced 
+        isOpen={showParentModal} 
         onClose={() => {
-          console.log("Customer modal closing");
-          setShowCustomerModal(false);
+          console.log("Parent modal closing");
+          setShowParentModal(false);
         }}
-        onParentConfirmed={handleCustomerConfirmed}
+        onParentConfirmed={handleParentConfirmed}
       />
       
       <EnhancedBookingModal
@@ -452,9 +452,9 @@ export default function Booking() {
           console.log("Booking modal closing");
           setShowBookingModal(false);
         }}
-        customerData={customerData || undefined}
+        parentData={parentData || undefined}
         selectedAthletes={selectedAthletes}
-        isNewCustomer={isNewCustomer}
+        isNewParent={isNewParent}
       />
 
       <Footer />

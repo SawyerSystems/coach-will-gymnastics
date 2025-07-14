@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
 import { calculateAge, formatDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
-import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Customer, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Tip } from "@shared/schema";
+import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Parent, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -144,8 +144,8 @@ export default function Admin() {
     enabled: !!authStatus?.loggedIn,
   });
 
-  const { data: customers = [] } = useQuery<Customer[]>({
-    queryKey: ['/api/customers'],
+  const { data: parents = [] } = useQuery<Parent[]>({
+    queryKey: ['/api/parents'],
     enabled: !!authStatus?.loggedIn,
   });
 
@@ -358,7 +358,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/athletes'] });
       queryClient.invalidateQueries({ queryKey: ['/api/parents'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/parents'] });
       setIsDeleteConfirmOpen(false);
       toast({ 
         title: "Data cleared successfully", 

@@ -37,8 +37,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
+    # Note: RENDER_SERVICE_ID and RENDER_API_KEY must be configured as repository secrets
+    # Go to GitHub repo Settings > Secrets and variables > Actions to add them
     - name: Deploy to Render
       uses: johnbeynon/render-deploy-action@v0.0.8
       with:

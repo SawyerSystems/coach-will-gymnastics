@@ -45,8 +45,8 @@ async function migrateData() {
       }
     }
 
-    // Migrate parents (customers)
-    const parentData = await readJsonFile<Parent>('customers.json');
+    // Migrate parents (parents)
+    const parentData = await readJsonFile<Parent>('parents.json');
     if (parentData.length > 0) {
       console.log(`Migrating ${parentData.length} parents...`);
       for (const parent of parentData) {

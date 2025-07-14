@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // Define PostgreSQL enum types for booking statuses
 export const bookingStatusEnum = pgEnum("booking_status", [
-  "pending", 
+  "pending",
   "paid", 
   "confirmed", 
   "manual", 

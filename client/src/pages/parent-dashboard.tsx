@@ -14,7 +14,7 @@ import { useAvailableTimes } from '@/hooks/use-available-times';
 import { toast } from '@/hooks/use-toast';
 import { calculateAge, formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
-import type { Athlete, Booking, Customer } from '@shared/schema';
+import type { Athlete, Booking, Parent } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, FileCheck, FileX, HelpCircle, LogOut, MapPin, Star, Trophy, User, Users, X, XCircle } from 'lucide-react';
@@ -254,7 +254,7 @@ function ParentDashboard() {
   });
 
   // Get complete parent information
-  const { data: parentInfo } = useQuery<Customer>({
+  const { data: parentInfo } = useQuery<Parent>({
     queryKey: ['/api/parent/info'],
     enabled: authStatus?.loggedIn,
   });
@@ -738,7 +738,7 @@ function ParentDashboard() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {authStatus?.email && (() => {
-                  // Get parent info from customers data using email
+                  // Get parent info from parents data using email
                   const parentInfo = bookings.length > 0 ? {
                     firstName: bookings[0].parentFirstName || '',
                     lastName: bookings[0].parentLastName || '',
@@ -1077,7 +1077,7 @@ function ParentDashboard() {
             setShowBookingModal(false);
             setSelectedAthleteForBooking(null);
           }}
-          customerData={parentInfo || undefined}
+          parentData={parentInfo || undefined}
           selectedAthletes={selectedAthleteForBooking ? [{
             id: selectedAthleteForBooking.id,
             parentId: selectedAthleteForBooking.parentId,
@@ -1092,7 +1092,7 @@ function ParentDashboard() {
             createdAt: new Date(),
             updatedAt: new Date()
           }] : athletes}
-          isNewCustomer={false}
+          isNewParent={false}
         />
 
         {/* Reschedule Booking Modal */}

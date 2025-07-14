@@ -615,14 +615,14 @@ export function AdminSiteContentManager() {
         <TabsContent value="testimonials" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Customer Testimonials</CardTitle>
+              <CardTitle>Parent Testimonials</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {content.testimonials.map((testimonial, index) => (
                 <div key={index} className="p-4 border rounded-lg space-y-3">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Customer Name</Label>
+                      <Label>Parent Name</Label>
                       <Input
                         value={testimonial.name}
                         onChange={(e) => {
@@ -630,7 +630,7 @@ export function AdminSiteContentManager() {
                           newTestimonials[index].name = e.target.value;
                           updateContent('testimonials', newTestimonials);
                         }}
-                        placeholder="Customer name"
+                        placeholder="Parent name"
                       />
                     </div>
                     <div>
@@ -657,7 +657,7 @@ export function AdminSiteContentManager() {
                         newTestimonials[index].text = e.target.value;
                         updateContent('testimonials', newTestimonials);
                       }}
-                      placeholder="Customer testimonial..."
+                      placeholder="Parent testimonial..."
                       rows={3}
                     />
                   </div>

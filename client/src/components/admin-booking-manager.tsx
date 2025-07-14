@@ -15,6 +15,7 @@ import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Booking, InsertBooking } from "@shared/schema";
+import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileText, FileX, Filter, HelpCircle, Plus, Trash2, User, X, XCircle } from "lucide-react";
 import { useState } from "react";
@@ -384,11 +385,11 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
         emergencyContactName: bookingData.emergencyContactName,
         emergencyContactPhone: bookingData.emergencyContactPhone,
         amount: bookingData.amount,
-        status: "confirmed" as any,
-        attendanceStatus: "pending" as any,
+        status: BookingStatusEnum.CONFIRMED,
+        attendanceStatus: AttendanceStatusEnum.PENDING,
         bookingMethod: bookingData.bookingMethod as any,
         waiverSigned: false,
-        paymentStatus: "reservation-pending" as any,
+        paymentStatus: PaymentStatusEnum.RESERVATION_PENDING,
         reservationFeePaid: false,
         paidAmount: "0.00",
         specialRequests: "",

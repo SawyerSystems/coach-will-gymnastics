@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-07-14T04:10:10.182Z",
+  "summary": {
+    "totalPassed": 0,
+    "totalTests": 1,
+    "overallPercentage": 0,
+    "criticalFailures": []
+  },
+  "suites": [
+    {
+      "suiteName": "Database Tests",
+      "results": []
+    },
+    {
+      "suiteName": "API Tests",
+      "results": []
+    },
+    {
+      "suiteName": "Authentication Tests",
+      "results": [
+        {
+          "name": "Admin Authentication",
+          "passed": false,
+          "details": ""
+        }
+      ]
+    },
+    {
+      "suiteName": "Integration Tests",
+      "results": []
+    },
+    {
+      "suiteName": "Performance Tests",
+      "results": []
+    }
+  ]
+}

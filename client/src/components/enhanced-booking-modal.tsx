@@ -2,54 +2,54 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { BookingFlowProvider } from "@/contexts/BookingFlowContext";
 import { BookingWizard } from "./BookingWizard";
-import type { Customer, Athlete } from "@shared/schema";
+import type { Parent, Athlete } from "@shared/schema";
 
 interface EnhancedBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  customerData?: Customer;
+  parentData?: Parent;
   selectedAthletes?: Athlete[];
-  isNewCustomer?: boolean;
+  isNewParent?: boolean;
 }
 
 export function EnhancedBookingModal({ 
   isOpen, 
   onClose, 
-  customerData, 
+  parentData, 
   selectedAthletes = [], 
-  isNewCustomer = false 
+  isNewParent = false 
 }: EnhancedBookingModalProps) {
   // Determine flow type based on provided data
-  const flowType: 'new-user' | 'athlete-modal' | 'parent-portal' = isNewCustomer ? 'new-user' : 
+  const flowType: 'new-user' | 'athlete-modal' | 'parent-portal' = isNewParent ? 'new-user' : 
                    selectedAthletes.length > 0 ? 'athlete-modal' : 
                    'parent-portal';
 
   console.log("EnhancedBookingModal rendered with:", {
     isOpen,
-    customerData: customerData ? {
-      id: customerData.id,
-      firstName: customerData.firstName || '',
-      lastName: customerData.lastName || '',
-      email: customerData.email || '',
-      phone: customerData.phone || '',
-      emergencyContactName: customerData.emergencyContactName || '',
-      emergencyContactPhone: customerData.emergencyContactPhone || ''
+    parentData: parentData ? {
+      id: parentData.id,
+      firstName: parentData.firstName || '',
+      lastName: parentData.lastName || '',
+      email: parentData.email || '',
+      phone: parentData.phone || '',
+      emergencyContactName: parentData.emergencyContactName || '',
+      emergencyContactPhone: parentData.emergencyContactPhone || ''
     } : null,
     selectedAthletes: selectedAthletes.length,
-    isNewCustomer,
+    isNewParent,
     flowType
   });
 
   const initialState = {
-    parentId: customerData?.id,
+    parentId: parentData?.id,
     selectedAthletes: selectedAthletes.map(athlete => athlete.id),
-    parentInfo: customerData ? {
-      firstName: customerData.firstName || '',
-      lastName: customerData.lastName || '',
-      email: customerData.email || '',
-      phone: customerData.phone || '',
-      emergencyContactName: customerData.emergencyContactName || '',
-      emergencyContactPhone: customerData.emergencyContactPhone || ''
+    parentInfo: parentData ? {
+      firstName: parentData.firstName || '',
+      lastName: parentData.lastName || '',
+      email: parentData.email || '',
+      phone: parentData.phone || '',
+      emergencyContactName: parentData.emergencyContactName || '',
+      emergencyContactPhone: parentData.emergencyContactPhone || ''
     } : undefined
   };
 

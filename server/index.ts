@@ -1,8 +1,10 @@
+import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import express, { NextFunction, type Request, Response } from "express";
 import session from "express-session";
 import fs from "fs";
 import path from "path";
 import { isAdminAuthenticated } from "./auth";
+import { logger } from "./logger";
 import { registerRoutes } from "./routes";
 import { log, serveStatic, setupVite } from "./vite";
 
@@ -172,10 +174,10 @@ app.use((req, res, next) => {
   app.post('/api/admin/site-content', isAdminAuthenticated, (req: Request, res: Response) => {
     try {
       siteContentData = { ...siteContentData, ...req.body };
-      console.log('Site content updated:', req.body);
+      logger.admin('Site content updated');
       res.json({ success: true, message: 'Site content saved successfully' });
     } catch (error) {
-      console.error('Error saving site content:', error);
+      logger.error('Error saving site content:', error);
       res.status(500).json({ error: 'Failed to save site content' });
     }
   });
@@ -203,7 +205,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
-      console.log('🗑️  ADMIN: Clearing all test data...');
+      logger.admin('Clearing all test data...');
       
       // Clear bookings first (due to foreign key constraints)
       const bookingsResponse = await fetch(`${BASE_URL}/rest/v1/bookings?id=neq.0`, {
@@ -220,7 +222,7 @@ app.use((req, res, next) => {
       if (bookingsResponse.ok) {
         const bookingsData = await bookingsResponse.json();
         bookingsCleared = Array.isArray(bookingsData) ? bookingsData.length : 0;
-        console.log(`✅ Cleared ${bookingsCleared} bookings`);
+        logger.admin(`✅ Cleared ${bookingsCleared} bookings`);
       }
 
       // Clear athletes
@@ -238,7 +240,7 @@ app.use((req, res, next) => {
       if (athletesResponse.ok) {
         const athletesData = await athletesResponse.json();
         athletesCleared = Array.isArray(athletesData) ? athletesData.length : 0;
-        console.log(`✅ Cleared ${athletesCleared} athletes`);
+        logger.admin(`✅ Cleared ${athletesCleared} athletes`);
       }
 
       // Clear parents
@@ -256,7 +258,7 @@ app.use((req, res, next) => {
       if (parentsResponse.ok) {
         const parentsData = await parentsResponse.json();
         parentsCleared = Array.isArray(parentsData) ? parentsData.length : 0;
-        console.log(`✅ Cleared ${parentsCleared} parents`);
+        logger.admin(`✅ Cleared ${parentsCleared} parents`);
       }
 
       // Clear parent auth codes
@@ -274,7 +276,7 @@ app.use((req, res, next) => {
       if (authCodesResponse.ok) {
         const authCodesData = await authCodesResponse.json();
         authCodesCleared = Array.isArray(authCodesData) ? authCodesData.length : 0;
-        console.log(`✅ Cleared ${authCodesCleared} auth codes`);
+        logger.admin(`✅ Cleared ${authCodesCleared} auth codes`);
       }
 
       // Clear test waiver files
@@ -294,9 +296,9 @@ app.use((req, res, next) => {
               console.warn(`⚠️  Could not delete waiver file ${file}:`, fileError);
             }
           }
-          console.log(`✅ Cleared ${waiversCleared} waiver files`);
+          logger.admin(`✅ Cleared ${waiversCleared} waiver files`);
         } else {
-          console.log('📁 No waivers directory found');
+          logger.admin('📁 No waivers directory found');
         }
       } catch (waiverError) {
         console.warn('⚠️  Could not clear waiver files:', waiverError);
@@ -314,7 +316,7 @@ app.use((req, res, next) => {
         }
       };
 
-      console.log('🎉 All test data cleared:', summary);
+      logger.admin('🎉 All test data cleared:', summary);
       res.json(summary);
     } catch (error) {
       console.error('Error clearing test data:', error);
@@ -332,7 +334,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
-      console.log('🧪 ADMIN: Generating test bookings...');
+      logger.admin('Generating test bookings...');
       
       const sampleBookings = [
         {
@@ -351,8 +353,8 @@ app.use((req, res, next) => {
           preferred_time: '10:00',
           focus_areas: ['Tumbling: Forward Roll', 'Beam: Straight Walk'],
           amount: 40,
-          status: 'pending',
-          payment_status: 'reservation-paid',
+          status: BookingStatusEnum.PENDING,
+          payment_status: PaymentStatusEnum.RESERVATION_PAID,
           booking_method: 'online'
         },
         {
@@ -371,8 +373,8 @@ app.use((req, res, next) => {
           preferred_time: '14:00',
           focus_areas: ['Vault: Handstand Flat Back', 'Bars: Pull-ups'],
           amount: 60,
-          status: 'confirmed',
-          payment_status: 'payment-confirmed',
+          status: BookingStatusEnum.CONFIRMED,
+          payment_status: PaymentStatusEnum.SESSION_PAID,
           booking_method: 'online'
         },
         {
@@ -395,8 +397,8 @@ app.use((req, res, next) => {
           preferred_time: '11:00',
           focus_areas: ['Tumbling: Cartwheel', 'Floor: Bridge'],
           amount: 50,
-          status: 'pending',
-          payment_status: 'reservation-paid',
+          status: BookingStatusEnum.PENDING,
+          payment_status: PaymentStatusEnum.RESERVATION_PAID,
           booking_method: 'online'
         },
         {
@@ -419,8 +421,8 @@ app.use((req, res, next) => {
           preferred_time: '16:00',
           focus_areas: ['Bars: Back Hip Circle', 'Vault: Cartwheel'],
           amount: 80,
-          status: 'confirmed',
-          payment_status: 'payment-confirmed',
+          status: BookingStatusEnum.CONFIRMED,
+          payment_status: PaymentStatusEnum.SESSION_PAID,
           booking_method: 'admin'
         },
         {
@@ -439,8 +441,8 @@ app.use((req, res, next) => {
           preferred_time: '13:00',
           focus_areas: ['Beam: Cartwheel', 'Floor: Round Off'],
           amount: 60,
-          status: 'pending',
-          payment_status: 'reservation-paid',
+          status: BookingStatusEnum.PENDING,
+          payment_status: PaymentStatusEnum.RESERVATION_PAID,
           booking_method: 'online'
         }
       ];
@@ -540,7 +542,7 @@ app.use((req, res, next) => {
         }
       }
 
-      console.log(`✅ Generated ${createdCount} test bookings`);
+      logger.admin(`✅ Generated ${createdCount} test bookings`);
       res.json({ success: true, count: createdCount, message: 'Test bookings generated successfully' });
     } catch (error) {
       console.error('Error generating test bookings:', error);
@@ -558,7 +560,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
-      console.log('💳 ADMIN: Simulating payment success...');
+      logger.admin('Simulating payment success...');
       
       const updateResponse = await fetch(`${BASE_URL}/rest/v1/bookings?payment_status=eq.reservation-paid`, {
         method: 'PATCH',
@@ -569,8 +571,8 @@ app.use((req, res, next) => {
           'Prefer': 'return=representation'
         },
         body: JSON.stringify({
-          payment_status: 'session-paid',
-          status: 'confirmed'
+          payment_status: PaymentStatusEnum.SESSION_PAID,
+          status: BookingStatusEnum.CONFIRMED
         })
       });
 
@@ -580,7 +582,7 @@ app.use((req, res, next) => {
         updatedCount = Array.isArray(updatedBookings) ? updatedBookings.length : 0;
       }
 
-      console.log(`✅ Updated ${updatedCount} bookings to session-paid`);
+      logger.admin(`✅ Updated ${updatedCount} bookings to session-paid`);
       res.json({ success: true, updated: updatedCount, message: 'Payment simulation completed' });
     } catch (error) {
       console.error('Error simulating payment success:', error);
@@ -599,7 +601,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Configuration missing' });
       }
 
-      console.log('🔄 ADMIN: Syncing payment status with Stripe...');
+      logger.admin('Syncing payment status with Stripe...');
       
       // Get all bookings with Stripe session IDs
       const bookingsResponse = await fetch(`${BASE_URL}/rest/v1/bookings?stripe_session_id=not.is.null&select=*`, {
@@ -638,20 +640,20 @@ app.use((req, res, next) => {
             // Map Stripe payment status to our system
             switch (stripeSession.payment_status) {
               case 'paid':
-                newPaymentStatus = 'session-paid';
-                newStatus = 'confirmed';
+                newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
+                newStatus = BookingStatusEnum.CONFIRMED;
                 break;
               case 'unpaid':
-                newPaymentStatus = 'reservation-paid';
-                newStatus = 'pending';
+                newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+                newStatus = BookingStatusEnum.PENDING;
                 break;
               case 'no_payment_required':
-                newPaymentStatus = 'session-paid';
-                newStatus = 'confirmed';
+                newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
+                newStatus = BookingStatusEnum.CONFIRMED;
                 break;
               default:
-                newPaymentStatus = 'reservation-paid';
-                newStatus = 'pending';
+                newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+                newStatus = BookingStatusEnum.PENDING;
             }
 
             // Update booking if status changed
@@ -671,7 +673,7 @@ app.use((req, res, next) => {
 
               if (updateResponse.ok) {
                 updatedCount++;
-                console.log(`Updated booking ${booking.id}: ${booking.payment_status} → ${newPaymentStatus}`);
+                logger.admin(`Updated booking ${booking.id}: ${booking.payment_status} → ${newPaymentStatus}`);
               }
             }
           }
@@ -680,7 +682,7 @@ app.use((req, res, next) => {
         }
       }
 
-      console.log(`✅ Synced ${updatedCount} bookings with Stripe`);
+      logger.admin(`✅ Synced ${updatedCount} bookings with Stripe`);
       res.json({ 
         success: true, 
         updated: updatedCount, 
@@ -703,7 +705,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
-      console.log('🔍 ADMIN: Running system health check...');
+      logger.admin('Running system health check...');
       
       const checks = [];
       let passed = 0;
@@ -745,7 +747,7 @@ app.use((req, res, next) => {
         checks.push({ test: 'Content API', passed: false });
       }
 
-      console.log(`✅ Health check completed: ${passed}/${checks.length} tests passed`);
+      logger.admin(`✅ Health check completed: ${passed}/${checks.length} tests passed`);
       res.json({ 
         success: true, 
         passed, 
@@ -769,7 +771,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
-      console.log('🗑️  ADMIN: Deleting user accounts created during booking...');
+      logger.admin('Deleting user accounts created during booking...');
       
       // Delete users with role 'user' (not admins)
       const usersResponse = await fetch(`${BASE_URL}/rest/v1/users?role=eq.user&id=neq.0`, {
@@ -788,7 +790,7 @@ app.use((req, res, next) => {
         usersDeleted = Array.isArray(usersData) ? usersData.length : 0;
       }
 
-      console.log(`✅ Deleted ${usersDeleted} user accounts`);
+      logger.admin(`✅ Deleted ${usersDeleted} user accounts`);
       res.json({ 
         success: true, 
         deleted: usersDeleted, 
@@ -810,7 +812,7 @@ app.use((req, res, next) => {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
-      console.log('🗄️  ADMIN: Testing database connection...');
+      logger.admin('Testing database connection...');
       
       // Test multiple table access
       const tests = [
@@ -848,7 +850,7 @@ app.use((req, res, next) => {
       }
 
       const successCount = results.filter(r => r.success).length;
-      console.log(`✅ Database test completed: ${successCount}/${results.length} tables accessible`);
+      logger.admin(`✅ Database test completed: ${successCount}/${results.length} tables accessible`);
       
       res.json({ 
         success: true, 

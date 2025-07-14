@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
+import { PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
@@ -527,13 +528,13 @@ export function PaymentsTab() {
                             variant="default"
                             onClick={() => {
                               const currentStatus = payment.paymentStatus;
-                              let newStatus = "session-paid";
+                              let newStatus = PaymentStatusEnum.SESSION_PAID;
                               
                               // Dynamic button behavior based on current payment status
                               if (currentStatus === "reservation-failed" || currentStatus === "reservation-pending") {
-                                newStatus = "reservation-paid";
+                                newStatus = PaymentStatusEnum.RESERVATION_PAID;
                               } else if (currentStatus === "reservation-paid") {
-                                newStatus = "session-paid";
+                                newStatus = PaymentStatusEnum.SESSION_PAID;
                               }
                               
                               updatePaymentStatusMutation.mutate({ 
