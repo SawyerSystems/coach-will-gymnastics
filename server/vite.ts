@@ -59,7 +59,11 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      if (url.endsWith('.js')) {
+        res.status(200).set({ "Content-Type": "application/javascript" }).end(page);
+      } else {
+        res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      }
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
