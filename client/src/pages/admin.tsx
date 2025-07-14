@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,26 +29,26 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Customer, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    AlertCircle,
-    ArrowUpDown,
-    BarChart,
-    Calendar,
-    CalendarX,
-    CheckCircle,
-    Clock,
-    DollarSign,
-    Edit,
-    Eye,
-    Mail,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    RefreshCw,
-    Search,
-    Trash2,
-    User,
-    Users,
-    X
+  AlertCircle,
+  ArrowUpDown,
+  BarChart,
+  Calendar,
+  CalendarX,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Edit,
+  Eye,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+  Users,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -2964,10 +2964,10 @@ export default function Admin() {
                       <div className="flex-1">
                         <p className="font-medium text-lg">{selectedAthlete.name}</p>
                         <p className="text-sm text-gray-600">
-                          Age: {calculateAge(selectedAthlete.dateOfBirth)} years old
+                          Age: {selectedAthlete.dateOfBirth ? calculateAge(selectedAthlete.dateOfBirth) : 'Unknown'} years old
                         </p>
                         <p className="text-sm text-gray-600">
-                          Born: {new Date(selectedAthlete.dateOfBirth).toLocaleDateString()}
+                          Born: {selectedAthlete.dateOfBirth ? new Date(selectedAthlete.dateOfBirth).toLocaleDateString() : 'Unknown'}
                         </p>
                         <p className="text-sm text-blue-600 font-medium mt-1">
                           Click photo to enlarge or click to upload new
@@ -3008,11 +3008,23 @@ export default function Admin() {
 
                 {/* Waiver Status */}
                 {(() => {
-                  const athleteBookings = bookings.filter(b => 
-                    b.athlete1Name === selectedAthlete.name ||
-                    (selectedAthlete.firstName && selectedAthlete.lastName && 
-                     b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
-                  );
+                  const athleteBookings = bookings.filter(b => {
+                    // Check if athlete is in booking_athletes relationship
+                    if (b.athletes && Array.isArray(b.athletes)) {
+                      return b.athletes.some((athlete: any) => 
+                        athlete.id === selectedAthlete.id ||
+                        athlete.name === selectedAthlete.name ||
+                        (selectedAthlete.firstName && selectedAthlete.lastName && 
+                         athlete.name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
+                      );
+                    }
+                    // Fallback to legacy fields
+                    return b.athlete1Name === selectedAthlete.name || 
+                           b.athlete2Name === selectedAthlete.name ||
+                           (selectedAthlete.firstName && selectedAthlete.lastName && 
+                            (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
+                             b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
+                  });
                   const hasWaiver = athleteBookings.some(b => b.waiverSigned);
                   const waiverBooking = athleteBookings.find(b => b.waiverSigned);
 
@@ -3051,7 +3063,23 @@ export default function Admin() {
                   <h3 className="font-semibold mb-3">Booking History</h3>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {bookings
-                      .filter(b => b.athlete1Name === selectedAthlete.name || b.athlete2Name === selectedAthlete.name)
+                      .filter(b => {
+                        // Check if athlete is in booking_athletes relationship
+                        if (b.athletes && Array.isArray(b.athletes)) {
+                          return b.athletes.some((athlete: any) => 
+                            athlete.id === selectedAthlete.id ||
+                            athlete.name === selectedAthlete.name ||
+                            (selectedAthlete.firstName && selectedAthlete.lastName && 
+                             athlete.name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
+                          );
+                        }
+                        // Fallback to legacy fields
+                        return b.athlete1Name === selectedAthlete.name || 
+                               b.athlete2Name === selectedAthlete.name ||
+                               (selectedAthlete.firstName && selectedAthlete.lastName && 
+                                (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
+                                 b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
+                      })
                       .sort((a, b) => new Date(b.preferredDate).getTime() - new Date(a.preferredDate).getTime())
                       .map((booking) => (
                         <div key={booking.id} className="border rounded p-3">
@@ -3059,22 +3087,46 @@ export default function Admin() {
                             <div>
                               <p className="font-medium">{booking.lessonType.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
                               <p className="text-sm text-gray-600">{booking.preferredDate} at {booking.preferredTime}</p>
-                              <p className="text-sm text-gray-600">Focus: {booking.focusAreas.join(', ')}</p>
+                              <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
+                              <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
                               {booking.waiverSigned && (
                                 <p className="text-xs text-green-600 font-medium">✓ Waiver Signed</p>
                               )}
                             </div>
-                            <Badge variant={
-                              booking.status === 'confirmed' ? 'default' :
-                              booking.status === 'pending' ? 'secondary' : 'destructive'
-                            }>
-                              {booking.status}
-                            </Badge>
+                            <div className="text-right">
+                              <Badge variant={
+                                booking.status === 'confirmed' ? 'default' :
+                                booking.status === 'pending' ? 'secondary' : 'destructive'
+                              }>
+                                {booking.status}
+                              </Badge>
+                              {booking.attendanceStatus && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Attendance: {booking.attendanceStatus}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
-                    {bookings.filter(b => b.athlete1Name === selectedAthlete.name || b.athlete2Name === selectedAthlete.name).length === 0 && (
-                      <p className="text-sm text-gray-500">No bookings yet</p>
+                    {bookings.filter(b => {
+                      // Check if athlete is in booking_athletes relationship
+                      if (b.athletes && Array.isArray(b.athletes)) {
+                        return b.athletes.some((athlete: any) => 
+                          athlete.id === selectedAthlete.id ||
+                          athlete.name === selectedAthlete.name ||
+                          (selectedAthlete.firstName && selectedAthlete.lastName && 
+                           athlete.name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
+                        );
+                      }
+                      // Fallback to legacy fields
+                      return b.athlete1Name === selectedAthlete.name || 
+                             b.athlete2Name === selectedAthlete.name ||
+                             (selectedAthlete.firstName && selectedAthlete.lastName && 
+                              (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
+                               b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
+                    }).length === 0 && (
+                      <p className="text-gray-500 text-center">No bookings found</p>
                     )}
                   </div>
                 </div>

@@ -785,7 +785,7 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
                       <div className="text-sm font-medium">${booking.amount}</div>
                       {booking.paymentStatus === 'paid' && booking.reservationFeePaid && (
                         <div className="text-xs text-gray-500">
-                          (Res. fee: $0.50)
+                          (Res. fee: $10)
                         </div>
                       )}
                     </div>
@@ -854,7 +854,7 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
                           </Select>
                           {booking.reservationFeePaid && booking.paymentStatus !== 'reservation-failed' && booking.paymentStatus !== 'failed' && (
                             <div className="text-xs text-green-600 font-medium">
-                              Reservation: ${parseFloat(booking.paidAmount || "0.50").toFixed(2)} ✓
+                              Reservation: ${parseFloat(booking.paidAmount || "10").toFixed(2)} ✓
                             </div>
                           )}
                         </div>

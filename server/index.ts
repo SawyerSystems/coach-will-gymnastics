@@ -18,17 +18,15 @@ app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' })); // Increased limit for photo uploads
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Use memory store for sessions since we're using Supabase with postgres-js
-let sessionStore;
-
+// Use default MemoryStore for sessions in development
 app.use(session({
-  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'your-secret-key-here',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Always false for local dev
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
 }));

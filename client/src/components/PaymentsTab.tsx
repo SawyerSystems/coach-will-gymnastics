@@ -121,7 +121,7 @@ export function PaymentsTab() {
   // Filter bookings based on search and filters
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = !searchTerm || 
-      (booking.athlete1Name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (booking.athlete1Name && booking.athlete1Name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       booking.parentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.parentFirstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.parentLastName.toLowerCase().includes(searchTerm.toLowerCase());

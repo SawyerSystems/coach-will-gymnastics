@@ -116,7 +116,7 @@ export default function BookingSuccess() {
 
   // Calculate payment amounts correctly
   const totalLessonPrice = parseFloat(booking?.amount || '0');
-  const actualPaidAmount = parseFloat(booking?.paidAmount || '0.50'); // Default to Stripe minimum if not set
+  const actualPaidAmount = parseFloat(booking?.paidAmount || '10'); // Default to $10 if not set
   const remainingBalance = totalLessonPrice - actualPaidAmount;
 
   return (

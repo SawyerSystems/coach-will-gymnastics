@@ -17,6 +17,16 @@ import { SupabaseStorage } from "./storage";
 import { supabase } from "./supabase-client";
 import { timeSlotLocksRouter } from "./time-slot-locks";
 
+// Helper function to get the base URL for the application
+function getBaseUrl(): string {
+  // In production, use the environment variable or default to Render subdomain
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.BASE_URL || `https://${process.env.RENDER_SERVICE_NAME || 'coachwilltumbles'}.onrender.com`;
+  }
+  // In development, use localhost
+  return process.env.BASE_URL || 'http://localhost:5173';
+}
+
 // Initialize storage
 const storage = new SupabaseStorage();
 
@@ -353,15 +363,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Map payment status to user-friendly display
         let displayPaymentStatus = booking.payment_status;
-        if (booking.payment_status === 'reservation_paid') {
+        if (booking.payment_status === 'reservation-paid') {
           displayPaymentStatus = 'Reservation: Paid';
-        } else if (booking.payment_status === 'fully_paid') {
-          displayPaymentStatus = 'Fully Paid';
+        } else if (booking.payment_status === 'session-paid') {
+          displayPaymentStatus = 'Session: Paid';
+        } else if (booking.payment_status === 'reservation-pending') {
+          displayPaymentStatus = 'Reservation: Pending';
+        } else if (booking.payment_status === 'reservation-failed') {
+          displayPaymentStatus = 'Reservation: Failed';
         }
         
         // Map booking status for confirmed sessions
         let displayStatus = booking.status;
-        if (booking.status === 'pending' && booking.payment_status === 'reservation_paid') {
+        if (booking.status === 'pending' && booking.payment_status === 'reservation-paid') {
           displayStatus = 'confirmed';
         }
         
@@ -1121,7 +1135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const bookingCreated = new Date(booking.createdAt || booking.preferredDate);
         const hoursSinceCreated = (now.getTime() - bookingCreated.getTime()) / (1000 * 60 * 60);
         if (hoursSinceCreated > 24 && booking.paymentStatus === PaymentStatusEnum.RESERVATION_PENDING) {
-          await storage.updateBookingPaymentStatus(bookingId, PaymentStatusEnum.RESERVATION_EXPIRED);
+          await storage.updateBookingPaymentStatus(bookingId, PaymentStatusEnum.RESERVATION_FAILED);
           await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.CANCELLED);
           console.log(`[STATUS SYNC] Auto-expired booking ${bookingId} after 24 hours`);
         }
@@ -1266,9 +1280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       firstName,
                       lastName,
                       dateOfBirth: athleteData.dateOfBirth,
-                      gender: (athleteData as any).gender || null,
-                      experience: (athleteData.experience === 'beginner' || athleteData.experience === 'intermediate' || athleteData.experience === 'advanced') 
-                        ? athleteData.experience : 'beginner',
+                      experience: (athleteData.experience as "beginner" | "intermediate" | "advanced") || 'beginner',
                       allergies: athleteData.allergies || null
                     });
                     createdAthleteIds.push(newAthlete.id);
@@ -1299,9 +1311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     firstName,
                     lastName,
                     dateOfBirth: booking.athlete1DateOfBirth,
-                    gender: (booking as any).athlete1Gender || null,
-                    experience: (booking.athlete1Experience === 'beginner' || booking.athlete1Experience === 'intermediate' || booking.athlete1Experience === 'advanced') 
-                      ? booking.athlete1Experience : 'beginner',
+                    experience: (booking.athlete1Experience as "beginner" | "intermediate" | "advanced") || 'beginner',
                     allergies: booking.athlete1Allergies || null
                   });
                   createdAthleteIds.push(newAthlete.id);
@@ -1330,9 +1340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     firstName,
                     lastName,
                     dateOfBirth: booking.athlete2DateOfBirth,
-                    gender: (booking as any).athlete2Gender || null,
-                    experience: (booking.athlete2Experience === 'beginner' || booking.athlete2Experience === 'intermediate' || booking.athlete2Experience === 'advanced') 
-                      ? booking.athlete2Experience : 'beginner',
+                    experience: (booking.athlete2Experience as "beginner" | "intermediate" | "advanced") || 'beginner',
                     allergies: booking.athlete2Allergies || null
                   });
                   createdAthleteIds.push(newAthlete.id);
@@ -1346,8 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Update the booking to link it with the parent and athletes
               if (createdAthleteIds.length > 0) {
                 try {
-                  // Note: parentId is not a direct field on bookings - it's managed through relationships
-                  // The parent is linked through the booking_athletes table and athlete records
+                  // The booking is already linked to the parent through parentEmail
                   console.log(`[STRIPE WEBHOOK] ✅ LINKED booking ${bookingId} with parent ${parentRecord.id} and ${createdAthleteIds.length} athletes`);
                 } catch (linkError) {
                   console.error('[STRIPE WEBHOOK] Failed to link booking with parent/athletes:', linkError);
@@ -1515,14 +1522,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`Using Stripe price for ${lessonType}: $${chargeAmount}`);
             } else {
               console.warn(`No matching Stripe product found for ${lessonType}, using fallback`);
-              chargeAmount = 0.50; // Fallback to Stripe minimum
+              chargeAmount = 10; // Fallback to $10
             }
           } catch (stripeError) {
             console.error('Error fetching Stripe product price:', stripeError);
-            chargeAmount = 0.50; // Fallback to Stripe minimum
+            chargeAmount = 10; // Fallback to $10
           }
         } else {
-          chargeAmount = 0.50; // Fallback to Stripe minimum
+          chargeAmount = 10; // Fallback to $10
         }
       }
       
@@ -1541,8 +1548,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           quantity: 1,
         }],
         mode: 'payment',
-        success_url: `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5001'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5001'}/booking`,
+        success_url: `${getBaseUrl()}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/booking`,
         metadata: {
           booking_id: bookingId.toString(),
           is_reservation_fee: isReservationFee ? 'true' : 'false',
@@ -1841,7 +1848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendManualBookingConfirmation(
           bookingData.parentEmail, 
           parentName,
-          `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5001'}/parent-login`
+          `${getBaseUrl()}/parent-login`
         );
       } catch (emailError) {
         console.error('Failed to send manual booking email:', emailError);
@@ -2053,7 +2060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send cancellation email if booking was cancelled
       if (status === 'cancelled') {
         try {
-          const rescheduleLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5001'}/booking`;
+          const rescheduleLink = `${getBaseUrl()}/booking`;
           await sendSessionCancellation(
             existingBooking.parentEmail,
             existingBooking.parentFirstName,
@@ -2133,43 +2140,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paidAmount: totalPrice.toString()
         });
       } else if (paymentStatus === "reservation-paid") {
-        // Reservation paid - fetch actual Stripe price dynamically
+        // Reservation paid - typically $10, but use actual Stripe amount if available
         if (paidAmount === 0) {
-          // Get dynamic Stripe price for this lesson type
-          let dynamicAmount = 0.50; // Stripe minimum fallback
-          
-          // Map lesson types to Stripe product names
-          const lessonTypeToProductName: Record<string, string> = {
-            'quick-journey': '30-Min Private [$40]',
-            'dual-quest': '30-Min Semi-Private [$50]',
-            'deep-dive': '1-Hour Private [$60]',
-            'partner-progression': '1-Hour Semi-Private [$80]'
-          };
-          
-          const productName = lessonTypeToProductName[booking.lessonType];
-          if (productName) {
-            try {
-              // Get all products and find the matching one
-              const products = await stripe.products.list({
-                active: true,
-                limit: 20,
-                expand: ['data.default_price']
-              });
-              
-              const matchingProduct = products.data.find(product => product.name === productName);
-              if (matchingProduct && matchingProduct.default_price) {
-                const price = matchingProduct.default_price as any;
-                dynamicAmount = price.unit_amount / 100; // Convert cents to dollars
-                console.log(`Using dynamic Stripe price for ${booking.lessonType}: $${dynamicAmount}`);
-              }
-            } catch (stripeError) {
-              console.error('Error fetching dynamic Stripe price:', stripeError);
-            }
-          }
-          
-          paidAmount = dynamicAmount;
+          paidAmount = 10; // Default reservation fee
           await storage.updateBooking(id, { 
-            paidAmount: dynamicAmount.toString(),
+            paidAmount: "10.00",
             reservationFeePaid: true
           });
         }
@@ -2820,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send cancellation email
       try {
         const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
-        const rescheduleLink = `${process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:5001'}/booking`;
+        const rescheduleLink = `${getBaseUrl()}/booking`;
         
         await sendSessionCancellation(
           booking.parentEmail,
@@ -2934,7 +2909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send new blog post notification email (optional for development)
       try {
-        const blogLink = `${process.env.REPLIT_DOMAINS || 'http://localhost:5001'}/blog`;
+        const blogLink = `${getBaseUrl()}/blog`;
         // Note: In production, you would send this to all subscribers
         // For now, we'll just log it since we don't have a subscriber list
         console.log(`New blog post created: "${post.title}" - would send email notification`);
@@ -2993,7 +2968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send new tip notification email (optional for development)
       try {
-        const tipLink =            `${process.env.REPLIT_DOMAINS || 'http://localhost:5001'}/tips`;
+        const tipLink = `${getBaseUrl()}/tips`;
         // Note: In production, you would send this to all subscribers
         // For now, we'll just log it since we don't have a subscriber list
         console.log(`New tip created: "${tip.title}" - would send email notification`);
@@ -3104,7 +3079,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result = await sendSessionCancellation(
             email,
             "Test Parent",
-            `${process.env.REPLIT_DOMAINS || 'http://localhost:5001'}/booking`
+            `${getBaseUrl()}/booking`
           );
           break;
           
@@ -3112,7 +3087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result = await sendNewTipOrBlogNotification(
             email,
             "How to Perfect Your Cartwheel",
-            `${process.env.REPLIT_DOMAINS || 'http://localhost:5000'}/tips`
+            `${getBaseUrl()}/tips`
           );
           break;
           

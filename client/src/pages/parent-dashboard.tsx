@@ -15,7 +15,6 @@ import { toast } from '@/hooks/use-toast';
 import { calculateAge, formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Customer } from '@shared/schema';
-import { PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, FileCheck, FileX, HelpCircle, LogOut, MapPin, Star, Trophy, User, Users, X, XCircle } from 'lucide-react';
@@ -298,12 +297,11 @@ function ParentDashboard() {
   const upcomingBookings = bookings.filter(b => {
     const bookingDate = new Date(b.preferredDate);
     const today = new Date();
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(today.getDate() + 7);
+    today.setHours(0, 0, 0, 0); // Start from beginning of today
     
     return bookingDate >= today && 
-           bookingDate <= sevenDaysFromNow && 
-           b.status !== 'cancelled';
+           b.status !== 'cancelled' &&
+           b.status !== 'completed';
   });
 
   const pastBookings = bookings.filter(b => 
@@ -516,7 +514,7 @@ function ParentDashboard() {
                               {booking.paymentStatus === 'reservation-pending' && <Clock className="w-4 h-4 text-yellow-600" />}
                               {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-4 h-4 text-green-600" />}
                               {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-4 h-4 text-red-600" />}
-                              {booking.paymentStatus === PaymentStatusEnum.RESERVATION_EXPIRED && <Clock className="w-4 h-4 text-gray-600" />}
+                              {booking.paymentStatus === 'failed' && <Clock className="w-4 h-4 text-gray-600" />}
                               {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-4 h-4 text-orange-600" />}
                               {!booking.paymentStatus && <HelpCircle className="w-4 h-4 text-gray-600" />}
                               
@@ -527,7 +525,7 @@ function ParentDashboard() {
                                   booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50' :
                                   booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
                                   booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50' :
-                                  booking.paymentStatus === PaymentStatusEnum.RESERVATION_EXPIRED ? 'border-gray-300 text-gray-700 bg-gray-50' :
+                                  booking.paymentStatus === 'failed' ? 'border-gray-300 text-gray-700 bg-gray-50' :
                                   booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50' :
                                   'border-gray-300 text-gray-700 bg-gray-50'
                                 }
@@ -536,7 +534,7 @@ function ParentDashboard() {
                                  booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
                                  booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
                                  booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
-                                 booking.paymentStatus === PaymentStatusEnum.RESERVATION_EXPIRED ? 'Expired' :
+                                 booking.paymentStatus === 'failed' ? 'Failed' :
                                  booking.paymentStatus === 'unpaid' ? 'Unpaid' :
                                  booking.paymentStatus || 'Unknown'}
                               </Badge>
@@ -710,7 +708,7 @@ function ParentDashboard() {
                           </Button>
                         </div>
                         <p className="text-sm text-gray-600">
-                          Born: {format(new Date(athlete.dateOfBirth), 'MMMM d, yyyy')}
+                          Born: {athlete.dateOfBirth ? format(new Date(athlete.dateOfBirth), 'MMMM d, yyyy') : 'Unknown'}
                         </p>
                         <p className="text-sm text-gray-600">
                           Experience: {athlete.experience}
@@ -926,7 +924,7 @@ function ParentDashboard() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Date of Birth</label>
-                      <p className="mt-1 text-gray-900">{formatDate(athlete.dateOfBirth)}</p>
+                      <p className="mt-1 text-gray-900">{athlete.dateOfBirth ? formatDate(athlete.dateOfBirth) : 'Unknown'}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700">Experience Level</label>
@@ -935,7 +933,7 @@ function ParentDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-700">Age</label>
                       <p className="mt-1 text-gray-900">
-                        {calculateAge(athlete.dateOfBirth)} years old
+                        {calculateAge(athlete.dateOfBirth) || 'Unknown'} years old
                       </p>
                     </div>
                   </div>
@@ -1208,7 +1206,7 @@ function ParentDashboard() {
                         <div>
                           <h3 className="font-medium text-gray-900">{athlete.name}</h3>
                           <p className="text-sm text-gray-600">
-                            {Math.floor((new Date().getTime() - new Date(athlete.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years old • {athlete.experience}
+                            {athlete.dateOfBirth ? Math.floor((new Date().getTime() - new Date(athlete.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 'Unknown'} years old • {athlete.experience}
                           </p>
                         </div>
                         <Button size="sm">Select</Button>
