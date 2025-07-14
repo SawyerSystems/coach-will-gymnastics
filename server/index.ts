@@ -14,7 +14,8 @@ process.env.TZ = 'America/Los_Angeles';
 const app = express();
 
 // Explicitly set Express environment based on NODE_ENV
-app.set('env', process.env.NODE_ENV || 'development');
+const nodeEnv = process.env.NODE_ENV || 'development';
+app.set('env', nodeEnv);
 
 // Add raw body parsing for Stripe webhook
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
@@ -887,12 +888,12 @@ app.use((req, res, next) => {
   const expressEnv = app.get("env");
   console.log(`Environment check: NODE_ENV=${nodeEnv}, Express env=${expressEnv}`);
   
-  if (expressEnv === "development") {
-    console.log("Setting up Vite development server");
-    await setupVite(app, server);
-  } else {
+  if (nodeEnv === "production") {
     console.log("Setting up static file serving for production");
     serveStatic(app);
+  } else {
+    console.log("Setting up Vite development server");
+    await setupVite(app, server);
   }
 
   // Use PORT from environment variable, default to 5001

@@ -59,11 +59,7 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
-      if (url.endsWith('.js')) {
-        res.status(200).set({ "Content-Type": "application/javascript" }).end(page);
-      } else {
-        res.status(200).set({ "Content-Type": "text/html" }).end(page);
-      }
+      res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -80,19 +76,31 @@ export function serveStatic(app: Express) {
     if (fs.existsSync(altDistPath)) {
       console.log(`Using alternate dist path: ${altDistPath}`);
       
-      // Set correct MIME types BEFORE serving static files
+      // Set correct MIME types for all assets
       app.use('/assets', (req, res, next) => {
         if (req.path.endsWith('.js')) {
-          res.setHeader('Content-Type', 'application/javascript');
+          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         } else if (req.path.endsWith('.css')) {
-          res.setHeader('Content-Type', 'text/css');
+          res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        } else if (req.path.endsWith('.json')) {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
         }
         next();
       });
       
-      app.use(express.static(altDistPath));
+      app.use(express.static(altDistPath, {
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          } else if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+          }
+        }
+      }));
+      
       app.use("*", (_req, res) => {
         console.log(`Fallback to index.html for: ${_req.originalUrl}`);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.sendFile(path.resolve(altDistPath, "index.html"));
       });
       return;
@@ -105,22 +113,33 @@ export function serveStatic(app: Express) {
 
   console.log(`Serving static files from: ${distPath}`);
   
-  // Set correct MIME types BEFORE serving static files
+  // Set correct MIME types for all assets
   app.use('/assets', (req, res, next) => {
     if (req.path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     } else if (req.path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (req.path.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
     }
     next();
   });
   
-  // Static file middleware
-  app.use(express.static(distPath));
+  // Static file middleware with MIME type override
+  app.use(express.static(distPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      } else if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     console.log(`Fallback to index.html for: ${_req.originalUrl}`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
