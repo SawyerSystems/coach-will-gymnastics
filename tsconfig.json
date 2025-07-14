@@ -14,11 +14,22 @@
     "server/create-admin.ts",
     "server/seed.ts",
     "server/persistent-storage.ts",
-    "server/routes-parent-test.ts"
+    "server/routes-parent-test.ts",
+    "data/**",
+    "archive/**",
+    "*.backup*",
+    "**/*.backup*",
+    "test-*.js",
+    "comprehensive-*.js",
+    "fix-*.js",
+    "setup-*.js",
+    "migrate-*.js",
+    "**/*.md",
+    "scripts/**",
+    "*.sh"
   ],
   "compilerOptions": {
-    "incremental": true,
-    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
+    "incremental": false,
     "noEmit": true,
     "module": "ESNext",
     "strict": true,
@@ -33,6 +44,8 @@
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "noErrorTruncation": false,
+    "preserveWatchOutput": true
   }
 }

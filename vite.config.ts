@@ -19,6 +19,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    host: "0.0.0.0", // Allow external connections for Codespaces
+    port: 5173,
     fs: {
       strict: true,
       deny: ["**/.*"],
@@ -26,7 +28,12 @@ export default defineConfig({
     hmr: {
       protocol: "ws",
       host: "localhost",
-      port: 5001,
+      port: 24678, // Different port for HMR to avoid conflicts
+    },
+    // Codespace optimization
+    watch: {
+      usePolling: true,
+      interval: 1000,
     },
   },
 });

@@ -311,7 +311,8 @@ export class PersistentMemStorage implements IStorage {
       allergies: insertAthlete.allergies ?? null,
       photo: insertAthlete.photo ?? null,
       firstName: insertAthlete.firstName ?? null,
-      lastName: insertAthlete.lastName ?? null
+      lastName: insertAthlete.lastName ?? null,
+      gender: insertAthlete.gender ?? null
     };
     this.athletes.set(id, athlete);
     await this.saveAthletes();
@@ -371,11 +372,8 @@ export class PersistentMemStorage implements IStorage {
       status: "pending",
       paymentStatus: "unpaid",
       attendanceStatus: "pending",
-      athlete1Allergies: insertBooking.athlete1Allergies ?? null,
-      athlete2Name: insertBooking.athlete2Name ?? null,
-      athlete2DateOfBirth: insertBooking.athlete2DateOfBirth ?? null,
-      athlete2Allergies: insertBooking.athlete2Allergies ?? null,
-      athlete2Experience: insertBooking.athlete2Experience ?? null,
+      focusAreas: (insertBooking.focusAreaIds || []).map(id => String(id)),
+      preferredDate: typeof insertBooking.preferredDate === 'string' ? insertBooking.preferredDate : insertBooking.preferredDate.toISOString().split('T')[0],
       waiverSigned: insertBooking.waiverSigned ?? false,
       waiverSignedAt: insertBooking.waiverSignedAt ?? null,
       waiverSignatureName: insertBooking.waiverSignatureName ?? null,
@@ -394,7 +392,8 @@ export class PersistentMemStorage implements IStorage {
       altPickupPersonRelationship: insertBooking.altPickupPersonRelationship ?? null,
       altPickupPersonPhone: insertBooking.altPickupPersonPhone ?? null,
       safetyVerificationSigned: insertBooking.safetyVerificationSigned ?? false,
-      safetyVerificationSignedAt: insertBooking.safetyVerificationSignedAt ?? null
+      safetyVerificationSignedAt: insertBooking.safetyVerificationSignedAt ?? null,
+      stripeSessionId: insertBooking.stripeSessionId ?? null
     };
     this.bookings.set(id, booking);
     await this.saveBookings();
@@ -596,7 +595,8 @@ export class PersistentMemStorage implements IStorage {
       id,
       createdAt: new Date(),
       reason: insertException.reason ?? null,
-      isAvailable: insertException.isAvailable ?? false
+      isAvailable: insertException.isAvailable ?? false,
+      date: typeof insertException.date === 'string' ? insertException.date : insertException.date.toISOString().split('T')[0]
     };
     this.availabilityExceptions.set(id, exception);
     await this.saveExceptions();
@@ -611,7 +611,8 @@ export class PersistentMemStorage implements IStorage {
       ...existing,
       ...insertException,
       id,
-      reason: insertException.reason ?? null
+      reason: insertException.reason ?? null,
+      date: typeof insertException.date === 'string' ? insertException.date : insertException.date.toISOString().split('T')[0]
     };
     this.availabilityExceptions.set(id, updated);
     await this.saveExceptions();
@@ -784,10 +785,6 @@ export class PersistentMemStorage implements IStorage {
 
   async getPaymentLogs(bookingId: number): Promise<any[]> {
     return [];
-  }
-
-  async createPaymentLog(log: any): Promise<any> {
-    throw new Error("Payment log functionality not implemented in legacy storage");
   }
 
   async getParentBookingLogs(parentId: number): Promise<any[]> {

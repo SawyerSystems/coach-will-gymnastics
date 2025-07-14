@@ -16,9 +16,14 @@ const app = express();
 // Add raw body parsing for Stripe webhook
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
-// JSON parsing for all other routes
-app.use(express.json({ limit: '10mb' })); // Increased limit for photo uploads
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+// JSON parsing for all other routes - optimized for Codespace
+app.use(express.json({ 
+  limit: process.env.NODE_ENV === 'development' ? '5mb' : '10mb' // Smaller limit in dev
+})); 
+app.use(express.urlencoded({ 
+  extended: false, 
+  limit: process.env.NODE_ENV === 'development' ? '5mb' : '10mb' 
+}));
 
 // Use default MemoryStore for sessions in development
 app.use(session({
