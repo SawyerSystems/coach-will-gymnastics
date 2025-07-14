@@ -13,6 +13,9 @@ process.env.TZ = 'America/Los_Angeles';
 
 const app = express();
 
+// Explicitly set Express environment based on NODE_ENV
+app.set('env', process.env.NODE_ENV || 'development');
+
 // Add raw body parsing for Stripe webhook
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
@@ -880,9 +883,15 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const expressEnv = app.get("env");
+  console.log(`Environment check: NODE_ENV=${nodeEnv}, Express env=${expressEnv}`);
+  
+  if (expressEnv === "development") {
+    console.log("Setting up Vite development server");
     await setupVite(app, server);
   } else {
+    console.log("Setting up static file serving for production");
     serveStatic(app);
   }
 

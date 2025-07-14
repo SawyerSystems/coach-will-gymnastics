@@ -71,15 +71,54 @@ export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "public");
 
   if (!fs.existsSync(distPath)) {
+    // Try alternate path - sometimes build outputs to different location
+    const altDistPath = path.resolve(process.cwd(), "dist", "public");
+    if (fs.existsSync(altDistPath)) {
+      console.log(`Using alternate dist path: ${altDistPath}`);
+      app.use(express.static(altDistPath, {
+        maxAge: '1d',
+        etag: true,
+        lastModified: true,
+        setHeaders: (res, path) => {
+          if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+          } else if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+          }
+        }
+      }));
+      app.use("*", (_req, res) => {
+        console.log(`Fallback to index.html for: ${_req.originalUrl}`);
+        res.sendFile(path.resolve(altDistPath, "index.html"));
+      });
+      return;
+    }
+    
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath} or ${altDistPath}, make sure to build the client first`,
     );
   }
 
-  app.use(express.static(distPath));
+  console.log(`Serving static files from: ${distPath}`);
+  
+  // Configure static middleware with proper options
+  app.use(express.static(distPath, {
+    maxAge: '1d', // Cache static assets for 1 day
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+      // Set proper content types for specific file types
+      if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      } else if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
+    console.log(`Fallback to index.html for: ${_req.originalUrl}`);
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
