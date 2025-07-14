@@ -75,18 +75,18 @@ export function serveStatic(app: Express) {
     const altDistPath = path.resolve(process.cwd(), "dist", "public");
     if (fs.existsSync(altDistPath)) {
       console.log(`Using alternate dist path: ${altDistPath}`);
-      app.use(express.static(altDistPath, {
-        maxAge: '1d',
-        etag: true,
-        lastModified: true,
-        setHeaders: (res, path) => {
-          if (path.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
-          } else if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-          }
+      
+      // Set correct MIME types BEFORE serving static files
+      app.use('/assets', (req, res, next) => {
+        if (req.path.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (req.path.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css');
         }
-      }));
+        next();
+      });
+      
+      app.use(express.static(altDistPath));
       app.use("*", (_req, res) => {
         console.log(`Fallback to index.html for: ${_req.originalUrl}`);
         res.sendFile(path.resolve(altDistPath, "index.html"));
@@ -101,20 +101,18 @@ export function serveStatic(app: Express) {
 
   console.log(`Serving static files from: ${distPath}`);
   
-  // Configure static middleware with proper options
-  app.use(express.static(distPath, {
-    maxAge: '1d', // Cache static assets for 1 day
-    etag: true,
-    lastModified: true,
-    setHeaders: (res, path) => {
-      // Set proper content types for specific file types
-      if (path.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css');
-      } else if (path.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript');
-      }
+  // Set correct MIME types BEFORE serving static files
+  app.use('/assets', (req, res, next) => {
+    if (req.path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (req.path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
     }
-  }));
+    next();
+  });
+  
+  // Static file middleware
+  app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
