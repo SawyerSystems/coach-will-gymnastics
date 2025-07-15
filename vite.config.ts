@@ -17,6 +17,19 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Handle large assets like video files
+    assetsInlineLimit: 0, // Don't inline any assets
+    rollupOptions: {
+      output: {
+        // Don't hash large video files
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith('.mov')) {
+            return '[name][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
+      }
+    }
   },
   server: {
     host: "0.0.0.0", // Allow external connections for Codespaces

@@ -1458,7 +1458,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         default:
-          console.log(`[STRIPE WEBHOOK] Unhandled event type ${event.type}`);
+          // Only log unhandled events that are relevant (ignore reporting events)
+          if (!event.type.startsWith('reporting.')) {
+            console.log(`[STRIPE WEBHOOK] Unhandled event type ${event.type}`);
+          }
       }
 
       res.json({ received: true });

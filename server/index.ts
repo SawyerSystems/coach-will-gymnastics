@@ -29,7 +29,7 @@ app.use(express.urlencoded({
   limit: process.env.NODE_ENV === 'development' ? '5mb' : '10mb' 
 }));
 
-// Use default MemoryStore for sessions in development
+// Session configuration - optimized for production
 const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-here',
@@ -39,8 +39,13 @@ app.use(session({
     httpOnly: true,
     secure: false, // Keep false for now to avoid HTTPS issues
     sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 24 // 24 hours
-  }
+    maxAge: isProduction ? 1000 * 60 * 60 * 4 : 1000 * 60 * 60 * 24 // 4 hours in prod, 24 in dev
+  },
+  // In production, we accept MemoryStore limitations for simplicity
+  // For high-traffic production, consider Redis or database-backed sessions
+  ...(isProduction && {
+    name: 'cwt.sid', // Custom session name
+  })
 }));
 
 app.use((req, res, next) => {
