@@ -6,7 +6,7 @@ import path from "path";
 import { isAdminAuthenticated } from "./auth";
 import { logger } from "./logger";
 import { registerRoutes } from "./routes";
-import { log, serveStatic, setupVite } from "./vite";
+import { serveStatic, setupVite } from "./vite";
 
 // Set Pacific timezone for the server
 process.env.TZ = 'America/Los_Angeles';
@@ -66,7 +66,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(logLine);
     }
   });
 
@@ -78,9 +78,9 @@ app.use((req, res, next) => {
   try {
     const { createSupabaseTablesViaAPI } = await import("./supabase-migration");
     await createSupabaseTablesViaAPI();
-    log("✅ Supabase tables initialized successfully");
+    console.log("✅ Supabase tables initialized successfully");
   } catch (error) {
-    log("⚠️ Supabase table initialization failed, continuing with startup...");
+    console.log("⚠️ Supabase table initialization failed, continuing with startup...");
     console.error(error);
   }
 
@@ -905,6 +905,6 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    console.log(`serving on port ${port}`);
   });
 })();

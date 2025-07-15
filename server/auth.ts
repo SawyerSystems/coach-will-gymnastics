@@ -1,8 +1,8 @@
-import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import { storage } from './storage';
-import type { Request, Response, NextFunction } from 'express';
 
 // Extend Express session data
 declare module 'express-session' {

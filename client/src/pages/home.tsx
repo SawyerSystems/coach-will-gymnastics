@@ -140,10 +140,15 @@ export default function Home() {
               muted={isVideoMuted}
               loop
               playsInline
-              onError={() => console.log('Video failed to load, using fallback image')}
+              onError={(e) => {
+                console.error('🚨 Video failed to load:', e);
+                console.error('Video URL:', import.meta.env.VITE_BANNER_VIDEO_URL);
+              }}
+              onLoadStart={() => console.log('🎬 Video load started')}
+              onCanPlay={() => console.log('✅ Video can play')}
               className="w-full h-full object-cover"
             >
-              <source src={import.meta.env.VITE_BANNER_VIDEO_URL} type="video/mp4" />
+              <source src={import.meta.env.VITE_BANNER_VIDEO_URL} type="video/quicktime" />
               {/* Fallback image if video fails to load */}
               <img 
                 src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080" 
