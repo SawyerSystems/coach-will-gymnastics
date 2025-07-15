@@ -1,6 +1,6 @@
-import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
 import { Footer } from "@/components/Footer";
+import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useStripePricing } from "@/hooks/use-stripe-products";
@@ -8,18 +8,18 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import {
-    Activity,
-    Brain,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Dumbbell,
-    Shield,
-    Star,
-    Target,
-    TrendingUp,
-    Trophy,
-    Zap
+  Activity,
+  Brain,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Dumbbell,
+  Shield,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Zap
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -30,7 +30,6 @@ export default function Home() {
   const [parentData, setParentData] = useState<Parent | null>(null);
   const [selectedAthletes, setSelectedAthletes] = useState<Athlete[]>([]);
   const [isNewParent, setIsNewParent] = useState(false);
-  const [isVideoMuted, setIsVideoMuted] = useState(true);
   const { getLessonPrice } = useStripePricing();
 
   // Check if parent is already logged in
@@ -133,37 +132,15 @@ export default function Home() {
       <section className="relative overflow-hidden min-h-screen flex items-center">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full">
-          {/* Hero Video/Image */}
-          {import.meta.env.VITE_BANNER_VIDEO_URL ? (
-            <video
-              autoPlay
-              muted={isVideoMuted}
-              loop
-              playsInline
-              onError={(e) => {
-                console.error('🚨 Video failed to load:', e);
-                console.error('Video URL:', import.meta.env.VITE_BANNER_VIDEO_URL);
-              }}
-              onLoadStart={() => console.log('🎬 Video load started')}
-              onCanPlay={() => console.log('✅ Video can play')}
-              className="w-full h-full object-cover"
-            >
-              <source src={import.meta.env.VITE_BANNER_VIDEO_URL} type="video/quicktime" />
-              {/* Fallback image if video fails to load */}
-              <img 
-                src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080" 
-                alt="Children learning gymnastics with coach" 
-                className="w-full h-full object-cover" 
-              />
-            </video>
-          ) : (
-            /* Fallback image when no video URL is provided */
-            <img 
-              src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080" 
-              alt="Children learning gymnastics with coach" 
-              className="w-full h-full object-cover" 
-            />
-          )}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="/banner-video.mov" type="video/quicktime" />
+          </video>
           
           {/* Enhanced gradient overlays for better text readability and fading */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40"></div>
@@ -227,28 +204,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Video Controls - Only show if video is available */}
-        {import.meta.env.VITE_BANNER_VIDEO_URL && (
-          <div className="absolute top-6 left-6 z-20">
-            <button
-              onClick={() => setIsVideoMuted(!isVideoMuted)}
-              className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full p-3 shadow-2xl transition-all duration-200 hover:scale-110"
-              aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
-            >
-              {isVideoMuted ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.846 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.846l3.537-3.816a1 1 0 011.617.816zM16 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
-                  <path fillRule="evenodd" d="M15.293 6.293a1 1 0 011.414 0 6 6 0 010 8.485 1 1 0 01-1.414-1.414A4 4 0 0015.293 6.293z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.846 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.846l3.537-3.816a1 1 0 011.617.816zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
-          </div>
-        )}
 
         
         
