@@ -116,7 +116,9 @@ async function staleWhileRevalidate(request, cacheName) {
   const fetchPromise = fetch(request).then((response) => {
     if (response.ok) {
       const cache = caches.open(cacheName);
-      cache.then(c => c.put(request, response.clone()));
+      // Clone the response before caching to avoid "Response body is already used" error
+      const responseClone = response.clone();
+      cache.then(c => c.put(request, responseClone));
     }
     return response;
   });

@@ -83,9 +83,19 @@ authRouter.get('/status', (req: Request, res: Response) => {
 
 // Middleware to protect admin routes
 export const isAdminAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  console.log('🔐 Auth check - Session data:', {
+    sessionID: req.sessionID,
+    adminId: req.session.adminId,
+    hasSession: !!req.session,
+    path: req.path
+  });
+  
   if (!req.session.adminId) {
+    console.log('❌ Admin authentication failed - no adminId in session');
     return res.status(401).json({ error: 'Authentication required' });
   }
+  
+  console.log('✅ Admin authentication successful');
   next();
 };
 

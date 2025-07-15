@@ -30,13 +30,14 @@ app.use(express.urlencoded({
 }));
 
 // Use default MemoryStore for sessions in development
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-here',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false, // Always false for local dev
+    secure: false, // Keep false for now to avoid HTTPS issues
     sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
