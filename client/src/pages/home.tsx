@@ -31,7 +31,6 @@ export default function Home() {
   const [selectedAthletes, setSelectedAthletes] = useState<Athlete[]>([]);
   const [isNewParent, setIsNewParent] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
-  const [videoError, setVideoError] = useState(false);
   const { getLessonPrice } = useStripePricing();
 
   // Check if parent is already logged in
@@ -134,25 +133,15 @@ export default function Home() {
       <section className="relative overflow-hidden min-h-screen flex items-center">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full">
-          {!videoError ? (
-            <video
-              autoPlay
-              muted={isVideoMuted}
-              loop
-              playsInline
-              className="w-full h-full object-cover"
-              onError={() => setVideoError(true)}
-            >
-              <source src="/banner-video.mov" type="video/quicktime" />
-            </video>
-          ) : (
-            /* Fallback image when video fails to load */
-            <img 
-              src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1080" 
-              alt="Children learning gymnastics with coach" 
-              className="w-full h-full object-cover" 
-            />
-          )}
+          <video
+            autoPlay
+            muted={isVideoMuted}
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="/banner-video.mov" type="video/quicktime" />
+          </video>
           
           {/* Enhanced gradient overlays for better text readability and fading */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40"></div>
@@ -217,14 +206,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Video Controls - Only show if video is available */}
-        {!videoError && (
-          <div className="absolute top-6 left-6 z-20">
-            <button
-              onClick={() => setIsVideoMuted(!isVideoMuted)}
-              className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full p-3 shadow-2xl transition-all duration-200 hover:scale-110"
-              aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
-            >
+        {/* Video Controls */}
+        <div className="absolute top-6 left-6 z-20">
+          <button
+            onClick={() => setIsVideoMuted(!isVideoMuted)}
+            className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full p-3 shadow-2xl transition-all duration-200 hover:scale-110"
+            aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
+          >
               {isVideoMuted ? (
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.816L4.846 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.846l3.537-3.816a1 1 0 011.617.816zM16 8a1 1 0 011 1v2a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
@@ -237,7 +225,6 @@ export default function Home() {
               )}
             </button>
           </div>
-        )}
 
         
         
