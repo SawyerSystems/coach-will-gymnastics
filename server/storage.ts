@@ -1153,7 +1153,7 @@ export class SupabaseStorage implements IStorage {
   async getAllParents(): Promise<Parent[]> {
     const { data, error } = await supabase
       .from('parents')
-      .select('*')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1161,13 +1161,27 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
 
-    return data || [];
+    // Transform snake_case to camelCase
+    return (data || []).map(parent => ({
+      id: parent.id,
+      firstName: parent.first_name,
+      lastName: parent.last_name,
+      email: parent.email,
+      phone: parent.phone,
+      emergencyContactName: parent.emergency_contact_name,
+      emergencyContactPhone: parent.emergency_contact_phone,
+      waiverSigned: parent.waiver_signed,
+      waiverSignedAt: parent.waiver_signed_at,
+      waiverSignatureName: parent.waiver_signature_name,
+      createdAt: parent.created_at,
+      updatedAt: parent.updated_at,
+    }));
   }
 
   async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
     const { data, error } = await supabase
       .from('parents')
-      .select('*')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at')
       .or(`email.eq.${email},phone.eq.${phone}`)
       .single();
 
@@ -1176,7 +1190,21 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data || undefined;
+    // Transform snake_case to camelCase
+    return data ? {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      emergencyContactName: data.emergency_contact_name,
+      emergencyContactPhone: data.emergency_contact_phone,
+      waiverSigned: data.waiver_signed,
+      waiverSignedAt: data.waiver_signed_at,
+      waiverSignatureName: data.waiver_signature_name,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } : undefined;
   }
 
   async createParent(insertParent: InsertParent): Promise<Parent> {
@@ -2431,7 +2459,7 @@ export class SupabaseStorage implements IStorage {
   async getParentById(id: number): Promise<Parent | undefined> {
     const { data, error } = await supabase
       .from('parents')
-      .select('*')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at')
       .eq('id', id)
       .single();
 
@@ -2440,7 +2468,21 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data;
+    // Transform snake_case to camelCase
+    return data ? {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      emergencyContactName: data.emergency_contact_name,
+      emergencyContactPhone: data.emergency_contact_phone,
+      waiverSigned: data.waiver_signed,
+      waiverSignedAt: data.waiver_signed_at,
+      waiverSignatureName: data.waiver_signature_name,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } : undefined;
   }
 
   async createParentAuthCode(authCode: InsertParentAuthCode): Promise<ParentAuthCode> {

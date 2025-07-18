@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-export type BookingFlowType = 'parent-portal' | 'athlete-modal' | 'new-user';
+export type BookingFlowType = 'parent-portal' | 'athlete-modal' | 'new-user' | 'admin-new-athlete' | 'admin-existing-athlete' | 'admin-from-athlete';
 
 interface AthleteInfo {
   firstName: string;
@@ -58,6 +58,12 @@ export interface BookingFlowState {
     signedAt?: Date;
   };
   focusAreas: string[];
+  // Admin-specific properties
+  isAdminFlow?: boolean;
+  adminPaymentMethod?: 'stripe' | 'cash' | 'check' | 'pending';
+  adminNotes?: string;
+  skipWaiver?: boolean;
+  skipSafety?: boolean;
 }
 
 // Define flow steps for each booking context
@@ -85,12 +91,37 @@ export const BOOKING_FLOWS = {
   'new-user': [
     'lessonType',
     'athleteInfoForm',
+    'parentSelection', // New step: Choose new or existing parent
     'focusAreas',
     'schedule',
     'parentInfoForm',
     'safety',
     'waiver',
     'payment',
+  ],
+  'admin-new-athlete': [
+    'lessonType',
+    'athleteInfoForm',
+    'parentSelection', // New step: Choose new or existing parent
+    'focusAreas',
+    'schedule',
+    'parentInfoForm',
+    'adminPayment',
+  ],
+  'admin-existing-athlete': [
+    'lessonType',
+    'athleteSelect',
+    'focusAreas',
+    'schedule',
+    'parentConfirm',
+    'adminPayment',
+  ],
+  'admin-from-athlete': [
+    'lessonType',
+    'focusAreas',
+    'schedule',
+    'parentConfirm',
+    'adminPayment',
   ]
 } as const;
 

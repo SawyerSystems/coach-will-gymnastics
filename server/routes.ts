@@ -308,6 +308,18 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // DIAGNOSTIC LOGGING MIDDLEWARE
+  app.use((req, res, next) => {
+    console.log('[REQ]', req.method, req.originalUrl, 'Cookie:', req.headers.cookie);
+    const send = res.send;
+    res.send = function(body) {
+      console.log('[RES]', req.method, req.originalUrl, 'STATUS', res.statusCode,
+        'Set-Cookie:', res.get('Set-Cookie'));
+      return send.call(this, body);
+    };
+    next();
+  });
+
   // Auth routes
   app.use('/api/auth', authRouter);
   
@@ -722,10 +734,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Parent management routes (preferred terminology)
   app.get("/api/parents", isAdminAuthenticated, async (req, res) => {
     try {
-      const parents = await storage.getAllParents();
-      res.json(parents);
+      const { search, page = '1', limit = '20' } = req.query;
+      const pageNum = parseInt(page as string, 10) || 1;
+      const limitNum = Math.min(parseInt(limit as string, 10) || 20, 100); // Cap at 100
+      const offset = (pageNum - 1) * limitNum;
+
+      let query = supabase
+        .from('parents')
+        .select(`
+          id, 
+          first_name, 
+          last_name, 
+          email, 
+          phone, 
+          created_at, 
+          updated_at
+        `, { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      // Add search filter if provided
+      if (search && typeof search === 'string') {
+        const searchTerm = `%${search.trim()}%`;
+        query = query.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`);
+      }
+
+      // Apply pagination
+      query = query.range(offset, offset + limitNum - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error("Error fetching parents:", error);
+        return res.status(500).json({ error: "Failed to fetch parents" });
+      }
+
+      // Enhance each parent with athlete and booking counts
+      const enhancedParents = await Promise.all((data || []).map(async (parent) => {
+        // Get athlete count and data
+        const { data: athletes, count: athleteCount } = await supabase
+          .from('athletes')
+          .select('id, first_name, last_name', { count: 'exact' })
+          .eq('parent_id', parent.id);
+
+        // Get booking count using explicit parent_id
+        const { count: bookingCount } = await supabase
+          .from('bookings')
+          .select('id', { count: 'exact', head: true })
+          .eq('parent_id', parent.id);
+
+        return {
+          ...parent,
+          athlete_count: athleteCount || 0,
+          booking_count: bookingCount || 0,
+          athletes: athletes || []
+        };
+      }));
+
+      res.json({
+        parents: enhancedParents,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limitNum)
+        }
+      });
     } catch (error) {
       console.error("Error fetching parents:", error);
+      res.status(500).json({ error: "Failed to fetch parents" });
+    }
+  });
+
+  app.get("/api/parents/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid parent ID" });
+      }
+
+      const { data, error } = await supabase
+        .from('parents')
+        .select(`
+          *,
+          athletes!athletes_parent_id_fkey(id, first_name, last_name, date_of_birth, gender, allergies, experience, emergency_contact_name, emergency_contact_phone)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching parent:", error);
+        if (error.code === 'PGRST116') {
+          return res.status(404).json({ error: "Parent not found" });
+        }
+        return res.status(500).json({ error: "Failed to fetch parent" });
+      }
+
+      // Fetch related bookings using explicit parent_id
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('id, preferred_date, lesson_type, payment_status, attendance_status, special_requests')
+        .eq('parent_id', id);
+
+      // Combine the data
+      const parentWithRelations = {
+        ...data,
+        bookings: bookings || []
+      };
+
+      res.json(parentWithRelations);
+    } catch (error) {
+      console.error("Error fetching parent:", error);
+      res.status(500).json({ error: "Failed to fetch parent" });
+    }
+  });
+
+  // Temporary test endpoint for parents (no auth required)
+  app.get("/api/test-parents", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('parents')
+        .select('*')
+        .limit(3);
+
+      if (error) {
+        console.error("Error fetching test parents:", error);
+        return res.status(500).json({ error: "Failed to fetch parents", details: error });
+      }
+
+      res.json({ parents: data || [], message: "Parents API working!" });
+    } catch (error) {
+      console.error("Error in test parents:", error);
       res.status(500).json({ error: "Failed to fetch parents" });
     }
   });
@@ -794,14 +932,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/parents/:id/athletes", async (req, res) => {
+  // UPCOMING SESSIONS ENDPOINT - Refactored with joined data
+  app.get("/api/upcoming-sessions", isAdminAuthenticated, async (req, res) => {
     try {
-      const parentId = parseInt(req.params.id);
-      const athletes = await storage.getParentAthletes(parentId);
-      res.json(athletes);
+      console.log('[UPCOMING] Fetching upcoming sessions...');
+      
+      const query = `
+        SELECT 
+          b.id,
+          b.preferred_date as session_date,
+          b.lesson_type,
+          p.first_name||' '||p.last_name AS parent_name,
+          array_agg(a.first_name||' '||a.last_name) AS athlete_names,
+          b.payment_status,
+          b.attendance_status
+        FROM bookings b
+        JOIN parents p ON p.id = b.parent_id
+        JOIN booking_athletes ba ON ba.booking_id = b.id
+        JOIN athletes a ON a.id = ba.athlete_id
+        WHERE b.preferred_date >= NOW()::date
+        GROUP BY b.id, b.preferred_date, b.lesson_type, p.first_name, p.last_name, b.payment_status, b.attendance_status
+        ORDER BY b.preferred_date;
+      `;
+
+      const { data: rows, error } = await supabase.rpc('exec_sql', { sql: query });
+      
+      if (error) {
+        console.error('[UPCOMING] Database error:', error);
+        return res.status(500).json({ error: 'Failed to fetch upcoming sessions' });
+      }
+
+      // Transform to expected format
+      const transformedSessions = rows?.map((row: any) => ({
+        id: row.id,
+        sessionDate: row.session_date,
+        lessonType: row.lesson_type,
+        parentName: row.parent_name,
+        athleteNames: row.athlete_names || [],
+        paymentStatus: row.payment_status || 'unpaid',
+        attendanceStatus: row.attendance_status || 'pending'
+      })) || [];
+
+      console.log('[UPCOMING]', transformedSessions.length);
+      res.json(transformedSessions);
     } catch (error: any) {
-      console.error("Error fetching parent athletes:", error);
-      res.status(500).json({ error: "Failed to fetch athletes" });
+      console.error('[UPCOMING] Error fetching upcoming sessions:', error);
+      res.status(500).json({ error: 'Failed to fetch upcoming sessions' });
     }
   });
 
@@ -834,6 +1010,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all athletes with missing waivers (admin only) - MUST BE BEFORE :id ROUTE
   app.get("/api/athletes/missing-waivers", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('[MISSING-WAIVERS] Fetching athletes with missing waivers');
+      
       // Get all athletes and bookings
       const athletes = await storage.getAllAthletes();
       const bookings = await storage.getAllBookings();
@@ -904,14 +1082,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
+      
+      console.log('[ATHLETE-GET] Fetching athlete', { athleteId: id });
       const athlete = await storage.getAthlete(id);
+      
       if (!athlete) {
+        console.log('[ATHLETE-GET] Athlete not found', { athleteId: id });
         return res.status(404).json({ error: "Athlete not found" });
       }
+      
+      console.log('[ATHLETE-GET] Found athlete', { athleteId: id, name: athlete.name });
       res.json(athlete);
     } catch (error: any) {
-      console.error("Error fetching athlete:", error);
+      console.error("[ATHLETE-GET] Error fetching athlete:", error);
       res.status(500).json({ error: "Failed to fetch athlete" });
+    }
+  });
+
+  // WAIVER STATUS ENDPOINT - Fix waiver status check
+  // Simple waiver check for athlete details modal
+  app.get("/api/athletes/:id/waiver", async (req, res) => {
+    try {
+      const athleteId = parseInt(req.params.id);
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: "Invalid athlete ID" });
+      }
+
+      const query = `
+        SELECT id FROM waivers
+        WHERE athlete_id = $1 AND signed_at IS NOT NULL
+        LIMIT 1;
+      `;
+
+      const { data: result, error } = await supabase.rpc('exec_sql', { 
+        sql: query.replace('$1', athleteId.toString())
+      });
+
+      if (error) {
+        console.error('[WAIVER-CHECK] Database error:', error);
+        return res.status(500).json({ error: 'Failed to check waiver status' });
+      }
+
+      const signed = result && result.length > 0;
+      res.json({ signed });
+    } catch (error: any) {
+      console.error("[WAIVER-CHECK] Error:", error);
+      res.status(500).json({ error: "Failed to check waiver status" });
+    }
+  });
+
+  app.get("/api/athletes/:id/waiver-status", async (req, res) => {
+    try {
+      const athleteId = parseInt(req.params.id);
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: "Invalid athlete ID" });
+      }
+
+      const { data: waiverCheck, error } = await supabase
+        .from('waivers')
+        .select('id')
+        .eq('athleteId', athleteId)
+        .not('signedAt', 'is', null)
+        .limit(1);
+
+      if (error) {
+        console.error('[WAIVER-STATUS] Database error:', error);
+        return res.status(500).json({ error: 'Failed to check waiver status' });
+      }
+
+      const hasWaiver = waiverCheck && waiverCheck.length > 0;
+      console.log('[WAIVER-STATUS] Checked waiver', { athleteId, hasWaiver });
+      
+      res.json({ has_waiver: hasWaiver });
+    } catch (error: any) {
+      console.error("[WAIVER-STATUS] Error checking waiver status:", error);
+      res.status(500).json({ error: "Failed to check waiver status" });
     }
   });
 
@@ -931,22 +1176,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add PATCH endpoint for athlete updates (used by admin dashboard)
-  app.patch("/api/athletes/:id", isAdminAuthenticated, async (req, res) => {
+  app.patch("/api/athletes/:athleteId", isAdminAuthenticated, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const athleteId = parseInt(req.params.athleteId);
       const updateData = req.body;
       
-      logger.debug(`[PATCH] Updating athlete ${id} with data:`, updateData);
+      console.log('[ATHLETE-PATCH]', athleteId, req.body);
       
-      const athlete = await storage.updateAthlete(id, updateData);
-      if (!athlete) {
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: "Invalid athlete ID" });
+      }
+
+      // Verify athlete exists
+      const existingAthlete = await storage.getAthlete(athleteId);
+      if (!existingAthlete) {
+        console.log('[ATHLETE-PATCH] Athlete not found', { athleteId });
         return res.status(404).json({ error: "Athlete not found" });
       }
       
-      logger.debug(`[PATCH] Updated athlete result:`, athlete);
+      // Allow gender patch and other updates
+      const athlete = await storage.updateAthlete(athleteId, updateData);
+      if (!athlete) {
+        return res.status(404).json({ error: "Athlete update failed" });
+      }
+      
+      console.log('[ATHLETE-PATCH] Successfully updated athlete', { athleteId, updates: Object.keys(updateData) });
       res.json(athlete);
     } catch (error: any) {
-      console.error("Error updating athlete (PATCH):", error);
+      console.error("[ATHLETE-PATCH] Error updating athlete:", error);
       res.status(500).json({ error: "Failed to update athlete" });
     }
   });
@@ -2103,11 +2360,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update payment status separately
+  // Update payment status separately with Stripe sync
   app.patch("/api/bookings/:id/payment-status", isAdminAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { paymentStatus } = req.body;
+      
+      console.log('[PAYMENT-SYNC] Starting payment status update', { bookingId: id, newStatus: paymentStatus });
       
       const validStatuses = ["unpaid", "paid", "failed", "refunded", "reservation-pending", "reservation-failed", "reservation-paid", "session-paid", "reservation-refunded", "session-refunded"];
       if (!validStatuses.includes(paymentStatus)) {
@@ -2120,6 +2379,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!currentBooking) {
         res.status(404).json({ message: "Booking not found" });
         return;
+      }
+
+      let paidAmount = parseFloat(currentBooking.paidAmount || "0");
+      
+      // Sync with Stripe if we have a payment intent ID
+      const stripePaymentIntentId = (currentBooking as any).stripe_payment_intent_id;
+      if (stripePaymentIntentId) {
+        try {
+          const paymentIntent = await stripe.paymentIntents.retrieve(stripePaymentIntentId);
+          console.log('[PAYMENT-SYNC] Retrieved Stripe PaymentIntent', { 
+            id: paymentIntent.id, 
+            status: paymentIntent.status, 
+            amount: paymentIntent.amount 
+          });
+          
+          // Update amount based on Stripe data
+          if (paymentIntent.status === 'succeeded') {
+            paidAmount = paymentIntent.amount / 100; // Convert from cents
+            console.log('[PAYMENT-SYNC] Updated amount from Stripe', { amount: paidAmount });
+          }
+        } catch (stripeError) {
+          console.error('[PAYMENT-SYNC] Stripe sync failed:', stripeError);
+          // Continue without Stripe sync
+        }
       }
 
       // Update payment status
@@ -2156,24 +2439,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const totalPrice = getLessonPrice(booking.lessonType);
 
-      // Update paid amount and balance based on payment status
-      let paidAmount = parseFloat(booking.paidAmount || "0");
-      
+      // Update paid amount and balance based on payment status  
       if (paymentStatus === "session-paid") {
-        // Full session paid - set paid amount to total price
-        paidAmount = totalPrice;
+        // Full session paid - set paid amount to total price or Stripe amount
+        const finalAmount = Math.max(paidAmount, totalPrice);
         await storage.updateBooking(id, { 
-          paidAmount: totalPrice.toString()
+          paidAmount: finalAmount.toString()
         });
+        paidAmount = finalAmount;
       } else if (paymentStatus === "reservation-paid") {
-        // Reservation paid - typically $10, but use actual Stripe amount if available
+        // Reservation paid - use Stripe amount if available, otherwise default to $10
         if (paidAmount === 0) {
           paidAmount = 10; // Default reservation fee
-          await storage.updateBooking(id, { 
-            paidAmount: "10.00",
-            reservationFeePaid: true
-          });
         }
+        await storage.updateBooking(id, { 
+          paidAmount: paidAmount.toString(),
+          reservationFeePaid: true
+        });
       } else if (paymentStatus === "reservation-pending" || paymentStatus === "reservation-failed") {
         // No payment yet
         paidAmount = 0;
@@ -2183,12 +2465,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log('[PAYMENT-SYNC] Payment status updated', { 
+        bookingId: id, 
+        newStatus: paymentStatus, 
+        amount: paidAmount 
+      });
+      
       // Fetch updated booking to return
       const updatedBooking = await storage.getBooking(id);
       res.json(updatedBooking);
     } catch (error) {
-      console.error("Error updating payment status:", error);
+      console.error("[PAYMENT-SYNC] Error updating payment status:", error);
       res.status(500).json({ message: "Failed to update payment status" });
+    }
+  });
+
+  app.patch("/api/bookings/:id/payment-sync", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid booking ID" });
+      }
+
+      // Get current booking
+      const { data: booking, error: fetchError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !booking) {
+        console.error("Error fetching booking for payment sync:", fetchError);
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      let syncResult = {
+        booking_id: id,
+        stripe_synced: false,
+        payment_status_updated: false,
+        amount_updated: false,
+        original_status: booking.payment_status,
+        new_status: booking.payment_status,
+        original_amount: booking.paid_amount || '0',
+        new_amount: booking.paid_amount || '0'
+      };
+
+      // Sync with Stripe if payment intent exists
+      if ((booking as any).stripe_payment_intent_id) {
+        try {
+          const paymentIntent = await stripe.paymentIntents.retrieve((booking as any).stripe_payment_intent_id);
+          console.log('[PAYMENT-SYNC] Retrieved Stripe PaymentIntent', { 
+            id: paymentIntent.id, 
+            status: paymentIntent.status, 
+            amount: paymentIntent.amount 
+          });
+
+          syncResult.stripe_synced = true;
+          
+          // Update payment status based on Stripe status
+          let newPaymentStatus = booking.payment_status;
+          if (paymentIntent.status === 'succeeded') {
+            newPaymentStatus = 'reservation-paid';
+            syncResult.new_amount = (paymentIntent.amount / 100).toString();
+            syncResult.amount_updated = true;
+          } else if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'canceled') {
+            newPaymentStatus = 'reservation-failed';
+          } else if (paymentIntent.status === 'processing' || paymentIntent.status === 'requires_confirmation') {
+            newPaymentStatus = 'reservation-pending';
+          }
+
+          // Update database if status changed
+          if (newPaymentStatus !== booking.payment_status || syncResult.amount_updated) {
+            const updateData: any = {};
+            
+            if (newPaymentStatus !== booking.payment_status) {
+              updateData.payment_status = newPaymentStatus;
+              syncResult.new_status = newPaymentStatus;
+              syncResult.payment_status_updated = true;
+            }
+            
+            if (syncResult.amount_updated) {
+              updateData.paid_amount = syncResult.new_amount;
+            }
+
+            const { error: updateError } = await supabase
+              .from('bookings')
+              .update(updateData)
+              .eq('id', id);
+
+            if (updateError) {
+              console.error("Error updating booking after Stripe sync:", updateError);
+              return res.status(500).json({ error: "Failed to update booking" });
+            }
+
+            // Update attendance status based on payment status
+            if (newPaymentStatus === 'reservation-paid') {
+              await supabase
+                .from('bookings')
+                .update({ attendance_status: 'confirmed' })
+                .eq('id', id);
+            } else if (newPaymentStatus === 'reservation-failed') {
+              await supabase
+                .from('bookings')
+                .update({ attendance_status: 'pending' })
+                .eq('id', id);
+            }
+          }
+        } catch (stripeError) {
+          console.error('[PAYMENT-SYNC] Stripe sync failed:', stripeError);
+          syncResult.stripe_synced = false;
+        }
+      }
+
+      res.json({
+        message: "Payment sync completed",
+        sync_result: syncResult
+      });
+    } catch (error) {
+      console.error("Error syncing payment:", error);
+      res.status(500).json({ error: "Failed to sync payment" });
     }
   });
 
@@ -4510,7 +4905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get parent information
-      const parentResponse = await fetch(`${BASE_URL}/rest/v1/parents?id=eq.${parentId}&select=*`, {
+      const parentResponse = await fetch(`${BASE_URL}/rest/v1/parents?id=eq.${parentId}&select=id,first_name,last_name,email,phone,emergency_contact_name,emergency_contact_phone,created_at,updated_at`, {
         headers: {
           'apikey': API_KEY,
           'Authorization': `Bearer ${API_KEY}`,
@@ -5064,6 +5459,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error deleting side quest:', error);
       res.status(500).json({ error: 'Failed to delete side quest' });
+    }
+  });
+
+  // Genders endpoints
+  app.get("/api/genders", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from('genders')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+      
+      if (error) {
+        console.error('Error fetching genders:', error);
+        return res.status(500).json({ error: 'Failed to fetch genders' });
+      }
+      
+      res.json(data || []);
+    } catch (error: any) {
+      console.error('Error fetching genders:', error);
+      res.status(500).json({ error: 'Failed to fetch genders' });
     }
   });
 

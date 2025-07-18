@@ -1,18 +1,18 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { LessonTypeStep } from "./booking-steps/LessonTypeStep";
-import { AthleteSelectStep } from "./booking-steps/AthleteSelectStep";
-import { AthleteInfoFormStep } from "./booking-steps/AthleteInfoFormStep";
-import { FocusAreasStep } from "./booking-steps/FocusAreasStep";
-import { ScheduleStep } from "./booking-steps/ScheduleStep";
-import { ParentInfoStep } from "./booking-steps/ParentInfoStep";
-import { SafetyStep } from "./booking-steps/SafetyStep";
-import { WaiverStep } from "./booking-steps/WaiverStep";
-import { PaymentStep } from "./booking-steps/PaymentStep";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { AdminPaymentStep } from "./booking-steps/AdminPaymentStep";
+import { AthleteInfoFormStep } from "./booking-steps/AthleteInfoFormStep";
+import { AthleteSelectStep } from "./booking-steps/AthleteSelectStep";
+import { FocusAreasStep } from "./booking-steps/FocusAreasStep";
+import { LessonTypeStep } from "./booking-steps/LessonTypeStep";
+import { ParentInfoStep } from "./booking-steps/ParentInfoStep";
+import { ParentSelectionStep } from "./booking-steps/ParentSelectionStep";
+import { PaymentStep } from "./booking-steps/PaymentStep";
+import { SafetyStep } from "./booking-steps/SafetyStep";
+import { ScheduleStep } from "./booking-steps/ScheduleStep";
+import { WaiverStep } from "./booking-steps/WaiverStep";
 
 interface BookingWizardProps {
   onClose: () => void;
@@ -36,6 +36,8 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
                state.athleteInfo.every(athlete => 
                  athlete.firstName && athlete.lastName && athlete.dateOfBirth && athlete.experience
                );
+      case 'parentSelection':
+        return true; // This step is complete when a choice is made (handled by the step itself)
       case 'focusAreas':
         return state.focusAreas.length > 0;
       case 'schedule':
@@ -80,6 +82,8 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
         return state.waiverStatus.signed;
       case 'payment':
         return true; // Payment step handles its own completion
+      case 'adminPayment':
+        return !!state.adminPaymentMethod; // Admin must select payment method
       default:
         return true;
     }
@@ -96,6 +100,8 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
         return <AthleteSelectStep skipIfNotSemi={stepName === 'athleteSelectIfSemi'} />;
       case 'athleteInfoForm':
         return <AthleteInfoFormStep />;
+      case 'parentSelection':
+        return <ParentSelectionStep />;
       case 'focusAreas':
         return <FocusAreasStep />;
       case 'schedule':
@@ -109,6 +115,8 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
         return <WaiverStep />;
       case 'payment':
         return <PaymentStep />;
+      case 'adminPayment':
+        return <AdminPaymentStep />;
       default:
         return <div>Unknown step</div>;
     }
@@ -126,6 +134,7 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
       athleteSelect: 'Select Athletes',
       athleteSelectIfSemi: 'Select Athletes',
       athleteInfoForm: 'Athlete Information',
+      parentSelection: 'Parent Account',
       focusAreas: 'Select Focus Areas',
       schedule: 'Choose Date & Time',
       parentConfirm: 'Confirm Your Information',
@@ -133,12 +142,14 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
       safety: 'Safety & Pickup Information',
       waiver: 'Waiver Agreement',
       payment: 'Complete Payment',
+      adminPayment: 'Admin Booking Completion',
     };
     return titles[stepName] || 'Booking';
   };
 
-  const totalSteps = state.flowType === 'parent-portal' ? 7 : 
-                    state.flowType === 'athlete-modal' ? 7 : 8;
+  const totalSteps = state.flowType.startsWith('admin-') ? 7 : // Admin flows have one more step now (parentSelection)
+                    state.flowType === 'parent-portal' ? 8 : 
+                    state.flowType === 'athlete-modal' ? 8 : 9; // new-user flow now has 9 steps
   const progress = ((state.currentStep + 1) / totalSteps) * 100;
 
   return (

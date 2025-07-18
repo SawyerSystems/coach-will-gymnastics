@@ -1,4 +1,4 @@
-import { EnhancedBookingModal } from '@/components/enhanced-booking-modal';
+import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UnifiedBookingModal } from '@/components/UnifiedBookingModal';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
 import { useAvailableTimes } from '@/hooks/use-available-times';
 import { toast } from '@/hooks/use-toast';
@@ -228,6 +229,7 @@ function ParentDashboard() {
   const [showAddAthlete, setShowAddAthlete] = useState(false);
   const [editingAthleteId, setEditingAthleteId] = useState<number | null>(null);
   const [editingAthleteInfo, setEditingAthleteInfo] = useState<any>(null);
+  const [editingAthleteGender, setEditingAthleteGender] = useState<string>('');
   const [selectedAthleteForBooking, setSelectedAthleteForBooking] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showAthleteSelection, setShowAthleteSelection] = useState(false);
@@ -1047,6 +1049,7 @@ function ParentDashboard() {
                         variant="outline"
                         onClick={() => {
                           setEditingAthleteInfo(athlete);
+                          setEditingAthleteGender(athlete.gender || '');
                           setEditingAthleteId(null); // Close this modal
                         }}
                       >
@@ -1071,7 +1074,7 @@ function ParentDashboard() {
         </Dialog>
 
         {/* Direct Booking Modal for Logged-in Parents */}
-        <EnhancedBookingModal 
+        <UnifiedBookingModal 
           isOpen={showBookingModal}
           onClose={() => {
             setShowBookingModal(false);
@@ -1254,7 +1257,10 @@ function ParentDashboard() {
 
 
         {/* Edit Athlete Modal */}
-        <Dialog open={editingAthleteInfo !== null} onOpenChange={() => setEditingAthleteInfo(null)}>
+        <Dialog open={editingAthleteInfo !== null} onOpenChange={() => {
+          setEditingAthleteInfo(null);
+          setEditingAthleteGender('');
+        }}>
           <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-md md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
             <DialogHeader className="px-0 pt-0">
               <DialogTitle className="text-xl md:text-2xl text-blue-900">Edit Athlete Information</DialogTitle>
@@ -1295,18 +1301,12 @@ function ParentDashboard() {
                 </div>
 
                 <div>
-                  <Label htmlFor="athlete-gender">Gender</Label>
-                  <Select defaultValue={editingAthleteInfo.gender || ""}>
-                    <SelectTrigger className="mt-1" id="athlete-gender">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                      <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <GenderSelect
+                    value={editingAthleteGender}
+                    onValueChange={setEditingAthleteGender}
+                    id="athlete-gender"
+                    name="gender"
+                  />
                 </div>
 
                 <div>
@@ -1334,7 +1334,10 @@ function ParentDashboard() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="outline" onClick={() => setEditingAthleteInfo(null)}>
+                  <Button variant="outline" onClick={() => {
+                    setEditingAthleteInfo(null);
+                    setEditingAthleteGender('');
+                  }}>
                     Cancel
                   </Button>
                   <Button onClick={async () => {
@@ -1343,8 +1346,7 @@ function ParentDashboard() {
                       const lastName = (document.getElementById('athlete-lastName') as HTMLInputElement)?.value;
                       const dateOfBirth = (document.getElementById('athlete-dob') as HTMLInputElement)?.value;
                       const allergies = (document.getElementById('athlete-allergies') as HTMLInputElement)?.value;
-                      const genderSelect = document.querySelector('#athlete-gender [data-value]') as HTMLElement;
-                      const gender = genderSelect?.getAttribute('data-value') || null;
+                      const gender = editingAthleteGender;
                       const experienceSelect = document.querySelector('[name="experience"]') as HTMLSelectElement;
                       const experience = experienceSelect?.value;
 
@@ -1369,6 +1371,7 @@ function ParentDashboard() {
                         description: "Athlete information has been updated successfully.",
                       });
                       setEditingAthleteInfo(null);
+                      setEditingAthleteGender('');
                     } catch (error) {
                       toast({
                         title: "Update Failed",
@@ -1431,15 +1434,6 @@ function ParentDashboard() {
                   id="profile-phone"
                   type="tel"
                   defaultValue={bookings && bookings.length > 0 ? bookings[0].parentPhone || '' : ''}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="profile-address">Address (Optional)</Label>
-                <Input
-                  id="profile-address"
-                  placeholder="Enter your address..."
                   className="mt-1"
                 />
               </div>

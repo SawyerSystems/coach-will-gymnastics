@@ -100,7 +100,7 @@ export const athletes = pgTable("athletes", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   dateOfBirth: text("date_of_birth").notNull(),
-  gender: text("gender"), // Added gender field
+  gender: text("gender").references(() => genders.name), // Reference to genders table
   allergies: text("allergies"),
   experience: text("experience").notNull(),
   photo: text("photo"), // Base64 encoded photo for admin use only
@@ -248,7 +248,7 @@ export const availabilityExceptions = pgTable("availability_exceptions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Normalized lookup tables for apparatus, focus areas, and side quests
+// Normalized lookup tables for apparatus, focus areas, side quests, and genders
 export const apparatus = pgTable("apparatus", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -269,6 +269,16 @@ export const sideQuests = pgTable("side_quests", {
   name: text("name").notNull().unique(),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const genders = pgTable("genders", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Join tables for booking relationships
@@ -312,7 +322,7 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
   experience: z.enum(["beginner", "intermediate", "advanced"]),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
-  gender: z.enum(["Male", "Female", "Other", "Prefer not to say"]).optional(),
+  gender: z.string().optional(), // Will be validated against genders table
 });
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
@@ -345,7 +355,7 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
     slotOrder: z.number(),
     name: z.string(),
     dateOfBirth: z.string(),
-    gender: z.enum(["Male", "Female", "Other", "Prefer not to say"]).optional(),
+    gender: z.string().optional(), // Will be validated against genders table
     allergies: z.string().optional(),
     experience: z.string(),
     photo: z.string().optional(),
@@ -432,6 +442,12 @@ export const insertSideQuestSchema = createInsertSchema(sideQuests).omit({
   createdAt: true,
 });
 
+export const insertGenderSchema = createInsertSchema(genders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Insert schemas for join tables
 export const insertBookingApparatusSchema = createInsertSchema(bookingApparatus).omit({
   id: true,
@@ -449,10 +465,12 @@ export const insertBookingSideQuestSchema = createInsertSchema(bookingSideQuests
 export type Apparatus = typeof apparatus.$inferSelect;
 export type FocusArea = typeof focusAreas.$inferSelect;
 export type SideQuest = typeof sideQuests.$inferSelect;
+export type Gender = typeof genders.$inferSelect;
 
 export type InsertApparatus = z.infer<typeof insertApparatusSchema>;
 export type InsertFocusArea = z.infer<typeof insertFocusAreaSchema>;
 export type InsertSideQuest = z.infer<typeof insertSideQuestSchema>;
+export type InsertGender = z.infer<typeof insertGenderSchema>;
 
 export type BookingApparatus = typeof bookingApparatus.$inferSelect;
 export type BookingFocusArea = typeof bookingFocusAreas.$inferSelect;
@@ -501,6 +519,8 @@ export type Booking = typeof bookings.$inferSelect & {
   athlete2DateOfBirth?: string | null;
   athlete2Allergies?: string | null;
   athlete2Experience?: string | null;
+  // Display properties added by backend transformations
+  displayPaymentStatus?: string;
   athletes?: Array<{
     athleteId?: number | null; // Optional for new athletes, can be null
     slotOrder: number;
