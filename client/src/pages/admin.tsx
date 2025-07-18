@@ -1,4 +1,8 @@
+import { GenderSelect } from "@/components/GenderSelect";
 import { PaymentsTab } from "@/components/PaymentsTab";
+import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
+import { UpcomingSessions } from "@/components/UpcomingSessions";
+import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { AdminBookingManager } from "@/components/admin-booking-manager";
 import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
@@ -24,13 +28,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability } from "@/hooks/use-availability";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
-import { calculateAge, formatDate } from "@/lib/dateUtils";
+import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
-import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Parent, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Tip } from "@shared/schema";
+import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowUpDown,
   BarChart,
   Calendar,
   CalendarX,
@@ -97,13 +100,22 @@ export default function Admin() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [isManualBookingFromAthlete, setIsManualBookingFromAthlete] = useState(false);
   
-  // Upcoming Sessions state
-  const [upcomingDateFilter, setUpcomingDateFilter] = useState<string>("");
-  const [upcomingTimeFilter, setUpcomingTimeFilter] = useState<string>("week");
+  // Unified booking modal state
+  const [showUnifiedBooking, setShowUnifiedBooking] = useState(false);
+  const [adminBookingContext, setAdminBookingContext] = useState<'new-athlete' | 'existing-athlete' | 'from-athlete'>('new-athlete');
+  const [preSelectedAthleteId, setPreSelectedAthleteId] = useState<number | undefined>();
+  
+  // Parent management state
+  const [isParentViewOpen, setIsParentViewOpen] = useState(false);
+  const [isParentEditOpen, setIsParentEditOpen] = useState(false);
   
   // Athletes search state
   const [athleteSearchTerm, setAthleteSearchTerm] = useState<string>("");
-  const [upcomingSortAsc, setUpcomingSortAsc] = useState<boolean>(true);
+  
+  // Parents state
+  const [parentSearchTerm, setParentSearchTerm] = useState<string>("");
+  const [currentParentPage, setCurrentParentPage] = useState(1);
+  const [selectedParent, setSelectedParent] = useState<any>(null);
   
   // Delete athlete error state
   const [deleteAthleteError, setDeleteAthleteError] = useState<{
@@ -149,6 +161,29 @@ export default function Admin() {
     enabled: !!authStatus?.loggedIn,
   });
 
+  // Enhanced parents query with pagination and search
+  const { 
+    data: parentsData, 
+    isLoading: parentsLoading, 
+    refetch: refetchParents 
+  } = useQuery({
+    queryKey: ['/api/parents', { search: parentSearchTerm, page: currentParentPage, limit: 20 }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: currentParentPage.toString(),
+        limit: '20'
+      });
+      
+      if (parentSearchTerm.trim()) {
+        params.append('search', parentSearchTerm.trim());
+      }
+      
+      const response = await apiRequest('GET', `/api/parents?${params.toString()}`);
+      return await response.json();
+    },
+    enabled: !!authStatus?.loggedIn,
+  });
+
   const { data: athletes = [] } = useQuery<Athlete[]>({
     queryKey: ['/api/athletes'],
     enabled: !!authStatus?.loggedIn,
@@ -166,7 +201,7 @@ export default function Admin() {
     enabled: !!authStatus?.loggedIn,
   });
 
-  const { data: missingWaivers = [] } = useMissingWaivers() as { data: Athlete[] };
+  const { data: missingWaivers = [] } = useMissingWaivers(!!authStatus?.loggedIn) as { data: Athlete[] };
 
   // ALL MUTATIONS
   const createAvailabilityMutation = useCreateAvailability();
@@ -710,6 +745,14 @@ export default function Admin() {
     setIsPhotoEnlarged(true);
   };
 
+  const openAthleteModal = (athleteId: string) => {
+    const athlete = athletes.find(a => a.id.toString() === athleteId);
+    if (athlete) {
+      setSelectedAthlete(athlete);
+      setIsAthleteViewOpen(true);
+    }
+  };
+
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>, athleteId: number) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -852,6 +895,9 @@ export default function Admin() {
     }));
   })();
 
+  // Filtered parents for local search when not using server-side search
+  const filteredParents = parentsData?.parents || [];
+
   // RENDER
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
@@ -939,24 +985,46 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="bookings" className="space-y-4">
-          <TabsList className="w-full grid grid-cols-3 grid-rows-4 gap-2 bg-gray-100 p-2 rounded-lg h-auto">
+          <TabsList 
+            className="w-full grid grid-cols-3 grid-rows-4 gap-2 bg-gray-100 p-2 rounded-lg h-auto"
+            role="tablist"
+            aria-label="Admin dashboard sections"
+          >
             <TabsTrigger 
               value="bookings" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-blue-100"
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              role="tab"
+              aria-controls="bookings-panel"
+              aria-label="Manage bookings and reservations"
             >
               📅 Bookings
             </TabsTrigger>
             <TabsTrigger 
               value="upcoming" 
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-green-100"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              role="tab"
+              aria-controls="upcoming-panel"
+              aria-label="View upcoming sessions and schedule"
             >
               🔮 Upcoming
             </TabsTrigger>
             <TabsTrigger 
               value="athletes" 
-              className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-orange-100"
+              className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              role="tab"
+              aria-controls="athletes-panel"
+              aria-label="Manage athlete profiles and information"
             >
               🏆 Athletes
+            </TabsTrigger>
+            <TabsTrigger 
+              value="parents" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+              role="tab"
+              aria-controls="parents-panel"
+              aria-label="Manage parent profiles and family relationships"
+            >
+              👪 Parents
             </TabsTrigger>
             <TabsTrigger 
               value="content" 
@@ -1008,11 +1076,11 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bookings">
-            <AdminBookingManager />
+          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab">
+            <AdminBookingManager openAthleteModal={openAthleteModal} />
           </TabsContent>
 
-          <TabsContent value="athletes">
+          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab">
             <Card>
               <CardHeader>
                 <CardTitle>Athletes Management</CardTitle>
@@ -1307,162 +1375,179 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="upcoming">
+          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    <CardTitle>Upcoming Sessions</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <Input
-                        type="date"
-                        className="w-40"
-                        value={upcomingDateFilter}
-                        onChange={(e) => setUpcomingDateFilter(e.target.value)}
-                        placeholder="Filter by date"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Select value={upcomingTimeFilter} onValueChange={setUpcomingTimeFilter}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Sessions</SelectItem>
-                        <SelectItem value="today">Today Only</SelectItem>
-                        <SelectItem value="week">This Week</SelectItem>
-                        <SelectItem value="month">This Month</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setUpcomingSortAsc(!upcomingSortAsc)}
-                    >
-                      <ArrowUpDown className="h-4 w-4" />
-                      {upcomingSortAsc ? "Earliest First" : "Latest First"}
-                    </Button>
-                  </div>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  👪 Parents Management
+                  <Badge variant="secondary">{parentsData?.parents?.length || 0} total</Badge>
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                {(() => {
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  
-                  let upcomingBookings = bookings
-                    .filter(b => {
-                      const bookingDate = new Date(b.preferredDate);
-                      
-                      // Filter by status - check attendance status
-                      if (b.attendanceStatus !== 'confirmed' && b.attendanceStatus !== 'manual') return false;
-                      
-                      // Filter by date if specified
-                      if (upcomingDateFilter && b.preferredDate !== upcomingDateFilter) return false;
-                      
-                      // Filter by time range
-                      if (upcomingTimeFilter === 'today') {
-                        return bookingDate.toDateString() === today.toDateString();
-                      } else if (upcomingTimeFilter === 'week') {
-                        const weekFromNow = new Date(today);
-                        weekFromNow.setDate(weekFromNow.getDate() + 7);
-                        return bookingDate >= today && bookingDate <= weekFromNow;
-                      } else if (upcomingTimeFilter === 'month') {
-                        const monthFromNow = new Date(today);
-                        monthFromNow.setMonth(monthFromNow.getMonth() + 1);
-                        return bookingDate >= today && bookingDate <= monthFromNow;
-                      }
-                      
-                      return bookingDate >= today;
-                    })
-                    .sort((a, b) => {
-                      const dateA = new Date(a.preferredDate);
-                      const dateB = new Date(b.preferredDate);
-                      if (dateA.getTime() === dateB.getTime()) {
-                        return a.preferredTime.localeCompare(b.preferredTime);
-                      }
-                      return upcomingSortAsc 
-                        ? dateA.getTime() - dateB.getTime()
-                        : dateB.getTime() - dateA.getTime();
-                      return dateA.getTime() - dateB.getTime();
-                    });
+              <CardContent className="space-y-4">
+                {/* Search bar */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search parents by name, email, or phone..."
+                      value={parentSearchTerm}
+                      onChange={(e) => setParentSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => refetchParents()}
+                    variant="outline"
+                    size="sm"
+                    disabled={parentsLoading}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${parentsLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
 
-                  const todayBookings = upcomingBookings.filter(b => {
-                    const bookingDate = new Date(b.preferredDate);
-                    return bookingDate.toDateString() === today.toDateString();
-                  });
-
-                  const futureBookings = upcomingBookings.filter(b => {
-                    const bookingDate = new Date(b.preferredDate);
-                    return bookingDate.toDateString() !== today.toDateString();
-                  });
-
-                  return (
-                    <div className="space-y-6">
-                      {todayBookings.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4 text-orange-600">Today's Sessions</h3>
-                          <div className="space-y-3">
-                            {todayBookings.map(booking => (
-                              <div key={booking.id} className="border rounded-lg p-4 bg-orange-50">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <p className="font-semibold">{booking.preferredTime} - {booking.lessonType}</p>
-                                    <p className="text-sm text-gray-600">
-                                      {booking.athlete1Name} 
-                                      {booking.athlete2Name && ` & ${booking.athlete2Name}`}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      Parent: {booking.parentFirstName} {booking.parentLastName}
-                                    </p>
-                                  </div>
-                                  <Badge variant="default">Today</Badge>
-                                </div>
-                              </div>
-                            ))}
+                {parentsLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="p-4 border rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2 flex-1">
+                            <Skeleton className="h-5 w-48" />
+                            <Skeleton className="h-4 w-64" />
+                            <Skeleton className="h-4 w-32" />
                           </div>
+                          <Skeleton className="h-8 w-20" />
                         </div>
-                      )}
-
-                      {futureBookings.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Future Sessions</h3>
-                          <div className="space-y-3">
-                            {futureBookings.map(booking => (
-                              <div key={booking.id} className="border rounded-lg p-4">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <p className="font-semibold">
-                                      {formatDate(booking.preferredDate)} at {booking.preferredTime}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      {booking.lessonType} - {booking.athlete1Name}
-                                      {booking.athlete2Name && ` & ${booking.athlete2Name}`}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      Parent: {booking.parentFirstName} {booking.parentLastName}
-                                    </p>
-                                  </div>
-                                  <Badge variant="outline">
-                                    {Math.ceil((new Date(booking.preferredDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))} days
-                                  </Badge>
-                                </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : parentsData?.parents?.length === 0 ? (
+                  <Card className="p-8 text-center border-dashed">
+                    <p className="text-gray-500 mb-4">No parents found</p>
+                    {parentSearchTerm && (
+                      <p className="text-sm text-gray-400">
+                        Try adjusting your search terms
+                      </p>
+                    )}
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredParents.map((parent: any) => {
+                      const athleteCount = parent.athletes?.length || 0;
+                      const bookingCount = parent.bookings?.length || 0;
+                      
+                      return (
+                        <Card key={parent.id} className="p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-lg">
+                                  {parent.first_name} {parent.last_name}
+                                </h3>
+                                <Badge variant="outline">{parent.id}</Badge>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                                <p className="flex items-center gap-1">
+                                  <Mail className="h-4 w-4" />
+                                  {parent.email}
+                                </p>
+                                <p className="flex items-center gap-1">
+                                  📞 {parent.phone}
+                                </p>
+                              </div>
 
-                      {upcomingBookings.length === 0 && (
-                        <p className="text-center text-gray-500 py-8">No upcoming sessions scheduled.</p>
-                      )}
-                    </div>
-                  );
-                })()}
+                              <div className="flex items-center gap-4 text-sm">
+                                <span className="flex items-center gap-1">
+                                  🏆 {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  📅 {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+
+                              {parent.athletes && parent.athletes.length > 0 && (
+                                <div className="text-sm">
+                                  <strong>Athletes:</strong>{' '}
+                                  {parent.athletes.map((athlete: any) => athlete.first_name + ' ' + athlete.last_name).join(', ')}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedParent(parent);
+                                  setIsParentViewOpen(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                                View
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedParent(parent);
+                                  setIsParentEditOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete ${parent.first_name} ${parent.last_name}? This action cannot be undone.`)) {
+                                    // TODO: Implement delete functionality
+                                    console.log('Delete parent:', parent.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+
+                    {/* Pagination */}
+                    {parentsData?.pagination && parentsData.pagination.totalPages > 1 && (
+                      <div className="flex justify-center items-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentParentPage <= 1}
+                          onClick={() => setCurrentParentPage(Math.max(1, currentParentPage - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          Page {currentParentPage} of {parentsData.pagination.totalPages}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentParentPage >= parentsData.pagination.totalPages}
+                          onClick={() => setCurrentParentPage(Math.min(parentsData.pagination.totalPages, currentParentPage + 1))}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab">
+            <UpcomingSessions />
           </TabsContent>
 
           <TabsContent value="content">
@@ -2772,6 +2857,197 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
         
+        {/* Parent Details Dialog */}
+        <Dialog open={!!selectedParent} onOpenChange={() => setSelectedParent(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                👪 Parent Details
+                {selectedParent && (
+                  <Badge variant="outline">ID: {selectedParent.id}</Badge>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                Complete parent profile with athletes and booking history
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedParent && (
+              <div className="space-y-6">
+                {/* Basic Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Basic Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                        <p className="text-lg font-semibold">
+                          {selectedParent.first_name} {selectedParent.last_name}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Parent ID</Label>
+                        <p className="text-lg">{selectedParent.id}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Email</Label>
+                        <p className="text-lg">{selectedParent.email}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Phone</Label>
+                        <p className="text-lg">{selectedParent.phone}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Emergency Contact</Label>
+                        <p className="text-lg">
+                          {selectedParent.emergency_contact_name || 'Not provided'}
+                          {selectedParent.emergency_contact_phone && (
+                            <span className="block text-sm text-gray-600">
+                              {selectedParent.emergency_contact_phone}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Member Since</Label>
+                        <p className="text-lg">
+                          {selectedParent.created_at ? new Date(selectedParent.created_at).toLocaleDateString() : 'Unknown'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Athletes */}
+                {selectedParent.athletes && selectedParent.athletes.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        🏆 Athletes
+                        <Badge variant="secondary">{selectedParent.athletes.length}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedParent.athletes.map((athlete: any) => (
+                          <Card key={athlete.id} className="p-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold">
+                                  {athlete.first_name} {athlete.last_name}
+                                </h4>
+                                <Badge variant="outline">ID: {athlete.id}</Badge>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <p>
+                                  <strong>Age:</strong>{' '}
+                                  {athlete.birth_date 
+                                    ? calculateAge(athlete.birth_date) 
+                                    : 'Not provided'
+                                  }
+                                </p>
+                                <p>
+                                  <strong>Gender:</strong> {athlete.gender || 'Not specified'}
+                                </p>
+                                {athlete.skill_level && (
+                                  <p>
+                                    <strong>Skill Level:</strong> {athlete.skill_level}
+                                  </p>
+                                )}
+                                {athlete.medical_conditions && (
+                                  <p>
+                                    <strong>Medical Conditions:</strong> {athlete.medical_conditions}
+                                  </p>
+                                )}
+                              </div>
+                              {athlete.waivers && athlete.waivers.length > 0 && (
+                                <div className="mt-2">
+                                  <WaiverStatusDisplay 
+                                    athleteId={athlete.id} 
+                                    athleteName={`${athlete.firstName} ${athlete.lastName}`}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Booking History */}
+                {selectedParent.bookings && selectedParent.bookings.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        📅 Booking History
+                        <Badge variant="secondary">{selectedParent.bookings.length}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {selectedParent.bookings
+                          .sort((a: any, b: any) => new Date(b.preferred_date).getTime() - new Date(a.preferred_date).getTime())
+                          .slice(0, 10) // Show last 10 bookings
+                          .map((booking: any) => (
+                          <div key={booking.id} className="border rounded-lg p-3">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">
+                                    {new Date(booking.preferred_date).toLocaleDateString()}
+                                  </span>
+                                  <Badge variant="outline">#{booking.id}</Badge>
+                                </div>
+                                <p className="text-sm text-gray-600">
+                                  <strong>Lesson:</strong> {booking.lesson_type}
+                                </p>
+                                {booking.special_requests && (
+                                  <p className="text-sm text-gray-600">
+                                    <strong>Notes:</strong> {booking.special_requests}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right space-y-1">
+                                <Badge 
+                                  variant={
+                                    booking.payment_status === 'reservation-paid' ? 'default' :
+                                    booking.payment_status === 'reservation-pending' ? 'secondary' : 'destructive'
+                                  }
+                                >
+                                  {booking.payment_status}
+                                </Badge>
+                                <Badge 
+                                  variant={
+                                    booking.attendance_status === 'confirmed' ? 'default' :
+                                    booking.attendance_status === 'completed' ? 'default' : 'secondary'
+                                  }
+                                  className="block"
+                                >
+                                  {booking.attendance_status}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {selectedParent.bookings.length > 10 && (
+                          <p className="text-sm text-gray-500 text-center">
+                            Showing 10 most recent bookings of {selectedParent.bookings.length} total
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+        
         {/* Photo Enlargement Modal */}
         <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
           <DialogContent className="max-w-4xl">
@@ -2790,9 +3066,14 @@ export default function Admin() {
 
         {/* Athlete Edit Modal */}
         <Dialog open={isAthleteEditOpen} onOpenChange={setIsAthleteEditOpen}>
-          <DialogContent>
+          <DialogContent aria-describedby="edit-athlete-description">
             <DialogHeader>
-              <DialogTitle>Edit Athlete</DialogTitle>
+              <DialogTitle id="edit-athlete-title">
+                Edit Athlete
+              </DialogTitle>
+              <DialogDescription id="edit-athlete-description">
+                {selectedAthlete ? `Update information for ${selectedAthlete.name}` : "Edit athlete information"}
+              </DialogDescription>
             </DialogHeader>
             {selectedAthlete && (
               <form onSubmit={(e) => {
@@ -2848,63 +3129,79 @@ export default function Admin() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="edit-firstName">First Name</Label>
+                      <Label htmlFor="edit-firstName" className="after:content-['*'] after:ml-0.5 after:text-red-500">
+                        First Name
+                      </Label>
                       <Input
                         id="edit-firstName"
                         name="firstName"
                         defaultValue={selectedAthlete.firstName || selectedAthlete.name.split(' ')[0]}
                         required
+                        aria-describedby="edit-firstName-error"
+                        autoComplete="given-name"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="edit-lastName">Last Name</Label>
+                      <Label htmlFor="edit-lastName" className="after:content-['*'] after:ml-0.5 after:text-red-500">
+                        Last Name
+                      </Label>
                       <Input
                         id="edit-lastName"
                         name="lastName"
                         defaultValue={selectedAthlete.lastName || selectedAthlete.name.split(' ').slice(1).join(' ')}
                         required
+                        aria-describedby="edit-lastName-error"
+                        autoComplete="family-name"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="edit-dob">Date of Birth</Label>
+                    <Label htmlFor="edit-dob" className="after:content-['*'] after:ml-0.5 after:text-red-500">
+                      Date of Birth
+                    </Label>
                     <Input
                       id="edit-dob"
                       name="dateOfBirth"
                       type="date"
                       defaultValue={selectedAthlete.dateOfBirth}
                       required
+                      aria-describedby="edit-dob-help"
+                      autoComplete="bday"
                     />
+                    <p id="edit-dob-help" className="text-xs text-gray-500 mt-1">
+                      Used to calculate age for appropriate class placement
+                    </p>
                   </div>
+                  <GenderSelect
+                    name="gender"
+                    defaultValue={selectedAthlete.gender || ""}
+                    id="edit-gender"
+                    aria-describedby="edit-gender-help"
+                  />
                   <div>
-                    <Label htmlFor="edit-gender">Gender</Label>
-                    <Select name="gender" defaultValue={selectedAthlete.gender || ""}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-experience">Experience Level</Label>
+                    <Label htmlFor="edit-experience" className="after:content-['*'] after:ml-0.5 after:text-red-500">
+                      Experience Level
+                    </Label>
                     <Select
                       name="experience"
                       defaultValue={selectedAthlete.experience}
+                      required
                     >
-                      <SelectTrigger>
-                        <SelectValue />
+                      <SelectTrigger 
+                        id="edit-experience"
+                        aria-describedby="edit-experience-help"
+                      >
+                        <SelectValue placeholder="Select experience level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
+                        <SelectItem value="beginner" aria-label="Beginner level">Beginner</SelectItem>
+                        <SelectItem value="intermediate" aria-label="Intermediate level">Intermediate</SelectItem>
+                        <SelectItem value="advanced" aria-label="Advanced level">Advanced</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p id="edit-experience-help" className="text-xs text-gray-500 mt-1">
+                      Used to match appropriate coaching and skill development
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="edit-allergies">Allergies/Medical Notes</Label>
@@ -2913,9 +3210,28 @@ export default function Admin() {
                       name="allergies"
                       defaultValue={selectedAthlete.allergies || ''}
                       placeholder="Any allergies or medical conditions..."
+                      aria-describedby="edit-allergies-help"
+                      rows={3}
                     />
+                    <p id="edit-allergies-help" className="text-xs text-gray-500 mt-1">
+                      Important medical information for coaches to be aware of
+                    </p>
                   </div>
-                  <Button type="submit">Save Changes</Button>
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsAthleteEditOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit"
+                      aria-label={`Save changes for ${selectedAthlete.name}`}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
@@ -2924,27 +3240,44 @@ export default function Admin() {
 
         {/* Athlete View Modal */}
         <Dialog open={isAthleteViewOpen} onOpenChange={setIsAthleteViewOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent 
+            className="max-w-3xl max-h-[90vh] overflow-y-auto" 
+            aria-describedby="athlete-profile-description"
+          >
             <DialogHeader>
-              <DialogTitle>Athlete Profile</DialogTitle>
+              <DialogTitle id="athlete-profile-title">
+                Athlete Profile
+              </DialogTitle>
+              <DialogDescription id="athlete-profile-description">
+                {selectedAthlete ? `Viewing profile for ${selectedAthlete.name}` : "View athlete information and manage bookings"}
+              </DialogDescription>
             </DialogHeader>
             {selectedAthlete && (
               <div className="space-y-6">
                 {/* Basic Info */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold mb-3">Basic Information</h3>
+                <div className="border rounded-lg p-4" role="region" aria-labelledby="basic-info-heading">
+                  <h3 id="basic-info-heading" className="font-semibold mb-3">Basic Information</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         {selectedAthlete.photo ? (
                           <img
                             src={selectedAthlete.photo}
-                            alt={`${selectedAthlete.name}'s photo`}
-                            className="w-20 h-20 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            alt={`${selectedAthlete.name}'s profile photo`}
+                            className="w-20 h-20 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             onClick={() => handlePhotoClick(selectedAthlete.photo!)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handlePhotoClick(selectedAthlete.photo!);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`View ${selectedAthlete.name}'s photo in full size`}
                           />
                         ) : (
-                          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+                          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center" aria-label="No photo available">
                             <User className="h-8 w-8 text-gray-400" />
                           </div>
                         )}
@@ -2954,10 +3287,12 @@ export default function Admin() {
                           onChange={(e) => handlePhotoUpload(e, selectedAthlete.id)}
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           disabled={uploadingPhoto}
+                          aria-label={`Upload new photo for ${selectedAthlete.name}`}
                         />
                         {uploadingPhoto && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
                             <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                            <span className="sr-only">Uploading photo...</span>
                           </div>
                         )}
                       </div>
@@ -2974,12 +3309,12 @@ export default function Admin() {
                         </p>
                       </div>
                     </div>
-                    <div>
+                    <div role="group" aria-label="Athlete details">
                       <p className="text-sm"><span className="font-medium">Experience:</span> {selectedAthlete.experience}</p>
                       <p className="text-sm"><span className="font-medium">Gender:</span> {selectedAthlete.gender || 'Not specified'}</p>
                       {selectedAthlete.allergies && (
                         <p className="text-sm text-red-600 mt-1">
-                          <span className="font-medium">Allergies:</span> {selectedAthlete.allergies}
+                          <span className="font-medium">⚠️ Allergies:</span> {selectedAthlete.allergies}
                         </p>
                       )}
                     </div>
@@ -2990,16 +3325,28 @@ export default function Admin() {
                 {(() => {
                   const parentInfo = parentMapping.get(`${selectedAthlete.name}-${selectedAthlete.dateOfBirth}`);
                   return parentInfo ? (
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-semibold mb-3">Parent Information</h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="border rounded-lg p-4" role="region" aria-labelledby="parent-info-heading">
+                      <h3 id="parent-info-heading" className="font-semibold mb-3">Parent Information</h3>
+                      <div className="grid grid-cols-2 gap-4 text-sm" role="group" aria-label="Parent contact details">
                         <div>
                           <p><span className="font-medium">Name:</span> {parentInfo.firstName} {parentInfo.lastName}</p>
-                          <p><span className="font-medium">Email:</span> {parentInfo.email}</p>
+                          <p><span className="font-medium">Email:</span> 
+                            <a href={`mailto:${parentInfo.email}`} className="text-blue-600 hover:underline ml-1">
+                              {parentInfo.email}
+                            </a>
+                          </p>
                         </div>
                         <div>
-                          <p><span className="font-medium">Phone:</span> {parentInfo.phone}</p>
-                          <p><span className="font-medium">Emergency Contact:</span> {parentInfo.emergencyContactName} ({parentInfo.emergencyContactPhone})</p>
+                          <p><span className="font-medium">Phone:</span> 
+                            <a href={`tel:${parentInfo.phone}`} className="text-blue-600 hover:underline ml-1">
+                              {parentInfo.phone}
+                            </a>
+                          </p>
+                          <p><span className="font-medium">Emergency Contact:</span> {parentInfo.emergencyContactName} 
+                            <a href={`tel:${parentInfo.emergencyContactPhone}`} className="text-blue-600 hover:underline ml-1">
+                              ({parentInfo.emergencyContactPhone})
+                            </a>
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -3007,61 +3354,22 @@ export default function Admin() {
                 })()}
 
                 {/* Waiver Status */}
-                {(() => {
-                  const athleteBookings = bookings.filter(b => {
-                    // Check if athlete is in booking_athletes relationship
-                    if (b.athletes && Array.isArray(b.athletes)) {
-                      return b.athletes.some((athlete: any) => 
-                        athlete.id === selectedAthlete.id ||
-                        athlete.name === selectedAthlete.name ||
-                        (selectedAthlete.firstName && selectedAthlete.lastName && 
-                         athlete.name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
-                      );
-                    }
-                    // Fallback to legacy fields
-                    return b.athlete1Name === selectedAthlete.name || 
-                           b.athlete2Name === selectedAthlete.name ||
-                           (selectedAthlete.firstName && selectedAthlete.lastName && 
-                            (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
-                             b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
-                  });
-                  const hasWaiver = athleteBookings.some(b => b.waiverSigned);
-                  const waiverBooking = athleteBookings.find(b => b.waiverSigned);
-
-                  return (
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-semibold mb-3">Waiver Status</h3>
-                      {hasWaiver ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-green-600">
-                            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                            <span className="font-medium">Waiver Signed</span>
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            <p>Signed by: {waiverBooking?.waiverSignatureName}</p>
-                            <p>Date: {waiverBooking?.waiverSignedAt ? formatDate(waiverBooking.waiverSignedAt.toString().split('T')[0]) : 'Unknown'}</p>
-                            <p>Booking ID: #{waiverBooking?.id}</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-orange-600">
-                            <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                            <span className="font-medium">Waiver Required</span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            No waiver found for this athlete. Waiver must be signed before first lesson.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                <WaiverStatusDisplay 
+                  athleteId={selectedAthlete.id}
+                  athleteName={selectedAthlete.name}
+                  onResendWaiver={() => {
+                    // TODO: Implement waiver resend functionality
+                    toast({
+                      title: "Feature Coming Soon",
+                      description: "Waiver resend functionality will be implemented soon.",
+                    });
+                  }}
+                />
 
                 {/* Bookings History */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-semibold mb-3">Booking History</h3>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
+                  <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History</h3>
+                  <div className="space-y-3 max-h-64 overflow-y-auto" role="log" aria-label="Booking history list">
                     {bookings
                       .filter(b => {
                         // Check if athlete is in booking_athletes relationship
@@ -3082,22 +3390,26 @@ export default function Admin() {
                       })
                       .sort((a, b) => new Date(b.preferredDate).getTime() - new Date(a.preferredDate).getTime())
                       .map((booking) => (
-                        <div key={booking.id} className="border rounded p-3">
+                        <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
                           <div className="flex justify-between">
                             <div>
                               <p className="font-medium">{booking.lessonType.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
-                              <p className="text-sm text-gray-600">{booking.preferredDate} at {booking.preferredTime}</p>
+                              <p className="text-sm text-gray-600">
+                                <time dateTime={booking.preferredDate}>
+                                  {booking.preferredDate}
+                                </time> at {booking.preferredTime}
+                              </p>
                               <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
                               <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
                               {booking.waiverSigned && (
-                                <p className="text-xs text-green-600 font-medium">✓ Waiver Signed</p>
+                                <p className="text-xs text-green-600 font-medium" role="status">✓ Waiver Signed</p>
                               )}
                             </div>
                             <div className="text-right">
                               <Badge variant={
                                 booking.status === 'confirmed' ? 'default' :
                                 booking.status === 'pending' ? 'secondary' : 'destructive'
-                              }>
+                              } aria-label={`Status: ${booking.status}`}>
                                 {booking.status}
                               </Badge>
                               {booking.attendanceStatus && (
@@ -3126,18 +3438,21 @@ export default function Admin() {
                               (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
                                b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
                     }).length === 0 && (
-                      <p className="text-gray-500 text-center">No bookings found</p>
+                      <p className="text-gray-500 text-center" role="status">No bookings found</p>
                     )}
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-between">
+                <div className="flex justify-between pt-4 border-t" role="group" aria-label="Athlete actions">
                   <Button 
                     onClick={() => {
                       setIsAthleteViewOpen(false);
-                      setIsManualBookingFromAthlete(true);
+                      setAdminBookingContext('from-athlete');
+                      setPreSelectedAthleteId(selectedAthlete.id);
+                      setShowUnifiedBooking(true);
                     }}
+                    aria-label={`Book a session for ${selectedAthlete.name}`}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Book Session
@@ -3149,11 +3464,16 @@ export default function Admin() {
                         setIsAthleteViewOpen(false);
                         setIsAthleteEditOpen(true);
                       }}
+                      aria-label={`Edit ${selectedAthlete.name}'s information`}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
-                    <Button variant="outline" onClick={() => setIsAthleteViewOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsAthleteViewOpen(false)}
+                      aria-label="Close athlete profile"
+                    >
                       Close
                     </Button>
                   </div>
@@ -3211,22 +3531,170 @@ export default function Admin() {
           </DialogContent>
         </Dialog>
 
-        {/* Manual Booking Modal from Athlete Profile */}
-        {isManualBookingFromAthlete && selectedAthlete && (
-          <AdminBookingManager
-            prefilledData={{
-              athlete1Name: selectedAthlete.name,
-              athlete1DateOfBirth: selectedAthlete.dateOfBirth,
-              athlete1Experience: selectedAthlete.experience,
-              athlete1Allergies: selectedAthlete.allergies || undefined,
-              parentInfo: parentMapping.get(`${selectedAthlete.name}-${selectedAthlete.dateOfBirth}`)
-            }}
-            onClose={() => {
-              setIsManualBookingFromAthlete(false);
-              setSelectedAthlete(null);
-            }}
-          />
-        )}
+        {/* Parent View Modal */}
+        <Dialog open={isParentViewOpen} onOpenChange={setIsParentViewOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Parent Details</DialogTitle>
+            </DialogHeader>
+            {selectedParent && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Contact Information</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><strong>Name:</strong> {selectedParent.first_name} {selectedParent.last_name}</p>
+                      <p><strong>Email:</strong> {selectedParent.email}</p>
+                      <p><strong>Phone:</strong> {selectedParent.phone}</p>
+                      <p><strong>Emergency Contact:</strong> {selectedParent.emergency_contact_name}</p>
+                      <p><strong>Emergency Phone:</strong> {selectedParent.emergency_contact_phone}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Summary</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><strong>Athletes:</strong> {selectedParent.athletes?.length || 0}</p>
+                      <p><strong>Bookings:</strong> {selectedParent.bookings?.length || 0}</p>
+                      <p><strong>Waiver Status:</strong> {selectedParent.waiver_signed ? 'Signed' : 'Not Signed'}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedParent.athletes && selectedParent.athletes.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Athletes</h3>
+                    <div className="grid gap-2">
+                      {selectedParent.athletes.map((athlete: any) => (
+                        <div key={athlete.id} className="p-3 border rounded-lg flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">{athlete.first_name} {athlete.last_name}</p>
+                            <p className="text-sm text-gray-600">Age: {calculateAge(athlete.date_of_birth)}, Experience: {athlete.experience}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openAthleteModal(athlete.id)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setIsParentViewOpen(false);
+                      setIsParentEditOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button variant="outline" onClick={() => setIsParentViewOpen(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Parent Edit Modal */}
+        <Dialog open={isParentEditOpen} onOpenChange={setIsParentEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Parent Information</DialogTitle>
+            </DialogHeader>
+            {selectedParent && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="parent-first-name">First Name</Label>
+                    <Input 
+                      id="parent-first-name"
+                      defaultValue={selectedParent.first_name}
+                      placeholder="First Name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="parent-last-name">Last Name</Label>
+                    <Input 
+                      id="parent-last-name"
+                      defaultValue={selectedParent.last_name}
+                      placeholder="Last Name"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="parent-email">Email</Label>
+                  <Input 
+                    id="parent-email"
+                    type="email"
+                    defaultValue={selectedParent.email}
+                    placeholder="Email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="parent-phone">Phone</Label>
+                  <Input 
+                    id="parent-phone"
+                    defaultValue={selectedParent.phone}
+                    placeholder="Phone Number"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="emergency-name">Emergency Contact Name</Label>
+                    <Input 
+                      id="emergency-name"
+                      defaultValue={selectedParent.emergency_contact_name}
+                      placeholder="Emergency Contact Name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="emergency-phone">Emergency Contact Phone</Label>
+                    <Input 
+                      id="emergency-phone"
+                      defaultValue={selectedParent.emergency_contact_phone}
+                      placeholder="Emergency Contact Phone"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsParentEditOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => {
+                    // TODO: Implement save functionality
+                    console.log('Save parent changes');
+                    setIsParentEditOpen(false);
+                  }}>
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Unified Booking Modal for Admin Flows */}
+        <UnifiedBookingModal
+          isOpen={showUnifiedBooking}
+          onClose={() => {
+            setShowUnifiedBooking(false);
+            setPreSelectedAthleteId(undefined);
+          }}
+          isAdminFlow={true}
+          adminContext={adminBookingContext}
+          preSelectedAthleteId={preSelectedAthleteId}
+        />
+
+        {/* Manual Booking Modal from Athlete Profile - DEPRECATED */}
+        {/* This has been replaced with UnifiedBookingModal above */}
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
