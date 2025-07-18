@@ -326,6 +326,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Parent auth routes
   app.use('/api/parent-auth', parentAuthRouter);
   
+  // Temporary debug endpoint to check admin table
+  app.get('/api/debug/admins', async (req, res) => {
+    try {
+      console.log('🔍 Checking admin table contents...');
+      
+      // Get all admins (without passwords)
+      const { data: admins, error } = await supabase
+        .from('admins')
+        .select('id, email, created_at');
+        
+      if (error) {
+        console.error('❌ Error querying admins:', error);
+        return res.json({ error: 'Database error', details: error });
+      }
+      
+      console.log('📊 Admin table contents:', admins);
+      res.json({ 
+        adminCount: admins?.length || 0,
+        admins: admins || [],
+        message: 'Admin table debug info'
+      });
+    } catch (error) {
+      console.error('❌ Debug endpoint error:', error);
+      res.status(500).json({ error: 'Debug failed', details: error });
+    }
+  });
+  
   // Time slot locking routes
   app.use('/api/time-slot-locks', timeSlotLocksRouter);
   
