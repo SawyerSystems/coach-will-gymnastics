@@ -29,23 +29,34 @@ authRouter.post('/login', [
   }
 
   const { email, password } = req.body;
+  
+  console.log('🔐 Login attempt for email:', email);
 
   try {
     // Find admin by email
     const admin = await storage.getAdminByEmail(email);
+    console.log('👤 Admin lookup result:', admin ? `Found admin ID ${admin.id}` : 'No admin found');
+    
     if (!admin) {
+      console.log('❌ Login failed: Admin not found for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Verify password (handle snake_case from Supabase)
     const passwordHash = admin.passwordHash || (admin as any).password_hash;
+    console.log('🔑 Password hash exists:', !!passwordHash);
+    
     const isValid = await bcrypt.compare(password, passwordHash);
+    console.log('🔓 Password validation result:', isValid);
+    
     if (!isValid) {
+      console.log('❌ Login failed: Invalid password for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Create session
     req.session.adminId = admin.id;
+    console.log('✅ Login successful for admin ID:', admin.id);
     
     res.json({ 
       success: true, 

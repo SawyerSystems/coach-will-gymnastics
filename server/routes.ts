@@ -326,44 +326,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Parent auth routes
   app.use('/api/parent-auth', parentAuthRouter);
   
-  // Bootstrap admin endpoint - One-time setup for production
-  app.post('/api/bootstrap/admin', async (req, res) => {
-    try {
-      // Check if any admin already exists
-      const existingAdmins = await storage.getAllAdmins();
-      if (existingAdmins && existingAdmins.length > 0) {
-        return res.status(400).json({ error: 'Admin account already exists' });
-      }
-
-      const { email, password, bootstrapToken } = req.body;
-      
-      // Simple security check - require bootstrap token that matches known value
-      const expectedToken = process.env.BOOTSTRAP_TOKEN || 'CoachWillBootstrap2025';
-      if (bootstrapToken !== expectedToken) {
-        return res.status(401).json({ error: 'Invalid bootstrap token' });
-      }
-
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password required' });
-      }
-
-      // Create the admin account
-      const bcrypt = require('bcrypt');
-      const passwordHash = await bcrypt.hash(password, 10);
-      
-      const admin = await storage.createAdmin({
-        email,
-        passwordHash
-      });
-
-      console.log('Bootstrap admin created:', admin.email);
-      res.json({ message: 'Admin account created successfully', adminId: admin.id });
-    } catch (error) {
-      console.error('Bootstrap admin creation failed:', error);
-      res.status(500).json({ error: 'Failed to create admin account' });
-    }
-  });
-  
   // Time slot locking routes
   app.use('/api/time-slot-locks', timeSlotLocksRouter);
   
