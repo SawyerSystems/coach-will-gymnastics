@@ -2177,6 +2177,15 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Admin methods
+  private mapAdminFromDb(data: any): Admin {
+    return {
+      id: data.id,
+      email: data.email,
+      passwordHash: data.password_hash,
+      createdAt: new Date(data.created_at)
+    };
+  }
+
   async getAllAdmins(): Promise<Admin[]> {
     const { data, error } = await supabase
       .from('admins')
@@ -2187,7 +2196,7 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(admin => this.mapAdminFromDb(admin));
   }
 
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
@@ -2202,13 +2211,19 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data || undefined;
+    return data ? this.mapAdminFromDb(data) : undefined;
   }
 
   async createAdmin(admin: InsertAdmin): Promise<Admin> {
+    // Map camelCase to snake_case for database
+    const dbAdmin = {
+      email: admin.email,
+      password_hash: admin.passwordHash
+    };
+
     const { data, error } = await supabase
       .from('admins')
-      .insert(admin)
+      .insert(dbAdmin)
       .select()
       .single();
 
@@ -2217,7 +2232,7 @@ export class SupabaseStorage implements IStorage {
       throw error;
     }
 
-    return data;
+    return this.mapAdminFromDb(data);
   }
 
   async getAdmin(id: number): Promise<Admin | undefined> {
@@ -2232,7 +2247,7 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data || undefined;
+    return data ? this.mapAdminFromDb(data) : undefined;
   }
 
   // Waiver methods
