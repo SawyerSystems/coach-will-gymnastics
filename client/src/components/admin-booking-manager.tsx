@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { useAvailableTimes } from "@/hooks/use-available-times";
 import { useToast } from "@/hooks/use-toast";
+import { useGenders } from "@/hooks/useGenders";
 import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -344,13 +346,36 @@ interface AdminBookingManagerProps {
     } | null;
   };
   onClose?: () => void;
+  openAthleteModal?: (athleteId: string) => void;
 }
 
-export function AdminBookingManager({ prefilledData, onClose }: AdminBookingManagerProps = {}) {
+export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }: AdminBookingManagerProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { genderOptions } = useGenders();
+
+  // Helper function to find athlete ID by name
+  const findAthleteIdByName = (athleteName: string): string | null => {
+    if (!athletes || !athleteName) return null;
+    
+    const athlete = athletes.find(a => {
+      const fullName = a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name;
+      return fullName === athleteName;
+    });
+    
+    return athlete?.id || null;
+  };
+
+  // Fetch all athletes for selection
+  const { data: athletes = [] } = useQuery<any[]>({
+    queryKey: ["/api/athletes"],
+  });
+
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showManualForm, setShowManualForm] = useState(!!prefilledData);
+  const [showUnifiedBooking, setShowUnifiedBooking] = useState(false);
+  const [adminBookingContext, setAdminBookingContext] = useState<'new-athlete' | 'existing-athlete' | 'from-athlete'>('new-athlete');
+  const [preSelectedAthleteId, setPreSelectedAthleteId] = useState<number | undefined>();
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [sortOption, setSortOption] = useState<string>("recent");
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -411,9 +436,7 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
             dateOfBirth: athlete1DOB.toISOString().split('T')[0],
             allergies: bookingData.allergies1 || "",
             experience: bookingData.athlete1Experience,
-            gender: (bookingData.athlete1Gender && ["Male", "Female", "Other", "Prefer not to say"].includes(bookingData.athlete1Gender)) 
-              ? bookingData.athlete1Gender as "Male" | "Female" | "Other" | "Prefer not to say" 
-              : undefined,
+            gender: bookingData.athlete1Gender || undefined,
           },
           ...(bookingData.athlete2Name ? [{
             athleteId: null,
@@ -422,9 +445,7 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
             dateOfBirth: athlete2DOB ? athlete2DOB.toISOString().split('T')[0] : "",
             allergies: bookingData.allergies2 || "",
             experience: bookingData.athlete2Experience || "beginner",
-            gender: (bookingData.athlete2Gender && ["Male", "Female", "Other", "Prefer not to say"].includes(bookingData.athlete2Gender)) 
-              ? bookingData.athlete2Gender as "Male" | "Female" | "Other" | "Prefer not to say" 
-              : undefined,
+            gender: bookingData.athlete2Gender || undefined,
           }] : [])
         ]
       };
@@ -689,34 +710,30 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
             </Select>
           </div>
         </div>
-        <Dialog 
-          open={showManualForm} 
-          onOpenChange={(open) => {
-            setShowManualForm(open);
-            if (!open && onClose) {
-              onClose();
-            }
-          }}
-        >
-          {!prefilledData && (
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Manual Booking
-              </Button>
-            </DialogTrigger>
-          )}
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Manual Booking</DialogTitle>
-            </DialogHeader>
-            <ManualBookingForm 
-              onSubmit={(data) => createManualBooking.mutate(data)}
-              isLoading={createManualBooking.isPending}
-              prefilledData={prefilledData}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              setAdminBookingContext('new-athlete');
+              setPreSelectedAthleteId(undefined);
+              setShowUnifiedBooking(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Athlete Booking
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => {
+              setAdminBookingContext('existing-athlete');
+              setPreSelectedAthleteId(undefined);
+              setShowUnifiedBooking(true);
+            }}
+          >
+            <User className="h-4 w-4 mr-2" />
+            Existing Athlete Booking
+          </Button>
+        </div>
       </div>
 
       {/* Bookings table */}
@@ -748,18 +765,58 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      {booking.athletes?.map((athlete, index) => (
-                        <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
-                          {athlete.name}
-                        </div>
-                      )) || (
+                      {booking.athletes?.map((athlete, index) => {
+                        const athleteId = findAthleteIdByName(athlete.name);
+                        return (
+                          <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
+                            {athleteId && openAthleteModal ? (
+                              <button
+                                onClick={() => openAthleteModal(athleteId)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none p-0 font-inherit"
+                              >
+                                {athlete.name}
+                              </button>
+                            ) : (
+                              athlete.name
+                            )}
+                          </div>
+                        );
+                      }) || (
                         // Fallback to legacy athlete data
                         <div className="space-y-1">
                           {booking.athlete1Name && (
-                            <div className="font-medium">{booking.athlete1Name}</div>
+                            <div className="font-medium">
+                              {(() => {
+                                const athleteId = findAthleteIdByName(booking.athlete1Name);
+                                return athleteId && openAthleteModal ? (
+                                  <button
+                                    onClick={() => openAthleteModal(athleteId)}
+                                    className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none p-0 font-inherit"
+                                  >
+                                    {booking.athlete1Name}
+                                  </button>
+                                ) : (
+                                  booking.athlete1Name
+                                );
+                              })()}
+                            </div>
                           )}
                           {booking.athlete2Name && (
-                            <div className="text-sm text-muted-foreground">{booking.athlete2Name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {(() => {
+                                const athleteId = findAthleteIdByName(booking.athlete2Name);
+                                return athleteId && openAthleteModal ? (
+                                  <button
+                                    onClick={() => openAthleteModal(athleteId)}
+                                    className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none p-0 font-inherit text-sm"
+                                  >
+                                    {booking.athlete2Name}
+                                  </button>
+                                ) : (
+                                  booking.athlete2Name
+                                );
+                              })()}
+                            </div>
                           )}
                           {!booking.athlete1Name && !booking.athlete2Name && (
                             <div className="text-muted-foreground">No athletes</div>
@@ -915,6 +972,15 @@ export function AdminBookingManager({ prefilledData, onClose }: AdminBookingMana
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Unified Booking Modal for Admin Flows */}
+      <UnifiedBookingModal
+        isOpen={showUnifiedBooking}
+        onClose={() => setShowUnifiedBooking(false)}
+        isAdminFlow={true}
+        adminContext={adminBookingContext}
+        preSelectedAthleteId={preSelectedAthleteId}
+      />
     </div>
   );
 }
@@ -943,6 +1009,7 @@ function ManualBookingForm({
   };
 }) {
   const { toast } = useToast();
+  const { genderOptions } = useGenders();
   const [athleteSelectionMode, setAthleteSelectionMode] = useState<'existing' | 'new'>('new');
   const [selectedExistingAthlete, setSelectedExistingAthlete] = useState<any>(null);
   const [formData, setFormData] = useState<ManualBookingFormData>({
@@ -973,14 +1040,14 @@ function ManualBookingForm({
 
   const [selectedApparatus, setSelectedApparatus] = useState<string>("");
 
-  // Fetch all athletes for selection
-  const { data: athletes = [] } = useQuery<any[]>({
-    queryKey: ["/api/athletes"],
-  });
-
   // Fetch all parents for mapping
   const { data: parents = [] } = useQuery<any[]>({
     queryKey: ["/api/parents"],
+  });
+
+  // Fetch all athletes for existing athlete selection
+  const { data: athletes = [] } = useQuery<any[]>({
+    queryKey: ["/api/athletes"],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1427,10 +1494,9 @@ function ManualBookingForm({
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                      <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                      {genderOptions.map((gender: string) => (
+                        <SelectItem key={gender} value={gender}>{gender}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1501,10 +1567,9 @@ function ManualBookingForm({
                             <SelectValue placeholder="Select gender" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                            <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                            {genderOptions.map((gender: string) => (
+                              <SelectItem key={gender} value={gender}>{gender}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1746,7 +1811,7 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
             <div className="flex justify-between">
               <span>Payment Status:</span>
               <Badge {...getPaymentStatusBadgeProps(booking.paymentStatus || 'unpaid')}>
-                {(booking.paymentStatus || 'unpaid').charAt(0).toUpperCase() + (booking.paymentStatus || 'unpaid').slice(1)}
+                {booking.displayPaymentStatus || (booking.paymentStatus || 'unpaid').charAt(0).toUpperCase() + (booking.paymentStatus || 'unpaid').slice(1)}
               </Badge>
             </div>
             <div className="flex justify-between">
