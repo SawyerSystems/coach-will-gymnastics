@@ -129,6 +129,9 @@ export async function createSupabaseTablesViaAPI() {
         password_hash TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Disable RLS on admins table to allow admin creation
+      ALTER TABLE admins DISABLE ROW LEVEL SECURITY;
       
       -- Create parent_auth_codes table
       CREATE TABLE IF NOT EXISTS parent_auth_codes (
