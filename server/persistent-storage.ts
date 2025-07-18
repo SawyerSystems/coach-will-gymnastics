@@ -1,24 +1,24 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import type {
-    Admin,
-    Athlete,
-    Availability,
-    AvailabilityException,
-    BlogPost,
-    Booking,
-    InsertAdmin,
-    InsertAthlete,
-    InsertAvailability,
-    InsertAvailabilityException,
-    InsertBlogPost,
-    InsertBooking,
-    InsertParent,
-    InsertParentAuthCode,
-    InsertTip,
-    Parent,
-    ParentAuthCode,
-    Tip
+  Admin,
+  Athlete,
+  Availability,
+  AvailabilityException,
+  BlogPost,
+  Booking,
+  InsertAdmin,
+  InsertAthlete,
+  InsertAvailability,
+  InsertAvailabilityException,
+  InsertBlogPost,
+  InsertBooking,
+  InsertParent,
+  InsertParentAuthCode,
+  InsertTip,
+  Parent,
+  ParentAuthCode,
+  Tip
 } from "../shared/schema";
 import { IStorage } from "./storage";
 
@@ -635,6 +635,10 @@ export class PersistentMemStorage implements IStorage {
   }
 
   // Admin methods
+  async getAllAdmins(): Promise<Admin[]> {
+    return Array.from(this.admins.values());
+  }
+
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
     return Array.from(this.admins.values()).find(admin => admin.email === email);
   }

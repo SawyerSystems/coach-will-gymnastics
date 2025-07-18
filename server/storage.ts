@@ -70,6 +70,7 @@ export interface IStorage {
   getAvailabilityExceptionsByDateRange(startDate: string, endDate: string): Promise<AvailabilityException[]>;
 
   // Admins
+  getAllAdmins(): Promise<Admin[]>;
   getAdminByEmail(email: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
   getAdmin(id: number): Promise<Admin | undefined>;
@@ -882,6 +883,10 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
 
   // Admin methods
+  async getAllAdmins(): Promise<Admin[]> {
+    return [];
+  }
+
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
     return undefined;
   }
@@ -2172,6 +2177,19 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Admin methods
+  async getAllAdmins(): Promise<Admin[]> {
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching admins:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
     const { data, error } = await supabase
       .from('admins')

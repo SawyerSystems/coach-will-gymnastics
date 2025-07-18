@@ -27,7 +27,8 @@ import { useAvailableTimes } from "@/hooks/use-available-times";
 import { useCreateBooking } from "@/hooks/use-booking";
 import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
-import { EXPERIENCE_LEVELS, GENDER_OPTIONS, LESSON_TYPES } from "@/lib/constants";
+import { useGenders } from "@/hooks/useGenders";
+import { EXPERIENCE_LEVELS, LESSON_TYPES } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookingStatusEnum, insertBookingSchema, PaymentStatusEnum } from "@shared/schema";
 import { loadStripe } from '@stripe/stripe-js';
@@ -86,6 +87,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const { genderOptions } = useGenders();
   
 
   const [selectedLessonType, setSelectedLessonType] = useState<keyof typeof LESSON_TYPES | null>(null);
@@ -514,7 +516,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {GENDER_OPTIONS.map((gender) => (
+                              {genderOptions.map((gender) => (
                                 <SelectItem key={gender} value={gender}>
                                   {gender}
                                 </SelectItem>
@@ -619,7 +621,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {GENDER_OPTIONS.map((gender) => (
+                                {genderOptions.map((gender) => (
                                   <SelectItem key={gender} value={gender}>
                                     {gender}
                                   </SelectItem>

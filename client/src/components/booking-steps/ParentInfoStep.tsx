@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, Contact, Edit2, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ParentInfoStepProps {
   isPrefilled?: boolean;
@@ -13,6 +14,41 @@ interface ParentInfoStepProps {
 export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   const { state, updateState, nextStep } = useBookingFlow();
   const [isEditing, setIsEditing] = useState(!isPrefilled);
+
+  const isAdminFlow = state.isAdminFlow || state.flowType.startsWith('admin-');
+  
+  // For existing athlete flows, fetch athlete data to get parent info
+  const shouldFetchAthleteParent = isAdminFlow && 
+    (state.flowType === 'admin-existing-athlete' || state.flowType === 'admin-from-athlete') &&
+    state.selectedAthletes.length > 0 && !state.parentId;
+
+  const { data: athleteData } = useQuery({
+    queryKey: ['/api/athletes', state.selectedAthletes[0]],
+    enabled: shouldFetchAthleteParent,
+  }) as { data: any };
+
+  // Fetch parent data if we have a parent ID from the athlete
+  const { data: parentData } = useQuery({
+    queryKey: ['/api/parents', athleteData?.parentId],
+    enabled: shouldFetchAthleteParent && !!athleteData?.parentId,
+  }) as { data: any };
+
+  // Auto-populate parent info when it becomes available
+  useEffect(() => {
+    if (shouldFetchAthleteParent && parentData && !state.parentId) {
+      updateState({
+        parentId: parentData.id,
+        parentInfo: {
+          firstName: parentData.firstName || '',
+          lastName: parentData.lastName || '',
+          email: parentData.email || '',
+          phone: parentData.phone || '',
+          emergencyContactName: parentData.emergencyContactName || '',
+          emergencyContactPhone: parentData.emergencyContactPhone || ''
+        }
+      });
+    }
+  }, [parentData, shouldFetchAthleteParent, state.parentId, updateState]);
 
   console.log("ParentInfoStep state:", {
     parentId: state.parentId,
@@ -52,14 +88,32 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
 
   // If this is a returning parent with existing info (or at least email), show confirmation interface
   if (state.parentId && (parentInfo.firstName || parentInfo.email) && !isEditing) {
+    const isAutoLinked = Boolean(shouldFetchAthleteParent && parentData);
+    
     return (
       <div className="space-y-6 py-4">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">Confirm Your Information</h2>
+          <h2 className="text-2xl font-bold">
+            {isAutoLinked ? "Linked Parent Information" : "Confirm Your Information"}
+          </h2>
           <p className="text-muted-foreground">
-            Please verify your contact information is up to date.
+            {isAutoLinked 
+              ? "This athlete is automatically linked to the following parent account."
+              : "Please verify your contact information is up to date."}
           </p>
         </div>
+
+        {isAutoLinked && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-green-800">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-medium">Parent Automatically Linked</span>
+            </div>
+            <p className="text-sm text-green-700 mt-1">
+              The selected athlete is already associated with this parent account.
+            </p>
+          </div>
+        )}
 
         <Card>
           <CardHeader>

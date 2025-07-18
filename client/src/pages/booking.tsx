@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
-import type { Parent, Athlete } from "@shared/schema";
+import { Footer } from "@/components/Footer";
 import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
-import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
-import { BookingModal } from "@/components/booking-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, Users, Clock, CheckCircle, Calendar, MapPin, Phone, Mail } from "lucide-react";
-import { LESSON_TYPES } from "@/lib/constants";
+import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { useStripePricing } from "@/hooks/use-stripe-products";
+import { LESSON_TYPES } from "@/lib/constants";
 import { apiRequest } from "@/lib/queryClient";
+import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import { Footer } from "@/components/Footer";
+import { Calendar, CheckCircle, Clock, Mail, MapPin, Phone, User, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Booking() {
   const [showParentModal, setShowParentModal] = useState(false);
@@ -94,49 +93,20 @@ export default function Booking() {
     
     // Check if parent is logged in
     if (parentAuth?.loggedIn) {
-      console.log("Parent is authenticated, checking for parent info...");
+      console.log("Parent is authenticated, using simplified approach");
       
-      // If we have parent info from the API, use it
+      // If we have complete parent info from the API, use it directly
       if (parentInfo && !parentInfoError) {
-        const parentDataToSet = {
-          id: parentInfo.id,
-          firstName: parentInfo.firstName,
-          lastName: parentInfo.lastName,
-          email: parentInfo.email,
-          phone: parentInfo.phone,
-          emergencyContactName: parentInfo.emergencyContactName,
-          emergencyContactPhone: parentInfo.emergencyContactPhone,
-          waiverSigned: parentInfo.waiverSigned,
-          waiverSignedAt: parentInfo.waiverSignedAt,
-          waiverSignatureName: parentInfo.waiverSignatureName,
-          createdAt: parentInfo.createdAt,
-          updatedAt: parentInfo.updatedAt
-        };
-        
-        console.log("Using parent info from API:", parentDataToSet);
-        setParentData(parentDataToSet);
+        console.log("Using complete parent info from API");
+        setParentData(parentInfo); // Use complete parent info directly
         setSelectedAthletes(parentAthletes || []);
         setIsNewParent(false);
         setShowBookingModal(true);
       } else {
-        // Fallback: Create basic parent data from parent auth session
-        console.log("Parent info API failed, using fallback from session data");
-        const fallbackParentData = {
-          id: parentAuth.parentId,
-          firstName: '',
-          lastName: '',
-          email: parentAuth.email || '',
-          phone: '',
-          emergencyContactName: '',
-          emergencyContactPhone: '',
-          waiverSigned: false,
-          waiverSignedAt: null,
-          waiverSignatureName: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        setParentData(fallbackParentData);
+        // Fallback: Parent is logged in but full info not available
+        // The UnifiedBookingModal will handle this via parentAuthStatus
+        console.log("Parent is logged in but full info not available, letting modal handle via auth status");
+        setParentData(null); // Let modal handle via auth status
         setSelectedAthletes(parentAthletes || []);
         setIsNewParent(false);
         setShowBookingModal(true);
@@ -446,7 +416,7 @@ export default function Booking() {
         onParentConfirmed={handleParentConfirmed}
       />
       
-      <EnhancedBookingModal
+      <UnifiedBookingModal
         isOpen={showBookingModal}
         onClose={() => {
           console.log("Booking modal closing");

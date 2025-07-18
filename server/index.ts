@@ -48,6 +48,19 @@ app.use(session({
   })
 }));
 
+// Enhanced diagnostic middleware for development
+if (nodeEnv === 'development') {
+  app.use((req, res, next) => {
+    console.log('[REQ]', req.method, req.originalUrl);
+    const send = res.send;
+    res.send = function(body) {
+      console.log('[RES]', res.statusCode, req.originalUrl);
+      return send.call(this, body);
+    };
+    next();
+  });
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -86,6 +99,16 @@ app.use((req, res, next) => {
     console.log("✅ Supabase tables initialized successfully");
   } catch (error) {
     console.log("⚠️ Supabase table initialization failed, continuing with startup...");
+    console.error(error);
+  }
+
+  // Ensure admin account exists on startup
+  try {
+    const { ensureAdmin } = await import("./ensure-admin.js");
+    await ensureAdmin();
+    console.log("✅ Admin account check completed");
+  } catch (error) {
+    console.log("⚠️ Admin account check failed, continuing with startup...");
     console.error(error);
   }
 

@@ -1,25 +1,25 @@
-import { EnhancedBookingModal } from "@/components/enhanced-booking-modal";
 import { Footer } from "@/components/Footer";
 import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { useStripePricing } from "@/hooks/use-stripe-products";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
-  Brain,
-  Calendar,
-  CheckCircle,
-  Clock,
-  Dumbbell,
-  Shield,
-  Star,
-  Target,
-  TrendingUp,
-  Trophy,
-  Zap
+    Activity,
+    Brain,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Dumbbell,
+    Shield,
+    Star,
+    Target,
+    TrendingUp,
+    Trophy,
+    Zap
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
@@ -78,45 +78,16 @@ export default function Home() {
     
     // Check if parent is logged in
     if (parentAuth?.loggedIn) {
-      // If we have parent info from the API, use it
+      // If we have complete parent info from the API, use it directly
       if (parentInfo && !parentInfoError) {
-        const parentDataToSet = {
-          id: parentInfo.id,
-          firstName: parentInfo.firstName,
-          lastName: parentInfo.lastName,
-          email: parentInfo.email,
-          phone: parentInfo.phone,
-          emergencyContactName: parentInfo.emergencyContactName,
-          emergencyContactPhone: parentInfo.emergencyContactPhone,
-          waiverSigned: parentInfo.waiverSigned,
-          waiverSignedAt: parentInfo.waiverSignedAt,
-          waiverSignatureName: parentInfo.waiverSignatureName,
-          createdAt: parentInfo.createdAt,
-          updatedAt: parentInfo.updatedAt
-        };
-        
-        setParentData(parentDataToSet);
+        setParentData(parentInfo); // Use complete parent info directly
         setSelectedAthletes(parentAthletes || []);
         setIsNewParent(false);
         setShowBookingModal(true);
       } else {
-        // Fallback: Create basic parent data from parent auth session
-        const fallbackParentData = {
-          id: parentAuth.parentId || 0,
-          firstName: '',
-          lastName: '',
-          email: parentAuth.email || '',
-          phone: '',
-          emergencyContactName: '',
-          emergencyContactPhone: '',
-          waiverSigned: false,
-          waiverSignedAt: null,
-          waiverSignatureName: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        setParentData(fallbackParentData);
+        // Fallback: Parent is logged in but full info not available
+        // The UnifiedBookingModal will handle this via parentAuthStatus
+        setParentData(null); // Let modal handle via auth status
         setSelectedAthletes(parentAthletes || []);
         setIsNewParent(false);
         setShowBookingModal(true);
@@ -665,7 +636,7 @@ export default function Home() {
         onParentConfirmed={handleParentConfirmed}
       />
       
-      <EnhancedBookingModal
+      <UnifiedBookingModal
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
         parentData={parentData || undefined}

@@ -153,12 +153,8 @@ export const EXPERIENCE_LEVELS = [
   "advanced"
 ] as const;
 
-export const GENDER_OPTIONS = [
-  "Male",
-  "Female", 
-  "Other",
-  "Prefer not to say"
-] as const;
+// Note: Gender options are now dynamically loaded from the database via useGenders hook
+// This ensures consistency with the normalized genders table
 
 export const AGES = [
   "4", "5", "6", "7", "8", "9", "10", "11", "12", "13+"

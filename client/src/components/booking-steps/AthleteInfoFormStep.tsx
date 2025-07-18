@@ -7,12 +7,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { GENDER_OPTIONS } from "@/lib/constants";
+import { useGenders } from "@/hooks/useGenders";
 import { AlertCircle, PlusCircle, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function AthleteInfoFormStep() {
   const { state, updateState } = useBookingFlow();
+  const { genderOptions } = useGenders();
   const [ageErrors, setAgeErrors] = useState<{ [key: number]: string }>({});
 
   // Function to calculate age and validate minimum age requirement
@@ -155,7 +156,7 @@ export function AthleteInfoFormStep() {
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  {GENDER_OPTIONS.map((gender) => (
+                  {genderOptions.map((gender: string) => (
                     <SelectItem key={gender} value={gender}>
                       {gender}
                     </SelectItem>
