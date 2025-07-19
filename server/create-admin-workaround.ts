@@ -53,29 +53,14 @@ export async function createAdminViaAPI() {
     }
     
     // If RPC doesn't work, try direct insert (will likely fail with RLS)
-    const adminData: any = {
-      email: email,
-      password_hash: passwordHash,
-      created_at: new Date().toISOString()
-    };
-    
-    // Only add updated_at if the column exists (production schema issue)
-    try {
-      // Test if updated_at column exists by attempting a select
-      await client
-        .from('admins')
-        .select('updated_at')
-        .limit(1);
-      
-      // If no error, the column exists, so we can include it
-      adminData.updated_at = new Date().toISOString();
-    } catch (schemaError) {
-      console.log('⚠️  updated_at column not found, creating admin without it');
-    }
-    
     const { data, error } = await client
       .from('admins')
-      .insert(adminData)
+      .insert({
+        email: email,
+        password_hash: passwordHash,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
       .select()
       .single();
       
@@ -93,8 +78,8 @@ export async function createAdminViaAPI() {
     const passwordHash = await bcrypt.hash(password, 10);
     console.log('\n--- Copy and paste this SQL into Supabase SQL Editor ---');
     console.log('ALTER TABLE admins DISABLE ROW LEVEL SECURITY;');
-    console.log(`INSERT INTO admins (email, password_hash, created_at)`);
-    console.log(`VALUES ('${email}', '${passwordHash}', NOW())`);
+    console.log(`INSERT INTO admins (email, password_hash, created_at, updated_at)`);
+    console.log(`VALUES ('${email}', '${passwordHash}', NOW(), NOW())`);
     console.log(`ON CONFLICT (email) DO NOTHING;`);
     console.log('ALTER TABLE admins ENABLE ROW LEVEL SECURITY;');
     console.log('--- End of SQL commands ---\n');
