@@ -1331,7 +1331,7 @@ export class SupabaseStorage implements IStorage {
 
   // Athletes
   async getAllAthletes(): Promise<Athlete[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('athletes')
       .select('*')
       .order('created_at', { ascending: false });
@@ -1658,7 +1658,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllBookings(): Promise<Booking[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .order('created_at', { ascending: false });
@@ -2548,7 +2548,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllWaivers(): Promise<Waiver[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('waivers')
       .select('*')
       .order('signed_at', { ascending: false });
@@ -3183,16 +3183,16 @@ export class SupabaseStorage implements IStorage {
     if (bookingIds.length === 0) return [];
 
     const [apparatusData, focusAreasData, sideQuestsData, athletesData] = await Promise.all([
-      supabase.from('booking_apparatus')
+      supabaseAdmin.from('booking_apparatus')
         .select(`booking_id, apparatus_id, apparatus!inner(id, name)`)
         .in('booking_id', bookingIds),
-      supabase.from('booking_focus_areas')
+      supabaseAdmin.from('booking_focus_areas')
         .select(`booking_id, focus_area_id, focus_areas!inner(id, name)`)
         .in('booking_id', bookingIds),
-      supabase.from('booking_side_quests')
+      supabaseAdmin.from('booking_side_quests')
         .select(`booking_id, side_quest_id, side_quests!inner(id, name)`)
         .in('booking_id', bookingIds),
-      supabase.from('booking_athletes')
+      supabaseAdmin.from('booking_athletes')
         .select(`booking_id, athlete_id, slot_order, athletes!inner(id, name, date_of_birth, gender, allergies, experience, parent_id)`)
         .in('booking_id', bookingIds)
         .order('slot_order', { ascending: true })

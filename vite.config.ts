@@ -54,6 +54,21 @@ export default defineConfig({
         target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Forward cookies from the original request
+            if (req.headers.cookie) {
+              proxyReq.setHeader('cookie', req.headers.cookie);
+            }
+          });
+          proxy.on('proxyRes', (proxyRes, _req, res) => {
+            // Forward set-cookie headers from the backend
+            const setCookieHeaders = proxyRes.headers['set-cookie'];
+            if (setCookieHeaders) {
+              res.setHeader('set-cookie', setCookieHeaders);
+            }
+          });
+        },
       },
     },
   },

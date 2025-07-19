@@ -15,7 +15,7 @@ import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
 import { SupabaseStorage } from "./storage";
-import { supabase } from "./supabase-client";
+import { supabase, supabaseAdmin } from "./supabase-client";
 import { timeSlotLocksRouter } from "./time-slot-locks";
 import { LessonUtils, ResponseUtils, ValidationUtils } from "./utils";
 
@@ -734,12 +734,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Parent management routes (preferred terminology)
   app.get("/api/parents", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 [PARENTS] Route handler started!');
+      console.log('🔍 [PARENTS] Using supabaseAdmin:', !!supabaseAdmin);
       const { search, page = '1', limit = '20' } = req.query;
       const pageNum = parseInt(page as string, 10) || 1;
       const limitNum = Math.min(parseInt(limit as string, 10) || 20, 100); // Cap at 100
       const offset = (pageNum - 1) * limitNum;
 
-      let query = supabase
+      console.log('[PARENTS] Query params:', { search, pageNum, limitNum, offset });
+
+      let query = supabaseAdmin
         .from('parents')
         .select(`
           id, 
@@ -752,6 +756,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `, { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      console.log('[PARENTS] Built initial query');
+
       // Add search filter if provided
       if (search && typeof search === 'string') {
         const searchTerm = `%${search.trim()}%`;
@@ -761,7 +767,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply pagination
       query = query.range(offset, offset + limitNum - 1);
 
+      console.log('[PARENTS] About to execute query...');
       const { data, error, count } = await query;
+
+      console.log('[PARENTS] Query result:', { 
+        dataLength: data?.length || 0, 
+        count, 
+        error: error?.message || null 
+      });
 
       if (error) {
         console.error("Error fetching parents:", error);
@@ -771,13 +784,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhance each parent with athlete and booking counts
       const enhancedParents = await Promise.all((data || []).map(async (parent) => {
         // Get athlete count and data
-        const { data: athletes, count: athleteCount } = await supabase
+        const { data: athletes, count: athleteCount } = await supabaseAdmin
           .from('athletes')
           .select('id, first_name, last_name', { count: 'exact' })
           .eq('parent_id', parent.id);
 
         // Get booking count using explicit parent_id
-        const { count: bookingCount } = await supabase
+        const { count: bookingCount } = await supabaseAdmin
           .from('bookings')
           .select('id', { count: 'exact', head: true })
           .eq('parent_id', parent.id);
@@ -950,9 +963,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Athlete management routes
   app.get("/api/athletes", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 [ATHLETES] Route handler started!');
       const athletes = await storage.getAllAthletes();
+      console.log(`🔍 [ATHLETES] Retrieved ${athletes.length} athletes from storage`);
       logger.debug(` Retrieved ${athletes.length} athletes from storage`);
       if (athletes.length > 0) {
+        console.log('🔍 [ATHLETES] First athlete:', athletes[0]);
         logger.debug(` First athlete:`, athletes[0]);
       }
       res.json(athletes);
@@ -2180,8 +2196,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/bookings", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 [BOOKINGS] Route handler started!');
       // Use getAllBookingsWithRelations to include athlete data
       const bookings = await storage.getAllBookingsWithRelations();
+      console.log(`🔍 [BOOKINGS] Retrieved ${bookings.length} bookings with relations from storage`);
       logger.debug(` Retrieved ${bookings.length} bookings with relations from storage`);
       res.json(bookings);
     } catch (error) {
@@ -4477,7 +4495,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all waivers (admin only)
   app.get("/api/waivers", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('🔍 [WAIVERS] Route handler started!');
       const waivers = await storage.getAllWaivers();
+      console.log(`🔍 [WAIVERS] Retrieved ${waivers.length} waivers from storage`);
       res.json(waivers);
     } catch (error: any) {
       console.error("Error fetching waivers:", error);
