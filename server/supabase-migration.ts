@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client';
+import { supabase, supabaseAdmin } from './supabase-client';
 
 // Verify Supabase tables exist and warn if they don't
 export async function createSupabaseTablesViaAPI() {
@@ -6,7 +6,7 @@ export async function createSupabaseTablesViaAPI() {
   
   try {
     // Test connection by checking if key tables exist
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('admins')
       .select('count')
       .limit(1);

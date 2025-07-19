@@ -1,5 +1,5 @@
 import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
-import { supabase } from "./supabase-client";
+import { supabase, supabaseAdmin } from "./supabase-client";
 
 
 export interface IStorage {
@@ -2187,7 +2187,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllAdmins(): Promise<Admin[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('admins')
       .select('*');
 
@@ -2200,7 +2200,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('admins')
       .select('*')
       .eq('email', email)
@@ -2221,7 +2221,7 @@ export class SupabaseStorage implements IStorage {
       password_hash: admin.passwordHash
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('admins')
       .insert(dbAdmin)
       .select()
@@ -2236,7 +2236,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAdmin(id: number): Promise<Admin | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('admins')
       .select('*')
       .eq('id', id)

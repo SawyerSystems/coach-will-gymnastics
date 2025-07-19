@@ -1,4 +1,5 @@
 import { createFirstAdmin } from './auth.js';
+import { createAdminViaAPI } from './create-admin-workaround.js';
 import { storage } from './storage.js';
 
 async function ensureAdmin() {
@@ -25,23 +26,38 @@ async function ensureAdmin() {
     console.log(`📧 Email: ${email}`);
     console.log(`🔑 Password: ${password.replace(/./g, '*')}`); // Hide password in logs
     
-    await createFirstAdmin(email, password);
-    
-    console.log('✅ Admin account created successfully!');
-    console.log('🚀 You can now login at /admin/login');
+    // Try the standard method first (uses service role key)
+    try {
+      await createFirstAdmin(email, password);
+      console.log('✅ Admin account created successfully!');
+      console.log('🚀 You can now login at /admin/login');
+      return;
+    } catch (serviceRoleError) {
+      console.log('⚠️  Service role method failed, trying API workaround...');
+      
+      // Try the API workaround method
+      try {
+        await createAdminViaAPI();
+        console.log('✅ Admin account created via API workaround!');
+        console.log('🚀 You can now login at /admin/login');
+        return;
+      } catch (apiError) {
+        console.log('⚠️  API workaround also failed');
+        throw apiError;
+      }
+    }
     
   } catch (error) {
-    console.error('❌ Error managing admin account:', error);
-    // Don't exit when called from server startup
-    if (import.meta.url === `file://${process.argv[1]}`) {
-      process.exit(1);
-    }
-    throw error;
-  }
-  
-  // Only exit if run directly as a script
-  if (import.meta.url === `file://${process.argv[1]}`) {
-    process.exit(0);
+    console.log('❌ All admin creation methods failed');
+    console.log('📋 MANUAL SETUP REQUIRED:');
+    console.log('   1. Go to Supabase SQL Editor');
+    console.log('   2. Run: node manual-admin-setup.js');
+    console.log('   3. Copy and paste the generated SQL commands');
+    console.log('   4. Restart the server');
+    console.error('Final error:', error instanceof Error ? error.message : String(error));
+    
+    // Continue with server startup instead of failing
+    console.log('✅ Admin account check completed (manual setup required)');
   }
 }
 
