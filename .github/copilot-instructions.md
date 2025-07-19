@@ -42,8 +42,17 @@ This is a full-stack gymnastics booking platform with React frontend, Express ba
 ### Starting Development
 ```bash
 npm install
+npm run dev:clean  # PREFERRED: Cleans ports then starts both client (5173) and server (5001)
+# OR if ports are already clean:
 npm run dev  # Starts both client (5173) and server (5001)
 ```
+
+**⚠️ IMPORTANT:** Always use `npm run dev:clean` to avoid port conflicts. This command:
+1. Runs `scripts/kill-ports.sh` to gracefully shutdown existing processes
+2. Cleans up ports 5001 (Express) and 5173 (Vite) 
+3. Starts fresh development servers on correct ports
+
+**Never use `npm run dev` if you see port conflicts** - always use `npm run dev:clean` instead.
 
 ### Essential Commands
 - `npm run check` - TypeScript validation across client/server/shared

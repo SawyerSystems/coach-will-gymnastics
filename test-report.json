@@ -1,37 +1,121 @@
 {
-  "timestamp": "2025-07-14T04:10:10.182Z",
+  "timestamp": "2025-07-19T21:45:02.415Z",
   "summary": {
-    "totalPassed": 0,
-    "totalTests": 1,
-    "overallPercentage": 0,
+    "totalPassed": 8,
+    "totalTests": 17,
+    "overallPercentage": 47,
     "criticalFailures": []
   },
   "suites": [
     {
       "suiteName": "Database Tests",
-      "results": []
+      "results": [
+        {
+          "name": "Database Connectivity",
+          "passed": false,
+          "details": "Status: 401"
+        },
+        {
+          "name": "Schema Integrity",
+          "passed": true,
+          "details": "Focus areas count: 36"
+        }
+      ]
     },
     {
       "suiteName": "API Tests",
-      "results": []
+      "results": [
+        {
+          "name": "Site Content API",
+          "passed": true,
+          "details": "Status: 200"
+        },
+        {
+          "name": "Focus Areas API",
+          "passed": true,
+          "details": "Status: 200"
+        },
+        {
+          "name": "Apparatus API",
+          "passed": true,
+          "details": "Status: 200"
+        },
+        {
+          "name": "Stripe Products API",
+          "passed": true,
+          "details": "Status: 200"
+        },
+        {
+          "name": "Booking Creation",
+          "passed": false,
+          "details": "Status: 400"
+        }
+      ]
     },
     {
       "suiteName": "Authentication Tests",
       "results": [
         {
           "name": "Admin Authentication",
+          "passed": true,
+          "details": "Admin login successful"
+        },
+        {
+          "name": "Parent Auth Code Request",
           "passed": false,
-          "details": ""
+          "details": "Status: 404"
+        },
+        {
+          "name": "Protected Endpoint Security",
+          "passed": false,
+          "details": "Correctly blocked unauthorized access: 200"
         }
       ]
     },
     {
       "suiteName": "Integration Tests",
-      "results": []
+      "results": [
+        {
+          "name": "Booking Creation Flow",
+          "passed": false,
+          "details": "Created booking ID: undefined"
+        },
+        {
+          "name": "Data Relationships",
+          "passed": false,
+          "details": "Athletes: 0, Parents: 0"
+        }
+      ]
     },
     {
       "suiteName": "Performance Tests",
-      "results": []
+      "results": [
+        {
+          "name": "Response Time: /api/bookings",
+          "passed": false,
+          "details": "2ms (target: <2000ms)"
+        },
+        {
+          "name": "Response Time: /api/athletes",
+          "passed": false,
+          "details": "2ms (target: <2000ms)"
+        },
+        {
+          "name": "Response Time: /api/parents",
+          "passed": false,
+          "details": "8ms (target: <2000ms)"
+        },
+        {
+          "name": "Response Time: /api/site-content",
+          "passed": true,
+          "details": "603ms (target: <2000ms)"
+        },
+        {
+          "name": "Concurrent Request Handling",
+          "passed": true,
+          "details": "5 requests in 72ms, all successful: true"
+        }
+      ]
     }
   ]
 }

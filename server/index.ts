@@ -1,9 +1,9 @@
 import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import express, { NextFunction, type Request, Response } from "express";
-import session from "express-session";
 import fs from "fs";
 import path from "path";
 import { isAdminAuthenticated } from "./auth";
+import { configureSessionAndCors, sessionConfig } from "./config/session";
 import { logger } from "./logger";
 import { registerRoutes } from "./routes";
 import { serveStatic, setupVite } from "./vite";
@@ -17,6 +17,10 @@ const app = express();
 const nodeEnv = process.env.NODE_ENV || 'development';
 app.set('env', nodeEnv);
 
+console.log(`🚀 Server starting in ${sessionConfig.environment} mode`);
+console.log(`🍪 Session cookie: ${sessionConfig.cookieName} (secure: ${sessionConfig.secure}, sameSite: ${sessionConfig.sameSite})`);
+console.log(`🌐 CORS origins: ${sessionConfig.corsOrigins.join(', ')}`);
+
 // Add raw body parsing for Stripe webhook
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
@@ -29,24 +33,8 @@ app.use(express.urlencoded({
   limit: process.env.NODE_ENV === 'development' ? '5mb' : '10mb' 
 }));
 
-// Session configuration - optimized for production
-const isProduction = process.env.NODE_ENV === 'production';
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-here',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: false, // Keep false for now to avoid HTTPS issues
-    sameSite: 'lax',
-    maxAge: isProduction ? 1000 * 60 * 60 * 4 : 1000 * 60 * 60 * 24 // 4 hours in prod, 24 in dev
-  },
-  // In production, we accept MemoryStore limitations for simplicity
-  // For high-traffic production, consider Redis or database-backed sessions
-  ...(isProduction && {
-    name: 'cwt.sid', // Custom session name
-  })
-}));
+// Configure CORS and session middleware using our environment-aware module
+configureSessionAndCors(app);
 
 // Enhanced diagnostic middleware for development
 if (nodeEnv === 'development') {
@@ -227,6 +215,17 @@ app.use((req, res, next) => {
       console.error('Error fetching site content:', error);
       res.status(500).json({ error: 'Failed to fetch site content' });
     }
+  });
+
+  // DIAGNOSTIC: Session tracing middleware
+  app.use((req, _res, next) => {
+    console.log('[SESSION]', req.originalUrl, {
+      sessionID: req.sessionID,
+      adminId: req.session.adminId,
+      parentId: req.session.parentId,
+      loggedIn: !!(req.session.adminId || req.session.parentId)
+    });
+    next();
   });
 
   // REGISTER ROUTES FIRST (before developer routes)

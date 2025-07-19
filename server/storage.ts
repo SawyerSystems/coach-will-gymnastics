@@ -1176,8 +1176,14 @@ With the right setup and approach, home practice can accelerate your child's gym
 
 // Supabase Storage Implementation
 export class SupabaseStorage implements IStorage {
+  // Helper function to log queries
+  private logQuery(operation: string, table: string, filters?: any) {
+    console.log('[SQL]', `${operation} FROM ${table}`, filters ? JSON.stringify(filters) : '');
+  }
+
   // Parent methods (preferred terminology)
   async getAllParents(): Promise<Parent[]> {
+    this.logQuery('SELECT', 'parents');
     const { data, error } = await supabase
       .from('parents')
       .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at')

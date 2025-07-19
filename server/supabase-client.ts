@@ -12,6 +12,12 @@ if (!supabaseKey) {
 
 console.log('Initializing Supabase client...');
 
+// DIAGNOSTIC: Log environment variables
+console.log('[ENV] SUPABASE_URL:', process.env.SUPABASE_URL?.slice(0, 30) + '...');
+console.log('[ENV] SUPABASE_ANON_KEY length:', process.env.SUPABASE_ANON_KEY?.length);
+console.log('[ENV] SUPABASE_SERVICE_ROLE_KEY length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length);
+console.log('[ENV] SUPABASE_SECRET_KEY length:', process.env.SUPABASE_SECRET_KEY?.length);
+
 // Create Supabase client with anon key for regular operations
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
