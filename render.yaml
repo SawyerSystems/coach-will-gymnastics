@@ -5,7 +5,7 @@ services:
     runtime: node
     env: node
     plan: starter
-    buildCommand: npm install && npm run db:push && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -13,10 +13,6 @@ services:
         value: production
       - key: PORT
         value: 5001
-      - key: DATABASE_URL
-        fromDatabase:
-          name: coachwilltumbles-db
-          property: connectionString
       # These will need to be set manually in Render dashboard:
       # - SUPABASE_URL
       # - SUPABASE_ANON_KEY  
@@ -25,13 +21,9 @@ services:
       # - STRIPE_WEBHOOK_SECRET
       # - RESEND_API_KEY
       # - SESSION_SECRET
-      - ADMIN_EMAIL
-      - ADMIN_PASSWORD
+      # - ADMIN_EMAIL
+      # - ADMIN_PASSWORD
       # - BASE_URL (set to your Render app URL)
 
-databases:
-  # PostgreSQL database for the application
-  - name: coachwilltumbles-db
-    databaseName: coachwilltumbles
-    user: coachwill
-    plan: starter
+# Note: This application uses Supabase as the database.
+# No additional database service needed in Render.

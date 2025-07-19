@@ -36,6 +36,15 @@ export interface IStorage {
   updateBookingPaymentStatus(id: number, paymentStatus: PaymentStatusEnum): Promise<Booking | undefined>;
   updateBookingAttendanceStatus(id: number, attendanceStatus: AttendanceStatusEnum): Promise<Booking | undefined>;
   deleteBooking(id: number): Promise<boolean>;
+  getUpcomingSessions(): Promise<{
+    id: number;
+    sessionDate: string;
+    lessonType: string;
+    parentName: string;
+    athleteNames: string[];
+    paymentStatus: string;
+    attendanceStatus: string;
+  }[]>;
 
   // Payment Logs
   createPaymentLog(log: { bookingId: number | null; stripeEvent: string | null; errorMessage: string | null }): Promise<void>;
@@ -642,6 +651,19 @@ With the right setup and approach, home practice can accelerate your child's gym
     return Array.from(this.bookings.values()).sort((a, b) => 
       b.createdAt.getTime() - a.createdAt.getTime()
     );
+  }
+
+  async getUpcomingSessions(): Promise<{
+    id: number;
+    sessionDate: string;
+    lessonType: string;
+    parentName: string;
+    athleteNames: string[];
+    paymentStatus: string;
+    attendanceStatus: string;
+  }[]> {
+    // For in-memory storage, return empty array (this is mainly for testing)
+    return [];
   }
 
   async updateBooking(id: number, data: Partial<Booking>): Promise<Booking | undefined> {
@@ -1644,6 +1666,102 @@ export class SupabaseStorage implements IStorage {
 
     // Map all bookings from snake_case to camelCase
     return data.map((booking: any) => this.mapBookingFromDb(booking));
+  }
+
+  async getUpcomingSessions(): Promise<{
+    id: number;
+    sessionDate: string;
+    lessonType: string;
+    parentName: string;
+    athleteNames: string[];
+    paymentStatus: string;
+    attendanceStatus: string;
+  }[]> {
+    try {
+      // Get bookings from today onwards with parent and athlete data
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          preferred_date,
+          lesson_type,
+          payment_status,
+          attendance_status,
+          parent_id
+        `)
+        .gte('preferred_date', new Date().toISOString().split('T')[0])
+        .order('preferred_date', { ascending: true });
+
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
+        return [];
+      }
+
+      if (!bookingsData || bookingsData.length === 0) {
+        return [];
+      }
+
+      // Get parent data for all bookings
+      const parentIds = Array.from(new Set(bookingsData.map(b => b.parent_id)));
+      const { data: parentsData, error: parentsError } = await supabase
+        .from('parents')
+        .select('id, first_name, last_name')
+        .in('id', parentIds);
+
+      if (parentsError) {
+        console.error('Error fetching parents:', parentsError);
+      }
+
+      // Get athlete data for all bookings
+      const bookingIds = bookingsData.map(b => b.id);
+      const { data: bookingAthletesData, error: bookingAthletesError } = await supabase
+        .from('booking_athletes')
+        .select(`
+          booking_id,
+          athletes:athlete_id (
+            id,
+            first_name,
+            last_name
+          )
+        `)
+        .in('booking_id', bookingIds);
+
+      if (bookingAthletesError) {
+        console.error('Error fetching booking athletes:', bookingAthletesError);
+      }
+
+      // Create lookup maps
+      const parentsMap = new Map();
+      parentsData?.forEach(parent => {
+        parentsMap.set(parent.id, `${parent.first_name} ${parent.last_name}`);
+      });
+
+      const athletesMap = new Map();
+      bookingAthletesData?.forEach(ba => {
+        if (!athletesMap.has(ba.booking_id)) {
+          athletesMap.set(ba.booking_id, []);
+        }
+        if (ba.athletes && typeof ba.athletes === 'object' && 'first_name' in ba.athletes) {
+          const athlete = ba.athletes as any;
+          athletesMap.get(ba.booking_id)!.push(`${athlete.first_name} ${athlete.last_name}`);
+        }
+      });
+
+      // Transform to expected format
+      return bookingsData.map(booking => ({
+        id: booking.id,
+        sessionDate: booking.preferred_date || '',
+        lessonType: booking.lesson_type || '',
+        parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
+        athleteNames: athletesMap.get(booking.id) || [],
+        paymentStatus: booking.payment_status || 'unpaid',
+        attendanceStatus: booking.attendance_status || 'pending'
+      }));
+
+    } catch (error) {
+      console.error('Error in getUpcomingSessions:', error);
+      return [];
+    }
   }
 
   async updateBooking(id: number, data: Partial<Booking>): Promise<Booking | undefined> {

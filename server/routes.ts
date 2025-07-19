@@ -932,49 +932,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // UPCOMING SESSIONS ENDPOINT - Refactored with joined data
+  // UPCOMING SESSIONS ENDPOINT - Fixed to use proper storage method
   app.get("/api/upcoming-sessions", isAdminAuthenticated, async (req, res) => {
     try {
       console.log('[UPCOMING] Fetching upcoming sessions...');
       
-      const query = `
-        SELECT 
-          b.id,
-          b.preferred_date as session_date,
-          b.lesson_type,
-          p.first_name||' '||p.last_name AS parent_name,
-          array_agg(a.first_name||' '||a.last_name) AS athlete_names,
-          b.payment_status,
-          b.attendance_status
-        FROM bookings b
-        JOIN parents p ON p.id = b.parent_id
-        JOIN booking_athletes ba ON ba.booking_id = b.id
-        JOIN athletes a ON a.id = ba.athlete_id
-        WHERE b.preferred_date >= NOW()::date
-        GROUP BY b.id, b.preferred_date, b.lesson_type, p.first_name, p.last_name, b.payment_status, b.attendance_status
-        ORDER BY b.preferred_date;
-      `;
-
-      const { data: rows, error } = await supabase.rpc('exec_sql', { sql: query });
+      const upcomingSessions = await storage.getUpcomingSessions();
       
-      if (error) {
-        console.error('[UPCOMING] Database error:', error);
-        return res.status(500).json({ error: 'Failed to fetch upcoming sessions' });
-      }
-
-      // Transform to expected format
-      const transformedSessions = rows?.map((row: any) => ({
-        id: row.id,
-        sessionDate: row.session_date,
-        lessonType: row.lesson_type,
-        parentName: row.parent_name,
-        athleteNames: row.athlete_names || [],
-        paymentStatus: row.payment_status || 'unpaid',
-        attendanceStatus: row.attendance_status || 'pending'
-      })) || [];
-
-      console.log('[UPCOMING]', transformedSessions.length);
-      res.json(transformedSessions);
+      console.log('[UPCOMING]', upcomingSessions.length, 'sessions found');
+      res.json(upcomingSessions);
     } catch (error: any) {
       console.error('[UPCOMING] Error fetching upcoming sessions:', error);
       res.status(500).json({ error: 'Failed to fetch upcoming sessions' });
@@ -1108,15 +1074,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
 
-      const query = `
-        SELECT id FROM waivers
-        WHERE athlete_id = $1 AND signed_at IS NOT NULL
-        LIMIT 1;
-      `;
-
-      const { data: result, error } = await supabase.rpc('exec_sql', { 
-        sql: query.replace('$1', athleteId.toString())
-      });
+      const { data: result, error } = await supabase
+        .from('waivers')
+        .select('id')
+        .eq('athlete_id', athleteId)
+        .not('signed_at', 'is', null)
+        .limit(1);
 
       if (error) {
         console.error('[WAIVER-CHECK] Database error:', error);
@@ -5524,7 +5487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SQL execution endpoint for migrations
+  // SQL execution endpoint for migrations - WARNING: exec_sql may not exist in all environments
   app.post('/api/execute-sql', async (req, res) => {
     try {
       const { sql } = req.body;
@@ -5535,6 +5498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Executing SQL:', sql.substring(0, 100) + '...');
       
       // Execute the SQL directly using the Supabase client
+      // NOTE: This function may not exist in all Supabase setups
       const { data, error } = await supabase.rpc('exec_sql', { sql });
       
       if (error) {

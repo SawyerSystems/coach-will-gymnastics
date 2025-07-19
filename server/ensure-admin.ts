@@ -14,9 +14,9 @@ async function ensureAdmin() {
     let existingAdmins;
     try {
       existingAdmins = await storage.getAllAdmins();
-    } catch (schemaError) {
-      console.log('⚠️  Schema error when checking admins:', schemaError.message);
-      if (schemaError.message.includes('updated_at') || schemaError.message.includes('created_at')) {
+    } catch (schemaError: any) {
+      console.log('⚠️  Schema error when checking admins:', schemaError?.message || schemaError);
+      if (schemaError?.message?.includes('updated_at') || schemaError?.message?.includes('created_at')) {
         console.log('🔧 Database schema needs to be updated. Please run fix-production-schema.sql');
         console.log('✅ Admin account check completed (schema update required)');
         return;

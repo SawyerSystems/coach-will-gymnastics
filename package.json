@@ -23,7 +23,8 @@
     "test:verbose": "DEBUG=true node test-suite.js",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:check-origin": "tsx scripts/check-db-origin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
