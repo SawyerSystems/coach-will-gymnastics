@@ -3273,14 +3273,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Blog posts routes
   app.get("/api/blog-posts", async (req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting all blog posts...');
       const posts = await storage.getAllBlogPosts();
       // Format published_at timestamp to Pacific timezone
       const formattedPosts = posts.map(post => ({
         ...post,
         publishedAt: formatPublishedAtToPacific(post.publishedAt)
       }));
+      console.log('✅ [ADMIN] Successfully retrieved blog posts:', formattedPosts.length);
       res.json(formattedPosts);
     } catch (error) {
+      console.error('❌ [ADMIN] Error fetching blog posts:', error);
       res.status(500).json({ message: "Failed to fetch blog posts" });
     }
   });
@@ -3332,14 +3335,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Tips routes
   app.get("/api/tips", async (req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting all tips...');
       const tips = await storage.getAllTips();
       // Format published_at timestamp to Pacific timezone
       const formattedTips = tips.map(tip => ({
         ...tip,
         publishedAt: formatPublishedAtToPacific(tip.publishedAt)
       }));
+      console.log('✅ [ADMIN] Successfully retrieved tips:', formattedTips.length);
       res.json(formattedTips);
     } catch (error) {
+      console.error('❌ [ADMIN] Error fetching tips:', error);
       res.status(500).json({ message: "Failed to fetch tips" });
     }
   });
@@ -3573,9 +3579,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Availability Routes
   app.get("/api/availability", async (_req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting availability data...');
       const availability = await storage.getAllAvailability();
+      console.log('✅ [ADMIN] Successfully retrieved availability:', availability.length);
       res.json(availability);
     } catch (error) {
+      console.error('❌ [ADMIN] Error fetching availability:', error);
       res.status(500).json({ message: "Failed to fetch availability" });
     }
   });
@@ -3623,9 +3632,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Availability Exceptions Routes
   app.get("/api/availability-exceptions", async (_req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting availability exceptions...');
       const exceptions = await storage.getAllAvailabilityExceptions();
+      console.log('✅ [ADMIN] Successfully retrieved availability exceptions:', exceptions.length);
       res.json(exceptions);
     } catch (error) {
+      console.error('❌ [ADMIN] Error fetching availability exceptions:', error);
       res.status(500).json({ message: "Failed to fetch availability exceptions" });
     }
   });
@@ -5287,10 +5299,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apparatus endpoints
   app.get("/api/apparatus", async (req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting apparatus data...');
       const apparatus = await storage.getAllApparatus();
+      console.log('✅ [ADMIN] Successfully retrieved apparatus:', apparatus.length);
       res.json(apparatus);
     } catch (error: any) {
-      console.error('Error fetching apparatus:', error);
+      console.error('❌ [ADMIN] Error fetching apparatus:', error);
       res.status(500).json({ error: 'Failed to fetch apparatus' });
     }
   });
@@ -5338,6 +5352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Focus Areas endpoints
   app.get("/api/focus-areas", async (req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting focus areas data...');
       const { apparatusId } = req.query;
       let focusAreas;
       
@@ -5347,9 +5362,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         focusAreas = await storage.getAllFocusAreas();
       }
       
+      console.log('✅ [ADMIN] Successfully retrieved focus areas:', focusAreas.length);
       res.json(focusAreas);
     } catch (error: any) {
-      console.error('Error fetching focus areas:', error);
+      console.error('❌ [ADMIN] Error fetching focus areas:', error);
       res.status(500).json({ error: 'Failed to fetch focus areas' });
     }
   });
@@ -5397,10 +5413,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Side Quests endpoints
   app.get("/api/side-quests", async (req, res) => {
     try {
+      console.log('🔍 [ADMIN] Getting side quests data...');
       const sideQuests = await storage.getAllSideQuests();
+      console.log('✅ [ADMIN] Successfully retrieved side quests:', sideQuests.length);
       res.json(sideQuests);
     } catch (error: any) {
-      console.error('Error fetching side quests:', error);
+      console.error('❌ [ADMIN] Error fetching side quests:', error);
       res.status(500).json({ error: 'Failed to fetch side quests' });
     }
   });

@@ -1890,7 +1890,7 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log('🔍 Attempting to fetch blog posts from Supabase...');
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('blog_posts')
         .select('*')
         .order('published_at', { ascending: true });
@@ -1924,7 +1924,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createBlogPost(insertPost: InsertBlogPost): Promise<BlogPost> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('blog_posts')
       .insert({
         ...insertPost,
@@ -1942,7 +1942,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateBlogPost(id: number, insertPost: InsertBlogPost): Promise<BlogPost | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('blog_posts')
       .update({
         ...insertPost,
@@ -1961,7 +1961,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteBlogPost(id: number): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('blog_posts')
       .delete()
       .eq('id', id);
@@ -1979,7 +1979,7 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log('🔍 Attempting to fetch tips from Supabase...');
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('tips')
         .select('*')
         .order('published_at', { ascending: true });
@@ -2013,7 +2013,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createTip(insertTip: InsertTip): Promise<Tip> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .insert({
         ...insertTip,
@@ -2032,7 +2032,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateTip(id: number, insertTip: InsertTip): Promise<Tip | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .update({
         ...insertTip,
@@ -2052,7 +2052,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteTip(id: number): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('tips')
       .delete()
       .eq('id', id);
@@ -2067,7 +2067,7 @@ export class SupabaseStorage implements IStorage {
 
   // Availability
   async getAllAvailability(): Promise<Availability[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability')
       .select('*')
       .order('day_of_week')
@@ -2124,7 +2124,7 @@ export class SupabaseStorage implements IStorage {
       is_available: insertAvailability.isAvailable ?? true,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability')
       .insert(dbData)
       .select()
@@ -2157,7 +2157,7 @@ export class SupabaseStorage implements IStorage {
       is_available: insertAvailability.isAvailable ?? true,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability')
       .update(dbData)
       .eq('id', id)
@@ -2182,7 +2182,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteAvailability(id: number): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('availability')
       .delete()
       .eq('id', id);
@@ -2197,7 +2197,7 @@ export class SupabaseStorage implements IStorage {
 
   // Availability Exceptions
   async getAllAvailabilityExceptions(): Promise<AvailabilityException[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_exceptions')
       .select('*')
       .order('date')
@@ -2236,7 +2236,7 @@ export class SupabaseStorage implements IStorage {
       reason: insertException.reason ?? null
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_exceptions')
       .insert(dbData)
       .select()
@@ -2251,7 +2251,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateAvailabilityException(id: number, insertException: InsertAvailabilityException): Promise<AvailabilityException | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_exceptions')
       .update({
         ...insertException,
@@ -2270,7 +2270,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteAvailabilityException(id: number): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('availability_exceptions')
       .delete()
       .eq('id', id);
@@ -2898,7 +2898,7 @@ export class SupabaseStorage implements IStorage {
 
   // Normalized Lookup Tables Implementation
   async getAllApparatus(): Promise<Apparatus[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('apparatus')
       .select('*')
       .order('sort_order', { ascending: true });
@@ -2912,7 +2912,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createApparatus(apparatus: InsertApparatus): Promise<Apparatus> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('apparatus')
       .insert({
         name: apparatus.name,
@@ -2963,7 +2963,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllFocusAreas(): Promise<FocusArea[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('focus_areas')
       .select('*')
       .order('sort_order', { ascending: true });
@@ -3045,7 +3045,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllSideQuests(): Promise<SideQuest[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('side_quests')
       .select('*')
       .order('sort_order', { ascending: true });
