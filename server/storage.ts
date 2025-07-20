@@ -1790,7 +1790,7 @@ export class SupabaseStorage implements IStorage {
     // Update the updated_at timestamp
     dbUpdate.updated_at = new Date().toISOString();
 
-    const { data: updatedBooking, error } = await supabase
+    const { data: updatedBooking, error } = await supabaseAdmin
       .from('bookings')
       .update(dbUpdate)
       .eq('id', id)
@@ -1809,7 +1809,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateBookingStatus(id: number, status: BookingStatusEnum): Promise<Booking | undefined> {
-    const { data: booking, error } = await supabase
+    const { data: booking, error } = await supabaseAdmin
       .from('bookings')
       .update({ status })
       .eq('id', id)
@@ -1825,7 +1825,8 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateBookingPaymentStatus(id: number, paymentStatus: PaymentStatusEnum): Promise<Booking | undefined> {
-    const { data: booking, error } = await supabase
+    console.log('[STORAGE] Updating booking payment status:', { id, paymentStatus });
+    const { data: booking, error } = await supabaseAdmin
       .from('bookings')
       .update({ payment_status: paymentStatus })
       .eq('id', id)
@@ -1837,11 +1838,13 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
+    console.log('[STORAGE] Successfully updated booking payment status:', { id, paymentStatus });
     return booking ? this.mapBookingFromDb(booking) : undefined;
   }
 
   async updateBookingAttendanceStatus(id: number, attendanceStatus: AttendanceStatusEnum): Promise<Booking | undefined> {
-    const { data: booking, error } = await supabase
+    console.log('[STORAGE] Updating booking attendance status:', { id, attendanceStatus });
+    const { data: booking, error } = await supabaseAdmin
       .from('bookings')
       .update({ attendance_status: attendanceStatus })
       .eq('id', id)
@@ -1853,11 +1856,12 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
+    console.log('[STORAGE] Successfully updated booking attendance status:', { id, attendanceStatus });
     return booking ? this.mapBookingFromDb(booking) : undefined;
   }
 
   async deleteBooking(id: number): Promise<boolean> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('bookings')
       .delete()
       .eq('id', id);
@@ -1872,7 +1876,7 @@ export class SupabaseStorage implements IStorage {
 
   // Payment Logs
   async createPaymentLog(log: { bookingId: number | null; stripeEvent: string | null; errorMessage: string | null }): Promise<void> {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('payment_logs')
       .insert({
         booking_id: log.bookingId,

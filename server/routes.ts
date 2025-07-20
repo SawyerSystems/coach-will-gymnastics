@@ -2347,7 +2347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { paymentStatus } = req.body;
       
-      console.log('[PAYMENT-SYNC] Starting payment status update', { bookingId: id, newStatus: paymentStatus });
+      console.log('[PAYMENT-STATUS-UPDATE] Starting payment status update', { bookingId: id, newStatus: paymentStatus });
       
       const validStatuses = ["unpaid", "paid", "failed", "refunded", "reservation-pending", "reservation-failed", "reservation-paid", "session-paid", "reservation-refunded", "session-refunded"];
       if (!validStatuses.includes(paymentStatus)) {
@@ -2469,7 +2469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get current booking
-      const { data: booking, error: fetchError } = await supabase
+      const { data: booking, error: fetchError } = await supabaseAdmin
         .from('bookings')
         .select('*')
         .eq('id', id)
@@ -2529,7 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               updateData.paid_amount = syncResult.new_amount;
             }
 
-            const { error: updateError } = await supabase
+            const { error: updateError } = await supabaseAdmin
               .from('bookings')
               .update(updateData)
               .eq('id', id);
@@ -2541,12 +2541,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Update attendance status based on payment status
             if (newPaymentStatus === 'reservation-paid') {
-              await supabase
+              await supabaseAdmin
                 .from('bookings')
                 .update({ attendance_status: 'confirmed' })
                 .eq('id', id);
             } else if (newPaymentStatus === 'reservation-failed') {
-              await supabase
+              await supabaseAdmin
                 .from('bookings')
                 .update({ attendance_status: 'pending' })
                 .eq('id', id);
@@ -3078,6 +3078,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { attendanceStatus } = req.body;
+      
+      console.log('[ATTENDANCE-STATUS-UPDATE] Starting attendance status update', { bookingId: id, newStatus: attendanceStatus });
       
       const validStatuses = ["pending", "confirmed", "completed", "cancelled", "no-show", "manual"];
       if (!validStatuses.includes(attendanceStatus)) {
