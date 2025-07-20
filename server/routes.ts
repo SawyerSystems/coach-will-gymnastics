@@ -1,5 +1,5 @@
 import { render } from "@react-email/render";
-import { AttendanceStatusEnum, BookingStatusEnum, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum, type Booking } from "@shared/schema";
+import { AttendanceStatusEnum, BookingStatusEnum, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
@@ -440,9 +440,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: mostCompleteBooking.parentPhone || '',
         emergencyContactName: mostCompleteBooking.emergencyContactName || '',
         emergencyContactPhone: mostCompleteBooking.emergencyContactPhone || '',
-        waiverSigned: parentBookings.some(b => b.waiverSigned),
-        waiverSignedAt: parentBookings.find(b => b.waiverSignedAt)?.waiverSignedAt || null,
-        waiverSignatureName: parentBookings.find(b => b.waiverSignatureName)?.waiverSignatureName || null,
         totalBookings: parentBookings.length,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -593,10 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emergencyContactName: latestBooking.emergencyContactName,
         emergencyContactPhone: latestBooking.emergencyContactPhone,
         createdAt: latestBooking.createdAt,
-        updatedAt: latestBooking.updatedAt,
-        waiverSigned: latestBooking.waiverSigned,
-        waiverSignedAt: latestBooking.waiverSignedAt,
-        waiverSignatureName: latestBooking.waiverSignatureName
+        updatedAt: latestBooking.updatedAt
       };
       
       // Group athletes by unique combination of name and date of birth
@@ -675,9 +669,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: latestBooking.parentPhone,
         emergencyContactName: latestBooking.emergencyContactName,
         emergencyContactPhone: latestBooking.emergencyContactPhone,
-        waiverSigned: latestBooking.waiverSigned,
-        waiverSignedAt: latestBooking.waiverSignedAt,
-        waiverSignatureName: latestBooking.waiverSignatureName,
       };
       
       // Extract unique athletes from all bookings
@@ -829,7 +820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from('parents')
         .select(`
           *,
-          athletes!athletes_parent_id_fkey(id, first_name, last_name, date_of_birth, gender, allergies, experience, emergency_contact_name, emergency_contact_phone)
+          athletes!athletes_parent_id_fkey(id, first_name, last_name, date_of_birth, gender, allergies, experience)
         `)
         .eq('id', id)
         .single();
@@ -994,8 +985,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('[MISSING-WAIVERS] Fetching athletes with missing waivers');
       
-      // Get all athletes and bookings
-      const athletes = await storage.getAllAthletes();
+      // Get all athletes with waiver status
+      const athletes = await storage.getAllAthletesWithWaiverStatus();
       const bookings = await storage.getAllBookings();
       
       if (!athletes || !bookings) {
@@ -1032,8 +1023,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ].includes(booking.status)
         );
         
-        // Check if athlete has signed waiver
-        const hasSignedWaiver = athleteBookings.some((booking: any) => booking && booking.waiverSigned);
+        // Check if athlete has signed waiver using new waiver status
+        const hasSignedWaiver = athlete.waiverStatus === 'signed';
         
         // Return true if has active bookings but no signed waiver
         return hasActiveBookings && !hasSignedWaiver;
@@ -1048,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: athlete.firstName || '',
         lastName: athlete.lastName || '',
         dateOfBirth: athlete.dateOfBirth || '',
-        hasWaiver: false
+        hasWaiver: athlete.waiverStatus === 'signed'
       }));
 
       res.json(formattedAthletes);
@@ -1117,22 +1108,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
 
-      const { data: waiverCheck, error } = await supabase
+      // Get the most recent waiver for this athlete
+      const { data: waiver, error } = await supabase
         .from('waivers')
-        .select('id')
-        .eq('athleteId', athleteId)
-        .not('signedAt', 'is', null)
-        .limit(1);
+        .select(`
+          id, signed_at, signature, booking_id
+        `)
+        .eq('athlete_id', athleteId)
+        .not('signed_at', 'is', null)
+        .order('signed_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error('[WAIVER-STATUS] Database error:', error);
         return res.status(500).json({ error: 'Failed to check waiver status' });
       }
 
-      const hasWaiver = waiverCheck && waiverCheck.length > 0;
+      const hasWaiver = !!waiver;
       console.log('[WAIVER-STATUS] Checked waiver', { athleteId, hasWaiver });
       
-      res.json({ has_waiver: hasWaiver });
+      if (hasWaiver && waiver) {
+        // Get parent name from booking if we have a booking_id
+        let parentName = 'Unknown Parent';
+        
+        if (waiver.booking_id) {
+          const { data: booking } = await supabase
+            .from('bookings')
+            .select(`
+              parent:parents(first_name, last_name)
+            `)
+            .eq('id', waiver.booking_id)
+            .single();
+            
+          if (booking?.parent) {
+            // Handle both array and object cases for parent data
+            const parent = Array.isArray(booking.parent) ? booking.parent[0] : booking.parent;
+            if (parent && parent.first_name && parent.last_name) {
+              parentName = `${parent.first_name} ${parent.last_name}`;
+            }
+          }
+        }
+          
+        res.json({
+          hasWaiver: true,
+          waiverSigned: true,
+          waiverSignedAt: waiver.signed_at,
+          waiverSignatureName: parentName,
+          bookingId: waiver.booking_id
+        });
+      } else {
+        res.json({
+          hasWaiver: false,
+          waiverSigned: false
+        });
+      }
     } catch (error: any) {
       console.error("[WAIVER-STATUS] Error checking waiver status:", error);
       res.status(500).json({ error: "Failed to check waiver status" });
@@ -1391,17 +1421,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async triggerWaiverReminders() {
       try {
         const bookings = await storage.getAllBookings();
+        const athletes = await storage.getAllAthletesWithWaiverStatus();
         const now = new Date();
         
         for (const booking of bookings) {
-          if (!booking.waiverSigned && booking.paymentStatus === PaymentStatusEnum.RESERVATION_PAID) {
-            const sessionDate = new Date(booking.preferredDate);
-            const daysUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          if (booking.paymentStatus === PaymentStatusEnum.RESERVATION_PAID) {
+            // Check if any athletes in this booking need waivers
+            const bookingAthletes = athletes.filter(athlete => {
+              const athleteName = athlete.firstName && athlete.lastName 
+                ? `${athlete.firstName} ${athlete.lastName}`
+                : athlete.name;
+              return booking.athlete1Name === athleteName || 
+                     booking.athlete2Name === athleteName ||
+                     booking.athlete1Name === athlete.name;
+            });
             
-            // Send reminder 2 days before session
-            if (daysUntilSession <= 2 && daysUntilSession > 1) {
-              console.log(`[STATUS SYNC] Waiver reminder needed for booking ${booking.id}`);
-              // Add waiver reminder logic here
+            const hasUnsignedWaivers = bookingAthletes.some(athlete => 
+              athlete.waiverStatus !== 'signed'
+            );
+            
+            if (hasUnsignedWaivers) {
+              const sessionDate = new Date(booking.preferredDate);
+              const daysUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+              
+              // Send reminder 2 days before session
+              if (daysUntilSession <= 2 && daysUntilSession > 1) {
+                console.log(`[STATUS SYNC] Waiver reminder needed for booking ${booking.id}`);
+                // Add waiver reminder logic here
+              }
             }
           }
         }
@@ -1490,10 +1537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   email: booking.parentEmail,
                   phone: booking.parentPhone,
                   emergencyContactName: booking.emergencyContactName || '',
-                  emergencyContactPhone: booking.emergencyContactPhone || '',
-                  waiverSigned: booking.waiverSigned || false,
-                  waiverSignedAt: booking.waiverSignedAt || null,
-                  waiverSignatureName: booking.waiverSignatureName || null
+                  emergencyContactPhone: booking.emergencyContactPhone || ''
                 });
                 console.log(`[STRIPE WEBHOOK] AUTO-CREATED parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
               } else {
@@ -1991,7 +2035,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertBookingSchema.parse(req.body);
       
       // Validate focus areas
-      const focusAreaValidation = validateFocusAreas(validatedData.focusAreaIds, validatedData.lessonType);
+      const focusAreaIds = Array.isArray(validatedData.focusAreaIds) ? validatedData.focusAreaIds : [];
+      const lessonTypeStr = typeof validatedData.lessonType === 'string' ? validatedData.lessonType : '';
+      const focusAreaValidation = validateFocusAreas(focusAreaIds, lessonTypeStr);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -2000,19 +2046,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Validate athletes array
-      if (!validatedData.athletes || validatedData.athletes.length === 0) {
+      if (!validatedData.athletes || !Array.isArray(validatedData.athletes) || validatedData.athletes.length === 0) {
         return res.status(400).json({
           message: "At least one athlete is required"
         });
       }
 
       // Determine lesson duration based on lesson type
-      const duration = getLessonDurationMinutes(validatedData.lessonType);
+      const duration = getLessonDurationMinutes(lessonTypeStr);
       
       // Check if the requested time slot is available
+      const preferredDateStr = validatedData.preferredDate instanceof Date ? 
+        validatedData.preferredDate.toISOString().split('T')[0] : 
+        String(validatedData.preferredDate);
+      const preferredTimeStr = String(validatedData.preferredTime);
+      
       const availabilityCheck = await checkBookingAvailability(
-        validatedData.preferredDate.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
-        validatedData.preferredTime, 
+        preferredDateStr, 
+        preferredTimeStr, 
         duration
       );
       
@@ -2024,19 +2075,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const booking = await storage.createBooking(validatedData);
-      
-      // Automatically mark waiver as signed for normal bookings (not manual admin bookings)
-      // Only manual admin bookings should require waiver emails
-      const isManualBooking = validatedData.bookingMethod === 'manual' || req.session?.adminId;
-      
-      if (!isManualBooking) {
-        // Auto-sign waiver for regular online bookings
-        await storage.updateBooking(booking.id, {
-          waiverSigned: true,
-          waiverSignedAt: new Date(),
-          waiverSignatureName: `${validatedData.parentFirstName} ${validatedData.parentLastName}`
-        });
-      }
       
       // Email will be sent after successful payment via webhook
       // Do not send confirmation email immediately
@@ -2081,8 +2119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: bookingData.parentEmail,
           phone: bookingData.parentPhone,
           emergencyContactName: bookingData.emergencyContactName,
-          emergencyContactPhone: bookingData.emergencyContactPhone,
-          waiverSigned: false
+          emergencyContactPhone: bookingData.emergencyContactPhone
         });
       }
       
@@ -2119,7 +2156,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookingData = insertBookingSchema.parse(req.body);
       
       // Validate focus areas
-      const focusAreaValidation = validateFocusAreas(bookingData.focusAreaIds, bookingData.lessonType);
+      const focusAreaIds = Array.isArray(bookingData.focusAreaIds) ? bookingData.focusAreaIds : [];
+      const lessonTypeStr = typeof bookingData.lessonType === 'string' ? bookingData.lessonType : '';
+      const focusAreaValidation = validateFocusAreas(focusAreaIds, lessonTypeStr);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -2128,10 +2167,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check availability
-      const duration = bookingData.lessonType.includes('1-hour') ? 60 : 30;
+      const duration = lessonTypeStr.includes('1-hour') ? 60 : 30;
+      const preferredDateStr = bookingData.preferredDate instanceof Date ? 
+        bookingData.preferredDate.toISOString().split('T')[0] : 
+        String(bookingData.preferredDate);
+      const preferredTimeStr = String(bookingData.preferredTime);
+      
       const availabilityCheck = await checkBookingAvailability(
-        bookingData.preferredDate.toISOString().split('T')[0], // Convert Date to YYYY-MM-DD string
-        bookingData.preferredTime, 
+        preferredDateStr,
+        preferredTimeStr,
         duration
       );
       
@@ -2145,10 +2189,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create booking without requiring auth
       const booking = await storage.createBooking({
         ...bookingData,
-        bookingMethod: 'online',
+        bookingMethod: 'Website' as any,
         status: BookingStatusEnum.PENDING,
         paymentStatus: PaymentStatusEnum.RESERVATION_PENDING
-      });
+      } as any);
       
       // Parent account will be created after successful payment via webhook
       
@@ -2168,29 +2212,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/waiver/:athleteId", async (req, res) => {
     try {
       const athleteId = parseInt(req.params.athleteId);
-      const athlete = await storage.getAthlete(athleteId);
+      const athlete = await storage.getAthleteWithWaiverStatus(athleteId);
       
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
       }
       
-      // Get parent waiver status
-      const parent = await storage.getParentById(athlete.parentId);
-      
-      if (!parent) {
-        return res.status(404).json({ error: "Parent not found" });
-      }
-      
       res.json({
         athleteId,
         athleteName: athlete.name,
-        waiverSigned: parent.waiverSigned,
-        waiverSignedAt: parent.waiverSignedAt,
-        waiverSignatureName: parent.waiverSignatureName
+        waiverSigned: athlete.waiverStatus === 'signed',
+        waiverSignedAt: athlete.waiverSignedAt,
+        waiverSignatureId: athlete.waiverSignatureId,
+        waiverStatus: athlete.waiverStatus
       });
     } catch (error: any) {
       console.error("Error checking waiver status:", error);
       res.status(500).json({ error: "Failed to check waiver status" });
+    }
+  });
+
+  // Simple test endpoint to check database structure
+  app.get("/api/admin/test-db", isAdminAuthenticated, async (req, res) => {
+    try {
+      console.log('🔍 Testing database structure...');
+      
+      const { data: bookings, error } = await supabaseAdmin
+        .from('bookings')
+        .select('*')
+        .limit(1);
+
+      if (error) {
+        console.error('Database test error:', error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      res.json({ 
+        bookingCount: bookings?.length || 0,
+        sampleBooking: bookings?.[0] || null,
+        message: 'Database test successful'
+      });
+
+    } catch (error) {
+      console.error('Test failed:', error);
+      res.status(500).json({ error: 'Database test failed' });
+    }
+  });
+
+  // Database Migration Endpoint
+  app.post("/api/admin/migrate-database", isAdminAuthenticated, async (req, res) => {
+    try {
+      console.log('🚀 Starting Database Migration...');
+      
+      // Step 1: Check if bookings exist at all
+      const { data: allBookings, error: allBookingsError } = await supabaseAdmin
+        .from('bookings')
+        .select('id, parent_id, lesson_type_id, waiver_id')
+        .limit(10);
+
+      if (allBookingsError) {
+        console.error('Error fetching all bookings:', allBookingsError);
+        return res.status(500).json({ error: 'Failed to fetch bookings' });
+      }
+
+      console.log(`Found ${allBookings?.length || 0} total bookings in database`);
+      
+      if (!allBookings || allBookings.length === 0) {
+        return res.json({ 
+          message: 'No bookings found in database', 
+          migratedCount: 0,
+          totalBookings: 0
+        });
+      }
+
+      // Step 2: Check for null foreign keys
+      const bookingsWithNullKeys = allBookings.filter(b => 
+        b.parent_id === null || b.lesson_type_id === null
+      );
+
+      console.log(`Found ${bookingsWithNullKeys.length} bookings with null foreign keys`);
+
+      if (bookingsWithNullKeys.length === 0) {
+        return res.json({ 
+          message: 'All bookings already have proper foreign key relationships', 
+          migratedCount: 0,
+          totalBookings: allBookings.length,
+          status: 'complete'
+        });
+      }
+
+      // If we get here, there are bookings that need migration
+      // But first, we need to understand the current database structure
+      res.json({
+        message: 'Found bookings needing migration - need to analyze data structure',
+        totalBookings: allBookings.length,
+        bookingsNeedingMigration: bookingsWithNullKeys.length,
+        sampleBooking: allBookings[0],
+        status: 'analysis_needed'
+      });
+
+    } catch (error) {
+      console.error('Migration failed:', error);
+      res.status(500).json({ error: 'Database migration failed' });
     }
   });
 
@@ -2588,10 +2711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: booking.parentEmail,
               phone: booking.parentPhone,
               emergencyContactName: booking.emergencyContactName || '',
-              emergencyContactPhone: booking.emergencyContactPhone || '',
-              waiverSigned: booking.waiverSigned || false,
-              waiverSignedAt: booking.waiverSignedAt || null,
-              waiverSignatureName: booking.waiverSignatureName || null
+              emergencyContactPhone: booking.emergencyContactPhone || ''
             });
             results.push({ type: 'parent_created', bookingId: booking.id, parentId: parent.id, email: booking.parentEmail });
           }
@@ -2711,10 +2831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: booking.parentEmail,
               phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || 'Not Provided',
-              emergencyContactPhone: booking.emergencyContactPhone || 'Not Provided',
-              waiverSigned: booking.waiverSigned || false,
-              waiverSignedAt: booking.waiverSignedAt || null,
-              waiverSignatureName: booking.waiverSignatureName || null
+              emergencyContactPhone: booking.emergencyContactPhone || 'Not Provided'
             });
             console.log(`[FIX ATHLETES] Created parent account for ${booking.parentEmail}`);
             results.push({ 
@@ -2859,10 +2976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: booking.parentEmail,
               phone: booking.parentPhone,
               emergencyContactName: booking.emergencyContactName || '',
-              emergencyContactPhone: booking.emergencyContactPhone || '',
-              waiverSigned: booking.waiverSigned || false,
-              waiverSignedAt: booking.waiverSignedAt || null,
-              waiverSignatureName: booking.waiverSignatureName || null
+              emergencyContactPhone: booking.emergencyContactPhone || ''
             });
             console.log(`Created parent account for ${booking.parentEmail}`);
             results.push({ type: 'parent_created', bookingId: booking.id, parentId: parentRecord.id, email: booking.parentEmail });
@@ -3152,9 +3266,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      // Only send waiver emails for manual bookings that haven't signed waivers
-      if (booking.waiverSigned) {
-        return res.status(400).json({ error: "Waiver already signed for this booking" });
+      // Get athletes associated with this booking and check waiver status
+      const athletes = await storage.getAllAthletesWithWaiverStatus();
+      const bookingAthletes = athletes.filter(athlete => {
+        const athleteName = athlete.firstName && athlete.lastName 
+          ? `${athlete.firstName} ${athlete.lastName}`
+          : athlete.name;
+        return booking.athlete1Name === athleteName || 
+               booking.athlete2Name === athleteName ||
+               booking.athlete1Name === athlete.name;
+      });
+
+      // Check if any athletes need waivers
+      const needsWaivers = bookingAthletes.some(athlete => 
+        athlete.waiverStatus !== 'signed'
+      );
+
+      if (!needsWaivers) {
+        return res.status(400).json({ error: "All athletes have signed waivers for this booking" });
       }
 
       const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
@@ -4248,7 +4377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...waiverData,
         ipAddress,
         userAgent,
-      });
+      } as any);
       
       // Generate PDF
       let pdfPath = null;
@@ -4703,35 +4832,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
 
-      // Get athlete info
-      const athlete = await storage.getAthlete(athleteId);
+      // Get athlete with waiver status
+      const athlete = await storage.getAthleteWithWaiverStatus(athleteId);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
       }
 
-      // Check bookings for waiver status
-      const bookings = await storage.getAllBookings();
-      const athleteBookings = bookings.filter((booking: Booking) => 
-        booking.athlete1Name === athlete.name ||
-        (athlete.firstName && athlete.lastName && booking.athlete1Name === `${athlete.firstName} ${athlete.lastName}`)
-      );
-
-      const signedWaiverBooking = athleteBookings.find((booking: Booking) => booking.waiverSigned);
+      const waiverSigned = athlete.waiverStatus === 'signed';
       
-      if (signedWaiverBooking) {
-        res.json({
-          hasWaiver: true,
-          waiverSigned: true,
-          waiverSignedAt: signedWaiverBooking.waiverSignedAt,
-          waiverSignatureName: signedWaiverBooking.waiverSignatureName,
-          bookingId: signedWaiverBooking.id
-        });
-      } else {
-        res.json({
-          hasWaiver: false,
-          waiverSigned: false
-        });
-      }
+      res.json({
+        hasWaiver: waiverSigned,
+        waiverSigned,
+        waiverSignedAt: athlete.waiverSignedAt,
+        waiverSignatureName: athlete.waiverSignatureId || '', // Updated field name
+        waiverStatus: athlete.waiverStatus,
+        latestWaiverId: athlete.latestWaiverId
+      });
     } catch (error: any) {
       console.error("Error checking waiver status:", error);
       res.status(500).json({ error: "Failed to check waiver status" });
@@ -4747,22 +4863,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Athlete name is required" });
       }
 
-      // Check bookings for waiver status
-      const bookings = await storage.getAllBookings();
-      const athleteBookings = bookings.filter((booking: Booking) => 
-        booking.athlete1Name === athleteName ||
-        booking.athlete2Name === athleteName
-      );
+      // Get athletes with waiver status
+      const athletes = await storage.getAllAthletesWithWaiverStatus();
+      const athlete = athletes.find(a => {
+        const fullName = a.firstName && a.lastName 
+          ? `${a.firstName} ${a.lastName}`
+          : a.name;
+        return fullName === athleteName || a.name === athleteName;
+      });
 
-      const signedWaiverBooking = athleteBookings.find((booking: any) => booking.waiverSigned);
-      
-      if (signedWaiverBooking) {
+      if (athlete) {
+        const waiverSigned = athlete.waiverStatus === 'signed';
         res.json({
-          hasWaiver: true,
-          waiverSigned: true,
-          waiverSignedAt: signedWaiverBooking.waiverSignedAt,
-          waiverSignatureName: signedWaiverBooking.waiverSignatureName,
-          bookingId: signedWaiverBooking.id
+          hasWaiver: waiverSigned,
+          waiverSigned,
+          waiverSignedAt: athlete.waiverSignedAt,
+          waiverSignatureName: athlete.waiverSignatureId || '', // Updated field name
+          athleteId: athlete.id,
+          waiverStatus: athlete.waiverStatus
         });
       } else {
         res.json({
@@ -5171,12 +5289,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             test: "Booking field mapping",
             passed: booking.stripeSessionId !== undefined && 
                    booking.paymentStatus !== undefined && 
-                   booking.waiverSigned !== undefined,
+                   booking.athlete1Name !== undefined,
             details: {
               stripeSessionId: booking.stripeSessionId !== undefined,
               paymentStatus: booking.paymentStatus !== undefined,
-              waiverSigned: booking.waiverSigned !== undefined,
-              athlete1Name: booking.athlete1Name !== undefined
+              athlete1Name: booking.athlete1Name !== undefined,
+              note: "waiverSigned moved to athlete table"
             }
           });
         } else {
@@ -5511,6 +5629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update booking relations
   app.put("/api/bookings/:id/relations", isAdminAuthenticated, async (req, res) => {
     try {
       const bookingId = parseInt(req.params.id);

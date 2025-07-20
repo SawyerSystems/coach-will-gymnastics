@@ -935,7 +935,7 @@ function ParentDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-700">Age</label>
                       <p className="mt-1 text-gray-900">
-                        {calculateAge(athlete.dateOfBirth) || 'Unknown'} years old
+                        {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old
                       </p>
                     </div>
                   </div>
@@ -1093,8 +1093,10 @@ function ParentDashboard() {
             experience: selectedAthleteForBooking.experience,
             photo: selectedAthleteForBooking.photo,
             createdAt: new Date(),
-            updatedAt: new Date()
-          }] : athletes}
+            updatedAt: new Date(),
+            latestWaiverId: selectedAthleteForBooking.latestWaiverId,
+            waiverStatus: selectedAthleteForBooking.waiverStatus
+          }] : Array.isArray(athletes) ? athletes : []}
           isNewParent={false}
         />
 

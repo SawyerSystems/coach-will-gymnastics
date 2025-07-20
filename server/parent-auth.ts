@@ -1,7 +1,6 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import { storage } from './storage';
-import { sendEmail } from './lib/email';
 
 export const parentAuthRouter = Router();
 
@@ -349,9 +348,7 @@ parentAuthRouter.post('/verify-code', [
           phone: parentBooking.parentPhone || '',
           emergencyContactName: parentBooking.emergencyContactName || '',
           emergencyContactPhone: parentBooking.emergencyContactPhone || '',
-          waiverSigned: parentBooking.waiverSigned || false,
-          waiverSignedAt: parentBooking.waiverSignedAt || null,
-          waiverSignatureName: parentBooking.waiverSignatureName || null
+          // Remove waiver fields - they're now in separate waivers table
         });
         console.log(`[PARENT AUTH] Created parent profile for ${email}`);
       } else {

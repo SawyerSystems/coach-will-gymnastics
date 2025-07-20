@@ -1,4 +1,4 @@
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { supabase, supabaseAdmin } from "./supabase-client";
 
 
@@ -21,8 +21,10 @@ export interface IStorage {
 
   // Athletes
   getAllAthletes(): Promise<Athlete[]>;
+  getAllAthletesWithWaiverStatus(): Promise<AthleteWithWaiverStatus[]>;
   createAthlete(athlete: InsertAthlete): Promise<Athlete>;
   getAthlete(id: number): Promise<Athlete | undefined>;
+  getAthleteWithWaiverStatus(id: number): Promise<AthleteWithWaiverStatus | undefined>;
   updateAthlete(id: number, athlete: Partial<InsertAthlete>): Promise<Athlete | undefined>;
   deleteAthlete(id: number): Promise<boolean>;
   getAthleteBookingHistory(athleteId: number): Promise<Booking[]>;
@@ -209,6 +211,11 @@ export class MemStorage implements IStorage {
 
     // Initialize with some sample data
     this.initializeSampleData();
+  }
+
+  // Helper function to log queries (no-op for MemStorage)
+  private logQuery(operation: string, table: string, filters?: any) {
+    // No-op for in-memory storage
   }
 
   private initializeSampleData() {
@@ -593,6 +600,14 @@ With the right setup and approach, home practice can accelerate your child's gym
     throw new Error("Athlete management not implemented in MemStorage");
   }
 
+  async getAllAthletesWithWaiverStatus(): Promise<AthleteWithWaiverStatus[]> {
+    throw new Error("Athlete waiver status not implemented in MemStorage");
+  }
+
+  async getAthleteWithWaiverStatus(id: number): Promise<AthleteWithWaiverStatus | undefined> {
+    throw new Error("Athlete waiver status not implemented in MemStorage");
+  }
+
   // Bookings
   async createBooking(insertBooking: InsertBooking): Promise<Booking> {
     const id = this.currentBookingId++;
@@ -609,18 +624,16 @@ With the right setup and approach, home practice can accelerate your child's gym
         insertBooking.preferredDate.toISOString().split('T')[0] : 
         insertBooking.preferredDate,
       // Map focusAreaIds to focusAreas for backward compatibility
-      focusAreas: insertBooking.focusAreaIds?.map(String) || [],
+      focusAreas: Array.isArray(insertBooking.focusAreaIds) ? insertBooking.focusAreaIds.map(String) : [],
       // Ensure required fields are set
       emergencyContactName: insertBooking.emergencyContactName || "",
       emergencyContactPhone: insertBooking.emergencyContactPhone || "",
-      athlete1Allergies: insertBooking.athletes?.[0]?.allergies ?? null,
-      athlete2Name: insertBooking.athletes?.[1]?.name ?? null,
-      athlete2DateOfBirth: insertBooking.athletes?.[1]?.dateOfBirth ?? null,
-      athlete2Allergies: insertBooking.athletes?.[1]?.allergies ?? null,
-      athlete2Experience: insertBooking.athletes?.[1]?.experience ?? null,
-      waiverSigned: insertBooking.waiverSigned ?? false,
-      waiverSignedAt: insertBooking.waiverSignedAt ?? null,
-      waiverSignatureName: insertBooking.waiverSignatureName ?? null,
+      athlete1Allergies: Array.isArray(insertBooking.athletes) && insertBooking.athletes[0] ? insertBooking.athletes[0].allergies : null,
+      athlete2Name: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].name : null,
+      athlete2DateOfBirth: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].dateOfBirth : null,
+      athlete2Allergies: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].allergies : null,
+      athlete2Experience: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].experience : null,
+      // Remove waiver fields - they're now in separate waivers table
       reservationFeePaid: insertBooking.reservationFeePaid ?? false,
       paidAmount: insertBooking.paidAmount ?? "0",
       specialRequests: insertBooking.specialRequests ?? null,
@@ -651,6 +664,21 @@ With the right setup and approach, home practice can accelerate your child's gym
     return Array.from(this.bookings.values()).sort((a, b) => 
       b.createdAt.getTime() - a.createdAt.getTime()
     );
+  }
+
+  async getAllBookingsWithRelations(): Promise<BookingWithRelations[]> {
+    // For in-memory storage, return bookings with empty relations (mainly for testing)
+    const bookings = await this.getAllBookings();
+    return bookings.map(booking => ({
+      ...booking,
+      apparatus: [],
+      focusAreas: [],
+      sideQuests: [],
+      athletes: [],
+      parent: undefined,
+      lessonType: undefined,
+      waiver: undefined,
+    })) as BookingWithRelations[];
   }
 
   async getUpcomingSessions(): Promise<{
@@ -1131,15 +1159,7 @@ With the right setup and approach, home practice can accelerate your child's gym
     } as BookingWithRelations;
   }
 
-  async getAllBookingsWithRelations(): Promise<BookingWithRelations[]> {
-    const bookings = await this.getAllBookings();
-    return bookings.map(booking => ({
-      ...booking,
-      apparatus: [],
-      focusAreas: [],
-      sideQuests: []
-    })) as BookingWithRelations[];
-  }
+  // getAllBookingsWithRelations implementation moved to the normalized section below
 
   async createBookingWithRelations(
     booking: InsertBooking,
@@ -1203,9 +1223,7 @@ export class SupabaseStorage implements IStorage {
       phone: parent.phone,
       emergencyContactName: parent.emergency_contact_name,
       emergencyContactPhone: parent.emergency_contact_phone,
-      waiverSigned: parent.waiver_signed,
-      waiverSignedAt: parent.waiver_signed_at,
-      waiverSignatureName: parent.waiver_signature_name,
+      // Remove waiver fields - they're now in separate waivers table
       createdAt: parent.created_at,
       updatedAt: parent.updated_at,
     }));
@@ -1232,9 +1250,7 @@ export class SupabaseStorage implements IStorage {
       phone: data.phone,
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
-      waiverSigned: data.waiver_signed,
-      waiverSignedAt: data.waiver_signed_at,
-      waiverSignatureName: data.waiver_signature_name,
+      // Remove waiver fields - they're now in separate waivers table
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1249,9 +1265,7 @@ export class SupabaseStorage implements IStorage {
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName || 'Not Provided',
       emergency_contact_phone: insertParent.emergencyContactPhone || 'Not Provided',
-      waiver_signed: insertParent.waiverSigned || false,
-      waiver_signed_at: insertParent.waiverSignedAt || null,
-      waiver_signature_name: insertParent.waiverSignatureName || null
+      // Remove waiver fields - they're now in separate waivers table
     };
 
     const { data, error } = await supabase
@@ -1320,12 +1334,14 @@ export class SupabaseStorage implements IStorage {
       firstName: athlete.first_name,
       lastName: athlete.last_name,
       dateOfBirth: athlete.date_of_birth,
-      gender: athlete.gender || null, // Will be null until column is added
+      gender: athlete.gender || null,
       allergies: athlete.allergies,
       experience: athlete.experience,
       photo: athlete.photo,
       createdAt: new Date(athlete.created_at),
-      updatedAt: new Date(athlete.updated_at)
+      updatedAt: new Date(athlete.updated_at),
+      latestWaiverId: athlete.latest_waiver_id || null,
+      waiverStatus: athlete.waiver_status || 'pending'
     }));
   }
 
@@ -1356,8 +1372,87 @@ export class SupabaseStorage implements IStorage {
       experience: athlete.experience,
       photo: athlete.photo,
       createdAt: new Date(athlete.created_at),
-      updatedAt: new Date(athlete.updated_at)
+      updatedAt: new Date(athlete.updated_at),
+      latestWaiverId: athlete.latest_waiver_id || null,
+      waiverStatus: athlete.waiver_status || 'pending'
     }));
+  }
+
+  async getAllAthletesWithWaiverStatus(): Promise<AthleteWithWaiverStatus[]> {
+    this.logQuery('SELECT', 'athletes_with_waiver_status view');
+    const { data, error } = await supabaseAdmin
+      .from('athletes_with_waiver_status')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching athletes with waiver status:', error);
+      return [];
+    }
+
+    if (!data) return [];
+
+    // Map snake_case to camelCase for frontend compatibility
+    return data.map(athlete => ({
+      id: athlete.id,
+      parentId: athlete.parent_id,
+      name: athlete.name,
+      firstName: athlete.first_name,
+      lastName: athlete.last_name,
+      dateOfBirth: athlete.date_of_birth,
+      gender: athlete.gender,
+      allergies: athlete.allergies,
+      experience: athlete.experience,
+      photo: athlete.photo,
+      createdAt: new Date(athlete.created_at),
+      updatedAt: new Date(athlete.updated_at),
+      latestWaiverId: athlete.latest_waiver_id,
+      waiverStatus: athlete.waiver_status,
+      // Remove direct waiver timestamp from athlete - now from waivers table
+      waiverSignatureId: athlete.waiver_signature_id,
+      waiverSignatureData: athlete.waiver_signature_data,
+      waiverCreatedAt: athlete.waiver_created_at,
+      computedWaiverStatus: athlete.computed_waiver_status
+    }));
+  }
+
+  async getAthleteWithWaiverStatus(id: number): Promise<AthleteWithWaiverStatus | undefined> {
+    this.logQuery('SELECT', 'athletes_with_waiver_status view', { id });
+    const { data, error } = await supabaseAdmin
+      .from('athletes_with_waiver_status')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching athlete with waiver status:', error);
+      return undefined;
+    }
+
+    if (!data) return undefined;
+
+    // Map snake_case to camelCase for frontend compatibility
+    return {
+      id: data.id,
+      parentId: data.parent_id,
+      name: data.name,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      dateOfBirth: data.date_of_birth,
+      gender: data.gender,
+      allergies: data.allergies,
+      experience: data.experience,
+      photo: data.photo,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      latestWaiverId: data.latest_waiver_id,
+      waiverStatus: data.waiver_status,
+      // Remove direct waiver timestamp from athlete - now from waivers table
+      waiverSignatureId: data.waiver_signature_id,
+      waiverSignatureData: data.waiver_signature_data,
+      waiverCreatedAt: data.waiver_created_at,
+      computedWaiverStatus: data.computed_waiver_status
+    };
   }
 
   async createAthlete(insertAthlete: InsertAthlete): Promise<Athlete> {
@@ -1450,25 +1545,22 @@ export class SupabaseStorage implements IStorage {
 
   // Bookings
   async createBooking(insertBooking: InsertBooking): Promise<Booking> {
-    // Map camelCase to snake_case for database (normalized schema)
+    // Map camelCase to snake_case for database (normalized schema with foreign keys)
     const dbBooking: any = {
-      lesson_type: insertBooking.lessonType,
-      parent_first_name: insertBooking.parentFirstName,
-      parent_last_name: insertBooking.parentLastName,
-      parent_email: insertBooking.parentEmail,
-      parent_phone: insertBooking.parentPhone,
-      emergency_contact_name: insertBooking.emergencyContactName,
-      emergency_contact_phone: insertBooking.emergencyContactPhone,
+      parent_id: insertBooking.parentId,
+      lesson_type_id: insertBooking.lessonTypeId,
+      waiver_id: insertBooking.waiverId,
       preferred_date: insertBooking.preferredDate,
       preferred_time: insertBooking.preferredTime,
-      // Note: focus_areas are now handled via booking_focus_areas junction table, not as a column
-      amount: insertBooking.amount,
       status: insertBooking.status || 'pending',
       payment_status: insertBooking.paymentStatus || 'unpaid',
-      booking_method: insertBooking.bookingMethod || 'online'
+      attendance_status: insertBooking.attendanceStatus || 'pending',
+      booking_method: insertBooking.bookingMethod || 'Website',
+      reservation_fee_paid: insertBooking.reservationFeePaid || false,
+      paid_amount: insertBooking.paidAmount || 0
     };
 
-    // Optional safety verification fields
+    // Optional fields
     if (insertBooking.dropoffPersonName) dbBooking.dropoff_person_name = insertBooking.dropoffPersonName;
     if (insertBooking.dropoffPersonRelationship) dbBooking.dropoff_person_relationship = insertBooking.dropoffPersonRelationship;
     if (insertBooking.dropoffPersonPhone) dbBooking.dropoff_person_phone = insertBooking.dropoffPersonPhone;
@@ -1500,7 +1592,7 @@ export class SupabaseStorage implements IStorage {
     const booking = this.mapBookingFromDb(data);
     
     // Create athlete records and booking_athletes relationships if athletes provided
-    if (insertBooking.athletes && insertBooking.athletes.length > 0) {
+    if (insertBooking.athletes && Array.isArray(insertBooking.athletes) && insertBooking.athletes.length > 0) {
       for (let i = 0; i < insertBooking.athletes.length; i++) {
         const athleteData = insertBooking.athletes[i];
         
@@ -1509,18 +1601,21 @@ export class SupabaseStorage implements IStorage {
         
         if (!athleteId) {
           // For new user flow, parent might not exist yet - create parent first
-          let parent = await this.identifyParent(insertBooking.parentEmail, insertBooking.parentPhone);
+          let parent = await this.identifyParent(
+            String(insertBooking.parentEmail || ''), 
+            String(insertBooking.parentPhone || '')
+          );
           
           if (!parent) {
             // Create parent account
             parent = await this.createParent({
-              firstName: insertBooking.parentFirstName,
-              lastName: insertBooking.parentLastName,
-              email: insertBooking.parentEmail,
-              phone: insertBooking.parentPhone,
-              emergencyContactName: insertBooking.emergencyContactName,
-              emergencyContactPhone: insertBooking.emergencyContactPhone,
-              waiverSigned: false
+              firstName: String((insertBooking as any).parentFirstName || ''),
+              lastName: String((insertBooking as any).parentLastName || ''),
+              email: String((insertBooking as any).parentEmail || ''),
+              phone: String((insertBooking as any).parentPhone || ''),
+              emergencyContactName: String((insertBooking as any).emergencyContactName || ''),
+              emergencyContactPhone: String((insertBooking as any).emergencyContactPhone || ''),
+              // Remove waiver fields - they're now in separate waivers table
             });
           }
           
@@ -1550,8 +1645,8 @@ export class SupabaseStorage implements IStorage {
     }
 
     // Create focus area relationships if provided
-    if (insertBooking.focusAreaIds && insertBooking.focusAreaIds.length > 0) {
-      const focusAreaInserts = insertBooking.focusAreaIds.map(focusAreaId => ({
+    if (insertBooking.focusAreaIds && Array.isArray(insertBooking.focusAreaIds) && insertBooking.focusAreaIds.length > 0) {
+      const focusAreaInserts = insertBooking.focusAreaIds.map((focusAreaId: number) => ({
         booking_id: booking.id,
         focus_area_id: focusAreaId
       }));
@@ -1561,21 +1656,19 @@ export class SupabaseStorage implements IStorage {
         .insert(focusAreaInserts);
     }
 
-    // Create apparatus relationships if provided  
-    if (insertBooking.apparatusIds && insertBooking.apparatusIds.length > 0) {
-      const apparatusInserts = insertBooking.apparatusIds.map(apparatusId => ({
+    // Create apparatus relationships if provided
+    if (insertBooking.apparatusIds && Array.isArray(insertBooking.apparatusIds) && insertBooking.apparatusIds.length > 0) {
+      const apparatusInserts = insertBooking.apparatusIds.map((apparatusId: number) => ({
         booking_id: booking.id,
         apparatus_id: apparatusId
-      }));
-      
-      await supabase
+      }));      await supabase
         .from('booking_apparatus')
         .insert(apparatusInserts);
     }
 
     // Create side quest relationships if provided
-    if (insertBooking.sideQuestIds && insertBooking.sideQuestIds.length > 0) {
-      const sideQuestInserts = insertBooking.sideQuestIds.map(sideQuestId => ({
+    if (insertBooking.sideQuestIds && Array.isArray(insertBooking.sideQuestIds) && insertBooking.sideQuestIds.length > 0) {
+      const sideQuestInserts = insertBooking.sideQuestIds.map((sideQuestId: number) => ({
         booking_id: booking.id,
         side_quest_id: sideQuestId
       }));
@@ -1591,8 +1684,11 @@ export class SupabaseStorage implements IStorage {
   private mapBookingFromDb(data: any): Booking {
     return {
       id: data.id,
-      lessonType: data.lesson_type,
-      // Legacy athlete fields for backward compatibility - these will be empty for normalized bookings
+      parentId: data.parent_id,
+      lessonTypeId: data.lesson_type_id,
+      waiverId: data.waiver_id,
+      // Legacy fields for backward compatibility - these will be empty/undefined for normalized bookings
+      lessonType: undefined,
       athlete1Name: '',
       athlete1DateOfBirth: '',
       athlete1Allergies: null,
@@ -1601,25 +1697,22 @@ export class SupabaseStorage implements IStorage {
       athlete2DateOfBirth: null,
       athlete2Allergies: null,
       athlete2Experience: null,
-      parentFirstName: data.parent_first_name,
-      parentLastName: data.parent_last_name,
-      parentEmail: data.parent_email,
-      parentPhone: data.parent_phone,
-      emergencyContactName: data.emergency_contact_name,
-      emergencyContactPhone: data.emergency_contact_phone,
+      parentFirstName: undefined,
+      parentLastName: undefined,
+      parentEmail: undefined,
+      parentPhone: undefined,
+      emergencyContactName: undefined,
+      emergencyContactPhone: undefined,
+      focusAreas: [], // Now handled via booking_focus_areas junction table
+      amount: undefined, // Now calculated from lesson type
       preferredDate: data.preferred_date,
       preferredTime: data.preferred_time,
-      focusAreas: data.focus_areas || [],
-      amount: data.amount,
       status: data.status,
       paymentStatus: data.payment_status,
       attendanceStatus: data.attendance_status,
       bookingMethod: data.booking_method,
-      waiverSigned: data.waiver_signed || false,
-      waiverSignedAt: data.waiver_signed_at,
-      waiverSignatureName: data.waiver_signature_name,
       reservationFeePaid: data.reservation_fee_paid || false,
-      paidAmount: data.paid_amount || "0.00",
+      paidAmount: data.paid_amount?.toString() || "0.00",
       specialRequests: data.special_requests,
       adminNotes: data.admin_notes,
       dropoffPersonName: data.dropoff_person_name,
@@ -1690,7 +1783,7 @@ export class SupabaseStorage implements IStorage {
         .select(`
           id,
           preferred_date,
-          lesson_type,
+          lesson_type_id,
           payment_status,
           attendance_status,
           parent_id
@@ -1718,6 +1811,17 @@ export class SupabaseStorage implements IStorage {
         console.error('Error fetching parents:', parentsError);
       }
 
+      // Get lesson type data for all bookings
+      const lessonTypeIds = Array.from(new Set(bookingsData.map(b => b.lesson_type_id).filter(Boolean)));
+      const { data: lessonTypesData, error: lessonTypesError } = await supabase
+        .from('lesson_types')
+        .select('id, name')
+        .in('id', lessonTypeIds);
+
+      if (lessonTypesError) {
+        console.error('Error fetching lesson types:', lessonTypesError);
+      }
+
       // Get athlete data for all bookings
       const bookingIds = bookingsData.map(b => b.id);
       const { data: bookingAthletesData, error: bookingAthletesError } = await supabase
@@ -1742,6 +1846,11 @@ export class SupabaseStorage implements IStorage {
         parentsMap.set(parent.id, `${parent.first_name} ${parent.last_name}`);
       });
 
+      const lessonTypesMap = new Map();
+      lessonTypesData?.forEach(lessonType => {
+        lessonTypesMap.set(lessonType.id, lessonType.name);
+      });
+
       const athletesMap = new Map();
       bookingAthletesData?.forEach(ba => {
         if (!athletesMap.has(ba.booking_id)) {
@@ -1757,7 +1866,7 @@ export class SupabaseStorage implements IStorage {
       return bookingsData.map(booking => ({
         id: booking.id,
         sessionDate: booking.preferred_date || '',
-        lessonType: booking.lesson_type || '',
+        lessonType: lessonTypesMap.get(booking.lesson_type_id) || 'Unknown Lesson Type',
         parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
         athleteNames: athletesMap.get(booking.id) || [],
         paymentStatus: booking.payment_status || 'unpaid',
@@ -1781,9 +1890,7 @@ export class SupabaseStorage implements IStorage {
     if (data.stripeSessionId !== undefined) dbUpdate.stripe_session_id = data.stripeSessionId;
     if (data.paidAmount !== undefined) dbUpdate.paid_amount = data.paidAmount;
     if (data.reservationFeePaid !== undefined) dbUpdate.reservation_fee_paid = data.reservationFeePaid;
-    if (data.waiverSigned !== undefined) dbUpdate.waiver_signed = data.waiverSigned;
-    if (data.waiverSignedAt !== undefined) dbUpdate.waiver_signed_at = data.waiverSignedAt;
-    if (data.waiverSignatureName !== undefined) dbUpdate.waiver_signature_name = data.waiverSignatureName;
+    // Remove waiver fields - they're now in separate waivers table
     if (data.adminNotes !== undefined) dbUpdate.admin_notes = data.adminNotes;
     if (data.specialRequests !== undefined) dbUpdate.special_requests = data.specialRequests;
 
@@ -2418,7 +2525,9 @@ export class SupabaseStorage implements IStorage {
           authorizes_emergency_care: waiver.authorizesEmergencyCare,
           allows_photo_video: waiver.allowsPhotoVideo,
           confirms_authority: waiver.confirmsAuthority,
-          signed_at: waiver.signedAt ? new Date(waiver.signedAt).toISOString() : new Date().toISOString()
+          signed_at: waiver.signedAt ? 
+            (waiver.signedAt instanceof Date ? waiver.signedAt.toISOString() : new Date(waiver.signedAt as string).toISOString()) : 
+            new Date().toISOString()
         };
 
         // Only add optional fields if they exist
@@ -2638,9 +2747,7 @@ export class SupabaseStorage implements IStorage {
       phone: data.phone,
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
-      waiverSigned: data.waiver_signed,
-      waiverSignedAt: data.waiver_signed_at,
-      waiverSignatureName: data.waiver_signature_name,
+      // Remove waiver fields - they're now in separate waivers table
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -3113,14 +3220,213 @@ export class SupabaseStorage implements IStorage {
     return true;
   }
 
-  // Enhanced booking methods with normalized relationships
+  async getAllBookingsWithRelations(): Promise<BookingWithRelations[]> {
+    this.logQuery('SELECT', 'bookings with relations');
+    
+    // Get bookings with basic info first
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching bookings:', error);
+      throw new Error(`Failed to fetch bookings: ${error.message}`);
+    }
+
+    if (!bookings || bookings.length === 0) {
+      return [];
+    }
+
+    // Get related data for all bookings
+    const bookingIds = bookings.map(b => b.id);
+    const parentIds = Array.from(new Set(bookings.map(b => b.parent_id).filter(Boolean)));
+    const lessonTypeIds = Array.from(new Set(bookings.map(b => b.lesson_type_id).filter(Boolean)));
+
+    // Fetch parents
+    const { data: parents } = await supabase
+      .from('parents')
+      .select('*')
+      .in('id', parentIds);
+
+    // Fetch lesson types  
+    const { data: lessonTypes } = await supabase
+      .from('lesson_types')
+      .select('*')
+      .in('id', lessonTypeIds);
+
+    // Fetch athletes for bookings
+    const { data: bookingAthletes } = await supabase
+      .from('booking_athletes')
+      .select(`
+        booking_id, slot_order,
+        athletes!inner(
+          id, first_name, last_name, date_of_birth, 
+          gender, allergies, experience, photo
+        )
+      `)
+      .in('booking_id', bookingIds);
+
+    // Create lookup maps
+    const parentMap = new Map(parents?.map(p => [p.id, p]) || []);
+    const lessonTypeMap = new Map(lessonTypes?.map(lt => [lt.id, lt]) || []);
+    const athletesByBooking = new Map<number, any[]>();
+    
+    bookingAthletes?.forEach(ba => {
+      if (!athletesByBooking.has(ba.booking_id)) {
+        athletesByBooking.set(ba.booking_id, []);
+      }
+      athletesByBooking.get(ba.booking_id)!.push({
+        ...ba.athletes,
+        slotOrder: ba.slot_order
+      });
+    });
+
+    return bookings.map((booking: any) => {
+      const parent = parentMap.get(booking.parent_id);
+      const lessonType = lessonTypeMap.get(booking.lesson_type_id);
+      const athletes = athletesByBooking.get(booking.id) || [];
+      
+      // Sort athletes by slot order
+      athletes.sort((a, b) => a.slotOrder - b.slotOrder);
+      
+      return {
+        id: booking.id,
+        parentId: booking.parent_id,
+        lessonTypeId: booking.lesson_type_id,
+        waiverId: booking.waiver_id,
+        preferredDate: booking.preferred_date,
+        preferredTime: booking.preferred_time,
+        status: booking.status,
+        paymentStatus: booking.payment_status,
+        attendanceStatus: booking.attendance_status,
+        bookingMethod: booking.booking_method,
+        amount: booking.amount || lessonType?.price?.toString() || "0",
+        reservationFeePaid: booking.reservation_fee_paid,
+        paidAmount: booking.paid_amount,
+        specialRequests: booking.special_requests,
+        adminNotes: booking.admin_notes,
+        
+        // Safety verification fields
+        dropoffPersonName: booking.dropoff_person_name,
+        dropoffPersonRelationship: booking.dropoff_person_relationship,
+        dropoffPersonPhone: booking.dropoff_person_phone,
+        pickupPersonName: booking.pickup_person_name,
+        pickupPersonRelationship: booking.pickup_person_relationship,
+        pickupPersonPhone: booking.pickup_person_phone,
+        altPickupPersonName: booking.alt_pickup_person_name,
+        altPickupPersonRelationship: booking.alt_pickup_person_relationship,
+        altPickupPersonPhone: booking.alt_pickup_person_phone,
+        safetyVerificationSigned: booking.safety_verification_signed,
+        safetyVerificationSignedAt: booking.safety_verification_signed_at,
+        
+        stripeSessionId: booking.stripe_session_id,
+        createdAt: booking.created_at,
+        updatedAt: booking.updated_at,
+        
+        // Related entities
+        parent: parent ? {
+          id: parent.id,
+          firstName: parent.first_name,
+          lastName: parent.last_name,
+          email: parent.email,
+          phone: parent.phone,
+          emergencyContactName: parent.emergency_contact_name,
+          emergencyContactPhone: parent.emergency_contact_phone,
+          createdAt: parent.created_at,
+          updatedAt: parent.updated_at,
+        } : undefined,
+        
+        lessonType: lessonType ? {
+          id: lessonType.id,
+          name: lessonType.name,
+          duration: lessonType.duration,
+          price: lessonType.price,
+          description: lessonType.description,
+        } : undefined,
+        
+        athletes: athletes.map((athlete: any) => ({
+          id: athlete.id,
+          firstName: athlete.first_name,
+          lastName: athlete.last_name,
+          dateOfBirth: athlete.date_of_birth,
+          gender: athlete.gender,
+          allergies: athlete.allergies,
+          experience: athlete.experience,
+          photo: athlete.photo,
+        })),
+        
+        // Legacy compatibility fields
+        parentFirstName: parent?.first_name,
+        parentLastName: parent?.last_name,
+        parentEmail: parent?.email,
+        parentPhone: parent?.phone,
+        emergencyContactName: parent?.emergency_contact_name,
+        emergencyContactPhone: parent?.emergency_contact_phone,
+        lessonTypeName: lessonType?.name,
+        
+        // Legacy athlete fields for backward compatibility
+        athlete1Name: athletes[0] ? `${athletes[0].first_name} ${athletes[0].last_name}` : null,
+        athlete1DateOfBirth: athletes[0]?.date_of_birth,
+        athlete1Allergies: athletes[0]?.allergies,
+        athlete1Experience: athletes[0]?.experience,
+        athlete2Name: athletes[1] ? `${athletes[1].first_name} ${athletes[1].last_name}` : null,
+        athlete2DateOfBirth: athletes[1]?.date_of_birth,
+        athlete2Allergies: athletes[1]?.allergies,
+        athlete2Experience: athletes[1]?.experience,
+        
+        // Empty arrays for relations not yet implemented
+        apparatus: [],
+        focusAreas: [],
+        sideQuests: [],
+        
+        // Legacy waiver fields (set to defaults since waivers are separate now)
+        waiverSigned: false,
+        waiverSignedAt: null,
+        waiverSignatureName: null,
+      } as BookingWithRelations;
+    });
+  }
+
   async getBookingWithRelations(id: number): Promise<BookingWithRelations | undefined> {
-    // First get the basic booking
+    this.logQuery('SELECT', 'booking with relations', { id });
+    
     const booking = await this.getBooking(id);
     if (!booking) return undefined;
+    
+    // Get parent data
+    let parent = undefined;
+    if (booking.parentId) {
+      parent = await this.getParentById(booking.parentId);
+    }
+
+    // Get lesson type data
+    let lessonType = undefined;
+    if (booking.lessonTypeId) {
+      const { data } = await supabase
+        .from('lesson_types')
+        .select('*')
+        .eq('id', booking.lessonTypeId)
+        .single();
+      if (data) {
+        lessonType = {
+          id: data.id,
+          name: data.name,
+          duration: data.duration_minutes,
+          price: parseFloat(data.total_price || '0'),
+          description: data.description
+        };
+      }
+    }
+
+    // Get waiver data
+    let waiver = undefined;
+    if (booking.waiverId) {
+      waiver = await this.getWaiver(booking.waiverId);
+    }
 
     // Get related apparatus
-    const { data: apparatusData } = await supabaseAdmin
+    const { data: apparatusData } = await supabase
       .from('booking_apparatus')
       .select(`
         apparatus_id,
@@ -3129,7 +3435,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related focus areas
-    const { data: focusAreasData } = await supabaseAdmin
+    const { data: focusAreasData } = await supabase
       .from('booking_focus_areas')
       .select(`
         focus_area_id,
@@ -3138,7 +3444,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related side quests
-    const { data: sideQuestsData } = await supabaseAdmin
+    const { data: sideQuestsData } = await supabase
       .from('booking_side_quests')
       .select(`
         side_quest_id,
@@ -3147,26 +3453,30 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related athletes
-    const { data: athletesData } = await supabaseAdmin
+    const { data: athletesData } = await supabase
       .from('booking_athletes')
       .select(`
         athlete_id,
         slot_order,
-        athletes!inner(id, name, date_of_birth, gender, allergies, experience, parent_id)
+        athletes!inner(id, first_name, last_name, date_of_birth, gender, allergies, experience, parent_id)
       `)
       .eq('booking_id', id)
       .order('slot_order', { ascending: true });
 
     return {
       ...booking,
+      parent,
+      lessonType,
+      waiver,
       apparatus: apparatusData?.map(item => ({ id: (item.apparatus as any).id, name: (item.apparatus as any).name })) || [],
-      focusAreas: focusAreasData?.map(item => ({ id: (item.focus_areas as any).id, name: (item.focus_areas as any).name })) || [] as any,
+      focusAreas: focusAreasData?.map(item => ({ id: (item.focus_areas as any).id, name: (item.focus_areas as any).name })) || [],
       sideQuests: sideQuestsData?.map(item => ({ id: (item.side_quests as any).id, name: (item.side_quests as any).name })) || [],
       athletes: athletesData?.map(item => {
         const athlete = item.athletes as any;
         return {
           id: athlete.id,
-          name: athlete.name,
+          firstName: athlete.first_name,
+          lastName: athlete.last_name,
           dateOfBirth: athlete.date_of_birth,
           gender: athlete.gender,
           allergies: athlete.allergies,
@@ -3177,103 +3487,55 @@ export class SupabaseStorage implements IStorage {
     } as BookingWithRelations;
   }
 
-  async getAllBookingsWithRelations(): Promise<BookingWithRelations[]> {
-    // Get all bookings
-    const bookings = await this.getAllBookings();
-    
-    // Get all relations at once for efficiency
-    const bookingIds = bookings.map(b => b.id);
-    
-    if (bookingIds.length === 0) return [];
-
-    const [apparatusData, focusAreasData, sideQuestsData, athletesData] = await Promise.all([
-      supabaseAdmin.from('booking_apparatus')
-        .select(`booking_id, apparatus_id, apparatus!inner(id, name)`)
-        .in('booking_id', bookingIds),
-      supabaseAdmin.from('booking_focus_areas')
-        .select(`booking_id, focus_area_id, focus_areas!inner(id, name)`)
-        .in('booking_id', bookingIds),
-      supabaseAdmin.from('booking_side_quests')
-        .select(`booking_id, side_quest_id, side_quests!inner(id, name)`)
-        .in('booking_id', bookingIds),
-      supabaseAdmin.from('booking_athletes')
-        .select(`booking_id, athlete_id, slot_order, athletes!inner(id, name, date_of_birth, gender, allergies, experience, parent_id)`)
-        .in('booking_id', bookingIds)
-        .order('slot_order', { ascending: true })
-    ]);
-
-    // Group relations by booking ID
-    const apparatusByBooking = (apparatusData.data || []).reduce((acc, item) => {
-      if (!acc[item.booking_id]) acc[item.booking_id] = [];
-      acc[item.booking_id].push({ id: (item.apparatus as any).id, name: (item.apparatus as any).name });
-      return acc;
-    }, {} as Record<number, Array<{ id: number; name: string }>>);
-
-    const focusAreasByBooking = (focusAreasData.data || []).reduce((acc, item) => {
-      if (!acc[item.booking_id]) acc[item.booking_id] = [];
-      acc[item.booking_id].push({ id: (item.focus_areas as any).id, name: (item.focus_areas as any).name });
-      return acc;
-    }, {} as Record<number, Array<{ id: number; name: string }>>);
-
-    const sideQuestsByBooking = (sideQuestsData.data || []).reduce((acc, item) => {
-      if (!acc[item.booking_id]) acc[item.booking_id] = [];
-      acc[item.booking_id].push({ id: (item.side_quests as any).id, name: (item.side_quests as any).name });
-      return acc;
-    }, {} as Record<number, Array<{ id: number; name: string }>>);
-
-    const athletesByBooking = (athletesData.data || []).reduce((acc, item) => {
-      if (!acc[item.booking_id]) acc[item.booking_id] = [];
-      const athlete = item.athletes as any;
-      acc[item.booking_id].push({
-        id: athlete.id,
-        name: athlete.name,
-        dateOfBirth: athlete.date_of_birth,
-        gender: athlete.gender,
-        allergies: athlete.allergies,
-        experience: athlete.experience,
-        parentId: athlete.parent_id
-      });
-      return acc;
-    }, {} as Record<number, Array<{ id: number; name: string; dateOfBirth: string; gender: string | null; allergies: string | null; experience: string; parentId: number }>>);
-
-    // Combine bookings with relations
-    return bookings.map(booking => ({
-      ...booking,
-      apparatus: apparatusByBooking[booking.id] || [],
-      focusAreas: focusAreasByBooking[booking.id] || [],
-      sideQuests: sideQuestsByBooking[booking.id] || [],
-      athletes: athletesByBooking[booking.id] || []
-    })) as BookingWithRelations[];
-  }
-
   async createBookingWithRelations(
     booking: InsertBooking,
     apparatusIds: number[],
     focusAreaIds: number[],
     sideQuestIds: number[]
   ): Promise<BookingWithRelations> {
-    // Create the base booking first
+    this.logQuery('INSERT', 'booking with relations');
+    
     const createdBooking = await this.createBooking(booking);
-
-    // Create all the relationship records
-    const [apparatusPromise, focusAreasPromise, sideQuestsPromise] = await Promise.all([
-      apparatusIds.length > 0 ? supabase.from('booking_apparatus').insert(
-        apparatusIds.map(apparatusId => ({ booking_id: createdBooking.id, apparatus_id: apparatusId }))
-      ) : Promise.resolve({ error: null }),
-      focusAreaIds.length > 0 ? supabase.from('booking_focus_areas').insert(
-        focusAreaIds.map(focusAreaId => ({ booking_id: createdBooking.id, focus_area_id: focusAreaId }))
-      ) : Promise.resolve({ error: null }),
-      sideQuestIds.length > 0 ? supabase.from('booking_side_quests').insert(
-        sideQuestIds.map(sideQuestId => ({ booking_id: createdBooking.id, side_quest_id: sideQuestId }))
-      ) : Promise.resolve({ error: null })
-    ]);
-
-    if (apparatusPromise.error) console.error('Error creating apparatus relations:', apparatusPromise.error);
-    if (focusAreasPromise.error) console.error('Error creating focus areas relations:', focusAreasPromise.error);
-    if (sideQuestsPromise.error) console.error('Error creating side quests relations:', sideQuestsPromise.error);
-
-    // Return the booking with relations
-    return this.getBookingWithRelations(createdBooking.id) as Promise<BookingWithRelations>;
+    
+    // Create apparatus relationships
+    if (apparatusIds.length > 0) {
+      const apparatusRelations = apparatusIds.map(apparatusId => ({
+        booking_id: createdBooking.id,
+        apparatus_id: apparatusId
+      }));
+      
+      await supabase
+        .from('booking_apparatus')
+        .insert(apparatusRelations);
+    }
+    
+    // Create focus area relationships
+    if (focusAreaIds.length > 0) {
+      const focusAreaRelations = focusAreaIds.map(focusAreaId => ({
+        booking_id: createdBooking.id,
+        focus_area_id: focusAreaId
+      }));
+      
+      await supabase
+        .from('booking_focus_areas')
+        .insert(focusAreaRelations);
+    }
+    
+    // Create side quest relationships
+    if (sideQuestIds.length > 0) {
+      const sideQuestRelations = sideQuestIds.map(sideQuestId => ({
+        booking_id: createdBooking.id,
+        side_quest_id: sideQuestId
+      }));
+      
+      await supabase
+        .from('booking_side_quests')
+        .insert(sideQuestRelations);
+    }
+    
+    // Return the booking with all relations loaded
+    const bookingWithRelations = await this.getBookingWithRelations(createdBooking.id);
+    return bookingWithRelations!;
   }
 
   async updateBookingRelations(
@@ -3282,27 +3544,67 @@ export class SupabaseStorage implements IStorage {
     focusAreaIds: number[],
     sideQuestIds: number[]
   ): Promise<BookingWithRelations | undefined> {
-    // Delete existing relations
-    await Promise.all([
-      supabase.from('booking_apparatus').delete().eq('booking_id', bookingId),
-      supabase.from('booking_focus_areas').delete().eq('booking_id', bookingId),
-      supabase.from('booking_side_quests').delete().eq('booking_id', bookingId)
-    ]);
-
-    // Create new relations
-    await Promise.all([
-      apparatusIds.length > 0 ? supabase.from('booking_apparatus').insert(
-        apparatusIds.map(apparatusId => ({ booking_id: bookingId, apparatus_id: apparatusId }))
-      ) : Promise.resolve({ error: null }),
-      focusAreaIds.length > 0 ? supabase.from('booking_focus_areas').insert(
-        focusAreaIds.map(focusAreaId => ({ booking_id: bookingId, focus_area_id: focusAreaId }))
-      ) : Promise.resolve({ error: null }),
-      sideQuestIds.length > 0 ? supabase.from('booking_side_quests').insert(
-        sideQuestIds.map(sideQuestId => ({ booking_id: bookingId, side_quest_id: sideQuestId }))
-      ) : Promise.resolve({ error: null })
-    ]);
-
-    return this.getBookingWithRelations(bookingId);
+    this.logQuery('UPDATE', 'booking relations', { bookingId });
+    
+    const booking = await this.getBooking(bookingId);
+    if (!booking) return undefined;
+    
+    // Delete existing apparatus relationships
+    await supabase
+      .from('booking_apparatus')
+      .delete()
+      .eq('booking_id', bookingId);
+    
+    // Delete existing focus area relationships
+    await supabase
+      .from('booking_focus_areas')
+      .delete()
+      .eq('booking_id', bookingId);
+    
+    // Delete existing side quest relationships
+    await supabase
+      .from('booking_side_quests')
+      .delete()
+      .eq('booking_id', bookingId);
+    
+    // Create new apparatus relationships
+    if (apparatusIds.length > 0) {
+      const apparatusRelations = apparatusIds.map(apparatusId => ({
+        booking_id: bookingId,
+        apparatus_id: apparatusId
+      }));
+      
+      await supabase
+        .from('booking_apparatus')
+        .insert(apparatusRelations);
+    }
+    
+    // Create new focus area relationships
+    if (focusAreaIds.length > 0) {
+      const focusAreaRelations = focusAreaIds.map(focusAreaId => ({
+        booking_id: bookingId,
+        focus_area_id: focusAreaId
+      }));
+      
+      await supabase
+        .from('booking_focus_areas')
+        .insert(focusAreaRelations);
+    }
+    
+    // Create new side quest relationships
+    if (sideQuestIds.length > 0) {
+      const sideQuestRelations = sideQuestIds.map(sideQuestId => ({
+        booking_id: bookingId,
+        side_quest_id: sideQuestId
+      }));
+      
+      await supabase
+        .from('booking_side_quests')
+        .insert(sideQuestRelations);
+    }
+    
+    // Return the booking with all relations loaded
+    return await this.getBookingWithRelations(bookingId);
   }
 }
 

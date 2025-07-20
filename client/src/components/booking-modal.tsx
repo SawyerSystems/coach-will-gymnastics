@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGenders } from "@/hooks/useGenders";
 import { EXPERIENCE_LEVELS, LESSON_TYPES } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookingStatusEnum, insertBookingSchema, PaymentStatusEnum } from "@shared/schema";
+import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { loadStripe } from '@stripe/stripe-js';
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CheckCircle, Clock, CreditCard, FileText, User, Users } from "lucide-react";
@@ -77,7 +77,57 @@ interface BookingModalProps {
   isReturningParent?: boolean;
 }
 
-const formSchema = insertBookingSchema;
+const formSchema = z.object({
+  // Parent info
+  parentFirstName: z.string().min(1, "First name is required"),
+  parentLastName: z.string().min(1, "Last name is required"),
+  parentEmail: z.string().email("Valid email is required"),
+  parentPhone: z.string().min(1, "Phone number is required"),
+  emergencyContactName: z.string().min(1, "Emergency contact name is required"),
+  emergencyContactPhone: z.string().min(1, "Emergency contact phone is required"),
+  
+  // Booking details
+  lessonType: z.string().min(1, "Lesson type is required"),
+  preferredDate: z.date(),
+  preferredTime: z.string().min(1, "Time is required"),
+  focusAreaIds: z.array(z.number()).default([]),
+  apparatusIds: z.array(z.number()).default([]),
+  sideQuestIds: z.array(z.number()).default([]),
+  
+  // Financial
+  amount: z.string().min(1, "Amount is required"),
+  waiverSigned: z.boolean().default(false),
+  reservationFeePaid: z.boolean().default(false),
+  paidAmount: z.string().default("0.00"),
+  specialRequests: z.string().default(""),
+  adminNotes: z.string().default(""),
+  
+  // Safety verification
+  dropoffPersonName: z.string().default(""),
+  dropoffPersonRelationship: z.string().default("Parent"),
+  dropoffPersonPhone: z.string().default(""),
+  pickupPersonName: z.string().default(""),
+  pickupPersonRelationship: z.string().default("Parent"),
+  pickupPersonPhone: z.string().default(""),
+  safetyVerificationSigned: z.boolean().default(false),
+  
+  // Status fields
+  status: z.string().default("pending"),
+  bookingMethod: z.string().default("online"),
+  paymentStatus: z.string().default("unpaid"),
+  
+  // Athletes
+  athletes: z.array(z.object({
+    athleteId: z.number().optional(),
+    slotOrder: z.number(),
+    name: z.string(),
+    dateOfBirth: z.string(),
+    gender: z.string().optional(),
+    allergies: z.string().optional(),
+    experience: z.string(),
+    photo: z.string().optional(),
+  })).default([])
+});
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -164,8 +214,8 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
     watchedLessonType || null
   );
 
-  const lessonTypeData = LESSON_TYPES[watchedLessonType];
-  const maxFocusAreas = lessonTypeData.maxFocusAreas;
+  const lessonTypeData = LESSON_TYPES[watchedLessonType as keyof typeof LESSON_TYPES];
+  const maxFocusAreas = lessonTypeData?.maxFocusAreas || 2;
 
   // Handle prefilled parent and auto-populate parent information
   useEffect(() => {
@@ -209,7 +259,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const handleLessonTypeChange = (lessonType: keyof typeof LESSON_TYPES) => {
     setSelectedLessonType(lessonType);
     form.setValue("lessonType", lessonType);
-    form.setValue("amount", LESSON_TYPES[lessonType].price.toString());
+    form.setValue("amount", LESSON_TYPES[lessonType as keyof typeof LESSON_TYPES]?.price.toString() || "40");
   };
 
   const handleFocusAreaToggle = (area: string, checked: boolean) => {
@@ -311,8 +361,53 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
   const onSubmit = async (data: FormData) => {
     try {
+      // Transform form data to match InsertBooking schema
+      const bookingData: any = {
+        // Core required fields
+        parentId: 0, // Will be handled by backend
+        lessonTypeId: 0, // Will be resolved by backend from lessonType
+        
+        // Form data
+        lessonType: data.lessonType,
+        preferredDate: data.preferredDate,
+        preferredTime: data.preferredTime,
+        focusAreaIds: data.focusAreaIds,
+        apparatusIds: data.apparatusIds,
+        sideQuestIds: data.sideQuestIds,
+        
+        // Parent info
+        parentFirstName: data.parentFirstName,
+        parentLastName: data.parentLastName,
+        parentEmail: data.parentEmail,
+        parentPhone: data.parentPhone,
+        emergencyContactName: data.emergencyContactName,
+        emergencyContactPhone: data.emergencyContactPhone,
+        
+        // Financial and status
+        amount: data.amount,
+        status: data.status,
+        bookingMethod: data.bookingMethod,
+        paymentStatus: data.paymentStatus,
+        
+        // Athletes array
+        athletes: data.athletes,
+        
+        // Safety and other fields
+        specialRequests: data.specialRequests,
+        adminNotes: data.adminNotes,
+        reservationFeePaid: data.reservationFeePaid,
+        paidAmount: data.paidAmount,
+        safetyVerificationSigned: data.safetyVerificationSigned,
+        dropoffPersonName: data.dropoffPersonName,
+        dropoffPersonRelationship: data.dropoffPersonRelationship,
+        dropoffPersonPhone: data.dropoffPersonPhone,
+        pickupPersonName: data.pickupPersonName,
+        pickupPersonRelationship: data.pickupPersonRelationship,
+        pickupPersonPhone: data.pickupPersonPhone,
+      };
+      
       // First create the booking
-      const booking = await createBooking.mutateAsync(data);
+      const booking = await createBooking.mutateAsync(bookingData);
       
       // Use the actual lesson amount from the form data
       const lessonAmount = data.amount || getLessonPrice(data.lessonType);
@@ -942,7 +1037,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       <hr className="my-4" />
                       <div className="flex justify-between text-lg font-bold">
                         <span>Total:</span>
-                        <span className="text-blue-600">${LESSON_TYPES[form.getValues("lessonType")]?.price}</span>
+                        <span className="text-blue-600">${LESSON_TYPES[form.getValues("lessonType") as keyof typeof LESSON_TYPES]?.price}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -958,7 +1053,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     <div className="bg-white p-4 rounded-lg border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-gray-700">Lesson Fee:</span>
-                        <span className="font-bold text-green-600">${LESSON_TYPES[form.getValues("lessonType")]?.price}</span>
+                        <span className="font-bold text-green-600">${LESSON_TYPES[form.getValues("lessonType") as keyof typeof LESSON_TYPES]?.price}</span>
                       </div>
                       <div className="border-t pt-3">
                         <div className="flex items-center justify-between">

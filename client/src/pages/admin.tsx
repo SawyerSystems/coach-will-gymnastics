@@ -579,14 +579,14 @@ export default function Admin() {
         if (!mapping.has(key)) {
           mapping.set(key, {
             id: booking.id,
-            firstName: booking.parentFirstName,
-            lastName: booking.parentLastName,
-            email: booking.parentEmail,
-            phone: booking.parentPhone,
-            emergencyContactName: booking.emergencyContactName,
-            emergencyContactPhone: booking.emergencyContactPhone,
-            waiverSigned: booking.waiverSigned,
-            waiverSignedAt: booking.waiverSignedAt
+            firstName: booking.parent?.firstName || booking.parentFirstName || '',
+            lastName: booking.parent?.lastName || booking.parentLastName || '',
+            email: booking.parent?.email || booking.parentEmail || '',
+            phone: booking.parent?.phone || booking.parentPhone || '',
+            emergencyContactName: booking.parent?.emergencyContactName || booking.emergencyContactName || '',
+            emergencyContactPhone: booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || '',
+            waiverSigned: booking.waiverId ? true : false,
+            waiverSignedAt: booking.waiver?.signedAt || null
           });
         }
       }
@@ -596,14 +596,14 @@ export default function Admin() {
         if (!mapping.has(key)) {
           mapping.set(key, {
             id: booking.id,
-            firstName: booking.parentFirstName,
-            lastName: booking.parentLastName,
-            email: booking.parentEmail,
-            phone: booking.parentPhone,
-            emergencyContactName: booking.emergencyContactName,
-            emergencyContactPhone: booking.emergencyContactPhone,
-            waiverSigned: booking.waiverSigned,
-            waiverSignedAt: booking.waiverSignedAt
+            firstName: booking.parent?.firstName || booking.parentFirstName || '',
+            lastName: booking.parent?.lastName || booking.parentLastName || '',
+            email: booking.parent?.email || booking.parentEmail || '',
+            phone: booking.parent?.phone || booking.parentPhone || '',
+            emergencyContactName: booking.parent?.emergencyContactName || booking.emergencyContactName || '',
+            emergencyContactPhone: booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || '',
+            waiverSigned: booking.waiverId ? true : false,
+            waiverSignedAt: booking.waiver?.signedAt || null
           });
         }
       }
@@ -861,7 +861,7 @@ export default function Admin() {
     if (analyticsDateRange.end && booking.preferredDate > analyticsDateRange.end) return false;
     
     // Filter by lesson type
-    if (analyticsLessonType !== 'all' && booking.lessonType !== analyticsLessonType) return false;
+    if (analyticsLessonType !== 'all' && (booking.lessonType?.name || booking.lessonType) !== analyticsLessonType) return false;
     
     return true;
   });
@@ -871,7 +871,7 @@ export default function Admin() {
     const areaCount = new Map<string, number>();
     filteredBookingsForAnalytics.forEach(booking => {
       if (booking.focusAreas && Array.isArray(booking.focusAreas)) {
-        booking.focusAreas.forEach(area => {
+        booking.focusAreas.forEach((area: string) => {
           areaCount.set(area, (areaCount.get(area) || 0) + 1);
         });
       }
@@ -1123,6 +1123,9 @@ export default function Admin() {
                       return true; // Show all athletes, not just those with upcoming birthdays
                     })
                     .sort((a, b) => {
+                      if (!a.dateOfBirth || !b.dateOfBirth) {
+                        return a.dateOfBirth ? -1 : (b.dateOfBirth ? 1 : 0);
+                      }
                       const today = new Date();
                       const birthdayA = new Date(a.dateOfBirth);
                       const birthdayB = new Date(b.dateOfBirth);
@@ -1151,15 +1154,19 @@ export default function Admin() {
                     .map((athlete) => {
                       const athleteKey = `${athlete.firstName && athlete.lastName 
                         ? `${athlete.firstName} ${athlete.lastName}`
-                        : athlete.name}-${athlete.dateOfBirth}`;
+                        : athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
                       const parentInfo = parentMapping.get(athleteKey);
                       const today = new Date();
-                      const birthDate = new Date(athlete.dateOfBirth);
-                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                      if (nextBirthday < today) {
-                        nextBirthday.setFullYear(today.getFullYear() + 1);
+                      
+                      let daysUntilBirthday = null;
+                      if (athlete.dateOfBirth) {
+                        const birthDate = new Date(athlete.dateOfBirth);
+                        const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                        if (nextBirthday < today) {
+                          nextBirthday.setFullYear(today.getFullYear() + 1);
+                        }
+                        daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                       }
-                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                       
                       return (
                         <div key={athlete.id} className="relative bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-5 shadow-sm">
@@ -1238,7 +1245,7 @@ export default function Admin() {
                               </h3>
                               
                               {/* Birthday alert - only if within 7 days */}
-                              {daysUntilBirthday <= 7 && (
+                              {daysUntilBirthday !== null && daysUntilBirthday <= 7 && (
                                 <p className="text-sm font-medium text-orange-700 flex items-center gap-1">
                                   🎉 Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!
                                 </p>
@@ -1246,7 +1253,7 @@ export default function Admin() {
                               
                               {/* Age and experience */}
                               <p className="text-sm text-gray-600 flex items-center gap-2">
-                                🎂 Age: {calculateAge(athlete.dateOfBirth)} | 
+                                🎂 Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} | 
                                 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}
                               </p>
                               
@@ -1277,6 +1284,9 @@ export default function Admin() {
                       }
                       
                       const today = new Date();
+                      if (!athlete.dateOfBirth) {
+                        return false; // Skip athletes without birth dates
+                      }
                       const birthDate = new Date(athlete.dateOfBirth);
                       const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
                       if (nextBirthday < today) {
@@ -1366,7 +1376,7 @@ export default function Admin() {
                               </h3>
                               
                               <p className="text-sm text-gray-600 flex items-center gap-2">
-                                🎂 {calculateAge(athlete.dateOfBirth)} years old | 
+                                🎂 {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old | 
                                 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}
                               </p>
                               
@@ -2419,7 +2429,7 @@ export default function Admin() {
                         <div className="text-2xl font-bold">
                           $
                           {bookings.length > 0
-                            ? (bookings.reduce((sum, b) => sum + parseFloat(b.amount || '0'), 0) / bookings.length).toFixed(2)
+                            ? (bookings.reduce((sum, b) => sum + parseFloat(b.lessonType?.price || b.paidAmount || '0'), 0) / bookings.length).toFixed(2)
                             : '0.00'}
                         </div>
                         <p className="text-xs text-muted-foreground">Per booking</p>
@@ -2550,7 +2560,7 @@ export default function Admin() {
                           ];
                           
                           return lessonTypes.map(type => {
-                            const count = filteredBookingsForAnalytics.filter(b => b.lessonType === type.key).length;
+                            const count = filteredBookingsForAnalytics.filter(b => (b.lessonType?.name || b.lessonType) === type.key).length;
                             const percentage = filteredBookingsForAnalytics.length > 0 
                               ? Math.round((count / filteredBookingsForAnalytics.length) * 100) 
                               : 0;
@@ -3176,7 +3186,7 @@ export default function Admin() {
                       id="edit-dob"
                       name="dateOfBirth"
                       type="date"
-                      defaultValue={selectedAthlete.dateOfBirth}
+                      defaultValue={selectedAthlete.dateOfBirth || ''}
                       required
                       aria-describedby="edit-dob-help"
                       autoComplete="bday"
@@ -3406,7 +3416,7 @@ export default function Admin() {
                         <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
                           <div className="flex justify-between">
                             <div>
-                              <p className="font-medium">{booking.lessonType.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                              <p className="font-medium">{(booking.lessonType?.name || booking.lessonType || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</p>
                               <p className="text-sm text-gray-600">
                                 <time dateTime={booking.preferredDate}>
                                   {booking.preferredDate}
@@ -3414,7 +3424,7 @@ export default function Admin() {
                               </p>
                               <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
                               <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
-                              {booking.waiverSigned && (
+                              {(booking.waiverId || booking.waiverSigned) && (
                                 <p className="text-xs text-green-600 font-medium" role="status">✓ Waiver Signed</p>
                               )}
                             </div>
@@ -3511,7 +3521,7 @@ export default function Admin() {
                       {deleteAthleteError.activeBookings.map((booking) => (
                         <div key={booking.id} className="text-sm border rounded p-2">
                           <p className="font-medium">{booking.preferredDate} at {booking.preferredTime}</p>
-                          <p className="text-gray-600">{booking.lessonType} - Status: {booking.status}</p>
+                          <p className="text-gray-600">{booking.lessonType?.name || booking.lessonType || 'Unknown'} - Status: {booking.status}</p>
                         </div>
                       ))}
                     </div>

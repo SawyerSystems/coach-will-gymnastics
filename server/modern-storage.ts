@@ -23,7 +23,7 @@ export class ModernSupabaseStorage {
     // 1. Create the booking record (without athletes)
     const bookingData = {
       lesson_type: insertBooking.lessonType,
-      preferred_date: insertBooking.preferredDate.toISOString().split('T')[0],
+      preferred_date: (insertBooking.preferredDate as any)?.toISOString?.()?.split('T')[0] || String(insertBooking.preferredDate),
       preferred_time: insertBooking.preferredTime,
       parent_first_name: insertBooking.parentFirstName,
       parent_last_name: insertBooking.parentLastName,
@@ -46,8 +46,8 @@ export class ModernSupabaseStorage {
     if (error) throw error;
 
     // 2. Link athletes to booking
-    if (insertBooking.athletes && insertBooking.athletes.length > 0) {
-      const athleteLinks = insertBooking.athletes.map(athlete => ({
+    if (insertBooking.athletes && Array.isArray(insertBooking.athletes) && insertBooking.athletes.length > 0) {
+      const athleteLinks = insertBooking.athletes.map((athlete: any) => ({
         booking_id: booking.id,
         athlete_id: athlete.athleteId,
         slot_order: athlete.slotOrder
@@ -61,8 +61,8 @@ export class ModernSupabaseStorage {
     }
 
     // 3. Link focus areas
-    if (insertBooking.focusAreaIds && insertBooking.focusAreaIds.length > 0) {
-      const focusAreaLinks = insertBooking.focusAreaIds.map(focusAreaId => ({
+    if (insertBooking.focusAreaIds && Array.isArray(insertBooking.focusAreaIds) && insertBooking.focusAreaIds.length > 0) {
+      const focusAreaLinks = insertBooking.focusAreaIds.map((focusAreaId: any) => ({
         booking_id: booking.id,
         focus_area_id: focusAreaId
       }));
@@ -223,9 +223,7 @@ export class ModernSupabaseStorage {
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName,
       emergency_contact_phone: insertParent.emergencyContactPhone,
-      waiver_signed: insertParent.waiverSigned || false,
-      waiver_signed_at: insertParent.waiverSignedAt,
-      waiver_signature_name: insertParent.waiverSignatureName
+      // Remove waiver fields - they're now in separate waivers table
     };
 
     const { data, error } = await supabase
@@ -331,7 +329,9 @@ export class ModernSupabaseStorage {
       experience: data.experience,
       photo: data.photo,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
+      latestWaiverId: data.latest_waiver_id || null,
+      waiverStatus: data.waiver_status || 'pending'
     };
   }
 
@@ -344,9 +344,7 @@ export class ModernSupabaseStorage {
       phone: data.phone,
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
-      waiverSigned: data.waiver_signed || false,
-      waiverSignedAt: data.waiver_signed_at ? new Date(data.waiver_signed_at) : null,
-      waiverSignatureName: data.waiver_signature_name || null,
+      // Remove waiver fields - they're now in separate waivers table
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

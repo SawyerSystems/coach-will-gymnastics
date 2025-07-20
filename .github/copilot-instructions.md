@@ -20,6 +20,7 @@ This is a full-stack gymnastics booking platform with React frontend, Express ba
 - **Migration workflow:** Schema changes via `npm run db:push` OR manual SQL
 - **Important:** When Supabase changes are needed, provide SQL commands to user for manual entry in Supabase SQL editor
 - **NEVER use:** `supabase.from(...).rpc('exec_sql')` - this function does not exist in our project
+- **NEVER edit .env file:** Environment variables are configured correctly. Always ask explicit permission before touching .env file
 
 ### Authentication System
 - **Dual auth:** Admin (email/password) + Parent (email magic codes via Resend)

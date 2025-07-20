@@ -16,7 +16,7 @@ import { useGenders } from "@/hooks/useGenders";
 import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
-import type { Booking, InsertBooking } from "@shared/schema";
+import type { Booking } from "@shared/schema";
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileText, FileX, Filter, HelpCircle, Plus, Trash2, User, X, XCircle } from "lucide-react";
@@ -396,7 +396,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
       const athlete2DOB = bookingData.athlete2Age ? 
         new Date(today.getFullYear() - bookingData.athlete2Age, today.getMonth(), today.getDate()) : null;
 
-      const formattedData: InsertBooking = {
+      const formattedData: any = {
         lessonType: bookingData.lessonType as any,
         preferredDate: new Date(bookingData.preferredDate),
         preferredTime: bookingData.preferredTime,
@@ -765,7 +765,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      {booking.athletes?.map((athlete, index) => {
+                      {booking.athletes?.map((athlete: any, index: number) => {
                         const athleteId = findAthleteIdByName(athlete.name);
                         return (
                           <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
@@ -826,7 +826,9 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{booking.lessonType}</Badge>
+                    <Badge variant="outline">
+                      {booking.lessonType?.name || booking.lessonTypeName || 'Unknown Lesson Type'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge {...getPaymentStatusBadgeProps(booking.paymentStatus || 'unpaid')}>
@@ -1798,7 +1800,7 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Type:</span>
-              <span>{booking.lessonType}</span>
+              <span>{booking.lessonType?.name || booking.lessonTypeName || 'Unknown Lesson Type'}</span>
             </div>
             <div className="flex justify-between">
               <span>Date:</span>
@@ -1832,23 +1834,23 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Name:</span>
-              <span>{booking.parentFirstName} {booking.parentLastName}</span>
+              <span>{booking.parent?.firstName || booking.parentFirstName} {booking.parent?.lastName || booking.parentLastName}</span>
             </div>
             <div className="flex justify-between">
               <span>Email:</span>
-              <span>{booking.parentEmail}</span>
+              <span>{booking.parent?.email || booking.parentEmail}</span>
             </div>
             <div className="flex justify-between">
               <span>Phone:</span>
-              <span>{booking.parentPhone}</span>
+              <span>{booking.parent?.phone || booking.parentPhone}</span>
             </div>
             <div className="flex justify-between">
               <span>Emergency:</span>
-              <span>{booking.emergencyContactName}</span>
+              <span>{booking.parent?.emergencyContactName || booking.emergencyContactName}</span>
             </div>
             <div className="flex justify-between">
               <span>Emergency Phone:</span>
-              <span>{booking.emergencyContactPhone}</span>
+              <span>{booking.parent?.emergencyContactPhone || booking.emergencyContactPhone}</span>
             </div>
           </div>
         </div>
@@ -1857,29 +1859,53 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
       <div>
         <h4 className="font-semibold mb-3">Athletes</h4>
         <div className="space-y-3">
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="font-medium">{booking.athlete1Name}</div>
-            <div className="text-sm text-gray-600">
-              Age: {calculateAge(booking.athlete1DateOfBirth || '')} | Experience: {booking.athlete1Experience}
-            </div>
-            {booking.athlete1Allergies && (
-              <div className="text-sm text-red-600 mt-1">
-                Allergies: {booking.athlete1Allergies}
+          {booking.athletes && booking.athletes.length > 0 ? (
+            booking.athletes.map((athlete: any, index: number) => (
+              <div key={athlete.id || index} className="p-3 bg-gray-50 rounded-lg">
+                <div className="font-medium">{athlete.firstName} {athlete.lastName}</div>
+                <div className="text-sm text-gray-600">
+                  Age: {calculateAge(athlete.dateOfBirth || '')} | Experience: {athlete.experience}
+                </div>
+                {athlete.allergies && (
+                  <div className="text-sm text-red-600 mt-1">
+                    Allergies: {athlete.allergies}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {booking.athlete2Name && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="font-medium">{booking.athlete2Name}</div>
-              <div className="text-sm text-gray-600">
-                Age: {booking.athlete2DateOfBirth ? calculateAge(booking.athlete2DateOfBirth) : "N/A"} | Experience: {booking.athlete2Experience}
-              </div>
-              {booking.athlete2Allergies && (
-                <div className="text-sm text-red-600 mt-1">
-                  Allergies: {booking.athlete2Allergies}
+            ))
+          ) : (
+            // Fallback to legacy fields
+            <>
+              {booking.athlete1Name && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium">{booking.athlete1Name}</div>
+                  <div className="text-sm text-gray-600">
+                    Age: {calculateAge(booking.athlete1DateOfBirth || '')} | Experience: {booking.athlete1Experience}
+                  </div>
+                  {booking.athlete1Allergies && (
+                    <div className="text-sm text-red-600 mt-1">
+                      Allergies: {booking.athlete1Allergies}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+              {booking.athlete2Name && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="font-medium">{booking.athlete2Name}</div>
+                  <div className="text-sm text-gray-600">
+                    Age: {booking.athlete2DateOfBirth ? calculateAge(booking.athlete2DateOfBirth) : "N/A"} | Experience: {booking.athlete2Experience}
+                  </div>
+                  {booking.athlete2Allergies && (
+                    <div className="text-sm text-red-600 mt-1">
+                      Allergies: {booking.athlete2Allergies}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+          {(!booking.athletes || booking.athletes.length === 0) && !booking.athlete1Name && (
+            <div className="text-muted-foreground">No athletes assigned</div>
           )}
         </div>
       </div>
@@ -1888,7 +1914,7 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
         <div>
           <h4 className="font-semibold mb-3">Focus Areas</h4>
           <div className="flex flex-wrap gap-2">
-            {booking.focusAreas.map((area, index) => (
+            {booking.focusAreas.map((area: any, index: number) => (
               <Badge key={index} variant="secondary">{area}</Badge>
             ))}
           </div>

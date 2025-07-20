@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { boolean, date, decimal, integer, json, pgEnum, pgTable, serial, text, time, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -78,6 +79,16 @@ export enum AttendanceStatusEnum {
   MANUAL = "manual"
 }
 
+// TypeScript enum for booking methods
+export enum BookingMethodEnum {
+  WEBSITE = "Website",
+  ADMIN = "Admin", 
+  TEXT = "Text",
+  CALL = "Call",
+  IN_PERSON = "In-Person",
+  EMAIL = "Email"
+}
+
 export const parents = pgTable("parents", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
@@ -86,52 +97,76 @@ export const parents = pgTable("parents", {
   phone: text("phone").notNull(),
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
-  waiverSigned: boolean("waiver_signed").notNull().default(false),
-  waiverSignedAt: timestamp("waiver_signed_at"),
-  waiverSignatureName: text("waiver_signature_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const athletes = pgTable("athletes", {
+export const athletes = pgTable('athletes', {
+  id: serial('id').primaryKey(),
+  parentId: integer('parent_id').notNull().references(() => parents.id),
+  name: text('name').notNull(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  allergies: text('allergies'),
+  experience: text('experience').notNull(),
+  photo: text('photo'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+  dateOfBirth: date('date_of_birth'),
+  gender: text('gender', { enum: ['male', 'female', 'prefer_not_to_say'] }),
+  latestWaiverId: integer('latest_waiver_id'),
+  waiverStatus: text('waiver_status', { enum: ['pending', 'signed', 'expired'] }).default('pending'),
+});
+
+// Lesson types table
+export const lessonTypes = pgTable("lesson_types", {
   id: serial("id").primaryKey(),
-  parentId: integer("parent_id").references(() => parents.id).notNull(),
-  name: text("name").notNull(), // Keep for backward compatibility during migration
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  dateOfBirth: text("date_of_birth").notNull(),
-  gender: text("gender").references(() => genders.name), // Reference to genders table
-  allergies: text("allergies"),
-  experience: text("experience").notNull(),
-  photo: text("photo"), // Base64 encoded photo for admin use only
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  duration: integer("duration").notNull(), // in minutes
+  isPrivate: boolean("is_private").default(false).notNull(),
+  maxAthletes: integer("max_athletes").default(1).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const bookings = pgTable("bookings", {
+// Booking method enum for the new dropdown requirements
+export const bookingMethodEnum = pgEnum("booking_method", [
+  "Website", "Admin", "Text", "Call", "In-Person", "Email"
+]);
+
+export const bookings: any = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  lessonType: text("lesson_type").notNull(),
+  // Foreign key relationships replace redundant data
+  parentId: integer("parent_id").notNull().references(() => parents.id, { onDelete: "cascade" }),
+  lessonTypeId: integer("lesson_type_id").notNull().references(() => lessonTypes.id, { onDelete: "restrict" }),
+  waiverId: integer("waiver_id").references((): any => waivers.id, { onDelete: "set null" }),
+  
+  // Core booking details
   preferredDate: date("preferred_date").notNull(),
   preferredTime: time("preferred_time").notNull(),
   focusAreas: text("focus_areas").array().notNull(),
-  parentFirstName: text("parent_first_name").notNull(),
-  parentLastName: text("parent_last_name").notNull(),
-  parentEmail: text("parent_email").notNull(),
-  parentPhone: text("parent_phone").notNull(),
-  emergencyContactName: text("emergency_contact_name").notNull(),
-  emergencyContactPhone: text("emergency_contact_phone").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  
+  // Status fields (the only status fields needed)
   status: bookingStatusEnum("status").notNull().default("pending"),
-  bookingMethod: text("booking_method").notNull().default("online"), // "online", "phone", "in-person", "manual"
-  waiverSigned: boolean("waiver_signed").notNull().default(false),
-  waiverSignedAt: timestamp("waiver_signed_at"),
-  waiverSignatureName: text("waiver_signature_name"),
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("unpaid"), // Tracks Stripe payment state
   attendanceStatus: attendanceStatusEnum("attendance_status").notNull().default("pending"), // Tracks session attendance
+  
+  // Booking method with proper enum
+  bookingMethod: bookingMethodEnum("booking_method").notNull().default("Website"),
+  
+  // Payment tracking
   reservationFeePaid: boolean("reservation_fee_paid").notNull().default(false),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  stripeSessionId: text("stripe_session_id"), // Stripe checkout session ID for payment tracking
+  
+  // Optional fields
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
+  
   // Safety verification fields for pickup/dropoff authorization
   dropoffPersonName: text("dropoff_person_name"),
   dropoffPersonRelationship: text("dropoff_person_relationship"),
@@ -145,7 +180,7 @@ export const bookings = pgTable("bookings", {
   altPickupPersonPhone: text("alt_pickup_person_phone"),
   safetyVerificationSigned: boolean("safety_verification_signed").notNull().default(false),
   safetyVerificationSignedAt: timestamp("safety_verification_signed_at"),
-  stripeSessionId: text("stripe_session_id"), // Stripe checkout session ID for payment tracking
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -177,16 +212,14 @@ export const paymentLogs = pgTable("payment_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const waivers = pgTable("waivers", {
+export const waivers: any = pgTable("waivers", {
   id: serial("id").primaryKey(),
-  bookingId: integer("booking_id").references(() => bookings.id),
-  athleteId: integer("athlete_id").references(() => athletes.id),
-  parentId: integer("parent_id").references(() => parents.id),
-  athleteName: text("athlete_name").notNull(),
-  signerName: text("signer_name").notNull(),
+  bookingId: integer("booking_id").references((): any => bookings.id),
+  athleteId: integer("athlete_id").references(() => athletes.id).notNull(),
+  parentId: integer("parent_id").references(() => parents.id).notNull(),
   relationshipToAthlete: text("relationship_to_athlete").notNull().default("Parent/Guardian"),
   signature: text("signature").notNull(), // Base64 signature data
-  emergencyContactNumber: text("emergency_contact_number").notNull(),
+  emergencyContactNumber: text("emergency_contact_number").notNull(), // Keep for historical record but derive from parent
   // Checkboxes for the five required agreements
   understandsRisks: boolean("understands_risks").notNull().default(false),
   agreesToPolicies: boolean("agrees_to_policies").notNull().default(false),
@@ -329,22 +362,40 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  focusAreas: true, // Remove old focusAreas field
+  focusAreas: true, // Will be handled via junction table
 }).extend({
-  lessonType: z.enum(["quick-journey", "dual-quest", "deep-dive", "partner-progression"]),
-  preferredDate: z.coerce.date(), // Use native date validation
-  preferredTime: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"), // Time validation
+  // Foreign key IDs (required)
+  parentId: z.number().positive("Parent ID is required"),
+  lessonTypeId: z.number().positive("Lesson type ID is required"),
+  waiverId: z.number().positive().nullable().optional(),
+  
+  // Core booking details
+  preferredDate: z.coerce.date(),
+  preferredTime: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
+  
+  // Status enums
   status: z.nativeEnum(BookingStatusEnum).default(BookingStatusEnum.PENDING),
-  bookingMethod: z.enum(["online", "phone", "in-person", "manual"]).default("online"),
+  bookingMethod: z.nativeEnum(BookingMethodEnum).default(BookingMethodEnum.WEBSITE),
   paymentStatus: z.nativeEnum(PaymentStatusEnum).default(PaymentStatusEnum.UNPAID),
   attendanceStatus: z.nativeEnum(AttendanceStatusEnum).default(AttendanceStatusEnum.PENDING),
-  // New normalized arrays for IDs only
+  
+  // Arrays for junction table relationships
   apparatusIds: z.array(z.number()).max(4).default([]),
   focusAreaIds: z.array(z.number()).max(8).default([]),
   sideQuestIds: z.array(z.number()).max(4).default([]),
-  amount: z.coerce.string(),
+  
+  // Legacy support for parent info (will be used to find/create parentId)
+  parentFirstName: z.string().optional(),
+  parentLastName: z.string().optional(), 
+  parentEmail: z.string().email().optional(),
+  parentPhone: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  
+  // Legacy support for lesson type (will be used to find lessonTypeId)
+  lessonType: z.string().optional(),
+  
   safetyVerificationSignedAt: z.union([z.date(), z.string().transform(str => new Date(str))]).nullable().optional(),
-  waiverSignedAt: z.union([z.date(), z.string().transform(str => new Date(str))]).nullable().optional(),
   // Safety verification fields
   dropoffPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]).nullable().optional(),
   pickupPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]).nullable().optional(),
@@ -481,11 +532,31 @@ export type InsertBookingFocusArea = z.infer<typeof insertBookingFocusAreaSchema
 export type InsertBookingSideQuest = z.infer<typeof insertBookingSideQuestSchema>;
 
 // Enhanced booking type with normalized relationships
+// Enhanced booking type with normalized relationships
 export type BookingWithRelations = Booking & {
+  // Related entities via foreign keys
+  parent?: Parent;
+  lessonType?: LessonType;
+  waiver?: Waiver;
+  
+  // Junction table relationships
   apparatus: Array<{ id: number; name: string }>;
   focusAreas: Array<{ id: number; name: string }>;
   sideQuests: Array<{ id: number; name: string }>;
   athletes?: Array<Athlete>;
+  
+  // Legacy fields for backward compatibility
+  parentFirstName?: string;
+  parentLastName?: string;
+  parentEmail?: string;
+  parentPhone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  lessonTypeName?: string;
+  amount?: number;
+  waiverSigned?: boolean;
+  waiverSignedAt?: Date | null;
+  waiverSignatureName?: string;
 };
 
 export const insertWaiverSchema = createInsertSchema(waivers).omit({
@@ -548,6 +619,10 @@ export type AvailabilityException = typeof availabilityExceptions.$inferSelect;
 export type InsertAvailabilityException = z.infer<typeof insertAvailabilityExceptionSchema>;
 export type Admin = typeof admins.$inferSelect;
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+
+// Lesson types
+export type LessonType = typeof lessonTypes.$inferSelect;
+export type InsertLessonType = typeof lessonTypes.$inferInsert;
 
 // Parent authentication codes table
 export const parentAuthCodes = pgTable("parent_auth_codes", {
@@ -614,6 +689,86 @@ export const archivedWaivers = pgTable("archived_waivers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Relations - defined after all tables to avoid circular references
+export const bookingsRelations = relations(bookings, ({ one, many }) => ({
+  parent: one(parents, {
+    fields: [bookings.parentId],
+    references: [parents.id],
+  }),
+  lessonType: one(lessonTypes, {
+    fields: [bookings.lessonTypeId],
+    references: [lessonTypes.id],
+  }),
+  waiver: one(waivers, {
+    fields: [bookings.waiverId],
+    references: [waivers.id],
+  }),
+  athletes: many(bookingAthletes),
+  focusAreas: many(bookingFocusAreas),
+  apparatus: many(bookingApparatus),
+  sideQuests: many(bookingSideQuests),
+  logs: many(bookingLogs),
+}));
+
+export const parentsRelations = relations(parents, ({ many }) => ({
+  bookings: many(bookings),
+  athletes: many(athletes),
+  waivers: many(waivers),
+}));
+
+export const lessonTypesRelations = relations(lessonTypes, ({ many }) => ({
+  bookings: many(bookings),
+}));
+
+export const waiversRelations = relations(waivers, ({ one, many }) => ({
+  booking: one(bookings, {
+    fields: [waivers.bookingId],
+    references: [bookings.id],
+  }),
+  athlete: one(athletes, {
+    fields: [waivers.athleteId],
+    references: [athletes.id],
+  }),
+  parent: one(parents, {
+    fields: [waivers.parentId],
+    references: [parents.id],
+  }),
+  bookingsUsingThisWaiver: many(bookings, {
+    relationName: "waiverReference"
+  }),
+}));
+
+export const athletesRelations = relations(athletes, ({ one, many }) => ({
+  parent: one(parents, {
+    fields: [athletes.parentId],
+    references: [parents.id],
+  }),
+  latestWaiver: one(waivers, {
+    fields: [athletes.latestWaiverId],
+    references: [waivers.id],
+  }),
+  waivers: many(waivers),
+  bookingAthletes: many(bookingAthletes),
+}));
+
+export const bookingAthletesRelations = relations(bookingAthletes, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [bookingAthletes.bookingId],
+    references: [bookings.id],
+  }),
+  athlete: one(athletes, {
+    fields: [bookingAthletes.athleteId],
+    references: [athletes.id],
+  }),
+}));
+
+export const athleteWaiverRelations = relations(athletes, ({ one }) => ({
+  latestWaiver: one(waivers, {
+    fields: [athletes.latestWaiverId],
+    references: [waivers.id],
+  }),
+}));
+
 export const insertArchivedWaiverSchema = createInsertSchema(archivedWaivers).omit({
   id: true,
   createdAt: true,
@@ -622,6 +777,37 @@ export const insertArchivedWaiverSchema = createInsertSchema(archivedWaivers).om
 
 export type ArchivedWaiver = typeof archivedWaivers.$inferSelect;
 export type InsertArchivedWaiver = z.infer<typeof insertArchivedWaiverSchema>;
+
+// Athlete with waiver status view type - matches the SQL view created in migration
+export type AthleteWithWaiverStatus = Athlete & {
+  waiverSignedAt?: string | null;
+  waiverSignatureId?: number | null; // The parent_id who signed
+  waiverSignatureData?: string | null; // The actual digital signature
+  waiverCreatedAt?: string | null;
+  computedWaiverStatus?: 'signed' | 'pending' | 'none';
+};
+
+// Parent with athletes waiver status summary
+export type ParentWithAthletesWaiverStatus = {
+  parent_id: number;
+  parent_first_name: string;
+  parent_last_name: string;
+  parent_email: string;
+  parent_phone: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  parent_created_at: Date;
+  total_athletes: number;
+  athletes_with_waivers: number;
+  athletes_without_waivers: number;
+  athletes_waiver_info: Array<{
+    athlete_id: number;
+    athlete_name: string;
+    waiver_signed: boolean;
+    waiver_signed_at: Date | null;
+    latest_waiver_id: number | null;
+  }>;
+};
 
 // Helper functions for focus area mapping
 export function mapFocusAreaNamesToIds(focusAreaNames: string[]): number[] {
