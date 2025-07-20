@@ -47,6 +47,12 @@ npm run dev:clean  # PREFERRED: Cleans ports then starts both client (5173) and 
 npm run dev  # Starts both client (5173) and server (5001)
 ```
 
+**⚠️ CRITICAL PORT ENFORCEMENT:** Always use the OFFICIAL development ports:
+- **FRONTEND (Vite):** `http://localhost:5173` - NEVER change this port
+- **BACKEND (Express):** `http://localhost:5001` - NEVER change this port
+- **If ports are in use:** Kill existing processes and restart on official ports
+- **NEVER use alternative ports** like 5174, 3000, etc. Always kill and restart on 5173/5001
+
 **⚠️ IMPORTANT:** Always use `npm run dev:clean` to avoid port conflicts. This command:
 1. Runs `scripts/kill-ports.sh` to gracefully shutdown existing processes
 2. Cleans up ports 5001 (Express) and 5173 (Vite) 

@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +33,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    AlertCircle,
-    BarChart,
-    Calendar,
-    CalendarX,
-    CheckCircle,
-    Clock,
-    DollarSign,
-    Edit,
-    Eye,
-    Mail,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    RefreshCw,
-    Search,
-    Trash2,
-    User,
-    Users,
-    X
+  AlertCircle,
+  BarChart,
+  Calendar,
+  CalendarX,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Edit,
+  Eye,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+  Users,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -106,7 +106,6 @@ export default function Admin() {
   const [preSelectedAthleteId, setPreSelectedAthleteId] = useState<number | undefined>();
   
   // Parent management state
-  const [isParentViewOpen, setIsParentViewOpen] = useState(false);
   const [isParentEditOpen, setIsParentEditOpen] = useState(false);
   
   // Athletes search state
@@ -187,6 +186,17 @@ export default function Admin() {
   const { data: athletes = [] } = useQuery<Athlete[]>({
     queryKey: ['/api/athletes'],
     enabled: !!authStatus?.loggedIn,
+  });
+
+  // Query for detailed parent information when one is selected
+  const { data: selectedParentDetails } = useQuery({
+    queryKey: ['/api/parents', selectedParent?.id],
+    queryFn: async () => {
+      if (!selectedParent?.id) return null;
+      const response = await apiRequest('GET', `/api/parents/${selectedParent.id}`);
+      return await response.json();
+    },
+    enabled: !!authStatus?.loggedIn && !!selectedParent?.id,
   });
 
   const { data: availability = [] } = useQuery<Availability[]>({
@@ -1480,7 +1490,6 @@ export default function Admin() {
                                 size="sm"
                                 onClick={() => {
                                   setSelectedParent(parent);
-                                  setIsParentViewOpen(true);
                                 }}
                               >
                                 <Eye className="h-4 w-4" />
@@ -2872,7 +2881,10 @@ export default function Admin() {
               </DialogDescription>
             </DialogHeader>
             
-            {selectedParent && (
+            {selectedParent && (() => {
+              // Use detailed data if available, fallback to basic parent data
+              const parentData = selectedParentDetails || selectedParent;
+              return (
               <div className="space-y-6">
                 {/* Basic Info */}
                 <Card>
@@ -2884,28 +2896,28 @@ export default function Admin() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Full Name</Label>
                         <p className="text-lg font-semibold">
-                          {selectedParent.first_name} {selectedParent.last_name}
+                          {parentData.first_name} {parentData.last_name}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Parent ID</Label>
-                        <p className="text-lg">{selectedParent.id}</p>
+                        <p className="text-lg">{parentData.id}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Email</Label>
-                        <p className="text-lg">{selectedParent.email}</p>
+                        <p className="text-lg">{parentData.email}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Phone</Label>
-                        <p className="text-lg">{selectedParent.phone}</p>
+                        <p className="text-lg">{parentData.phone}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Emergency Contact</Label>
                         <p className="text-lg">
-                          {selectedParent.emergency_contact_name || 'Not provided'}
-                          {selectedParent.emergency_contact_phone && (
+                          {parentData.emergency_contact_name || 'Not provided'}
+                          {parentData.emergency_contact_phone && (
                             <span className="block text-sm text-gray-600">
-                              {selectedParent.emergency_contact_phone}
+                              {parentData.emergency_contact_phone}
                             </span>
                           )}
                         </p>
@@ -2913,7 +2925,7 @@ export default function Admin() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Member Since</Label>
                         <p className="text-lg">
-                          {selectedParent.created_at ? new Date(selectedParent.created_at).toLocaleDateString() : 'Unknown'}
+                          {parentData.created_at ? new Date(parentData.created_at).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                     </div>
@@ -2921,17 +2933,17 @@ export default function Admin() {
                 </Card>
 
                 {/* Athletes */}
-                {selectedParent.athletes && selectedParent.athletes.length > 0 && (
+                {parentData.athletes && parentData.athletes.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         🏆 Athletes
-                        <Badge variant="secondary">{selectedParent.athletes.length}</Badge>
+                        <Badge variant="secondary">{parentData.athletes.length}</Badge>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {selectedParent.athletes.map((athlete: any) => (
+                        {parentData.athletes.map((athlete: any) => (
                           <Card key={athlete.id} className="p-4">
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
@@ -2979,17 +2991,17 @@ export default function Admin() {
                 )}
 
                 {/* Booking History */}
-                {selectedParent.bookings && selectedParent.bookings.length > 0 && (
+                {parentData.bookings && parentData.bookings.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         📅 Booking History
-                        <Badge variant="secondary">{selectedParent.bookings.length}</Badge>
+                        <Badge variant="secondary">{parentData.bookings.length}</Badge>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {selectedParent.bookings
+                        {parentData.bookings
                           .sort((a: any, b: any) => new Date(b.preferred_date).getTime() - new Date(a.preferred_date).getTime())
                           .slice(0, 10) // Show last 10 bookings
                           .map((booking: any) => (
@@ -3034,9 +3046,9 @@ export default function Admin() {
                           </div>
                         ))}
                         
-                        {selectedParent.bookings.length > 10 && (
+                        {parentData.bookings.length > 10 && (
                           <p className="text-sm text-gray-500 text-center">
-                            Showing 10 most recent bookings of {selectedParent.bookings.length} total
+                            Showing 10 most recent bookings of {parentData.bookings.length} total
                           </p>
                         )}
                       </div>
@@ -3044,7 +3056,8 @@ export default function Admin() {
                   </Card>
                 )}
               </div>
-            )}
+            );
+            })()}
           </DialogContent>
         </Dialog>
         
@@ -3527,78 +3540,6 @@ export default function Admin() {
                 alt="Enlarged athlete photo"
                 className="w-full h-auto rounded-lg"
               />
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Parent View Modal */}
-        <Dialog open={isParentViewOpen} onOpenChange={setIsParentViewOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Parent Details</DialogTitle>
-            </DialogHeader>
-            {selectedParent && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Contact Information</h3>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>Name:</strong> {selectedParent.first_name} {selectedParent.last_name}</p>
-                      <p><strong>Email:</strong> {selectedParent.email}</p>
-                      <p><strong>Phone:</strong> {selectedParent.phone}</p>
-                      <p><strong>Emergency Contact:</strong> {selectedParent.emergency_contact_name}</p>
-                      <p><strong>Emergency Phone:</strong> {selectedParent.emergency_contact_phone}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Summary</h3>
-                    <div className="space-y-2 text-sm">
-                      <p><strong>Athletes:</strong> {selectedParent.athletes?.length || 0}</p>
-                      <p><strong>Bookings:</strong> {selectedParent.bookings?.length || 0}</p>
-                      <p><strong>Waiver Status:</strong> {selectedParent.waiver_signed ? 'Signed' : 'Not Signed'}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {selectedParent.athletes && selectedParent.athletes.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Athletes</h3>
-                    <div className="grid gap-2">
-                      {selectedParent.athletes.map((athlete: any) => (
-                        <div key={athlete.id} className="p-3 border rounded-lg flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">{athlete.first_name} {athlete.last_name}</p>
-                            <p className="text-sm text-gray-600">Age: {calculateAge(athlete.date_of_birth)}, Experience: {athlete.experience}</p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openAthleteModal(athlete.id)}
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setIsParentViewOpen(false);
-                      setIsParentEditOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsParentViewOpen(false)}>
-                    Close
-                  </Button>
-                </div>
-              </div>
             )}
           </DialogContent>
         </Dialog>

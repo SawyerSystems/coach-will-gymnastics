@@ -1640,7 +1640,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getBooking(id: number): Promise<Booking | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('id', id)
@@ -3120,7 +3120,7 @@ export class SupabaseStorage implements IStorage {
     if (!booking) return undefined;
 
     // Get related apparatus
-    const { data: apparatusData } = await supabase
+    const { data: apparatusData } = await supabaseAdmin
       .from('booking_apparatus')
       .select(`
         apparatus_id,
@@ -3129,7 +3129,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related focus areas
-    const { data: focusAreasData } = await supabase
+    const { data: focusAreasData } = await supabaseAdmin
       .from('booking_focus_areas')
       .select(`
         focus_area_id,
@@ -3138,7 +3138,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related side quests
-    const { data: sideQuestsData } = await supabase
+    const { data: sideQuestsData } = await supabaseAdmin
       .from('booking_side_quests')
       .select(`
         side_quest_id,
@@ -3147,7 +3147,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related athletes
-    const { data: athletesData } = await supabase
+    const { data: athletesData } = await supabaseAdmin
       .from('booking_athletes')
       .select(`
         athlete_id,
