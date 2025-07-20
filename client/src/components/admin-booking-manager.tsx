@@ -385,6 +385,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   // Fetch all bookings
   const { data: bookings = [], isLoading } = useQuery<Booking[]>({
     queryKey: ["/api/bookings"],
+    queryFn: () => apiRequest('GET', '/api/bookings').then(res => res.json()),
   });
 
   // Create manual booking mutation

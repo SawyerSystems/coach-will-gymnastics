@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Download, Mail, Eye, FileText, AlertCircle, CheckCircle } from "lucide-react";
 import { formatDate } from "@/lib/dateUtils";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, CheckCircle, Download, Eye, FileText, Mail, Search } from "lucide-react";
+import { useState } from "react";
 
 interface Waiver {
   id: number | string;
@@ -199,12 +199,12 @@ export function AdminWaiverManagement() {
 
   // Filter waivers based on search term
   const filteredSignedWaivers = signedWaivers.filter(waiver =>
-    waiver.athleteName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    waiver.signerName.toLowerCase().includes(searchTerm.toLowerCase())
+    (waiver.athleteName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (waiver.signerName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredMissingWaivers = missingWaivers.filter(waiver =>
-    waiver.athleteName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (waiver.athleteName || waiver.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     ((waiver as any).name && (waiver as any).name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 

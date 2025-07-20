@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +33,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  BarChart,
-  Calendar,
-  CalendarX,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Edit,
-  Eye,
-  Mail,
-  MessageCircle,
-  MessageSquare,
-  Plus,
-  RefreshCw,
-  Search,
-  Trash2,
-  User,
-  Users,
-  X
+    AlertCircle,
+    BarChart,
+    Calendar,
+    CalendarX,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Edit,
+    Eye,
+    Mail,
+    MessageCircle,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Search,
+    Trash2,
+    User,
+    Users,
+    X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -142,21 +142,25 @@ export default function Admin() {
 
   const { data: bookings = [] } = useQuery<Booking[]>({
     queryKey: ['/api/bookings'],
+    queryFn: () => apiRequest('GET', '/api/bookings').then(res => res.json()),
     enabled: !!authStatus?.loggedIn,
   });
 
   const { data: blogPosts = [] } = useQuery<BlogPost[]>({
     queryKey: ['/api/blog-posts'],
+    queryFn: () => apiRequest('GET', '/api/blog-posts').then(res => res.json()),
     enabled: !!authStatus?.loggedIn,
   });
 
   const { data: tips = [] } = useQuery<Tip[]>({
     queryKey: ['/api/tips'],
+    queryFn: () => apiRequest('GET', '/api/tips').then(res => res.json()),
     enabled: !!authStatus?.loggedIn,
   });
 
   const { data: parents = [] } = useQuery<Parent[]>({
     queryKey: ['/api/parents'],
+    queryFn: () => apiRequest('GET', '/api/parents').then(res => res.json()),
     enabled: !!authStatus?.loggedIn,
   });
 
@@ -185,6 +189,7 @@ export default function Admin() {
 
   const { data: athletes = [] } = useQuery<Athlete[]>({
     queryKey: ['/api/athletes'],
+    queryFn: () => apiRequest('GET', '/api/athletes').then(res => res.json()),
     enabled: !!authStatus?.loggedIn,
   });
 
@@ -193,10 +198,17 @@ export default function Admin() {
     queryKey: ['/api/parents', selectedParent?.id],
     queryFn: async () => {
       if (!selectedParent?.id) return null;
-      const response = await apiRequest('GET', `/api/parents/${selectedParent.id}`);
-      return await response.json();
+      try {
+        const response = await apiRequest('GET', `/api/parents/${selectedParent.id}`);
+        if (!response.ok) return null; // Handle 404 gracefully
+        return await response.json();
+      } catch (error) {
+        console.warn(`Parent ${selectedParent.id} not found:`, error);
+        return null;
+      }
     },
     enabled: !!authStatus?.loggedIn && !!selectedParent?.id,
+    retry: false, // Don't retry 404s
   });
 
   const { data: availability = [] } = useQuery<Availability[]>({
@@ -1109,6 +1121,10 @@ export default function Admin() {
                   </div>
                   {/* Show all athletes with search filter */}
                   {athletes
+                    // First deduplicate by athlete ID
+                    .filter((athlete, index, self) => 
+                      index === self.findIndex((a) => a.id === athlete.id)
+                    )
                     .filter(athlete => {
                       // Search filter
                       if (athleteSearchTerm) {
@@ -1152,9 +1168,8 @@ export default function Admin() {
                       return nameA.localeCompare(nameB);
                     })
                     .map((athlete) => {
-                      const athleteKey = `${athlete.firstName && athlete.lastName 
-                        ? `${athlete.firstName} ${athlete.lastName}`
-                        : athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
+                      // Use consistent key format: athlete.name should be the full name
+                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
                       const parentInfo = parentMapping.get(athleteKey);
                       const today = new Date();
                       
@@ -1296,9 +1311,8 @@ export default function Admin() {
                       return daysUntilBirthday > 7 || daysUntilBirthday < 0;
                     })
                     .map((athlete) => {
-                      const athleteKey = `${athlete.firstName && athlete.lastName 
-                        ? `${athlete.firstName} ${athlete.lastName}`
-                        : athlete.name}-${athlete.dateOfBirth}`;
+                      // Use consistent key format: athlete.name should be the full name
+                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth}`;
                       const parentInfo = parentMapping.get(athleteKey);
                       
                       return (
@@ -1499,7 +1513,13 @@ export default function Admin() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedParent(parent);
+                                  // Only set selectedParent if it exists in our parents data
+                                  const validParent = parents.find(p => p.id === parent.id);
+                                  if (validParent) {
+                                    setSelectedParent(validParent);
+                                  } else {
+                                    console.warn(`Parent ${parent.id} not found in current parents list`);
+                                  }
                                 }}
                               >
                                 <Eye className="h-4 w-4" />
@@ -1509,8 +1529,14 @@ export default function Admin() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setSelectedParent(parent);
-                                  setIsParentEditOpen(true);
+                                  // Only set selectedParent if it exists in our parents data
+                                  const validParent = parents.find(p => p.id === parent.id);
+                                  if (validParent) {
+                                    setSelectedParent(validParent);
+                                    setIsParentEditOpen(true);
+                                  } else {
+                                    console.warn(`Parent ${parent.id} not found in current parents list`);
+                                  }
                                 }}
                               >
                                 <Edit className="h-4 w-4" />

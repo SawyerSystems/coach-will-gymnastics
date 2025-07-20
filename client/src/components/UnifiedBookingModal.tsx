@@ -154,22 +154,8 @@ export function UnifiedBookingModal({
 
   const initialState = getInitialState();
 
-  console.log("UnifiedBookingModal rendered with:", {
-    flowType,
-    isOpen,
-    parentData: parentData ? {
-      id: parentData.id,
-      firstName: parentData.firstName,
-      lastName: parentData.lastName,
-      email: parentData.email
-    } : null,
-    selectedAthletes: selectedAthletes.length,
-    isNewParent,
-    isAdminFlow,
-    adminContext,
-    preSelectedAthleteId,
-    initialState
-  });
+  // Debug logging commented out to prevent console spam
+  // console.log("UnifiedBookingModal rendered with:", { flowType, isOpen, ... });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
