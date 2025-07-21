@@ -2792,11 +2792,38 @@ export default function Admin() {
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {parentData.athletes.map((athlete: any) => (
-                          <Card key={athlete.id} className="p-4">
+                          <Card
+                            key={athlete.id}
+                            className="p-4 cursor-pointer hover:bg-blue-50 focus:bg-blue-100 transition"
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`View details for ${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
+                            onClick={() => {
+                              setSelectedAthlete({
+                                ...athlete,
+                                // Normalize name fields for detail modal
+                                name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
+                                dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
+                              });
+                              setIsAthleteViewOpen(true);
+                              setParentDetailsModalOpen(false);
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedAthlete({
+                                  ...athlete,
+                                  name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
+                                  dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
+                                });
+                                setIsAthleteViewOpen(true);
+                                setParentDetailsModalOpen(false);
+                              }
+                            }}
+                          >
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-semibold">
-                                  {/* Prefer firstName/lastName, fallback to name */}
                                   {athlete.firstName || athlete.first_name || ''} {athlete.lastName || athlete.last_name || athlete.name?.split(' ').slice(1).join(' ') || ''}
                                 </h4>
                                 <Badge variant="outline">ID: {athlete.id}</Badge>
@@ -2805,7 +2832,6 @@ export default function Admin() {
                                 <p>
                                   <strong>Age:</strong>{' '}
                                   {(() => {
-                                    // Use date_of_birth, fallback to other keys if needed
                                     const dob = athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date;
                                     if (dob) {
                                       const age = calculateAge(dob);
@@ -2816,7 +2842,6 @@ export default function Admin() {
                                 </p>
                                 <p>
                                   <strong>Gender:</strong> {(() => {
-                                    // Normalize gender for display
                                     const genderRaw = athlete.gender || athlete.gender_identity || athlete.genderIdentity || '';
                                     if (!genderRaw) return 'Not provided';
                                     const g = genderRaw.toLowerCase().replace(/\s|_/g, '');
