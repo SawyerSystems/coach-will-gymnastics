@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +33,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    AlertCircle,
-    BarChart,
-    Calendar,
-    CalendarX,
-    CheckCircle,
-    Clock,
-    DollarSign,
-    Edit,
-    Eye,
-    Mail,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    RefreshCw,
-    Search,
-    Trash2,
-    User,
-    Users,
-    X
+  AlertCircle,
+  BarChart,
+  Calendar,
+  CalendarX,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Edit,
+  Eye,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+  Users,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -1127,102 +1127,11 @@ export default function Admin() {
                       className="pl-10"
                     />
                   </div>
-                  {/* Show all athletes with search filter */}
-                  {/* Upcoming birthdays (yellow cards, next 7 days only, no overlap) */}
+                  {/* Render each athlete only once: yellow card if birthday in next 7 days, else white card */}
                   {athletes
                     .filter((athlete, index, self) =>
                       index === self.findIndex((a) => a.id === athlete.id)
                     )
-                    .filter(athlete => {
-                      if (!athlete.dateOfBirth) return false;
-                      const today = new Date();
-                      const birthDate = new Date(athlete.dateOfBirth);
-                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                      if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      return daysUntilBirthday >= 0 && daysUntilBirthday <= 7;
-                    })
-                    .map((athlete) => {
-                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
-                      const parentInfo = parentMapping.get(athleteKey);
-                      const today = new Date();
-                      let daysUntilBirthday: number | null = null;
-                      if (athlete.dateOfBirth) {
-                        const birthDate = new Date(athlete.dateOfBirth);
-                        const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                        if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-                        daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      }
-                      return (
-                        <div key={athlete.id} className="relative bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-5 shadow-sm">
-                          {/* Action buttons in top-right corner */}
-                          <div className="absolute top-3 right-3 flex gap-2">
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-yellow-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} title="View Details"><Eye className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-yellow-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} title="Edit Athlete"><Edit className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-red-100 text-red-600" onClick={() => { const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); if (activeBookings.length > 0) { setDeleteAthleteError({ athlete, activeBookings }); } else { deleteAthleteMutation.mutate(athlete.id); } }} title="Delete Athlete"><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                          {/* Card Content */}
-                          <div className="flex items-start space-x-4">
-                            {athlete.photo ? (
-                              <img src={athlete.photo} alt={`${athlete.name}'s photo`} className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handlePhotoClick(athlete.photo!)} />
-                            ) : (
-                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-8 w-8 text-gray-400" /></div>
-                            )}
-                            <div className="flex-1 space-y-2">
-                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}</h3>
-                              <p className="text-sm font-medium text-orange-700 flex items-center gap-1">🎉 Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!</p>
-                              <p className="text-sm text-gray-600 flex items-center gap-2">🎂 Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} | 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}</p>
-                              {parentInfo && (<p className="text-sm text-gray-600 flex items-center gap-1">👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}</p>)}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  {/* Regular athletes (white cards, not in yellow cards) */}
-                  {athletes
-                    .filter((athlete, index, self) =>
-                      index === self.findIndex((a) => a.id === athlete.id)
-                    )
-                    .filter(athlete => {
-                      if (!athlete.dateOfBirth) return false;
-                      const today = new Date();
-                      const birthDate = new Date(athlete.dateOfBirth);
-                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                      if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      return daysUntilBirthday > 7;
-                    })
-                    .map((athlete) => {
-                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth}`;
-                      const parentInfo = parentMapping.get(athleteKey);
-                      return (
-                        <div key={`regular-${athlete.id}`} className="relative bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                          {/* Action buttons in top-right corner */}
-                          <div className="absolute top-3 right-3 flex gap-2">
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-blue-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} title="View Details"><Eye className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-blue-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} title="Edit Athlete"><Edit className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-red-100 text-red-600" onClick={() => { const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); if (activeBookings.length > 0) { setDeleteAthleteError({ athlete, activeBookings }); } else { deleteAthleteMutation.mutate(athlete.id); } }}><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                          {/* Card Content */}
-                          <div className="flex items-start space-x-4">
-                            {athlete.photo ? (
-                              <img src={athlete.photo} alt={`${athlete.name}'s photo`} className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handlePhotoClick(athlete.photo!)} />
-                            ) : (
-                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-8 w-8 text-gray-400" /></div>
-                            )}
-                            <div className="flex-1 space-y-2">
-                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}</h3>
-                              <p className="text-sm text-gray-600 flex items-center gap-2">🎂 {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old | 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}</p>
-                              {parentInfo && (<p className="text-sm text-gray-600 flex items-center gap-1">👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}</p>)}
-                            </div>
-                          </div>
-                        </div>
-                    );
-                  })}
-                  
-                  {/* Show regular athletes */}
-                  {athletes
                     .filter(athlete => {
                       // Search filter
                       if (athleteSearchTerm) {
@@ -1234,113 +1143,51 @@ export default function Admin() {
                           return false;
                         }
                       }
-                      
-                      const today = new Date();
-                      if (!athlete.dateOfBirth) {
-                        return false; // Skip athletes without birth dates
-                      }
-                      const birthDate = new Date(athlete.dateOfBirth);
-                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                      if (nextBirthday < today) {
-                        nextBirthday.setFullYear(today.getFullYear() + 1);
-                      }
-                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      return daysUntilBirthday > 7 || daysUntilBirthday < 0;
+                      return !!athlete.dateOfBirth;
                     })
                     .map((athlete) => {
-                      // Use consistent key format: athlete.name should be the full name
-                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth}`;
+                      const today = new Date();
+                      const birthDate = new Date(athlete.dateOfBirth || "1970-01-01");
+                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                      if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                      const isUpcomingBirthday = daysUntilBirthday >= 0 && daysUntilBirthday <= 7;
+                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
                       const parentInfo = parentMapping.get(athleteKey);
-                      
                       return (
-                        <div key={`regular-${athlete.id}`} className="relative bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                        <div
+                          key={athlete.id}
+                          className={
+                            isUpcomingBirthday
+                              ? 'relative bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-5 shadow-sm'
+                              : 'relative bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow'
+                          }
+                        >
                           {/* Action buttons in top-right corner */}
-                          <div className="absolute top-3 right-3 flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0 hover:bg-blue-100"
-                              onClick={() => {
-                                setSelectedAthlete(athlete);
-                                setIsAthleteViewOpen(true);
-                              }}
-                              title="View Details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0 hover:bg-blue-100"
-                              onClick={() => {
-                                setSelectedAthlete(athlete);
-                                setIsAthleteEditOpen(true);
-                              }}
-                              title="Edit Athlete"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0 hover:bg-red-100 text-red-600"
-                              onClick={() => {
-                                const activeBookings = bookings.filter(b => 
-                                  (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && 
-                                  (b.status === 'confirmed' || b.status === 'pending')
-                                );
-                                
-                                if (activeBookings.length > 0) {
-                                  setDeleteAthleteError({
-                                    athlete,
-                                    activeBookings
-                                  });
-                                } else {
-                                  deleteAthleteMutation.mutate(athlete.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <div className={`absolute top-3 right-3 flex gap-2 ${isUpcomingBirthday ? '' : ''}`}>
+                            <Button size="sm" variant="outline" className={`h-8 w-8 p-0 ${isUpcomingBirthday ? 'hover:bg-yellow-100' : 'hover:bg-blue-100'}`} onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} title="View Details"><Eye className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className={`h-8 w-8 p-0 ${isUpcomingBirthday ? 'hover:bg-yellow-100' : 'hover:bg-blue-100'}`} onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} title="Edit Athlete"><Edit className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className={`h-8 w-8 p-0 hover:bg-red-100 text-red-600`} onClick={() => { const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); if (activeBookings.length > 0) { setDeleteAthleteError({ athlete, activeBookings }); } else { deleteAthleteMutation.mutate(athlete.id); } }} title="Delete Athlete"><Trash2 className="h-4 w-4" /></Button>
                           </div>
-
                           {/* Card Content */}
                           <div className="flex items-start space-x-4">
                             {athlete.photo ? (
-                              <img
-                                src={athlete.photo}
-                                alt={`${athlete.name}'s photo`}
-                                className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handlePhotoClick(athlete.photo!)}
-                              />
+                              <img src={athlete.photo} alt={`${athlete.name}'s photo`} className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handlePhotoClick(athlete.photo!)} />
                             ) : (
-                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                                <User className="h-8 w-8 text-gray-400" />
-                              </div>
+                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-8 w-8 text-gray-400" /></div>
                             )}
-                            
                             <div className="flex-1 space-y-2">
-                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                🧑 {athlete.firstName && athlete.lastName 
-                                  ? `${athlete.firstName} ${athlete.lastName}`
-                                  : athlete.name}
-                              </h3>
-                              
-                              <p className="text-sm text-gray-600 flex items-center gap-2">
-                                🎂 {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old | 
-                                🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}
-                              </p>
-                              
-                              {parentInfo && (
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
-                                  👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}
-                                </p>
+                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}</h3>
+                              {isUpcomingBirthday && (
+                                <p className="text-sm font-medium text-orange-700 flex items-center gap-1">🎉 Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!</p>
                               )}
+                              <p className="text-sm text-gray-600 flex items-center gap-2">🎂 Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} | 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}</p>
+                              {parentInfo && (<p className="text-sm text-gray-600 flex items-center gap-1">👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}</p>)}
                             </div>
                           </div>
                         </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </CardContent>
             </Card>
@@ -3498,7 +3345,13 @@ export default function Admin() {
                 </div>
               </>
             ) : (
-              <div className="py-8 text-center text-gray-500">No athlete selected.</div>
+              <>
+                <DialogHeader>
+                  <DialogTitle className="sr-only">No Athlete Selected</DialogTitle>
+                  <DialogDescription className="sr-only">No athlete is currently selected. Select an athlete to view details.</DialogDescription>
+                </DialogHeader>
+                <div className="py-8 text-center text-gray-500">No athlete selected.</div>
+              </>
             )}
           </DialogContent>
         </Dialog>
