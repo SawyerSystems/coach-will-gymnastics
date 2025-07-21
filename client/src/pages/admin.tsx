@@ -876,8 +876,8 @@ export default function Admin() {
 
   // DASHBOARD STATS
   const totalBookings = bookings.length;
-  const pendingBookings = bookings.filter(b => b.status === "pending").length;
-  const confirmedBookings = bookings.filter(b => b.status === "confirmed").length;
+  const pendingBookings = bookings.filter(b => b.attendanceStatus === "pending").length;
+  const confirmedBookings = bookings.filter(b => b.attendanceStatus === "confirmed").length;
 
   // ANALYTICS COMPUTED DATA
   const filteredBookingsForAnalytics = bookings.filter(booking => {
@@ -2253,7 +2253,7 @@ export default function Admin() {
                       <CardContent>
                         <div className="text-2xl font-bold">
                           {bookings.length > 0 
-                            ? Math.round((bookings.filter(b => b.status === 'confirmed' || b.status === 'completed').length / bookings.length) * 100)
+                            ? Math.round((bookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length / bookings.length) * 100)
                             : 0}%
                         </div>
                         <p className="text-xs text-muted-foreground">Form to payment</p>
