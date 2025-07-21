@@ -3415,7 +3415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      if (booking.paymentStatus === PaymentStatusEnum.PAID) {
+      if (booking.paymentStatus === PaymentStatusEnum.RESERVATION_PAID || booking.paymentStatus === PaymentStatusEnum.SESSION_PAID) {
         return res.status(400).json({ error: "Payment already confirmed" });
       }
 

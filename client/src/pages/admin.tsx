@@ -2819,7 +2819,6 @@ export default function Admin() {
                                 dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
                               });
                               setIsAthleteViewOpen(true);
-                              setParentDetailsModalOpen(false);
                             }}
                             onKeyDown={e => {
                               if (e.key === 'Enter' || e.key === ' ') {
@@ -2830,7 +2829,6 @@ export default function Admin() {
                                   dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
                                 });
                                 setIsAthleteViewOpen(true);
-                                setParentDetailsModalOpen(false);
                               }
                             }}
                           >
