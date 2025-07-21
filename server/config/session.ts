@@ -55,10 +55,8 @@ export const sessionMiddleware = session({
     httpOnly: true,                              // Security: prevent XSS
     secure: isProd,                              // HTTPS only in production
     sameSite: isProd ? 'none' : 'lax',          // Cross-origin support
-    maxAge: 24 * 60 * 60 * 1000,                // 1 day session lifetime
-    
-    // Development: set domain for localhost cross-origin support
-    ...((!isProd) && { domain: 'localhost' })
+    maxAge: 24 * 60 * 60 * 1000                 // 1 day session lifetime
+    // Removed domain: 'localhost' for dev to allow cookie for all localhost variants
   }
 });
 
