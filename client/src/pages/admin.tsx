@@ -780,6 +780,10 @@ export default function Admin() {
     
     if (athlete) {
       console.log('🔍 SETTING SELECTED ATHLETE:', athlete);
+      // Ensure other modals are closed first
+      setIsAthleteEditOpen(false);
+      
+      // Set athlete and open modal
       setSelectedAthlete(athlete);
       setIsAthleteViewOpen(true);
       console.log('🔍 MODAL SHOULD BE OPEN NOW');
@@ -3155,20 +3159,20 @@ export default function Admin() {
         </Dialog>
 
         {/* Athlete View Modal */}
-        <Dialog open={isAthleteViewOpen} onOpenChange={setIsAthleteViewOpen}>
+        <Dialog open={isAthleteViewOpen && !!selectedAthlete} onOpenChange={setIsAthleteViewOpen}>
           <DialogContent 
             className="max-w-3xl max-h-[90vh] overflow-y-auto" 
             aria-describedby="athlete-profile-description"
           >
             <DialogHeader>
               <DialogTitle id="athlete-profile-title">
-                {selectedAthlete ? `Athlete Profile` : "No Athlete Selected"}
+                Athlete Profile
               </DialogTitle>
               <DialogDescription id="athlete-profile-description">
                 {selectedAthlete ? `Viewing profile for ${selectedAthlete.name}` : "View athlete information and manage bookings"}
               </DialogDescription>
             </DialogHeader>
-            {selectedAthlete ? (
+            {selectedAthlete && (
               <>
                 {/* Basic Info */}
                 <div className="border rounded-lg p-4" role="region" aria-labelledby="basic-info-heading">
@@ -3395,14 +3399,6 @@ export default function Admin() {
                     </Button>
                   </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="sr-only">No Athlete Selected</DialogTitle>
-                  <DialogDescription className="sr-only">No athlete is currently selected. Select an athlete to view details.</DialogDescription>
-                </DialogHeader>
-                <div className="py-8 text-center text-gray-500">No athlete selected.</div>
               </>
             )}
           </DialogContent>
