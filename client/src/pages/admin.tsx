@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +33,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  BarChart,
-  Calendar,
-  CalendarX,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Edit,
-  Eye,
-  Mail,
-  MessageCircle,
-  MessageSquare,
-  Plus,
-  RefreshCw,
-  Search,
-  Trash2,
-  User,
-  Users,
-  X
+    AlertCircle,
+    BarChart,
+    Calendar,
+    CalendarX,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Edit,
+    Eye,
+    Mail,
+    MessageCircle,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Search,
+    Trash2,
+    User,
+    Users,
+    X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -1555,6 +1555,9 @@ export default function Admin() {
                         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Create New Blog Post</DialogTitle>
+                            <DialogDescription>
+                              Fill out the details to create a new blog post.
+                            </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
                             <div>
@@ -1608,6 +1611,9 @@ export default function Admin() {
                       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Edit Blog Post</DialogTitle>
+                          <DialogDescription>
+                            Edit the details of your blog post below.
+                          </DialogDescription>
                         </DialogHeader>
                         {editingPost && (
                           <form onSubmit={(e) => {
@@ -1709,6 +1715,9 @@ export default function Admin() {
                         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Create New Tip</DialogTitle>
+                            <DialogDescription>
+                              Add a new tip for athletes and parents.
+                            </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
                             <div>
@@ -1790,6 +1799,9 @@ export default function Admin() {
                       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Edit Tip</DialogTitle>
+                          <DialogDescription>
+                            Edit the tip details below.
+                          </DialogDescription>
                         </DialogHeader>
                         {editingTip && (
                           <form onSubmit={(e) => {
@@ -2001,6 +2013,9 @@ export default function Admin() {
                                   <DialogContent>
                                     <DialogHeader>
                                       <DialogTitle>Set {day.label} Hours</DialogTitle>
+                                      <DialogDescription>
+                                        Set your available hours for {day.label}.
+                                      </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4">
                                       <div>
@@ -2617,14 +2632,12 @@ export default function Admin() {
                                   <DialogTitle>Confirm Data Deletion</DialogTitle>
                                   <DialogDescription>
                                     <span>This action will permanently delete ALL:</span>
-                                  </DialogDescription>
-                                  <ul className="list-disc list-inside mt-2 space-y-1">
-                                    <li>Parent profiles</li>
-                                    <li>Athlete profiles</li>
-                                    <li>Booking records</li>
-                                    <li>Authentication codes</li>
-                                  </ul>
-                                  <DialogDescription>
+                                    <ul className="list-disc list-inside mt-2 space-y-1">
+                                      <li>Parent profiles</li>
+                                      <li>Athlete profiles</li>
+                                      <li>Booking records</li>
+                                      <li>Authentication codes</li>
+                                    </ul>
                                     This action cannot be undone.
                                   </DialogDescription>
                                 </DialogHeader>
@@ -3054,6 +3067,9 @@ export default function Admin() {
           <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>Athlete Photo</DialogTitle>
+              <DialogDescription>
+                Enlarged view of the athlete's photo.
+              </DialogDescription>
             </DialogHeader>
             {enlargedPhoto && (
               <img
@@ -3247,14 +3263,14 @@ export default function Admin() {
           >
             <DialogHeader>
               <DialogTitle id="athlete-profile-title">
-                Athlete Profile
+                {selectedAthlete ? `Athlete Profile` : "No Athlete Selected"}
               </DialogTitle>
               <DialogDescription id="athlete-profile-description">
                 {selectedAthlete ? `Viewing profile for ${selectedAthlete.name}` : "View athlete information and manage bookings"}
               </DialogDescription>
             </DialogHeader>
-            {selectedAthlete && (
-              <div className="space-y-6">
+            {selectedAthlete ? (
+              <>
                 {/* Basic Info */}
                 <div className="border rounded-lg p-4" role="region" aria-labelledby="basic-info-heading">
                   <h3 id="basic-info-heading" className="font-semibold mb-3">Basic Information</h3>
@@ -3321,7 +3337,6 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
-
                 {/* Parent Info */}
                 {(() => {
                   const parentInfo = parentMapping.get(`${selectedAthlete.name}-${selectedAthlete.dateOfBirth}`);
@@ -3353,7 +3368,6 @@ export default function Admin() {
                     </div>
                   ) : null;
                 })()}
-
                 {/* Waiver Status */}
                 <WaiverStatusDisplay 
                   athleteId={selectedAthlete.id}
@@ -3366,7 +3380,6 @@ export default function Admin() {
                     });
                   }}
                 />
-
                 {/* Bookings History */}
                 <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
                   <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History</h3>
@@ -3417,12 +3430,7 @@ export default function Admin() {
                               )}
                             </div>
                             <div className="text-right">
-                              <Badge variant={
-                                booking.status === 'confirmed' ? 'default' :
-                                booking.status === 'pending' ? 'secondary' : 'destructive'
-                              } aria-label={`Status: ${booking.status}`}>
-                                {booking.status}
-                              </Badge>
+                              {/* Removed generic booking.status badge for cleaner UI */}
                               {booking.attendanceStatus && (
                                 <p className="text-xs text-gray-500 mt-1">
                                   Attendance: {booking.attendanceStatus}
@@ -3453,7 +3461,6 @@ export default function Admin() {
                     )}
                   </div>
                 </div>
-
                 {/* Action Buttons */}
                 <div className="flex justify-between pt-4 border-t" role="group" aria-label="Athlete actions">
                   <Button 
@@ -3489,7 +3496,9 @@ export default function Admin() {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </>
+            ) : (
+              <div className="py-8 text-center text-gray-500">No athlete selected.</div>
             )}
           </DialogContent>
         </Dialog>
@@ -3537,6 +3546,9 @@ export default function Admin() {
           <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>Athlete Photo</DialogTitle>
+              <DialogDescription>
+                Enlarged view of the athlete's photo.
+              </DialogDescription>
             </DialogHeader>
             {enlargedPhoto && (
               <img
@@ -3553,6 +3565,9 @@ export default function Admin() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Parent Information</DialogTitle>
+              <DialogDescription>
+                Update the parent's information below.
+              </DialogDescription>
             </DialogHeader>
             {selectedParent && (
               <div className="space-y-4">
