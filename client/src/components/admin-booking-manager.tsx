@@ -365,7 +365,7 @@ interface AdminBookingManagerProps {
     } | null;
   };
   onClose?: () => void;
-  openAthleteModal?: (athleteId: string) => void;
+  openAthleteModal?: (athleteId: string | number) => void;
 }
 
 export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }: AdminBookingManagerProps = {}) {
@@ -791,7 +791,16 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                           <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
                             {athleteId && openAthleteModal ? (
                               <button
-                                onClick={() => openAthleteModal(athleteId)}
+                                type="button"
+                                onClick={() => {
+                                  console.log('🔍 BOOKING TABLE CLICK DEBUG:', {
+                                    athleteId,
+                                    athleteName: athlete.name,
+                                    openAthleteModalExists: !!openAthleteModal,
+                                    fullAthleteData: athlete
+                                  });
+                                  openAthleteModal(athleteId);
+                                }}
                                 className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none p-0 font-inherit"
                               >
                                 {athlete.name}
@@ -810,7 +819,15 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                                 const athleteId = findAthleteIdByName(booking.athlete1Name);
                                 return athleteId && openAthleteModal ? (
                                   <button
-                                    onClick={() => openAthleteModal(athleteId)}
+                                    type="button"
+                                    onClick={() => {
+                                      console.log('🔍 LEGACY ATHLETE1 CLICK DEBUG:', {
+                                        athleteId,
+                                        athleteName: booking.athlete1Name,
+                                        openAthleteModalExists: !!openAthleteModal
+                                      });
+                                      openAthleteModal(athleteId);
+                                    }}
                                     className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none p-0 font-inherit"
                                   >
                                     {booking.athlete1Name}
@@ -827,7 +844,15 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                                 const athleteId = findAthleteIdByName(booking.athlete2Name);
                                 return athleteId && openAthleteModal ? (
                                   <button
-                                    onClick={() => openAthleteModal(athleteId)}
+                                    type="button"
+                                    onClick={() => {
+                                      console.log('🔍 LEGACY ATHLETE2 CLICK DEBUG:', {
+                                        athleteId,
+                                        athleteName: booking.athlete2Name,
+                                        openAthleteModalExists: !!openAthleteModal
+                                      });
+                                      openAthleteModal(athleteId);
+                                    }}
                                     className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer bg-transparent border-none p-0 font-inherit text-sm"
                                   >
                                     {booking.athlete2Name}

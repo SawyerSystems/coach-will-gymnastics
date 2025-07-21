@@ -56,25 +56,28 @@ CREATE TYPE payment_status AS ENUM (
     "table_name": "athletes",
     "column_name": "parent_id",
     "foreign_table_name": "parents",
-    "foreign_column_name": "id"
+    "foreign_column_name": "id",
+    "on_delete": "CASCADE"
   },
   {
     "table_name": "booking_athletes",
     "column_name": "booking_id",
     "foreign_table_name": "bookings",
     "foreign_column_name": "id"
-  },
   {
-    "table_name": "booking_athletes",
+    "table_name": "waivers",
     "column_name": "athlete_id",
     "foreign_table_name": "athletes",
-    "foreign_column_name": "id"
+    "foreign_column_name": "id",
+    "on_delete": "SET NULL"
   },
   {
-    "table_name": "bookings",
+    "table_name": "waivers",
     "column_name": "parent_id",
     "foreign_table_name": "parents",
-    "foreign_column_name": "id"
+    "foreign_column_name": "id",
+    "on_delete": "SET NULL"
+  },
   },
   {
     "table_name": "athletes",
@@ -2282,6 +2285,23 @@ CREATE TYPE payment_status AS ENUM (
 ]
 
 Triggers and Functions
+-- Trigger: Set waiver_signed to false on waiver delete
+CREATE OR REPLACE FUNCTION unset_waiver_signed_on_waiver_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE athletes
+  SET waiver_signed = FALSE
+  WHERE latest_waiver_id = OLD.id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_unset_waiver_signed_on_waiver_delete ON waivers;
+
+CREATE TRIGGER trg_unset_waiver_signed_on_waiver_delete
+AFTER DELETE ON waivers
+FOR EACH ROW
+EXECUTE FUNCTION unset_waiver_signed_on_waiver_delete();
 [
   {
     "schemaname": "public",

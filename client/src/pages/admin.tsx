@@ -767,11 +767,24 @@ export default function Admin() {
     setIsPhotoEnlarged(true);
   };
 
-  const openAthleteModal = (athleteId: string) => {
-    const athlete = athletes.find(a => a.id.toString() === athleteId);
+  const openAthleteModal = (athleteId: string | number) => {
+    console.log('🔍 openAthleteModal CALLED:', {
+      athleteId,
+      athleteIdType: typeof athleteId,
+      athletesArray: athletes,
+      athletesLength: athletes.length
+    });
+    
+    const athlete = athletes.find(a => a.id === Number(athleteId));
+    console.log('🔍 FOUND ATHLETE:', athlete);
+    
     if (athlete) {
+      console.log('🔍 SETTING SELECTED ATHLETE:', athlete);
       setSelectedAthlete(athlete);
       setIsAthleteViewOpen(true);
+      console.log('🔍 MODAL SHOULD BE OPEN NOW');
+    } else {
+      console.log('🔍 ATHLETE NOT FOUND!');
     }
   };
 
