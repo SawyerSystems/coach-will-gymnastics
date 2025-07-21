@@ -1,3 +1,12 @@
+// Helper to safely extract name/description from unknown object
+function getNameOrDescription(obj: unknown): string {
+  if (obj && typeof obj === 'object') {
+    if ('name' in obj && typeof (obj as any).name === 'string') return (obj as any).name;
+    if ('description' in obj && typeof (obj as any).description === 'string') return (obj as any).description;
+    return JSON.stringify(obj);
+  }
+  return String(obj);
+}
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,31 +81,16 @@ export function PaymentsTab() {
     queryKey: ["/api/bookings"],
   });
 
-  // Calculate financial totals
+  // Enhanced payment analytics
   const totals = {
-    pendingReservations: bookings
-      .filter(b => b.status === "pending")
-      .reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
-    
-    completedLessons: bookings
-      .filter(b => b.attendanceStatus === "completed")
-      .reduce((sum, b) => {
-        // Use actual lesson price instead of just amount field
-        const lessonPrice = getLessonPrice(b.lessonType);
-        return sum + lessonPrice;
-      }, 0),
-    
-    pendingStripePayments: bookings
-      .filter(b => b.paymentStatus === "unpaid" && b.status !== "cancelled")
-      .reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
-    
-    totalRevenue: bookings
-      .filter(b => ["paid", "confirmed", "manual-paid", "completed"].includes(b.status))
-      .reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
-    
-    refunded: bookings
-      .filter(b => b.paymentStatus === "refunded")
-      .reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
+    pendingReservations: bookings.filter(b => b.status === "pending").reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
+    completedLessons: bookings.filter(b => b.attendanceStatus === "completed").reduce((sum, b) => sum + getLessonPrice(b.lessonType || ''), 0),
+    pendingStripePayments: bookings.filter(b => b.paymentStatus === "unpaid" && b.status !== "cancelled").reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
+    totalRevenue: bookings.filter(b => ["paid", "confirmed", "manual-paid", "completed", "session-paid"].includes(b.status) || b.paymentStatus === "session-paid").reduce((sum, b) => sum + parseFloat(b.paidAmount || b.amount || "0"), 0),
+    totalPaid: bookings.reduce((sum, b) => sum + parseFloat(b.paidAmount || "0"), 0),
+    totalUnpaid: bookings.reduce((sum, b) => sum + (parseFloat(b.amount || "0") - parseFloat(b.paidAmount || "0")), 0),
+    refunded: bookings.filter(b => b.paymentStatus === "refunded" || b.paymentStatus === "session-refunded" || b.paymentStatus === "reservation-refunded").reduce((sum, b) => sum + parseFloat(b.paidAmount || b.amount || "0"), 0),
+    avgBookingValue: bookings.length > 0 ? (bookings.reduce((sum, b) => sum + parseFloat(b.paidAmount || b.amount || "0"), 0) / bookings.length) : 0,
   };
 
   // Calculate pending payments (remaining balance after reservation fee)
@@ -107,7 +101,7 @@ export function PaymentsTab() {
       b.attendanceStatus !== "completed" // Automatically exclude completed bookings
     )
     .map(booking => {
-      const totalPrice = getLessonPrice(booking.lessonType);
+      const totalPrice = getLessonPrice(booking.lessonType || '');
       const paidAmount = parseFloat(booking.paidAmount || "0");
       const remainingBalance = totalPrice - paidAmount;
       return {
@@ -123,9 +117,9 @@ export function PaymentsTab() {
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = !searchTerm || 
       (booking.athlete1Name && booking.athlete1Name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      booking.parentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.parentFirstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.parentLastName.toLowerCase().includes(searchTerm.toLowerCase());
+      (booking.parentEmail && booking.parentEmail.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (booking.parentFirstName && booking.parentFirstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (booking.parentLastName && booking.parentLastName.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesDate = !dateFilter || booking.preferredDate === dateFilter;
     const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
@@ -175,59 +169,8 @@ export function PaymentsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Pending Reservations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              ${totals.pendingReservations.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {bookings.filter(b => b.status === "pending").length} bookings
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Completed Lessons
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              ${totals.completedLessons.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {bookings.filter(b => b.attendanceStatus === "completed").length} lessons
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Pending Stripe
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              ${totals.pendingStripePayments.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Awaiting payment
-            </p>
-          </CardContent>
-        </Card>
-
+      {/* Enhanced Payment Analytics Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -239,12 +182,51 @@ export function PaymentsTab() {
             <div className="text-2xl font-bold text-blue-600">
               ${totals.totalRevenue.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              All time
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">All time</p>
           </CardContent>
         </Card>
-
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Check className="h-4 w-4" />
+              Total Paid
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              ${totals.totalPaid.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">All time</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Pending Reservations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              ${totals.pendingReservations.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.status === "pending").length} bookings</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Pending Stripe
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              ${totals.pendingStripePayments.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -256,9 +238,21 @@ export function PaymentsTab() {
             <div className="text-2xl font-bold text-gray-600">
               ${totals.refunded.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {bookings.filter(b => b.paymentStatus === "refunded").length} refunds
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.paymentStatus === "refunded" || b.paymentStatus === "session-refunded" || b.paymentStatus === "reservation-refunded").length} refunds</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Avg Booking Value
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              ${totals.avgBookingValue.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Per booking</p>
           </CardContent>
         </Card>
       </div>
@@ -374,7 +368,7 @@ export function PaymentsTab() {
                 </TableHeader>
                 <TableBody>
                   {filteredBookings.map((booking) => {
-                    const totalPrice = getLessonPrice(booking.lessonType);
+                    const totalPrice = getLessonPrice(booking.lessonType || '');
                     const paidAmount = parseFloat(booking.paidAmount || "0");
                     
                     // Calculate balance due based on payment status
@@ -398,14 +392,18 @@ export function PaymentsTab() {
                         <TableCell>
                           <div className="space-y-1">
                             <p className="text-sm font-medium">
-                              {formatDate(booking.preferredDate)}
+                              {formatDate(booking.preferredDate || '')}
                             </p>
                             <p className="text-xs text-muted-foreground">{booking.preferredTime}</p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <p className="font-medium">{booking.lessonType}</p>
+                            <p className="font-medium">
+                              {typeof booking.lessonType === 'object' && booking.lessonType !== null
+                                ? getNameOrDescription(booking.lessonType)
+                                : booking.lessonType}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               {booking.athlete1Name}
                               {booking.athlete2Name && ` & ${booking.athlete2Name}`}
@@ -424,7 +422,7 @@ export function PaymentsTab() {
                           ${balanceDue.toFixed(2)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{booking.status}</Badge>
+                            <Badge variant="outline">{typeof booking.status === 'object' && booking.status !== null ? JSON.stringify(booking.status) : booking.status}</Badge>
                         </TableCell>
                         <TableCell>
                           <Select
@@ -495,7 +493,7 @@ export function PaymentsTab() {
                         <TableCell>
                           <div className="space-y-1">
                             <p className="font-medium">
-                              {formatDate(payment.preferredDate)}
+                              {formatDate(payment.preferredDate || '')}
                             </p>
                             <p className="text-sm text-muted-foreground">{payment.preferredTime}</p>
                           </div>
@@ -513,7 +511,11 @@ export function PaymentsTab() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{payment.lessonType}</Badge>
+                          <Badge variant="outline">
+                            {typeof payment.lessonType === 'object' && payment.lessonType !== null
+                              ? getNameOrDescription(payment.lessonType)
+                              : payment.lessonType}
+                          </Badge>
                         </TableCell>
                         <TableCell>${payment.totalPrice.toFixed(2)}</TableCell>
                         <TableCell className="text-green-600">
@@ -606,7 +608,9 @@ export function PaymentsTab() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {booking.bookingMethod}
+                            {typeof booking.bookingMethod === 'object' && booking.bookingMethod !== null
+                              ? getNameOrDescription(booking.bookingMethod)
+                              : booking.bookingMethod}
                           </Badge>
                         </TableCell>
                         <TableCell>
