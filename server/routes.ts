@@ -149,8 +149,8 @@ async function checkBookingAvailability(date: string, startTime: string, duratio
   const existingBookings = await storage.getAllBookings();
   for (const booking of existingBookings) {
     if (booking.preferredDate === date && booking.status !== AttendanceStatusEnum.CANCELLED) {
-      const existingStart = timeToMinutes(booking.preferredTime);
-      const existingDuration = booking.lessonType.includes('1-hour') ? 60 : 30;
+      const existingStart = timeToMinutes(booking.preferredTime || '');
+      const existingDuration = booking.lessonType?.includes('1-hour') ? 60 : 30;
       const existingEnd = existingStart + existingDuration;
       
       // Check for overlap
@@ -236,8 +236,8 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
       // Check if this time conflicts with existing bookings
       let conflictsWithBooking = false;
       for (const booking of dayBookings) {
-        const bookingStart = timeToMinutes(booking.preferredTime);
-        const bookingDuration = getLessonDurationMinutes(booking.lessonType);
+        const bookingStart = timeToMinutes(booking.preferredTime || '');
+        const bookingDuration = getLessonDurationMinutes(booking.lessonType || '');
         const bookingEnd = bookingStart + bookingDuration;
         
         // Check for overlap
@@ -1398,9 +1398,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Auto-complete past sessions
-        const sessionDate = new Date(booking.preferredDate);
+        const sessionDate = booking.preferredDate ? new Date(booking.preferredDate) : null;
         const now = new Date();
-        if (sessionDate < now && booking.attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
+        if (sessionDate && sessionDate < now && booking.attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
           await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.COMPLETED);
           console.log(`[STATUS SYNC] Auto-completed past session for booking ${bookingId}`);
         }
@@ -1441,13 +1441,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
             
             if (hasUnsignedWaivers) {
-              const sessionDate = new Date(booking.preferredDate);
-              const daysUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate) : null;
+              if (sessionDate) {
+                const daysUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
               
-              // Send reminder 2 days before session
-              if (daysUntilSession <= 2 && daysUntilSession > 1) {
-                console.log(`[STATUS SYNC] Waiver reminder needed for booking ${booking.id}`);
-                // Add waiver reminder logic here
+                // Send reminder 2 days before session
+                if (daysUntilSession <= 2 && daysUntilSession > 1) {
+                  console.log(`[STATUS SYNC] Waiver reminder needed for booking ${booking.id}`);
+                  // Add waiver reminder logic here
+                }
               }
             }
           }
@@ -1528,14 +1530,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Automatic parent and athlete profile creation with booking linkage
             try {
-              let parentRecord = await storage.identifyParent(booking.parentEmail, booking.parentPhone);
+              if (!booking.parentEmail) {
+                console.error(`[STRIPE WEBHOOK] No parent email for booking ${bookingId}`);
+                return res.status(200).json({ received: true });
+              }
+
+              let parentRecord = await storage.identifyParent(booking.parentEmail, booking.parentPhone || '');
               
               if (!parentRecord) {
                 parentRecord = await storage.createParent({
-                  firstName: booking.parentFirstName,
-                  lastName: booking.parentLastName,
+                  firstName: booking.parentFirstName || 'Unknown',
+                  lastName: booking.parentLastName || 'Parent',
                   email: booking.parentEmail,
-                  phone: booking.parentPhone,
+                  phone: booking.parentPhone || '',
                   emergencyContactName: booking.emergencyContactName || '',
                   emergencyContactPhone: booking.emergencyContactPhone || ''
                 });
@@ -1656,12 +1663,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Automatic confirmation email
             try {
               const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
-              const sessionDate = new Date(booking.preferredDate).toLocaleDateString('en-US', {
+              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
-              });
+              }) : 'Unknown Date';
               
               // Get athlete name with better fallback logic
               let athleteName = 'Athlete';
@@ -1671,16 +1678,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 athleteName = booking.athlete1Name;
               }
               
-              console.log(`[STRIPE WEBHOOK] Sending confirmation email to ${booking.parentEmail} for ${athleteName}`);
-              
-              await sendSessionConfirmation(
-                booking.parentEmail,
-                parentName,
-                athleteName,
-                sessionDate,
-                booking.preferredTime
-              );
-              console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
+              if (booking.parentEmail) {
+                console.log(`[STRIPE WEBHOOK] Sending confirmation email to ${booking.parentEmail} for ${athleteName}`);
+                
+                await sendSessionConfirmation(
+                  booking.parentEmail,
+                  parentName,
+                  athleteName,
+                  sessionDate,
+                  booking.preferredTime || 'Unknown Time'
+                );
+                console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
+              }
             } catch (emailError) {
               console.error('[STRIPE WEBHOOK] ❌ Failed to auto-send confirmation email:', emailError);
             }
@@ -1927,7 +1936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 name: `Reservation Fee - ${booking.lessonType}`,
                 description: `Reservation payment for ${athlete1Name}'s lesson`,
               },
-              unit_amount: Math.round(parseFloat(booking.amount) * 100),
+              unit_amount: Math.round(parseFloat(booking.amount || '0') * 100),
             },
             quantity: 1,
           },
@@ -1949,10 +1958,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reservationEmailHtml = await render(ReservationPaymentLink({
         parentName,
         athleteName: athlete1Name,
-        lessonType: booking.lessonType,
-        lessonDate: booking.preferredDate,
-        lessonTime: booking.preferredTime,
-        amount: booking.amount,
+        lessonType: booking.lessonType || 'Unknown Lesson',
+        lessonDate: booking.preferredDate || 'Unknown Date',
+        lessonTime: booking.preferredTime || 'Unknown Time',
+        amount: booking.amount || '0',
         paymentLink: session.url!
       }));
       
@@ -1971,32 +1980,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send all three emails
       const emailPromises = [];
       
-      // 1. Reservation Payment Email
-      emailPromises.push(
-        sendGenericEmail(
-          booking.parentEmail,
-          'Complete Your Reservation Payment',
-          reservationEmailHtml
-        )
-      );
-      
-      // 2. Waiver Completion Email
-      emailPromises.push(
-        sendGenericEmail(
-          booking.parentEmail,
-          `${athlete1Name}'s Waiver Form - Action Required`,
-          waiverEmailHtml
-        )
-      );
-      
-      // 3. Safety Information Email
-      emailPromises.push(
-        sendGenericEmail(
-          booking.parentEmail,
-          `Safety Authorization for ${athlete1Name}`,
-          safetyEmailHtml
-        )
-      );
+      if (booking.parentEmail) {
+        // 1. Reservation Payment Email
+        emailPromises.push(
+          sendGenericEmail(
+            booking.parentEmail,
+            'Complete Your Reservation Payment',
+            reservationEmailHtml
+          )
+        );
+        
+        // 2. Waiver Completion Email
+        emailPromises.push(
+          sendGenericEmail(
+            booking.parentEmail,
+            `${athlete1Name}'s Waiver Form - Action Required`,
+            waiverEmailHtml
+          )
+        );
+        
+        // 3. Safety Information Email
+        emailPromises.push(
+          sendGenericEmail(
+            booking.parentEmail,
+            `Safety Authorization for ${athlete1Name}`,
+            safetyEmailHtml
+          )
+        );
+      }
       
       // Wait for all emails to send
       await Promise.all(emailPromises);
@@ -2108,6 +2119,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Resolve lesson type to ID
+      let lessonTypeId: number | null = null;
+      if (bookingData.lessonType) {
+        const lessonTypeMapping: { [key: string]: number } = {
+          'quick-journey': 1,
+          'dual-quest': 2,  
+          'deep-dive': 3,
+          'partner-progression': 4
+        };
+        lessonTypeId = lessonTypeMapping[bookingData.lessonType] || null;
+        
+        if (!lessonTypeId) {
+          return res.status(400).json({
+            message: "Invalid lesson type",
+            details: `Unknown lesson type: ${bookingData.lessonType}`
+          });
+        }
+      }
+      
       // Check if parent exists
       let parent = await storage.identifyParent(bookingData.parentEmail, bookingData.parentPhone);
       
@@ -2123,14 +2153,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create booking with manual status
-      const booking = await storage.createBooking({
+      // Create booking with admin status
+      let booking = await storage.createBooking({
         ...bookingData,
-        bookingMethod: 'manual',
+        parentId: parent.id,
+        lessonTypeId: lessonTypeId,
+        bookingMethod: 'Admin', // Must match DB allowed values
         status: BookingStatusEnum.MANUAL,
         paymentStatus: PaymentStatusEnum.UNPAID
       });
-      
+
+      // Debug log the booking object
+      console.log('[DEBUG] Created booking:', booking);
+
+      // Fallback: If booking.id is missing, try to fetch the latest booking for this parent/lesson/date/time
+      if (!booking || !booking.id) {
+        console.warn('[WARN] Booking object missing id, attempting fallback fetch...');
+        const allBookings = await storage.getAllBookings();
+        const found = allBookings.find(b =>
+          b.parentId === parent.id &&
+          b.lessonTypeId === lessonTypeId &&
+          b.preferredDate === bookingData.preferredDate &&
+          b.preferredTime === bookingData.preferredTime
+        );
+        if (!found) {
+          return res.status(500).json({ error: 'Booking created but could not retrieve booking with id.' });
+        }
+        booking = found;
+      }
+
       // Send email to parent with auth link
       try {
         const parentName = `${bookingData.parentFirstName} ${bookingData.parentLastName}`;
@@ -2142,7 +2193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (emailError) {
         console.error('Failed to send manual booking email:', emailError);
       }
-      
+
       res.json({ booking, parentCreated: !parent });
     } catch (error: any) {
       console.error("Error creating manual booking:", error);
@@ -2324,6 +2375,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bookings = await storage.getAllBookingsWithRelations();
       console.log(`🔍 [BOOKINGS] Retrieved ${bookings.length} bookings with relations from storage`);
       logger.debug(` Retrieved ${bookings.length} bookings with relations from storage`);
+      // Print all booking IDs and parent IDs for debug
+      console.log('[BOOKINGS] IDs:', bookings.map(b => b.id));
+      console.log('[BOOKINGS] Parent IDs:', bookings.map(b => b.parentId));
       res.json(bookings);
     } catch (error) {
       console.error("[DEBUG] Error fetching bookings:", error);
@@ -2378,7 +2432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Validate focus areas
-        const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], currentBooking.lessonType);
+        const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], currentBooking.lessonType || '');
         if (!focusAreaValidation.isValid) {
           return res.status(400).json({
             message: "Focus area validation failed",
@@ -2449,8 +2503,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const rescheduleLink = `${getBaseUrl()}/booking`;
           await sendSessionCancellation(
-            existingBooking.parentEmail,
-            existingBooking.parentFirstName,
+            existingBooking.parentEmail || 'unknown@email.com',
+            existingBooking.parentFirstName || 'Unknown',
             rescheduleLink
           );
         } catch (emailError) {
@@ -2541,7 +2595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return priceMap[lessonType] || 0;
       };
 
-      const totalPrice = getLessonPrice(booking.lessonType);
+      const totalPrice = getLessonPrice(booking.lessonType || '');
 
       // Update paid amount and balance based on payment status  
       if (paymentStatus === "session-paid") {
@@ -2706,10 +2760,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let parent = parents.find(p => p.email === booking.parentEmail && p.phone === booking.parentPhone);
           if (!parent) {
             parent = await storage.createParent({
-              firstName: booking.parentFirstName,
-              lastName: booking.parentLastName,
-              email: booking.parentEmail,
-              phone: booking.parentPhone,
+              firstName: booking.parentFirstName || 'Unknown',
+              lastName: booking.parentLastName || 'Parent',
+              email: booking.parentEmail || 'unknown@email.com',
+              phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || '',
               emergencyContactPhone: booking.emergencyContactPhone || ''
             });
@@ -2821,14 +2875,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const booking of bookings) {
         try {
           // Check if parent exists
-          let parentRecord = await storage.identifyParent(booking.parentEmail, booking.parentPhone || '');
+          let parentRecord = await storage.identifyParent(booking.parentEmail || '', booking.parentPhone || '');
           
           if (!parentRecord) {
             // Create parent account
             parentRecord = await storage.createParent({
               firstName: booking.parentFirstName || '',
               lastName: booking.parentLastName || '',
-              email: booking.parentEmail,
+              email: booking.parentEmail || 'unknown@email.com',
               phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || 'Not Provided',
               emergencyContactPhone: booking.emergencyContactPhone || 'Not Provided'
@@ -2966,15 +3020,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const booking of bookings) {
         try {
           // Check if parent exists
-          let parentRecord = await storage.identifyParent(booking.parentEmail, booking.parentPhone);
+          let parentRecord = await storage.identifyParent(booking.parentEmail || '', booking.parentPhone || '');
           
           if (!parentRecord) {
             // Create parent account
             parentRecord = await storage.createParent({
-              firstName: booking.parentFirstName,
-              lastName: booking.parentLastName,
-              email: booking.parentEmail,
-              phone: booking.parentPhone,
+              firstName: booking.parentFirstName || 'Unknown',
+              lastName: booking.parentLastName || 'Parent',
+              email: booking.parentEmail || 'unknown@email.com',
+              phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || '',
               emergencyContactPhone: booking.emergencyContactPhone || ''
             });
@@ -3290,7 +3344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const waiverLink = `${process.env.REPLIT_URL || 'https://your-domain.replit.app'}/waiver/${bookingId}`;
       
       // Send waiver reminder email
-      await sendWaiverReminder(booking.parentEmail, parentName, waiverLink);
+      await sendWaiverReminder(booking.parentEmail || '', parentName, waiverLink);
 
       res.json({ message: "Waiver email sent successfully" });
     } catch (error) {
@@ -3331,7 +3385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const rescheduleLink = `${getBaseUrl()}/booking`;
         
         await sendSessionCancellation(
-          booking.parentEmail,
+          booking.parentEmail || '',
           parentName,
           rescheduleLink
         );
@@ -3372,19 +3426,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send confirmation email
       try {
         const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
-        const sessionDate = new Date(booking.preferredDate).toLocaleDateString('en-US', {
+        const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
           day: 'numeric'
-        });
+        }) : 'Unknown Date';
         
         await sendSessionConfirmation(
-          booking.parentEmail,
+          booking.parentEmail || '',
           parentName,
           booking.athlete1Name || 'Athlete',
           sessionDate,
-          booking.preferredTime
+          booking.preferredTime || 'TBD'
         );
         console.log(`Manual confirmation email sent for booking ${bookingId}`);
       } catch (emailError) {
@@ -4231,8 +4285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Check against existing bookings
           if (isAvailable) {
             for (const booking of dateBookings) {
-              const bookingStart = timeToMinutes(booking.preferredTime);
-              const bookingDuration = booking.lessonType.includes('1 hour') ? 60 : 30;
+              const bookingStart = timeToMinutes(booking.preferredTime || '00:00');
+              const bookingDuration = (booking.lessonType || '').includes('1 hour') ? 60 : 30;
               const bookingEnd = bookingStart + bookingDuration;
               
               if (!(endMinutes <= bookingStart || minutes >= bookingEnd)) {
@@ -4320,7 +4374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "deep-dive": 60,
             "partner-progression": 80,
           };
-          return sum + (lessonPriceMap[b.lessonType] || 0);
+          return sum + (lessonPriceMap[b.lessonType || ''] || 0);
         }, 0);
 
       testResults.push({
@@ -4383,17 +4437,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let pdfPath = null;
       try {
         pdfPath = await saveWaiverPDF({
-          athleteName: waiver.athleteName,
-          signerName: waiver.signerName,
-          relationshipToAthlete: waiver.relationshipToAthlete,
+          athleteName: waiver.athleteName || 'Unknown Athlete',
+          signerName: waiver.signerName || 'Unknown Signer',
+          relationshipToAthlete: waiver.relationshipToAthlete || 'Parent/Guardian',
           emergencyContactNumber: waiver.emergencyContactNumber,
           signature: waiver.signature,
-          signedAt: waiver.signedAt,
-          understandsRisks: waiver.understandsRisks,
-          agreesToPolicies: waiver.agreesToPolicies,
-          authorizesEmergencyCare: waiver.authorizesEmergencyCare,
-          allowsPhotoVideo: waiver.allowsPhotoVideo,
-          confirmsAuthority: waiver.confirmsAuthority,
+          signedAt: waiver.signedAt || new Date(),
+          understandsRisks: waiver.understandsRisks ?? false,
+          agreesToPolicies: waiver.agreesToPolicies ?? false,
+          authorizesEmergencyCare: waiver.authorizesEmergencyCare ?? false,
+          allowsPhotoVideo: waiver.allowsPhotoVideo ?? false,
+          confirmsAuthority: waiver.confirmsAuthority ?? false,
         }, waiver.id);
         
         // Update waiver with PDF path
@@ -4420,8 +4474,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (parentEmail) {
             const emailHtml = render(SignedWaiverConfirmation({
-              parentName: waiver.signerName,
-              athleteName: waiver.athleteName,
+              parentName: waiver.signerName || 'Unknown Parent',
+              athleteName: waiver.athleteName || 'Unknown Athlete',
             }));
             
             const emailData: any = {
@@ -4718,17 +4772,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save PDF to filesystem and update waiver record
       const pdfPath = await saveWaiverPDF({
-        athleteName: waiver.athleteName,
-        signerName: waiver.signerName,
-        relationshipToAthlete: waiver.relationshipToAthlete,
+        athleteName: waiver.athleteName || 'Unknown Athlete',
+        signerName: waiver.signerName || 'Unknown Signer',
+        relationshipToAthlete: waiver.relationshipToAthlete || 'Parent/Guardian',
         emergencyContactNumber: waiver.emergencyContactNumber,
         signature: waiver.signature,
-        signedAt: new Date(waiver.signedAt),
-        understandsRisks: waiver.understandsRisks,
-        agreesToPolicies: waiver.agreesToPolicies,
-        authorizesEmergencyCare: waiver.authorizesEmergencyCare,
-        allowsPhotoVideo: waiver.allowsPhotoVideo,
-        confirmsAuthority: waiver.confirmsAuthority,
+        signedAt: waiver.signedAt || new Date(),
+        understandsRisks: waiver.understandsRisks ?? false,
+        agreesToPolicies: waiver.agreesToPolicies ?? false,
+        authorizesEmergencyCare: waiver.authorizesEmergencyCare ?? false,
+        allowsPhotoVideo: waiver.allowsPhotoVideo ?? false,
+        confirmsAuthority: waiver.confirmsAuthority ?? false,
       }, id);
       
       await storage.updateWaiverPdfPath(id, pdfPath);
@@ -4787,8 +4841,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resend = new Resend(process.env.RESEND_API_KEY);
       
       const emailHtml = render(SignedWaiverConfirmation({
-        parentName: waiver.signerName,
-        athleteName: waiver.athleteName,
+        parentName: waiver.signerName || 'Unknown Parent',
+        athleteName: waiver.athleteName || 'Unknown Athlete',
       }));
       
       const emailData: any = {

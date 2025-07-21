@@ -21,7 +21,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
 import { PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertCircle, Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
+import { Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
 
 // Extended payment status types
@@ -53,19 +53,25 @@ export const getExtendedPaymentStatusBadgeProps = (status: string): { variant: "
   }
 };
 
-// Calculate lesson price based on type
-const getLessonPrice = (lessonType: string): number => {
-  const priceMap: Record<string, number> = {
-    "quick-journey": 40,
-    "30-min-private": 40,
-    "dual-quest": 50,
-    "30-min-semi-private": 50,
-    "deep-dive": 60,
-    "1-hour-private": 60,
-    "partner-progression": 80,
-    "1-hour-semi-private": 80,
-  };
-  return priceMap[lessonType] || 0;
+
+// Always get lesson price from booking.lessonType.price (from Supabase). Only fallback to booking.amount if price is missing (legacy/edge case).
+// Always get lesson price from booking.lessonType.total_price (from Supabase). Only fallback to price, then booking.amount if missing (legacy/edge case).
+const getLessonPrice = (booking: any): number => {
+  if (booking.lessonType && typeof booking.lessonType === 'object') {
+    if ('total_price' in booking.lessonType && booking.lessonType.total_price != null) {
+      return typeof booking.lessonType.total_price === 'number'
+        ? booking.lessonType.total_price
+        : parseFloat(booking.lessonType.total_price);
+    }
+    if ('price' in booking.lessonType && booking.lessonType.price != null) {
+      return typeof booking.lessonType.price === 'number'
+        ? booking.lessonType.price
+        : parseFloat(booking.lessonType.price);
+    }
+  }
+  // Fallback for legacy/edge cases only
+  if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
+  return 0;
 };
 
 export function PaymentsTab() {
@@ -82,15 +88,32 @@ export function PaymentsTab() {
   });
 
   // Enhanced payment analytics
+  // Dynamic metrics based on payment status
   const totals = {
-    pendingReservations: bookings.filter(b => b.status === "pending").reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
-    completedLessons: bookings.filter(b => b.attendanceStatus === "completed").reduce((sum, b) => sum + getLessonPrice(b.lessonType || ''), 0),
-    pendingStripePayments: bookings.filter(b => b.paymentStatus === "unpaid" && b.status !== "cancelled").reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0),
-    totalRevenue: bookings.filter(b => ["paid", "confirmed", "manual-paid", "completed", "session-paid"].includes(b.status) || b.paymentStatus === "session-paid").reduce((sum, b) => sum + parseFloat(b.paidAmount || b.amount || "0"), 0),
-    totalPaid: bookings.reduce((sum, b) => sum + parseFloat(b.paidAmount || "0"), 0),
-    totalUnpaid: bookings.reduce((sum, b) => sum + (parseFloat(b.amount || "0") - parseFloat(b.paidAmount || "0")), 0),
-    refunded: bookings.filter(b => b.paymentStatus === "refunded" || b.paymentStatus === "session-refunded" || b.paymentStatus === "reservation-refunded").reduce((sum, b) => sum + parseFloat(b.paidAmount || b.amount || "0"), 0),
-    avgBookingValue: bookings.length > 0 ? (bookings.reduce((sum, b) => sum + parseFloat(b.paidAmount || b.amount || "0"), 0) / bookings.length) : 0,
+    // Pending Reservations: reservation-pending only
+    pendingReservations: bookings.filter(b => b.paymentStatus === "reservation-pending").reduce((sum, b) => sum + getLessonPrice(b), 0),
+    // Total Revenue: reservation-paid and session-paid only
+    totalRevenue: bookings.filter(b => b.paymentStatus === "reservation-paid" || b.paymentStatus === "session-paid").reduce((sum, b) => {
+      // If session-paid, use full lesson price; if reservation-paid, use reservation amount
+      if (b.paymentStatus === "session-paid") {
+        return sum + getLessonPrice(b);
+      } else {
+        return sum + parseFloat(b.paidAmount || "0");
+      }
+    }, 0),
+    refunded: bookings.filter(b => b.paymentStatus === "reservation-refunded" || b.paymentStatus === "session-refunded").reduce((sum, b) => sum + parseFloat(b.paidAmount || "0"), 0),
+    avgBookingValue: bookings.length > 0 ? (bookings.reduce((sum, b) => sum + getLessonPrice(b), 0) / bookings.length) : 0,
+  };
+
+  // Helper to extract lesson type string
+  const extractLessonTypeString = (lessonType: unknown): string => {
+    if (typeof lessonType === 'string') return lessonType;
+    if (lessonType && typeof lessonType === 'object') {
+      if ('name' in lessonType && typeof (lessonType as any).name === 'string') return (lessonType as any).name;
+      if ('description' in lessonType && typeof (lessonType as any).description === 'string') return (lessonType as any).description;
+      return JSON.stringify(lessonType);
+    }
+    return '';
   };
 
   // Calculate pending payments (remaining balance after reservation fee)
@@ -101,7 +124,7 @@ export function PaymentsTab() {
       b.attendanceStatus !== "completed" // Automatically exclude completed bookings
     )
     .map(booking => {
-      const totalPrice = getLessonPrice(booking.lessonType || '');
+      const totalPrice = getLessonPrice(booking);
       const paidAmount = parseFloat(booking.paidAmount || "0");
       const remainingBalance = totalPrice - paidAmount;
       return {
@@ -170,7 +193,7 @@ export function PaymentsTab() {
   return (
     <div className="space-y-6">
       {/* Enhanced Payment Analytics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -182,21 +205,7 @@ export function PaymentsTab() {
             <div className="text-2xl font-bold text-blue-600">
               ${totals.totalRevenue.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">All time</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Check className="h-4 w-4" />
-              Total Paid
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              ${totals.totalPaid.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">All time</p>
+            <p className="text-xs text-muted-foreground mt-1">Reservation Paid + Session Paid</p>
           </CardContent>
         </Card>
         <Card>
@@ -210,21 +219,7 @@ export function PaymentsTab() {
             <div className="text-2xl font-bold text-yellow-600">
               ${totals.pendingReservations.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.status === "pending").length} bookings</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Pending Stripe
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              ${totals.pendingStripePayments.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting payment</p>
+            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.paymentStatus === "reservation-pending").length} bookings</p>
           </CardContent>
         </Card>
         <Card>
@@ -238,7 +233,7 @@ export function PaymentsTab() {
             <div className="text-2xl font-bold text-gray-600">
               ${totals.refunded.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.paymentStatus === "refunded" || b.paymentStatus === "session-refunded" || b.paymentStatus === "reservation-refunded").length} refunds</p>
+            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.paymentStatus === "reservation-refunded" || b.paymentStatus === "session-refunded").length} refunds</p>
           </CardContent>
         </Card>
         <Card>
@@ -328,9 +323,6 @@ export function PaymentsTab() {
                 <SelectContent>
                   <SelectItem value="all">All Payments</SelectItem>
                   <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                  <SelectItem value="refunded">Refunded</SelectItem>
                   <SelectItem value="reservation-pending">Reservation: Pending</SelectItem>
                   <SelectItem value="reservation-paid">Reservation: Paid</SelectItem>
                   <SelectItem value="reservation-failed">Reservation: Failed</SelectItem>
@@ -368,25 +360,29 @@ export function PaymentsTab() {
                 </TableHeader>
                 <TableBody>
                   {filteredBookings.map((booking) => {
-                    const totalPrice = getLessonPrice(booking.lessonType || '');
-                    const paidAmount = parseFloat(booking.paidAmount || "0");
-                    
-                    // Calculate balance due based on payment status
-                    let balanceDue = totalPrice - paidAmount;
-                    let displayPaidAmount = paidAmount;
-                    
+                    const totalPrice = getLessonPrice(booking);
+                    let displayPaidAmount = 0;
+                    let balanceDue = totalPrice;
+
                     if (booking.paymentStatus === "session-paid") {
-                      balanceDue = 0; // Full session paid, no balance due
-                      displayPaidAmount = totalPrice; // Show full amount as paid
+                      displayPaidAmount = totalPrice;
+                      balanceDue = 0;
                     } else if (booking.paymentStatus === "reservation-paid") {
-                      // For reservation paid, show reservation amount in Paid Amount
-                      displayPaidAmount = paidAmount > 0 ? paidAmount : 0.50; // Default Stripe minimum reservation
-                      balanceDue = totalPrice - displayPaidAmount; // Remaining balance after reservation
-                    } else if (booking.paymentStatus === "unpaid" || booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed") {
-                      displayPaidAmount = 0; // Nothing paid yet
-                      balanceDue = totalPrice; // Full amount due
+                      // Use paidAmount if present and > 0, otherwise default to $0.50
+                      displayPaidAmount = parseFloat(booking.paidAmount || "0");
+                      if (displayPaidAmount <= 0) displayPaidAmount = 0.50;
+                      balanceDue = totalPrice - displayPaidAmount;
+                    } else if (booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed" || booking.paymentStatus === "unpaid") {
+                      displayPaidAmount = 0;
+                      balanceDue = totalPrice;
+                    } else if (booking.paymentStatus === "reservation-refunded" || booking.paymentStatus === "session-refunded") {
+                      displayPaidAmount = 0;
+                      balanceDue = 0;
                     }
-                    
+
+                    // Never show negative balance due
+                    if (balanceDue < 0) balanceDue = 0;
+
                     return (
                       <TableRow key={booking.id}>
                         <TableCell>

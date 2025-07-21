@@ -209,8 +209,8 @@ export function AdminWaiverManagement() {
   );
 
   const filteredArchivedWaivers = archivedWaivers.filter(waiver =>
-    waiver.athleteName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    waiver.signerName.toLowerCase().includes(searchTerm.toLowerCase())
+    (waiver.athleteName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (waiver.signerName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (waiversLoading || missingLoading) {

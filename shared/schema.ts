@@ -20,15 +20,12 @@ export const bookingStatusEnum = pgEnum("booking_status", [
 ]);
 
 export const paymentStatusEnum = pgEnum("payment_status", [
-  "unpaid", 
-  "paid", 
-  "failed", 
-  "refunded", 
-  "reservation-pending", 
-  "reservation-paid", 
-  "reservation-failed", 
-  "session-paid", 
-  "reservation-refunded", 
+  "unpaid",
+  "reservation-pending",
+  "reservation-paid",
+  "reservation-failed",
+  "session-paid",
+  "reservation-refunded",
   "session-refunded"
 ]);
 
@@ -59,9 +56,6 @@ export enum BookingStatusEnum {
 
 export enum PaymentStatusEnum {
   UNPAID = "unpaid",
-  PAID = "paid",
-  FAILED = "failed", 
-  REFUNDED = "refunded",
   RESERVATION_PENDING = "reservation-pending",
   RESERVATION_PAID = "reservation-paid",
   RESERVATION_FAILED = "reservation-failed",
@@ -93,29 +87,29 @@ export const parents = pgTable("parents", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const athletes = pgTable('athletes', {
   id: serial('id').primaryKey(),
-  parentId: integer('parent_id').notNull().references(() => parents.id),
-  name: text('name').notNull(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
+  parentId: integer('parent_id').references(() => parents.id), // Can be NULL in actual DB
+  name: text('name'), // Can be NULL in actual DB
+  firstName: text('first_name'), // Can be NULL in actual DB  
+  lastName: text('last_name'), // Can be NULL in actual DB
   allergies: text('allergies'),
   experience: text('experience').notNull(),
   photo: text('photo'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   dateOfBirth: date('date_of_birth'),
-  gender: text('gender', { enum: ['male', 'female', 'prefer_not_to_say'] }),
-  latestWaiverId: integer('latest_waiver_id'),
-  waiverStatus: text('waiver_status', { enum: ['pending', 'signed', 'expired'] }).default('pending'),
+  gender: text('gender'), // References genders table, but can be any text
+  latestWaiverId: integer('latest_waiver_id').references((): any => waivers.id),
+  waiverStatus: varchar('waiver_status').default('pending'), // varchar in actual DB
 });
 
 // Lesson types table
@@ -138,51 +132,37 @@ export const bookingMethodEnum = pgEnum("booking_method", [
   "Website", "Admin", "Text", "Call", "In-Person", "Email"
 ]);
 
-export const bookings: any = pgTable("bookings", {
+export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  // Foreign key relationships replace redundant data
-  parentId: integer("parent_id").notNull().references(() => parents.id, { onDelete: "cascade" }),
-  lessonTypeId: integer("lesson_type_id").notNull().references(() => lessonTypes.id, { onDelete: "restrict" }),
-  waiverId: integer("waiver_id").references((): any => waivers.id, { onDelete: "set null" }),
-  
-  // Core booking details
-  preferredDate: date("preferred_date").notNull(),
-  preferredTime: time("preferred_time").notNull(),
-  focusAreas: text("focus_areas").array().notNull(),
-  
-  // Status fields (the only status fields needed)
-  status: bookingStatusEnum("status").notNull().default("pending"),
-  paymentStatus: paymentStatusEnum("payment_status").notNull().default("unpaid"), // Tracks Stripe payment state
-  attendanceStatus: attendanceStatusEnum("attendance_status").notNull().default("pending"), // Tracks session attendance
-  
-  // Booking method with proper enum
-  bookingMethod: bookingMethodEnum("booking_method").notNull().default("Website"),
-  
-  // Payment tracking
+  parentId: integer("parent_id").references(() => parents.id),
+  athleteId: integer("athlete_id").references(() => athletes.id),
+  lessonTypeId: integer("lesson_type_id").references(() => lessonTypes.id),
+  waiverId: integer("waiver_id"),
+  preferredDate: date("preferred_date"),
+  preferredTime: time("preferred_time"),
+  focusAreas: text("focus_areas").array(),
+  status: text("status").notNull().default("pending"),
+  paymentStatus: text("payment_status").notNull().default("unpaid"),
+  attendanceStatus: text("attendance_status").notNull().default("pending"),
+  bookingMethod: text("booking_method").notNull().default("Website"),
   reservationFeePaid: boolean("reservation_fee_paid").notNull().default(false),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).notNull().default("0.00"),
-  stripeSessionId: text("stripe_session_id"), // Stripe checkout session ID for payment tracking
-  
-  // Optional fields
+  stripeSessionId: text("stripe_session_id"),
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
-  
-  // Safety verification fields for pickup/dropoff authorization
   dropoffPersonName: text("dropoff_person_name"),
   dropoffPersonRelationship: text("dropoff_person_relationship"),
   dropoffPersonPhone: text("dropoff_person_phone"),
   pickupPersonName: text("pickup_person_name"),
   pickupPersonRelationship: text("pickup_person_relationship"),
   pickupPersonPhone: text("pickup_person_phone"),
-  // Alternative pickup person (optional)
   altPickupPersonName: text("alt_pickup_person_name"),
   altPickupPersonRelationship: text("alt_pickup_person_relationship"),
   altPickupPersonPhone: text("alt_pickup_person_phone"),
   safetyVerificationSigned: boolean("safety_verification_signed").notNull().default(false),
   safetyVerificationSignedAt: timestamp("safety_verification_signed_at"),
-  
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const bookingAthletes = pgTable("booking_athletes", {
@@ -212,28 +192,26 @@ export const paymentLogs = pgTable("payment_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const waivers: any = pgTable("waivers", {
+export const waivers = pgTable("waivers", {
   id: serial("id").primaryKey(),
-  bookingId: integer("booking_id").references((): any => bookings.id),
+  bookingId: integer("booking_id"), // nullable in actual DB
   athleteId: integer("athlete_id").references(() => athletes.id).notNull(),
   parentId: integer("parent_id").references(() => parents.id).notNull(),
-  relationshipToAthlete: text("relationship_to_athlete").notNull().default("Parent/Guardian"),
-  signature: text("signature").notNull(), // Base64 signature data
-  emergencyContactNumber: text("emergency_contact_number").notNull(), // Keep for historical record but derive from parent
-  // Checkboxes for the five required agreements
-  understandsRisks: boolean("understands_risks").notNull().default(false),
-  agreesToPolicies: boolean("agrees_to_policies").notNull().default(false),
-  authorizesEmergencyCare: boolean("authorizes_emergency_care").notNull().default(false),
-  allowsPhotoVideo: boolean("allows_photo_video").notNull().default(true),
-  confirmsAuthority: boolean("confirms_authority").notNull().default(false),
-  // PDF and tracking info
-  pdfPath: text("pdf_path"), // Storage path for the generated PDF
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  signedAt: timestamp("signed_at").defaultNow().notNull(),
-  emailSentAt: timestamp("email_sent_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  relationshipToAthlete: text("relationship_to_athlete").default("Parent/Guardian"), // nullable in actual DB
+  signature: text("signature").notNull(),
+  emergencyContactNumber: text("emergency_contact_number").notNull(),
+  understandsRisks: boolean("understands_risks").default(false), // nullable in actual DB
+  agreesToPolicies: boolean("agrees_to_policies").default(false), // nullable in actual DB
+  authorizesEmergencyCare: boolean("authorizes_emergency_care").default(false), // nullable in actual DB
+  allowsPhotoVideo: boolean("allows_photo_video").default(true), // nullable in actual DB
+  confirmsAuthority: boolean("confirms_authority").default(false), // nullable in actual DB
+  pdfPath: text("pdf_path"), // nullable
+  ipAddress: text("ip_address"), // nullable
+  userAgent: text("user_agent"), // nullable
+  signedAt: timestamp("signed_at").defaultNow(), // nullable in actual DB
+  emailSentAt: timestamp("email_sent_at"), // nullable
+  createdAt: timestamp("created_at").defaultNow(), // nullable in actual DB
+  updatedAt: timestamp("updated_at").defaultNow(), // nullable in actual DB
 });
 
 export const blogPosts = pgTable("blog_posts", {
@@ -345,6 +323,9 @@ export const insertParentSchema = createInsertSchema(parents).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  emergencyContactName: z.string().min(1, "Emergency contact name is required"),
+  emergencyContactPhone: z.string().min(1, "Emergency contact phone is required"),
 });
 
 export const insertAthleteSchema = createInsertSchema(athletes).omit({
@@ -590,6 +571,24 @@ export type Booking = typeof bookings.$inferSelect & {
   athlete2DateOfBirth?: string | null;
   athlete2Allergies?: string | null;
   athlete2Experience?: string | null;
+  // Emergency contact fields from bookings_with_details view
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  // Parent email field from bookings_with_details view  
+  parentEmail?: string;
+  // Legacy parent fields for backward compatibility
+  parentFirstName?: string;
+  parentLastName?: string;
+  parentPhone?: string;
+  // Legacy lesson type fields for backward compatibility
+  lessonType?: string;
+  lessonTypeName?: string;
+  // Legacy amount field for backward compatibility
+  amount?: string;
+  // Legacy waiver field for backward compatibility
+  waiverSigned?: boolean;
+  // Parent object for compatibility
+  parent?: Parent;
   // Display properties added by backend transformations
   displayPaymentStatus?: string;
   athletes?: Array<{
@@ -607,7 +606,11 @@ export type BookingAthlete = typeof bookingAthletes.$inferSelect;
 export type InsertBookingAthlete = z.infer<typeof insertBookingAthleteSchema>;
 export type BookingLog = typeof bookingLogs.$inferSelect;
 export type InsertBookingLog = z.infer<typeof insertBookingLogSchema>;
-export type Waiver = typeof waivers.$inferSelect;
+export type Waiver = typeof waivers.$inferSelect & {
+  // Fields added by storage layer joins/transformations
+  athleteName?: string;
+  signerName?: string;
+};
 export type InsertWaiver = z.infer<typeof insertWaiverSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;

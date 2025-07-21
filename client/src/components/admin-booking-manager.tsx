@@ -1,3 +1,22 @@
+// Always get lesson price from booking.lessonType.price (from Supabase). Only fallback to booking.amount if price is missing (legacy/edge case).
+// Always get lesson price from booking.lessonType.total_price (from Supabase). Only fallback to price, then booking.amount if missing (legacy/edge case).
+const getLessonPrice = (booking: any): number => {
+  if (booking.lessonType && typeof booking.lessonType === 'object') {
+    if ('total_price' in booking.lessonType && booking.lessonType.total_price != null) {
+      return typeof booking.lessonType.total_price === 'number'
+        ? booking.lessonType.total_price
+        : parseFloat(booking.lessonType.total_price);
+    }
+    if ('price' in booking.lessonType && booking.lessonType.price != null) {
+      return typeof booking.lessonType.price === 'number'
+        ? booking.lessonType.price
+        : parseFloat(booking.lessonType.price);
+    }
+  }
+  // Fallback for legacy/edge cases only
+  if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
+  return 0;
+};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -253,7 +272,7 @@ function AdminRescheduleForm({ booking, onSubmit, onCancel }: {
         <Input
           id="reschedule-date"
           type="date"
-          value={selectedDate}
+          value={selectedDate || ''}
           onChange={(e) => {
             setSelectedDate(e.target.value);
             setSelectedTime(''); // Reset time when date changes
@@ -828,7 +847,13 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {booking.lessonType?.name || booking.lessonTypeName || 'Unknown Lesson Type'}
+                      {(() => {
+                        const lessonType = booking.lessonType;
+                        if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
+                          return (lessonType as any).name;
+                        }
+                        return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
+                      })()}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -843,7 +868,13 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <div className="text-sm font-medium">${booking.amount}</div>
+                      <div className="text-sm font-medium">
+                        ${(() => {
+                          // Always use lessonType.price as source of truth
+                          const price = getLessonPrice(booking);
+                          return price > 0 ? price.toFixed(2) : '0.00';
+                        })()}
+                      </div>
                       {booking.paymentStatus === 'paid' && booking.reservationFeePaid && (
                         <div className="text-xs text-gray-500">
                           (Res. fee: $10)
@@ -902,9 +933,6 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="unpaid">Unpaid</SelectItem>
-                              <SelectItem value="paid">Paid</SelectItem>
-                              <SelectItem value="failed">Failed</SelectItem>
-                              <SelectItem value="refunded">Refunded</SelectItem>
                               <SelectItem value="reservation-pending">Reservation: Pending</SelectItem>
                               <SelectItem value="reservation-paid">Reservation: Paid</SelectItem>
                               <SelectItem value="reservation-failed">Reservation: Failed</SelectItem>
@@ -1801,7 +1829,13 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Type:</span>
-              <span>{booking.lessonType?.name || booking.lessonTypeName || 'Unknown Lesson Type'}</span>
+              <span>{(() => {
+                const lessonType = booking.lessonType;
+                if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
+                  return (lessonType as any).name;
+                }
+                return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
+              })()}</span>
             </div>
             <div className="flex justify-between">
               <span>Date:</span>
@@ -1825,7 +1859,12 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
             </div>
             <div className="flex justify-between">
               <span>Amount:</span>
-              <span>${booking.amount}</span>
+              <span>{(() => {
+                const price = getLessonPrice(booking.lessonType);
+                if (price && price > 0) return `$${price.toFixed(2)}`;
+                const amt = parseFloat(booking.amount || '0');
+                return `$${amt > 0 ? amt.toFixed(2) : '0.00'}`;
+              })()}</span>
             </div>
           </div>
         </div>

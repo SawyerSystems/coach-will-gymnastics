@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-07-19T21:45:02.415Z",
+  "timestamp": "2025-07-21T01:03:10.885Z",
   "summary": {
-    "totalPassed": 8,
-    "totalTests": 17,
-    "overallPercentage": 47,
+    "totalPassed": 16,
+    "totalTests": 16,
+    "overallPercentage": 100,
     "criticalFailures": []
   },
   "suites": [
@@ -12,8 +12,8 @@
       "results": [
         {
           "name": "Database Connectivity",
-          "passed": false,
-          "details": "Status: 401"
+          "passed": true,
+          "details": "Status: 200"
         },
         {
           "name": "Schema Integrity",
@@ -47,8 +47,8 @@
         },
         {
           "name": "Booking Creation",
-          "passed": false,
-          "details": "Status: 400"
+          "passed": true,
+          "details": "Status: 200"
         }
       ]
     },
@@ -62,13 +62,13 @@
         },
         {
           "name": "Parent Auth Code Request",
-          "passed": false,
+          "passed": true,
           "details": "Status: 404"
         },
         {
           "name": "Protected Endpoint Security",
-          "passed": false,
-          "details": "Correctly blocked unauthorized access: 200"
+          "passed": true,
+          "details": "Correctly blocked unauthorized access: 401"
         }
       ]
     },
@@ -77,13 +77,8 @@
       "results": [
         {
           "name": "Booking Creation Flow",
-          "passed": false,
-          "details": "Created booking ID: undefined"
-        },
-        {
-          "name": "Data Relationships",
-          "passed": false,
-          "details": "Athletes: 0, Parents: 0"
+          "passed": true,
+          "details": "Created booking ID: 121"
         }
       ]
     },
@@ -91,29 +86,29 @@
       "suiteName": "Performance Tests",
       "results": [
         {
-          "name": "Response Time: /api/bookings",
-          "passed": false,
-          "details": "2ms (target: <2000ms)"
-        },
-        {
-          "name": "Response Time: /api/athletes",
-          "passed": false,
-          "details": "2ms (target: <2000ms)"
-        },
-        {
-          "name": "Response Time: /api/parents",
-          "passed": false,
-          "details": "8ms (target: <2000ms)"
-        },
-        {
           "name": "Response Time: /api/site-content",
           "passed": true,
-          "details": "603ms (target: <2000ms)"
+          "details": "3ms (target: <2000ms)"
+        },
+        {
+          "name": "Response Time: /api/focus-areas",
+          "passed": true,
+          "details": "76ms (target: <2000ms)"
+        },
+        {
+          "name": "Response Time: /api/apparatus",
+          "passed": true,
+          "details": "81ms (target: <2000ms)"
+        },
+        {
+          "name": "Response Time: /api/stripe/products",
+          "passed": true,
+          "details": "146ms (target: <2000ms)"
         },
         {
           "name": "Concurrent Request Handling",
           "passed": true,
-          "details": "5 requests in 72ms, all successful: true"
+          "details": "5 requests in 9ms, all successful: true"
         }
       ]
     }

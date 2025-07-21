@@ -1,7 +1,8 @@
+// ...existing code...
+// ...existing code...
 import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { supabase, supabaseAdmin } from "./supabase-client";
-
-
+import { supabaseServiceRole } from "./supabase-service-role";
 export interface IStorage {
   // Parents (preferred terminology)
   getAllParents(): Promise<Parent[]>;
@@ -18,6 +19,7 @@ export interface IStorage {
   updateParent(id: number, parent: Partial<InsertParent>): Promise<Parent | undefined>;
   deleteParent(id: number): Promise<boolean>;
   getParentAthletes(parentId: number): Promise<Athlete[]>;
+// ...rest of interface unchanged...
 
   // Athletes
   getAllAthletes(): Promise<Athlete[]>;
@@ -150,6 +152,10 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  async getAllWaivers(): Promise<Waiver[]> {
+    // In-memory stub for test/dev only
+    return [];
+  }
   private bookings: Map<number, Booking>;
   private blogPosts: Map<number, BlogPost>;
   private tips: Map<number, Tip>;
@@ -614,6 +620,8 @@ With the right setup and approach, home practice can accelerate your child's gym
     const booking: Booking = { 
       ...insertBooking,
       id,
+      athleteId: insertBooking.athleteId || null, // Ensure athleteId is included
+      waiverId: insertBooking.waiverId ?? null,  // Ensure waiverId is properly set
       createdAt: new Date(),
       updatedAt: new Date(),
       status: BookingStatusEnum.PENDING,
@@ -625,9 +633,7 @@ With the right setup and approach, home practice can accelerate your child's gym
         insertBooking.preferredDate,
       // Map focusAreaIds to focusAreas for backward compatibility
       focusAreas: Array.isArray(insertBooking.focusAreaIds) ? insertBooking.focusAreaIds.map(String) : [],
-      // Ensure required fields are set
-      emergencyContactName: insertBooking.emergencyContactName || "",
-      emergencyContactPhone: insertBooking.emergencyContactPhone || "",
+      // Ensure required fields are set for legacy athlete fields
       athlete1Allergies: Array.isArray(insertBooking.athletes) && insertBooking.athletes[0] ? insertBooking.athletes[0].allergies : null,
       athlete2Name: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].name : null,
       athlete2DateOfBirth: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].dateOfBirth : null,
@@ -966,10 +972,7 @@ With the right setup and approach, home practice can accelerate your child's gym
     return undefined;
   }
 
-  async getAllWaivers(): Promise<Waiver[]> {
-    return [];
-  }
-
+// ...existing code...
   async updateWaiver(id: number, waiver: Partial<InsertWaiver>): Promise<Waiver | undefined> {
     return undefined;
   }
@@ -1268,7 +1271,7 @@ export class SupabaseStorage implements IStorage {
       // Remove waiver fields - they're now in separate waivers table
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServiceRole
       .from('parents')
       .insert(supabaseData)
       .select()
@@ -1576,7 +1579,7 @@ export class SupabaseStorage implements IStorage {
     if (insertBooking.adminNotes) dbBooking.admin_notes = insertBooking.adminNotes;
     if (insertBooking.stripeSessionId) dbBooking.stripe_session_id = insertBooking.stripeSessionId;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .insert(dbBooking)
       .select()
@@ -1685,10 +1688,10 @@ export class SupabaseStorage implements IStorage {
     return {
       id: data.id,
       parentId: data.parent_id,
+      athleteId: data.athlete_id,
       lessonTypeId: data.lesson_type_id,
       waiverId: data.waiver_id,
       // Legacy fields for backward compatibility - these will be empty/undefined for normalized bookings
-      lessonType: undefined,
       athlete1Name: '',
       athlete1DateOfBirth: '',
       athlete1Allergies: null,
@@ -1811,11 +1814,11 @@ export class SupabaseStorage implements IStorage {
         console.error('Error fetching parents:', parentsError);
       }
 
-      // Get lesson type data for all bookings
+      // Get lesson type data for all bookings (include total_price)
       const lessonTypeIds = Array.from(new Set(bookingsData.map(b => b.lesson_type_id).filter(Boolean)));
       const { data: lessonTypesData, error: lessonTypesError } = await supabase
         .from('lesson_types')
-        .select('id, name')
+        .select('id, name, total_price')
         .in('id', lessonTypeIds);
 
       if (lessonTypesError) {
@@ -1848,7 +1851,7 @@ export class SupabaseStorage implements IStorage {
 
       const lessonTypesMap = new Map();
       lessonTypesData?.forEach(lessonType => {
-        lessonTypesMap.set(lessonType.id, lessonType.name);
+        lessonTypesMap.set(lessonType.id, lessonType);
       });
 
       const athletesMap = new Map();
@@ -1863,15 +1866,19 @@ export class SupabaseStorage implements IStorage {
       });
 
       // Transform to expected format
-      return bookingsData.map(booking => ({
-        id: booking.id,
-        sessionDate: booking.preferred_date || '',
-        lessonType: lessonTypesMap.get(booking.lesson_type_id) || 'Unknown Lesson Type',
-        parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
-        athleteNames: athletesMap.get(booking.id) || [],
-        paymentStatus: booking.payment_status || 'unpaid',
-        attendanceStatus: booking.attendance_status || 'pending'
-      }));
+      return bookingsData.map(booking => {
+        const lessonTypeObj = lessonTypesMap.get(booking.lesson_type_id);
+        return {
+          id: booking.id,
+          sessionDate: booking.preferred_date,
+          lessonType: lessonTypeObj?.name || 'Unknown',
+          totalPrice: lessonTypeObj?.total_price ? lessonTypeObj.total_price.toString() : '0',
+          parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
+          athleteNames: athletesMap.get(booking.id) || [],
+          paymentStatus: booking.payment_status || 'unpaid',
+          attendanceStatus: booking.attendance_status || 'pending'
+        };
+      });
 
     } catch (error) {
       console.error('Error in getUpcomingSessions:', error);
@@ -2490,10 +2497,24 @@ export class SupabaseStorage implements IStorage {
     console.log('🔍 Creating waiver with data:', JSON.stringify(waiver, null, 2));
 
     try {
+      // Fetch athlete and parent data to get names
+      const [athlete, parent] = await Promise.all([
+        this.getAthlete(waiver.athleteId),
+        this.getParentById(waiver.parentId)
+      ]);
+
+      const athleteName = athlete ? 
+        `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || athlete.name || 'Unknown Athlete' :
+        'Unknown Athlete';
+      
+      const signerName = parent ? 
+        `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || 'Unknown Parent' :
+        'Unknown Parent';
+
       // Use RPC to bypass schema cache issues
       const { data, error } = await supabase.rpc('create_waiver', {
-        p_athlete_name: waiver.athleteName,
-        p_signer_name: waiver.signerName,
+        p_athlete_name: athleteName,
+        p_signer_name: signerName,
         p_relationship_to_athlete: waiver.relationshipToAthlete,
         p_signature: waiver.signature,
         p_emergency_contact_number: waiver.emergencyContactNumber,
@@ -2515,8 +2536,8 @@ export class SupabaseStorage implements IStorage {
 
         // Fallback to direct insert
         const dbWaiver: any = {
-          athlete_name: waiver.athleteName,
-          signer_name: waiver.signerName,
+          athlete_name: athleteName,
+          signer_name: signerName,
           relationship_to_athlete: waiver.relationshipToAthlete,
           signature: waiver.signature,
           emergency_contact_number: waiver.emergencyContactNumber,
@@ -2593,7 +2614,17 @@ export class SupabaseStorage implements IStorage {
   async getWaiver(id: number): Promise<Waiver | undefined> {
     const { data, error } = await supabase
       .from('waivers')
-      .select('*')
+      .select(`
+        *,
+        athletes!athlete_id (
+          first_name,
+          last_name
+        ),
+        parents!parent_id (
+          first_name,
+          last_name
+        )
+      `)
       .eq('id', id)
       .single();
 
@@ -2604,30 +2635,14 @@ export class SupabaseStorage implements IStorage {
 
     if (!data) return undefined;
 
-    // Map snake_case to camelCase
-    return {
-      id: data.id,
-      bookingId: data.booking_id,
-      athleteId: data.athlete_id,
-      parentId: data.parent_id,
-      athleteName: data.athlete_name,
-      signerName: data.signer_name,
-      relationshipToAthlete: data.relationship_to_athlete,
-      signature: data.signature,
-      emergencyContactNumber: data.emergency_contact_number,
-      understandsRisks: data.understands_risks,
-      agreesToPolicies: data.agrees_to_policies,
-      authorizesEmergencyCare: data.authorizes_emergency_care,
-      allowsPhotoVideo: data.allows_photo_video,
-      confirmsAuthority: data.confirms_authority,
-      pdfPath: data.pdf_path,
-      ipAddress: data.ip_address,
-      userAgent: data.user_agent,
-      signedAt: new Date(data.signed_at),
-      emailSentAt: data.email_sent_at ? new Date(data.email_sent_at) : null,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
-    };
+    const athlete = data.athletes;
+    const parent = data.parents;
+
+    return this.mapWaiverFromDb({
+      ...data,
+      athlete_name: athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown Athlete',
+      signer_name: parent ? `${parent.first_name} ${parent.last_name}` : 'Unknown Signer'
+    });
   }
 
   async getWaiverByAthleteId(athleteId: number): Promise<Waiver | undefined> {
@@ -2663,7 +2678,17 @@ export class SupabaseStorage implements IStorage {
   async getAllWaivers(): Promise<Waiver[]> {
     const { data, error } = await supabaseAdmin
       .from('waivers')
-      .select('*')
+      .select(`
+        *,
+        athletes!athlete_id (
+          first_name,
+          last_name
+        ),
+        parents!parent_id (
+          first_name,
+          last_name
+        )
+      `)
       .order('signed_at', { ascending: false });
 
     if (error) {
@@ -2673,8 +2698,17 @@ export class SupabaseStorage implements IStorage {
 
     if (!data) return [];
 
-    // Map all waivers from snake_case to camelCase
-    return data.map((waiver: any) => this.mapWaiverFromDb(waiver));
+    // Map all waivers from snake_case to camelCase with joined data
+    return data.map((waiver: any) => {
+      const athlete = waiver.athletes;
+      const parent = waiver.parents;
+      
+      return this.mapWaiverFromDb({
+        ...waiver,
+        athlete_name: athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown Athlete',
+        signer_name: parent ? `${parent.first_name} ${parent.last_name}` : 'Unknown Signer'
+      });
+    });
   }
 
   async updateWaiver(id: number, waiver: Partial<InsertWaiver>): Promise<Waiver | undefined> {
@@ -2979,23 +3013,46 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
+    // Get athlete and parent data for names if missing
+    let athleteName = originalWaiver.athleteName;
+    let signerName = originalWaiver.signerName;
+    
+    if (!athleteName || !signerName) {
+      const [athlete, parent] = await Promise.all([
+        this.getAthlete(originalWaiver.athleteId),
+        this.getParentById(originalWaiver.parentId)
+      ]);
+      
+      if (!athleteName) {
+        athleteName = athlete ? 
+          `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || athlete.name || 'Unknown Athlete' :
+          'Unknown Athlete';
+      }
+      
+      if (!signerName) {
+        signerName = parent ? 
+          `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || 'Unknown Parent' :
+          'Unknown Parent';
+      }
+    }
+
     // Create archived waiver
     const archivedWaiver = await this.createArchivedWaiver({
       originalWaiverId: originalWaiver.id,
-      athleteName: originalWaiver.athleteName,
-      signerName: originalWaiver.signerName,
-      relationshipToAthlete: originalWaiver.relationshipToAthlete,
+      athleteName: athleteName || 'Unknown Athlete',
+      signerName: signerName,
+      relationshipToAthlete: originalWaiver.relationshipToAthlete || 'Parent/Guardian',
       signature: originalWaiver.signature,
       emergencyContactNumber: originalWaiver.emergencyContactNumber,
-      understandsRisks: originalWaiver.understandsRisks,
-      agreesToPolicies: originalWaiver.agreesToPolicies,
-      authorizesEmergencyCare: originalWaiver.authorizesEmergencyCare,
-      allowsPhotoVideo: originalWaiver.allowsPhotoVideo,
-      confirmsAuthority: originalWaiver.confirmsAuthority,
+      understandsRisks: originalWaiver.understandsRisks ?? false,
+      agreesToPolicies: originalWaiver.agreesToPolicies ?? false,
+      authorizesEmergencyCare: originalWaiver.authorizesEmergencyCare ?? false,
+      allowsPhotoVideo: originalWaiver.allowsPhotoVideo ?? true,
+      confirmsAuthority: originalWaiver.confirmsAuthority ?? false,
       pdfPath: originalWaiver.pdfPath,
       ipAddress: originalWaiver.ipAddress,
       userAgent: originalWaiver.userAgent,
-      signedAt: originalWaiver.signedAt,
+      signedAt: originalWaiver.signedAt || new Date(),
       emailSentAt: originalWaiver.emailSentAt,
       archivedAt: new Date(),
       archiveReason: reason,
@@ -3272,27 +3329,35 @@ export class SupabaseStorage implements IStorage {
     const lessonTypeMap = new Map(lessonTypes?.map(lt => [lt.id, lt]) || []);
     const athletesByBooking = new Map<number, any[]>();
     
-    bookingAthletes?.forEach(ba => {
+    bookingAthletes?.forEach((ba: any) => {
       if (!athletesByBooking.has(ba.booking_id)) {
         athletesByBooking.set(ba.booking_id, []);
       }
-      athletesByBooking.get(ba.booking_id)!.push({
-        ...ba.athletes,
-        slotOrder: ba.slot_order
-      });
+      // Fix: Access the nested athletes object correctly - ba.athletes is the joined object
+      const athlete = ba.athletes as any; // Force type to any to avoid TypeScript inference issues
+      if (athlete) {
+        athletesByBooking.get(ba.booking_id)!.push({
+          athleteId: athlete.id,
+          slotOrder: ba.slot_order,
+          name: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+          dateOfBirth: athlete.date_of_birth || '',
+          allergies: athlete.allergies || '',
+          experience: athlete.experience || 'beginner',
+          photo: athlete.photo || ''
+        });
+      }
     });
 
     return bookings.map((booking: any) => {
       const parent = parentMap.get(booking.parent_id);
       const lessonType = lessonTypeMap.get(booking.lesson_type_id);
       const athletes = athletesByBooking.get(booking.id) || [];
-      
       // Sort athletes by slot order
       athletes.sort((a, b) => a.slotOrder - b.slotOrder);
-      
       return {
         id: booking.id,
         parentId: booking.parent_id,
+        athleteId: booking.athlete_id,
         lessonTypeId: booking.lesson_type_id,
         waiverId: booking.waiver_id,
         preferredDate: booking.preferred_date,
@@ -3301,7 +3366,7 @@ export class SupabaseStorage implements IStorage {
         paymentStatus: booking.payment_status,
         attendanceStatus: booking.attendance_status,
         bookingMethod: booking.booking_method,
-        amount: booking.amount || lessonType?.price?.toString() || "0",
+        amount: booking.amount || (lessonType?.total_price?.toString() ?? lessonType?.price?.toString()) || "0",
         reservationFeePaid: booking.reservation_fee_paid,
         paidAmount: booking.paid_amount,
         specialRequests: booking.special_requests,
@@ -3342,19 +3407,12 @@ export class SupabaseStorage implements IStorage {
           name: lessonType.name,
           duration: lessonType.duration,
           price: lessonType.price,
+          total_price: lessonType.total_price,
+          reservation_fee: lessonType.reservation_fee,
           description: lessonType.description,
         } : undefined,
         
-        athletes: athletes.map((athlete: any) => ({
-          id: athlete.id,
-          firstName: athlete.first_name,
-          lastName: athlete.last_name,
-          dateOfBirth: athlete.date_of_birth,
-          gender: athlete.gender,
-          allergies: athlete.allergies,
-          experience: athlete.experience,
-          photo: athlete.photo,
-        })),
+        // Legacy athlete fields for compatibility
         
         // Legacy compatibility fields
         parentFirstName: parent?.first_name,
@@ -3366,14 +3424,17 @@ export class SupabaseStorage implements IStorage {
         lessonTypeName: lessonType?.name,
         
         // Legacy athlete fields for backward compatibility
-        athlete1Name: athletes[0] ? `${athletes[0].first_name} ${athletes[0].last_name}` : null,
-        athlete1DateOfBirth: athletes[0]?.date_of_birth,
+        athlete1Name: athletes[0] ? athletes[0].name : null,
+        athlete1DateOfBirth: athletes[0]?.dateOfBirth,
         athlete1Allergies: athletes[0]?.allergies,
         athlete1Experience: athletes[0]?.experience,
-        athlete2Name: athletes[1] ? `${athletes[1].first_name} ${athletes[1].last_name}` : null,
-        athlete2DateOfBirth: athletes[1]?.date_of_birth,
+        athlete2Name: athletes[1] ? athletes[1].name : null,
+        athlete2DateOfBirth: athletes[1]?.dateOfBirth,
         athlete2Allergies: athletes[1]?.allergies,
         athlete2Experience: athletes[1]?.experience,
+        
+        // Add the athletes array with the correct structure
+        athletes: athletes,
         
         // Empty arrays for relations not yet implemented
         apparatus: [],
@@ -3383,7 +3444,7 @@ export class SupabaseStorage implements IStorage {
         // Legacy waiver fields (set to defaults since waivers are separate now)
         waiverSigned: false,
         waiverSignedAt: null,
-        waiverSignatureName: null,
+        waiverSignatureName: undefined,
       } as BookingWithRelations;
     });
   }
@@ -3474,14 +3535,13 @@ export class SupabaseStorage implements IStorage {
       athletes: athletesData?.map(item => {
         const athlete = item.athletes as any;
         return {
-          id: athlete.id,
-          firstName: athlete.first_name,
-          lastName: athlete.last_name,
-          dateOfBirth: athlete.date_of_birth,
-          gender: athlete.gender,
-          allergies: athlete.allergies,
-          experience: athlete.experience,
-          parentId: athlete.parent_id
+          athleteId: athlete.id,
+          slotOrder: item.slot_order || 1, // Get slot_order from booking_athletes
+          name: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+          dateOfBirth: athlete.date_of_birth || '',
+          allergies: athlete.allergies || '',
+          experience: athlete.experience || 'beginner',
+          photo: athlete.photo || ''
         };
       }) || []
     } as BookingWithRelations;

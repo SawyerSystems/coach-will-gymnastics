@@ -1,5 +1,18 @@
 # CoachWillTumbles - AI Coding Agent Instructions
 
+## PRIMARY DATABASE RULES (TOP PRIORITY)
+
+**⚠️ CRITICAL: Always reference `attached_assets/complete_current_schema.txt` for the complete database schema, including all triggers and functions. Treat this file as the single source of truth for anything related to the codebase's interaction with the database. Never deviate from it under any circumstance.**
+
+**Schema Updates:**
+- If a schema update is needed, provide SQL commands to run in Supabase
+- User will manually update the file afterward to reflect current database state
+- Do not attempt to run SQL commands yourself
+
+**Error Handling:**
+- Always communicate database-related errors clearly
+- Provide multiple options or solutions before continuing any iteration
+
 ## Architecture Overview
 
 This is a full-stack gymnastics booking platform with React frontend, Express backend, and Supabase PostgreSQL database.
@@ -15,9 +28,10 @@ This is a full-stack gymnastics booking platform with React frontend, Express ba
 ## Critical Development Knowledge
 
 ### Database Schema Pattern
-- **Central source of truth:** `shared/schema.ts` using Drizzle ORM
+- **ABSOLUTE SOURCE OF TRUTH:** `attached_assets/complete_current_schema.txt` - contains complete Supabase schema including triggers and functions
+- **Secondary schema:** `shared/schema.ts` using Drizzle ORM - must match the complete schema exactly
 - **Supabase integration:** All queries go through `server/storage.ts` abstraction layer
-- **Migration workflow:** Schema changes via `npm run db:push` OR manual SQL
+- **Migration workflow:** Schema changes via manual SQL in Supabase SQL editor ONLY
 - **Important:** When Supabase changes are needed, provide SQL commands to user for manual entry in Supabase SQL editor
 - **NEVER use:** `supabase.from(...).rpc('exec_sql')` - this function does not exist in our project
 - **NEVER edit .env file:** Environment variables are configured correctly. Always ask explicit permission before touching .env file

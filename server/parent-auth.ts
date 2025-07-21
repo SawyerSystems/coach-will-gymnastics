@@ -91,7 +91,7 @@ parentAuthRouter.post('/request-code', async (req, res) => {
       // Check if parent exists in bookings
       const bookings = await storage.getAllBookings();
       const parentBookings = bookings.filter(booking => 
-        booking.parentEmail.toLowerCase() === email.toLowerCase()
+        booking.parentEmail?.toLowerCase() === email.toLowerCase()
       );
 
       if (parentBookings.length === 0) {
@@ -197,7 +197,7 @@ parentAuthRouter.post('/send-code', async (req, res) => {
       // Check if parent exists in bookings
       const bookings = await storage.getAllBookings();
       const parentBookings = bookings.filter(booking => 
-        booking.parentEmail.toLowerCase() === email.toLowerCase()
+        booking.parentEmail?.toLowerCase() === email.toLowerCase()
       );
 
       if (parentBookings.length === 0) {
@@ -337,7 +337,7 @@ parentAuthRouter.post('/verify-code', [
       // Create parent from booking data
       const bookings = await storage.getAllBookings();
       const parentBooking = bookings.find(booking => 
-        booking.parentEmail.toLowerCase() === email.toLowerCase()
+        booking.parentEmail?.toLowerCase() === email.toLowerCase()
       );
       
       if (parentBooking) {

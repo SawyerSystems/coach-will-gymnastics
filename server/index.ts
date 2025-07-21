@@ -244,8 +244,10 @@ app.use((req, res, next) => {
 
       logger.admin('Clearing all test data...');
       
-      // Clear bookings first (due to foreign key constraints)
-      const bookingsResponse = await fetch(`${BASE_URL}/rest/v1/bookings?id=neq.0`, {
+
+      // Only delete test data: emails containing 'test' or ending with '@example.com'
+      // Bookings
+      const bookingsResponse = await fetch(`${BASE_URL}/rest/v1/bookings?or=(parent_email.ilike.*test*,parent_email.ilike.*@example.com)`, {
         method: 'DELETE',
         headers: {
           'apikey': API_KEY,
@@ -254,16 +256,15 @@ app.use((req, res, next) => {
           'Prefer': 'return=representation'
         }
       });
-
       let bookingsCleared = 0;
       if (bookingsResponse.ok) {
         const bookingsData = await bookingsResponse.json();
         bookingsCleared = Array.isArray(bookingsData) ? bookingsData.length : 0;
-        logger.admin(`✅ Cleared ${bookingsCleared} bookings`);
+        logger.admin(`✅ Cleared ${bookingsCleared} test bookings`);
       }
 
-      // Clear athletes
-      const athletesResponse = await fetch(`${BASE_URL}/rest/v1/athletes?id=neq.0`, {
+      // Athletes (linked to test parents)
+      const athletesResponse = await fetch(`${BASE_URL}/rest/v1/athletes?or=(parent_email.ilike.*test*,parent_email.ilike.*@example.com)`, {
         method: 'DELETE',
         headers: {
           'apikey': API_KEY,
@@ -272,16 +273,15 @@ app.use((req, res, next) => {
           'Prefer': 'return=representation'
         }
       });
-
       let athletesCleared = 0;
       if (athletesResponse.ok) {
         const athletesData = await athletesResponse.json();
         athletesCleared = Array.isArray(athletesData) ? athletesData.length : 0;
-        logger.admin(`✅ Cleared ${athletesCleared} athletes`);
+        logger.admin(`✅ Cleared ${athletesCleared} test athletes`);
       }
 
-      // Clear parents
-      const parentsResponse = await fetch(`${BASE_URL}/rest/v1/parents?id=neq.0`, {
+      // Parents (test emails)
+      const parentsResponse = await fetch(`${BASE_URL}/rest/v1/parents?or=(email.ilike.*test*,email.ilike.*@example.com)`, {
         method: 'DELETE',
         headers: {
           'apikey': API_KEY,
@@ -290,16 +290,15 @@ app.use((req, res, next) => {
           'Prefer': 'return=representation'
         }
       });
-
       let parentsCleared = 0;
       if (parentsResponse.ok) {
         const parentsData = await parentsResponse.json();
         parentsCleared = Array.isArray(parentsData) ? parentsData.length : 0;
-        logger.admin(`✅ Cleared ${parentsCleared} parents`);
+        logger.admin(`✅ Cleared ${parentsCleared} test parents`);
       }
 
-      // Clear parent auth codes
-      const authCodesResponse = await fetch(`${BASE_URL}/rest/v1/parent_auth_codes?id=neq.0`, {
+      // Parent auth codes (test emails)
+      const authCodesResponse = await fetch(`${BASE_URL}/rest/v1/parent_auth_codes?or=(email.ilike.*test*,email.ilike.*@example.com)`, {
         method: 'DELETE',
         headers: {
           'apikey': API_KEY,
@@ -308,32 +307,52 @@ app.use((req, res, next) => {
           'Prefer': 'return=representation'
         }
       });
-
       let authCodesCleared = 0;
       if (authCodesResponse.ok) {
         const authCodesData = await authCodesResponse.json();
         authCodesCleared = Array.isArray(authCodesData) ? authCodesData.length : 0;
-        logger.admin(`✅ Cleared ${authCodesCleared} auth codes`);
+        logger.admin(`✅ Cleared ${authCodesCleared} test auth codes`);
       }
 
       // Clear test waiver files
       let waiversCleared = 0;
       try {
+        // Fetch test parent emails
+        const testParentsRes = await fetch(`${BASE_URL}/rest/v1/parents?select=id,email&or=(email.ilike.*test*,email.ilike.*@example.com)`, {
+          headers: {
+            'apikey': API_KEY,
+            'Authorization': `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const testParents = testParentsRes.ok ? await testParentsRes.json() : [];
+        const testParentIds = testParents.map((p: any) => p.id);
+
+        // Fetch waivers for test parents
+        const testWaiversRes = await fetch(`${BASE_URL}/rest/v1/waivers?select=id,pdf_path,parent_id&parent_id=in.(${testParentIds.join(',')})`, {
+          headers: {
+            'apikey': API_KEY,
+            'Authorization': `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const testWaivers = testWaiversRes.ok ? await testWaiversRes.json() : [];
+        const waiverPdfPaths = testWaivers.map((w: any) => w.pdf_path).filter(Boolean);
+
         const waiversDir = path.join(process.cwd(), 'data', 'waivers');
         if (fs.existsSync(waiversDir)) {
-          const files = fs.readdirSync(waiversDir);
-          const waiverFiles = files.filter(file => file.startsWith('waiver_') && file.endsWith('.pdf'));
-          
-          for (const file of waiverFiles) {
-            const filePath = path.join(waiversDir, file);
-            try {
-              fs.unlinkSync(filePath);
-              waiversCleared++;
-            } catch (fileError) {
-              console.warn(`⚠️  Could not delete waiver file ${file}:`, fileError);
+          for (const pdfPath of waiverPdfPaths) {
+            const filePath = path.join(waiversDir, path.basename(pdfPath));
+            if (fs.existsSync(filePath)) {
+              try {
+                fs.unlinkSync(filePath);
+                waiversCleared++;
+              } catch (fileError) {
+                console.warn(`⚠️  Could not delete waiver file ${filePath}:`, fileError);
+              }
             }
           }
-          logger.admin(`✅ Cleared ${waiversCleared} waiver files`);
+          logger.admin(`✅ Cleared ${waiversCleared} test waiver files`);
         } else {
           logger.admin('📁 No waivers directory found');
         }

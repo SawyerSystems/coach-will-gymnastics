@@ -297,6 +297,7 @@ function ParentDashboard() {
   });
 
   const upcomingBookings = bookings.filter(b => {
+    if (!b.preferredDate) return false;
     const bookingDate = new Date(b.preferredDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Start from beginning of today
@@ -307,7 +308,7 @@ function ParentDashboard() {
   });
 
   const pastBookings = bookings.filter(b => 
-    new Date(b.preferredDate) < new Date() || 
+    (b.preferredDate && new Date(b.preferredDate) < new Date()) || 
     b.status === 'cancelled'
   );
 
@@ -500,14 +501,14 @@ function ParentDashboard() {
 
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4 text-gray-500" />
-                              <span>{formatDate(booking.preferredDate)}</span>
+                              <span>{booking.preferredDate ? formatDate(booking.preferredDate) : 'Date TBD'}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                               <Clock className="w-4 h-4 text-gray-500" />
                               <span>{booking.preferredTime}</span>
                               <Badge variant="secondary">
-                                {booking.lessonType.replace('-', ' ').replace('min', 'minute')}
+                                {booking.lessonType?.replace('-', ' ').replace('min', 'minute') || 'Unknown Lesson Type'}
                               </Badge>
                             </div>
 
@@ -673,7 +674,7 @@ function ParentDashboard() {
 
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-500" />
-                            <span>{format(new Date(booking.preferredDate), 'MMMM d, yyyy')}</span>
+                            <span>{booking.preferredDate ? format(new Date(booking.preferredDate), 'MMMM d, yyyy') : 'Date TBD'}</span>
                             <Badge variant="outline">
                               {booking.status}
                             </Badge>
@@ -998,7 +999,7 @@ function ParentDashboard() {
 
                         {athleteBookings.filter(b => b.waiverSigned).map(booking => (
                           <div key={booking.id} className="text-sm text-gray-600 ml-4">
-                            Signed by: {booking.waiverSignatureName} on {booking.waiverSignedAt ? format(new Date(booking.waiverSignedAt), 'MMM d, yyyy') : 'Unknown date'}
+                            Waiver has been signed
                           </div>
                         ))}
 
@@ -1027,7 +1028,7 @@ function ParentDashboard() {
                       <div className="space-y-2 max-h-32 overflow-y-auto">
                         {athleteBookings.map(booking => (
                           <div key={booking.id} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                            <span>{format(new Date(booking.preferredDate), 'MMM d, yyyy')} - {booking.preferredTime}</span>
+                            <span>{booking.preferredDate ? format(new Date(booking.preferredDate), 'MMM d, yyyy') : 'Date TBD'} - {booking.preferredTime}</span>
                             <Badge variant="secondary" className="text-xs">
                               {booking.status}
                             </Badge>
@@ -1144,14 +1145,14 @@ function ParentDashboard() {
                   <div className="space-y-3">
                     <div>
                       <Label className="text-sm font-medium">Current Focus Areas</Label>
-                      <p className="text-sm text-gray-600">{booking.focusAreas.join(', ')}</p>
+                      <p className="text-sm text-gray-600">{booking.focusAreas?.join(', ') || 'No specific focus areas'}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Lesson Details</Label>
                       <p className="text-sm text-gray-600">
                         {booking.athlete1Name}
                         {booking.athlete2Name && ` & ${booking.athlete2Name}`} - 
-                        {booking.lessonType.replace('-', ' ')} on {booking.preferredDate} at {booking.preferredTime}
+                        {booking.lessonType?.replace('-', ' ') || 'Unknown Lesson Type'} on {booking.preferredDate} at {booking.preferredTime}
                       </p>
                     </div>
                   </div>

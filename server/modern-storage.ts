@@ -31,7 +31,7 @@ export class ModernSupabaseStorage {
       parent_phone: insertBooking.parentPhone,
       emergency_contact_name: insertBooking.emergencyContactName,
       emergency_contact_phone: insertBooking.emergencyContactPhone,
-      amount: insertBooking.amount,
+      amount: insertBooking.paidAmount || '0',
       status: insertBooking.status || 'pending',
       payment_status: insertBooking.paymentStatus || 'unpaid',
       booking_method: insertBooking.bookingMethod || 'online'
@@ -268,6 +268,13 @@ export class ModernSupabaseStorage {
   private mapBookingFromDb(data: any): Booking {
     return {
       id: data.id,
+      status: data.status,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      parentId: data.parent_id || null,
+      athleteId: data.athlete_id || null,
+      lessonTypeId: data.lesson_type_id || null,
+      waiverId: data.waiver_id || null,
       lessonType: data.lesson_type,
       preferredDate: data.preferred_date,
       preferredTime: data.preferred_time,
@@ -279,11 +286,8 @@ export class ModernSupabaseStorage {
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
       amount: data.amount,
-      status: data.status,
       bookingMethod: data.booking_method || 'online',
       waiverSigned: data.waiver_signed || false,
-      waiverSignedAt: data.waiver_signed_at ? new Date(data.waiver_signed_at) : null,
-      waiverSignatureName: data.waiver_signature_name || null,
       paymentStatus: data.payment_status || 'unpaid',
       attendanceStatus: data.attendance_status || 'pending',
       reservationFeePaid: data.reservation_fee_paid || false,
@@ -302,8 +306,6 @@ export class ModernSupabaseStorage {
       safetyVerificationSigned: data.safety_verification_signed || false,
       safetyVerificationSignedAt: data.safety_verification_signed_at ? new Date(data.safety_verification_signed_at) : null,
       stripeSessionId: data.stripe_session_id || null,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
       // For backward compatibility during transition
       athlete1Name: data.athlete1_name,
       athlete1DateOfBirth: data.athlete1_date_of_birth,

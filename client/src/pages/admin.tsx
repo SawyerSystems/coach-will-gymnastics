@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +33,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    AlertCircle,
-    BarChart,
-    Calendar,
-    CalendarX,
-    CheckCircle,
-    Clock,
-    DollarSign,
-    Edit,
-    Eye,
-    Mail,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    RefreshCw,
-    Search,
-    Trash2,
-    User,
-    Users,
-    X
+  AlertCircle,
+  BarChart,
+  Calendar,
+  CalendarX,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Edit,
+  Eye,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+  Users,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -598,7 +598,7 @@ export default function Admin() {
             emergencyContactName: booking.parent?.emergencyContactName || booking.emergencyContactName || '',
             emergencyContactPhone: booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || '',
             waiverSigned: booking.waiverId ? true : false,
-            waiverSignedAt: booking.waiver?.signedAt || null
+            waiverSignedAt: null // Waiver timestamp not available in this context
           });
         }
       }
@@ -615,7 +615,7 @@ export default function Admin() {
             emergencyContactName: booking.parent?.emergencyContactName || booking.emergencyContactName || '',
             emergencyContactPhone: booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || '',
             waiverSigned: booking.waiverId ? true : false,
-            waiverSignedAt: booking.waiver?.signedAt || null
+            waiverSignedAt: null // Waiver timestamp not available in this context
           });
         }
       }
@@ -869,11 +869,18 @@ export default function Admin() {
   // ANALYTICS COMPUTED DATA
   const filteredBookingsForAnalytics = bookings.filter(booking => {
     // Filter by date range
-    if (analyticsDateRange.start && booking.preferredDate < analyticsDateRange.start) return false;
-    if (analyticsDateRange.end && booking.preferredDate > analyticsDateRange.end) return false;
+    if (analyticsDateRange.start && booking.preferredDate && booking.preferredDate < analyticsDateRange.start) return false;
+    if (analyticsDateRange.end && booking.preferredDate && booking.preferredDate > analyticsDateRange.end) return false;
     
     // Filter by lesson type
-    if (analyticsLessonType !== 'all' && (booking.lessonType?.name || booking.lessonType) !== analyticsLessonType) return false;
+    const lessonTypeName = (() => {
+      const lt = booking.lessonType;
+      if (typeof lt === 'object' && lt && 'name' in lt) {
+        return (lt as any).name;
+      }
+      return lt;
+    })();
+    if (analyticsLessonType !== 'all' && lessonTypeName !== analyticsLessonType) return false;
     
     return true;
   });
@@ -897,6 +904,7 @@ export default function Admin() {
   const bookingTrendData = (() => {
     const monthCount = new Map<string, number>();
     filteredBookingsForAnalytics.forEach(booking => {
+      if (!booking.preferredDate) return;
       const date = new Date(booking.preferredDate);
       const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
       monthCount.set(monthKey, (monthCount.get(monthKey) || 0) + 1);
@@ -1120,169 +1128,98 @@ export default function Admin() {
                     />
                   </div>
                   {/* Show all athletes with search filter */}
+                  {/* Upcoming birthdays (yellow cards, next 7 days only, no overlap) */}
                   {athletes
-                    // First deduplicate by athlete ID
-                    .filter((athlete, index, self) => 
+                    .filter((athlete, index, self) =>
                       index === self.findIndex((a) => a.id === athlete.id)
                     )
                     .filter(athlete => {
-                      // Search filter
-                      if (athleteSearchTerm) {
-                        const searchTerm = athleteSearchTerm.toLowerCase();
-                        const athleteName = (athlete.firstName && athlete.lastName 
-                          ? `${athlete.firstName} ${athlete.lastName}` 
-                          : athlete.name).toLowerCase();
-                        if (!athleteName.includes(searchTerm)) {
-                          return false;
-                        }
-                      }
-                      return true; // Show all athletes, not just those with upcoming birthdays
-                    })
-                    .sort((a, b) => {
-                      if (!a.dateOfBirth || !b.dateOfBirth) {
-                        return a.dateOfBirth ? -1 : (b.dateOfBirth ? 1 : 0);
-                      }
+                      if (!athlete.dateOfBirth) return false;
                       const today = new Date();
-                      const birthdayA = new Date(a.dateOfBirth);
-                      const birthdayB = new Date(b.dateOfBirth);
-                      const nextBirthdayA = new Date(today.getFullYear(), birthdayA.getMonth(), birthdayA.getDate());
-                      const nextBirthdayB = new Date(today.getFullYear(), birthdayB.getMonth(), birthdayB.getDate());
-                      
-                      if (nextBirthdayA < today) nextBirthdayA.setFullYear(today.getFullYear() + 1);
-                      if (nextBirthdayB < today) nextBirthdayB.setFullYear(today.getFullYear() + 1);
-                      
-                      const daysUntilA = Math.ceil((nextBirthdayA.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      const daysUntilB = Math.ceil((nextBirthdayB.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      
-                      // Sort by upcoming birthdays first (within 30 days), then alphabetically
-                      const isUpcomingA = daysUntilA <= 30;
-                      const isUpcomingB = daysUntilB <= 30;
-                      
-                      if (isUpcomingA && !isUpcomingB) return -1;
-                      if (!isUpcomingA && isUpcomingB) return 1;
-                      if (isUpcomingA && isUpcomingB) return daysUntilA - daysUntilB;
-                      
-                      // Both not upcoming, sort alphabetically
-                      const nameA = (a.firstName && a.lastName ? `${a.firstName} ${a.lastName}` : a.name);
-                      const nameB = (b.firstName && b.lastName ? `${b.firstName} ${b.lastName}` : b.name);
-                      return nameA.localeCompare(nameB);
+                      const birthDate = new Date(athlete.dateOfBirth);
+                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                      if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                      return daysUntilBirthday >= 0 && daysUntilBirthday <= 7;
                     })
                     .map((athlete) => {
-                      // Use consistent key format: athlete.name should be the full name
                       const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
                       const parentInfo = parentMapping.get(athleteKey);
                       const today = new Date();
-                      
-                      let daysUntilBirthday = null;
+                      let daysUntilBirthday: number | null = null;
                       if (athlete.dateOfBirth) {
                         const birthDate = new Date(athlete.dateOfBirth);
                         const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                        if (nextBirthday < today) {
-                          nextBirthday.setFullYear(today.getFullYear() + 1);
-                        }
+                        if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
                         daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                       }
-                      
                       return (
                         <div key={athlete.id} className="relative bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-5 shadow-sm">
                           {/* Action buttons in top-right corner */}
                           <div className="absolute top-3 right-3 flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0 hover:bg-yellow-100"
-                              onClick={() => {
-                                setSelectedAthlete(athlete);
-                                setIsAthleteViewOpen(true);
-                              }}
-                              title="View Details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0 hover:bg-yellow-100"
-                              onClick={() => {
-                                setSelectedAthlete(athlete);
-                                setIsAthleteEditOpen(true);
-                              }}
-                              title="Edit Athlete"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 w-8 p-0 hover:bg-red-100 text-red-600"
-                              onClick={() => {
-                                const activeBookings = bookings.filter(b => 
-                                  (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && 
-                                  (b.status === 'confirmed' || b.status === 'pending')
-                                );
-                                
-                                if (activeBookings.length > 0) {
-                                  setDeleteAthleteError({
-                                    athlete,
-                                    activeBookings
-                                  });
-                                } else {
-                                  deleteAthleteMutation.mutate(athlete.id);
-                                }
-                              }}
-                              title="Delete Athlete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-yellow-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} title="View Details"><Eye className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-yellow-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} title="Edit Athlete"><Edit className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-red-100 text-red-600" onClick={() => { const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); if (activeBookings.length > 0) { setDeleteAthleteError({ athlete, activeBookings }); } else { deleteAthleteMutation.mutate(athlete.id); } }} title="Delete Athlete"><Trash2 className="h-4 w-4" /></Button>
                           </div>
-
                           {/* Card Content */}
                           <div className="flex items-start space-x-4">
                             {athlete.photo ? (
-                              <img
-                                src={athlete.photo}
-                                alt={`${athlete.name}'s photo`}
-                                className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handlePhotoClick(athlete.photo!)}
-                              />
+                              <img src={athlete.photo} alt={`${athlete.name}'s photo`} className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handlePhotoClick(athlete.photo!)} />
                             ) : (
-                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                                <User className="h-8 w-8 text-gray-400" />
-                              </div>
+                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-8 w-8 text-gray-400" /></div>
                             )}
-                            
                             <div className="flex-1 space-y-2">
-                              {/* Name with emoji */}
-                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                🧑 {athlete.firstName && athlete.lastName 
-                                  ? `${athlete.firstName} ${athlete.lastName}`
-                                  : athlete.name}
-                              </h3>
-                              
-                              {/* Birthday alert - only if within 7 days */}
-                              {daysUntilBirthday !== null && daysUntilBirthday <= 7 && (
-                                <p className="text-sm font-medium text-orange-700 flex items-center gap-1">
-                                  🎉 Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!
-                                </p>
-                              )}
-                              
-                              {/* Age and experience */}
-                              <p className="text-sm text-gray-600 flex items-center gap-2">
-                                🎂 Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} | 
-                                🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}
-                              </p>
-                              
-                              {/* Parent info */}
-                              {parentInfo && (
-                                <p className="text-sm text-gray-600 flex items-center gap-1">
-                                  👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}
-                                </p>
-                              )}
+                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}</h3>
+                              <p className="text-sm font-medium text-orange-700 flex items-center gap-1">🎉 Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!</p>
+                              <p className="text-sm text-gray-600 flex items-center gap-2">🎂 Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} | 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}</p>
+                              {parentInfo && (<p className="text-sm text-gray-600 flex items-center gap-1">👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}</p>)}
                             </div>
                           </div>
                         </div>
                       );
                     })}
+
+                  {/* Regular athletes (white cards, not in yellow cards) */}
+                  {athletes
+                    .filter((athlete, index, self) =>
+                      index === self.findIndex((a) => a.id === athlete.id)
+                    )
+                    .filter(athlete => {
+                      if (!athlete.dateOfBirth) return false;
+                      const today = new Date();
+                      const birthDate = new Date(athlete.dateOfBirth);
+                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                      if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                      return daysUntilBirthday > 7;
+                    })
+                    .map((athlete) => {
+                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth}`;
+                      const parentInfo = parentMapping.get(athleteKey);
+                      return (
+                        <div key={`regular-${athlete.id}`} className="relative bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                          {/* Action buttons in top-right corner */}
+                          <div className="absolute top-3 right-3 flex gap-2">
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-blue-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} title="View Details"><Eye className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-blue-100" onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} title="Edit Athlete"><Edit className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="outline" className="h-8 w-8 p-0 hover:bg-red-100 text-red-600" onClick={() => { const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); if (activeBookings.length > 0) { setDeleteAthleteError({ athlete, activeBookings }); } else { deleteAthleteMutation.mutate(athlete.id); } }}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                          {/* Card Content */}
+                          <div className="flex items-start space-x-4">
+                            {athlete.photo ? (
+                              <img src={athlete.photo} alt={`${athlete.name}'s photo`} className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handlePhotoClick(athlete.photo!)} />
+                            ) : (
+                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-8 w-8 text-gray-400" /></div>
+                            )}
+                            <div className="flex-1 space-y-2">
+                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}</h3>
+                              <p className="text-sm text-gray-600 flex items-center gap-2">🎂 {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old | 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}</p>
+                              {parentInfo && (<p className="text-sm text-gray-600 flex items-center gap-1">👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}</p>)}
+                            </div>
+                          </div>
+                        </div>
+                    );
+                  })}
                   
                   {/* Show regular athletes */}
                   {athletes
@@ -1292,7 +1229,7 @@ export default function Admin() {
                         const searchTerm = athleteSearchTerm.toLowerCase();
                         const athleteName = (athlete.firstName && athlete.lastName 
                           ? `${athlete.firstName} ${athlete.lastName}` 
-                          : athlete.name).toLowerCase();
+                          : athlete.name || 'Unknown Athlete').toLowerCase();
                         if (!athleteName.includes(searchTerm)) {
                           return false;
                         }
@@ -1513,8 +1450,8 @@ export default function Admin() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  // Only set selectedParent if it exists in our parents data
-                                  const validParent = parents.find(p => p.id === parent.id);
+                                  // Use filteredParents instead of parents
+                                  const validParent = filteredParents.find((p: any) => p.id === parent.id);
                                   if (validParent) {
                                     setSelectedParent(validParent);
                                   } else {
@@ -1529,8 +1466,8 @@ export default function Admin() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  // Only set selectedParent if it exists in our parents data
-                                  const validParent = parents.find(p => p.id === parent.id);
+                                  // Use filteredParents instead of parents
+                                  const validParent = filteredParents.find((p: any) => p.id === parent.id);
                                   if (validParent) {
                                     setSelectedParent(validParent);
                                     setIsParentEditOpen(true);
@@ -1734,7 +1671,7 @@ export default function Admin() {
                               <div className="flex gap-2 mt-2">
                                 <Badge variant="secondary">{post.category}</Badge>
                                 <span className="text-sm text-gray-500">
-                                  {new Date(post.publishedAt).toLocaleDateString()}
+                                  {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'No date'}
                                 </span>
                               </div>
                             </div>
@@ -2423,6 +2360,7 @@ export default function Admin() {
                       <CardContent>
                         <div className="text-2xl font-bold">
                           {bookings.filter(b => {
+                            if (!b.preferredDate) return false;
                             const bookingDate = new Date(b.preferredDate);
                             const thisMonth = new Date();
                             return bookingDate.getMonth() === thisMonth.getMonth() && 
@@ -2455,7 +2393,13 @@ export default function Admin() {
                         <div className="text-2xl font-bold">
                           $
                           {bookings.length > 0
-                            ? (bookings.reduce((sum, b) => sum + parseFloat(b.lessonType?.price || b.paidAmount || '0'), 0) / bookings.length).toFixed(2)
+                            ? (bookings.reduce((sum, b) => {
+                                const lt = b.lessonType;
+                                const price = (typeof lt === 'object' && lt && 'price' in lt) 
+                                  ? (lt as any).price 
+                                  : b.paidAmount || '0';
+                                return sum + parseFloat(price);
+                              }, 0) / bookings.length).toFixed(2)
                             : '0.00'}
                         </div>
                         <p className="text-xs text-muted-foreground">Per booking</p>
@@ -2586,7 +2530,13 @@ export default function Admin() {
                           ];
                           
                           return lessonTypes.map(type => {
-                            const count = filteredBookingsForAnalytics.filter(b => (b.lessonType?.name || b.lessonType) === type.key).length;
+                            const count = filteredBookingsForAnalytics.filter(b => {
+                              const lt = b.lessonType;
+                              const lessonTypeName = (typeof lt === 'object' && lt && 'name' in lt) 
+                                ? (lt as any).name 
+                                : lt;
+                              return lessonTypeName === type.key;
+                            }).length;
                             const percentage = filteredBookingsForAnalytics.length > 0 
                               ? Math.round((count / filteredBookingsForAnalytics.length) * 100) 
                               : 0;
@@ -2666,13 +2616,15 @@ export default function Admin() {
                                 <DialogHeader>
                                   <DialogTitle>Confirm Data Deletion</DialogTitle>
                                   <DialogDescription>
-                                    This action will permanently delete ALL:
-                                    <ul className="list-disc list-inside mt-2 space-y-1">
-                                      <li>Parent profiles</li>
-                                      <li>Athlete profiles</li>
-                                      <li>Booking records</li>
-                                      <li>Authentication codes</li>
-                                    </ul>
+                                    <span>This action will permanently delete ALL:</span>
+                                  </DialogDescription>
+                                  <ul className="list-disc list-inside mt-2 space-y-1">
+                                    <li>Parent profiles</li>
+                                    <li>Athlete profiles</li>
+                                    <li>Booking records</li>
+                                    <li>Authentication codes</li>
+                                  </ul>
+                                  <DialogDescription>
                                     This action cannot be undone.
                                   </DialogDescription>
                                 </DialogHeader>
@@ -3184,7 +3136,7 @@ export default function Admin() {
                       <Input
                         id="edit-firstName"
                         name="firstName"
-                        defaultValue={selectedAthlete.firstName || selectedAthlete.name.split(' ')[0]}
+                        defaultValue={selectedAthlete.firstName || (selectedAthlete.name ? selectedAthlete.name.split(' ')[0] : '')}
                         required
                         aria-describedby="edit-firstName-error"
                         autoComplete="given-name"
@@ -3197,7 +3149,7 @@ export default function Admin() {
                       <Input
                         id="edit-lastName"
                         name="lastName"
-                        defaultValue={selectedAthlete.lastName || selectedAthlete.name.split(' ').slice(1).join(' ')}
+                        defaultValue={selectedAthlete.lastName || (selectedAthlete.name ? selectedAthlete.name.split(' ').slice(1).join(' ') : '')}
                         required
                         aria-describedby="edit-lastName-error"
                         autoComplete="family-name"
@@ -3405,7 +3357,7 @@ export default function Admin() {
                 {/* Waiver Status */}
                 <WaiverStatusDisplay 
                   athleteId={selectedAthlete.id}
-                  athleteName={selectedAthlete.name}
+                  athleteName={selectedAthlete.name || 'Unknown Athlete'}
                   onResendWaiver={() => {
                     // TODO: Implement waiver resend functionality
                     toast({
@@ -3437,14 +3389,24 @@ export default function Admin() {
                                 (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
                                  b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
                       })
-                      .sort((a, b) => new Date(b.preferredDate).getTime() - new Date(a.preferredDate).getTime())
+                      .sort((a, b) => {
+                        const dateA = a.preferredDate ? new Date(a.preferredDate).getTime() : 0;
+                        const dateB = b.preferredDate ? new Date(b.preferredDate).getTime() : 0;
+                        return dateB - dateA;
+                      })
                       .map((booking) => (
                         <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
                           <div className="flex justify-between">
                             <div>
-                              <p className="font-medium">{(booking.lessonType?.name || booking.lessonType || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</p>
+                              <p className="font-medium">{(() => {
+                                const lt = booking.lessonType;
+                                const name = (typeof lt === 'object' && lt && 'name' in lt) 
+                                  ? (lt as any).name 
+                                  : lt;
+                                return (name || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                              })()}</p>
                               <p className="text-sm text-gray-600">
-                                <time dateTime={booking.preferredDate}>
+                                <time dateTime={booking.preferredDate || undefined}>
                                   {booking.preferredDate}
                                 </time> at {booking.preferredTime}
                               </p>
@@ -3547,7 +3509,13 @@ export default function Admin() {
                       {deleteAthleteError.activeBookings.map((booking) => (
                         <div key={booking.id} className="text-sm border rounded p-2">
                           <p className="font-medium">{booking.preferredDate} at {booking.preferredTime}</p>
-                          <p className="text-gray-600">{booking.lessonType?.name || booking.lessonType || 'Unknown'} - Status: {booking.status}</p>
+                          <p className="text-gray-600">{(() => {
+                            const lt = booking.lessonType;
+                            const name = (typeof lt === 'object' && lt && 'name' in lt) 
+                              ? (lt as any).name 
+                              : lt;
+                            return name || 'Unknown';
+                          })()} - Status: {booking.status}</p>
                         </div>
                       ))}
                     </div>
