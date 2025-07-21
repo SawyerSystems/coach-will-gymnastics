@@ -2796,20 +2796,36 @@ export default function Admin() {
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-semibold">
-                                  {athlete.first_name} {athlete.last_name}
+                                  {/* Prefer firstName/lastName, fallback to name */}
+                                  {athlete.firstName || athlete.first_name || ''} {athlete.lastName || athlete.last_name || athlete.name?.split(' ').slice(1).join(' ') || ''}
                                 </h4>
                                 <Badge variant="outline">ID: {athlete.id}</Badge>
                               </div>
                               <div className="text-sm text-gray-600 space-y-1">
                                 <p>
                                   <strong>Age:</strong>{' '}
-                                  {athlete.birth_date 
-                                    ? calculateAge(athlete.birth_date) 
-                                    : 'Not provided'
-                                  }
+                                  {(() => {
+                                    // Use date_of_birth, fallback to other keys if needed
+                                    const dob = athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date;
+                                    if (dob) {
+                                      const age = calculateAge(dob);
+                                      return isNaN(age) ? 'Not provided' : age;
+                                    }
+                                    return 'Not provided';
+                                  })()}
                                 </p>
                                 <p>
-                                  <strong>Gender:</strong> {athlete.gender || 'Not specified'}
+                                  <strong>Gender:</strong> {(() => {
+                                    // Normalize gender for display
+                                    const genderRaw = athlete.gender || athlete.gender_identity || athlete.genderIdentity || '';
+                                    if (!genderRaw) return 'Not provided';
+                                    const g = genderRaw.toLowerCase().replace(/\s|_/g, '');
+                                    if (g === 'male') return 'Male';
+                                    if (g === 'female') return 'Female';
+                                    if (g === 'other') return 'Other';
+                                    if (g === 'prefernottosay' || g === 'prefernotosay' || g === 'prefer_not_to_say') return 'Prefer not to say';
+                                    return genderRaw;
+                                  })()}
                                 </p>
                                 {athlete.skill_level && (
                                   <p>
@@ -2826,7 +2842,7 @@ export default function Admin() {
                                 <div className="mt-2">
                                   <WaiverStatusDisplay 
                                     athleteId={athlete.id} 
-                                    athleteName={`${athlete.firstName} ${athlete.lastName}`}
+                                    athleteName={`${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
                                   />
                                 </div>
                               )}
@@ -2905,7 +2921,7 @@ export default function Admin() {
                 )}
               </div>
             );
-            })()}
+          })()}
           </DialogContent>
         </Dialog>
         
