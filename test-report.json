@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-07-21T01:03:10.885Z",
+  "timestamp": "2025-07-22T05:17:47.679Z",
   "summary": {
     "totalPassed": 16,
     "totalTests": 16,
@@ -78,7 +78,7 @@
         {
           "name": "Booking Creation Flow",
           "passed": true,
-          "details": "Created booking ID: 121"
+          "details": "Created booking ID: 123"
         }
       ]
     },
@@ -88,27 +88,27 @@
         {
           "name": "Response Time: /api/site-content",
           "passed": true,
-          "details": "3ms (target: <2000ms)"
+          "details": "2ms (target: <2000ms)"
         },
         {
           "name": "Response Time: /api/focus-areas",
           "passed": true,
-          "details": "76ms (target: <2000ms)"
+          "details": "84ms (target: <2000ms)"
         },
         {
           "name": "Response Time: /api/apparatus",
           "passed": true,
-          "details": "81ms (target: <2000ms)"
+          "details": "64ms (target: <2000ms)"
         },
         {
           "name": "Response Time: /api/stripe/products",
           "passed": true,
-          "details": "146ms (target: <2000ms)"
+          "details": "161ms (target: <2000ms)"
         },
         {
           "name": "Concurrent Request Handling",
           "passed": true,
-          "details": "5 requests in 9ms, all successful: true"
+          "details": "5 requests in 17ms, all successful: true"
         }
       ]
     }

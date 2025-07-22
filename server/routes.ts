@@ -1207,9 +1207,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Athlete not found" });
       }
       // Only update allowed fields
-      const athlete = await storage.updateAthlete(athleteId, parseResult.data);
+      let athlete;
+      try {
+        athlete = await storage.updateAthlete(athleteId, parseResult.data);
+      } catch (supabaseError) {
+        // Forward Supabase error as 500, safely handling unknown type
+        let errorMsg = "Supabase error updating athlete";
+        if (supabaseError instanceof Error) {
+          errorMsg = supabaseError.message;
+        } else if (typeof supabaseError === 'object' && supabaseError && 'message' in supabaseError) {
+          errorMsg = String((supabaseError as any).message);
+        } else if (typeof supabaseError === 'string') {
+          errorMsg = supabaseError;
+        }
+        return res.status(500).json({ error: errorMsg });
+      }
       if (!athlete) {
-        return res.status(404).json({ error: "Athlete update failed" });
+        return res.status(500).json({ error: "Athlete update failed" });
       }
       console.log('[ATHLETE-PATCH] Successfully updated athlete', { athleteId, updates: Object.keys(parseResult.data) });
       res.json(athlete);

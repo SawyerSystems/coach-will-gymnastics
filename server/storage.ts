@@ -1516,7 +1516,8 @@ export class SupabaseStorage implements IStorage {
     if (updateData.latestWaiverId !== undefined) dbUpdate.latest_waiver_id = updateData.latestWaiverId;
     if (updateData.waiverStatus !== undefined) dbUpdate.waiver_status = updateData.waiverStatus;
 
-    const { data, error } = await supabase
+    // Use supabaseAdmin to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('athletes')
       .update(dbUpdate)
       .eq('id', id)
@@ -1525,7 +1526,8 @@ export class SupabaseStorage implements IStorage {
 
     if (error) {
       console.error('Error updating athlete:', error);
-      return undefined;
+      // Forward error for route to handle
+      throw error;
     }
 
     return data || undefined;
