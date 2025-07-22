@@ -1189,29 +1189,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const athleteId = parseInt(req.params.athleteId);
       const updateData = req.body;
-      
       console.log('[ATHLETE-PATCH]', athleteId, req.body);
-      
       if (isNaN(athleteId)) {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
-
+      // Validate updateData against insertAthleteSchema (partial)
+      const { insertAthleteSchema } = require("@shared/schema");
+      const safeSchema = insertAthleteSchema.partial();
+      const parseResult = safeSchema.safeParse(updateData);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Validation failed", details: parseResult.error.flatten() });
+      }
       // Verify athlete exists
       const existingAthlete = await storage.getAthlete(athleteId);
       if (!existingAthlete) {
         console.log('[ATHLETE-PATCH] Athlete not found', { athleteId });
         return res.status(404).json({ error: "Athlete not found" });
       }
-      
-      // Allow gender patch and other updates
-      const athlete = await storage.updateAthlete(athleteId, updateData);
+      // Only update allowed fields
+      const athlete = await storage.updateAthlete(athleteId, parseResult.data);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete update failed" });
       }
-      
-      console.log('[ATHLETE-PATCH] Successfully updated athlete', { athleteId, updates: Object.keys(updateData) });
+      console.log('[ATHLETE-PATCH] Successfully updated athlete', { athleteId, updates: Object.keys(parseResult.data) });
       res.json(athlete);
-    } catch (error: any) {
+    } catch (error) {
       console.error("[ATHLETE-PATCH] Error updating athlete:", error);
       res.status(500).json({ error: "Failed to update athlete" });
     }

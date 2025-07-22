@@ -1502,9 +1502,23 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateAthlete(id: number, updateData: Partial<InsertAthlete>): Promise<Athlete | undefined> {
+    // Map camelCase to snake_case for DB update
+    const dbUpdate: Record<string, any> = {};
+    if (updateData.firstName !== undefined) dbUpdate.first_name = updateData.firstName;
+    if (updateData.lastName !== undefined) dbUpdate.last_name = updateData.lastName;
+    if (updateData.parentId !== undefined) dbUpdate.parent_id = updateData.parentId;
+    if (updateData.dateOfBirth !== undefined) dbUpdate.date_of_birth = updateData.dateOfBirth;
+    if (updateData.gender !== undefined) dbUpdate.gender = updateData.gender;
+    if (updateData.name !== undefined) dbUpdate.name = updateData.name;
+    if (updateData.allergies !== undefined) dbUpdate.allergies = updateData.allergies;
+    if (updateData.experience !== undefined) dbUpdate.experience = updateData.experience;
+    if (updateData.photo !== undefined) dbUpdate.photo = updateData.photo;
+    if (updateData.latestWaiverId !== undefined) dbUpdate.latest_waiver_id = updateData.latestWaiverId;
+    if (updateData.waiverStatus !== undefined) dbUpdate.waiver_status = updateData.waiverStatus;
+
     const { data, error } = await supabase
       .from('athletes')
-      .update(updateData)
+      .update(dbUpdate)
       .eq('id', id)
       .select()
       .single();

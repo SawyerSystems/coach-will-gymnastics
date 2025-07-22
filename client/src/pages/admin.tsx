@@ -379,10 +379,26 @@ export default function Admin() {
       setIsAthleteEditOpen(false);
       toast({ title: "Athlete updated successfully" });
     },
-    onError: () => {
+    onError: (error: any) => {
+      let description = "Failed to update athlete";
+      if (error instanceof Error && error.message) {
+        // Try to parse backend error JSON if present
+        try {
+          const match = error.message.match(/\{.*\}$/);
+          if (match) {
+            const errObj = JSON.parse(match[0]);
+            if (errObj.error) description = errObj.error;
+            if (errObj.details && errObj.details.fieldErrors) {
+              description += ': ' + Object.entries(errObj.details.fieldErrors)
+                .map(([field, msgs]) => `${field}: ${(msgs as string[]).join(', ')}`)
+                .join('; ');
+            }
+          }
+        } catch {}
+      }
       toast({
         title: "Error",
-        description: "Failed to update athlete",
+        description,
         variant: "destructive",
       });
     },
