@@ -1,5 +1,5 @@
 import { render } from "@react-email/render";
-import { AttendanceStatusEnum, BookingStatusEnum, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
+import { AttendanceStatusEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
@@ -1194,7 +1194,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
       // Validate updateData against insertAthleteSchema (partial)
-      const { insertAthleteSchema } = require("@shared/schema");
       const safeSchema = insertAthleteSchema.partial();
       const parseResult = safeSchema.safeParse(updateData);
       if (!parseResult.success) {
