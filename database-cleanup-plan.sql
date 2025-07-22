@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS email_logs CASCADE;
 DROP TABLE IF EXISTS payment_logs CASCADE;
 
 -- 3. Drop unused slot reservations (0 records, feature not implemented)
-DROP TABLE IF EXISTS slot_reservations CASCADE;
 
 -- 4. KEEP: parent_auth_codes (essential for authentication)
 -- This table stays - it's needed for the parent login system

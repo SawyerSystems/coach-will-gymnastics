@@ -181,11 +181,16 @@ function getLessonDurationMinutes(lessonType: string): number {
 
 // Helper function to generate available time slots for a specific date
 async function getAvailableTimeSlots(date: string, lessonDuration: number = 30): Promise<string[]> {
-  const bookingDate = new Date(date);
-  const dayOfWeek = bookingDate.getDay();
+  // Always parse as UTC to avoid timezone issues
+  const bookingDate = new Date(date + 'T00:00:00Z');
+  const dayOfWeek = bookingDate.getUTCDay();
+
+  // Use Pacific Time helpers for 'today' logic
+  // (Assumes formatToPacificISO and getTodayInPacific are imported from shared/timezone-utils)
+  const todayPacific = formatToPacificISO(getTodayInPacific());
   
   logger.debug(`=== BOOKING CUTOFF SYSTEM ===`);
-  logger.debug(`Date: ${date}, Day: ${dayOfWeek}, Lesson Duration: ${lessonDuration} minutes`);
+  logger.debug(`Date: ${date}, Day (UTC): ${dayOfWeek}, Lesson Duration: ${lessonDuration} minutes, Today (Pacific): ${todayPacific}`);
   
   // Get weekly availability for this day
   const dayAvailability = await storage.getAllAvailability();
