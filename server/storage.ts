@@ -2455,7 +2455,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAvailabilityExceptionsByDateRange(startDate: string, endDate: string): Promise<AvailabilityException[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_exceptions')
       .select('*')
       .gte('date', startDate)
@@ -2468,7 +2468,7 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
 
-    return (data || []).map(row => ({
+    const mapped = (data || []).map(row => ({
       id: row.id,
       date: row.date,
       startTime: row.start_time,
@@ -2477,6 +2477,8 @@ export class SupabaseStorage implements IStorage {
       reason: row.reason,
       createdAt: row.created_at
     }));
+    console.debug(`[AVAILABILITY EXCEPTIONS] getAvailabilityExceptionsByDateRange(${startDate}, ${endDate}) -> ${mapped.length} rows`);
+    return mapped;
   }
 
   // Admin methods
