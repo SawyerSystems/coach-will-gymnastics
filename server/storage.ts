@@ -2342,7 +2342,15 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(row => ({
+      id: row.id,
+      date: row.date,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      isAvailable: row.is_available,
+      reason: row.reason,
+      createdAt: row.created_at
+    }));
   }
 
   async getAvailabilityException(id: number): Promise<AvailabilityException | undefined> {
@@ -2357,7 +2365,16 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data;
+    if (!data) return undefined;
+    return {
+      id: data.id,
+      date: data.date,
+      startTime: data.start_time,
+      endTime: data.end_time,
+      isAvailable: data.is_available,
+      reason: data.reason,
+      createdAt: data.created_at
+    };
   }
 
   async createAvailabilityException(insertException: InsertAvailabilityException): Promise<AvailabilityException> {
@@ -2381,16 +2398,28 @@ export class SupabaseStorage implements IStorage {
       throw new Error('Failed to create availability exception');
     }
 
-    return data;
+    return {
+      id: data.id,
+      date: data.date,
+      startTime: data.start_time,
+      endTime: data.end_time,
+      isAvailable: data.is_available,
+      reason: data.reason,
+      createdAt: data.created_at
+    };
   }
 
   async updateAvailabilityException(id: number, insertException: InsertAvailabilityException): Promise<AvailabilityException | undefined> {
+    const dbData = {
+      date: insertException.date,
+      start_time: insertException.startTime,
+      end_time: insertException.endTime,
+      is_available: insertException.isAvailable ?? false,
+      reason: insertException.reason ?? null
+    };
     const { data, error } = await supabaseAdmin
       .from('availability_exceptions')
-      .update({
-        ...insertException,
-        reason: insertException.reason ?? null
-      })
+      .update(dbData)
       .eq('id', id)
       .select()
       .single();
@@ -2400,7 +2429,15 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data;
+    return {
+      id: data.id,
+      date: data.date,
+      startTime: data.start_time,
+      endTime: data.end_time,
+      isAvailable: data.is_available,
+      reason: data.reason,
+      createdAt: data.created_at
+    };
   }
 
   async deleteAvailabilityException(id: number): Promise<boolean> {
@@ -2431,7 +2468,15 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(row => ({
+      id: row.id,
+      date: row.date,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      isAvailable: row.is_available,
+      reason: row.reason,
+      createdAt: row.created_at
+    }));
   }
 
   // Admin methods
