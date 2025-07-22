@@ -2284,6 +2284,17 @@ CREATE TYPE payment_status AS ENUM (
   }
 ]
 
+-- TABLE: slot_reservations
+CREATE TABLE IF NOT EXISTS slot_reservations (
+  id SERIAL PRIMARY KEY,
+  date TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  lesson_type TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 Triggers and Functions
 -- Trigger: Set waiver_signed to false on waiver delete
 CREATE OR REPLACE FUNCTION unset_waiver_signed_on_waiver_delete()

@@ -97,8 +97,9 @@ function timeToMinutes(timeStr: string): number {
 // Helper function to check if a booking time conflicts with availability
 async function checkBookingAvailability(date: string, startTime: string, duration: number): Promise<{ available: boolean; reason?: string }> {
   logger.debug(`Checking availability for ${date}, time: ${startTime} (duration: ${duration}min)`);
-  const bookingDate = new Date(date);
-  const dayOfWeek = bookingDate.getDay();
+  // Always parse as UTC to avoid timezone issues
+  const bookingDate = new Date(date + 'T00:00:00Z');
+  const dayOfWeek = bookingDate.getUTCDay();
   const startTime24 = convertTo24Hour(startTime);
   logger.debug(`Converted time ${startTime} to 24-hour: ${startTime24}`);
   const startMinutes = timeToMinutes(startTime);
