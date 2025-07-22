@@ -6,6 +6,7 @@ import { isAdminAuthenticated } from "./auth";
 import { configureSessionAndCors, sessionConfig } from "./config/session";
 import { logger } from "./logger";
 import { registerRoutes } from "./routes";
+import { storage } from "./storage";
 import { serveStatic, setupVite } from "./vite";
 
 // Set Pacific timezone for the server
@@ -315,13 +316,17 @@ app.use((req, res, next) => {
       }
 
       // Clear test waiver files
-      let waiversCleared = 0;
+      let waiversArchived = 0;
       try {
+        // Use service role key for privileged operations
+        const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing');
+
         // Fetch test parent emails
         const testParentsRes = await fetch(`${BASE_URL}/rest/v1/parents?select=id,email&or=(email.ilike.*test*,email.ilike.*@example.com)`, {
           headers: {
-            'apikey': API_KEY,
-            'Authorization': `Bearer ${API_KEY}`,
+            'apikey': SERVICE_ROLE_KEY,
+            'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
             'Content-Type': 'application/json'
           }
         });
@@ -331,14 +336,26 @@ app.use((req, res, next) => {
         // Fetch waivers for test parents
         const testWaiversRes = await fetch(`${BASE_URL}/rest/v1/waivers?select=id,pdf_path,parent_id&parent_id=in.(${testParentIds.join(',')})`, {
           headers: {
-            'apikey': API_KEY,
-            'Authorization': `Bearer ${API_KEY}`,
+            'apikey': SERVICE_ROLE_KEY,
+            'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
             'Content-Type': 'application/json'
           }
         });
         const testWaivers = testWaiversRes.ok ? await testWaiversRes.json() : [];
         const waiverPdfPaths = testWaivers.map((w: any) => w.pdf_path).filter(Boolean);
 
+        // Archive each waiver using storage.archiveWaiver
+        for (const waiver of testWaivers) {
+          try {
+            // Archive with reason 'test data cleanup'
+            const archived = await storage.archiveWaiver(waiver.id, 'test data cleanup');
+            if (archived) waiversArchived++;
+          } catch (archiveError) {
+            console.warn(`⚠️  Could not archive waiver ${waiver.id}:`, archiveError);
+          }
+        }
+
+        // Remove PDF files for test waivers
         const waiversDir = path.join(process.cwd(), 'data', 'waivers');
         if (fs.existsSync(waiversDir)) {
           for (const pdfPath of waiverPdfPaths) {
@@ -346,18 +363,17 @@ app.use((req, res, next) => {
             if (fs.existsSync(filePath)) {
               try {
                 fs.unlinkSync(filePath);
-                waiversCleared++;
               } catch (fileError) {
                 console.warn(`⚠️  Could not delete waiver file ${filePath}:`, fileError);
               }
             }
           }
-          logger.admin(`✅ Cleared ${waiversCleared} test waiver files`);
+          logger.admin(`✅ Archived ${waiversArchived} test waivers and removed PDF files`);
         } else {
           logger.admin('📁 No waivers directory found');
         }
       } catch (waiverError) {
-        console.warn('⚠️  Could not clear waiver files:', waiverError);
+        console.warn('⚠️  Could not archive waivers:', waiverError);
       }
 
       const summary = {
@@ -368,7 +384,7 @@ app.use((req, res, next) => {
           athletes: athletesCleared,
           parents: parentsCleared,
           authCodes: authCodesCleared,
-          waivers: waiversCleared
+          waivers: waiversArchived
         }
       };
 
