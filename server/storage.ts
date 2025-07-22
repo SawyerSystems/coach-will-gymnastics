@@ -2679,11 +2679,11 @@ export class SupabaseStorage implements IStorage {
       .from('waivers')
       .select(`
         *,
-        athletes!athlete_id (
+        athletes!fk_waivers_athlete (
           first_name,
           last_name
         ),
-        parents!parent_id (
+        parents!fk_waivers_parent (
           first_name,
           last_name
         )
@@ -2743,11 +2743,11 @@ export class SupabaseStorage implements IStorage {
       .from('waivers')
       .select(`
         *,
-        athletes!athlete_id (
+        athletes!fk_waivers_athlete (
           first_name,
           last_name
         ),
-        parents!parent_id (
+        parents!fk_waivers_parent (
           first_name,
           last_name
         )
