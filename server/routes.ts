@@ -8,7 +8,7 @@ import { ReservationPaymentLink } from "../emails/ReservationPaymentLink";
 import { SafetyInformationLink } from "../emails/SafetyInformationLink";
 import { SignedWaiverConfirmation } from "../emails/SignedWaiverConfirmation";
 import { WaiverCompletionLink } from "../emails/WaiverCompletionLink";
-import { formatPublishedAtToPacific } from "../shared/timezone-utils";
+import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
 import { sendGenericEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendSessionCancellation, sendSessionConfirmation, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
@@ -220,6 +220,7 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
   // Get availability exceptions for this date
   const exceptions = await storage.getAvailabilityExceptionsByDateRange(date, date);
   const blockedTimes = exceptions.filter(exception => !exception.isAvailable);
+  logger.debug(`Blocked times for ${date}:`, blockedTimes.map(b => `${b.startTime}-${b.endTime}`));
   
   const availableTimes: string[] = [];
   
@@ -273,21 +274,21 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
       for (const block of blockedTimes) {
         const blockStart = timeToMinutes(block.startTime);
         const blockEnd = timeToMinutes(block.endTime);
-        
+        logger.debug(`  Checking slot ${timeStr}-${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')} against block ${block.startTime}-${block.endTime} (${blockStart}-${blockEnd})`);
         // Check for overlap
         if (!(endMinutes <= blockStart || minutes >= blockEnd)) {
+          logger.debug(`   OVERLAP: slot ${timeStr} is blocked by ${block.startTime}-${block.endTime}`);
           conflictsWithBlock = true;
           break;
         }
       }
       
-      // Check if time is in the past for today
-      const now = new Date();
-      const today = new Date().toISOString().split('T')[0];
+      // Check if time is in the past for today (Pacific Time)
+      const nowPacific = getTodayInPacific();
+      const todayPacificISO = formatToPacificISO(nowPacific);
       let isPastTime = false;
-      
-      if (date === today) {
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      if (date === todayPacificISO) {
+        const currentMinutes = nowPacific.getHours() * 60 + nowPacific.getMinutes();
         isPastTime = minutes <= currentMinutes + 60; // Give 1 hour buffer for bookings
       }
       
