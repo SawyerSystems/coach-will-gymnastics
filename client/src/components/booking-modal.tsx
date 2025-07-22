@@ -23,10 +23,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useAvailableTimes } from "@/hooks/use-available-times";
 import { useCreateBooking } from "@/hooks/use-booking";
 import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
+import { useAvailableTimes } from "@/hooks/useAvailableTimes";
 import { useGenders } from "@/hooks/useGenders";
 import { EXPERIENCE_LEVELS, LESSON_TYPES } from "@/lib/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -210,8 +210,8 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
   // Fetch available time slots when date or lesson type changes
   const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableTimes(
-    watchedDate ? watchedDate.toISOString().split('T')[0] : null, 
-    watchedLessonType || null
+    watchedDate ? watchedDate.toISOString().split('T')[0] : '',
+    watchedLessonType || ''
   );
 
   const lessonTypeData = LESSON_TYPES[watchedLessonType as keyof typeof LESSON_TYPES];

@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UnifiedBookingModal } from '@/components/UnifiedBookingModal';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
-import { useAvailableTimes } from '@/hooks/use-available-times';
 import { toast } from '@/hooks/use-toast';
+import { useAvailableTimes } from '@/hooks/useAvailableTimes';
 import { calculateAge, formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent } from '@shared/schema';
@@ -32,8 +32,8 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
   const [selectedTime, setSelectedTime] = useState('');
 
   const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableTimes(
-    selectedDate || null,
-    booking.lessonType || null
+    selectedDate || '',
+    booking.lessonType || ''
   );
 
   const handleSubmit = (e: React.FormEvent) => {

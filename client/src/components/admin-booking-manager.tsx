@@ -29,8 +29,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
-import { useAvailableTimes } from "@/hooks/use-available-times";
 import { useToast } from "@/hooks/use-toast";
+import { useAvailableTimes } from "@/hooks/useAvailableTimes";
 import { useGenders } from "@/hooks/useGenders";
 import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
 import { calculateAge } from "@/lib/dateUtils";
@@ -244,8 +244,8 @@ function AdminRescheduleForm({ booking, onSubmit, onCancel }: {
   const [selectedTime, setSelectedTime] = useState('');
 
   const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableTimes(
-    selectedDate || null,
-    booking.lessonType || null
+    selectedDate || '',
+    booking.lessonType || ''
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1146,8 +1146,8 @@ function ManualBookingForm({
 
   // Fetch available time slots for the selected date and lesson type
   const { data: availableSlots = [], isLoading: slotsLoading } = useAvailableTimes(
-    formData.preferredDate || null,
-    formData.lessonType || null
+    formData.preferredDate || '',
+    formData.lessonType || ''
   );
 
   const toggleFocusArea = (area: string) => {
