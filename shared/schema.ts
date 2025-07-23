@@ -83,11 +83,13 @@ export enum BookingMethodEnum {
   EMAIL = "Email"
 }
 
+
 export const parents = pgTable("parents", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull().unique(),
+  passwordHash: text("password_hash"), // new column
   phone: text("phone").notNull(),
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
@@ -319,11 +321,13 @@ export const admins = pgTable("admins", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+
 export const insertParentSchema = createInsertSchema(parents).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
+  passwordHash: z.string().min(1), // required on signup
   emergencyContactName: z.string().min(1, "Emergency contact name is required"),
   emergencyContactPhone: z.string().min(1, "Emergency contact phone is required"),
 });

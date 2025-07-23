@@ -1226,17 +1226,19 @@ export class SupabaseStorage implements IStorage {
       phone: parent.phone,
       emergencyContactName: parent.emergency_contact_name,
       emergencyContactPhone: parent.emergency_contact_phone,
-      // Remove waiver fields - they're now in separate waivers table
+      passwordHash: parent.password_hash || null,
       createdAt: parent.created_at,
       updatedAt: parent.updated_at,
     }));
   }
 
   async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
+    // Normalize email to lower case for comparison
+    const emailLower = email.toLowerCase();
     const { data, error } = await supabase
       .from('parents')
       .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at')
-      .or(`email.eq.${email},phone.eq.${phone}`)
+      .or(`email.ilike.${emailLower},phone.eq.${phone}`)
       .single();
 
     if (error) {
@@ -1253,18 +1255,20 @@ export class SupabaseStorage implements IStorage {
       phone: data.phone,
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
-      // Remove waiver fields - they're now in separate waivers table
+      passwordHash: data.password_hash || null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
   }
 
+
   async createParent(insertParent: InsertParent): Promise<Parent> {
-    // Map camelCase to snake_case for Supabase
+    // Always store email in lower case
     const supabaseData = {
       first_name: insertParent.firstName,
       last_name: insertParent.lastName,
-      email: insertParent.email,
+      email: insertParent.email.toLowerCase(),
+      password_hash: insertParent.passwordHash, // new field
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName || 'Not Provided',
       emergency_contact_phone: insertParent.emergencyContactPhone || 'Not Provided',
@@ -1282,13 +1286,56 @@ export class SupabaseStorage implements IStorage {
       throw error;
     }
 
-    return data;
+    return data ? {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      emergencyContactName: data.emergency_contact_name,
+      emergencyContactPhone: data.emergency_contact_phone,
+      passwordHash: data.password_hash || null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } : undefined;
+  }
+
+  async getParentByEmail(email: string): Promise<Parent | undefined> {
+    const { data, error } = await supabase
+      .from('parents')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .single();
+
+    if (error) {
+      if (error.code !== 'PGRST116') { // not found is not an error
+        console.error('Error fetching parent by email:', error);
+      }
+      return undefined;
+    }
+    return data ? {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      emergencyContactName: data.emergency_contact_name,
+      emergencyContactPhone: data.emergency_contact_phone,
+      passwordHash: data.password_hash || null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } : undefined;
   }
 
   async updateParent(id: number, updateData: Partial<InsertParent>): Promise<Parent | undefined> {
+    // If updating email, always store in lower case
+    const updateDataNormalized = { ...updateData };
+    if (updateDataNormalized.email) {
+      updateDataNormalized.email = updateDataNormalized.email.toLowerCase();
+    }
     const { data, error } = await supabase
       .from('parents')
-      .update(updateData)
+      .update(updateDataNormalized)
       .eq('id', id)
       .select()
       .single();
@@ -1298,7 +1345,18 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data || undefined;
+    return data ? {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      phone: data.phone,
+      emergencyContactName: data.emergency_contact_name,
+      emergencyContactPhone: data.emergency_contact_phone,
+      passwordHash: data.password_hash || null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } : undefined;
   }
 
   async deleteParent(id: number): Promise<boolean> {
@@ -1639,7 +1697,7 @@ export class SupabaseStorage implements IStorage {
               phone: String((insertBooking as any).parentPhone || ''),
               emergencyContactName: String((insertBooking as any).emergencyContactName || ''),
               emergencyContactPhone: String((insertBooking as any).emergencyContactPhone || ''),
-              // Remove waiver fields - they're now in separate waivers table
+              passwordHash: await import('bcryptjs').then(bcrypt => bcrypt.hash(Math.random().toString(36).slice(2), 10)),
             });
           }
           

@@ -1,5 +1,6 @@
 import { render } from "@react-email/render";
 import { AttendanceStatusEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
+import bcrypt from 'bcryptjs';
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
@@ -1591,7 +1592,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   email: booking.parentEmail,
                   phone: booking.parentPhone || '',
                   emergencyContactName: booking.emergencyContactName || '',
-                  emergencyContactPhone: booking.emergencyContactPhone || ''
+                  emergencyContactPhone: booking.emergencyContactPhone || '',
+                  passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
                 });
                 console.log(`[STRIPE WEBHOOK] AUTO-CREATED parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
               } else {
@@ -1810,42 +1812,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create payment intent with Stripe
   app.post("/api/create-payment-intent", async (req, res) => {
     try {
-      // Parse required fields from request body
-      const { amount, bookingId, isReservationFee, fullLessonPrice, lessonType } = req.body;
-      if (!bookingId || !amount) {
-        return res.status(400).json({ message: "Missing required bookingId or amount" });
-      }
-
-      // Calculate chargeAmount (mimic previous logic)
-      let chargeAmount = 0;
-      if (isReservationFee) {
-        // Reservation fee is always $25 for semi-private, $20 for private
-        if (lessonType && lessonType.toLowerCase().includes('semi')) {
-          chargeAmount = 25;
-        } else {
-          chargeAmount = 20;
+      const { amount, bookingId } = req.body;
+      
+      // Create a payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        metadata: {
+          type: "lesson_booking",
+          booking_id: bookingId?.toString() || "unknown"
         }
-      } else {
-        chargeAmount = parseFloat(amount);
-      }
+      });
+      
+      res.json({ 
+        clientSecret: paymentIntent.client_secret 
+      });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ message: "Error creating payment intent: " + error.message });
+    }
+  });
 
+  // New endpoint for creating checkout sessions with better tracking
+  app.post("/api/create-checkout-session", async (req, res) => {
+    try {
+      const { amount, bookingId, isReservationFee, fullLessonPrice, lessonType } = req.body;
+      
+      if (!bookingId) {
+        return res.status(400).json({ message: "Booking ID is required" });
+      }
+      
+      // For reservation fee system, fetch actual Stripe product price
+      let chargeAmount = amount;
+      if (isReservationFee && lessonType) {
+        // Map lesson types to Stripe product names
+        const lessonTypeToProductName: Record<string, string> = {
+          'quick-journey': '30-Min Private [$40]',
+          'dual-quest': '30-Min Semi-Private [$50]',
+          'deep-dive': '1-Hour Private [$60]',
+          'partner-progression': '1-Hour Semi-Private [$80]'
+        };
+        
+        const productName = lessonTypeToProductName[lessonType];
+        if (productName) {
+          try {
+            // Get all products and find the matching one
+            const products = await stripe.products.list({
+              active: true,
+              limit: 20,
+              expand: ['data.default_price']
+            });
+            
+            const matchingProduct = products.data.find(product => product.name === productName);
+            if (matchingProduct && matchingProduct.default_price) {
+              const price = matchingProduct.default_price as any;
+              chargeAmount = price.unit_amount / 100; // Convert cents to dollars
+              console.log(`Using Stripe price for ${lessonType}: $${chargeAmount}`);
+            } else {
+              console.warn(`No matching Stripe product found for ${lessonType}, using fallback`);
+              chargeAmount = 10; // Fallback to $10
+            }
+          } catch (stripeError) {
+            console.error('Error fetching Stripe product price:', stripeError);
+            chargeAmount = 10; // Fallback to $10
+          }
+        } else {
+          chargeAmount = 10; // Fallback to $10
+        }
+      }
+      
+      // Create checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: lessonType ? `${lessonType} Lesson` : 'Gymnastics Lesson',
-              },
-              unit_amount: Math.round(chargeAmount * 100),
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Gymnastics Lesson Reservation Fee',
+              description: `$${chargeAmount.toFixed(2)} reservation fee for gymnastics lesson. Remaining balance of $${(fullLessonPrice || amount) - chargeAmount} due at time of lesson.`
             },
-            quantity: 1,
+            unit_amount: Math.round(chargeAmount * 100), // Convert to cents
           },
-        ],
+          quantity: 1,
+        }],
         mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/booking`,
+        success_url: `${getBaseUrl()}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/booking`,
         metadata: {
           booking_id: bookingId.toString(),
           is_reservation_fee: isReservationFee ? 'true' : 'false',
@@ -1853,6 +1906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           reservation_fee_amount: chargeAmount.toString()
         }
       });
+      
       // Update booking with session ID and payment status
       try {
         await storage.updateBooking(bookingId, { 
@@ -1862,6 +1916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (updateError) {
         console.error('Failed to update booking with session ID:', updateError);
       }
+      
       res.json({ 
         sessionId: session.id,
         url: session.url
@@ -2143,7 +2198,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: bookingData.parentEmail,
           phone: bookingData.parentPhone,
           emergencyContactName: bookingData.emergencyContactName,
-          emergencyContactPhone: bookingData.emergencyContactPhone
+          emergencyContactPhone: bookingData.emergencyContactPhone,
+          passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
         });
       }
       
@@ -2759,7 +2815,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: booking.parentEmail || 'unknown@email.com',
               phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || '',
-              emergencyContactPhone: booking.emergencyContactPhone || ''
+              emergencyContactPhone: booking.emergencyContactPhone || '',
+              passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
             });
             results.push({ type: 'parent_created', bookingId: booking.id, parentId: parent.id, email: booking.parentEmail });
           }
@@ -2879,7 +2936,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: booking.parentEmail || 'unknown@email.com',
               phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || 'Not Provided',
-              emergencyContactPhone: booking.emergencyContactPhone || 'Not Provided'
+              emergencyContactPhone: booking.emergencyContactPhone || 'Not Provided',
+              passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
             });
             console.log(`[FIX ATHLETES] Created parent account for ${booking.parentEmail}`);
             results.push({ 
@@ -3024,7 +3082,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               email: booking.parentEmail || 'unknown@email.com',
               phone: booking.parentPhone || '',
               emergencyContactName: booking.emergencyContactName || '',
-              emergencyContactPhone: booking.emergencyContactPhone || ''
+              emergencyContactPhone: booking.emergencyContactPhone || '',
+              passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
             });
             console.log(`Created parent account for ${booking.parentEmail}`);
             results.push({ type: 'parent_created', bookingId: booking.id, parentId: parentRecord.id, email: booking.parentEmail });
@@ -5232,6 +5291,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clear test data endpoint
+  app.delete("/api/clear-test-data", isAdminAuthenticated, async (req, res) => {
+    try {
+      console.log('🗑️ Clearing test data...');
+      
+      const BASE_URL = process.env.SUPABASE_URL;
+      const API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+      if (!BASE_URL || !API_KEY) {
+        return res.status(500).json({ error: 'Supabase configuration missing (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)' });
+      }
+
+      // Delete all waivers first (due to foreign key constraints)
+      const waiverResponse = await fetch(`${BASE_URL}/rest/v1/waivers?id=neq.0`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (waiverResponse.ok) {
+        console.log('✅ Waivers deleted');
+      } else {
+        console.error('Error deleting waivers:', await waiverResponse.text());
+      }
+      
+      // Delete all athletes
+      const athleteResponse = await fetch(`${BASE_URL}/rest/v1/athletes?id=neq.0`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (athleteResponse.ok) {
+        console.log('✅ Athletes deleted');
+      } else {
+        console.error('Error deleting athletes:', await athleteResponse.text());
+      }
+      
+      // Delete all parents
+      const parentResponse = await fetch(`${BASE_URL}/rest/v1/parents?id=neq.0`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (parentResponse.ok) {
+        console.log('✅ Parents deleted');
+      } else {
+        console.error('Error deleting parents:', await parentResponse.text());
+      }
+      
+      // Delete all bookings
+      const bookingResponse = await fetch(`${BASE_URL}/rest/v1/bookings?id=neq.0`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (bookingResponse.ok) {
+        console.log('✅ Bookings deleted');
+      } else {
+        console.error('Error deleting bookings:', await bookingResponse.text());
+      }
+      
+      res.json({ 
+        message: 'Test data cleared successfully',
+        deleted: {
+          waivers: waiverResponse.ok,
+          athletes: athleteResponse.ok,
+          parents: parentResponse.ok,
+          bookings: bookingResponse.ok
+        }
+      });
+      
+    } catch (error: any) {
+      console.error('Error clearing test data:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Test endpoint for Supabase fixes
   app.get("/api/test-supabase-fixes", async (req, res) => {

@@ -10,9 +10,6 @@ declare module 'express-session' {
     adminId?: number;
     parentId?: number;
     parentEmail?: string;
-    tempAuthCode?: string;
-    tempAuthEmail?: string;
-    tempAuthExpiry?: number;
   }
 }
 

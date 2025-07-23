@@ -237,116 +237,82 @@ app.use((req, res, next) => {
   app.post('/api/admin/clear-test-data', isAdminAuthenticated, async (req: Request, res: Response) => {
     try {
       const BASE_URL = process.env.SUPABASE_URL;
-
-      const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      if (!BASE_URL || !SERVICE_ROLE_KEY) {
+      const API_KEY = process.env.SUPABASE_ANON_KEY;
+      
+      if (!BASE_URL || !API_KEY) {
         return res.status(500).json({ error: 'Supabase configuration missing' });
       }
 
       logger.admin('Clearing all test data...');
       
 
-      // 1. Fetch test parent IDs
-      const testParentsRes = await fetch(`${BASE_URL}/rest/v1/parents?select=id,email&or=(email.ilike.*test*,email.ilike.*@example.com)`, {
-        headers: {
-          'apikey': SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      let testParentIds: string[] = [];
-      if (testParentsRes.ok) {
-        const testParents = await testParentsRes.json();
-        testParentIds = testParents.map((p: any) => p.id);
-      } else {
-        logger.error(`❌ Failed to fetch test parents. Status: ${testParentsRes.status} ${testParentsRes.statusText}`);
-        logger.error(await testParentsRes.text());
-      }
-
-      // 2. Delete bookings for test parents
-      let bookingsCleared = 0;
-      if (testParentIds.length > 0) {
-        const bookingsResponse = await fetch(`${BASE_URL}/rest/v1/bookings?parent_id=in.(${testParentIds.join(',')})`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': SERVICE_ROLE_KEY,
-            'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          }
-        });
-        if (bookingsResponse.ok) {
-          const bookingsData = await bookingsResponse.json();
-          bookingsCleared = Array.isArray(bookingsData) ? bookingsData.length : 0;
-          logger.admin(`✅ Cleared ${bookingsCleared} test bookings`);
-        } else {
-          logger.error(`❌ Failed to clear bookings. Status: ${bookingsResponse.status} ${bookingsResponse.statusText}`);
-          logger.error(await bookingsResponse.text());
-        }
-      }
-
-      // 3. Delete athletes for test parents
-      let athletesCleared = 0;
-      if (testParentIds.length > 0) {
-        const athletesResponse = await fetch(`${BASE_URL}/rest/v1/athletes?parent_id=in.(${testParentIds.join(',')})`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': SERVICE_ROLE_KEY,
-            'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          }
-        });
-        if (athletesResponse.ok) {
-          const athletesData = await athletesResponse.json();
-          athletesCleared = Array.isArray(athletesData) ? athletesData.length : 0;
-          logger.admin(`✅ Cleared ${athletesCleared} test athletes`);
-        } else {
-          logger.error(`❌ Failed to clear athletes. Status: ${athletesResponse.status} ${athletesResponse.statusText}`);
-          logger.error(await athletesResponse.text());
-        }
-      }
-
-      // 4. Delete test parents
-      let parentsCleared = 0;
-      if (testParentIds.length > 0) {
-        const parentsResponse = await fetch(`${BASE_URL}/rest/v1/parents?id=in.(${testParentIds.join(',')})`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': SERVICE_ROLE_KEY,
-            'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          }
-        });
-        if (parentsResponse.ok) {
-          const parentsData = await parentsResponse.json();
-          parentsCleared = Array.isArray(parentsData) ? parentsData.length : 0;
-          logger.admin(`✅ Cleared ${parentsCleared} test parents`);
-        } else {
-          logger.error(`❌ Failed to clear parents. Status: ${parentsResponse.status} ${parentsResponse.statusText}`);
-          logger.error(await parentsResponse.text());
-        }
-      }
-
-      // 5. Delete parent auth codes for test emails
-      let authCodesCleared = 0;
-      const authCodesResponse = await fetch(`${BASE_URL}/rest/v1/parent_auth_codes?or=(email.ilike.*test*,email.ilike.*@example.com)`, {
+      // Only delete test data: emails containing 'test' or ending with '@example.com'
+      // Bookings
+      const bookingsResponse = await fetch(`${BASE_URL}/rest/v1/bookings?or=(parent_email.ilike.*test*,parent_email.ilike.*@example.com)`, {
         method: 'DELETE',
         headers: {
-          'apikey': SERVICE_ROLE_KEY,
-          'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=representation'
         }
       });
+      let bookingsCleared = 0;
+      if (bookingsResponse.ok) {
+        const bookingsData = await bookingsResponse.json();
+        bookingsCleared = Array.isArray(bookingsData) ? bookingsData.length : 0;
+        logger.admin(`✅ Cleared ${bookingsCleared} test bookings`);
+      }
+
+      // Athletes (linked to test parents)
+      const athletesResponse = await fetch(`${BASE_URL}/rest/v1/athletes?or=(parent_email.ilike.*test*,parent_email.ilike.*@example.com)`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        }
+      });
+      let athletesCleared = 0;
+      if (athletesResponse.ok) {
+        const athletesData = await athletesResponse.json();
+        athletesCleared = Array.isArray(athletesData) ? athletesData.length : 0;
+        logger.admin(`✅ Cleared ${athletesCleared} test athletes`);
+      }
+
+      // Parents (test emails)
+      const parentsResponse = await fetch(`${BASE_URL}/rest/v1/parents?or=(email.ilike.*test*,email.ilike.*@example.com)`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        }
+      });
+      let parentsCleared = 0;
+      if (parentsResponse.ok) {
+        const parentsData = await parentsResponse.json();
+        parentsCleared = Array.isArray(parentsData) ? parentsData.length : 0;
+        logger.admin(`✅ Cleared ${parentsCleared} test parents`);
+      }
+
+      // Parent auth codes (test emails)
+      const authCodesResponse = await fetch(`${BASE_URL}/rest/v1/parent_auth_codes?or=(email.ilike.*test*,email.ilike.*@example.com)`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': API_KEY,
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        }
+      });
+      let authCodesCleared = 0;
       if (authCodesResponse.ok) {
         const authCodesData = await authCodesResponse.json();
         authCodesCleared = Array.isArray(authCodesData) ? authCodesData.length : 0;
         logger.admin(`✅ Cleared ${authCodesCleared} test auth codes`);
-      } else {
-        logger.error(`❌ Failed to clear parent auth codes. Status: ${authCodesResponse.status} ${authCodesResponse.statusText}`);
-        logger.error(await authCodesResponse.text());
       }
 
       // Clear test waiver files
