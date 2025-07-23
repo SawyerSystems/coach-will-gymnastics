@@ -226,6 +226,28 @@ export default function Admin() {
   const { data: missingWaivers = [] } = useMissingWaivers(!!authStatus?.loggedIn) as { data: Athlete[] };
 
   // ALL MUTATIONS
+  // Delete parent mutation
+  const deleteParentMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/parents/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete parent");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/parents'] });
+      toast({ title: "Parent deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error deleting parent",
+        description: error.message || "Failed to delete parent",
+        variant: "destructive",
+      });
+    },
+  });
   const createAvailabilityMutation = useCreateAvailability();
   const updateAvailabilityMutation = useUpdateAvailability();
   const deleteAvailabilityMutation = useDeleteAvailability();
