@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +33,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    AlertCircle,
-    BarChart,
-    Calendar,
-    CalendarX,
-    CheckCircle,
-    Clock,
-    DollarSign,
-    Edit,
-    Eye,
-    Mail,
-    MessageCircle,
-    MessageSquare,
-    Plus,
-    RefreshCw,
-    Search,
-    Trash2,
-    User,
-    Users,
-    X
+  AlertCircle,
+  BarChart,
+  Calendar,
+  CalendarX,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Edit,
+  Eye,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+  Users,
+  X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -1284,8 +1284,8 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4">
                     {filteredParents.map((parent: any) => {
-                      const athleteCount = parent.athlete_count ?? parent.athletes?.length ?? 0;
-                      const bookingCount = parent.booking_count ?? parent.bookings?.length ?? 0;
+                      const athleteCount = typeof parent.athlete_count === 'number' ? parent.athlete_count : (parent.athletes?.length ?? 0);
+                      const bookingCount = typeof parent.booking_count === 'number' ? parent.booking_count : (parent.bookings?.length ?? 0);
                       
                       return (
                         <Card key={parent.id} className="p-4 hover:shadow-md transition-shadow">
@@ -2509,17 +2509,15 @@ export default function Admin() {
                               <DialogContent>
                                 <DialogHeader>
                                   <DialogTitle>Confirm Data Deletion</DialogTitle>
-                                  <DialogDescription asChild>
-                                    <div>
-                                      <p>This action will permanently delete ALL:</p>
-                                      <ul className="list-disc list-inside mt-2 space-y-1">
-                                        <li>Parent profiles</li>
-                                        <li>Athlete profiles</li>
-                                        <li>Booking records</li>
-                                        <li>Authentication codes</li>
-                                      </ul>
-                                      <p>This action cannot be undone.</p>
-                                    </div>
+                                  <DialogDescription>
+                                    <span>This action will permanently delete ALL:</span>
+                                    <ul className="list-disc list-inside mt-2 space-y-1">
+                                      <li>Parent profiles</li>
+                                      <li>Athlete profiles</li>
+                                      <li>Booking records</li>
+                                      <li>Authentication codes</li>
+                                    </ul>
+                                    This action cannot be undone.
                                   </DialogDescription>
                                 </DialogHeader>
                                 <div className="flex justify-end space-x-2">
