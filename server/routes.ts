@@ -5260,15 +5260,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clear test data endpoint
-  app.delete("/api/clear-test-data", async (req, res) => {
+  app.delete("/api/clear-test-data", isAdminAuthenticated, async (req, res) => {
     try {
       console.log('🗑️ Clearing test data...');
       
       const BASE_URL = process.env.SUPABASE_URL;
-      const API_KEY = process.env.SUPABASE_ANON_KEY;
+      const API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
       
       if (!BASE_URL || !API_KEY) {
-        return res.status(500).json({ error: 'Supabase configuration missing' });
+        return res.status(500).json({ error: 'Supabase configuration missing (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)' });
       }
 
       // Delete all waivers first (due to foreign key constraints)
