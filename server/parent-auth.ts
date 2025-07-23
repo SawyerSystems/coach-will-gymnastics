@@ -1,8 +1,22 @@
 import { Request, Response, Router } from 'express';
+
+import { NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { storage } from './storage';
 
 export const parentAuthRouter = Router();
+
+// Middleware to check if parent is authenticated
+export const isParentAuthenticated = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.session.parentId) {
+    return res.status(401).json({ error: 'Parent authentication required' });
+  }
+  next();
+};
 
 import bcrypt from 'bcryptjs';
 
