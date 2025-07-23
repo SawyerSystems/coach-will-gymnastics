@@ -1,24 +1,24 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import type {
-  Admin,
-  Athlete,
-  Availability,
-  AvailabilityException,
-  BlogPost,
-  Booking,
-  InsertAdmin,
-  InsertAthlete,
-  InsertAvailability,
-  InsertAvailabilityException,
-  InsertBlogPost,
-  InsertBooking,
-  InsertParent,
-  InsertParentAuthCode,
-  InsertTip,
-  Parent,
-  ParentAuthCode,
-  Tip
+    Admin,
+    Athlete,
+    Availability,
+    AvailabilityException,
+    BlogPost,
+    Booking,
+    InsertAdmin,
+    InsertAthlete,
+    InsertAvailability,
+    InsertAvailabilityException,
+    InsertBlogPost,
+    InsertBooking,
+    InsertParent,
+    InsertParentAuthCode,
+    InsertTip,
+    Parent,
+    ParentAuthCode,
+    Tip
 } from "../shared/schema";
 import { IStorage } from "./storage";
 
@@ -285,6 +285,11 @@ export class PersistentMemStorage implements IStorage {
   }
 
   async deleteParent(id: number): Promise<boolean> {
+    // Cascade delete all athletes for this parent
+    const athletesToDelete = Array.from(this.athletes.values()).filter(a => a.parentId === id);
+    for (const athlete of athletesToDelete) {
+      await this.deleteAthlete(athlete.id);
+    }
     const deleted = this.parents.delete(id);
     if (deleted) {
       await this.saveParents();

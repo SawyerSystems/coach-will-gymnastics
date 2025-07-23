@@ -1284,8 +1284,8 @@ export default function Admin() {
                 ) : (
                   <div className="space-y-4">
                     {filteredParents.map((parent: any) => {
-                      const athleteCount = parent.athletes?.length || 0;
-                      const bookingCount = parent.bookings?.length || 0;
+                      const athleteCount = parent.athlete_count ?? parent.athletes?.length ?? 0;
+                      const bookingCount = parent.booking_count ?? parent.bookings?.length ?? 0;
                       
                       return (
                         <Card key={parent.id} className="p-4 hover:shadow-md transition-shadow">
@@ -1364,8 +1364,7 @@ export default function Admin() {
                                 size="sm"
                                 onClick={() => {
                                   if (confirm(`Are you sure you want to delete ${parent.first_name} ${parent.last_name}? This action cannot be undone.`)) {
-                                    // TODO: Implement delete functionality
-                                    console.log('Delete parent:', parent.id);
+                                    deleteParentMutation.mutate(parent.id);
                                   }
                                 }}
                               >

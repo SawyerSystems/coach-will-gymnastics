@@ -1302,6 +1302,11 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteParent(id: number): Promise<boolean> {
+    // Cascade delete all athletes for this parent
+    const athletes = await this.getParentAthletes(id);
+    for (const athlete of athletes) {
+      await this.deleteAthlete(athlete.id);
+    }
     const { error } = await supabase
       .from('parents')
       .delete()

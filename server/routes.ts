@@ -890,6 +890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   app.put("/api/parents/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -902,6 +903,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error updating parent:", error);
       res.status(500).json({ error: "Failed to update parent" });
+    }
+  });
+
+  // DELETE /api/parents/:id - Cascade delete parent and their athletes
+  app.delete("/api/parents/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid parent ID" });
+      }
+      // Fetch athletes for this parent
+      const athletes = await storage.getParentAthletes(id);
+      for (const athlete of athletes) {
+        await storage.deleteAthlete(athlete.id);
+      }
+      // Delete the parent
+      const deleted = await storage.deleteParent(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Parent not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting parent:", error);
+      res.status(500).json({ error: "Failed to delete parent" });
     }
   });
 
