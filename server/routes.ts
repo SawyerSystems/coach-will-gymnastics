@@ -1,7 +1,7 @@
 import { render } from "@react-email/render";
 import { AttendanceStatusEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
 import bcrypt from 'bcryptjs';
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { z } from "zod";
@@ -19,6 +19,20 @@ import { SupabaseStorage } from "./storage";
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { timeSlotLocksRouter } from "./time-slot-locks";
 import { LessonUtils, ResponseUtils, ValidationUtils } from "./utils";
+
+export default function registerRoutes(app: Express) {
+  // Get archived bookings (admin only)
+  app.get("/api/bookings/archived", isAdminAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const archivedBookings = await storage.getAllArchivedBookings();
+      res.json(archivedBookings);
+    } catch (error: any) {
+      console.error("Error fetching archived bookings:", error);
+      res.status(500).json({ error: "Failed to fetch archived bookings" });
+    }
+  });
+  // ...existing code...
+}
 
 // Helper function to get the base URL for the application
 function getBaseUrl(): string {

@@ -9,6 +9,44 @@ CREATE TYPE payment_status AS ENUM (
   'reservation-refunded',
   'session-refunded'
 );
+
+-- TABLE: archived_bookings
+CREATE TABLE IF NOT EXISTS archived_bookings (
+  id SERIAL PRIMARY KEY,
+  original_booking_id INTEGER,
+  parent_id INTEGER,
+  athlete_id INTEGER,
+  lesson_type_id INTEGER,
+  waiver_id INTEGER,
+  preferred_date DATE,
+  preferred_time TIME,
+  focus_areas TEXT[],
+  status TEXT,
+  payment_status TEXT,
+  attendance_status TEXT,
+  booking_method TEXT,
+  reservation_fee_paid BOOLEAN,
+  paid_amount NUMERIC(10,2),
+  stripe_session_id TEXT,
+  special_requests TEXT,
+  admin_notes TEXT,
+  dropoff_person_name TEXT,
+  dropoff_person_relationship TEXT,
+  dropoff_person_phone TEXT,
+  pickup_person_name TEXT,
+  pickup_person_relationship TEXT,
+  pickup_person_phone TEXT,
+  alt_pickup_person_name TEXT,
+  alt_pickup_person_relationship TEXT,
+  alt_pickup_person_phone TEXT,
+  safety_verification_signed BOOLEAN,
+  safety_verification_signed_at TIMESTAMP,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  archived_at TIMESTAMP DEFAULT NOW(),
+  archive_reason TEXT NOT NULL
+);
+
 [
   {
     "table_name": "bookings",

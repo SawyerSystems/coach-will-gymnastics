@@ -4,6 +4,10 @@ import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type Ath
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
 export interface IStorage {
+  // Archiving logic
+  archiveBookingsByParentId(parentId: number, reason: string): Promise<void>;
+  archiveBookingsByAthleteId(athleteId: number, reason: string): Promise<void>;
+  getAllArchivedBookings(): Promise<any[]>;
   // Parents (preferred terminology)
   getAllParents(): Promise<Parent[]>;
   identifyParent(email: string, phone: string): Promise<Parent | undefined>;
@@ -152,6 +156,23 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  // Archive all bookings for a parent (stub)
+  async archiveBookingsByParentId(parentId: number, reason: string): Promise<void> {
+    // Not implemented in MemStorage
+    return;
+  }
+
+  // Archive all bookings for an athlete (stub)
+  async archiveBookingsByAthleteId(athleteId: number, reason: string): Promise<void> {
+    // Not implemented in MemStorage
+    return;
+  }
+
+  // Get all archived bookings (stub)
+  async getAllArchivedBookings(): Promise<any[]> {
+    // Not implemented in MemStorage
+    return [];
+  }
   async getAllWaivers(): Promise<Waiver[]> {
     // In-memory stub for test/dev only
     return [];
@@ -1199,6 +1220,60 @@ With the right setup and approach, home practice can accelerate your child's gym
 
 // Supabase Storage Implementation
 export class SupabaseStorage implements IStorage {
+  // Archive all bookings for a parent
+  async archiveBookingsByParentId(parentId: number, reason: string): Promise<void> {
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('parent_id', parentId);
+    if (error) {
+      console.error('Error fetching bookings for archiving:', error);
+      return;
+    }
+    if (!bookings) return;
+    for (const booking of bookings) {
+      await supabaseServiceRole.from('archived_bookings').insert({
+        ...booking,
+        original_booking_id: booking.id,
+        archived_at: new Date().toISOString(),
+        archive_reason: reason
+      });
+    }
+  }
+
+  // Archive all bookings for an athlete
+  async archiveBookingsByAthleteId(athleteId: number, reason: string): Promise<void> {
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('athlete_id', athleteId);
+    if (error) {
+      console.error('Error fetching bookings for archiving:', error);
+      return;
+    }
+    if (!bookings) return;
+    for (const booking of bookings) {
+      await supabaseServiceRole.from('archived_bookings').insert({
+        ...booking,
+        original_booking_id: booking.id,
+        archived_at: new Date().toISOString(),
+        archive_reason: reason
+      });
+    }
+  }
+
+  // Fetch all archived bookings
+  async getAllArchivedBookings(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('archived_bookings')
+      .select('*')
+      .order('archived_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching archived bookings:', error);
+      return [];
+    }
+    return data || [];
+  }
   // Helper function to log queries
   private logQuery(operation: string, table: string, filters?: any) {
     console.log('[SQL]', `${operation} FROM ${table}`, filters ? JSON.stringify(filters) : '');
