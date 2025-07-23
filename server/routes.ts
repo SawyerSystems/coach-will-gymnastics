@@ -1785,9 +1785,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create payment intent with Stripe
   app.post("/api/create-payment-intent", async (req, res) => {
     try {
-      // ...existing code to create payment intent...
+      // Parse required fields from request body
+      const { amount, bookingId, isReservationFee, fullLessonPrice, lessonType } = req.body;
+      if (!bookingId || !amount) {
+        return res.status(400).json({ message: "Missing required bookingId or amount" });
+      }
+
+      // Calculate chargeAmount (mimic previous logic)
+      let chargeAmount = 0;
+      if (isReservationFee) {
+        // Reservation fee is always $25 for semi-private, $20 for private
+        if (lessonType && lessonType.toLowerCase().includes('semi')) {
+          chargeAmount = 25;
+        } else {
+          chargeAmount = 20;
+        }
+      } else {
+        chargeAmount = parseFloat(amount);
+      }
+
       const session = await stripe.checkout.sessions.create({
-        // ...existing session config...
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: lessonType ? `${lessonType} Lesson` : 'Gymnastics Lesson',
+              },
+              unit_amount: Math.round(chargeAmount * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/booking`,
         metadata: {
           booking_id: bookingId.toString(),
           is_reservation_fee: isReservationFee ? 'true' : 'false',
@@ -5174,96 +5207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clear test data endpoint
-  app.delete("/api/clear-test-data", isAdminAuthenticated, async (req, res) => {
-    try {
-      console.log('🗑️ Clearing test data...');
-      
-      const BASE_URL = process.env.SUPABASE_URL;
-      const API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
-      if (!BASE_URL || !API_KEY) {
-        return res.status(500).json({ error: 'Supabase configuration missing (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)' });
-      }
-
-      // Delete all waivers first (due to foreign key constraints)
-      const waiverResponse = await fetch(`${BASE_URL}/rest/v1/waivers?id=neq.0`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (waiverResponse.ok) {
-        console.log('✅ Waivers deleted');
-      } else {
-        console.error('Error deleting waivers:', await waiverResponse.text());
-      }
-      
-      // Delete all athletes
-      const athleteResponse = await fetch(`${BASE_URL}/rest/v1/athletes?id=neq.0`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (athleteResponse.ok) {
-        console.log('✅ Athletes deleted');
-      } else {
-        console.error('Error deleting athletes:', await athleteResponse.text());
-      }
-      
-      // Delete all parents
-      const parentResponse = await fetch(`${BASE_URL}/rest/v1/parents?id=neq.0`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (parentResponse.ok) {
-        console.log('✅ Parents deleted');
-      } else {
-        console.error('Error deleting parents:', await parentResponse.text());
-      }
-      
-      // Delete all bookings
-      const bookingResponse = await fetch(`${BASE_URL}/rest/v1/bookings?id=neq.0`, {
-        method: 'DELETE',
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (bookingResponse.ok) {
-        console.log('✅ Bookings deleted');
-      } else {
-        console.error('Error deleting bookings:', await bookingResponse.text());
-      }
-      
-      res.json({ 
-        message: 'Test data cleared successfully',
-        deleted: {
-          waivers: waiverResponse.ok,
-          athletes: athleteResponse.ok,
-          parents: parentResponse.ok,
-          bookings: bookingResponse.ok
-        }
-      });
-      
-    } catch (error: any) {
-      console.error('Error clearing test data:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
 
   // Test endpoint for Supabase fixes
   app.get("/api/test-supabase-fixes", async (req, res) => {
