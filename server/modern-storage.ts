@@ -223,7 +223,7 @@ export class ModernSupabaseStorage {
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName,
       emergency_contact_phone: insertParent.emergencyContactPhone,
-      // Remove waiver fields - they're now in separate waivers table
+      password_hash: insertParent.passwordHash,
     };
 
     const { data, error } = await supabase
@@ -346,7 +346,7 @@ export class ModernSupabaseStorage {
       phone: data.phone,
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
-      // Remove waiver fields - they're now in separate waivers table
+      passwordHash: data.password_hash || null,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

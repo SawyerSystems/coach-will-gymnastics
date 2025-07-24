@@ -85,3 +85,30 @@ parentAuthRouter.post('/login', [
     res.status(500).json({ error: 'Failed to login' });
   }
 });
+
+// GET /api/parent-auth/status
+parentAuthRouter.get('/status', (req: Request, res: Response) => {
+  if (req.session.parentId) {
+    res.json({
+      loggedIn: true,
+      parentId: req.session.parentId,
+      email: req.session.parentEmail
+    });
+  } else {
+    res.json({
+      loggedIn: false
+    });
+  }
+});
+
+// POST /api/parent-auth/logout
+parentAuthRouter.post('/logout', (req: Request, res: Response) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Session destruction error:', err);
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    res.clearCookie('connect.sid'); // Clear the session cookie
+    res.json({ success: true, message: 'Logged out successfully' });
+  });
+});
