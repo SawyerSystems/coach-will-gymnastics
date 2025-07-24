@@ -26,6 +26,7 @@ const Contact = lazy(() => import("@/pages/contact"));
 const Admin = lazy(() => import("@/pages/admin"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
 const ParentLogin = lazy(() => import("@/pages/parent-login"));
+const ParentRegister = lazy(() => import("@/pages/parent-register"));
 const Checkout = lazy(() => import("@/pages/checkout"));
 const BlogPost = lazy(() => import("@/pages/blog-post"));
 const TipDetail = lazy(() => import("@/pages/tip-detail"));
@@ -69,6 +70,7 @@ function Router() {
           <Route path="/admin" component={Admin} />
           <Route path="/admin/login" component={AdminLogin} />
           <Route path="/parent/login" component={ParentLogin} />
+          <Route path="/parent-register" component={ParentRegister} />
           <Route path="/parent-dashboard" component={ParentDashboard} />
           <Route path="/checkout" component={Checkout} />
           <Route path="/booking-success" component={BookingSuccess} />

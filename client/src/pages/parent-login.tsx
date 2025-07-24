@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, UserPlus } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'wouter';
@@ -137,6 +137,20 @@ export default function ParentLogin() {
               </Button>
             </form>
           </Form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground mb-3">
+              Don't have an account?
+            </p>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => setLocation('/parent-register')}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create New Account
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
