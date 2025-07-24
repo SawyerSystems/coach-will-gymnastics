@@ -367,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             )
           )
         `)
-        .eq('parent_email', req.session.parentEmail)
+        .eq('parent_id', req.session.parentId)
         .order('created_at', { ascending: false });
         
       if (parentBookingsQuery.error) {
@@ -416,43 +416,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get complete parent information (aggregated from bookings)
   app.get('/api/parent/info', async (req, res) => {
-
-    
     if (!req.session.parentId) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
     
     try {
-      const allBookings = await storage.getAllBookings();
-      const parentBookings = allBookings.filter(booking => {
-        return booking.parentEmail === req.session.parentEmail;
-      });
+      // Get parent information directly from the parents table
+      const { data: parent, error } = await supabase
+        .from('parents')
+        .select('*')
+        .eq('id', req.session.parentId)
+        .single();
       
-      if (parentBookings.length === 0) {
+      if (error || !parent) {
         return res.status(404).json({ message: 'No parent information found' });
       }
       
-      // Get the most complete parent information from bookings
-      // Prioritize bookings with more complete information
-      const sortedBookings = parentBookings.sort((a, b) => {
-        const aScore = (a.parentPhone ? 1 : 0) + (a.emergencyContactName ? 1 : 0) + (a.emergencyContactPhone ? 1 : 0);
-        const bScore = (b.parentPhone ? 1 : 0) + (b.emergencyContactName ? 1 : 0) + (b.emergencyContactPhone ? 1 : 0);
-        return bScore - aScore; // Highest score first
-      });
-      
-      const mostCompleteBooking = sortedBookings[0];
-      
+      // Transform to match expected frontend structure
       const parentInfo = {
-        id: req.session.parentId,
-        firstName: mostCompleteBooking.parentFirstName || '',
-        lastName: mostCompleteBooking.parentLastName || '',
-        email: req.session.parentEmail || '',
-        phone: mostCompleteBooking.parentPhone || '',
-        emergencyContactName: mostCompleteBooking.emergencyContactName || '',
-        emergencyContactPhone: mostCompleteBooking.emergencyContactPhone || '',
-        totalBookings: parentBookings.length,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        id: parent.id,
+        firstName: parent.first_name,
+        lastName: parent.last_name,
+        email: parent.email,
+        phone: parent.phone,
+        emergencyContactName: parent.emergency_contact_name,
+        emergencyContactPhone: parent.emergency_contact_phone,
+        isVerified: parent.is_verified,
+        createdAt: parent.created_at,
+        updatedAt: parent.updated_at
       };
       
       res.json(parentInfo);

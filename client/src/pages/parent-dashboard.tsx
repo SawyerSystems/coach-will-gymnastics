@@ -245,7 +245,7 @@ function ParentDashboard() {
 
   useEffect(() => {
     if (authStatus && !authStatus.loggedIn) {
-      setLocation('/parent/login');
+      setLocation('/parent-login');
     }
   }, [authStatus, setLocation]);
 

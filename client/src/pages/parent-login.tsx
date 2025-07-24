@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Lock, UserPlus } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -22,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function ParentLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -53,6 +54,8 @@ export default function ParentLogin() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate auth status query to trigger re-fetch
+      queryClient.invalidateQueries({ queryKey: ['/api/parent-auth/status'] });
       toast({
         title: 'Login Successful',
         description: 'Welcome to your parent dashboard!',
