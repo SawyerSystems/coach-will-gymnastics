@@ -99,6 +99,13 @@ export interface IStorage {
   markAuthCodeAsUsed(id: number): Promise<void>;
   cleanupExpiredAuthCodes(): Promise<void>;
 
+  // Email Verification
+  createVerificationToken(token: { parentId: number; token: string; expiresAt: Date }): Promise<any>;
+  getVerificationToken(token: string): Promise<any>;
+  markParentAsVerified(parentId: number): Promise<void>;
+  deleteVerificationToken(token: string): Promise<void>;
+  deleteVerificationTokensByParentId(parentId: number): Promise<void>;
+
   // Slot Reservations
   getActiveReservations(date: string): Promise<{ startTime: string; lessonType: string }[]>;
   reserveSlot(date: string, startTime: string, lessonType: string, sessionId: string): Promise<boolean>;
@@ -1216,6 +1223,27 @@ With the right setup and approach, home practice can accelerate your child's gym
       sideQuests: []
     } as BookingWithRelations;
   }
+
+  // Email verification methods - Not implemented in MemStorage
+  async createVerificationToken(token: { parentId: number; token: string; expiresAt: Date }): Promise<any> {
+    throw new Error("Verification token creation not implemented in MemStorage");
+  }
+
+  async getVerificationToken(token: string): Promise<any> {
+    return undefined;
+  }
+
+  async markParentAsVerified(parentId: number): Promise<void> {
+    // Not implemented
+  }
+
+  async deleteVerificationToken(token: string): Promise<void> {
+    // Not implemented
+  }
+
+  async deleteVerificationTokensByParentId(parentId: number): Promise<void> {
+    // Not implemented
+  }
 }
 
 // Supabase Storage Implementation
@@ -1284,7 +1312,7 @@ export class SupabaseStorage implements IStorage {
     this.logQuery('SELECT', 'parents');
     const { data, error } = await supabase
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1302,6 +1330,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: parent.emergency_contact_name,
       emergencyContactPhone: parent.emergency_contact_phone,
       passwordHash: parent.password_hash || null,
+      isVerified: parent.is_verified || false,
       createdAt: parent.created_at,
       updatedAt: parent.updated_at,
     }));
@@ -1312,7 +1341,7 @@ export class SupabaseStorage implements IStorage {
     const emailLower = email.toLowerCase();
     const { data, error } = await supabase
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
       .or(`email.ilike.${emailLower},phone.eq.${phone}`)
       .single();
 
@@ -1331,6 +1360,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
+      isVerified: data.is_verified || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1344,6 +1374,7 @@ export class SupabaseStorage implements IStorage {
       last_name: insertParent.lastName,
       email: insertParent.email.toLowerCase(),
       password_hash: insertParent.passwordHash, // new field
+      is_verified: insertParent.isVerified || false, // new field
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName || 'Not Provided',
       emergency_contact_phone: insertParent.emergencyContactPhone || 'Not Provided',
@@ -1371,6 +1402,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
+      isVerified: data.is_verified || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -1398,6 +1430,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
+      isVerified: data.is_verified || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1430,6 +1463,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
+      isVerified: data.is_verified || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -2965,7 +2999,7 @@ export class SupabaseStorage implements IStorage {
   async getParentById(id: number): Promise<Parent | undefined> {
     const { data, error } = await supabase
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
       .eq('id', id)
       .single();
 
@@ -2984,6 +3018,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: data.emergency_contact_name,
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
+      isVerified: data.is_verified || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -3867,6 +3902,79 @@ export class SupabaseStorage implements IStorage {
     
     // Return the booking with all relations loaded
     return await this.getBookingWithRelations(bookingId);
+  }
+
+  // Email verification methods
+  async createVerificationToken(token: { parentId: number; token: string; expiresAt: Date }): Promise<any> {
+    const supabaseData = {
+      parent_id: token.parentId,
+      token: token.token,
+      expires_at: token.expiresAt.toISOString(),
+    };
+
+    const { data, error } = await supabaseServiceRole
+      .from('parent_verification_tokens')
+      .insert(supabaseData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating verification token:', error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  async getVerificationToken(token: string): Promise<any> {
+    const { data, error } = await supabaseServiceRole
+      .from('parent_verification_tokens')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (error) {
+      console.error('Error fetching verification token:', error);
+      return undefined;
+    }
+
+    return data;
+  }
+
+  async markParentAsVerified(parentId: number): Promise<void> {
+    const { error } = await supabaseServiceRole
+      .from('parents')
+      .update({ is_verified: true })
+      .eq('id', parentId);
+
+    if (error) {
+      console.error('Error marking parent as verified:', error);
+      throw error;
+    }
+  }
+
+  async deleteVerificationToken(token: string): Promise<void> {
+    const { error } = await supabaseServiceRole
+      .from('parent_verification_tokens')
+      .delete()
+      .eq('token', token);
+
+    if (error) {
+      console.error('Error deleting verification token:', error);
+      throw error;
+    }
+  }
+
+  async deleteVerificationTokensByParentId(parentId: number): Promise<void> {
+    const { error } = await supabaseServiceRole
+      .from('parent_verification_tokens')
+      .delete()
+      .eq('parent_id', parentId);
+
+    if (error) {
+      console.error('Error deleting verification tokens by parent ID:', error);
+      throw error;
+    }
   }
 }
 

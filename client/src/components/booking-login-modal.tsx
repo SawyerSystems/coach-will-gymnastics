@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 interface BookingLoginModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export function BookingLoginModal({ isOpen, onClose, onLoginSuccess }: BookingLo
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const handleLogin = async () => {
@@ -93,7 +95,7 @@ export function BookingLoginModal({ isOpen, onClose, onLoginSuccess }: BookingLo
 
   const handleNewParent = () => {
     onClose();
-    onLoginSuccess(null); // Pass null to indicate new parent flow
+    setLocation('/parent-register');
   };
 
   return (

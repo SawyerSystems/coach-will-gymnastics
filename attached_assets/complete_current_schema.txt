@@ -1930,6 +1930,22 @@ CREATE TABLE IF NOT EXISTS archived_bookings (
   },
   {
     "table_name": "parents",
+    "column_name": "password_hash",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "parents",
+    "column_name": "is_verified",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": false,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "parents",
     "column_name": "created_at",
     "data_type": "timestamp without time zone",
     "is_nullable": "YES",
@@ -1943,6 +1959,46 @@ CREATE TABLE IF NOT EXISTS archived_bookings (
     "is_nullable": "YES",
     "column_default": "CURRENT_TIMESTAMP",
     "ordinal_position": 12
+  },
+  {
+    "table_name": "parent_verification_tokens",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": "nextval('parent_verification_tokens_id_seq'::regclass)",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "parent_verification_tokens",
+    "column_name": "parent_id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "parent_verification_tokens",
+    "column_name": "token",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "parent_verification_tokens",
+    "column_name": "expires_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "parent_verification_tokens",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP",
+    "ordinal_position": 5
   },
   {
     "table_name": "parents_with_waiver_status",

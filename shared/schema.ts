@@ -93,8 +93,17 @@ export const parents = pgTable("parents", {
   phone: text("phone").notNull(),
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const parentVerificationTokens = pgTable("parent_verification_tokens", {
+  id: serial("id").primaryKey(),
+  parentId: integer("parent_id").notNull().references(() => parents.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const athletes = pgTable('athletes', {
@@ -558,6 +567,8 @@ export const insertWaiverSchema = createInsertSchema(waivers).omit({
 
 export type Parent = typeof parents.$inferSelect;
 export type InsertParent = z.infer<typeof insertParentSchema>;
+export type ParentVerificationToken = typeof parentVerificationTokens.$inferSelect;
+export type InsertParentVerificationToken = typeof parentVerificationTokens.$inferInsert;
 // Legacy aliases for backward compatibility
 export type Customer = Parent;
 export type InsertCustomer = InsertParent;
