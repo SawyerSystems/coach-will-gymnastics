@@ -219,7 +219,7 @@ export default function Booking() {
                     
                     <Button 
                       className={`w-full ${buttonClasses[lesson.color as keyof typeof buttonClasses]} text-white py-3 rounded-full font-medium transform transition-all duration-200`}
-                      onClick={() => setShowParentModal(true)}
+                      onClick={() => handleBookNow(key)}
                     >
                       Start This Path
                     </Button>
