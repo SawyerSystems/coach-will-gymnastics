@@ -2858,6 +2858,7 @@ export default function Admin() {
                                 // Normalize name fields for detail modal
                                 name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
                                 dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
+                                photo: athlete.photo,
                               });
                               setIsAthleteViewOpen(true);
                             }}
@@ -2868,6 +2869,7 @@ export default function Admin() {
                                   ...athlete,
                                   name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
                                   dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
+                                  photo: athlete.photo,
                                 });
                                 setIsAthleteViewOpen(true);
                               }

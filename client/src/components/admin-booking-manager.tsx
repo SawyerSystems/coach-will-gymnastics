@@ -39,7 +39,7 @@ import type { Booking } from "@shared/schema";
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileX, Filter, HelpCircle, Plus, User, X, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // Helper function to get status badge variant and color
 export const getStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
@@ -401,25 +401,32 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [dateFilter, setDateFilter] = useState<string>("");
   const [tab, setTab] = useState<'active' | 'archived'>("active");
-  const [archivedBookings, setArchivedBookings] = useState<Booking[]>([]);
-  const [loadingArchived, setLoadingArchived] = useState(false);
-  // Fetch archived bookings when tab is switched
-  useEffect(() => {
-    if (tab === "archived" && archivedBookings.length === 0) {
-      setLoadingArchived(true);
-      apiRequest("GET", "/api/archived-bookings")
-        .then(res => res.json())
-        .then(data => setArchivedBookings(data || []))
-        .catch(() => setArchivedBookings([]))
-        .finally(() => setLoadingArchived(false));
-    }
-  }, [tab]);
 
-  // Fetch all bookings
+  // Auth status check to ensure queries are enabled only when admin is logged in
+  const { data: authStatus } = useQuery<{ loggedIn: boolean; adminId?: number }>({
+    queryKey: ['/api/auth/status'],
+    queryFn: () => apiRequest('GET', '/api/auth/status').then(res => res.json()),
+  });
+
+  // Fetch active bookings
   const { data: bookings = [], isLoading } = useQuery<Booking[]>({
     queryKey: ["/api/bookings"],
     queryFn: () => apiRequest('GET', '/api/bookings').then(res => res.json()),
+    enabled: !!authStatus?.loggedIn,
   });
+
+  // Fetch archived bookings (completed, no-show, cancelled)
+  const { data: archivedBookings = [], isLoading: loadingArchived } = useQuery<Booking[]>({
+    queryKey: ["/api/archived-bookings"],
+    queryFn: () => apiRequest('GET', '/api/archived-bookings').then(res => res.json()),
+    enabled: !!authStatus?.loggedIn && tab === 'archived',
+  });
+
+  // Helper function to invalidate booking caches
+  const invalidateBookingQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/archived-bookings"] });
+  };
 
   // Create manual booking mutation
   const createManualBooking = useMutation({
@@ -504,7 +511,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         title: "Booking Created",
         description: "Manual booking has been successfully created.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      invalidateBookingQueries();
       setShowManualForm(false);
       if (onClose) {
         onClose();
@@ -531,7 +538,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         title: "Status Updated",
         description: "Booking status has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      invalidateBookingQueries();
     },
     onError: () => {
       toast({
@@ -553,7 +560,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         title: "Payment Status Updated",
         description: "Payment status has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      invalidateBookingQueries();
     },
     onError: () => {
       toast({
@@ -575,7 +582,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         title: "Attendance Status Updated",
         description: "Attendance status has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      invalidateBookingQueries();
     },
     onError: () => {
       toast({
@@ -597,7 +604,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         title: "Booking Deleted",
         description: "Booking has been deleted successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      invalidateBookingQueries();
     },
     onError: () => {
       toast({
@@ -622,7 +629,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         title: "Booking Rescheduled",
         description: "The booking has been rescheduled successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      invalidateBookingQueries();
       setShowRescheduleModal(false);
       setRescheduleBooking(null);
     },
@@ -904,14 +911,52 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge {...getPaymentStatusBadgeProps(booking.paymentStatus || 'unpaid')}>
-                              {(booking.paymentStatus || 'unpaid').charAt(0).toUpperCase() + (booking.paymentStatus || 'unpaid').slice(1).replace(/-/g, ' ')}
-                            </Badge>
+                            <Select
+                              value={booking.paymentStatus || "unpaid"}
+                              onValueChange={(value) => 
+                                updatePaymentStatusMutation.mutate({ 
+                                  id: booking.id, 
+                                  paymentStatus: value 
+                                })
+                              }
+                              disabled={updatePaymentStatusMutation.isPending}
+                            >
+                              <SelectTrigger className="h-8 w-[140px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unpaid">Unpaid</SelectItem>
+                                <SelectItem value="reservation-pending">Reservation: Pending</SelectItem>
+                                <SelectItem value="reservation-failed">Reservation: Failed</SelectItem>
+                                <SelectItem value="reservation-paid">Reservation: Paid</SelectItem>
+                                <SelectItem value="session-paid">Session Paid</SelectItem>
+                                <SelectItem value="reservation-refunded">Reservation: Refunded</SelectItem>
+                                <SelectItem value="session-refunded">Session: Refunded</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell>
-                            <Badge {...getAttendanceStatusBadgeProps(booking.attendanceStatus || 'pending')}>
-                              {(booking.attendanceStatus || 'pending').charAt(0).toUpperCase() + (booking.attendanceStatus || 'pending').slice(1).replace(/-/g, ' ')}
-                            </Badge>
+                            <Select
+                              value={booking.attendanceStatus || "pending"}
+                              onValueChange={(value) => 
+                                updateAttendanceStatusMutation.mutate({ 
+                                  id: booking.id, 
+                                  attendanceStatus: value 
+                                })
+                              }
+                              disabled={updateAttendanceStatusMutation.isPending}
+                            >
+                              <SelectTrigger className="h-8 w-[120px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="no-show">No Show</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm font-medium">

@@ -1250,7 +1250,7 @@ With the right setup and approach, home practice can accelerate your child's gym
 export class SupabaseStorage implements IStorage {
   // Archive all bookings for a parent
   async archiveBookingsByParentId(parentId: number, reason: string): Promise<void> {
-    const { data: bookings, error } = await supabase
+    const { data: bookings, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('parent_id', parentId);
@@ -1271,7 +1271,7 @@ export class SupabaseStorage implements IStorage {
 
   // Archive all bookings for an athlete
   async archiveBookingsByAthleteId(athleteId: number, reason: string): Promise<void> {
-    const { data: bookings, error } = await supabase
+    const { data: bookings, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .eq('athlete_id', athleteId);
@@ -1292,7 +1292,7 @@ export class SupabaseStorage implements IStorage {
 
   // Fetch all archived bookings
   async getAllArchivedBookings(): Promise<any[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('archived_bookings')
       .select('*')
       .order('archived_at', { ascending: false });
@@ -1310,7 +1310,7 @@ export class SupabaseStorage implements IStorage {
   // Parent methods (preferred terminology)
   async getAllParents(): Promise<Parent[]> {
     this.logQuery('SELECT', 'parents');
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('parents')
       .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
       .order('created_at', { ascending: false });
@@ -1339,7 +1339,7 @@ export class SupabaseStorage implements IStorage {
   async identifyParent(email: string, phone: string): Promise<Parent | undefined> {
     // Normalize email to lower case for comparison
     const emailLower = email.toLowerCase();
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('parents')
       .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
       .or(`email.ilike.${emailLower},phone.eq.${phone}`)
@@ -1409,7 +1409,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getParentByEmail(email: string): Promise<Parent | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('parents')
       .select('*')
       .eq('email', email.toLowerCase())
@@ -1442,7 +1442,7 @@ export class SupabaseStorage implements IStorage {
     if (updateDataNormalized.email) {
       updateDataNormalized.email = updateDataNormalized.email.toLowerCase();
     }
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('parents')
       .update(updateDataNormalized)
       .eq('id', id)
@@ -1475,7 +1475,7 @@ export class SupabaseStorage implements IStorage {
     for (const athlete of athletes) {
       await this.deleteAthlete(athlete.id);
     }
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('parents')
       .delete()
       .eq('id', id);
@@ -1489,7 +1489,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getParentAthletes(parentId: number): Promise<Athlete[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('athletes')
       .select('*')
       .eq('parent_id', parentId)
@@ -1970,7 +1970,7 @@ export class SupabaseStorage implements IStorage {
   }[]> {
     try {
       // Get bookings from today onwards with parent and athlete data
-      const { data: bookingsData, error: bookingsError } = await supabase
+      const { data: bookingsData, error: bookingsError } = await supabaseAdmin
         .from('bookings')
         .select(`
           id,
@@ -1994,7 +1994,7 @@ export class SupabaseStorage implements IStorage {
 
       // Get parent data for all bookings
       const parentIds = Array.from(new Set(bookingsData.map(b => b.parent_id)));
-      const { data: parentsData, error: parentsError } = await supabase
+      const { data: parentsData, error: parentsError } = await supabaseAdmin
         .from('parents')
         .select('id, first_name, last_name')
         .in('id', parentIds);
@@ -2005,7 +2005,7 @@ export class SupabaseStorage implements IStorage {
 
       // Get lesson type data for all bookings (include total_price)
       const lessonTypeIds = Array.from(new Set(bookingsData.map(b => b.lesson_type_id).filter(Boolean)));
-      const { data: lessonTypesData, error: lessonTypesError } = await supabase
+      const { data: lessonTypesData, error: lessonTypesError } = await supabaseAdmin
         .from('lesson_types')
         .select('id, name, total_price')
         .in('id', lessonTypeIds);
@@ -2016,7 +2016,7 @@ export class SupabaseStorage implements IStorage {
 
       // Get athlete data for all bookings
       const bookingIds = bookingsData.map(b => b.id);
-      const { data: bookingAthletesData, error: bookingAthletesError } = await supabase
+      const { data: bookingAthletesData, error: bookingAthletesError } = await supabaseAdmin
         .from('booking_athletes')
         .select(`
           booking_id,
@@ -3518,7 +3518,7 @@ export class SupabaseStorage implements IStorage {
     this.logQuery('SELECT', 'bookings with relations');
     
     // Get bookings with basic info first
-    const { data: bookings, error } = await supabase
+    const { data: bookings, error } = await supabaseAdmin
       .from('bookings')
       .select('*')
       .order('created_at', { ascending: false });
@@ -3538,19 +3538,19 @@ export class SupabaseStorage implements IStorage {
     const lessonTypeIds = Array.from(new Set(bookings.map(b => b.lesson_type_id).filter(Boolean)));
 
     // Fetch parents
-    const { data: parents } = await supabase
+    const { data: parents } = await supabaseAdmin
       .from('parents')
       .select('*')
       .in('id', parentIds);
 
     // Fetch lesson types  
-    const { data: lessonTypes } = await supabase
+    const { data: lessonTypes } = await supabaseAdmin
       .from('lesson_types')
       .select('*')
       .in('id', lessonTypeIds);
 
     // Fetch athletes for bookings
-    const { data: bookingAthletes } = await supabase
+    const { data: bookingAthletes } = await supabaseAdmin
       .from('booking_athletes')
       .select(`
         booking_id, slot_order,

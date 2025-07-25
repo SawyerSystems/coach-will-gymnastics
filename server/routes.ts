@@ -2346,17 +2346,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/bookings", isAdminAuthenticated, async (req, res) => {
     try {
       console.log('🔍 [BOOKINGS] Route handler started!');
-      // Use getAllBookingsWithRelations to include athlete data
-      const bookings = await storage.getAllBookingsWithRelations();
-      console.log(`🔍 [BOOKINGS] Retrieved ${bookings.length} bookings with relations from storage`);
-      logger.debug(` Retrieved ${bookings.length} bookings with relations from storage`);
-      // Print all booking IDs and parent IDs for debug
-      console.log('[BOOKINGS] IDs:', bookings.map(b => b.id));
-      console.log('[BOOKINGS] Parent IDs:', bookings.map(b => b.parentId));
-      res.json(bookings);
+      const allBookings = await storage.getAllBookingsWithRelations();
+      
+      // A booking is active if it is NOT in a final state.
+      const activeBookings = allBookings.filter(booking => {
+        const isCompleted = booking.status === 'completed' || booking.attendanceStatus === 'completed';
+        const isNoShow = booking.status === 'no-show' || booking.attendanceStatus === 'no-show';
+        const isCancelled = booking.status === 'cancelled' || booking.attendanceStatus === 'cancelled';
+        
+        return !isCompleted && !isNoShow && !isCancelled;
+      });
+      
+      console.log(`[DEBUG] Total bookings: ${allBookings.length}, Active bookings: ${activeBookings.length}`);
+      res.json(activeBookings);
     } catch (error) {
       console.error("[DEBUG] Error fetching bookings:", error);
       res.status(500).json({ message: "Failed to fetch bookings" });
+    }
+  });
+
+  // Get archived bookings (completed, no-show, cancelled)
+  app.get("/api/archived-bookings", isAdminAuthenticated, async (req, res) => {
+    try {
+      console.log('🔍 [ARCHIVED-BOOKINGS] Route handler started!');
+      const allBookings = await storage.getAllBookingsWithRelations();
+      
+      // A booking is archived if it IS in a final state.
+      const archivedBookings = allBookings.filter(booking => {
+        const isCompleted = booking.status === 'completed' || booking.attendanceStatus === 'completed';
+        const isNoShow = booking.status === 'no-show' || booking.attendanceStatus === 'no-show';
+        const isCancelled = booking.status === 'cancelled' || booking.attendanceStatus === 'cancelled';
+
+        return isCompleted || isNoShow || isCancelled;
+      });
+      
+      console.log(`[DEBUG] Total bookings: ${allBookings.length}, Archived bookings: ${archivedBookings.length}`);
+      res.json(archivedBookings);
+    } catch (error) {
+      console.error("[DEBUG] Error fetching archived bookings:", error);
+      res.status(500).json({ message: "Failed to fetch archived bookings" });
     }
   });
 
