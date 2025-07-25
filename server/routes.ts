@@ -1127,74 +1127,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/athletes/:id/waiver-status", async (req, res) => {
-    try {
-      const athleteId = parseInt(req.params.id);
-      if (isNaN(athleteId)) {
-        return res.status(400).json({ error: "Invalid athlete ID" });
-      }
-
-      // Get the most recent waiver for this athlete
-      const { data: waiver, error } = await supabase
-        .from('waivers')
-        .select(`
-          id, signed_at, signature, booking_id
-        `)
-        .eq('athlete_id', athleteId)
-        .not('signed_at', 'is', null)
-        .order('signed_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('[WAIVER-STATUS] Database error:', error);
-        return res.status(500).json({ error: 'Failed to check waiver status' });
-      }
-
-      const hasWaiver = !!waiver;
-      console.log('[WAIVER-STATUS] Checked waiver', { athleteId, hasWaiver });
-      
-      if (hasWaiver && waiver) {
-        // Get parent name from booking if we have a booking_id
-        let parentName = 'Unknown Parent';
-        
-        if (waiver.booking_id) {
-          const { data: booking } = await supabase
-            .from('bookings')
-            .select(`
-              parent:parents(first_name, last_name)
-            `)
-            .eq('id', waiver.booking_id)
-            .single();
-            
-          if (booking?.parent) {
-            // Handle both array and object cases for parent data
-            const parent = Array.isArray(booking.parent) ? booking.parent[0] : booking.parent;
-            if (parent && parent.first_name && parent.last_name) {
-              parentName = `${parent.first_name} ${parent.last_name}`;
-            }
-          }
-        }
-          
-        res.json({
-          hasWaiver: true,
-          waiverSigned: true,
-          waiverSignedAt: waiver.signed_at,
-          waiverSignatureName: parentName,
-          bookingId: waiver.booking_id
-        });
-      } else {
-        res.json({
-          hasWaiver: false,
-          waiverSigned: false
-        });
-      }
-    } catch (error: any) {
-      console.error("[WAIVER-STATUS] Error checking waiver status:", error);
-      res.status(500).json({ error: "Failed to check waiver status" });
-    }
-  });
-
   app.put("/api/athletes/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -4923,7 +4855,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get waiver status for athlete
+  // Get waiver status for athlete (handles both :id and :athleteId for compatibility)
   app.get("/api/athletes/:athleteId/waiver-status", async (req, res) => {
     try {
       const athleteId = parseInt(req.params.athleteId);
@@ -4932,7 +4864,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
 
-      // Get athlete with waiver status
+      // Get athlete with waiver status using admin client
+      const athlete = await storage.getAthleteWithWaiverStatus(athleteId);
+      if (!athlete) {
+        return res.status(404).json({ error: "Athlete not found" });
+      }
+
+      const waiverSigned = athlete.waiverStatus === 'signed';
+      
+      res.json({
+        hasWaiver: waiverSigned,
+        waiverSigned,
+        waiverSignedAt: athlete.waiverSignedAt,
+        waiverSignatureName: athlete.waiverSignatureId || '', // Updated field name
+        waiverStatus: athlete.waiverStatus,
+        latestWaiverId: athlete.latestWaiverId
+      });
+    } catch (error: any) {
+      console.error("Error checking waiver status:", error);
+      res.status(500).json({ error: "Failed to check waiver status" });
+    }
+  });
+
+  // Compatibility endpoint for :id parameter format
+  app.get("/api/athletes/:id/waiver-status", async (req, res) => {
+    try {
+      const athleteId = parseInt(req.params.id);
+      
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: "Invalid athlete ID" });
+      }
+
+      // Get athlete with waiver status using admin client
       const athlete = await storage.getAthleteWithWaiverStatus(athleteId);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
@@ -5005,57 +4968,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Parent authentication required' });
       }
 
-      const BASE_URL = process.env.SUPABASE_URL;
-      const API_KEY = process.env.SUPABASE_ANON_KEY;
-      
-      if (!BASE_URL || !API_KEY) {
-        return res.status(500).json({ error: 'Supabase configuration missing' });
+      // Use supabaseAdmin to query athletes_with_waiver_status view directly
+      // This bypasses RLS and provides accurate waiver status information
+      const { data: athleteWaiverData, error } = await supabaseAdmin
+        .from('athletes_with_waiver_status')
+        .select('*')
+        .eq('parent_id', parentId);
+
+      if (error) {
+        console.error('Error fetching athlete waiver data:', error);
+        return res.status(500).json({ error: 'Failed to fetch athlete waiver data' });
       }
 
-      // Get parent's athletes
-      const athletesResponse = await fetch(`${BASE_URL}/rest/v1/athletes?parent_id=eq.${parentId}&select=*`, {
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!athletesResponse.ok) {
-        return res.status(500).json({ error: 'Failed to fetch athletes' });
-      }
-
-      const athletes = await athletesResponse.json();
-
-      // Get waivers for parent's athletes
-      const waiversResponse = await fetch(`${BASE_URL}/rest/v1/waivers?parent_id=eq.${parentId}&select=*`, {
-        headers: {
-          'apikey': API_KEY,
-          'Authorization': `Bearer ${API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!waiversResponse.ok) {
-        return res.status(500).json({ error: 'Failed to fetch waivers' });
-      }
-
-      const waivers = await waiversResponse.json();
-
-      // Combine athlete and waiver data
-      const athleteWaiverStatus = athletes.map((athlete: any) => {
-        const waiver = waivers.find((w: any) => 
-          w.athlete_id === athlete.id || 
-          w.athlete_name === athlete.name ||
-          w.athlete_name === `${athlete.first_name} ${athlete.last_name}`
-        );
-
+      // Transform the data to match the expected format
+      const athleteWaiverStatus = athleteWaiverData.map((athleteData: any) => {
+        const hasWaiver = athleteData.computed_waiver_status === 'signed' || athleteData.athlete_waiver_status === 'signed';
+        
         return {
-          athlete: athlete,
-          waiver: waiver || null,
-          hasWaiver: !!waiver,
-          waiverSigned: !!waiver,
-          needsWaiver: !waiver
+          athlete: {
+            id: athleteData.id,
+            parent_id: athleteData.parent_id,
+            name: athleteData.name,
+            first_name: athleteData.first_name,
+            last_name: athleteData.last_name,
+            date_of_birth: athleteData.date_of_birth,
+            experience: athleteData.experience,
+            allergies: athleteData.allergies,
+            created_at: athleteData.created_at,
+            updated_at: athleteData.updated_at
+          },
+          waiver: athleteData.latest_waiver_id ? {
+            id: athleteData.latest_waiver_id,
+            athlete_id: athleteData.id,
+            signed_at: athleteData.waiver_signed_at,
+            signature_id: athleteData.waiver_signature_id,
+            signature_data: athleteData.waiver_signature_data,
+            created_at: athleteData.waiver_created_at
+          } : null,
+          hasWaiver: hasWaiver,
+          waiverSigned: hasWaiver,
+          needsWaiver: !hasWaiver
         };
       });
 

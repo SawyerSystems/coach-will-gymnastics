@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UnifiedBookingModal } from '@/components/UnifiedBookingModal';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
 import { toast } from '@/hooks/use-toast';
+import { useAthleteWaiverStatus } from '@/hooks/use-waiver-status';
 import { useAvailableTimes } from '@/hooks/useAvailableTimes';
 import { calculateAge, formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
@@ -307,10 +308,25 @@ function ParentDashboard() {
            b.status !== 'completed';
   });
 
-  const pastBookings = bookings.filter(b => 
-    (b.preferredDate && new Date(b.preferredDate) < new Date()) || 
-    b.status === 'cancelled'
-  );
+  const pastBookings = bookings.filter(b => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to midnight
+    
+    // Check if booking is cancelled
+    if (b.status === 'cancelled') return true;
+    
+    // Check if attendance status is completed
+    if (b.attendanceStatus === 'completed') return true;
+    
+    // Check if preferredDate is in the past
+    if (b.preferredDate) {
+      const preferredDate = new Date(b.preferredDate);
+      preferredDate.setHours(0, 0, 0, 0); // Normalize to midnight
+      if (preferredDate < today) return true;
+    }
+    
+    return false;
+  });
 
   // Reschedule booking mutation
   const rescheduleBookingMutation = useMutation({
@@ -917,6 +933,9 @@ function ParentDashboard() {
                 b.athlete1Name === athlete.name || b.athlete2Name === athlete.name
               );
 
+              // Fetch waiver status for this athlete
+              const { data: waiverStatus, isLoading: waiverLoading, error: waiverError } = useAthleteWaiverStatus(athlete.id);
+
               return (
                 <div className="space-y-6 px-4 md:px-0">
                   {/* Basic Info */}
@@ -983,41 +1002,57 @@ function ParentDashboard() {
                   {/* Waiver Status */}
                   <div className="border-t pt-4">
                     <h4 className="font-medium text-gray-900 mb-3">Waiver Status</h4>
-                    {athleteBookings.length > 0 ? (
+                    {waiverLoading ? (
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                        <span>Loading waiver status...</span>
+                      </div>
+                    ) : waiverError ? (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <XCircle className="w-4 h-4" />
+                        <span>Error loading waiver status</span>
+                      </div>
+                    ) : waiverStatus ? (
                       <div className="space-y-2">
-                        {athleteBookings.some(b => b.waiverSigned) ? (
-                          <div className="flex items-center gap-2 text-green-600">
-                            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                            <span className="font-medium">Waiver Completed</span>
+                        {waiverStatus.waiverSigned ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-green-600">
+                              <CheckCircle className="w-4 h-4" />
+                              <span className="font-medium">Waiver Completed</span>
+                            </div>
+                            {waiverStatus.waiverSignedAt && (
+                              <div className="text-sm text-gray-600 ml-6">
+                                Signed on {new Date(waiverStatus.waiverSignedAt).toLocaleDateString()}
+                                {waiverStatus.waiverSignatureName && (
+                                  <span> by {waiverStatus.waiverSignatureName}</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-orange-600">
-                            <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                            <span className="font-medium">Waiver Required</span>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-orange-600">
+                              <FileX className="w-4 h-4" />
+                              <span className="font-medium">Waiver Required</span>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              className="mt-2"
+                              onClick={() => {
+                                setSelectedAthleteForWaiver(athlete);
+                                setShowWaiverModal(true);
+                              }}
+                            >
+                              Sign Digital Waiver
+                            </Button>
                           </div>
-                        )}
-
-                        {athleteBookings.filter(b => b.waiverSigned).map(booking => (
-                          <div key={booking.id} className="text-sm text-gray-600 ml-4">
-                            Waiver has been signed
-                          </div>
-                        ))}
-
-                        {!athleteBookings.some(b => b.waiverSigned) && (
-                          <Button 
-                            size="sm" 
-                            className="mt-2"
-                            onClick={() => {
-                              setSelectedAthleteForWaiver(athlete);
-                              setShowWaiverModal(true);
-                            }}
-                          >
-                            Sign Digital Waiver
-                          </Button>
                         )}
                       </div>
                     ) : (
-                      <p className="text-gray-500">No bookings found for this athlete</p>
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <HelpCircle className="w-4 h-4" />
+                        <span>Waiver status unavailable</span>
+                      </div>
                     )}
                   </div>
 
@@ -1026,14 +1061,32 @@ function ParentDashboard() {
                     <h4 className="font-medium text-gray-900 mb-3">Session History</h4>
                     {athleteBookings.length > 0 ? (
                       <div className="space-y-2 max-h-32 overflow-y-auto">
-                        {athleteBookings.map(booking => (
-                          <div key={booking.id} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                            <span>{booking.preferredDate ? format(new Date(booking.preferredDate), 'MMM d, yyyy') : 'Date TBD'} - {booking.preferredTime}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {booking.status}
-                            </Badge>
-                          </div>
-                        ))}
+                        {athleteBookings.map(booking => {
+                          // For completed bookings, use updatedAt as the session date, otherwise use preferredDate
+                          const displayDate = (() => {
+                            if (booking.attendanceStatus === 'completed' && booking.updatedAt) {
+                              return format(new Date(booking.updatedAt), 'MMM d, yyyy');
+                            }
+                            if (booking.preferredDate) {
+                              return format(new Date(booking.preferredDate), 'MMM d, yyyy');
+                            }
+                            return 'Date TBD';
+                          })();
+
+                          return (
+                            <div key={booking.id} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
+                              <span>
+                                {displayDate} - {booking.preferredTime || 'Time TBD'}
+                                {booking.attendanceStatus === 'completed' && booking.updatedAt && (
+                                  <span className="text-xs text-gray-500 ml-2">(completed)</span>
+                                )}
+                              </span>
+                              <Badge variant="secondary" className="text-xs">
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="text-gray-500">No sessions recorded</p>
@@ -1363,7 +1416,7 @@ function ParentDashboard() {
                         experience
                       };
 
-                      await apiRequest(`/api/athletes/${editingAthleteInfo.id}`, 'PUT', updateData);
+                      await apiRequest('PUT', `/api/athletes/${editingAthleteInfo.id}`, updateData);
 
                       // Invalidate queries to refresh data
                       queryClient.invalidateQueries({ queryKey: ['/api/athletes'] });
