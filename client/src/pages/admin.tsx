@@ -1,3 +1,4 @@
+import { AthleteDetailDialog } from "@/components/AthleteDetailDialog";
 import { GenderSelect } from "@/components/GenderSelect";
 import { PaymentsTab } from "@/components/PaymentsTab";
 import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
@@ -11,13 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,25 +34,25 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  BarChart,
-  Calendar,
-  CalendarX,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  Edit,
-  Eye,
-  Mail,
-  MessageCircle,
-  MessageSquare,
-  Plus,
-  RefreshCw,
-  Search,
-  Trash2,
-  User,
-  Users,
-  X
+    AlertCircle,
+    BarChart,
+    Calendar,
+    CalendarX,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Edit,
+    Eye,
+    Mail,
+    MessageCircle,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Search,
+    Trash2,
+    User,
+    Users,
+    X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -3198,250 +3199,24 @@ export default function Admin() {
         </Dialog>
 
         {/* Athlete View Modal */}
-        <Dialog open={isAthleteViewOpen && !!selectedAthlete} onOpenChange={setIsAthleteViewOpen}>
-          <DialogContent 
-            className="max-w-3xl max-h-[90vh] overflow-y-auto" 
-            aria-describedby="athlete-profile-description"
-          >
-            <DialogHeader>
-              <DialogTitle id="athlete-profile-title">
-                Athlete Profile
-              </DialogTitle>
-              <DialogDescription id="athlete-profile-description">
-                {selectedAthlete ? `Viewing profile for ${selectedAthlete.name}` : "View athlete information and manage bookings"}
-              </DialogDescription>
-            </DialogHeader>
-            {selectedAthlete && (
-              <>
-                {/* Basic Info */}
-                <div className="border rounded-lg p-4" role="region" aria-labelledby="basic-info-heading">
-                  <h3 id="basic-info-heading" className="font-semibold mb-3">Basic Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        {selectedAthlete.photo ? (
-                          <img
-                            src={selectedAthlete.photo}
-                            alt={`${selectedAthlete.name}'s profile photo`}
-                            className="w-20 h-20 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            onClick={() => handlePhotoClick(selectedAthlete.photo!)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                handlePhotoClick(selectedAthlete.photo!);
-                              }
-                            }}
-                            tabIndex={0}
-                            role="button"
-                            aria-label={`View ${selectedAthlete.name}'s photo in full size`}
-                          />
-                        ) : (
-                          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center" aria-label="No photo available">
-                            <User className="h-8 w-8 text-gray-400" />
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handlePhotoUpload(e, selectedAthlete.id)}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          disabled={uploadingPhoto}
-                          aria-label={`Upload new photo for ${selectedAthlete.name}`}
-                        />
-                        {uploadingPhoto && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
-                            <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-                            <span className="sr-only">Uploading photo...</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-lg">{selectedAthlete.name}</p>
-                        <p className="text-sm text-gray-600">
-                          Age: {selectedAthlete.dateOfBirth ? calculateAge(selectedAthlete.dateOfBirth) : 'Unknown'} years old
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Born: {selectedAthlete.dateOfBirth ? new Date(selectedAthlete.dateOfBirth).toLocaleDateString() : 'Unknown'}
-                        </p>
-                        <p className="text-sm text-blue-600 font-medium mt-1">
-                          Click photo to enlarge or click to upload new
-                        </p>
-                      </div>
-                    </div>
-                    <div role="group" aria-label="Athlete details">
-                      <p className="text-sm"><span className="font-medium">Experience:</span> {selectedAthlete.experience}</p>
-                      <p className="text-sm"><span className="font-medium">Gender:</span> {selectedAthlete.gender || 'Not specified'}</p>
-                      {selectedAthlete.allergies && (
-                        <p className="text-sm text-red-600 mt-1">
-                          <span className="font-medium">⚠️ Allergies:</span> {selectedAthlete.allergies}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {/* Parent Info */}
-                {(() => {
-                  const parentInfo = parentMapping.get(`${selectedAthlete.name}-${selectedAthlete.dateOfBirth}`);
-                  return parentInfo ? (
-                    <div className="border rounded-lg p-4" role="region" aria-labelledby="parent-info-heading">
-                      <h3 id="parent-info-heading" className="font-semibold mb-3">Parent Information</h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm" role="group" aria-label="Parent contact details">
-                        <div>
-                          <p><span className="font-medium">Name:</span> {parentInfo.firstName} {parentInfo.lastName}</p>
-                          <p><span className="font-medium">Email:</span> 
-                            <a href={`mailto:${parentInfo.email}`} className="text-blue-600 hover:underline ml-1">
-                              {parentInfo.email}
-                            </a>
-                          </p>
-                        </div>
-                        <div>
-                          <p><span className="font-medium">Phone:</span> 
-                            <a href={`tel:${parentInfo.phone}`} className="text-blue-600 hover:underline ml-1">
-                              {parentInfo.phone}
-                            </a>
-                          </p>
-                          <p><span className="font-medium">Emergency Contact:</span> {parentInfo.emergencyContactName} 
-                            <a href={`tel:${parentInfo.emergencyContactPhone}`} className="text-blue-600 hover:underline ml-1">
-                              ({parentInfo.emergencyContactPhone})
-                            </a>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-                {/* Waiver Status */}
-                <WaiverStatusDisplay 
-                  athleteId={selectedAthlete.id}
-                  athleteName={selectedAthlete.name || 'Unknown Athlete'}
-                  onResendWaiver={() => {
-                    // TODO: Implement waiver resend functionality
-                    toast({
-                      title: "Feature Coming Soon",
-                      description: "Waiver resend functionality will be implemented soon.",
-                    });
-                  }}
-                />
-                {/* Bookings History */}
-                <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
-                  <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History</h3>
-                  <div className="space-y-3 max-h-64 overflow-y-auto" role="log" aria-label="Booking history list">
-                    {bookings
-                      .filter(b => {
-                        // Check if athlete is in booking_athletes relationship
-                        if (b.athletes && Array.isArray(b.athletes)) {
-                          return b.athletes.some((athlete: any) => 
-                            athlete.id === selectedAthlete.id ||
-                            athlete.name === selectedAthlete.name ||
-                            (selectedAthlete.firstName && selectedAthlete.lastName && 
-                             athlete.name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
-                          );
-                        }
-                        // Fallback to legacy fields
-                        return b.athlete1Name === selectedAthlete.name || 
-                               b.athlete2Name === selectedAthlete.name ||
-                               (selectedAthlete.firstName && selectedAthlete.lastName && 
-                                (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
-                                 b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
-                      })
-                      .sort((a, b) => {
-                        const dateA = a.preferredDate ? new Date(a.preferredDate).getTime() : 0;
-                        const dateB = b.preferredDate ? new Date(b.preferredDate).getTime() : 0;
-                        return dateB - dateA;
-                      })
-                      .map((booking) => (
-                        <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-medium">{(() => {
-                                const lt = booking.lessonType;
-                                const name = (typeof lt === 'object' && lt && 'name' in lt) 
-                                  ? (lt as any).name 
-                                  : lt;
-                                return (name || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
-                              })()}</p>
-                              <p className="text-sm text-gray-600">
-                                <time dateTime={booking.preferredDate || undefined}>
-                                  {booking.preferredDate}
-                                </time> at {booking.preferredTime}
-                              </p>
-                              <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
-                              <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
-                              {(booking.waiverId || booking.waiverSigned) && (
-                                <p className="text-xs text-green-600 font-medium" role="status">✓ Waiver Signed</p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              {/* Removed generic booking.status badge for cleaner UI */}
-                              {booking.attendanceStatus && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Attendance: {booking.attendanceStatus}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    {bookings.filter(b => {
-                      // Check if athlete is in booking_athletes relationship
-                      if (b.athletes && Array.isArray(b.athletes)) {
-                        return b.athletes.some((athlete: any) => 
-                          athlete.id === selectedAthlete.id ||
-                          athlete.name === selectedAthlete.name ||
-                          (selectedAthlete.firstName && selectedAthlete.lastName && 
-                           athlete.name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`)
-                        );
-                      }
-                      // Fallback to legacy fields
-                      return b.athlete1Name === selectedAthlete.name || 
-                             b.athlete2Name === selectedAthlete.name ||
-                             (selectedAthlete.firstName && selectedAthlete.lastName && 
-                              (b.athlete1Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}` ||
-                               b.athlete2Name === `${selectedAthlete.firstName} ${selectedAthlete.lastName}`));
-                    }).length === 0 && (
-                      <p className="text-gray-500 text-center" role="status">No bookings found</p>
-                    )}
-                  </div>
-                </div>
-                {/* Action Buttons */}
-                <div className="flex justify-between pt-4 border-t" role="group" aria-label="Athlete actions">
-                  <Button 
-                    onClick={() => {
-                      setIsAthleteViewOpen(false);
-                      setAdminBookingContext('from-athlete');
-                      setPreSelectedAthleteId(selectedAthlete.id);
-                      setShowUnifiedBooking(true);
-                    }}
-                    aria-label={`Book a session for ${selectedAthlete.name}`}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Book Session
-                  </Button>
-                  <div className="space-x-2">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setIsAthleteViewOpen(false);
-                        setIsAthleteEditOpen(true);
-                      }}
-                      aria-label={`Edit ${selectedAthlete.name}'s information`}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsAthleteViewOpen(false)}
-                      aria-label="Close athlete profile"
-                    >
-                      Close
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+        <AthleteDetailDialog
+          open={isAthleteViewOpen && !!selectedAthlete}
+          onOpenChange={setIsAthleteViewOpen}
+          athlete={selectedAthlete}
+          bookings={bookings}
+          parentInfo={selectedAthlete ? parentMapping.get(`${selectedAthlete.name}-${selectedAthlete.dateOfBirth}`) : undefined}
+          onBookSession={() => {
+            setIsAthleteViewOpen(false);
+            setAdminBookingContext('from-athlete');
+            setPreSelectedAthleteId(selectedAthlete?.id);
+            setShowUnifiedBooking(true);
+          }}
+          onEditAthlete={() => {
+            setIsAthleteViewOpen(false);
+            setIsAthleteEditOpen(true);
+          }}
+          showActionButtons={true}
+        />
 
         {/* Delete Athlete Error Modal */}
         <Dialog open={!!deleteAthleteError} onOpenChange={() => setDeleteAthleteError(null)}>
@@ -3478,25 +3253,6 @@ export default function Admin() {
             <div className="flex justify-end">
               <Button onClick={() => setDeleteAthleteError(null)}>Understood</Button>
             </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Photo Enlargement Modal */}
-        <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Athlete Photo</DialogTitle>
-              <DialogDescription>
-                Enlarged view of the athlete's photo.
-              </DialogDescription>
-            </DialogHeader>
-            {enlargedPhoto && (
-              <img
-                src={enlargedPhoto}
-                alt="Enlarged athlete photo"
-                className="w-full h-auto rounded-lg"
-              />
-            )}
           </DialogContent>
         </Dialog>
 

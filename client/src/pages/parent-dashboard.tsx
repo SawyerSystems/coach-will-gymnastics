@@ -1,3 +1,4 @@
+import { AthleteDetailDialog } from '@/components/AthleteDetailDialog';
 import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -14,7 +15,7 @@ import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
 import { toast } from '@/hooks/use-toast';
 import { useAthleteWaiverStatus } from '@/hooks/use-waiver-status';
 import { useAvailableTimes } from '@/hooks/useAvailableTimes';
-import { calculateAge, formatDate } from '@/lib/dateUtils';
+import { formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -239,6 +240,11 @@ function ParentDashboard() {
   const [showWaiverModal, setShowWaiverModal] = useState(false);
   const [selectedAthleteForWaiver, setSelectedAthleteForWaiver] = useState<any>(null);
 
+  // Hook for waiver status - moved to top level to fix Rules of Hooks violation
+  const { data: waiverStatus, isLoading: waiverLoading, error: waiverError } = useAthleteWaiverStatus(
+    editingAthleteId ?? ''
+  );
+
   // Check if parent is authenticated
   const { data: authStatus } = useQuery<{ loggedIn: boolean; parentId?: number; email?: string }>({
     queryKey: ['/api/parent-auth/status'],
@@ -312,17 +318,22 @@ function ParentDashboard() {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize to midnight
     
-    // Check if booking is cancelled
-    if (b.status === 'cancelled') return true;
+    // Check if booking is cancelled, completed, or no-show
+    if (b.status === 'cancelled' || b.status === 'completed' || b.status === 'no-show') return true;
     
-    // Check if attendance status is completed
-    if (b.attendanceStatus === 'completed') return true;
+    // Check if attendance status indicates completion
+    if (b.attendanceStatus === 'completed' || b.attendanceStatus === 'no-show') return true;
     
-    // Check if preferredDate is in the past
+    // Check if preferredDate is in the past (for bookings that haven't been explicitly marked)
     if (b.preferredDate) {
       const preferredDate = new Date(b.preferredDate);
       preferredDate.setHours(0, 0, 0, 0); // Normalize to midnight
       if (preferredDate < today) return true;
+    }
+    
+    // Also check if the booking has attendanceStatus completed which implies past session
+    if (b.attendanceStatus === 'completed') {
+      return true;
     }
     
     return false;
@@ -916,216 +927,30 @@ function ParentDashboard() {
         </Tabs>
 
         {/* Athlete Detail Modal */}
-        <Dialog open={editingAthleteId !== null} onOpenChange={() => setEditingAthleteId(null)}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-2xl md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Athlete Details</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                View and manage athlete information and waivers
-              </DialogDescription>
-            </DialogHeader>
-
-            {editingAthleteId && (() => {
-              const athlete = athletes.find(a => a.id === editingAthleteId);
-              if (!athlete) return null;
-
-              const athleteBookings = bookings.filter(b => 
-                b.athlete1Name === athlete.name || b.athlete2Name === athlete.name
-              );
-
-              // Fetch waiver status for this athlete
-              const { data: waiverStatus, isLoading: waiverLoading, error: waiverError } = useAthleteWaiverStatus(athlete.id);
-
-              return (
-                <div className="space-y-6 px-4 md:px-0">
-                  {/* Basic Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Name</label>
-                      <p className="mt-1 text-gray-900">{athlete.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Date of Birth</label>
-                      <p className="mt-1 text-gray-900">{athlete.dateOfBirth ? formatDate(athlete.dateOfBirth) : 'Unknown'}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Experience Level</label>
-                      <p className="mt-1 text-gray-900 capitalize">{athlete.experience}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Age</label>
-                      <p className="mt-1 text-gray-900">
-                        {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Allergies */}
-                  {athlete.allergies && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4 text-orange-500" />
-                        Allergies & Medical Notes
-                      </label>
-                      <p className="mt-1 text-gray-900 bg-orange-50 p-3 rounded-lg">{athlete.allergies}</p>
-                    </div>
-                  )}
-
-                  {/* Parent Information */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Parent Information</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Parent Name</label>
-                        <p className="mt-1 text-gray-900">{parentInfo?.firstName} {parentInfo?.lastName}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Email</label>
-                        <p className="mt-1 text-gray-900">{parentInfo?.email}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Phone</label>
-                        <p className="mt-1 text-gray-900">{parentInfo?.phone}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Emergency Contact</label>
-                        <p className="mt-1 text-gray-900">
-                          {parentInfo?.emergencyContactName ? 
-                            `${parentInfo.emergencyContactName} - ${parentInfo.emergencyContactPhone}` : 
-                            'Not provided'
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Waiver Status */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Waiver Status</h4>
-                    {waiverLoading ? (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                        <span>Loading waiver status...</span>
-                      </div>
-                    ) : waiverError ? (
-                      <div className="flex items-center gap-2 text-red-600">
-                        <XCircle className="w-4 h-4" />
-                        <span>Error loading waiver status</span>
-                      </div>
-                    ) : waiverStatus ? (
-                      <div className="space-y-2">
-                        {waiverStatus.waiverSigned ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-green-600">
-                              <CheckCircle className="w-4 h-4" />
-                              <span className="font-medium">Waiver Completed</span>
-                            </div>
-                            {waiverStatus.waiverSignedAt && (
-                              <div className="text-sm text-gray-600 ml-6">
-                                Signed on {new Date(waiverStatus.waiverSignedAt).toLocaleDateString()}
-                                {waiverStatus.waiverSignatureName && (
-                                  <span> by {waiverStatus.waiverSignatureName}</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-orange-600">
-                              <FileX className="w-4 h-4" />
-                              <span className="font-medium">Waiver Required</span>
-                            </div>
-                            <Button 
-                              size="sm" 
-                              className="mt-2"
-                              onClick={() => {
-                                setSelectedAthleteForWaiver(athlete);
-                                setShowWaiverModal(true);
-                              }}
-                            >
-                              Sign Digital Waiver
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <HelpCircle className="w-4 h-4" />
-                        <span>Waiver status unavailable</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Session History */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Session History</h4>
-                    {athleteBookings.length > 0 ? (
-                      <div className="space-y-2 max-h-32 overflow-y-auto">
-                        {athleteBookings.map(booking => {
-                          // For completed bookings, use updatedAt as the session date, otherwise use preferredDate
-                          const displayDate = (() => {
-                            if (booking.attendanceStatus === 'completed' && booking.updatedAt) {
-                              return format(new Date(booking.updatedAt), 'MMM d, yyyy');
-                            }
-                            if (booking.preferredDate) {
-                              return format(new Date(booking.preferredDate), 'MMM d, yyyy');
-                            }
-                            return 'Date TBD';
-                          })();
-
-                          return (
-                            <div key={booking.id} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                              <span>
-                                {displayDate} - {booking.preferredTime || 'Time TBD'}
-                                {booking.attendanceStatus === 'completed' && booking.updatedAt && (
-                                  <span className="text-xs text-gray-500 ml-2">(completed)</span>
-                                )}
-                              </span>
-                              <Badge variant="secondary" className="text-xs">
-                                {booking.status}
-                              </Badge>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">No sessions recorded</p>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-between pt-4">
-                    <Button variant="outline" onClick={() => setEditingAthleteId(null)}>
-                      Close
-                    </Button>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingAthleteInfo(athlete);
-                          setEditingAthleteGender(athlete.gender || '');
-                          setEditingAthleteId(null); // Close this modal
-                        }}
-                      >
-                        Edit Info
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          setEditingAthleteId(null); // Close this modal
-                          setSelectedAthleteForBooking(athlete);
-                          setShowBookingModal(true);
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        Book Session
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </DialogContent>
-        </Dialog>
+        <AthleteDetailDialog
+          open={editingAthleteId !== null}
+          onOpenChange={(open) => setEditingAthleteId(open ? editingAthleteId : null)}
+          athlete={editingAthleteId ? athletes.find(a => a.id === editingAthleteId) || null : null}
+          bookings={bookings}
+          parentInfo={parentInfo}
+          onBookSession={() => {
+            const athlete = athletes.find(a => a.id === editingAthleteId);
+            if (athlete) {
+              setEditingAthleteId(null); // Close this modal
+              setSelectedAthleteForBooking(athlete);
+              setShowBookingModal(true);
+            }
+          }}
+          onEditAthlete={() => {
+            const athlete = athletes.find(a => a.id === editingAthleteId);
+            if (athlete) {
+              setEditingAthleteInfo(athlete);
+              setEditingAthleteGender(athlete.gender || '');
+              setEditingAthleteId(null); // Close this modal
+            }
+          }}
+          showActionButtons={true}
+        />
 
         {/* Direct Booking Modal for Logged-in Parents */}
         <UnifiedBookingModal 
