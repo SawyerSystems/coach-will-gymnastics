@@ -1,0 +1,167 @@
+{
+  "timestamp": "2025-07-26T23:24:10.367Z",
+  "schemaAudit": {
+    "tables": {
+      "admins": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "apparatus": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "archived_waivers": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "athletes": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "availability": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "availability_exceptions": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "blog_posts": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "booking_athletes": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "booking_focus_areas": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "booking_apparatus": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "booking_side_quests": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "bookings": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "focus_areas": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "genders": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "lesson_types": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "parents": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "side_quests": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "slot_reservations": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "tips": {
+        "type": "BASE TABLE",
+        "columns": []
+      },
+      "waivers": {
+        "type": "BASE TABLE",
+        "columns": []
+      }
+    },
+    "discrepancies": [],
+    "recommendations": []
+  },
+  "bookingsAudit": {
+    "columns": [
+      "id",
+      "booking_method",
+      "reservation_fee_paid",
+      "paid_amount",
+      "special_requests",
+      "admin_notes",
+      "dropoff_person_name",
+      "dropoff_person_relationship",
+      "dropoff_person_phone",
+      "pickup_person_name",
+      "pickup_person_relationship",
+      "pickup_person_phone",
+      "alt_pickup_person_name",
+      "alt_pickup_person_relationship",
+      "alt_pickup_person_phone",
+      "safety_verification_signed",
+      "safety_verification_signed_at",
+      "stripe_session_id",
+      "created_at",
+      "updated_at",
+      "status",
+      "payment_status",
+      "attendance_status",
+      "preferred_date",
+      "preferred_time",
+      "parent_id",
+      "lesson_type_id",
+      "waiver_id",
+      "focus_areas",
+      "progress_note",
+      "coach_name"
+    ],
+    "hasAdventureLog": true,
+    "hasFocusAreasArray": true
+  },
+  "junctionTablesAudit": {
+    "booking_athletes": {
+      "exists": true,
+      "rowCount": 1
+    },
+    "booking_focus_areas": {
+      "exists": true,
+      "rowCount": 0
+    },
+    "booking_apparatus": {
+      "exists": true,
+      "rowCount": 0
+    },
+    "booking_side_quests": {
+      "exists": true,
+      "rowCount": 0
+    }
+  },
+  "apiEndpointsAudit": {
+    "bookings": {
+      "accessible": true,
+      "recordCount": 1
+    },
+    "parents": {
+      "accessible": true,
+      "recordCount": 1
+    },
+    "athletes": {
+      "accessible": true,
+      "recordCount": 1
+    },
+    "waivers": {
+      "accessible": true,
+      "recordCount": 1
+    },
+    "lesson_types": {
+      "accessible": true,
+      "recordCount": 1
+    }
+  },
+  "dataConsistencyIssues": []
+}

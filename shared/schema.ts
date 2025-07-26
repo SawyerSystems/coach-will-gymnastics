@@ -151,7 +151,6 @@ export const bookings = pgTable("bookings", {
   waiverId: integer("waiver_id"),
   preferredDate: date("preferred_date"),
   preferredTime: time("preferred_time"),
-  focusAreas: text("focus_areas").array(),
   status: text("status").notNull().default("pending"),
   paymentStatus: text("payment_status").notNull().default("unpaid"),
   attendanceStatus: text("attendance_status").notNull().default("pending"),
@@ -161,6 +160,7 @@ export const bookings = pgTable("bookings", {
   stripeSessionId: text("stripe_session_id"),
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
+  focusAreas: text("focus_areas").array(), // Array of focus areas/skills worked on during the session
   progressNote: text("progress_note"), // For Adventure Log progress tracking
   coachName: text("coach_name").default("Coach Will"), // For Adventure Log coach tracking
   dropoffPersonName: text("dropoff_person_name"),
@@ -358,7 +358,6 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  focusAreas: true, // Will be handled via junction table
 }).extend({
   // Foreign key IDs (required)
   parentId: z.number().positive("Parent ID is required"),
@@ -537,7 +536,7 @@ export type BookingWithRelations = Booking & {
   
   // Junction table relationships
   apparatus: Array<{ id: number; name: string }>;
-  focusAreas: Array<{ id: number; name: string }>;
+  focusAreas: string[]; // Array of focus area names/skills
   sideQuests: Array<{ id: number; name: string }>;
   athletes?: Array<Athlete>;
   
@@ -644,23 +643,26 @@ export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type LessonType = typeof lessonTypes.$inferSelect;
 export type InsertLessonType = typeof lessonTypes.$inferInsert;
 
-// Parent authentication codes table
-export const parentAuthCodes = pgTable("parent_auth_codes", {
-  id: serial("id").primaryKey(),
-  email: varchar("email", { length: 255 }).notNull(),
-  code: varchar("code", { length: 6 }).notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  used: boolean("used").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+// NOTE: parent_auth_codes table is not implemented - the application uses 
+// magic code authentication via Resend API instead of database storage
+// 
+// Parent authentication codes table (COMMENTED OUT - not in use)
+// export const parentAuthCodes = pgTable("parent_auth_codes", {
+//   id: serial("id").primaryKey(),
+//   email: varchar("email", { length: 255 }).notNull(),
+//   code: varchar("code", { length: 6 }).notNull(),
+//   expiresAt: timestamp("expires_at").notNull(),
+//   used: boolean("used").default(false).notNull(),
+//   createdAt: timestamp("created_at").defaultNow().notNull(),
+// });
 
-export const insertParentAuthCodeSchema = createInsertSchema(parentAuthCodes).omit({
-  id: true,
-  createdAt: true,
-});
+// export const insertParentAuthCodeSchema = createInsertSchema(parentAuthCodes).omit({
+//   id: true,
+//   createdAt: true,
+// });
 
-export type ParentAuthCode = typeof parentAuthCodes.$inferSelect;
-export type InsertParentAuthCode = z.infer<typeof insertParentAuthCodeSchema>;
+// export type ParentAuthCode = typeof parentAuthCodes.$inferSelect;
+// export type InsertParentAuthCode = z.infer<typeof insertParentAuthCodeSchema>;
 
 // Slot reservations table for temporary slot holding during booking flow
 export const slotReservations = pgTable("slot_reservations", {
@@ -724,7 +726,6 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     references: [waivers.id],
   }),
   athletes: many(bookingAthletes),
-  focusAreas: many(bookingFocusAreas),
   apparatus: many(bookingApparatus),
   sideQuests: many(bookingSideQuests),
   logs: many(bookingLogs),

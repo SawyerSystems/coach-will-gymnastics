@@ -9,6 +9,13 @@
 - User will manually update the file afterward to reflect current database state
 - Do not attempt to run SQL commands yourself
 
+**⚠️ PERMISSION REQUIRED: Always ask explicit user permission before:**
+- Creating/modifying database schema for new features
+- Performing complex data operations with full SQL power
+- Accessing system catalogs for comprehensive database analysis
+- Executing migrations and schema updates directly
+- Implementing advanced database features like triggers, functions, and views
+
 **Error Handling:**
 - Always communicate database-related errors clearly
 - Provide multiple options or solutions before continuing any iteration
