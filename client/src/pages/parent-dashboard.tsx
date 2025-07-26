@@ -315,28 +315,8 @@ function ParentDashboard() {
   });
 
   const pastBookings = bookings.filter(b => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to midnight
-    
-    // Check if booking is cancelled, completed, or no-show
-    if (b.status === 'cancelled' || b.status === 'completed' || b.status === 'no-show') return true;
-    
-    // Check if attendance status indicates completion
-    if (b.attendanceStatus === 'completed' || b.attendanceStatus === 'no-show') return true;
-    
-    // Check if preferredDate is in the past (for bookings that haven't been explicitly marked)
-    if (b.preferredDate) {
-      const preferredDate = new Date(b.preferredDate);
-      preferredDate.setHours(0, 0, 0, 0); // Normalize to midnight
-      if (preferredDate < today) return true;
-    }
-    
-    // Also check if the booking has attendanceStatus completed which implies past session
-    if (b.attendanceStatus === 'completed') {
-      return true;
-    }
-    
-    return false;
+    // Adventure Log should only show completed sessions
+    return b.attendanceStatus === 'completed';
   });
 
   // Reschedule booking mutation
@@ -474,7 +454,7 @@ function ParentDashboard() {
               value="past" 
               className="min-h-[48px] border-2 border-blue-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:border-blue-500 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-blue-100"
             >
-              📚 Past
+              🎯 Adventure Log
             </TabsTrigger>
             <TabsTrigger 
               value="athletes" 
@@ -681,34 +661,187 @@ function ParentDashboard() {
           <TabsContent value="past">
             <Card>
               <CardHeader>
-                <CardTitle>Past Sessions</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  🎯 Adventure Log
+                  <span className="text-sm font-normal text-gray-500">Progress & Growth Tracking</span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {pastBookings.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No past sessions</p>
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🎯</div>
+                    <p className="text-gray-500 text-lg mb-2">No adventures completed yet!</p>
+                    <p className="text-gray-400 text-sm">Complete your first session to start tracking progress</p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {pastBookings.map((booking) => (
-                      <div key={booking.id} className="border rounded-lg p-4 opacity-75">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium">{booking.athlete1Name}</span>
-                            {booking.athlete2Name && (
-                              <span className="font-medium">& {booking.athlete2Name}</span>
-                            )}
-                          </div>
+                  <div className="space-y-6">
+                    {/* Summary Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-700">{pastBookings.length}</div>
+                        <div className="text-sm text-blue-600">Sessions Completed</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-700">
+                          {pastBookings.reduce((total, booking) => {
+                            return total + (booking.focusAreas?.length || 0);
+                          }, 0)}
+                        </div>
+                        <div className="text-sm text-purple-600">Skills Practiced</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-700 flex items-center justify-center gap-1">
+                          {(() => {
+                            const sessionsPerMonth = pastBookings.length / Math.max(1, 
+                              Math.ceil((new Date().getTime() - new Date(Math.min(...pastBookings.map(b => b.createdAt ? new Date(b.createdAt).getTime() : Date.now()))).getTime()) / (1000 * 60 * 60 * 24 * 30))
+                            );
+                            if (sessionsPerMonth >= 4) return <>🔥 Excellent</>;
+                            if (sessionsPerMonth >= 2) return <>⚡ Moderate</>;
+                            return <>💤 Low</>;
+                          })()}
+                        </div>
+                        <div className="text-sm text-green-600">Consistency</div>
+                      </div>
+                    </div>
 
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-500" />
-                            <span>{booking.preferredDate ? format(new Date(booking.preferredDate), 'MMMM d, yyyy') : 'Date TBD'}</span>
-                            <Badge variant="outline">
-                              {booking.status}
-                            </Badge>
+                    {/* Adventure Log Entries */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        📜 Adventure History
+                        <span className="text-sm font-normal text-gray-500">({pastBookings.length} completed)</span>
+                      </h3>
+                      
+                      {pastBookings.map((booking) => (
+                        <div key={booking.id} className="border rounded-xl p-6 bg-gradient-to-r from-gray-50 to-blue-50 hover:shadow-md transition-all duration-200">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Left Column - Session Info */}
+                            <div className="space-y-4">
+                              {/* Athlete and Date */}
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <User className="w-5 h-5 text-blue-600" />
+                                    <span className="font-semibold text-lg text-gray-800">
+                                      {booking.athletes && booking.athletes.length > 0 ? (
+                                        booking.athletes.map((athlete: any) => athlete.name).join(' & ')
+                                      ) : (
+                                        <>
+                                          {booking.athlete1Name}
+                                          {booking.athlete2Name && ` & ${booking.athlete2Name}`}
+                                        </>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="w-4 h-4" />
+                                      {booking.preferredDate ? format(new Date(booking.preferredDate), 'MMMM d, yyyy') : 'Date TBD'}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="w-4 h-4" />
+                                      {booking.preferredTime || 'Time TBD'}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <User className="w-4 h-4" />
+                                      {booking.coachName || 'Coach Will'}
+                                    </div>
+                                  </div>
+                                </div>
+                                <Badge 
+                                  variant="outline"
+                                  className="bg-green-50 text-green-700 border-green-200"
+                                >
+                                  ✅ Completed
+                                </Badge>
+                              </div>
+
+                              {/* Focus Areas */}
+                              {booking.focusAreas && booking.focusAreas.length > 0 && (
+                                <div>
+                                  <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    🎯 Skills Practiced
+                                  </h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {booking.focusAreas.map((area, index) => (
+                                      <Badge 
+                                        key={index}
+                                        variant="secondary"
+                                        className="bg-blue-100 text-blue-800 border-blue-200"
+                                      >
+                                        {area}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Right Column - Progress & Notes */}
+                            <div className="space-y-4">
+                              {/* Progress Note */}
+                              <div>
+                                <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                  📈 Progress Note
+                                </h4>
+                                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                                  <p className="text-gray-700 leading-relaxed">
+                                    {booking.progressNote || 
+                                     booking.adminNotes || 
+                                     "Great session! The athlete showed excellent focus and made steady progress in their skills. Keep up the fantastic work! 🌟"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Coach Recommendation (placeholder) */}
+                              <div>
+                                <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                  💡 Coach Recommendation
+                                </h4>
+                                <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                                  <p className="text-amber-800 text-sm">
+                                    {(() => {
+                                      if (booking.focusAreas?.some(area => area.includes('Tumbling'))) {
+                                        return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
+                                      }
+                                      if (booking.focusAreas?.some(area => area.includes('Beam'))) {
+                                        return "Great balance work! Practice walking on lines at home to improve beam skills.";
+                                      }
+                                      if (booking.focusAreas?.some(area => area.includes('Flexibility'))) {
+                                        return "Keep up the daily stretching routine. Consistency is key for flexibility gains!";
+                                      }
+                                      return "Excellent progress! Continue practicing basic movements and building strength at home.";
+                                    })()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Export Option */}
+                    <div className="border-t pt-6">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-medium text-gray-700">📄 Export Progress Report</h4>
+                          <p className="text-sm text-gray-500">Download a complete progress report for your records</p>
+                        </div>
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            // TODO: Implement PDF export
+                            toast({
+                              title: "Feature Coming Soon! 🚀",
+                              description: "PDF export will be available in the next update.",
+                            });
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          📥 Export PDF
+                        </Button>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -767,59 +900,47 @@ function ParentDashboard() {
                 <p className="text-sm text-gray-600">Manage your personal and emergency contact information</p>
               </CardHeader>
               <CardContent className="space-y-6">
-                {authStatus?.email && (() => {
-                  // Get parent info from parents data using email
-                  const parentInfo = bookings.length > 0 ? {
-                    firstName: bookings[0].parentFirstName || '',
-                    lastName: bookings[0].parentLastName || '',
-                    email: authStatus.email,
-                    phone: bookings[0].parentPhone || '',
-                    emergencyContactName: bookings[0].emergencyContactName || '',
-                    emergencyContactPhone: bookings[0].emergencyContactPhone || ''
-                  } : null;
-
-                  return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Personal Information */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-gray-900">Personal Information</h4>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">First Name</label>
-                            <p className="mt-1 text-gray-900">{parentInfo?.firstName || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Last Name</label>
-                            <p className="mt-1 text-gray-900">{parentInfo?.lastName || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Email</label>
-                            <p className="mt-1 text-gray-900">{parentInfo?.email || authStatus.email}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Phone</label>
-                            <p className="mt-1 text-gray-900">{parentInfo?.phone || 'Not provided'}</p>
-                          </div>
+                {authStatus?.email && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Personal Information */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Personal Information</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">First Name</label>
+                          <p className="mt-1 text-gray-900">{parentInfo?.firstName || 'Not provided'}</p>
                         </div>
-                      </div>
-
-                      {/* Emergency Contact */}
-                      <div className="space-y-4">
-                        <h4 className="font-medium text-gray-900">Emergency Contact</h4>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Emergency Contact Name</label>
-                            <p className="mt-1 text-gray-900">{parentInfo?.emergencyContactName || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-gray-700">Emergency Contact Phone</label>
-                            <p className="mt-1 text-gray-900">{parentInfo?.emergencyContactPhone || 'Not provided'}</p>
-                          </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Last Name</label>
+                          <p className="mt-1 text-gray-900">{parentInfo?.lastName || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Email</label>
+                          <p className="mt-1 text-gray-900">{parentInfo?.email || authStatus.email}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Phone</label>
+                          <p className="mt-1 text-gray-900">{parentInfo?.phone || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
+
+                    {/* Emergency Contact */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-gray-900">Emergency Contact</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Emergency Contact Name</label>
+                          <p className="mt-1 text-gray-900">{parentInfo?.emergencyContactName || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Emergency Contact Phone</label>
+                          <p className="mt-1 text-gray-900">{parentInfo?.emergencyContactPhone || 'Not provided'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Account Actions */}
                 <div className="border-t pt-6">
@@ -933,6 +1054,7 @@ function ParentDashboard() {
           athlete={editingAthleteId ? athletes.find(a => a.id === editingAthleteId) || null : null}
           bookings={bookings}
           parentInfo={parentInfo}
+          mode="parent"
           onBookSession={() => {
             const athlete = athletes.find(a => a.id === editingAthleteId);
             if (athlete) {

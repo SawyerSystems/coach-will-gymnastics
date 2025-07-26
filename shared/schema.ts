@@ -161,6 +161,8 @@ export const bookings = pgTable("bookings", {
   stripeSessionId: text("stripe_session_id"),
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
+  progressNote: text("progress_note"), // For Adventure Log progress tracking
+  coachName: text("coach_name").default("Coach Will"), // For Adventure Log coach tracking
   dropoffPersonName: text("dropoff_person_name"),
   dropoffPersonRelationship: text("dropoff_person_relationship"),
   dropoffPersonPhone: text("dropoff_person_phone"),

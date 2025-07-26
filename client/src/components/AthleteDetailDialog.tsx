@@ -1,17 +1,17 @@
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, User } from "lucide-react";
 import React, { useState } from "react";
 
@@ -24,6 +24,7 @@ interface AthleteDetailDialogProps {
   onBookSession?: () => void;
   onEditAthlete?: () => void;
   showActionButtons?: boolean;
+  mode?: 'parent' | 'admin';
 }
 
 export function AthleteDetailDialog({
@@ -34,8 +35,74 @@ export function AthleteDetailDialog({
   parentInfo,
   onBookSession,
   onEditAthlete,
-  showActionButtons = true
+  showActionButtons = true,
+  mode = 'admin'
 }: AthleteDetailDialogProps) {
+  console.log('🔍 AthleteDetailDialog rendered with:', {
+    athlete: athlete ? { id: athlete.id, name: athlete.name, photo: athlete.photo } : null,
+    parentInfo,
+    bookingsCount: bookings.length,
+    bookings: bookings.map(b => ({ id: b.id, status: b.status, athleteName: b.athlete1Name })),
+    mode
+  });
+
+  // For parent mode, fetch all bookings to show complete booking history
+  const { data: allBookings = [] } = useQuery<Booking[]>({
+    queryKey: ['/api/parent/all-bookings'],
+    enabled: mode === 'parent',
+  });
+
+  // Filter bookings for this specific athlete
+  const athleteBookings = mode === 'parent' ? 
+    allBookings.filter(booking => {
+      const athleteId = athlete?.id;
+      if (!athleteId) return false;
+      
+      // Check if this athlete is in the booking's athletes array
+      if (booking.athletes && booking.athletes.length > 0) {
+        return booking.athletes.some(a => a.athleteId === athleteId);
+      }
+      
+      // Fallback: check legacy fields and athlete names
+      const athleteName = athlete.name || 
+                         (athlete.firstName && athlete.lastName ? 
+                          `${athlete.firstName} ${athlete.lastName}` : '');
+      
+      return booking.athlete1Name === athleteName || 
+             booking.athlete2Name === athleteName ||
+             booking.athleteId === athleteId;
+    }) : 
+    bookings.filter(booking => {
+      // For admin mode, use the provided bookings prop
+      const athleteId = athlete?.id;
+      if (!athleteId) return false;
+      
+      if (booking.athletes && booking.athletes.length > 0) {
+        return booking.athletes.some(a => a.athleteId === athleteId);
+      }
+      
+      const athleteName = athlete.name || 
+                         (athlete.firstName && athlete.lastName ? 
+                          `${athlete.firstName} ${athlete.lastName}` : '');
+      
+      return booking.athlete1Name === athleteName || 
+             booking.athlete2Name === athleteName ||
+             booking.athleteId === athleteId;
+    });
+
+  console.log('🔍 Filtered athlete bookings:', {
+    athleteId: athlete?.id,
+    athleteName: athlete?.name,
+    totalBookings: mode === 'parent' ? allBookings.length : bookings.length,
+    filteredBookings: athleteBookings.length,
+    athleteBookings: athleteBookings.map(b => ({ 
+      id: b.id, 
+      status: b.status, 
+      athleteName: b.athlete1Name,
+      hasAthletes: !!b.athletes,
+      athletesCount: b.athletes?.length || 0
+    }))
+  });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
@@ -96,6 +163,7 @@ export function AthleteDetailDialog({
         
         if (response.ok) {
           queryClient.invalidateQueries({ queryKey: ['/api/athletes'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/parent/athletes'] });
           toast({
             title: "Photo Updated",
             description: "Athlete photo has been successfully updated.",
@@ -116,25 +184,27 @@ export function AthleteDetailDialog({
     }
   };
 
-  if (!athlete) return null;
+  if (!athlete) {
+    console.log('🔍 AthleteDetailDialog: No athlete provided');
+    return null;
+  }
 
-  const athleteBookings = bookings.filter(b => {
-    // Check if athlete is in booking_athletes relationship
-    if (b.athletes && Array.isArray(b.athletes)) {
-      return b.athletes.some((bookingAthlete: any) => 
-        bookingAthlete.id === athlete.id ||
-        bookingAthlete.name === athlete.name ||
-        (athlete.firstName && athlete.lastName && 
-         bookingAthlete.name === `${athlete.firstName} ${athlete.lastName}`)
-      );
-    }
-    // Fallback to legacy fields
-    return b.athlete1Name === athlete.name || 
-           b.athlete2Name === athlete.name ||
-           (athlete.firstName && athlete.lastName && 
-            (b.athlete1Name === `${athlete.firstName} ${athlete.lastName}` ||
-             b.athlete2Name === `${athlete.firstName} ${athlete.lastName}`));
+  console.log('🔍 AthleteDetailDialog photo debug:', {
+    athleteId: athlete.id,
+    athleteName: athlete.name,
+    hasPhoto: !!athlete.photo,
+    photoValue: athlete.photo,
+    photoType: typeof athlete.photo,
+    photoLength: athlete.photo?.length
   });
+
+  // Debug logging to help identify issues
+  console.log('=== AthleteDetailDialog Debug ===');
+  console.log('Athlete:', athlete);
+  console.log('Total bookings received:', bookings.length);
+  console.log('ParentInfo:', parentInfo);
+  console.log('Filtered athlete bookings:', athleteBookings.length, athleteBookings);
+  console.log('=== End Debug ===');
 
   return (
     <>
@@ -148,7 +218,7 @@ export function AthleteDetailDialog({
               Athlete Profile
             </DialogTitle>
             <DialogDescription id="athlete-profile-description">
-              Viewing profile for {athlete.name}
+              Viewing profile for {athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || 'Unknown Athlete'}
             </DialogDescription>
           </DialogHeader>
           
@@ -161,7 +231,7 @@ export function AthleteDetailDialog({
                   {athlete.photo ? (
                     <img
                       src={athlete.photo}
-                      alt={`${athlete.name}'s profile photo`}
+                      alt={`${athlete.name || 'Athlete'}'s profile photo`}
                       className="w-20 h-20 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       onClick={() => handlePhotoClick(athlete.photo!)}
                       onKeyDown={(e) => {
@@ -172,7 +242,10 @@ export function AthleteDetailDialog({
                       }}
                       tabIndex={0}
                       role="button"
-                      aria-label={`View ${athlete.name}'s photo in full size`}
+                      aria-label={`View ${athlete.name || 'athlete'}'s photo in full size`}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center" aria-label="No photo available">
@@ -185,7 +258,7 @@ export function AthleteDetailDialog({
                     onChange={(e) => handlePhotoUpload(e, athlete.id)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     disabled={uploadingPhoto}
-                    aria-label={`Upload new photo for ${athlete.name}`}
+                    aria-label={`Upload new photo for ${athlete.name || 'athlete'}`}
                   />
                   {uploadingPhoto && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
@@ -195,7 +268,7 @@ export function AthleteDetailDialog({
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-lg">{athlete.name}</p>
+                  <p className="font-medium text-lg">{athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || 'Unknown Athlete'}</p>
                   <p className="text-sm text-gray-600">
                     Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} years old
                   </p>
@@ -220,31 +293,53 @@ export function AthleteDetailDialog({
           </div>
 
           {/* Parent Info */}
-          {parentInfo && (
+          {parentInfo ? (
             <div className="border rounded-lg p-4" role="region" aria-labelledby="parent-info-heading">
               <h3 id="parent-info-heading" className="font-semibold mb-3">Parent Information</h3>
               <div className="grid grid-cols-2 gap-4 text-sm" role="group" aria-label="Parent contact details">
                 <div>
-                  <p><span className="font-medium">Name:</span> {parentInfo.firstName} {parentInfo.lastName}</p>
+                  <p><span className="font-medium">Name:</span> {parentInfo.firstName || 'N/A'} {parentInfo.lastName || 'N/A'}</p>
                   <p><span className="font-medium">Email:</span> 
-                    <a href={`mailto:${parentInfo.email}`} className="text-blue-600 hover:underline ml-1">
-                      {parentInfo.email}
-                    </a>
+                    {parentInfo.email ? (
+                      <a href={`mailto:${parentInfo.email}`} className="text-blue-600 hover:underline ml-1">
+                        {parentInfo.email}
+                      </a>
+                    ) : (
+                      <span className="ml-1 text-gray-500">Not provided</span>
+                    )}
                   </p>
                 </div>
                 <div>
                   <p><span className="font-medium">Phone:</span> 
-                    <a href={`tel:${parentInfo.phone}`} className="text-blue-600 hover:underline ml-1">
-                      {parentInfo.phone}
-                    </a>
+                    {parentInfo.phone ? (
+                      <a href={`tel:${parentInfo.phone}`} className="text-blue-600 hover:underline ml-1">
+                        {parentInfo.phone}
+                      </a>
+                    ) : (
+                      <span className="ml-1 text-gray-500">Not provided</span>
+                    )}
                   </p>
-                  <p><span className="font-medium">Emergency Contact:</span> {parentInfo.emergencyContactName} 
-                    <a href={`tel:${parentInfo.emergencyContactPhone}`} className="text-blue-600 hover:underline ml-1">
-                      ({parentInfo.emergencyContactPhone})
-                    </a>
+                  <p><span className="font-medium">Emergency Contact:</span> 
+                    {parentInfo.emergencyContactName ? (
+                      <>
+                        {parentInfo.emergencyContactName}
+                        {parentInfo.emergencyContactPhone && (
+                          <a href={`tel:${parentInfo.emergencyContactPhone}`} className="text-blue-600 hover:underline ml-1">
+                            ({parentInfo.emergencyContactPhone})
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-gray-500">Not provided</span>
+                    )}
                   </p>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="border rounded-lg p-4 bg-gray-50" role="region" aria-labelledby="parent-info-heading">
+              <h3 id="parent-info-heading" className="font-semibold mb-3">Parent Information</h3>
+              <p className="text-gray-500 text-center">No parent information available</p>
             </div>
           )}
 
@@ -263,48 +358,52 @@ export function AthleteDetailDialog({
 
           {/* Bookings History */}
           <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
-            <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History</h3>
+            <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History ({athleteBookings.length})</h3>
             <div className="space-y-3 max-h-64 overflow-y-auto" role="log" aria-label="Booking history list">
-              {athleteBookings
-                .sort((a, b) => {
-                  const dateA = a.preferredDate ? new Date(a.preferredDate).getTime() : 0;
-                  const dateB = b.preferredDate ? new Date(b.preferredDate).getTime() : 0;
-                  return dateB - dateA;
-                })
-                .map((booking) => (
-                  <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
-                    <div className="flex justify-between">
-                      <div>
-                        <p className="font-medium">{(() => {
-                          const lt = booking.lessonType;
-                          const name = (typeof lt === 'object' && lt && 'name' in lt) 
-                            ? (lt as any).name 
-                            : lt;
-                          return (name || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
-                        })()}</p>
-                        <p className="text-sm text-gray-600">
-                          <time dateTime={booking.preferredDate || undefined}>
-                            {booking.preferredDate}
-                          </time> at {booking.preferredTime}
-                        </p>
-                        <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
-                        <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
-                        {(booking.waiverId || booking.waiverSigned) && (
-                          <p className="text-xs text-green-600 font-medium" role="status">✓ Waiver Signed</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        {booking.attendanceStatus && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Attendance: {booking.attendanceStatus}
+              {athleteBookings.length > 0 ? (
+                athleteBookings
+                  .sort((a, b) => {
+                    const dateA = a.preferredDate ? new Date(a.preferredDate).getTime() : 0;
+                    const dateB = b.preferredDate ? new Date(b.preferredDate).getTime() : 0;
+                    return dateB - dateA;
+                  })
+                  .map((booking) => (
+                    <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
+                      <div className="flex justify-between">
+                        <div>
+                          <p className="font-medium">{(() => {
+                            const lt = booking.lessonType;
+                            const name = (typeof lt === 'object' && lt && 'name' in lt) 
+                              ? (lt as any).name 
+                              : lt;
+                            return (name || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                          })()}</p>
+                          <p className="text-sm text-gray-600">
+                            <time dateTime={booking.preferredDate || undefined}>
+                              {booking.preferredDate}
+                            </time> at {booking.preferredTime}
                           </p>
-                        )}
+                          <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
+                          <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
+                          {(booking.waiverId || booking.waiverSigned) && (
+                            <p className="text-xs text-green-600 font-medium" role="status">✓ Waiver Signed</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">Status: {booking.status}</p>
+                          {booking.attendanceStatus && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Attendance: {booking.attendanceStatus}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              {athleteBookings.length === 0 && (
-                <p className="text-gray-500 text-center" role="status">No bookings found</p>
+                  ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500" role="status">No bookings found for this athlete</p>
+                </div>
               )}
             </div>
           </div>
@@ -355,7 +454,7 @@ export function AthleteDetailDialog({
             <div className="flex justify-center">
               <img
                 src={enlargedPhoto}
-                alt={`${athlete.name}'s enlarged photo`}
+                alt={`${athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || 'Athlete'}'s enlarged photo`}
                 className="max-w-full max-h-96 object-contain rounded-lg"
               />
             </div>

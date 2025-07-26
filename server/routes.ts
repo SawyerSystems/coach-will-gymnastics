@@ -414,6 +414,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get ALL parent bookings (including archived/completed)
+  app.get('/api/parent/all-bookings', async (req, res) => {
+    if (!req.session.parentId) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      // Get ALL bookings for this parent (no status filtering)
+      const allBookingsQuery = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          booking_athletes (
+            athlete_id,
+            slot_order,
+            athletes:athlete_id (
+              id,
+              name,
+              first_name,
+              last_name,
+              date_of_birth,
+              allergies,
+              experience,
+              gender,
+              parent_id,
+              photo
+            )
+          )
+        `)
+        .eq('parent_id', req.session.parentId)
+        .order('created_at', { ascending: false });
+        
+      if (allBookingsQuery.error) {
+        throw allBookingsQuery.error;
+      }
+      
+      // Transform the data similar to the regular bookings endpoint
+      const allBookingsWithAthletes = allBookingsQuery.data?.map((booking: any) => {
+        const athletes = booking.booking_athletes?.map((ba: any) => ba.athletes) || [];
+        
+        let displayPaymentStatus = booking.payment_status;
+        if (booking.payment_status === PaymentStatusEnum.RESERVATION_PAID) {
+          displayPaymentStatus = 'Reservation: Paid';
+        } else if (booking.payment_status === PaymentStatusEnum.SESSION_PAID) {
+          displayPaymentStatus = 'Session: Paid';
+        } else if (booking.payment_status === PaymentStatusEnum.RESERVATION_PENDING) {
+          displayPaymentStatus = 'Reservation: Pending';
+        } else if (booking.payment_status === PaymentStatusEnum.RESERVATION_FAILED) {
+          displayPaymentStatus = 'Reservation: Failed';
+        }
+        
+        let displayStatus = booking.status;
+        if (booking.status === BookingStatusEnum.PENDING && booking.payment_status === PaymentStatusEnum.RESERVATION_PAID) {
+          displayStatus = BookingStatusEnum.CONFIRMED;
+        }
+        
+        return {
+          ...booking,
+          athletes,
+          displayPaymentStatus,
+          status: displayStatus,
+          // Legacy fields for backward compatibility
+          athlete1Name: athletes[0]?.name || '',
+          athlete2Name: athletes[1]?.name || '',
+        };
+      }) || [];
+      
+      res.json(allBookingsWithAthletes);
+    } catch (error) {
+      console.error('Error fetching all parent bookings:', error);
+      res.status(500).json({ message: 'Failed to fetch all bookings' });
+    }
+  });
+  
   // Get complete parent information (aggregated from bookings)
   app.get('/api/parent/info', async (req, res) => {
     if (!req.session.parentId) {
