@@ -6,6 +6,15 @@ export interface WaiverStatus {
   waiverSigned: boolean;
   waiverSignedAt?: string;
   waiverSignatureName?: string;
+  waiverAgreements?: {
+    relationship: string;
+    understands_risks: boolean;
+    agrees_to_policies: boolean;
+    authorizes_emergency_care: boolean;
+    allows_photo_video: boolean;
+    confirms_authority: boolean;
+  };
+  latestWaiverId?: number;
   bookingId?: number;
 }
 

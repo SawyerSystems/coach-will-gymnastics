@@ -4966,28 +4966,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get waiver status for athlete (handles both :id and :athleteId for compatibility)
   app.get("/api/athletes/:athleteId/waiver-status", async (req, res) => {
     try {
+      console.log('=== WAIVER STATUS ENDPOINT CALLED ===');
       const athleteId = parseInt(req.params.athleteId);
       
       if (isNaN(athleteId)) {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
 
-      // Get athlete with waiver status using admin client
-      const athlete = await storage.getAthleteWithWaiverStatus(athleteId);
+      // Get athlete directly from the athletes table using the simple waiver_signed boolean
+      const athlete = await storage.getAthlete(athleteId);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
       }
 
-      const waiverSigned = athlete.waiverStatus === 'signed';
+      console.log('🔍 Debug athlete object:', athlete);
+
+      // Use camelCase field names as returned by storage layer
+      const isWaiverSigned = athlete.waiverSigned;
+      const latestWaiverId = athlete.latestWaiverId;
       
-      res.json({
-        hasWaiver: waiverSigned,
-        waiverSigned,
-        waiverSignedAt: athlete.waiverSignedAt,
-        waiverSignatureName: athlete.waiverSignatureId || '', // Updated field name
-        waiverStatus: athlete.waiverStatus,
-        latestWaiverId: athlete.latestWaiverId
-      });
+      console.log('🔍 Waiver signed:', isWaiverSigned, 'Latest waiver ID:', latestWaiverId);
+      
+      // Get waiver signer name and agreement details if waiver is signed
+      let waiverSignatureName = '';
+      let waiverSignedAt = null;
+      let waiverAgreements = null;
+      
+      if (isWaiverSigned && latestWaiverId) {
+        try {
+          console.log('🔍 Fetching waiver details for waiver ID:', latestWaiverId);
+          const { data: waiverData, error: waiverError } = await supabaseAdmin
+            .from('waivers')
+            .select(`
+              signed_at, 
+              relationship_to_athlete,
+              understands_risks,
+              agrees_to_policies,
+              authorizes_emergency_care,
+              allows_photo_video,
+              confirms_authority,
+              parents!waivers_parent_id_fkey(first_name, last_name)
+            `)
+            .eq('id', latestWaiverId)
+            .single();
+            
+          console.log('🔍 Waiver data response:', waiverData);
+          console.log('🔍 Waiver error:', waiverError);
+            
+          if (waiverData && waiverData.parents) {
+            const parent = waiverData.parents as any;
+            waiverSignatureName = `${parent.first_name} ${parent.last_name}`;
+            waiverSignedAt = waiverData.signed_at;
+            
+            // Create human-readable agreement summary
+            waiverAgreements = {
+              relationship: waiverData.relationship_to_athlete,
+              understands_risks: waiverData.understands_risks,
+              agrees_to_policies: waiverData.agrees_to_policies,
+              authorizes_emergency_care: waiverData.authorizes_emergency_care,
+              allows_photo_video: waiverData.allows_photo_video,
+              confirms_authority: waiverData.confirms_authority
+            };
+            
+            console.log('🔍 Final waiver signature name:', waiverSignatureName);
+            console.log('🔍 Final waiver agreements:', waiverAgreements);
+          }
+        } catch (error) {
+          console.warn('Could not fetch waiver signer name:', error);
+        }
+      }
+      
+      const responseData = {
+        hasWaiver: isWaiverSigned,
+        waiverSigned: isWaiverSigned,
+        waiverSignedAt,
+        waiverSignatureName,
+        waiverAgreements,
+        latestWaiverId
+      };
+      
+      console.log('Waiver status response:', responseData);
+      res.json(responseData);
     } catch (error: any) {
       console.error("Error checking waiver status:", error);
       res.status(500).json({ error: "Failed to check waiver status" });
@@ -5003,20 +5062,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid athlete ID" });
       }
 
-      // Get athlete with waiver status using admin client
-      const athlete = await storage.getAthleteWithWaiverStatus(athleteId);
+      // Get athlete directly from the athletes table using the simple waiver_signed boolean
+      const athlete = await storage.getAthlete(athleteId);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
       }
 
-      const waiverSigned = athlete.waiverStatus === 'signed';
+      // Get waiver signer name if waiver is signed
+      let waiverSignatureName = '';
+      let waiverSignedAt = null;
+      
+      if (athlete.waiverSigned && athlete.latestWaiverId) {
+        try {
+          const { data: waiverData } = await supabaseAdmin
+            .from('waivers')
+            .select('signed_at, parents!inner(first_name, last_name)')
+            .eq('id', athlete.latestWaiverId)
+            .single();
+            
+          if (waiverData && waiverData.parents) {
+            const parent = waiverData.parents as any;
+            waiverSignatureName = `${parent.first_name} ${parent.last_name}`;
+            waiverSignedAt = waiverData.signed_at;
+          }
+        } catch (error) {
+          console.warn('Could not fetch waiver signer name:', error);
+        }
+      }
       
       res.json({
-        hasWaiver: waiverSigned,
-        waiverSigned,
-        waiverSignedAt: athlete.waiverSignedAt,
-        waiverSignatureName: athlete.waiverSignatureId || '', // Updated field name
-        waiverStatus: athlete.waiverStatus,
+        hasWaiver: athlete.waiverSigned,
+        waiverSigned: athlete.waiverSigned,
+        waiverSignedAt,
+        waiverSignatureName,
         latestWaiverId: athlete.latestWaiverId
       });
     } catch (error: any) {
@@ -5034,24 +5112,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Athlete name is required" });
       }
 
-      // Get athletes with waiver status
-      const athletes = await storage.getAllAthletesWithWaiverStatus();
-      const athlete = athletes.find(a => {
-        const fullName = a.firstName && a.lastName 
-          ? `${a.firstName} ${a.lastName}`
+      // Get athletes directly from athletes table using simple waiver_signed boolean
+      const { data: athletes, error } = await supabaseAdmin
+        .from('athletes')
+        .select('id, name, first_name, last_name, waiver_signed, latest_waiver_id')
+        .or(`name.eq.${athleteName},first_name.eq.${athleteName.split(' ')[0]}`);
+        
+      if (error) {
+        console.error('Error fetching athletes:', error);
+        return res.status(500).json({ error: "Failed to fetch athletes" });
+      }
+
+      const athlete = athletes?.find(a => {
+        const fullName = a.first_name && a.last_name 
+          ? `${a.first_name} ${a.last_name}`
           : a.name;
         return fullName === athleteName || a.name === athleteName;
       });
 
       if (athlete) {
-        const waiverSigned = athlete.waiverStatus === 'signed';
+        // Get waiver signer name if waiver is signed
+        let waiverSignatureName = '';
+        let waiverSignedAt = null;
+        
+        if (athlete.waiver_signed && athlete.latest_waiver_id) {
+          try {
+            const { data: waiverData } = await supabaseAdmin
+              .from('waivers')
+              .select('signed_at, parents!inner(first_name, last_name)')
+              .eq('id', athlete.latest_waiver_id)
+              .single();
+              
+            if (waiverData && waiverData.parents) {
+              const parent = waiverData.parents as any;
+              waiverSignatureName = `${parent.first_name} ${parent.last_name}`;
+              waiverSignedAt = waiverData.signed_at;
+            }
+          } catch (error) {
+            console.warn('Could not fetch waiver signer name:', error);
+          }
+        }
+        
         res.json({
-          hasWaiver: waiverSigned,
-          waiverSigned,
-          waiverSignedAt: athlete.waiverSignedAt,
-          waiverSignatureName: athlete.waiverSignatureId || '', // Updated field name
-          athleteId: athlete.id,
-          waiverStatus: athlete.waiverStatus
+          hasWaiver: athlete.waiver_signed,
+          waiverSigned: athlete.waiver_signed,
+          waiverSignedAt,
+          waiverSignatureName,
+          athleteId: athlete.id
         });
       } else {
         res.json({

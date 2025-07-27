@@ -1,8 +1,25 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertParentAuthCode, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type ParentAuthCode, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
+
+// Temporary types for unused auth codes (intentionally missing from database)
+interface ParentAuthCode {
+  id: number;
+  email: string;
+  code: string;
+  createdAt: Date;
+  expiresAt: Date;
+  isUsed: boolean;
+}
+
+interface InsertParentAuthCode {
+  email: string;
+  code: string;
+  expiresAt: Date;
+  used?: boolean;
+}
 export interface IStorage {
   // Archiving logic
   archiveBookingsByParentId(parentId: number, reason: string): Promise<void>;
@@ -684,6 +701,8 @@ With the right setup and approach, home practice can accelerate your child's gym
       altPickupPersonPhone: insertBooking.altPickupPersonPhone ?? null,
       safetyVerificationSigned: insertBooking.safetyVerificationSigned ?? false,
       safetyVerificationSignedAt: insertBooking.safetyVerificationSignedAt ?? null,
+      progressNote: insertBooking.progressNote ?? null,
+      coachName: insertBooking.coachName ?? "Coach Will",
       stripeSessionId: insertBooking.stripeSessionId ?? null
     };
     this.bookings.set(id, booking);
@@ -1517,7 +1536,8 @@ export class SupabaseStorage implements IStorage {
       createdAt: new Date(athlete.created_at),
       updatedAt: new Date(athlete.updated_at),
       latestWaiverId: athlete.latest_waiver_id || null,
-      waiverStatus: athlete.waiver_status || 'pending'
+      waiverStatus: athlete.waiver_status || 'pending',
+      waiverSigned: athlete.waiver_signed || false
     }));
   }
 
@@ -1550,7 +1570,8 @@ export class SupabaseStorage implements IStorage {
       createdAt: new Date(athlete.created_at),
       updatedAt: new Date(athlete.updated_at),
       latestWaiverId: athlete.latest_waiver_id || null,
-      waiverStatus: athlete.waiver_status || 'pending'
+      waiverStatus: athlete.waiver_status || 'pending',
+      waiverSigned: athlete.waiver_signed || false
     }));
   }
 
@@ -1584,9 +1605,11 @@ export class SupabaseStorage implements IStorage {
       updatedAt: new Date(athlete.updated_at),
       latestWaiverId: athlete.latest_waiver_id,
       waiverStatus: athlete.waiver_status,
+      waiverSigned: athlete.waiver_signed || false,
       // Remove direct waiver timestamp from athlete - now from waivers table
       waiverSignatureId: athlete.waiver_signature_id,
       waiverSignatureData: athlete.waiver_signature_data,
+      waiverSignerName: athlete.waiver_signer_name,
       waiverCreatedAt: athlete.waiver_created_at,
       computedWaiverStatus: athlete.computed_waiver_status
     }));
@@ -1623,9 +1646,11 @@ export class SupabaseStorage implements IStorage {
       updatedAt: new Date(data.updated_at),
       latestWaiverId: data.latest_waiver_id,
       waiverStatus: data.waiver_status,
+      waiverSigned: data.waiver_signed || false,
       // Remove direct waiver timestamp from athlete - now from waivers table
       waiverSignatureId: data.waiver_signature_id,
       waiverSignatureData: data.waiver_signature_data,
+      waiverSignerName: data.waiver_signer_name,
       waiverCreatedAt: data.waiver_created_at,
       computedWaiverStatus: data.computed_waiver_status
     };
@@ -1660,7 +1685,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAthlete(id: number): Promise<Athlete | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('athletes')
       .select('*')
       .eq('id', id)
@@ -1671,7 +1696,26 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
 
-    return data || undefined;
+    if (!data) return undefined;
+
+    // Map snake_case to camelCase for frontend compatibility
+    return {
+      id: data.id,
+      parentId: data.parent_id,
+      name: data.name,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      dateOfBirth: data.date_of_birth,
+      gender: data.gender || null,
+      allergies: data.allergies,
+      experience: data.experience,
+      photo: data.photo,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      latestWaiverId: data.latest_waiver_id || null,
+      waiverStatus: data.waiver_status || 'pending',
+      waiverSigned: data.waiver_signed || false
+    };
   }
 
   async updateAthlete(id: number, updateData: Partial<InsertAthlete>): Promise<Athlete | undefined> {
@@ -1918,6 +1962,8 @@ export class SupabaseStorage implements IStorage {
       altPickupPersonPhone: data.alt_pickup_person_phone,
       safetyVerificationSigned: data.safety_verification_signed || false,
       safetyVerificationSignedAt: data.safety_verification_signed_at,
+      progressNote: data.progress_note || null,
+      coachName: data.coach_name || "Coach Will",
       stripeSessionId: data.stripe_session_id,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
@@ -3608,6 +3654,8 @@ export class SupabaseStorage implements IStorage {
         paidAmount: booking.paid_amount,
         specialRequests: booking.special_requests,
         adminNotes: booking.admin_notes,
+        progressNote: booking.progress_note || null,
+        coachName: booking.coach_name || "Coach Will",
         
         // Safety verification fields
         dropoffPersonName: booking.dropoff_person_name,
@@ -3767,7 +3815,7 @@ export class SupabaseStorage implements IStorage {
       lessonType,
       waiver,
       apparatus: apparatusData?.map(item => ({ id: (item.apparatus as any).id, name: (item.apparatus as any).name })) || [],
-      focusAreas: focusAreasData?.map(item => ({ id: (item.focus_areas as any).id, name: (item.focus_areas as any).name })) || [],
+      focusAreas: focusAreasData?.map(item => (item.focus_areas as any).name) || [],
       sideQuests: sideQuestsData?.map(item => ({ id: (item.side_quests as any).id, name: (item.side_quests as any).name })) || [],
       athletes: athletesData?.map(item => {
         const athlete = item.athletes as any;

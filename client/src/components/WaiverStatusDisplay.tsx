@@ -78,22 +78,71 @@ export function WaiverStatusDisplay({ athleteId, athleteName, onResendWaiver }: 
           </div>
           
           {waiverStatus && (
-            <div className="text-sm text-gray-600 space-y-1" role="group" aria-label="Waiver details">
-              {waiverStatus.waiverSignatureName && (
-                <p>
-                  <span className="font-medium">Signed by:</span> {waiverStatus.waiverSignatureName}
-                </p>
+            <div className="space-y-3">
+              {/* Signer Information */}
+              <div className="text-sm text-gray-600 space-y-1" role="group" aria-label="Waiver signer details">
+                {waiverStatus.waiverSignatureName && (
+                  <p>
+                    <span className="font-medium">Signed by:</span> {waiverStatus.waiverSignatureName}
+                  </p>
+                )}
+                {waiverStatus.waiverAgreements?.relationship && (
+                  <p>
+                    <span className="font-medium">Relationship:</span> {waiverStatus.waiverAgreements.relationship}
+                  </p>
+                )}
+                {waiverStatus.waiverSignedAt && (
+                  <p>
+                    <span className="font-medium">Date:</span>{' '}
+                    {new Date(waiverStatus.waiverSignedAt).toLocaleDateString()} at{' '}
+                    {new Date(waiverStatus.waiverSignedAt).toLocaleTimeString()}
+                  </p>
+                )}
+              </div>
+
+              {/* Agreement Details */}
+              {waiverStatus.waiverAgreements && (
+                <div className="border-t pt-3">
+                  <h4 className="font-medium text-sm mb-2">Agreement Details:</h4>
+                  <div className="grid grid-cols-1 gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${waiverStatus.waiverAgreements.understands_risks ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>Understands gymnastics risks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${waiverStatus.waiverAgreements.agrees_to_policies ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>Agrees to gym policies</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${waiverStatus.waiverAgreements.authorizes_emergency_care ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>Authorizes emergency medical care</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${waiverStatus.waiverAgreements.allows_photo_video ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>Allows photos/videos for promotion</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${waiverStatus.waiverAgreements.confirms_authority ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      <span>Confirms authority to sign</span>
+                    </div>
+                  </div>
+                </div>
               )}
-              {waiverStatus.waiverSignedAt && (
-                <p>
-                  <span className="font-medium">Date:</span>{' '}
-                  {new Date(waiverStatus.waiverSignedAt).toLocaleDateString()}
-                </p>
-              )}
-              {waiverStatus.bookingId && (
-                <p>
-                  <span className="font-medium">Booking ID:</span> #{waiverStatus.bookingId}
-                </p>
+
+              {/* Additional Details */}
+              {(waiverStatus.latestWaiverId || waiverStatus.bookingId) && (
+                <div className="text-xs text-gray-500 space-y-1">
+                  {waiverStatus.latestWaiverId && (
+                    <p>
+                      <span className="font-medium">Waiver ID:</span> #{waiverStatus.latestWaiverId}
+                    </p>
+                  )}
+                  {waiverStatus.bookingId && (
+                    <p>
+                      <span className="font-medium">Booking ID:</span> #{waiverStatus.bookingId}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}

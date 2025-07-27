@@ -121,6 +121,7 @@ export const athletes = pgTable('athletes', {
   gender: text('gender'), // References genders table, but can be any text
   latestWaiverId: integer('latest_waiver_id').references((): any => waivers.id),
   waiverStatus: varchar('waiver_status').default('pending'), // varchar in actual DB
+  waiverSigned: boolean('waiver_signed').default(false).notNull(), // Simple boolean for waiver status
 });
 
 // Lesson types table
@@ -804,6 +805,7 @@ export type AthleteWithWaiverStatus = Athlete & {
   waiverSignedAt?: string | null;
   waiverSignatureId?: number | null; // The parent_id who signed
   waiverSignatureData?: string | null; // The actual digital signature
+  waiverSignerName?: string | null; // The name of the person who signed the waiver
   waiverCreatedAt?: string | null;
   computedWaiverStatus?: 'signed' | 'pending' | 'none';
 };

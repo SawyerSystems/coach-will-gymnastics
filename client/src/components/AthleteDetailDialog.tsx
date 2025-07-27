@@ -1,11 +1,11 @@
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { calculateAge } from "@/lib/dateUtils";
@@ -38,14 +38,6 @@ export function AthleteDetailDialog({
   showActionButtons = true,
   mode = 'admin'
 }: AthleteDetailDialogProps) {
-  console.log('🔍 AthleteDetailDialog rendered with:', {
-    athlete: athlete ? { id: athlete.id, name: athlete.name, photo: athlete.photo } : null,
-    parentInfo,
-    bookingsCount: bookings.length,
-    bookings: bookings.map(b => ({ id: b.id, status: b.status, athleteName: b.athlete1Name })),
-    mode
-  });
-
   // For parent mode, fetch all bookings to show complete booking history
   const { data: allBookings = [] } = useQuery<Booking[]>({
     queryKey: ['/api/parent/all-bookings'],
@@ -55,15 +47,16 @@ export function AthleteDetailDialog({
   // Filter bookings for this specific athlete
   const athleteBookings = mode === 'parent' ? 
     allBookings.filter(booking => {
+      // For parent mode, check if any athlete in booking_athletes matches
       const athleteId = athlete?.id;
       if (!athleteId) return false;
       
-      // Check if this athlete is in the booking's athletes array
+      // Check if booking has athletes array (modern structure)
       if (booking.athletes && booking.athletes.length > 0) {
         return booking.athletes.some(a => a.athleteId === athleteId);
       }
       
-      // Fallback: check legacy fields and athlete names
+      // Fallback to legacy name matching
       const athleteName = athlete.name || 
                          (athlete.firstName && athlete.lastName ? 
                           `${athlete.firstName} ${athlete.lastName}` : '');
