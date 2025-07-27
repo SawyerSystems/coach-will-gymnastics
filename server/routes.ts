@@ -340,18 +340,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/time-slot-locks', timeSlotLocksRouter);
   
   // Parent dashboard routes
-  app.get('/api/parent/bookings', async (req, res) => {
-    if (!req.session.parentId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
+  app.get('/api/parent/bookings', isParentAuthenticated, async (req, res) => {
+    console.log('🚨 PARENT BOOKINGS ENDPOINT REACHED 🚨');
+    console.log(`[PARENT-BOOKINGS-START] Endpoint called, parentId: ${req.session.parentId}`);
     
     try {
+      console.log(`[PARENT-BOOKINGS] Fetching bookings for parent ${req.session.parentId}`);
+      
+      // First, let's test a simple query without joins
+      console.log(`[DEBUG] Testing simple bookings query first...`);
+      const simpleQuery = await supabaseAdmin
+        .from('bookings')
+        .select('id, parent_id, status, attendance_status')
+        .eq('parent_id', req.session.parentId!);
+        
+      console.log(`[DEBUG] Simple query result:`, {
+        error: simpleQuery.error,
+        dataLength: simpleQuery.data?.length,
+        data: simpleQuery.data
+      });
+      
       // Get bookings for this parent with athlete information
-      const parentBookingsQuery = await supabase
+      const parentBookingsQuery = await supabaseAdmin
         .from('bookings')
         .select(`
           *,
-          booking_athletes!inner (
+          booking_athletes (
             athlete_id,
             slot_order,
             athletes:athlete_id (
@@ -367,8 +381,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             )
           )
         `)
-        .eq('parent_id', req.session.parentId)
+        .eq('parent_id', req.session.parentId!)
         .order('created_at', { ascending: false });
+        
+      console.log(`[PARENT-BOOKINGS] Query result:`, {
+        error: parentBookingsQuery.error,
+        dataLength: parentBookingsQuery.data?.length,
+        data: parentBookingsQuery.data
+      });
         
       if (parentBookingsQuery.error) {
         throw parentBookingsQuery.error;
@@ -401,6 +421,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           athletes,
           displayPaymentStatus,
           status: displayStatus,
+          // Transform snake_case to camelCase for frontend compatibility
+          attendanceStatus: booking.attendance_status,
+          paymentStatus: booking.payment_status,
+          createdAt: booking.created_at,
+          updatedAt: booking.updated_at,
+          preferredDate: booking.preferred_date,
+          preferredTime: booking.preferred_time,
+          parentId: booking.parent_id,
+          lessonTypeId: booking.lesson_type_id,
+          waiverId: booking.waiver_id,
+          bookingMethod: booking.booking_method,
+          reservationFeePaid: booking.reservation_fee_paid,
+          paidAmount: booking.paid_amount,
+          specialRequests: booking.special_requests,
+          adminNotes: booking.admin_notes,
+          dropoffPersonName: booking.dropoff_person_name,
+          dropoffPersonRelationship: booking.dropoff_person_relationship,
+          dropoffPersonPhone: booking.dropoff_person_phone,
+          pickupPersonName: booking.pickup_person_name,
+          pickupPersonRelationship: booking.pickup_person_relationship,
+          pickupPersonPhone: booking.pickup_person_phone,
+          altPickupPersonName: booking.alt_pickup_person_name,
+          altPickupPersonRelationship: booking.alt_pickup_person_relationship,
+          altPickupPersonPhone: booking.alt_pickup_person_phone,
+          safetyVerificationSigned: booking.safety_verification_signed,
+          safetyVerificationSignedAt: booking.safety_verification_signed_at,
+          stripeSessionId: booking.stripe_session_id,
+          focusAreas: booking.focus_areas,
+          progressNote: booking.progress_note,
+          coachName: booking.coach_name,
           // Legacy fields for backward compatibility
           athlete1Name: athletes[0]?.name || '',
           athlete2Name: athletes[1]?.name || '',
@@ -520,13 +570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/parent/athletes', async (req, res) => {
-    if (!req.session.parentId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
+  app.get('/api/parent/athletes', isParentAuthenticated, async (req, res) => {
     try {
-      const athletes = await storage.getParentAthletes(req.session.parentId);
+      const athletes = await storage.getParentAthletes(req.session.parentId!);
       res.json(athletes);
     } catch (error) {
       console.error('Error fetching parent athletes:', error);
