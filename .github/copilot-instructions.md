@@ -180,6 +180,12 @@ const { data: bookings = [] } = useQuery<Booking[]>({
 - `RESEND_API_KEY` - Email delivery
 - `SESSION_SECRET` - Secure session encryption
 
+**⚠️ CREDENTIALS REMINDER:** Always check `.env` file for login credentials when debugging authentication issues or when you need to login:
+- `ADMIN_EMAIL` and `ADMIN_PASSWORD` - For admin panel access (admin@coachwilltumbles.com / TumbleCoach2025!)
+- `PARENT_TEST_USER_EMAIL` and `PARENT_TEST_USER_PASSWORD` - For parent portal testing
+- **IMPORTANT:** Check the .env file FIRST whenever you need credentials - don't forget this step
+- Never hardcode credentials - always reference from environment variables
+
 **⚠️ ABSOLUTE RULE:** Never add new tables/columns without updating `shared/schema.ts` and documenting SQL for manual Supabase run.
 
 Remember: This platform handles real payments and personal data. Always test thoroughly before deploying changes to production.

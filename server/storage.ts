@@ -2212,6 +2212,10 @@ export class SupabaseStorage implements IStorage {
     // Remove waiver fields - they're now in separate waivers table
     if (data.adminNotes !== undefined) dbUpdate.admin_notes = data.adminNotes;
     if (data.specialRequests !== undefined) dbUpdate.special_requests = data.specialRequests;
+    // Add missing fields for reschedule functionality
+    if (data.preferredDate !== undefined) dbUpdate.preferred_date = data.preferredDate;
+    if (data.preferredTime !== undefined) dbUpdate.preferred_time = data.preferredTime;
+    if (data.focusAreas !== undefined) dbUpdate.focus_areas = data.focusAreas;
 
     // Update the updated_at timestamp
     dbUpdate.updated_at = new Date().toISOString();

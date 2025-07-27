@@ -50,6 +50,27 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     }
   }, [parentData, shouldFetchAthleteParent, state.parentId, updateState]);
 
+  // Handle selectedParent from admin parent selection
+  useEffect(() => {
+    if (state.selectedParent && state.parentInfo && !isEditing) {
+      // If we have a selected parent and parent info is populated, we can show read-only mode
+      setIsEditing(false);
+    } else if (state.selectedParent && !state.parentInfo) {
+      // If we have selected parent but no parent info, populate it
+      updateState({
+        parentInfo: {
+          firstName: state.selectedParent.firstName || '',
+          lastName: state.selectedParent.lastName || '',
+          email: state.selectedParent.email || '',
+          phone: state.selectedParent.phone || '',
+          emergencyContactName: state.selectedParent.emergencyContactName || '',
+          emergencyContactPhone: state.selectedParent.emergencyContactPhone || ''
+        }
+      });
+      setIsEditing(false); // Show in read-only mode since this is pre-selected
+    }
+  }, [state.selectedParent, state.parentInfo, isEditing, updateState]);
+
   console.log("ParentInfoStep state:", {
     parentId: state.parentId,
     flowType: state.flowType,

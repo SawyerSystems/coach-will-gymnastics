@@ -25,6 +25,7 @@ export interface BookingFlowState {
   flowType: BookingFlowType;
   currentStep: number;
   parentId?: number;
+  selectedParent?: any; // Parent object when selected from existing parents
   lessonType: string;
   selectedAthletes: number[];
   selectedTimeSlot: { date: string; time: string } | null;
@@ -140,6 +141,7 @@ const BookingFlowContext = createContext<BookingFlowContextType | undefined>(und
 const initialState: BookingFlowState = {
   flowType: 'new-user',
   currentStep: 0,
+  selectedParent: undefined,
   lessonType: '',
   selectedAthletes: [],
   selectedTimeSlot: null,
