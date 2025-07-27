@@ -1734,6 +1734,7 @@ export class SupabaseStorage implements IStorage {
     if (updateData.photo !== undefined) dbUpdate.photo = updateData.photo;
     if (updateData.latestWaiverId !== undefined) dbUpdate.latest_waiver_id = updateData.latestWaiverId;
     if (updateData.waiverStatus !== undefined) dbUpdate.waiver_status = updateData.waiverStatus;
+    if (updateData.waiverSigned !== undefined) dbUpdate.waiver_signed = updateData.waiverSigned;
 
     console.log('[STORAGE-UPDATE-ATHLETE] DB update object:', dbUpdate);
 
@@ -2817,85 +2818,65 @@ export class SupabaseStorage implements IStorage {
     console.log('🔍 Creating waiver with data:', JSON.stringify(waiver, null, 2));
 
     try {
-      // Fetch athlete and parent data to get names
-      const [athlete, parent] = await Promise.all([
-        this.getAthlete(waiver.athleteId),
-        this.getParentById(waiver.parentId)
-      ]);
+      // Direct insert (RPC method deprecated since athlete_name/signer_name columns were removed)
+      const dbWaiver: any = {
+        relationship_to_athlete: waiver.relationshipToAthlete,
+        signature: waiver.signature,
+        emergency_contact_number: waiver.emergencyContactNumber,
+        understands_risks: waiver.understandsRisks,
+        agrees_to_policies: waiver.agreesToPolicies,
+        authorizes_emergency_care: waiver.authorizesEmergencyCare,
+        allows_photo_video: waiver.allowsPhotoVideo,
+        confirms_authority: waiver.confirmsAuthority,
+        signed_at: waiver.signedAt ? 
+          (waiver.signedAt instanceof Date ? waiver.signedAt.toISOString() : new Date(waiver.signedAt as string).toISOString()) : 
+          new Date().toISOString()
+      };
 
-      const athleteName = athlete ? 
-        `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || athlete.name || 'Unknown Athlete' :
-        'Unknown Athlete';
-      
-      const signerName = parent ? 
-        `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || 'Unknown Parent' :
-        'Unknown Parent';
+      // Only add optional fields if they exist
+      if (waiver.bookingId) dbWaiver.booking_id = waiver.bookingId;
+      if (waiver.athleteId) dbWaiver.athlete_id = waiver.athleteId;
+      if (waiver.parentId) dbWaiver.parent_id = waiver.parentId;
+      if (waiver.pdfPath) dbWaiver.pdf_path = waiver.pdfPath;
+      if (waiver.ipAddress) dbWaiver.ip_address = waiver.ipAddress;
+      if (waiver.userAgent) dbWaiver.user_agent = waiver.userAgent;
 
-      // Use RPC to bypass schema cache issues
-      const { data, error } = await supabase.rpc('create_waiver', {
-        p_athlete_name: athleteName,
-        p_signer_name: signerName,
-        p_relationship_to_athlete: waiver.relationshipToAthlete,
-        p_signature: waiver.signature,
-        p_emergency_contact_number: waiver.emergencyContactNumber,
-        p_understands_risks: waiver.understandsRisks,
-        p_agrees_to_policies: waiver.agreesToPolicies,
-        p_authorizes_emergency_care: waiver.authorizesEmergencyCare,
-        p_allows_photo_video: waiver.allowsPhotoVideo,
-        p_confirms_authority: waiver.confirmsAuthority,
-        p_booking_id: waiver.bookingId || null,
-        p_athlete_id: waiver.athleteId || null,
-        p_parent_id: waiver.parentId || null,
-        p_pdf_path: waiver.pdfPath || null,
-        p_ip_address: waiver.ipAddress || null,
-        p_user_agent: waiver.userAgent || null
-      });
+      console.log('📝 Inserting waiver with fields:', Object.keys(dbWaiver));
 
-      if (error) {
-        console.log('RPC failed, trying direct insert...');
+      const { data: insertData, error: insertError } = await supabaseAdmin
+        .from('waivers')
+        .insert(dbWaiver)
+        .select()
+        .single();
 
-        // Fallback to direct insert
-        const dbWaiver: any = {
-          athlete_name: athleteName,
-          signer_name: signerName,
-          relationship_to_athlete: waiver.relationshipToAthlete,
-          signature: waiver.signature,
-          emergency_contact_number: waiver.emergencyContactNumber,
-          understands_risks: waiver.understandsRisks,
-          agrees_to_policies: waiver.agreesToPolicies,
-          authorizes_emergency_care: waiver.authorizesEmergencyCare,
-          allows_photo_video: waiver.allowsPhotoVideo,
-          confirms_authority: waiver.confirmsAuthority,
-          signed_at: waiver.signedAt ? 
-            (waiver.signedAt instanceof Date ? waiver.signedAt.toISOString() : new Date(waiver.signedAt as string).toISOString()) : 
-            new Date().toISOString()
-        };
-
-        // Only add optional fields if they exist
-        if (waiver.bookingId) dbWaiver.booking_id = waiver.bookingId;
-        if (waiver.athleteId) dbWaiver.athlete_id = waiver.athleteId;
-        if (waiver.parentId) dbWaiver.parent_id = waiver.parentId;
-        if (waiver.pdfPath) dbWaiver.pdf_path = waiver.pdfPath;
-        if (waiver.ipAddress) dbWaiver.ip_address = waiver.ipAddress;
-        if (waiver.userAgent) dbWaiver.user_agent = waiver.userAgent;
-
-        console.log('📝 Inserting waiver with fields:', Object.keys(dbWaiver));
-
-        const { data: insertData, error: insertError } = await supabase
-          .from('waivers')
-          .insert(dbWaiver)
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Error creating waiver:', insertError);
-          throw new Error(`Failed to create waiver: ${insertError.message}`);
-        }
-
-        return this.mapWaiverFromDb(insertData);
+      if (insertError) {
+        console.error('Error creating waiver:', insertError);
+        throw new Error(`Failed to create waiver: ${insertError.message}`);
       }
 
-      return this.mapWaiverFromDb(data);
+      const createdWaiver = this.mapWaiverFromDb(insertData);
+      console.log('💎 Waiver created successfully with ID:', createdWaiver.id);
+
+      // ✅ AUTOMATICALLY UPDATE ATHLETE'S WAIVER_SIGNED STATUS
+      console.log('🚨 CHECKING ATHLETE UPDATE LOGIC - athleteId:', waiver.athleteId);
+      if (waiver.athleteId) {
+        console.log('🏃‍♂️ Updating athlete waiver_signed status to true for athleteId:', waiver.athleteId);
+        try {
+          const updateResult = await this.updateAthlete(waiver.athleteId, {
+            waiverSigned: true,
+            waiverStatus: 'signed',
+            latestWaiverId: createdWaiver.id
+          });
+          console.log('✅ Successfully updated athlete waiver status:', updateResult);
+        } catch (updateError) {
+          console.error('❌ Error updating athlete waiver status:', updateError);
+          // Don't throw here - waiver was created successfully, athlete update is secondary
+        }
+      } else {
+        console.log('⚠️ No athleteId found in waiver data - skipping athlete update');
+      }
+
+      return createdWaiver;
     } catch (error) {
       console.error('Error in createWaiver:', error);
       throw new Error('Failed to create waiver');
@@ -2911,8 +2892,8 @@ export class SupabaseStorage implements IStorage {
       bookingId: data.booking_id,
       athleteId: data.athlete_id,
       parentId: data.parent_id,
-      athleteName: data.athlete_name,
-      signerName: data.signer_name,
+      athleteName: data.athlete_name || 'Unknown Athlete',
+      signerName: data.signer_name || 'Unknown Signer',
       relationshipToAthlete: data.relationship_to_athlete,
       signature: data.signature,
       emergencyContactNumber: data.emergency_contact_number,

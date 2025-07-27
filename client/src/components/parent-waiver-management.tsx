@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CheckCircle, AlertCircle, FileText, Calendar, User, Phone, Mail, Shield } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, Calendar, CheckCircle, FileText, Phone, Shield, User } from 'lucide-react';
+import { useState } from 'react';
 
 interface Athlete {
   id: number;
@@ -60,15 +59,39 @@ export function ParentWaiverManagement() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Fetch parent information for waiver pre-filling
+  const { 
+    data: parentInfo, 
+    isLoading: isLoadingParentInfo, 
+    refetch: refetchParentInfo 
+  } = useQuery({
+    queryKey: ['/api/parent/info'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/parent/info');
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const [showWaiverModal, setShowWaiverModal] = useState(false);
 
   const handleCreateWaiver = (athlete: Athlete) => {
     setSelectedAthlete(athlete);
-    setShowWaiverModal(true);
+    // Ensure parent info is loaded before opening waiver modal
+    if (parentInfo) {
+      setShowWaiverModal(true);
+    } else {
+      // If parent info isn't loaded yet, try to refetch
+      refetchParentInfo().then(() => {
+        setShowWaiverModal(true);
+      });
+    }
   };
 
   const handleWaiverSigned = () => {
+    // Invalidate all waiver-related queries to update UI dynamically
     queryClient.invalidateQueries({ queryKey: ['/api/parent/waivers'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/parent/athletes'] });
     setShowWaiverModal(false);
     setSelectedAthlete(null);
     toast({
@@ -253,8 +276,9 @@ export function ParentWaiverManagement() {
                     <Button 
                       onClick={() => handleCreateWaiver(status.athlete)}
                       className="bg-orange-600 hover:bg-orange-700"
+                      disabled={isLoadingParentInfo}
                     >
-                      Sign Waiver
+                      {isLoadingParentInfo ? 'Loading...' : 'Sign Waiver'}
                     </Button>
                   </div>
                 </CardContent>
@@ -372,10 +396,12 @@ export function ParentWaiverManagement() {
           isOpen={showWaiverModal}
           onClose={() => setShowWaiverModal(false)}
           onWaiverSigned={handleWaiverSigned}
+          athleteId={selectedAthlete.id}
+          parentId={parentInfo?.id}
           bookingData={{
             athleteName: selectedAthlete.name,
-            parentName: '', // Will be filled by parent auth
-            emergencyContactNumber: '',
+            parentName: parentInfo ? `${parentInfo.firstName || ''} ${parentInfo.lastName || ''}`.trim() : '',
+            emergencyContactNumber: parentInfo?.phone || '',
             relationshipToAthlete: 'Parent/Guardian'
           }}
         />

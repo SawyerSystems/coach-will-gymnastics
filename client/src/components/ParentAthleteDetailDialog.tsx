@@ -6,13 +6,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { UpdatedWaiverModal } from "@/components/updated-waiver-modal";
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { useToast } from "@/hooks/use-toast";
+import { useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete } from "@shared/schema";
-import { useQuery } from "@tanstack/react-query";
-import { Edit, Plus, User } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Edit, FileCheck, Plus, User } from "lucide-react";
 import React, { useState } from "react";
 
 interface ParentAthleteDetailDialogProps {
@@ -35,7 +37,9 @@ export function ParentAthleteDetailDialog({
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [isWaiverModalOpen, setIsWaiverModalOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch complete athlete details to ensure we have all the data
   const { data: completeAthleteData } = useQuery<Athlete>({
@@ -46,6 +50,24 @@ export function ParentAthleteDetailDialog({
       return response.json();
     },
     enabled: !!athlete?.id && open,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch waiver status for the athlete
+  const { data: waiverStatus } = useAthleteWaiverStatus(athlete?.id || 0);
+
+  // Fetch parent information for waiver pre-filling
+  const { 
+    data: parentInfo, 
+    isLoading: isLoadingParentInfo, 
+    refetch: refetchParentInfo 
+  } = useQuery({
+    queryKey: ['/api/parent/info'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/parent/info');
+      return response.json();
+    },
+    enabled: open, // Only fetch when modal is open
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -114,9 +136,34 @@ export function ParentAthleteDetailDialog({
     }
   };
 
+  const handleWaiverSigned = async (waiverData: any) => {
+    try {
+      toast({
+        title: "Waiver signed successfully!",
+        description: `Waiver has been signed for ${athleteData?.name}.`,
+      });
+      
+      // Refresh all waiver-related data to update UI dynamically
+      await queryClient.invalidateQueries({ queryKey: ['/api/parent/athletes'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/parent/waivers'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/waivers'] });
+      
+      setIsWaiverModalOpen(false);
+    } catch (error) {
+      console.error('Error handling waiver signature:', error);
+      toast({
+        title: "Error",
+        description: "There was an error processing the waiver signature.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!athleteData) {
     return null;
   }
+
+  const hasWaiver = waiverStatus?.hasWaiver || waiverStatus?.waiverSigned;
 
   return (
     <>
@@ -243,6 +290,34 @@ export function ParentAthleteDetailDialog({
               athleteId={athleteData.id}
               athleteName={athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
             />
+            
+            {/* Sign Waiver Button - Show only if waiver is not signed */}
+            {!hasWaiver && (
+              <div className="mt-4 pt-3 border-t">
+                <Button 
+                  onClick={() => {
+                    // Ensure parent info is loaded before opening waiver modal
+                    if (parentInfo) {
+                      setIsWaiverModalOpen(true);
+                    } else {
+                      // If parent info isn't loaded yet, try to refetch
+                      refetchParentInfo().then(() => {
+                        setIsWaiverModalOpen(true);
+                      });
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                  size="lg"
+                  disabled={isLoadingParentInfo}
+                >
+                  <FileCheck className="h-4 w-4 mr-2" />
+                  {isLoadingParentInfo ? 'Loading...' : 'Sign Waiver Now'}
+                </Button>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Complete the waiver to enable booking sessions for this athlete
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -273,6 +348,21 @@ export function ParentAthleteDetailDialog({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Waiver Signing Modal */}
+      <UpdatedWaiverModal
+        isOpen={isWaiverModalOpen}
+        onClose={() => setIsWaiverModalOpen(false)}
+        onWaiverSigned={handleWaiverSigned}
+        athleteId={athleteData.id}
+        parentId={parentInfo?.id}
+        bookingData={{
+          athleteName: athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim(),
+          parentName: parentInfo ? `${parentInfo.firstName || ''} ${parentInfo.lastName || ''}`.trim() : '',
+          emergencyContactNumber: parentInfo?.phone || '',
+          relationshipToAthlete: 'Parent', // Default value
+        }}
+      />
 
       {/* Photo Enlargement Modal */}
       <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>

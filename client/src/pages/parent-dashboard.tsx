@@ -1634,9 +1634,9 @@ function ParentDashboard() {
             }}
             bookingData={{
               athleteName: selectedAthleteForWaiver.name,
-              parentName: `${parentInfo?.firstName} ${parentInfo?.lastName}`,
+              parentName: `${parentInfo?.firstName || ''} ${parentInfo?.lastName || ''}`.trim(),
               relationshipToAthlete: "Parent/Guardian",
-              emergencyContactNumber: bookings?.[0]?.emergencyContactPhone || "",
+              emergencyContactNumber: parentInfo?.phone || "",
             }}
           />
         )}

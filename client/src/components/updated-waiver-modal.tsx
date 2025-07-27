@@ -1,19 +1,19 @@
-import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, FileText, Shield, Users, Heart, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, ChevronRight, FileText, Heart, Shield, Users } from "lucide-react";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import SignatureCanvas from "react-signature-canvas";
+import { z } from "zod";
 
 // Updated waiver schema matching new requirements exactly
 const waiverSchema = z.object({
@@ -44,9 +44,11 @@ interface UpdatedWaiverModalProps {
     emergencyContactNumber?: string;
     relationshipToAthlete?: string;
   };
+  athleteId?: number;
+  parentId?: number;
 }
 
-export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingData }: UpdatedWaiverModalProps) {
+export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingData, athleteId, parentId }: UpdatedWaiverModalProps) {
   const [step, setStep] = useState(1);
   const [signatureData, setSignatureData] = useState<string>("");
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
@@ -92,7 +94,10 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
       });
       onWaiverSigned(data);
       onClose();
+      // Invalidate all waiver-related queries to update UI dynamically
       queryClient.invalidateQueries({ queryKey: ["/api/waivers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/parent/athletes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/parent/waivers"] });
     },
     onError: (error: any) => {
       toast({
@@ -183,6 +188,8 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
       ...data,
       signature: signatureData,
       signedAt: new Date(),
+      athleteId,
+      parentId,
     };
 
     createWaiverMutation.mutate(waiverData);
@@ -201,9 +208,9 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
           <DialogTitle className="text-2xl font-bold text-amber-600">
             CoachWillTumbles.com - Waiver & Adventure Agreement
           </DialogTitle>
-          <p className="text-gray-600">
+          <DialogDescription className="text-gray-600">
             Welcome to the journey! Every hero needs a guide, and every quest begins with a few ground rules.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {/* Progress Steps */}
