@@ -48,6 +48,12 @@ Thumbs.db
 *session*.txt
 *cookies*.txt
 admin*.txt
+
+# Test scripts
+test-*.js
+test-*.ts
+debug-*.js
+debug-*.cjs
 parent*.txt
 test*.txt
 fresh*.txt

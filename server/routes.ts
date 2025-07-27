@@ -6,7 +6,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -1036,6 +1036,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const parentData = req.body;
       const parent = await storage.createParent(parentData);
+      
+      // Send welcome email to manually created parent
+      if (parent.email) {
+        try {
+          const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent-login`;
+          await sendParentWelcomeEmail(parent.email, parent.firstName || 'Gymnastics Parent', loginLink);
+          console.log(`Welcome email sent to manually created parent ${parent.email}`);
+        } catch (emailError) {
+          console.error(`Failed to send welcome email to ${parent.email}:`, emailError);
+          // Continue with parent creation even if email fails
+        }
+      }
+      
       res.json(parent);
     } catch (error: any) {
       console.error("Error creating parent:", error);
@@ -1834,6 +1847,15 @@ setTimeout(async () => {
                   passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
                 });
                 console.log(`[STRIPE WEBHOOK] AUTO-CREATED parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
+                
+                // Send welcome email for automatically created parent accounts
+                try {
+                  const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent-login`;
+                  await sendParentWelcomeEmail(booking.parentEmail, booking.parentFirstName || 'Gymnastics Parent', loginLink);
+                  console.log(`[STRIPE WEBHOOK] Welcome email sent to new parent ${booking.parentEmail}`);
+                } catch (emailError) {
+                  console.error(`[STRIPE WEBHOOK] Failed to send welcome email to ${booking.parentEmail}:`, emailError);
+                }
               } else {
                 console.log(`[STRIPE WEBHOOK] Using existing parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
               }
@@ -2707,6 +2729,7 @@ setTimeout(async () => {
 
   // General booking update endpoint (requires parent authentication)
   app.patch("/api/bookings/:id", async (req, res) => {
+    console.log("🚨 MAIN PATCH ENDPOINT HIT - /api/bookings/:id with ID:", req.params.id, "Body:", req.body);
     try {
       const id = parseInt(req.params.id);
       const { focusAreas, specialNotes } = req.body;
@@ -2755,9 +2778,14 @@ setTimeout(async () => {
       let originalDate: string | null | undefined;
       let originalTime: string | null | undefined;
       
+      console.log(`[RESCHEDULE DEBUG] Initial check - isReschedule: ${isReschedule}`);
+      
       if (isReschedule) {
         originalDate = booking.preferredDate;
         originalTime = booking.preferredTime;
+        
+        console.log(`[RESCHEDULE DEBUG] Original values - Date: ${originalDate}, Time: ${originalTime}`);
+        console.log(`[RESCHEDULE DEBUG] New values - Date: ${req.body.preferredDate}, Time: ${req.body.preferredTime}`);
         
         if (req.body.preferredDate !== undefined) updateData.preferredDate = req.body.preferredDate;
         if (req.body.preferredTime !== undefined) updateData.preferredTime = req.body.preferredTime;
@@ -2765,8 +2793,11 @@ setTimeout(async () => {
       
       const updatedBooking = await storage.updateBooking(id, updateData);
       
+      console.log(`[RESCHEDULE DEBUG] After update - Updated booking date: ${updatedBooking?.preferredDate}, time: ${updatedBooking?.preferredTime}`);
+      
       // Send reschedule confirmation email if this was a reschedule
       if (isReschedule && updatedBooking && (originalDate !== updatedBooking.preferredDate || originalTime !== updatedBooking.preferredTime)) {
+        console.log(`[RESCHEDULE DEBUG] Email condition met - sending reschedule email`);
         try {
           const newSessionDate = updatedBooking.preferredDate ? new Date(updatedBooking.preferredDate).toLocaleDateString('en-US', {
             weekday: 'long',
@@ -2777,18 +2808,33 @@ setTimeout(async () => {
           
           const newSessionTime = updatedBooking.preferredTime || 'Unknown Time';
           
-          if (updatedBooking.parentEmail) {
+          // Fetch parent email using parentId
+          console.log(`[RESCHEDULE DEBUG] Looking up parent with ID: ${updatedBooking.parentId}`);
+          const parentData = updatedBooking.parentId ? await storage.getParentById(updatedBooking.parentId) : null;
+          console.log(`[RESCHEDULE DEBUG] Parent data:`, parentData);
+          const parentEmail = parentData?.email;
+          console.log(`[RESCHEDULE DEBUG] Parent email:`, parentEmail);
+          
+          if (parentEmail) {
             await sendRescheduleConfirmation(
-              updatedBooking.parentEmail,
+              parentEmail,
               newSessionDate,
               newSessionTime
             );
-            console.log(`[RESCHEDULE EMAIL] Sent reschedule confirmation to ${updatedBooking.parentEmail} for booking ${id}`);
+            console.log(`[RESCHEDULE EMAIL] Sent reschedule confirmation to ${parentEmail} for booking ${id}`);
+          } else {
+            console.log(`[RESCHEDULE DEBUG] No parent email found for parentId: ${updatedBooking.parentId}`);
           }
         } catch (emailError) {
           console.error('[RESCHEDULE EMAIL] Failed to send reschedule confirmation:', emailError);
           // Don't fail the request if email fails
         }
+      } else {
+        console.log(`[RESCHEDULE DEBUG] Email condition NOT met:`);
+        console.log(`  - isReschedule: ${isReschedule}`);
+        console.log(`  - updatedBooking exists: ${!!updatedBooking}`);
+        console.log(`  - originalDate !== updatedBooking.preferredDate: ${originalDate} !== ${updatedBooking?.preferredDate} = ${originalDate !== updatedBooking?.preferredDate}`);
+        console.log(`  - originalTime !== updatedBooking.preferredTime: ${originalTime} !== ${updatedBooking?.preferredTime} = ${originalTime !== updatedBooking?.preferredTime}`);
       }
       
       res.json(updatedBooking);
@@ -2798,6 +2844,7 @@ setTimeout(async () => {
   });
 
   app.patch("/api/bookings/:id/status", isAdminAuthenticated, async (req, res) => {
+    console.log("🚨 STATUS PATCH ENDPOINT HIT - /api/bookings/:id/status with ID:", req.params.id);
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
@@ -2866,6 +2913,7 @@ setTimeout(async () => {
 
   // Update payment status separately with Stripe sync
   app.patch("/api/bookings/:id/payment-status", isAdminAuthenticated, async (req, res) => {
+    console.log("🚨 PAYMENT STATUS PATCH ENDPOINT HIT - /api/bookings/:id/payment-status with ID:", req.params.id);
     try {
       const id = parseInt(req.params.id);
       const { paymentStatus } = req.body;
@@ -2985,6 +3033,7 @@ setTimeout(async () => {
   });
 
   app.patch("/api/bookings/:id/payment-sync", isAdminAuthenticated, async (req, res) => {
+    console.log("🚨 PAYMENT SYNC PATCH ENDPOINT HIT - /api/bookings/:id/payment-sync with ID:", req.params.id);
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
@@ -3592,6 +3641,7 @@ setTimeout(async () => {
 
   // Update attendance status separately
   app.patch("/api/bookings/:id/attendance-status", isAdminAuthenticated, async (req, res) => {
+    console.log("🚨 ATTENDANCE STATUS PATCH ENDPOINT HIT - /api/bookings/:id/attendance-status with ID:", req.params.id);
     try {
       const id = parseInt(req.params.id);
       const { attendanceStatus } = req.body;
@@ -3704,6 +3754,7 @@ setTimeout(async () => {
 
   // Parent booking cancellation
   app.patch("/api/bookings/:id/cancel", async (req, res) => {
+    console.log("🚨 CANCEL PATCH ENDPOINT HIT - /api/bookings/:id/cancel with ID:", req.params.id);
     try {
       const bookingId = parseInt(req.params.id);
       const booking = await storage.getBooking(bookingId);

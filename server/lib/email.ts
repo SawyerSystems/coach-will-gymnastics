@@ -5,6 +5,7 @@ import { BirthdayEmail } from '../../emails/BirthdayEmail';
 import { ManualBookingConfirmation } from '../../emails/ManualBookingConfirmation';
 import { NewTipOrBlog } from '../../emails/NewTipOrBlog';
 import { ParentAuthorization } from '../../emails/ParentAuthorization';
+import { ParentWelcome } from '../../emails/ParentWelcome';
 import { RescheduleConfirmation } from '../../emails/RescheduleConfirmation';
 import { ReservationPaymentLink } from '../../emails/ReservationPaymentLink';
 import { SafetyInformationLink } from '../../emails/SafetyInformationLink';
@@ -20,6 +21,10 @@ export const emailTemplates = {
   'parent-auth': { 
     subject: '🗝️ Access Code to Begin Your Journey', 
     component: ParentAuthorization 
+  },
+  'parent-welcome': {
+    subject: '🤸‍♀️ Welcome to Coach Will Tumbles!',
+    component: ParentWelcome
   },
   'session-confirmation': { 
     subject: '✅ Session Confirmed! — Coach Will Tumbles', 
@@ -414,5 +419,18 @@ export async function sendSignedWaiverConfirmation(
     console.error(`Failed to send signed waiver confirmation email to ${to}`, error);
     throw error;
   }
+}
+
+// Helper function to send welcome email to new parents
+export async function sendParentWelcomeEmail(
+  to: string,
+  parentName: string,
+  loginLink: string
+) {
+  return sendEmail({
+    type: 'parent-welcome',
+    to,
+    data: { parentName, loginLink }
+  });
 }
 

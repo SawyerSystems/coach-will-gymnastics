@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express';
+import { sendParentWelcomeEmail } from './lib/email';
 
 import crypto from 'crypto';
 import { NextFunction } from 'express';
@@ -75,6 +76,16 @@ parentAuthRouter.post('/register', [
     });
 
     await sendVerificationEmail(email, token);
+
+    // Send welcome email to new parent
+    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent-login`;
+    try {
+      await sendParentWelcomeEmail(email, firstName, loginLink);
+      console.log(`Welcome email sent to ${email}`);
+    } catch (emailError) {
+      console.error(`Failed to send welcome email to ${email}:`, emailError);
+      // Continue with registration even if email fails
+    }
 
     res.status(201).json({ 
       success: true, 
