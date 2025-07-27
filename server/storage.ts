@@ -1331,7 +1331,7 @@ export class SupabaseStorage implements IStorage {
     this.logQuery('SELECT', 'parents');
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1360,7 +1360,7 @@ export class SupabaseStorage implements IStorage {
     const emailLower = email.toLowerCase();
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
       .or(`email.ilike.${emailLower},phone.eq.${phone}`)
       .single();
 
@@ -1719,6 +1719,8 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateAthlete(id: number, updateData: Partial<InsertAthlete>): Promise<Athlete | undefined> {
+    console.log('[STORAGE-UPDATE-ATHLETE] Starting update:', { id, updateData });
+    
     // Map camelCase to snake_case for DB update
     const dbUpdate: Record<string, any> = {};
     if (updateData.firstName !== undefined) dbUpdate.first_name = updateData.firstName;
@@ -1733,6 +1735,8 @@ export class SupabaseStorage implements IStorage {
     if (updateData.latestWaiverId !== undefined) dbUpdate.latest_waiver_id = updateData.latestWaiverId;
     if (updateData.waiverStatus !== undefined) dbUpdate.waiver_status = updateData.waiverStatus;
 
+    console.log('[STORAGE-UPDATE-ATHLETE] DB update object:', dbUpdate);
+
     // Use supabaseAdmin to bypass RLS
     const { data, error } = await supabaseAdmin
       .from('athletes')
@@ -1741,13 +1745,47 @@ export class SupabaseStorage implements IStorage {
       .select()
       .single();
 
+    console.log('[STORAGE-UPDATE-ATHLETE] Supabase response:', { 
+      success: !error, 
+      error: error?.message, 
+      data: data ? { id: data.id, name: data.name || data.first_name + ' ' + data.last_name } : null 
+    });
+
     if (error) {
       console.error('Error updating athlete:', error);
       // Forward error for route to handle
       throw error;
     }
 
-    return data || undefined;
+    if (!data) return undefined;
+
+    // Transform snake_case to camelCase for frontend compatibility (SAME AS getAthlete)
+    const transformedAthlete = {
+      id: data.id,
+      parentId: data.parent_id,
+      name: data.name,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      dateOfBirth: data.date_of_birth,
+      gender: data.gender || null,
+      allergies: data.allergies,
+      experience: data.experience,
+      photo: data.photo,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      latestWaiverId: data.latest_waiver_id || null,
+      waiverStatus: data.waiver_status || 'pending',
+      waiverSigned: data.waiver_signed || false
+    };
+
+    console.log('[STORAGE-UPDATE-ATHLETE] Returning transformed athlete:', {
+      id: transformedAthlete.id,
+      firstName: transformedAthlete.firstName,
+      lastName: transformedAthlete.lastName,
+      allergies: transformedAthlete.allergies
+    });
+
+    return transformedAthlete;
   }
 
   async deleteAthlete(id: number): Promise<boolean> {

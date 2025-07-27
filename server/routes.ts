@@ -488,36 +488,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get complete parent information (aggregated from bookings)
-  app.get('/api/parent/info', async (req, res) => {
-    if (!req.session.parentId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
+  // Get complete parent information (using storage layer)
+  app.get('/api/parent/info', isParentAuthenticated, async (req, res) => {
     try {
-      // Get parent information directly from the parents table
-      const { data: parent, error } = await supabase
-        .from('parents')
-        .select('*')
-        .eq('id', req.session.parentId)
-        .single();
+      // Get parent information using storage layer
+      const parents = await storage.getAllParents();
+      const parent = parents.find(p => p.id === req.session.parentId);
       
-      if (error || !parent) {
+      if (!parent) {
         return res.status(404).json({ message: 'No parent information found' });
       }
       
       // Transform to match expected frontend structure
       const parentInfo = {
         id: parent.id,
-        firstName: parent.first_name,
-        lastName: parent.last_name,
+        firstName: parent.firstName,
+        lastName: parent.lastName,
         email: parent.email,
         phone: parent.phone,
-        emergencyContactName: parent.emergency_contact_name,
-        emergencyContactPhone: parent.emergency_contact_phone,
-        isVerified: parent.is_verified,
-        createdAt: parent.created_at,
-        updatedAt: parent.updated_at
+        emergencyContactName: parent.emergencyContactName,
+        emergencyContactPhone: parent.emergencyContactPhone,
+        isVerified: parent.isVerified,
+        createdAt: parent.createdAt,
+        updatedAt: parent.updatedAt
       };
       
       res.json(parentInfo);
@@ -538,6 +531,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching parent athletes:', error);
       res.status(500).json({ message: 'Failed to fetch athletes' });
+    }
+  });
+
+  // PUT /api/parent/athletes/:id - Update athlete information (parent-specific)
+  app.put('/api/parent/athletes/:id', isParentAuthenticated, async (req, res) => {
+    if (!req.session.parentId) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      const athleteId = parseInt(req.params.id);
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: 'Invalid athlete ID' });
+      }
+
+      console.log('[PARENT-ATHLETE-UPDATE] Request data:', {
+        athleteId,
+        parentId: req.session.parentId,
+        requestBody: req.body
+      });
+
+      // First verify that this athlete belongs to the authenticated parent
+      const athletes = await storage.getParentAthletes(req.session.parentId);
+      const athleteExists = athletes.find(a => a.id === athleteId);
+      
+      if (!athleteExists) {
+        console.log('[PARENT-ATHLETE-UPDATE] Athlete not found or access denied', { athleteId, parentId: req.session.parentId });
+        return res.status(403).json({ error: 'Athlete not found or access denied' });
+      }
+
+      // Only allow parents to update certain fields
+      const allowedFields = ['firstName', 'lastName', 'name', 'dateOfBirth', 'gender', 'allergies', 'experience'];
+      const updateData: any = {};
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      console.log('[PARENT-ATHLETE-UPDATE] Update data after filtering:', updateData);
+
+      // Update the athlete
+      const updatedAthlete = await storage.updateAthlete(athleteId, updateData);
+      
+      console.log('[PARENT-ATHLETE-UPDATE] Update result:', {
+        success: !!updatedAthlete,
+        updatedAthlete: updatedAthlete ? { id: updatedAthlete.id, name: updatedAthlete.name } : null
+      });
+      
+      if (!updatedAthlete) {
+        return res.status(404).json({ error: 'Athlete not found' });
+      }
+
+      res.json(updatedAthlete);
+    } catch (error: any) {
+      console.error('[PARENT-ATHLETE-UPDATE] Error updating athlete:', error);
+      res.status(500).json({ error: 'Failed to update athlete' });
     }
   });
 

@@ -1364,11 +1364,11 @@ function ParentDashboard() {
                         experience
                       };
 
-                      await apiRequest('PUT', `/api/athletes/${editingAthleteInfo.id}`, updateData);
+                      await apiRequest('PUT', `/api/parent/athletes/${editingAthleteInfo.id}`, updateData);
 
                       // Invalidate queries to refresh data
-                      queryClient.invalidateQueries({ queryKey: ['/api/athletes'] });
-                      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/parent/athletes'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/parent/bookings'] });
 
                       toast({
                         title: "Athlete Updated",
