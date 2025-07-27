@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
 
@@ -177,6 +177,13 @@ export interface IStorage {
     focusAreaIds: number[],
     sideQuestIds: number[]
   ): Promise<BookingWithRelations | undefined>;
+
+  // Blog Email Subscriptions
+  updateParentBlogEmailOptIn(parentId: number, optIn: boolean): Promise<Parent | undefined>;
+  createBlogEmailSignup(email: string): Promise<BlogEmailSignup>;
+  getAllBlogEmailSignups(): Promise<BlogEmailSignup[]>;
+  getAllParentsWithBlogOptIn(): Promise<Parent[]>;
+  getAllBlogEmailAddresses(): Promise<string[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -1263,6 +1270,32 @@ With the right setup and approach, home practice can accelerate your child's gym
   async deleteVerificationTokensByParentId(parentId: number): Promise<void> {
     // Not implemented
   }
+
+  // Blog Email Subscriptions (MemStorage - not implemented)
+  async updateParentBlogEmailOptIn(parentId: number, optIn: boolean): Promise<Parent | undefined> {
+    // Not implemented in MemStorage
+    return undefined;
+  }
+
+  async createBlogEmailSignup(email: string): Promise<BlogEmailSignup> {
+    // Not implemented in MemStorage
+    throw new Error("MemStorage does not support blog email signups");
+  }
+
+  async getAllBlogEmailSignups(): Promise<BlogEmailSignup[]> {
+    // Not implemented in MemStorage
+    return [];
+  }
+
+  async getAllParentsWithBlogOptIn(): Promise<Parent[]> {
+    // Not implemented in MemStorage
+    return [];
+  }
+
+  async getAllBlogEmailAddresses(): Promise<string[]> {
+    // Not implemented in MemStorage
+    return [];
+  }
 }
 
 // Supabase Storage Implementation
@@ -1331,7 +1364,7 @@ export class SupabaseStorage implements IStorage {
     this.logQuery('SELECT', 'parents');
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1350,6 +1383,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: parent.emergency_contact_phone,
       passwordHash: parent.password_hash || null,
       isVerified: parent.is_verified || false,
+      blogEmails: parent.blog_emails || false,
       createdAt: parent.created_at,
       updatedAt: parent.updated_at,
     }));
@@ -1360,7 +1394,7 @@ export class SupabaseStorage implements IStorage {
     const emailLower = email.toLowerCase();
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails')
       .or(`email.ilike.${emailLower},phone.eq.${phone}`)
       .single();
 
@@ -1380,6 +1414,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1422,6 +1457,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -1450,6 +1486,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1483,6 +1520,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -3064,7 +3102,7 @@ export class SupabaseStorage implements IStorage {
   async getParentById(id: number): Promise<Parent | undefined> {
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails')
       .eq('id', id)
       .single();
 
@@ -3084,6 +3122,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -4042,6 +4081,131 @@ export class SupabaseStorage implements IStorage {
       console.error('Error deleting verification tokens by parent ID:', error);
       throw error;
     }
+  }
+
+  // Blog Email Subscriptions
+  async updateParentBlogEmailOptIn(parentId: number, optIn: boolean): Promise<Parent | undefined> {
+    const { data, error } = await supabaseAdmin
+      .from('parents')
+      .update({ blog_emails: optIn, updated_at: new Date().toISOString() })
+      .eq('id', parentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating parent blog email opt-in:', error);
+      throw error;
+    }
+
+    return data ? {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      email: data.email,
+      passwordHash: data.password_hash,
+      phone: data.phone,
+      emergencyContactName: data.emergency_contact_name,
+      emergencyContactPhone: data.emergency_contact_phone,
+      isVerified: data.is_verified,
+      blogEmails: data.blog_emails,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    } : undefined;
+  }
+
+  async createBlogEmailSignup(email: string): Promise<BlogEmailSignup> {
+    const { data, error } = await supabaseAdmin
+      .from('blog_email_signups')
+      .insert({ email })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating blog email signup:', error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      email: data.email,
+      createdAt: new Date(data.created_at),
+    };
+  }
+
+  async getAllBlogEmailSignups(): Promise<BlogEmailSignup[]> {
+    const { data, error } = await supabaseAdmin
+      .from('blog_email_signups')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching blog email signups:', error);
+      throw error;
+    }
+
+    return data.map(item => ({
+      id: item.id,
+      email: item.email,
+      createdAt: new Date(item.created_at),
+    }));
+  }
+
+  async getAllParentsWithBlogOptIn(): Promise<Parent[]> {
+    const { data, error } = await supabaseAdmin
+      .from('parents')
+      .select('*')
+      .eq('blog_emails', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching parents with blog opt-in:', error);
+      throw error;
+    }
+
+    return data.map(item => ({
+      id: item.id,
+      firstName: item.first_name,
+      lastName: item.last_name,
+      email: item.email,
+      passwordHash: item.password_hash,
+      phone: item.phone,
+      emergencyContactName: item.emergency_contact_name,
+      emergencyContactPhone: item.emergency_contact_phone,
+      isVerified: item.is_verified,
+      blogEmails: item.blog_emails,
+      createdAt: new Date(item.created_at),
+      updatedAt: new Date(item.updated_at),
+    }));
+  }
+
+  async getAllBlogEmailAddresses(): Promise<string[]> {
+    // Get parent emails with blog opt-in
+    const { data: parentData, error: parentError } = await supabaseAdmin
+      .from('parents')
+      .select('email')
+      .eq('blog_emails', true);
+
+    if (parentError) {
+      console.error('Error fetching parent emails:', parentError);
+      throw parentError;
+    }
+
+    // Get guest signup emails
+    const { data: signupData, error: signupError } = await supabaseAdmin
+      .from('blog_email_signups')
+      .select('email');
+
+    if (signupError) {
+      console.error('Error fetching signup emails:', signupError);
+      throw signupError;
+    }
+
+    // Combine and deduplicate emails
+    const parentEmails = parentData.map(p => p.email);
+    const signupEmails = signupData.map(s => s.email);
+    const allEmails = [...parentEmails, ...signupEmails];
+    
+    return Array.from(new Set(allEmails)); // Remove duplicates
   }
 }
 

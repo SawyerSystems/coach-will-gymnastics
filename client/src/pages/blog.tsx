@@ -1,31 +1,107 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowRight, Calendar, User, Search, Filter, ArrowUpDown } from "lucide-react";
-import { Link } from "wouter";
-import type { BlogPost } from "@shared/schema";
 import { CTASection } from "@/components/cta-section";
 import { Footer } from "@/components/Footer";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { BlogPost, Parent } from "@shared/schema";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUpDown, Calendar, CheckCircle, Filter, Mail, Search, User } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link } from "wouter";
 
 export default function Blog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [subscriptionMessage, setSubscriptionMessage] = useState("");
+  
+  const queryClient = useQueryClient();
+
+  // Check if user is authenticated
+  const { data: authStatus } = useQuery<{ loggedIn: boolean; parentId?: number; email?: string }>({
+    queryKey: ["/api/parent-auth/status"],
+  });
+
+  // Get parent info if authenticated
+  const { data: parentInfo } = useQuery<Parent>({
+    queryKey: ["/api/parent/info"],
+    enabled: authStatus?.loggedIn === true,
+  });
 
   const { data: posts, isLoading, error } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog-posts"],
   });
+
+  // Mutation for parent blog email opt-in
+  const parentOptInMutation = useMutation({
+    mutationFn: async (optIn: boolean) => {
+      const response = await fetch("/api/parent/blog-email-opt-in", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ optIn }),
+      });
+      if (!response.ok) throw new Error("Failed to update blog email preference");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/parent/info"] });
+      setSubscriptionMessage(data.message);
+      setTimeout(() => setSubscriptionMessage(""), 5000);
+    },
+    onError: (error) => {
+      setSubscriptionMessage("Failed to update subscription preference. Please try again.");
+      setTimeout(() => setSubscriptionMessage(""), 5000);
+    },
+  });
+
+  // Mutation for guest email signup
+  const guestSignupMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch("/api/blog-email-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to subscribe");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setGuestEmail("");
+      setSubscriptionMessage(data.message);
+      setTimeout(() => setSubscriptionMessage(""), 5000);
+    },
+    onError: (error: any) => {
+      setSubscriptionMessage(error.message || "Failed to subscribe. Please try again.");
+      setTimeout(() => setSubscriptionMessage(""), 5000);
+    },
+  });
+
+  // Handle subscription actions
+  const handleParentOptInChange = (checked: boolean) => {
+    parentOptInMutation.mutate(checked);
+  };
+
+  const handleGuestSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (guestEmail.trim()) {
+      guestSignupMutation.mutate(guestEmail.trim());
+    }
+  };
 
   // Filter and sort posts
   const filteredAndSortedPosts = useMemo(() => {
@@ -195,20 +271,68 @@ export default function Blog() {
 
                 {/* Newsletter */}
                 <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4">Stay Updated</h3>
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <Mail className="h-5 w-5 mr-2" />
+                    Stay Updated
+                  </h3>
                   <p className="text-sm text-gray-600 mb-4">
                     Get the latest gymnastics tips and stories delivered to your inbox!
                   </p>
-                  <div className="space-y-3">
-                    <Input 
-                      type="email" 
-                      placeholder="Enter your email"
-                      className="bg-white"
-                    />
-                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                      Subscribe
-                    </Button>
-                  </div>
+                  
+                  {subscriptionMessage && (
+                    <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+                        <p className="text-sm text-green-800">{subscriptionMessage}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {authStatus?.loggedIn ? (
+                    // Authenticated parent - show checkbox for opt-in
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="blog-emails"
+                          checked={parentInfo?.blogEmails || false}
+                          onCheckedChange={handleParentOptInChange}
+                          disabled={parentOptInMutation.isPending}
+                        />
+                        <label 
+                          htmlFor="blog-emails" 
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Subscribe to blog notifications
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Notifications will be sent to {parentInfo?.email}
+                      </p>
+                      {parentOptInMutation.isPending && (
+                        <p className="text-xs text-purple-600">Updating preference...</p>
+                      )}
+                    </div>
+                  ) : (
+                    // Unauthenticated user - show email input
+                    <form onSubmit={handleGuestSignup} className="space-y-3">
+                      <Input 
+                        type="email" 
+                        placeholder="Enter your email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        className="bg-white"
+                        disabled={guestSignupMutation.isPending}
+                        required
+                      />
+                      <Button 
+                        type="submit"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        disabled={guestSignupMutation.isPending || !guestEmail.trim()}
+                      >
+                        {guestSignupMutation.isPending ? "Subscribing..." : "Subscribe"}
+                      </Button>
+                    </form>
+                  )}
                 </Card>
               </div>
             </div>

@@ -94,8 +94,15 @@ export const parents = pgTable("parents", {
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
+  blogEmails: boolean("blog_emails").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const blogEmailSignups = pgTable("blog_email_signups", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const parentVerificationTokens = pgTable("parent_verification_tokens", {
@@ -344,6 +351,13 @@ export const insertParentSchema = createInsertSchema(parents).omit({
   emergencyContactPhone: z.string().min(1, "Emergency contact phone is required"),
 });
 
+export const insertBlogEmailSignupSchema = createInsertSchema(blogEmailSignups).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email("Please enter a valid email address"),
+});
+
 export const insertAthleteSchema = createInsertSchema(athletes).omit({
   id: true,
   createdAt: true,
@@ -569,6 +583,8 @@ export const insertWaiverSchema = createInsertSchema(waivers).omit({
 
 export type Parent = typeof parents.$inferSelect;
 export type InsertParent = z.infer<typeof insertParentSchema>;
+export type BlogEmailSignup = typeof blogEmailSignups.$inferSelect;
+export type InsertBlogEmailSignup = typeof blogEmailSignups.$inferInsert;
 export type ParentVerificationToken = typeof parentVerificationTokens.$inferSelect;
 export type InsertParentVerificationToken = typeof parentVerificationTokens.$inferInsert;
 // Legacy aliases for backward compatibility

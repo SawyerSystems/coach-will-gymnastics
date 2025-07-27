@@ -1,17 +1,12 @@
-import { render } from "@react-email/render";
 import { AttendanceStatusEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { z } from "zod";
-import { ReservationPaymentLink } from "../emails/ReservationPaymentLink";
-import { SafetyInformationLink } from "../emails/SafetyInformationLink";
-import { SignedWaiverConfirmation } from "../emails/SignedWaiverConfirmation";
-import { WaiverCompletionLink } from "../emails/WaiverCompletionLink";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendGenericEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendSessionCancellation, sendSessionConfirmation, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -1555,6 +1550,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
 
+    async triggerSessionReminders() {
+      try {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const bookings = await storage.getAllBookings();
+        const upcomingBookings = bookings.filter(booking => {
+          if (!booking.preferredDate || booking.attendanceStatus === AttendanceStatusEnum.CANCELLED) {
+            return false;
+          }
+          
+          const sessionDate = new Date(booking.preferredDate);
+          const timeDiff = sessionDate.getTime() - now.getTime();
+          const hoursUntilSession = timeDiff / (1000 * 60 * 60);
+          
+          // Send reminder for sessions occurring in 20-28 hours (next day)
+          return hoursUntilSession >= 20 && hoursUntilSession <= 28;
+        });
+        
+        for (const booking of upcomingBookings) {
+          try {
+            if (booking.parentEmail) {
+              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              }) : 'Unknown Date';
+              
+              // Get athlete name - prioritize from athletes array or fall back to legacy fields
+              let athleteName = 'Athlete';
+              if (booking.athletes && booking.athletes.length > 0) {
+                athleteName = booking.athletes[0].name;
+              } else if (booking.athlete1Name) {
+                athleteName = booking.athlete1Name;
+              }
+              
+              await sendSessionReminder(
+                booking.parentEmail,
+                athleteName,
+                sessionDate,
+                booking.preferredTime || 'Unknown Time'
+              );
+              
+              console.log(`[SESSION REMINDER] Sent session reminder to ${booking.parentEmail} for booking ${booking.id}`);
+            }
+          } catch (emailError) {
+            console.error(`[SESSION REMINDER] Failed to send reminder for booking ${booking.id}:`, emailError);
+          }
+        }
+        
+        if (upcomingBookings.length > 0) {
+          console.log(`[SESSION REMINDER] Processed ${upcomingBookings.length} session reminders`);
+        }
+      } catch (error) {
+        console.error('[SESSION REMINDER] Error sending session reminders:', error);
+      }
+    },
+
+    async triggerBirthdayEmails() {
+      try {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        // Get all athletes and check for birthdays
+        const athletes = await storage.getAllAthletes();
+        const birthdayAthletes = athletes.filter(athlete => {
+          if (!athlete.dateOfBirth) return false;
+          
+          // Parse date of birth and check if today is their birthday
+          const dob = new Date(athlete.dateOfBirth + 'T00:00:00Z'); // Ensure UTC parsing
+          const dobMonthDay = `${(dob.getUTCMonth() + 1).toString().padStart(2, '0')}-${dob.getUTCDate().toString().padStart(2, '0')}`;
+          const todayMonthDay = `${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+          
+          return dobMonthDay === todayMonthDay;
+        });
+        
+        for (const athlete of birthdayAthletes) {
+          try {
+            // Get parent email for this athlete
+            let parentEmail: string | null = null;
+            
+            if (athlete.parentId) {
+              const parent = await storage.getParentById(athlete.parentId);
+              parentEmail = parent?.email || null;
+            }
+            
+            // If no parent found, try to find via recent bookings
+            if (!parentEmail) {
+              const bookings = await storage.getAllBookings();
+              const athleteBooking = bookings.find(booking => {
+                if (booking.athletes && booking.athletes.length > 0) {
+                  return booking.athletes.some(a => a.name === athlete.name);
+                }
+                return booking.athlete1Name === athlete.name || booking.athlete2Name === athlete.name;
+              });
+              
+              if (athleteBooking) {
+                parentEmail = athleteBooking.parentEmail || null;
+              }
+            }
+            
+            if (parentEmail) {
+              const athleteName = athlete.name || `${athlete.firstName} ${athlete.lastName}`.trim() || 'Athlete';
+              
+              await sendBirthdayEmail(
+                parentEmail,
+                athleteName
+              );
+              
+              console.log(`[BIRTHDAY EMAIL] Sent birthday email to ${parentEmail} for ${athleteName}`);
+            } else {
+              console.warn(`[BIRTHDAY EMAIL] Could not find parent email for athlete ${athlete.name} (ID: ${athlete.id})`);
+            }
+          } catch (emailError) {
+            console.error(`[BIRTHDAY EMAIL] Failed to send birthday email for athlete ${athlete.id}:`, emailError);
+          }
+        }
+        
+        if (birthdayAthletes.length > 0) {
+          console.log(`[BIRTHDAY EMAIL] Processed ${birthdayAthletes.length} birthday emails`);
+        }
+      } catch (error) {
+        console.error('[BIRTHDAY EMAIL] Error sending birthday emails:', error);
+      }
+    },
+
     async triggerWaiverReminders() {
       try {
         const bookings = await storage.getAllBookings();
@@ -1597,18 +1720,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Auto-sync statuses every 5 minutes
-  setInterval(async () => {
-    try {
-      const bookings = await storage.getAllBookings();
-      for (const booking of bookings) {
-        await StatusSyncService.syncBookingStatuses(booking.id);
-      }
-      await StatusSyncService.triggerWaiverReminders();
-    } catch (error) {
-      console.error('[STATUS SYNC] Periodic sync error:', error);
+// Auto-sync statuses every 5 minutes
+setInterval(async () => {
+  try {
+    console.log('[STATUS SYNC] Running periodic status sync...');
+    const bookings = await storage.getAllBookings();
+    for (const booking of bookings) {
+      await StatusSyncService.syncBookingStatuses(booking.id);
     }
-  }, 5 * 60 * 1000); // 5 minutes
+    await StatusSyncService.triggerWaiverReminders();
+    console.log('[STATUS SYNC] Periodic sync completed');
+  } catch (error) {
+    console.error('[STATUS SYNC] Periodic sync error:', error);
+  }
+}, 5 * 60 * 1000); // 5 minutes
+
+// Daily scheduled job for session reminders and birthday emails
+setInterval(async () => {
+  try {
+    console.log('[DAILY SYNC] Running daily email checks...');
+    await StatusSyncService.triggerSessionReminders();
+    await StatusSyncService.triggerBirthdayEmails();
+    console.log('[DAILY SYNC] Daily email checks completed');
+  } catch (error) {
+    console.error('[DAILY SYNC] Daily sync error:', error);
+  }
+}, 60 * 60 * 1000); // 1 hour (but only sends if conditions are met)
+
+// Run daily tasks once on startup
+setTimeout(async () => {
+  try {
+    console.log('[STARTUP] Running initial daily sync...');
+    await StatusSyncService.triggerSessionReminders();
+    await StatusSyncService.triggerBirthdayEmails();
+    console.log('[STARTUP] Initial daily sync completed');
+  } catch (error) {
+    console.error('[STARTUP] Initial daily sync error:', error);
+  }
+}, 30000); // 30 seconds after startup
 
   // Enhanced Stripe webhook for automatic status updates
   app.post("/api/stripe/webhook", async (req, res) => {
@@ -2092,57 +2241,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5001';
       const parentLoginLink = `${baseUrl}/parent-login?redirect=dashboard&booking_id=${bookingId}`;
       
-      // Render all email templates first
-      const reservationEmailHtml = await render(ReservationPaymentLink({
-        parentName,
-        athleteName: athlete1Name,
-        lessonType: booking.lessonType || 'Unknown Lesson',
-        lessonDate: booking.preferredDate || 'Unknown Date',
-        lessonTime: booking.preferredTime || 'Unknown Time',
-        amount: booking.amount || '0',
-        paymentLink: session.url!
-      }));
-      
-      const waiverEmailHtml = await render(WaiverCompletionLink({
-        parentName,
-        athleteName: athlete1Name,
-        loginLink: parentLoginLink
-      }));
-      
-      const safetyEmailHtml = await render(SafetyInformationLink({
-        parentName,
-        athleteName: athlete1Name,
-        loginLink: parentLoginLink
-      }));
-      
-      // Send all three emails
+      // Send all three emails using helper functions
       const emailPromises = [];
       
       if (booking.parentEmail) {
         // 1. Reservation Payment Email
         emailPromises.push(
-          sendGenericEmail(
+          sendReservationPaymentLink(
             booking.parentEmail,
-            'Complete Your Reservation Payment',
-            reservationEmailHtml
+            parentName,
+            athlete1Name,
+            booking.lessonType || 'Unknown Lesson',
+            booking.preferredDate || 'Unknown Date',
+            booking.preferredTime || 'Unknown Time',
+            booking.amount || '0',
+            session.url!
           )
         );
         
         // 2. Waiver Completion Email
         emailPromises.push(
-          sendGenericEmail(
+          sendWaiverCompletionLink(
             booking.parentEmail,
-            `${athlete1Name}'s Waiver Form - Action Required`,
-            waiverEmailHtml
+            parentName,
+            athlete1Name,
+            parentLoginLink
           )
         );
         
         // 3. Safety Information Email
         emailPromises.push(
-          sendGenericEmail(
+          sendSafetyInformationLink(
             booking.parentEmail,
-            `Safety Authorization for ${athlete1Name}`,
-            safetyEmailHtml
+            parentName,
+            athlete1Name,
+            parentLoginLink
           )
         );
       }
@@ -2617,7 +2750,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (specialNotes !== undefined) updateData.adminNotes = specialNotes;
       
+      // Check if this is a reschedule (date or time changed)
+      const isReschedule = req.body.preferredDate !== undefined || req.body.preferredTime !== undefined;
+      let originalDate: string | null | undefined;
+      let originalTime: string | null | undefined;
+      
+      if (isReschedule) {
+        originalDate = booking.preferredDate;
+        originalTime = booking.preferredTime;
+        
+        if (req.body.preferredDate !== undefined) updateData.preferredDate = req.body.preferredDate;
+        if (req.body.preferredTime !== undefined) updateData.preferredTime = req.body.preferredTime;
+      }
+      
       const updatedBooking = await storage.updateBooking(id, updateData);
+      
+      // Send reschedule confirmation email if this was a reschedule
+      if (isReschedule && updatedBooking && (originalDate !== updatedBooking.preferredDate || originalTime !== updatedBooking.preferredTime)) {
+        try {
+          const newSessionDate = updatedBooking.preferredDate ? new Date(updatedBooking.preferredDate).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : 'Unknown Date';
+          
+          const newSessionTime = updatedBooking.preferredTime || 'Unknown Time';
+          
+          if (updatedBooking.parentEmail) {
+            await sendRescheduleConfirmation(
+              updatedBooking.parentEmail,
+              newSessionDate,
+              newSessionTime
+            );
+            console.log(`[RESCHEDULE EMAIL] Sent reschedule confirmation to ${updatedBooking.parentEmail} for booking ${id}`);
+          }
+        } catch (emailError) {
+          console.error('[RESCHEDULE EMAIL] Failed to send reschedule confirmation:', emailError);
+          // Don't fail the request if email fails
+        }
+      }
+      
       res.json(updatedBooking);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -3673,14 +3846,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertBlogPostSchema.parse(req.body);
       const post = await storage.createBlogPost(validatedData);
       
-      // Send new blog post notification email (optional for development)
+      // Send new blog post notification emails
       try {
         const blogLink = `${getBaseUrl()}/blog`;
-        // Note: In production, you would send this to all subscribers
-        // For now, we'll just log it since we don't have a subscriber list
-        console.log(`New blog post created: "${post.title}" - would send email notification`);
+        
+        // Get all blog email subscribers
+        const subscriberEmails = await storage.getAllBlogEmailAddresses();
+        
+        console.log(`New blog post created: "${post.title}" - sending notifications to ${subscriberEmails.length} subscribers`);
+        
+        // Send notifications to all subscribers
+        const notificationPromises = subscriberEmails.map(email => 
+          sendNewTipOrBlogNotification(email, post.title, blogLink, 'blog')
+        );
+        
+        await Promise.allSettled(notificationPromises);
+        console.log(`Notification emails sent for blog post: "${post.title}"`);
+        
       } catch (emailError) {
-        console.error('Failed to send blog notification email:', emailError);
+        console.error('Failed to send blog notification emails:', emailError);
+        // Don't fail the blog post creation if email fails
       }
       
       res.json(post);
@@ -3735,14 +3920,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertTipSchema.parse(req.body);
       const tip = await storage.createTip(validatedData);
       
-      // Send new tip notification email (optional for development)
+      // Send new tip notification emails
       try {
         const tipLink = `${getBaseUrl()}/tips`;
-        // Note: In production, you would send this to all subscribers
-        // For now, we'll just log it since we don't have a subscriber list
-        console.log(`New tip created: "${tip.title}" - would send email notification`);
+        
+        // Get all blog email subscribers (tips use same subscription list)
+        const subscriberEmails = await storage.getAllBlogEmailAddresses();
+        
+        console.log(`New tip created: "${tip.title}" - sending notifications to ${subscriberEmails.length} subscribers`);
+        
+        // Send notifications to all subscribers
+        const notificationPromises = subscriberEmails.map(email => 
+          sendNewTipOrBlogNotification(email, tip.title, tipLink, 'tip')
+        );
+        
+        await Promise.allSettled(notificationPromises);
+        console.log(`Notification emails sent for tip: "${tip.title}"`);
+        
       } catch (emailError) {
-        console.error('Failed to send tip notification email:', emailError);
+        console.error('Failed to send tip notification emails:', emailError);
+        // Don't fail the tip creation if email fails
       }
       
       res.json(tip);
@@ -3785,6 +3982,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Blog post deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Blog Email Subscriptions Routes
+
+  // Update parent blog email opt-in status (authenticated parents only)
+  app.patch("/api/parent/blog-email-opt-in", isParentAuthenticated, async (req, res) => {
+    try {
+      const parentId = req.session.parentId;
+      const { optIn } = req.body;
+
+      if (!parentId) {
+        res.status(401).json({ error: "Parent authentication required" });
+        return;
+      }
+
+      if (typeof optIn !== 'boolean') {
+        res.status(400).json({ error: "optIn must be a boolean value" });
+        return;
+      }
+
+      const updatedParent = await storage.updateParentBlogEmailOptIn(parentId, optIn);
+      if (!updatedParent) {
+        res.status(404).json({ error: "Parent not found" });
+        return;
+      }
+
+      res.json({ 
+        success: true, 
+        blogEmails: updatedParent.blogEmails,
+        message: optIn ? "You've been subscribed to blog notifications!" : "You've been unsubscribed from blog notifications."
+      });
+    } catch (error) {
+      console.error('Error updating blog email opt-in:', error);
+      res.status(500).json({ error: "Failed to update blog email preference" });
+    }
+  });
+
+  // Guest blog email signup (public route)
+  app.post("/api/blog-email-signup", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email || typeof email !== 'string') {
+        res.status(400).json({ error: "Valid email address is required" });
+        return;
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        res.status(400).json({ error: "Please enter a valid email address" });
+        return;
+      }
+
+      const signup = await storage.createBlogEmailSignup(email.toLowerCase());
+      res.json({ 
+        success: true, 
+        message: "Thank you for subscribing to our blog updates!",
+        signup: {
+          email: signup.email,
+          createdAt: signup.createdAt
+        }
+      });
+    } catch (error: any) {
+      console.error('Error creating blog email signup:', error);
+      
+      // Handle duplicate email error
+      if (error?.code === '23505' || error?.message?.includes('duplicate')) {
+        res.status(409).json({ error: "This email is already subscribed to our blog updates." });
+        return;
+      }
+      
+      res.status(500).json({ error: "Failed to subscribe to blog updates" });
+    }
+  });
+
+  // Get all blog email addresses (admin only)
+  app.get("/api/admin/blog-email-addresses", isAdminAuthenticated, async (req, res) => {
+    try {
+      const emails = await storage.getAllBlogEmailAddresses();
+      res.json({ 
+        emails,
+        total: emails.length,
+        parentCount: (await storage.getAllParentsWithBlogOptIn()).length,
+        guestCount: (await storage.getAllBlogEmailSignups()).length
+      });
+    } catch (error) {
+      console.error('Error fetching blog email addresses:', error);
+      res.status(500).json({ error: "Failed to fetch blog email addresses" });
+    }
+  });
+
+  // Get all blog email signups (admin only)
+  app.get("/api/admin/blog-email-signups", isAdminAuthenticated, async (req, res) => {
+    try {
+      const signups = await storage.getAllBlogEmailSignups();
+      res.json(signups);
+    } catch (error) {
+      console.error('Error fetching blog email signups:', error);
+      res.status(500).json({ error: "Failed to fetch blog email signups" });
     }
   });
 
@@ -4649,33 +4947,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           if (parentEmail) {
-            const emailHtml = render(SignedWaiverConfirmation({
-              parentName: waiver.signerName || 'Unknown Parent',
-              athleteName: waiver.athleteName || 'Unknown Athlete',
-            }));
-            
-            const emailData: any = {
-              from: 'Coach Will <coach@coachwilltumbles.com>',
-              to: parentEmail,
-              subject: `CoachWillTumbles - Signed Waiver for ${waiver.athleteName}`,
-              html: emailHtml,
-            };
-            
-            // Attach PDF if generated successfully
+            // Prepare PDF buffer if available
+            let pdfBuffer: Buffer | undefined;
             if (pdfPath) {
               try {
                 const fs = await import('fs/promises');
-                const pdfBuffer = await fs.readFile(pdfPath);
-                emailData.attachments = [{
-                  filename: `${waiver.athleteName}_waiver.pdf`,
-                  content: pdfBuffer,
-                }];
+                pdfBuffer = await fs.readFile(pdfPath);
               } catch (attachError) {
-                console.error('Error attaching PDF to email:', attachError);
+                console.error('Error reading PDF for email attachment:', attachError);
               }
             }
+
+            // Send signed waiver confirmation using helper function
+            await sendSignedWaiverConfirmation(
+              parentEmail,
+              waiver.signerName || 'Unknown Parent',
+              waiver.athleteName || 'Unknown Athlete',
+              pdfBuffer
+            );
             
-            await resend.emails.send(emailData);
             await storage.updateWaiverEmailSent(waiver.id);
             console.log(`Waiver email sent to: ${parentEmail}`);
           }
@@ -5008,41 +5298,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!parentEmail) {
         return res.status(400).json({ error: "Parent email not found for this waiver. Please ensure the athlete has booking information with parent contact details." });
       }
-      
-      if (!process.env.RESEND_API_KEY) {
-        return res.status(500).json({ error: "Email service not configured" });
-      }
-      
-      const { Resend } = await import('resend');
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      
-      const emailHtml = render(SignedWaiverConfirmation({
-        parentName: waiver.signerName || 'Unknown Parent',
-        athleteName: waiver.athleteName || 'Unknown Athlete',
-      }));
-      
-      const emailData: any = {
-        from: 'Coach Will <coach@coachwilltumbles.com>',
-        to: parentEmail,
-        subject: `CoachWillTumbles - Signed Waiver for ${waiver.athleteName}`,
-        html: emailHtml,
-      };
-      
-      // Attach PDF if available
+
+      // Prepare PDF buffer if available
+      let pdfBuffer: Buffer | undefined;
       if (waiver.pdfPath) {
         try {
           const fs = await import('fs/promises');
-          const pdfBuffer = await fs.readFile(waiver.pdfPath);
-          emailData.attachments = [{
-            filename: `${waiver.athleteName}_waiver.pdf`,
-            content: pdfBuffer,
-          }];
+          pdfBuffer = await fs.readFile(waiver.pdfPath);
         } catch (attachError) {
-          console.error('Error attaching PDF to email:', attachError);
+          console.error('Error reading PDF for email attachment:', attachError);
         }
       }
+
+      // Send signed waiver confirmation using helper function
+      await sendSignedWaiverConfirmation(
+        parentEmail,
+        waiver.signerName || 'Unknown Parent',
+        waiver.athleteName || 'Unknown Athlete',
+        pdfBuffer
+      );
       
-      await resend.emails.send(emailData);
       await storage.updateWaiverEmailSent(id);
       
       res.json({ success: true, message: "Waiver email resent successfully" });

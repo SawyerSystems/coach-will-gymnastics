@@ -1,19 +1,19 @@
-import React from 'react';
 import { render } from '@react-email/render';
+import React from 'react';
 import { Resend } from 'resend';
-import { ParentAuthorization } from '../../emails/ParentAuthorization';
-import { SessionConfirmation } from '../../emails/SessionConfirmation';
-import { ManualBookingConfirmation } from '../../emails/ManualBookingConfirmation';
-import { WaiverReminder } from '../../emails/WaiverReminder';
-import { SessionReminder } from '../../emails/SessionReminder';
-import { SessionCancellation } from '../../emails/SessionCancellation';
-import { RescheduleConfirmation } from '../../emails/RescheduleConfirmation';
-import { SessionFollowUp } from '../../emails/SessionFollowUp';
 import { BirthdayEmail } from '../../emails/BirthdayEmail';
+import { ManualBookingConfirmation } from '../../emails/ManualBookingConfirmation';
 import { NewTipOrBlog } from '../../emails/NewTipOrBlog';
+import { ParentAuthorization } from '../../emails/ParentAuthorization';
+import { RescheduleConfirmation } from '../../emails/RescheduleConfirmation';
 import { ReservationPaymentLink } from '../../emails/ReservationPaymentLink';
-import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
 import { SafetyInformationLink } from '../../emails/SafetyInformationLink';
+import { SessionCancellation } from '../../emails/SessionCancellation';
+import { SessionConfirmation } from '../../emails/SessionConfirmation';
+import { SessionFollowUp } from '../../emails/SessionFollowUp';
+import { SessionReminder } from '../../emails/SessionReminder';
+import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
+import { WaiverReminder } from '../../emails/WaiverReminder';
 
 // Email type mapping
 export const emailTemplates = {
@@ -55,6 +55,10 @@ export const emailTemplates = {
   },
   'new-tip': { 
     subject: '✨ New Tip Unlocked on Your Journey!', 
+    component: NewTipOrBlog 
+  },
+  'new-blog': { 
+    subject: '📝 New Blog Post from Coach Will!', 
     component: NewTipOrBlog 
   },
   'reservation-payment': { 
@@ -281,13 +285,134 @@ export async function sendBirthdayEmail(
 // Helper function to send new tip/blog notification
 export async function sendNewTipOrBlogNotification(
   to: string,
-  blogTitle: string,
-  blogLink: string
+  contentTitle: string,
+  contentLink: string,
+  type: 'tip' | 'blog' = 'tip'
+) {
+  const emailType = type === 'blog' ? 'new-blog' : 'new-tip';
+  return sendEmail({
+    type: emailType,
+    to,
+    data: { blogTitle: contentTitle, blogLink: contentLink }
+  });
+}
+
+// Helper function to send reservation payment link
+export async function sendReservationPaymentLink(
+  to: string,
+  parentName: string,
+  athleteName: string,
+  lessonType: string,
+  lessonDate: string,
+  lessonTime: string,
+  amount: string,
+  paymentLink: string
 ) {
   return sendEmail({
-    type: 'new-tip',
+    type: 'reservation-payment',
     to,
-    data: { blogTitle, blogLink }
+    data: { 
+      parentName, 
+      athleteName, 
+      lessonType, 
+      lessonDate, 
+      lessonTime, 
+      amount, 
+      paymentLink 
+    }
   });
+}
+
+// Helper function to send waiver completion link
+export async function sendWaiverCompletionLink(
+  to: string,
+  parentName: string,
+  athleteName: string,
+  loginLink: string
+) {
+  return sendEmail({
+    type: 'waiver-completion',
+    to,
+    data: { parentName, athleteName, loginLink }
+  });
+}
+
+// Helper function to send safety information link
+export async function sendSafetyInformationLink(
+  to: string,
+  parentName: string,
+  athleteName: string,
+  loginLink: string
+) {
+  return sendEmail({
+    type: 'safety-information',
+    to,
+    data: { parentName, athleteName, loginLink }
+  });
+}
+
+// Helper function to send signed waiver confirmation
+export async function sendSignedWaiverConfirmation(
+  to: string,
+  parentName: string,
+  athleteName: string,
+  pdfBuffer?: Buffer
+) {
+  // Get Resend API key from environment
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (!resendApiKey) {
+    console.error('RESEND_API_KEY not found in environment variables');
+    // In development, just log the email that would be sent
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Development mode - Signed waiver confirmation email that would be sent:', {
+        to,
+        parentName,
+        athleteName,
+        hasPdfAttachment: !!pdfBuffer
+      });
+      return;
+    }
+    throw new Error('RESEND_API_KEY is required for sending emails');
+  }
+
+  const resend = new Resend(resendApiKey);
+  
+  try {
+    // Import the component here to avoid circular imports
+    const { SignedWaiverConfirmation } = await import('../../emails/SignedWaiverConfirmation');
+    const { render } = await import('@react-email/render');
+    
+    // Render the email component to HTML
+    const html = await render(React.createElement(SignedWaiverConfirmation, { 
+      parentName, 
+      athleteName 
+    }));
+    
+    // Prepare email data
+    const emailData: any = {
+      from: 'Coach Will Tumbles <coach@coachwilltumbles.com>',
+      to,
+      subject: `CoachWillTumbles - Signed Waiver for ${athleteName}`,
+      html,
+    };
+
+    // Attach PDF if provided
+    if (pdfBuffer) {
+      emailData.attachments = [{
+        filename: `${athleteName}_waiver.pdf`,
+        content: pdfBuffer,
+      }];
+    }
+    
+    // Send the email
+    const result = await resend.emails.send(emailData);
+
+    console.log(`Signed waiver confirmation email sent successfully to ${to}`, result);
+    return result;
+  } catch (error) {
+    console.error(`Failed to send signed waiver confirmation email to ${to}`, error);
+    throw error;
+  }
 }
 

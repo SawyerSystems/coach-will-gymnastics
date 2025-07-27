@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Save, MapPin, Phone, Mail, Clock, Video, Image } from 'lucide-react';
+import { Clock, Image, Mail, MapPin, Phone, Save, Upload, Video } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface SiteContent {
   bannerVideo: string;
@@ -236,7 +236,7 @@ export function AdminSiteContentManager() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="media">Media</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
@@ -244,6 +244,7 @@ export function AdminSiteContentManager() {
           <TabsTrigger value="programs">Programs</TabsTrigger>
           <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
           <TabsTrigger value="faqs">FAQs</TabsTrigger>
+          <TabsTrigger value="emails">Emails</TabsTrigger>
         </TabsList>
 
         {/* Media Tab */}
@@ -743,6 +744,148 @@ export function AdminSiteContentManager() {
               >
                 Add FAQ
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Emails Tab */}
+        <TabsContent value="emails" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5" />
+                Email Template Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-800 mb-2">Email Templates</h4>
+                <p className="text-sm text-blue-700 mb-3">
+                  Manage all email templates used throughout the platform. Each template is automatically sent based on specific triggers and events.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Parent Authorization</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent when parents need access codes to login</p>
+                    <Badge variant="secondary" className="text-xs">Manual</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Session Confirmation</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent after successful payment confirmation</p>
+                    <Badge variant="default" className="text-xs">Automatic</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Session Reminder</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent 24 hours before scheduled sessions</p>
+                    <Badge variant="default" className="text-xs">Automatic</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Reschedule Confirmation</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent when bookings are rescheduled</p>
+                    <Badge variant="default" className="text-xs">Automatic</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Session Cancellation</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent when sessions are cancelled</p>
+                    <Badge variant="destructive" className="text-xs">Manual</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Birthday Email</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent on athlete birthdays</p>
+                    <Badge variant="default" className="text-xs">Automatic</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Waiver Reminder</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent when waivers need completion</p>
+                    <Badge variant="secondary" className="text-xs">Manual</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Signed Waiver Confirmation</h5>
+                    <p className="text-xs text-gray-600 mb-2">Sent after waiver completion with PDF</p>
+                    <Badge variant="default" className="text-xs">Automatic</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Reservation Payment</h5>
+                    <p className="text-xs text-gray-600 mb-2">Payment links for new athletes</p>
+                    <Badge variant="secondary" className="text-xs">Manual</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Waiver Completion</h5>
+                    <p className="text-xs text-gray-600 mb-2">Links for waiver completion</p>
+                    <Badge variant="secondary" className="text-xs">Manual</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">Safety Information</h5>
+                    <p className="text-xs text-gray-600 mb-2">Important safety information links</p>
+                    <Badge variant="secondary" className="text-xs">Manual</Badge>
+                  </div>
+                  <div className="bg-white rounded border p-3">
+                    <h5 className="font-medium text-sm mb-1">New Tips/Blog Posts</h5>
+                    <p className="text-xs text-gray-600 mb-2">Notifications for new content</p>
+                    <Badge variant="secondary" className="text-xs">Manual</Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-medium text-yellow-800 mb-2">🔧 Email Template Editing</h4>
+                <p className="text-sm text-yellow-700 mb-3">
+                  Email templates are currently managed as React components in the <code>/emails</code> directory. 
+                  To edit email content, styles, or add new templates:
+                </p>
+                <ol className="text-sm text-yellow-700 space-y-1 ml-4 list-decimal">
+                  <li>Navigate to the <code>/workspaces/coach-will-gymnastics-clean/emails/</code> folder</li>
+                  <li>Edit the desired <code>.tsx</code> template file</li>
+                  <li>Templates use React Email components for styling</li>
+                  <li>Changes are automatically applied after server restart</li>
+                </ol>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-medium text-green-800 mb-2">📬 Automatic Email Triggers</h4>
+                <div className="text-sm text-green-700 space-y-2">
+                  <p><strong>Session Reminders:</strong> Sent daily at ~24 hours before scheduled sessions</p>
+                  <p><strong>Birthday Emails:</strong> Sent daily for athletes with birthdays on current date</p>
+                  <p><strong>Reschedule Confirmations:</strong> Sent immediately when bookings are rescheduled</p>
+                  <p><strong>Payment Confirmations:</strong> Sent via Stripe webhook after successful payments</p>
+                  <p><strong>Waiver Confirmations:</strong> Sent immediately after waiver completion</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-800 mb-2">📋 Available Email Templates</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <div className="space-y-1">
+                    <p><code>BirthdayEmail.tsx</code> - Birthday wishes</p>
+                    <p><code>ManualBookingConfirmation.tsx</code> - Manual booking confirmations</p>
+                    <p><code>NewTipOrBlog.tsx</code> - Content notifications</p>
+                    <p><code>ParentAuthorization.tsx</code> - Login access codes</p>
+                    <p><code>RescheduleConfirmation.tsx</code> - Reschedule confirmations</p>
+                    <p><code>ReservationPaymentLink.tsx</code> - Payment links</p>
+                    <p><code>SafetyInformationLink.tsx</code> - Safety information</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p><code>SessionCancellation.tsx</code> - Cancellation notices</p>
+                    <p><code>SessionConfirmation.tsx</code> - Session confirmations</p>
+                    <p><code>SessionFollowUp.tsx</code> - Post-session follow-up</p>
+                    <p><code>SessionReminder.tsx</code> - Session reminders</p>
+                    <p><code>SignedWaiverConfirmation.tsx</code> - Waiver confirmations</p>
+                    <p><code>WaiverCompletionLink.tsx</code> - Waiver completion links</p>
+                    <p><code>WaiverReminder.tsx</code> - Waiver reminders</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-medium text-red-800 mb-2">⚠️ Email Configuration</h4>
+                <p className="text-sm text-red-700 mb-2">
+                  Email delivery requires proper configuration of the <code>RESEND_API_KEY</code> environment variable.
+                </p>
+                <p className="text-sm text-red-700">
+                  In development mode, emails are logged to the console instead of being sent.
+                  Check the server logs to verify email trigger functionality.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

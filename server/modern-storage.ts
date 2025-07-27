@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import type {
-  Athlete,
-  Booking,
-  InsertAthlete,
-  InsertBooking,
-  InsertParent,
-  Parent
+    Athlete,
+    Booking,
+    InsertAthlete,
+    InsertBooking,
+    InsertParent,
+    Parent
 } from '../shared/schema';
 
 const supabase = createClient(
@@ -351,6 +351,7 @@ export class ModernSupabaseStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };
