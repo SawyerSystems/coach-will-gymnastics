@@ -5242,6 +5242,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get comprehensive booking history for athlete
+  app.get("/api/athletes/:athleteId/booking-history", isAdminAuthenticated, async (req, res) => {
+    try {
+      const athleteId = parseInt(req.params.athleteId);
+      
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: "Invalid athlete ID" });
+      }
+
+      // Get athlete to verify existence
+      const athlete = await storage.getAthlete(athleteId);
+      if (!athlete) {
+        return res.status(404).json({ error: "Athlete not found" });
+      }
+
+      // Get comprehensive booking history with all related data
+      // Use a simpler approach to avoid complex query syntax
+      const { data: allBookings, error: bookingsError } = await supabaseAdmin
+        .from('bookings')
+        .select(`
+          *,
+          lesson_types(name),
+          parents(first_name, last_name)
+        `)
+        .order('preferred_date', { ascending: false });
+
+      if (bookingsError) {
+        console.error("Error fetching booking history:", bookingsError);
+        return res.status(500).json({ error: "Failed to fetch booking history" });
+      }
+
+      // Also get junction table data
+      const { data: junctionData, error: junctionError } = await supabaseAdmin
+        .from('booking_athletes')
+        .select('booking_id, athlete_id, slot_order')
+        .eq('athlete_id', athleteId);
+
+      if (junctionError) {
+        console.error("Error fetching junction data:", junctionError);
+        return res.status(500).json({ error: "Failed to fetch booking athletes data" });
+      }
+
+      // Filter bookings to only those relevant to this athlete
+      const junctionBookingIds = junctionData?.map(ja => ja.booking_id) || [];
+      
+      const relevantBookings = allBookings?.filter(booking => 
+        booking.athlete_id === athleteId || junctionBookingIds.includes(booking.id)
+      ) || [];
+
+      const uniqueBookings = relevantBookings;
+
+      // Process and enhance booking data
+      const enhancedBookings = uniqueBookings?.map(booking => {
+        // Count total athletes in this booking (from junction table or default to 1)
+        const athleteCount = booking.booking_athletes?.length || 1;
+        
+        // For now, we'll get other athlete names in a separate query if needed
+        const otherAthleteNames: string[] = [];
+
+        // Determine waiver status (simplified for now)
+        const waiverStatus = booking.waiver_id ? 'signed' : 'pending';
+
+        return {
+          id: booking.id,
+          lessonTypeName: booking.lesson_types?.name || 'Gymnastics Session',
+          preferredDate: booking.preferred_date,
+          preferredTime: booking.preferred_time,
+          status: booking.status,
+          paymentStatus: booking.payment_status,
+          attendanceStatus: booking.attendance_status,
+          paidAmount: booking.paid_amount,
+          focusAreas: booking.focus_areas || [],
+          progressNote: booking.progress_note,
+          coachName: booking.coach_name || 'Coach Will',
+          bookingMethod: booking.booking_method || 'Website',
+          specialRequests: booking.special_requests,
+          adminNotes: booking.admin_notes,
+          createdAt: booking.created_at,
+          updatedAt: booking.updated_at,
+          athleteCount,
+          otherAthleteNames,
+          safetyVerificationSigned: booking.safety_verification_signed || false,
+          waiverStatus,
+          // Pickup/dropoff info
+          dropoffPersonName: booking.dropoff_person_name,
+          dropoffPersonRelationship: booking.dropoff_person_relationship,
+          pickupPersonName: booking.pickup_person_name,
+          pickupPersonRelationship: booking.pickup_person_relationship,
+        };
+      }) || [];
+
+      res.json(enhancedBookings);
+    } catch (error: any) {
+      console.error("Error fetching booking history:", error);
+      res.status(500).json({ error: "Failed to fetch booking history" });
+    }
+  });
+
 
   // Get waivers for a specific parent (parent portal endpoint)
   app.get("/api/parent/waivers", isParentAuthenticated, async (req, res) => {

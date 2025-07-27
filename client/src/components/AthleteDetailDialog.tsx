@@ -1,3 +1,4 @@
+import { BookingHistoryDisplay } from "@/components/BookingHistoryDisplay";
 import { ParentInfoDisplay } from "@/components/ParentInfoDisplay";
 import { Button } from "@/components/ui/button";
 import {
@@ -306,56 +307,7 @@ export function AthleteDetailDialog({
           />
 
           {/* Bookings History */}
-          <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
-            <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History ({athleteBookings.length})</h3>
-            <div className="space-y-3 max-h-64 overflow-y-auto" role="log" aria-label="Booking history list">
-              {athleteBookings.length > 0 ? (
-                athleteBookings
-                  .sort((a, b) => {
-                    const dateA = a.preferredDate ? new Date(a.preferredDate).getTime() : 0;
-                    const dateB = b.preferredDate ? new Date(b.preferredDate).getTime() : 0;
-                    return dateB - dateA;
-                  })
-                  .map((booking) => (
-                    <div key={booking.id} className="border rounded p-3" role="article" aria-label={`Booking ${booking.id}`}>
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="font-medium">{(() => {
-                            const lt = booking.lessonType;
-                            const name = (typeof lt === 'object' && lt && 'name' in lt) 
-                              ? (lt as any).name 
-                              : lt;
-                            return (name || '').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
-                          })()}</p>
-                          <p className="text-sm text-gray-600">
-                            <time dateTime={booking.preferredDate || undefined}>
-                              {booking.preferredDate}
-                            </time> at {booking.preferredTime}
-                          </p>
-                          <p className="text-sm text-gray-600">Focus: {booking.focusAreas?.join(', ') || 'Not specified'}</p>
-                          <p className="text-sm text-blue-600">Payment: {booking.paymentStatus}</p>
-                          {(booking.waiverId || booking.waiverSigned) && (
-                            <p className="text-xs text-green-600 font-medium" role="status">✓ Waiver Signed</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Status: {booking.status}</p>
-                          {booking.attendanceStatus && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Attendance: {booking.attendanceStatus}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-gray-500" role="status">No bookings found for this athlete</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <BookingHistoryDisplay athleteId={athlete.id} />
 
           {/* Action Buttons */}
           {showActionButtons && (
