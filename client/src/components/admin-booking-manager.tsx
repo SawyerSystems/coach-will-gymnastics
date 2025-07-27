@@ -798,7 +798,25 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAndSortedBookings.map((booking: Booking) => (
+                  {filteredAndSortedBookings.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                        <div className="flex flex-col items-center gap-3">
+                          <Calendar className="h-8 w-8 text-gray-400" />
+                          <div>
+                            <div className="font-medium text-lg">No active bookings found</div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              Active bookings will appear here when athletes have pending, confirmed, or paid sessions.
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              Completed, cancelled, and no-show bookings can be found in the "Archived" tab.
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredAndSortedBookings.map((booking: Booking) => (
                     // ...existing row rendering code for active bookings...
                     <TableRow key={booking.id}>
                       {/* ...existing cells... */}
@@ -807,7 +825,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                       {/* ... */}
                       {/* ... */}
                     </TableRow>
-                  ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -866,8 +885,16 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                   <TableBody>
                     {archivedBookings.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                          No archived bookings found.
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                          <div className="flex flex-col items-center gap-3">
+                            <FileCheck className="h-8 w-8 text-gray-400" />
+                            <div>
+                              <div className="font-medium text-lg">No archived bookings found</div>
+                              <div className="text-sm text-gray-500 mt-1">
+                                Completed, cancelled, and no-show bookings will appear here.
+                              </div>
+                            </div>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (

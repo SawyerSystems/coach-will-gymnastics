@@ -28,7 +28,13 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 
 // Create Supabase admin client with priority: secret key > service role key > anon key
 const adminKey = supabaseSecretKey || supabaseServiceKey || supabaseKey;
-console.log('Admin client using key type:', supabaseSecretKey ? 'SECRET' : supabaseServiceKey ? 'SERVICE_ROLE' : 'ANON');
+
+if (!supabaseSecretKey && !supabaseServiceKey) {
+  console.warn('⚠️  WARNING: No service role key found! Admin operations may fail due to RLS.');
+  console.warn('   Configure SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY for full admin access.');
+}
+
+console.log('Admin client using key type:', supabaseSecretKey ? 'SECRET' : supabaseServiceKey ? 'SERVICE_ROLE' : 'ANON (LIMITED)');
 export const supabaseAdmin = createClient(supabaseUrl, adminKey, {
   auth: {
     autoRefreshToken: false,

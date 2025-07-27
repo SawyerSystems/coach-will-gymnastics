@@ -22,6 +22,32 @@ console.log(`🚀 Server starting in ${sessionConfig.environment} mode`);
 console.log(`🍪 Session cookie: ${sessionConfig.cookieName} (secure: ${sessionConfig.secure}, sameSite: ${sessionConfig.sameSite})`);
 console.log(`🌐 CORS origins: ${sessionConfig.corsOrigins.join(', ')}`);
 
+// Critical environment validation for admin functionality
+console.log('🔑 Validating critical environment variables...');
+const requiredEnvVars = [
+  'SUPABASE_URL',
+  'SUPABASE_ANON_KEY',
+  'SESSION_SECRET_DEV',
+  'RESEND_API_KEY'
+];
+
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+if (!serviceRoleKey) {
+  console.error('❌ CRITICAL: Missing Supabase service role key!');
+  console.error('   Set either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY');
+  console.error('   Without this key, admin dashboard will show empty booking lists due to RLS restrictions');
+  process.exit(1);
+}
+
+console.log('✅ Service role key configured for admin operations');
+
+// Validate other required environment variables
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingVars.length > 0) {
+  console.warn(`⚠️  Warning: Missing environment variables: ${missingVars.join(', ')}`);
+  console.warn('   Some features may not work correctly');
+}
+
 // Add raw body parsing for Stripe webhook
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
