@@ -145,3 +145,13 @@ VideoBanner_*
 .env.*.local
 .env.COMPROMISED
 .env.backup.COMPROMISED
+
+# Security-sensitive script files (prevent secrets leakage)
+run-sql-direct.js
+run-sql.js
+direct-db-access.cjs
+*-db-access.*
+run-sql-*
+*database-credentials*
+*-secrets.*
+test-connection-*
