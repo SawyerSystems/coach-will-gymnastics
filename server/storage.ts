@@ -1422,12 +1422,26 @@ export class SupabaseStorage implements IStorage {
 
 
   async createParent(insertParent: InsertParent): Promise<Parent> {
+    // Validate required fields
+    if (!insertParent.email) {
+      throw new Error("Email is required to create a parent");
+    }
+    if (!insertParent.firstName) {
+      throw new Error("First name is required to create a parent");
+    }
+    if (!insertParent.lastName) {
+      throw new Error("Last name is required to create a parent");
+    }
+    if (!insertParent.phone) {
+      throw new Error("Phone number is required to create a parent");
+    }
+
     // Always store email in lower case
     const supabaseData = {
       first_name: insertParent.firstName,
       last_name: insertParent.lastName,
       email: insertParent.email.toLowerCase(),
-      password_hash: insertParent.passwordHash, // new field
+      password_hash: insertParent.passwordHash || '', // new field
       is_verified: insertParent.isVerified || false, // new field
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName || 'Not Provided',

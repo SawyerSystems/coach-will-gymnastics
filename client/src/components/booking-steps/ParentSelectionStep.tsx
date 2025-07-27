@@ -96,28 +96,41 @@ export function ParentSelectionStep() {
 
     setIsCreatingParent(true);
     try {
+      // Prepare data for API call - match InsertParent schema requirements
+      const parentData = {
+        firstName: newParentForm.firstName.trim(),
+        lastName: newParentForm.lastName.trim(),
+        email: newParentForm.email.trim(),
+        phone: newParentForm.phone.trim(),
+        emergencyContactName: (newParentForm.emergencyContactName || 'Not Provided').trim(),
+        emergencyContactPhone: (newParentForm.emergencyContactPhone || 'Not Provided').trim(),
+        passwordHash: '', // Will be set by backend if needed
+        isVerified: false,
+        blogEmails: false,
+      };
+
       const response = await apiRequest('POST', '/api/parents', {
-        body: JSON.stringify(newParentForm),
+        body: JSON.stringify(parentData),
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const createdParent = await response.json();
         const newParent: Parent = {
-          id: data.parent.id,
-          firstName: newParentForm.firstName,
-          lastName: newParentForm.lastName,
-          email: newParentForm.email,
-          phone: newParentForm.phone,
+          id: createdParent.id,
+          firstName: createdParent.firstName || newParentForm.firstName,
+          lastName: createdParent.lastName || newParentForm.lastName,
+          email: createdParent.email || newParentForm.email,
+          phone: createdParent.phone || newParentForm.phone,
           passwordHash: null,
-          emergencyContactName: newParentForm.emergencyContactName,
-          emergencyContactPhone: newParentForm.emergencyContactPhone,
+          emergencyContactName: createdParent.emergencyContactName || newParentForm.emergencyContactName,
+          emergencyContactPhone: createdParent.emergencyContactPhone || newParentForm.emergencyContactPhone,
           isVerified: false,
           blogEmails: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date(createdParent.createdAt || Date.now()),
+          updatedAt: new Date(createdParent.updatedAt || Date.now()),
         };
 
         // Update booking state with new parent

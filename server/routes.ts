@@ -1032,10 +1032,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/parents", async (req, res) => {
+  app.post("/api/parents", isAdminAuthenticated, async (req, res) => {
     try {
-      const parentData = req.body;
-      const parent = await storage.createParent(parentData);
+      // Check if the request body is in the expected format or if it's nested in a body property
+      let parentData;
+      if (req.body && typeof req.body === 'object') {
+        if (req.body.body && typeof req.body.body === 'string') {
+          try {
+            // If the data is nested in a body property as a string, parse it
+            parentData = JSON.parse(req.body.body);
+          } catch (parseError) {
+            console.error("Failed to parse body JSON:", parseError);
+            return res.status(400).json({ error: "Invalid request format" });
+          }
+        } else {
+          // Use the req.body directly if it's already an object with the expected properties
+          parentData = req.body;
+        }
+      } else {
+        return res.status(400).json({ error: "Invalid request format" });
+      }
+      
+      // Debug: Log the incoming data
+      console.log("🔍 [PARENT-CREATE] Request data format:", req.body.body ? "Nested JSON string" : "Direct object");
+      console.log("🔍 [PARENT-CREATE] Processed data:", JSON.stringify(parentData, null, 2));
+      
+      // Validate required fields
+      if (!parentData.firstName || !parentData.lastName || !parentData.email || !parentData.phone) {
+        console.log("❌ [PARENT-CREATE] Missing required fields:", {
+          firstName: !!parentData.firstName,
+          lastName: !!parentData.lastName,
+          email: !!parentData.email,
+          phone: !!parentData.phone
+        });
+        return res.status(400).json({ 
+          error: "Missing required fields: firstName, lastName, email, and phone are required" 
+        });
+      }
+
+      // Ensure emergency contact fields have defaults
+      const processedData = {
+        ...parentData,
+        emergencyContactName: parentData.emergencyContactName || 'Not Provided',
+        emergencyContactPhone: parentData.emergencyContactPhone || 'Not Provided',
+        passwordHash: parentData.passwordHash || '', // Empty string for admin-created parents
+      };
+
+      console.log("🔍 [PARENT-CREATE] Processed data:", JSON.stringify(processedData, null, 2));
+
+      const parent = await storage.createParent(processedData);
       
       // Send welcome email to manually created parent
       if (parent.email) {
@@ -1108,16 +1153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Parent management routes (legacy compatibility)
-  app.post("/api/parents", async (req, res) => {
-    try {
-      const parentData = req.body;
-      const parent = await storage.createParent(parentData);
-      res.json(parent);
-    } catch (error: any) {
-      console.error("Error creating parent:", error);
-      res.status(500).json({ error: "Failed to create parent" });
-    }
-  });
+  // Parent creation is handled by the authenticated route above
 
   app.put("/api/parents/:id", async (req, res) => {
     try {

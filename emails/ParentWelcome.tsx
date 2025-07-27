@@ -35,7 +35,7 @@ export function ParentWelcome({ parentName, loginLink }: { parentName: string; l
           </a>
         </div>
         
-        <Text style={{ marginTop: '30px' }}>If you have any questions, feel free to contact us at support@coachwilltumbles.com.</Text>
+        <Text style={{ marginTop: '30px' }}>If you have any questions, feel free to contact us at will@coachwilltumbles.com.</Text>
         
         <Text>Looking forward to seeing your athlete flourish!</Text>
         
