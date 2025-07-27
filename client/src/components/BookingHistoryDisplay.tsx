@@ -3,6 +3,8 @@ import {
     AlertCircle,
     Calendar,
     CheckCircle,
+    ChevronDown,
+    ChevronRight,
     Clock,
     DollarSign,
     FileText,
@@ -12,6 +14,7 @@ import {
     Users,
     XCircle
 } from "lucide-react";
+import { useState } from "react";
 
 interface BookingDetails {
   id: number;
@@ -48,6 +51,17 @@ interface BookingHistoryDisplayProps {
 }
 
 export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: BookingHistoryDisplayProps) {
+  const [expandedBookings, setExpandedBookings] = useState<Set<number>>(new Set());
+
+  const toggleBookingExpansion = (bookingId: number) => {
+    const newExpanded = new Set(expandedBookings);
+    if (newExpanded.has(bookingId)) {
+      newExpanded.delete(bookingId);
+    } else {
+      newExpanded.add(bookingId);
+    }
+    setExpandedBookings(newExpanded);
+  };
   const { data: bookingHistory, isLoading, error } = useQuery<BookingDetails[]>({
     queryKey: [`/api/athletes/${athleteId}/booking-history`],
     queryFn: async () => {
@@ -158,180 +172,241 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
           <p className="text-gray-500" role="status">No bookings found for this athlete</p>
         </div>
       ) : (
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-2 max-h-96 overflow-y-auto">
           {bookings
             .sort((a, b) => {
               const dateA = new Date(a.preferredDate || a.createdAt).getTime();
               const dateB = new Date(b.preferredDate || b.createdAt).getTime();
               return dateB - dateA; // Most recent first
             })
-            .map((booking) => (
-              <div 
-                key={booking.id} 
-                className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
-                role="article" 
-                aria-label={`Booking ${booking.id}`}
-              >
-                {/* Header with lesson type and status */}
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-lg flex items-center">
-                      <Target className="w-4 h-4 mr-2 text-blue-500" />
-                      {booking.lessonTypeName || 'Gymnastics Session'}
-                    </h4>
-                    <div className="flex items-center text-sm text-gray-600 mt-1">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <time dateTime={booking.preferredDate}>
-                        {formatDate(booking.preferredDate)}
-                      </time>
-                      <Clock className="w-4 h-4 ml-3 mr-1" />
-                      {formatTime(booking.preferredTime)}
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col items-end space-y-1">
-                    <div className="flex items-center">
-                      {getStatusIcon(booking.status)}
-                      <span className="ml-1 text-sm font-medium capitalize">
-                        {booking.status}
-                      </span>
-                    </div>
-                    {booking.attendanceStatus && booking.attendanceStatus !== 'pending' && (
-                      <div className="flex items-center">
-                        {getStatusIcon(booking.attendanceStatus)}
-                        <span className="ml-1 text-xs text-gray-600 capitalize">
-                          {booking.attendanceStatus}
+            .map((booking) => {
+              const isExpanded = expandedBookings.has(booking.id);
+              
+              return (
+                <div 
+                  key={booking.id} 
+                  className="border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                  role="article" 
+                  aria-label={`Booking ${booking.id}`}
+                >
+                  {/* Condensed header - always visible */}
+                  <div 
+                    className="p-3 cursor-pointer flex items-center justify-between"
+                    onClick={() => toggleBookingExpansion(booking.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleBookingExpansion(booking.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      {/* Expand/collapse icon */}
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                      )}
+                      
+                      {/* Date and time */}
+                      <div className="flex items-center space-x-2 text-sm text-gray-600 flex-shrink-0">
+                        <Calendar className="w-4 h-4" />
+                        <span className="font-medium">
+                          {formatDate(booking.preferredDate)}
+                        </span>
+                        <Clock className="w-3 h-3" />
+                        <span>
+                          {formatTime(booking.preferredTime)}
                         </span>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Booking details grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                  {/* Payment info */}
-                  <div className="flex items-center">
-                    {getPaymentStatusIcon(booking.paymentStatus)}
-                    <span className="ml-2 text-sm">
-                      <span className="font-medium capitalize">{booking.paymentStatus}</span>
-                      {booking.paidAmount && booking.paidAmount !== '0.00' && (
-                        <span className="text-gray-600"> - ${booking.paidAmount}</span>
+                      
+                      {/* Lesson type */}
+                      <div className="flex items-center space-x-1 min-w-0 flex-1">
+                        <Target className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                        <span className="font-medium text-gray-900 truncate">
+                          {booking.lessonTypeName || 'Gymnastics Session'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Status indicators */}
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      {/* Payment status */}
+                      <div className="flex items-center space-x-1">
+                        {getPaymentStatusIcon(booking.paymentStatus)}
+                        {booking.paidAmount && booking.paidAmount !== '0.00' && (
+                          <span className="text-xs text-gray-600">${booking.paidAmount}</span>
+                        )}
+                      </div>
+                      
+                      {/* Booking status */}
+                      <div className="flex items-center space-x-1">
+                        {getStatusIcon(booking.attendanceStatus || booking.status)}
+                        <span className="text-xs font-medium capitalize text-gray-700">
+                          {booking.attendanceStatus || booking.status}
+                        </span>
+                      </div>
+                      
+                      {/* Multi-athlete indicator */}
+                      {booking.athleteCount > 1 && (
+                        <div className="flex items-center">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          <span className="text-xs text-gray-600 ml-1">
+                            {booking.athleteCount}
+                          </span>
+                        </div>
                       )}
-                    </span>
+                    </div>
                   </div>
 
-                  {/* Coach info */}
-                  <div className="flex items-center">
-                    <User className="w-4 h-4 text-gray-500 mr-2" />
-                    <span className="text-sm">{booking.coachName || 'Coach Will'}</span>
-                  </div>
+                  {/* Expanded details - only visible when expanded */}
+                  {isExpanded && (
+                    <div className="px-6 pb-4 border-t bg-gray-50">
+                      <div className="pt-3 space-y-3">
+                        {/* Basic details grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* Coach info */}
+                          <div className="flex items-center">
+                            <User className="w-4 h-4 text-gray-500 mr-2" />
+                            <span className="text-sm">{booking.coachName || 'Coach Will'}</span>
+                          </div>
 
-                  {/* Multi-athlete indicator */}
-                  {booking.athleteCount > 1 && (
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 text-blue-500 mr-2" />
-                      <span className="text-sm">
-                        Group session ({booking.athleteCount} athletes)
-                      </span>
+                          {/* Booking method */}
+                          <div className="flex items-center">
+                            <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+                            <span className="text-sm capitalize">{booking.bookingMethod}</span>
+                          </div>
+
+                          {/* Payment details */}
+                          <div className="flex items-center">
+                            <DollarSign className="w-4 h-4 text-gray-500 mr-2" />
+                            <span className="text-sm">
+                              <span className="font-medium capitalize">{booking.paymentStatus}</span>
+                              {booking.paidAmount && booking.paidAmount !== '0.00' && (
+                                <span className="text-gray-600"> - ${booking.paidAmount}</span>
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Attendance status */}
+                          {booking.attendanceStatus && booking.attendanceStatus !== 'pending' && (
+                            <div className="flex items-center">
+                              {getStatusIcon(booking.attendanceStatus)}
+                              <span className="ml-2 text-sm">
+                                Attendance: <span className="font-medium capitalize">{booking.attendanceStatus}</span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Focus areas */}
+                        {booking.focusAreas && booking.focusAreas.length > 0 && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <Target className="w-4 h-4 text-orange-500 mr-1" />
+                              <span className="text-sm font-medium">Focus Areas:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {booking.focusAreas.map((area: string, index: number) => (
+                                <span 
+                                  key={index}
+                                  className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full"
+                                >
+                                  {area}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Progress note */}
+                        {booking.progressNote && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FileText className="w-4 h-4 text-green-500 mr-1" />
+                              <span className="text-sm font-medium">Progress Note:</span>
+                            </div>
+                            <p className="text-sm text-gray-700 bg-green-50 p-2 rounded">
+                              {booking.progressNote}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Special requests */}
+                        {booking.specialRequests && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <AlertCircle className="w-4 h-4 text-blue-500 mr-1" />
+                              <span className="text-sm font-medium">Special Requests:</span>
+                            </div>
+                            <p className="text-sm text-gray-700 bg-blue-50 p-2 rounded">
+                              {booking.specialRequests}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Admin notes */}
+                        {booking.adminNotes && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <AlertCircle className="w-4 h-4 text-purple-500 mr-1" />
+                              <span className="text-sm font-medium">Admin Notes:</span>
+                            </div>
+                            <p className="text-sm text-gray-700 bg-purple-50 p-2 rounded">
+                              {booking.adminNotes}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Pickup/Dropoff info */}
+                        {(booking.dropoffPersonName || booking.pickupPersonName) && (
+                          <div>
+                            <div className="text-sm font-medium mb-2">Transportation:</div>
+                            <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded space-y-1">
+                              {booking.dropoffPersonName && (
+                                <div>
+                                  <span className="font-medium">Drop-off:</span> {booking.dropoffPersonName}
+                                  {booking.dropoffPersonRelationship && ` (${booking.dropoffPersonRelationship})`}
+                                </div>
+                              )}
+                              {booking.pickupPersonName && (
+                                <div>
+                                  <span className="font-medium">Pick-up:</span> {booking.pickupPersonName}
+                                  {booking.pickupPersonRelationship && ` (${booking.pickupPersonRelationship})`}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Footer with safety and booking info */}
+                        <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-2 mt-3">
+                          <div className="flex items-center space-x-4">
+                            {booking.safetyVerificationSigned && (
+                              <div className="flex items-center text-green-600">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Safety Verified
+                              </div>
+                            )}
+                            {booking.waiverStatus === 'signed' && (
+                              <div className="flex items-center text-green-600">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Waiver Signed
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            Booked: {formatDate(booking.createdAt)}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
-
-                  {/* Booking method */}
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-                    <span className="text-sm capitalize">{booking.bookingMethod}</span>
-                  </div>
                 </div>
-
-                {/* Focus areas */}
-                {booking.focusAreas && booking.focusAreas.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center mb-1">
-                      <Target className="w-4 h-4 text-orange-500 mr-1" />
-                      <span className="text-sm font-medium">Focus Areas:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {booking.focusAreas.map((area: string, index: number) => (
-                        <span 
-                          key={index}
-                          className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full"
-                        >
-                          {area}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Progress note */}
-                {booking.progressNote && (
-                  <div className="mb-3">
-                    <div className="flex items-center mb-1">
-                      <FileText className="w-4 h-4 text-green-500 mr-1" />
-                      <span className="text-sm font-medium">Progress Note:</span>
-                    </div>
-                    <p className="text-sm text-gray-700 bg-green-50 p-2 rounded">
-                      {booking.progressNote}
-                    </p>
-                  </div>
-                )}
-
-                {/* Special requests */}
-                {booking.specialRequests && (
-                  <div className="mb-3">
-                    <div className="flex items-center mb-1">
-                      <AlertCircle className="w-4 h-4 text-blue-500 mr-1" />
-                      <span className="text-sm font-medium">Special Requests:</span>
-                    </div>
-                    <p className="text-sm text-gray-700 bg-blue-50 p-2 rounded">
-                      {booking.specialRequests}
-                    </p>
-                  </div>
-                )}
-
-                {/* Pickup/Dropoff info */}
-                {(booking.dropoffPersonName || booking.pickupPersonName) && (
-                  <div className="mb-3">
-                    <div className="text-sm font-medium mb-1">Transportation:</div>
-                    <div className="text-xs text-gray-600 space-y-1">
-                      {booking.dropoffPersonName && (
-                        <div>
-                          Drop-off: {booking.dropoffPersonName}
-                          {booking.dropoffPersonRelationship && ` (${booking.dropoffPersonRelationship})`}
-                        </div>
-                      )}
-                      {booking.pickupPersonName && (
-                        <div>
-                          Pick-up: {booking.pickupPersonName}
-                          {booking.pickupPersonRelationship && ` (${booking.pickupPersonRelationship})`}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Safety and waiver status */}
-                <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-2">
-                  <div className="flex items-center space-x-4">
-                    {booking.safetyVerificationSigned && (
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Safety Verified
-                      </div>
-                    )}
-                    {booking.waiverStatus === 'signed' && (
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Waiver Signed
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    Booked: {formatDate(booking.createdAt)}
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       )}
     </div>
