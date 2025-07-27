@@ -2,32 +2,27 @@
 
 /**
  * SQL Execution Script for Supabase Database
- * Usage: node run-sql.js "SELECT * FROM bookings LIMIT 5;"
- * Usage: node Tests/cjs/run-sql.cjs --file Tests/sql/migration.sql
+ * Usage: node Tests/cjs/run-sql-direct.cjs "SELECT * FROM bookings LIMIT 5;"
+ * Usage: node Tests/cjs/run-sql-direct.cjs --file Tests/sql/migration.sql
  */
 
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
-// Direct PostgreSQL connection string
+// Direct PostgreSQL connection string with IPv4 only
 const connectionString = 'postgresql://postgres:govgo2-cysdyr-kagmeV@db.nwdgtdzrcyfmislilucy.supabase.co:5432/postgres';
 
 async function runSQL(sqlQuery) {
   const client = new Client({
-    // Force IPv4 only - no connection string
-    host: 'db.nwdgtdzrcyfmislilucy.supabase.co',
-    port: 5432,
-    database: 'postgres',
-    user: 'postgres',
-    password: 'govgo2-cysdyr-kagmeV',
+    connectionString,
     ssl: { rejectUnauthorized: false },
     // Force IPv4
-    family: 4
+    options: '--ip-version=4'
   });
 
   try {
-    console.log('🔌 Connecting to Supabase database (IPv4)...');
+    console.log('🔌 Connecting to Supabase database...');
     await client.connect();
     console.log('✅ Connected successfully!\n');
 
@@ -76,42 +71,36 @@ async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
-    console.log(`
-🗄️  Supabase SQL Runner
+    console.log('Usage:');
+    console.log('  node Tests/cjs/run-sql-direct.cjs "SELECT * FROM bookings LIMIT 5;"');
+    console.log('  node Tests/cjs/run-sql-direct.cjs --file Tests/sql/migration.sql');
+    process.exit(1);
+  }
 
-Usage:
-  node Tests/cjs/run-sql.cjs "SELECT * FROM bookings LIMIT 5;"
-  node Tests/cjs/run-sql.cjs --file Tests/sql/path/to/script.sql
-  
-Examples:
-  node Tests/cjs/run-sql.cjs "SHOW TABLES;"
-  node Tests/cjs/run-sql.cjs "SELECT COUNT(*) FROM bookings;"
-  node Tests/cjs/run-sql.cjs --file Tests/sql/adventure-log-schema-updates.sql
-    `);
-    return;
-  }
-  
-  let sqlCommand;
-  
-  if (args[0] === '--file') {
-    const filePath = args[1];
-    if (!filePath) {
-      console.error('❌ Please provide a file path after --file');
-      return;
+  let sqlQuery;
+
+  if (args[0] === '--file' && args[1]) {
+    const filePath = path.resolve(args[1]);
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ File not found: ${filePath}`);
+      process.exit(1);
     }
-    
-    try {
-      sqlCommand = fs.readFileSync(filePath, 'utf8');
-      console.log(`📂 Reading SQL from: ${filePath}`);
-    } catch (err) {
-      console.error('❌ Error reading file:', err.message);
-      return;
-    }
+    sqlQuery = fs.readFileSync(filePath, 'utf8');
+    console.log(`📁 Reading SQL from file: ${filePath}`);
   } else {
-    sqlCommand = args.join(' ');
+    sqlQuery = args.join(' ');
   }
-  
-  await runSQL(sqlCommand);
+
+  if (!sqlQuery.trim()) {
+    console.error('❌ No SQL query provided');
+    process.exit(1);
+  }
+
+  await runSQL(sqlQuery);
 }
 
-main().catch(console.error);
+if (require.main === module) {
+  main().catch(console.error);
+}
+
+module.exports = { runSQL };

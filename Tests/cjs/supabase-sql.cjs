@@ -59,12 +59,12 @@ async function main() {
 🗄️  Supabase SQL Runner (HTTP API)
 
 Usage:
-  node supabase-sql.cjs "SELECT * FROM bookings LIMIT 5;"
-  node supabase-sql.cjs --file path/to/script.sql
+  node Tests/cjs/supabase-sql.cjs "SELECT * FROM bookings LIMIT 5;"
+  node Tests/cjs/supabase-sql.cjs --file Tests/sql/path/to/script.sql
   
 Examples:
-  node supabase-sql.cjs "SELECT COUNT(*) FROM bookings;"
-  node supabase-sql.cjs "SELECT column_name FROM information_schema.columns WHERE table_name='bookings';"
+  node Tests/cjs/supabase-sql.cjs "SELECT COUNT(*) FROM bookings;"
+  node Tests/cjs/supabase-sql.cjs "SELECT column_name FROM information_schema.columns WHERE table_name='bookings';"
     `);
     return;
   }
