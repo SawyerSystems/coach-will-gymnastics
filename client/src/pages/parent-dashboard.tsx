@@ -1,6 +1,6 @@
-import { AthleteDetailDialog } from '@/components/AthleteDetailDialog';
 import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
+import { ParentAthleteDetailDialog } from '@/components/ParentAthleteDetailDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1048,13 +1048,10 @@ function ParentDashboard() {
         </Tabs>
 
         {/* Athlete Detail Modal */}
-        <AthleteDetailDialog
+        <ParentAthleteDetailDialog
           open={editingAthleteId !== null}
           onOpenChange={(open) => setEditingAthleteId(open ? editingAthleteId : null)}
           athlete={editingAthleteId ? athletes.find(a => a.id === editingAthleteId) || null : null}
-          bookings={bookings}
-          parentInfo={parentInfo}
-          mode="parent"
           onBookSession={() => {
             const athlete = athletes.find(a => a.id === editingAthleteId);
             if (athlete) {
