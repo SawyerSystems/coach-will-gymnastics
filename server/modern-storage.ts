@@ -306,6 +306,8 @@ export class ModernSupabaseStorage {
       safetyVerificationSigned: data.safety_verification_signed || false,
       safetyVerificationSignedAt: data.safety_verification_signed_at ? new Date(data.safety_verification_signed_at) : null,
       stripeSessionId: data.stripe_session_id || null,
+      progressNote: data.progress_note || null,
+      coachName: data.coach_name || 'Coach Will',
       // For backward compatibility during transition
       athlete1Name: data.athlete1_name,
       athlete1DateOfBirth: data.athlete1_date_of_birth,
@@ -318,22 +320,23 @@ export class ModernSupabaseStorage {
     };
   }
 
-  private mapAthleteFromDb(data: any): Athlete {
+  private mapAthleteFromDb(row: any): Athlete {
     return {
-      id: data.id,
-      parentId: data.parent_id,
-      name: data.name,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      dateOfBirth: data.date_of_birth,
-      gender: data.gender || null,
-      allergies: data.allergies,
-      experience: data.experience,
-      photo: data.photo,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-      latestWaiverId: data.latest_waiver_id || null,
-      waiverStatus: data.waiver_status || 'pending'
+      id: row.id,
+      parentId: row.parent_id,
+      name: row.name,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      allergies: row.allergies,
+      experience: row.experience,
+      photo: row.photo,
+      createdAt: row.created_at ? new Date(row.created_at) : null,
+      updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+      dateOfBirth: row.date_of_birth,
+      gender: row.gender,
+      latestWaiverId: row.latest_waiver_id,
+      waiverStatus: row.waiver_status || 'pending',
+      waiverSigned: row.waiver_signed || false,
     };
   }
 

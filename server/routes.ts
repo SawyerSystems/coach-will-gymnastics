@@ -5258,13 +5258,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get comprehensive booking history with all related data
-      // Use a simpler approach to avoid complex query syntax
+      // Use explicit foreign key relationship to avoid ambiguity
       const { data: allBookings, error: bookingsError } = await supabaseAdmin
         .from('bookings')
         .select(`
           *,
           lesson_types(name),
-          parents(first_name, last_name)
+          parents!bookings_parent_id_fkey(first_name, last_name)
         `)
         .order('preferred_date', { ascending: false });
 

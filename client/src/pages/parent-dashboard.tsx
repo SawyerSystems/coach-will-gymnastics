@@ -1096,8 +1096,12 @@ function ParentDashboard() {
             createdAt: new Date(),
             updatedAt: new Date(),
             latestWaiverId: selectedAthleteForBooking.latestWaiverId,
-            waiverStatus: selectedAthleteForBooking.waiverStatus
-          }] : Array.isArray(athletes) ? athletes : []}
+            waiverStatus: selectedAthleteForBooking.waiverStatus,
+            waiverSigned: selectedAthleteForBooking.waiverSigned || false
+          }] : Array.isArray(athletes) ? athletes.map(athlete => ({
+            ...athlete,
+            waiverSigned: athlete.waiverSigned || false
+          })) : []}
           isNewParent={false}
         />
 
