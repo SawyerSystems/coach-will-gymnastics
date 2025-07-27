@@ -2799,7 +2799,7 @@ export default function Admin() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Full Name</Label>
                         <p className="text-lg font-semibold">
-                          {parentData.first_name} {parentData.last_name}
+                          {parentData.firstName || parentData.first_name} {parentData.lastName || parentData.last_name}
                         </p>
                       </div>
                       <div>
@@ -2828,7 +2828,7 @@ export default function Admin() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Member Since</Label>
                         <p className="text-lg">
-                          {parentData.created_at ? new Date(parentData.created_at).toLocaleDateString() : 'Unknown'}
+                          {(parentData.createdAt || parentData.created_at) ? new Date(parentData.createdAt || parentData.created_at).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                     </div>

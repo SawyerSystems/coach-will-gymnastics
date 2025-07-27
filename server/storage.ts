@@ -3043,9 +3043,9 @@ export class SupabaseStorage implements IStorage {
 
   // Parent auth methods
   async getParentById(id: number): Promise<Parent | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, waiver_signed, waiver_signed_at, waiver_signature_name, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
       .eq('id', id)
       .single();
 
