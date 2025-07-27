@@ -817,13 +817,146 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                     </TableRow>
                   ) : (
                     filteredAndSortedBookings.map((booking: Booking) => (
-                    // ...existing row rendering code for active bookings...
                     <TableRow key={booking.id}>
-                      {/* ...existing cells... */}
-                      {/* (Unchanged, see above for full code) */}
-                      {/* ... */}
-                      {/* ... */}
-                      {/* ... */}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <div>
+                            <div className="font-medium">{booking.preferredDate}</div>
+                            <div className="text-sm text-gray-500">{booking.preferredTime}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {booking.athletes?.map((athlete: any, index: number) => (
+                            <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
+                              {athlete.name}
+                            </div>
+                          )) || (
+                            <div className="space-y-1">
+                              {booking.athlete1Name && <div className="font-medium">{booking.athlete1Name}</div>}
+                              {booking.athlete2Name && <div className="text-sm text-muted-foreground">{booking.athlete2Name}</div>}
+                              {!booking.athlete1Name && !booking.athlete2Name && (
+                                <div className="text-muted-foreground">No athletes</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {(() => {
+                            const lessonType = booking.lessonType;
+                            if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
+                              return (lessonType as any).name;
+                            }
+                            return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
+                          })()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={booking.paymentStatus || "unpaid"}
+                          onValueChange={(value) => 
+                            updatePaymentStatusMutation.mutate({ 
+                              id: booking.id, 
+                              paymentStatus: value 
+                            })
+                          }
+                          disabled={updatePaymentStatusMutation.isPending}
+                        >
+                          <SelectTrigger className="h-8 w-[140px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unpaid">Unpaid</SelectItem>
+                            <SelectItem value="reservation-pending">Reservation: Pending</SelectItem>
+                            <SelectItem value="reservation-failed">Reservation: Failed</SelectItem>
+                            <SelectItem value="reservation-paid">Reservation: Paid</SelectItem>
+                            <SelectItem value="session-paid">Session Paid</SelectItem>
+                            <SelectItem value="reservation-refunded">Reservation: Refunded</SelectItem>
+                            <SelectItem value="session-refunded">Session: Refunded</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={booking.attendanceStatus || "pending"}
+                          onValueChange={(value) => 
+                            updateAttendanceStatusMutation.mutate({ 
+                              id: booking.id, 
+                              attendanceStatus: value 
+                            })
+                          }
+                          disabled={updateAttendanceStatusMutation.isPending}
+                        >
+                          <SelectTrigger className="h-8 w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="no-show">No Show</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-medium">
+                          ${(() => {
+                            const price = getLessonPrice(booking);
+                            return price > 0 ? price.toFixed(2) : '0.00';
+                          })()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Booking Details</DialogTitle>
+                              </DialogHeader>
+                              <BookingDetailsView booking={booking} />
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setRescheduleBooking(booking);
+                              setShowRescheduleModal(true);
+                            }}
+                          >
+                            Reschedule
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => sendWaiverEmailMutation.mutate(booking.id)}
+                            disabled={sendWaiverEmailMutation.isPending}
+                          >
+                            Send Waiver
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to delete this booking?')) {
+                                deleteBookingMutation.mutate(booking.id);
+                              }
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                     ))
                   )}

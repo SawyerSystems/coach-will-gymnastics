@@ -22,26 +22,19 @@ export interface StatusValidationResult {
 
 /**
  * Determines if a booking should be archived based on its status
+ * RULE: Attendance status is the authoritative field for determining booking state
  */
 export function isBookingArchived(state: BookingStatusState): boolean {
-  const { bookingStatus, attendanceStatus } = state;
+  const { attendanceStatus } = state;
   
-  // Booking is archived if it's in a final state
-  const finalBookingStatuses = [
-    BookingStatusEnum.COMPLETED,
-    BookingStatusEnum.NO_SHOW,
-    BookingStatusEnum.CANCELLED,
-    BookingStatusEnum.FAILED
-  ];
-  
-  const finalAttendanceStatuses = [
+  // Only attendance status determines archival - not booking status or payment status
+  const archivedAttendanceStatuses = [
     AttendanceStatusEnum.COMPLETED,
     AttendanceStatusEnum.NO_SHOW,
     AttendanceStatusEnum.CANCELLED
   ];
   
-  return finalBookingStatuses.includes(bookingStatus) || 
-         finalAttendanceStatuses.includes(attendanceStatus);
+  return archivedAttendanceStatuses.includes(attendanceStatus);
 }
 
 /**

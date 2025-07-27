@@ -2422,16 +2422,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 [BOOKINGS] Route handler started!');
       const allBookings = await storage.getAllBookingsWithRelations();
       
-      // A booking is active if it is NOT in a final state.
+      // A booking is active if attendance status is NOT in a final state.
+      // Attendance status is the authoritative field for determining booking state.
       const activeBookings = allBookings.filter(booking => {
-        const isCompleted = booking.status === 'completed' || booking.attendanceStatus === 'completed';
-        const isNoShow = booking.status === 'no-show' || booking.attendanceStatus === 'no-show';
-        const isCancelled = booking.status === 'cancelled' || booking.attendanceStatus === 'cancelled';
+        const attendanceStatus = booking.attendanceStatus;
         
-        return !isCompleted && !isNoShow && !isCancelled;
+        // Archived attendance statuses
+        const archivedAttendanceStatuses = ['completed', 'no-show', 'cancelled'];
+        
+        return !archivedAttendanceStatuses.includes(attendanceStatus);
       });
       
       console.log(`[DEBUG] Total bookings: ${allBookings.length}, Active bookings: ${activeBookings.length}`);
+      console.log('[DEBUG] Active booking attendance statuses:', activeBookings.map(b => `ID:${b.id} -> ${b.attendanceStatus}`));
       res.json(activeBookings);
     } catch (error) {
       console.error("[DEBUG] Error fetching bookings:", error);
@@ -2445,16 +2448,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔍 [ARCHIVED-BOOKINGS] Route handler started!');
       const allBookings = await storage.getAllBookingsWithRelations();
       
-      // A booking is archived if it IS in a final state.
+      // A booking is archived if attendance status IS in a final state.
+      // Attendance status is the authoritative field for determining booking state.
       const archivedBookings = allBookings.filter(booking => {
-        const isCompleted = booking.status === 'completed' || booking.attendanceStatus === 'completed';
-        const isNoShow = booking.status === 'no-show' || booking.attendanceStatus === 'no-show';
-        const isCancelled = booking.status === 'cancelled' || booking.attendanceStatus === 'cancelled';
-
-        return isCompleted || isNoShow || isCancelled;
+        const attendanceStatus = booking.attendanceStatus;
+        
+        // Archived attendance statuses
+        const archivedAttendanceStatuses = ['completed', 'no-show', 'cancelled'];
+        
+        return archivedAttendanceStatuses.includes(attendanceStatus);
       });
       
       console.log(`[DEBUG] Total bookings: ${allBookings.length}, Archived bookings: ${archivedBookings.length}`);
+      console.log('[DEBUG] Archived booking attendance statuses:', archivedBookings.map(b => `ID:${b.id} -> ${b.attendanceStatus}`));
       res.json(archivedBookings);
     } catch (error) {
       console.error("[DEBUG] Error fetching archived bookings:", error);
