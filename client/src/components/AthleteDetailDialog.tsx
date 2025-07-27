@@ -1,12 +1,13 @@
-import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
+import { ParentInfoDisplay } from "@/components/ParentInfoDisplay";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
+import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -286,55 +287,10 @@ export function AthleteDetailDialog({
           </div>
 
           {/* Parent Info */}
-          {parentInfo ? (
-            <div className="border rounded-lg p-4" role="region" aria-labelledby="parent-info-heading">
-              <h3 id="parent-info-heading" className="font-semibold mb-3">Parent Information</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm" role="group" aria-label="Parent contact details">
-                <div>
-                  <p><span className="font-medium">Name:</span> {parentInfo.firstName || 'N/A'} {parentInfo.lastName || 'N/A'}</p>
-                  <p><span className="font-medium">Email:</span> 
-                    {parentInfo.email ? (
-                      <a href={`mailto:${parentInfo.email}`} className="text-blue-600 hover:underline ml-1">
-                        {parentInfo.email}
-                      </a>
-                    ) : (
-                      <span className="ml-1 text-gray-500">Not provided</span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p><span className="font-medium">Phone:</span> 
-                    {parentInfo.phone ? (
-                      <a href={`tel:${parentInfo.phone}`} className="text-blue-600 hover:underline ml-1">
-                        {parentInfo.phone}
-                      </a>
-                    ) : (
-                      <span className="ml-1 text-gray-500">Not provided</span>
-                    )}
-                  </p>
-                  <p><span className="font-medium">Emergency Contact:</span> 
-                    {parentInfo.emergencyContactName ? (
-                      <>
-                        {parentInfo.emergencyContactName}
-                        {parentInfo.emergencyContactPhone && (
-                          <a href={`tel:${parentInfo.emergencyContactPhone}`} className="text-blue-600 hover:underline ml-1">
-                            ({parentInfo.emergencyContactPhone})
-                          </a>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-gray-500">Not provided</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="border rounded-lg p-4 bg-gray-50" role="region" aria-labelledby="parent-info-heading">
-              <h3 id="parent-info-heading" className="font-semibold mb-3">Parent Information</h3>
-              <p className="text-gray-500 text-center">No parent information available</p>
-            </div>
-          )}
+          <ParentInfoDisplay 
+            athleteId={athlete.id}
+            parentInfo={parentInfo}
+          />
 
           {/* Waiver Status */}
           <WaiverStatusDisplay 

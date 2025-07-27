@@ -5172,6 +5172,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get comprehensive parent details for athlete
+  app.get("/api/athletes/:athleteId/parent-details", isAdminAuthenticated, async (req, res) => {
+    try {
+      const athleteId = parseInt(req.params.athleteId);
+      
+      if (isNaN(athleteId)) {
+        return res.status(400).json({ error: "Invalid athlete ID" });
+      }
+
+      // Get athlete to find parent ID
+      const athlete = await storage.getAthlete(athleteId);
+      if (!athlete) {
+        return res.status(404).json({ error: "Athlete not found" });
+      }
+
+      // Get comprehensive parent details
+      const { data: parentData, error: parentError } = await supabaseAdmin
+        .from('parents')
+        .select('*')
+        .eq('id', athlete.parentId)
+        .single();
+
+      if (parentError || !parentData) {
+        return res.status(404).json({ error: "Parent not found" });
+      }
+
+      // Get additional statistics
+      const { data: childrenCount } = await supabaseAdmin
+        .from('athletes')
+        .select('id', { count: 'exact' })
+        .eq('parent_id', athlete.parentId);
+
+      const { data: totalBookings } = await supabaseAdmin
+        .from('bookings')
+        .select('id', { count: 'exact' })
+        .eq('parent_id', athlete.parentId);
+
+      const { data: activeBookings } = await supabaseAdmin
+        .from('bookings')
+        .select('id', { count: 'exact' })
+        .eq('parent_id', athlete.parentId)
+        .in('status', ['confirmed', 'scheduled']);
+
+      // Get last login (if available from session logs or parent login tracking)
+      // For now, we'll use the updated_at field as a proxy
+      
+      const enhancedParentInfo = {
+        id: parentData.id,
+        firstName: parentData.first_name,
+        lastName: parentData.last_name,
+        email: parentData.email,
+        phone: parentData.phone,
+        emergencyContactName: parentData.emergency_contact_name,
+        emergencyContactPhone: parentData.emergency_contact_phone,
+        isVerified: parentData.is_verified || false,
+        createdAt: parentData.created_at,
+        updatedAt: parentData.updated_at,
+        totalChildren: childrenCount?.length || 0,
+        totalBookings: totalBookings?.length || 0,
+        activeBookings: activeBookings?.length || 0,
+        lastLoginAt: parentData.updated_at // Using updated_at as proxy for last activity
+      };
+
+      res.json(enhancedParentInfo);
+    } catch (error: any) {
+      console.error("Error fetching parent details:", error);
+      res.status(500).json({ error: "Failed to fetch parent details" });
+    }
+  });
 
 
   // Get waivers for a specific parent (parent portal endpoint)
