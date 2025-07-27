@@ -2817,10 +2817,10 @@ export default function Admin() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Emergency Contact</Label>
                         <p className="text-lg">
-                          {parentData.emergency_contact_name || 'Not provided'}
-                          {parentData.emergency_contact_phone && (
+                          {parentData.emergencyContactName || 'Not provided'}
+                          {parentData.emergencyContactPhone && (
                             <span className="block text-sm text-gray-600">
-                              {parentData.emergency_contact_phone}
+                              {parentData.emergencyContactPhone}
                             </span>
                           )}
                         </p>
@@ -3307,7 +3307,7 @@ export default function Admin() {
                     <Label htmlFor="emergency-name">Emergency Contact Name</Label>
                     <Input 
                       id="emergency-name"
-                      defaultValue={selectedParent.emergency_contact_name}
+                      defaultValue={selectedParent.emergencyContactName}
                       placeholder="Emergency Contact Name"
                     />
                   </div>
@@ -3315,7 +3315,7 @@ export default function Admin() {
                     <Label htmlFor="emergency-phone">Emergency Contact Phone</Label>
                     <Input 
                       id="emergency-phone"
-                      defaultValue={selectedParent.emergency_contact_phone}
+                      defaultValue={selectedParent.emergencyContactPhone}
                       placeholder="Emergency Contact Phone"
                     />
                   </div>

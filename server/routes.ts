@@ -891,22 +891,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid parent ID" });
       }
 
-      const { data, error } = await supabase
-        .from('parents')
-        .select(`
-          *,
-          athletes!athletes_parent_id_fkey(id, first_name, last_name, date_of_birth, gender, allergies, experience)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching parent:", error);
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: "Parent not found" });
-        }
-        return res.status(500).json({ error: "Failed to fetch parent" });
+      // Use storage layer method which handles field mapping
+      const parent = await storage.getParentById(id);
+      if (!parent) {
+        return res.status(404).json({ error: "Parent not found" });
       }
+
+      // Get parent's athletes
+      const athletes = await storage.getParentAthletes(id);
 
       // Fetch related bookings using explicit parent_id
       const { data: bookings } = await supabase
@@ -916,7 +908,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Combine the data
       const parentWithRelations = {
-        ...data,
+        ...parent,
+        athletes: athletes || [],
         bookings: bookings || []
       };
 
