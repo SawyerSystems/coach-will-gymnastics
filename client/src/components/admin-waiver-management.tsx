@@ -225,28 +225,28 @@ export function AdminWaiverManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 w-full">
       {/* Modern Header Section */}
-      <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6">
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+      <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-lg sm:rounded-xl border border-slate-200/50 p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-6">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3 mb-2">
-              <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
-                <FileText className="h-6 w-6 text-[#D8BD2A]" />
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+              <div className="p-1.5 sm:p-2 bg-[#D8BD2A]/10 rounded-lg">
+                <FileText className="h-4 w-4 sm:h-6 sm:w-6 text-[#D8BD2A]" />
               </div>
               Waiver Management
             </h2>
-            <p className="text-slate-600">Manage liability waivers and athlete documentation</p>
+            <p className="text-xs sm:text-sm text-slate-600">Manage liability waivers and athlete documentation</p>
           </div>
           
           {/* Search Section */}
-          <div className="relative w-full lg:w-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+          <div className="relative w-full sm:w-auto mt-2 sm:mt-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <Input
               placeholder="Search athletes or signers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full lg:w-80 rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+              className="pl-9 sm:pl-10 h-8 sm:h-10 text-sm w-full sm:w-64 md:w-80 rounded-lg sm:rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
             />
           </div>
         </div>
@@ -318,26 +318,26 @@ export function AdminWaiverManagement() {
         </Card>
       </div>
 
-      <Tabs defaultValue="signed" className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-1 rounded-xl shadow-sm">
+      <Tabs defaultValue="signed" className="space-y-4 sm:space-y-6 w-full">
+        <div className="flex items-center justify-center sm:justify-start w-full">
+          <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-0.5 sm:p-1 rounded-lg sm:rounded-xl shadow-sm w-full sm:w-auto overflow-x-auto">
             <TabsTrigger 
               value="signed" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-none"
             >
-              Signed Waivers ({signedWaivers.length})
+              Signed ({signedWaivers.length})
             </TabsTrigger>
             <TabsTrigger 
               value="missing" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-none"
             >
-              Missing Waivers ({missingWaivers.length})
+              Missing ({missingWaivers.length})
             </TabsTrigger>
             <TabsTrigger 
               value="archived" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-none"
             >
-              Archived Waivers ({archivedWaivers.length})
+              Archived ({archivedWaivers.length})
             </TabsTrigger>
           </TabsList>
         </div>
@@ -360,15 +360,15 @@ export function AdminWaiverManagement() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="w-full">
                   <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                     <TableRow className="border-b border-slate-200">
-                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete</TableHead>
-                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Signer</TableHead>
-                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Relationship</TableHead>
-                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Signed Date</TableHead>
-                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Email Status</TableHead>
-                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider hidden sm:table-cell">Signer</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider hidden md:table-cell">Relationship</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Signed Date</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Email Status</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="divide-y divide-slate-100">

@@ -210,11 +210,11 @@ export function AdminSidebar({
       {isOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={onClose}>
           <aside 
-            className="fixed left-0 top-0 h-full w-[280px] bg-gradient-to-b from-white to-slate-50 dark:from-gray-900 dark:to-gray-800 shadow-xl animate-slideInFromLeft"
+            className="fixed left-0 top-0 h-full w-[85vw] max-w-[280px] bg-gradient-to-b from-white to-slate-50 dark:from-gray-900 dark:to-gray-800 shadow-xl animate-slideInFromLeft overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile Header */}
-            <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-gray-700">
+            <div className="p-3 sm:p-4 flex items-center justify-between border-b border-slate-200 dark:border-gray-700">
               <div className="flex items-center space-x-2">
                 <div className="h-8 w-8 rounded-full bg-[#0F0276] flex items-center justify-center">
                   <span className="text-white font-bold text-sm">CW</span>

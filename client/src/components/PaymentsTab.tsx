@@ -193,41 +193,41 @@ export function PaymentsTab() {
   return (
     <>
       {/* Enhanced Payment Analytics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-blue-800">Total Revenue</CardTitle>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <DollarSign className="h-4 w-4 text-blue-600" />
+      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8 w-full mx-auto">
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-md hover:shadow-xl transform transition-all duration-300 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-semibold text-blue-800">Total Revenue</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+              <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black text-blue-900">
+          <CardContent className="pt-1">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-blue-900">
               ${totals.totalRevenue.toFixed(2)}
             </div>
-            <p className="text-xs text-blue-600 mt-1 font-medium">Reservation Paid + Session Paid</p>
+            <p className="text-[10px] sm:text-xs text-blue-600 mt-1 font-medium">Reservation Paid + Session Paid</p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-yellow-800">Pending Reservations</CardTitle>
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Clock className="h-4 w-4 text-yellow-600" />
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-md hover:shadow-xl transform transition-all duration-300 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-semibold text-yellow-800">Pending Reservations</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-yellow-100 rounded-lg">
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black text-yellow-900">
+          <CardContent className="pt-1">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black text-yellow-900">
               ${totals.pendingReservations.toFixed(2)}
             </div>
-            <p className="text-xs text-yellow-600 mt-1 font-medium">{bookings.filter(b => b.paymentStatus === "reservation-pending").length} bookings</p>
+            <p className="text-[10px] sm:text-xs text-yellow-600 mt-1 font-medium">{bookings.filter(b => b.paymentStatus === "reservation-pending").length} bookings</p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-slate-25 to-slate-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-slate-800">Refunded</CardTitle>
-            <div className="p-2 bg-slate-100 rounded-lg">
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-slate-25 to-slate-50/30 shadow-md hover:shadow-xl transform transition-all duration-300 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs sm:text-sm font-semibold text-slate-800">Refunded</CardTitle>
+            <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg">
               <X className="h-4 w-4 text-slate-600" />
             </div>
           </CardHeader>
@@ -347,13 +347,13 @@ export function PaymentsTab() {
 
         {/* Enhanced Tabs for different views */}
         <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-blue-50/30 shadow-lg">
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <div className="flex items-center justify-between mb-6">
-                <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-1 rounded-xl shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+                <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-0.5 sm:p-1 rounded-lg sm:rounded-xl shadow-sm w-full sm:w-auto overflow-x-auto">
                   <TabsTrigger 
                     value="overview" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200"
                   >
                     All Transactions
                   </TabsTrigger>

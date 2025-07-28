@@ -71,14 +71,15 @@ export default function Admin() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(window?.innerWidth >= 768); // Default to open on desktop only
   const [activeTab, setActiveTab] = useState<string>("bookings");
   
-  // Set sidebar open state based on window size
+  // Set sidebar open state based on window size with enhanced mobile support
   useEffect(() => {
     const handleResize = () => {
-      setIsSidebarOpen(window.innerWidth >= 768); // Show sidebar by default on desktop
+      // Only auto-show sidebar on larger screens (md breakpoint)
+      setIsSidebarOpen(window.innerWidth >= 768);
     };
     
-    // Add resize listener
-    window.addEventListener('resize', handleResize);
+    // Add resize listener with passive option for better performance
+    window.addEventListener('resize', handleResize, { passive: true });
     
     // Initial check
     handleResize();
@@ -1042,10 +1043,10 @@ export default function Admin() {
         />
 
         {/* Main Content Area */}
-        <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : ''}`}>
-          <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : ''} w-full`}>
+          <div className="max-w-full md:max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
             {/* Dashboard Header */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 sm:mb-10 gap-4">
               <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F0276] dark:text-white drop-shadow-sm">
                 {/* Show different titles based on active tab */}
                 {activeTab === 'bookings' && 'Booking Manager'}
@@ -1074,10 +1075,10 @@ export default function Admin() {
               </div>
             </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10 mx-auto w-full">
           {!bookings || !athletes ? (
             [...Array(4)].map((_, index) => (
-              <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white">
+              <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white transform transition-transform hover:scale-[1.02] duration-300">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-4 rounded" />
@@ -1089,49 +1090,57 @@ export default function Admin() {
             ))
           ) : (
             <>
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-8 border-[#0F0276] hover:shadow-2xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-black tracking-tight text-[#0F0276]">Total Bookings</CardTitle>
-                  <Calendar className="h-5 w-5 text-[#0F0276]" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276]">Total Bookings</CardTitle>
+                  <div className="bg-[#0F0276]/10 p-1.5 sm:p-2 rounded-full">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276]" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-black text-[#0F0276]">{totalBookings}</div>
+                  <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{totalBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#D8BD2A]/[.08] to-white border-l-8 border-[#D8BD2A] hover:shadow-2xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-black tracking-tight text-[#D8BD2A]">Pending</CardTitle>
-                  <Clock className="h-5 w-5 text-[#D8BD2A]" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#D8BD2A]/[.08] to-white border-l-4 sm:border-l-8 border-[#D8BD2A] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#D8BD2A]">Pending</CardTitle>
+                  <div className="bg-[#D8BD2A]/10 p-1.5 sm:p-2 rounded-full">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#D8BD2A]" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-black text-[#D8BD2A]">{pendingBookings}</div>
+                  <div className="text-2xl sm:text-3xl font-black text-[#D8BD2A]">{pendingBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-green-100 to-white border-l-8 border-green-500 hover:shadow-2xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-black tracking-tight text-green-600">Confirmed</CardTitle>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-green-100 to-white border-l-4 sm:border-l-8 border-green-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-green-600">Confirmed</CardTitle>
+                  <div className="bg-green-100 p-1.5 sm:p-2 rounded-full">
+                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-black text-green-600">{confirmedBookings}</div>
+                  <div className="text-2xl sm:text-3xl font-black text-green-600">{confirmedBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-blue-100 to-white border-l-8 border-blue-500 hover:shadow-2xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-black tracking-tight text-blue-700">Total Athletes</CardTitle>
-                  <Users className="h-5 w-5 text-blue-700" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-blue-100 to-white border-l-4 sm:border-l-8 border-blue-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-blue-700">Total Athletes</CardTitle>
+                  <div className="bg-blue-100 p-1.5 sm:p-2 rounded-full">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-700" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-black text-blue-700">{athletes.length}</div>
+                  <div className="text-2xl sm:text-3xl font-black text-blue-700">{athletes.length}</div>
                 </CardContent>
               </Card>
 
               {missingWaivers.length > 0 && (
-                <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#E10B0B]/[.08] to-white border-l-8 border-[#E10B0B] hover:shadow-2xl transition-shadow duration-300">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#E10B0B]/[.08] to-white border-l-4 sm:border-l-8 border-[#E10B0B] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                  <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                     <CardTitle className="text-sm font-black tracking-tight text-[#E10B0B]">Missing Waivers</CardTitle>
                     <AlertCircle className="h-5 w-5 text-[#E10B0B]" />
                   </CardHeader>
@@ -1147,7 +1156,7 @@ export default function Admin() {
           )}
         </div>
 
-        <Tabs value={activeTab} className="w-full">
+        <Tabs value={activeTab} className="w-full max-w-full overflow-hidden">
           {/* TabsList is now hidden as we're using the sidebar instead */}
           <TabsList className="hidden">
             <TabsTrigger 
@@ -1230,24 +1239,24 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Booking Management
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 pt-0">
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <AdminBookingManager openAthleteModal={openAthleteModal} />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <Users className="h-8 w-8 text-[#D8BD2A]" />
                   Athletes Management
                 </CardTitle>
@@ -1265,7 +1274,7 @@ export default function Admin() {
                     />
                   </div>
                   {/* Athletes Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                     {athletes
                       .filter((athlete, index, self) =>
                         index === self.findIndex((a) => a.id === athlete.id)
@@ -1387,10 +1396,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <User className="h-8 w-8 text-[#D8BD2A]" />
                   Parents Management
                   <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-bold rounded-xl px-3 py-1">
@@ -1444,7 +1453,7 @@ export default function Admin() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       {filteredParents.map((parent: any) => {
                         const athleteCount = typeof parent.athlete_count === 'number' ? parent.athlete_count : (parent.athletes?.length ?? 0);
                         const bookingCount = typeof parent.booking_count === 'number' ? parent.booking_count : (parent.bookings?.length ?? 0);
@@ -1598,24 +1607,24 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <Clock className="h-8 w-8 text-[#D8BD2A]" />
                   Upcoming Sessions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 pt-0">
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <UpcomingSessions />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="content">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Content Management
                 </CardTitle>
@@ -2054,10 +2063,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="schedule">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="schedule" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Schedule & Availability
                 </CardTitle>
@@ -2350,11 +2359,11 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="parentcomm">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                  <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                     <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
                     Parent Communication
                   </CardTitle>
@@ -2548,32 +2557,32 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payments">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
                   Payment Management
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 pt-0">
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <PaymentsTab />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <BarChart className="h-8 w-8 text-[#D8BD2A]" />
                   Analytics Dashboard
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-                <div className="space-y-6">
+              <CardContent className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                     <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-blue-800">Total Bookings</CardTitle>
@@ -2820,24 +2829,24 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="waivers">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="waivers" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Waiver Management
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 pt-0">
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <AdminWaiverManagement />
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings">
-            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
-              <CardHeader className="pb-4 sm:pb-6">
-                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <TabsContent value="settings" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
                   <AlertCircle className="h-8 w-8 text-[#D8BD2A]" />
                   Settings
                 </CardTitle>
