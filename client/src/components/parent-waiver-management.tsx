@@ -7,7 +7,7 @@ import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Calendar, CheckCircle, FileText, Phone, Shield, User } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, FileText, FileX, Phone, Shield, User } from 'lucide-react';
 import { useState } from 'react';
 
 interface Athlete {
@@ -178,44 +178,50 @@ export function ParentWaiverManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Shield className="w-5 h-5 text-orange-600" />
-        <h2 className="text-xl font-semibold">Waiver Management</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <Shield className="h-6 w-6 text-blue-600" />
+        <h2 className="text-2xl font-bold text-blue-800">Waiver Management</h2>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="overflow-hidden border-0 shadow-md bg-gradient-to-br from-green-50 to-green-100">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+            <div className="flex items-center gap-3">
+              <div className="bg-green-100 p-2 rounded-full">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
               <div>
-                <p className="text-2xl font-bold text-green-600">{athletesWithWaivers.length}</p>
-                <p className="text-sm text-gray-600">Signed Waivers</p>
+                <p className="text-3xl font-bold text-green-600">{athletesWithWaivers.length}</p>
+                <p className="text-sm font-medium text-green-700">Signed Waivers</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-100">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-100 p-2 rounded-full">
+                <AlertCircle className="w-6 h-6 text-orange-600" />
+              </div>
               <div>
-                <p className="text-2xl font-bold text-orange-600">{athletesNeedingWaivers.length}</p>
-                <p className="text-sm text-gray-600">Pending Waivers</p>
+                <p className="text-3xl font-bold text-orange-600">{athletesNeedingWaivers.length}</p>
+                <p className="text-sm font-medium text-orange-700">Pending Waivers</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <User className="w-6 h-6 text-blue-600" />
+              </div>
               <div>
-                <p className="text-2xl font-bold text-blue-600">{waiverStatus.length}</p>
-                <p className="text-sm text-gray-600">Total Athletes</p>
+                <p className="text-3xl font-bold text-blue-600">{waiverStatus.length}</p>
+                <p className="text-sm font-medium text-blue-700">Total Athletes</p>
               </div>
             </div>
           </CardContent>
@@ -225,131 +231,141 @@ export function ParentWaiverManagement() {
       {/* Pending Waivers */}
       {athletesNeedingWaivers.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-orange-600" />
-            <h3 className="text-lg font-semibold">Athletes Needing Waivers</h3>
-          </div>
-          
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              The following athletes need signed waivers before participating in coaching sessions. Please complete the waiver process for each athlete.
-            </AlertDescription>
-          </Alert>
+          <Card className="overflow-hidden border-0 shadow-md">
+            <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-600 py-4">
+              <CardTitle className="text-white flex items-center gap-2">
+                <FileX className="h-5 w-5" />
+                Athletes Needing Waivers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              <Alert className="mb-4 border-orange-200 bg-orange-50 text-orange-800">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  The following athletes need signed waivers before participating in coaching sessions. Please complete the waiver process for each athlete.
+                </AlertDescription>
+              </Alert>
 
-          <div className="grid gap-4">
-            {athletesNeedingWaivers.map((status: AthleteWaiverStatus) => (
-              <Card key={status.athlete.id} className="border-orange-200 bg-orange-50">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {status.athlete.name || `${status.athlete.first_name} ${status.athlete.last_name}`}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Age: {getAthleteAge(status.athlete.date_of_birth)}
-                        </span>
-                        <span className="capitalize">
-                          Experience: {status.athlete.experience}
-                        </span>
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">
-                      Waiver Required
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        A liability waiver is required before this athlete can participate in coaching sessions.
-                      </p>
-                      {status.athlete.allergies && (
-                        <p className="text-sm text-red-600 mt-1">
-                          <strong>Allergies:</strong> {status.athlete.allergies}
-                        </p>
-                      )}
-                    </div>
-                    <Button 
-                      onClick={() => handleCreateWaiver(status.athlete)}
-                      className="bg-orange-600 hover:bg-orange-700"
-                      disabled={isLoadingParentInfo}
-                    >
-                      {isLoadingParentInfo ? 'Loading...' : 'Sign Waiver'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+              <div className="grid gap-4">
+                {athletesNeedingWaivers.map((status: AthleteWaiverStatus) => (
+                  <Card key={status.athlete.id} className="border-orange-200 bg-orange-50/50 hover:bg-orange-50 transition-all duration-200 shadow-sm hover:shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg text-orange-800">
+                            {status.athlete.name || `${status.athlete.first_name} ${status.athlete.last_name}`}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-4 mt-1 text-orange-700">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              Age: {getAthleteAge(status.athlete.date_of_birth)}
+                            </span>
+                            <span className="capitalize">
+                              Experience: {status.athlete.experience}
+                            </span>
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 font-medium bg-orange-50">
+                          Waiver Required
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm text-orange-700">
+                            A liability waiver is required before this athlete can participate in coaching sessions.
+                          </p>
+                          {status.athlete.allergies && (
+                            <p className="text-sm text-red-600 mt-1">
+                              <strong>Allergies:</strong> {status.athlete.allergies}
+                            </p>
+                          )}
+                        </div>
+                        <Button 
+                          onClick={() => handleCreateWaiver(status.athlete)}
+                          className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-medium shadow-sm"
+                          disabled={isLoadingParentInfo}
+                        >
+                          {isLoadingParentInfo ? 'Loading...' : 'Sign Waiver'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* Signed Waivers */}
       {athletesWithWaivers.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <h3 className="text-lg font-semibold">Signed Waivers</h3>
-          </div>
-
-          <div className="grid gap-4">
-            {athletesWithWaivers.map((status: AthleteWaiverStatus) => (
-              <Card key={status.athlete.id} className="border-green-200 bg-green-50">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {status.athlete.name || `${status.athlete.first_name} ${status.athlete.last_name}`}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-1">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Age: {getAthleteAge(status.athlete.date_of_birth)}
-                        </span>
-                        <span className="capitalize">
-                          Experience: {status.athlete.experience}
-                        </span>
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="text-green-600 border-green-600">
-                      Waiver Signed
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Signed by:</span>
-                      <span className="text-sm font-medium">{status.waiver?.signer_name}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Date signed:</span>
-                      <span className="text-sm font-medium">
-                        {status.waiver?.signed_at ? formatDate(status.waiver.signed_at) : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Relationship:</span>
-                      <span className="text-sm font-medium">{status.waiver?.relationship_to_athlete}</span>
-                    </div>
-                    {status.waiver?.emergency_contact_number && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Emergency Contact:</span>
-                        <span className="text-sm font-medium flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          {status.waiver.emergency_contact_number}
-                        </span>
+          <Card className="overflow-hidden border-0 shadow-md">
+            <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 py-4">
+              <CardTitle className="text-white flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                Signed Waivers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              <div className="grid gap-4">
+                {athletesWithWaivers.map((status: AthleteWaiverStatus) => (
+                  <Card key={status.athlete.id} className="border-green-200 bg-green-50/50 hover:bg-green-50 transition-all duration-200 shadow-sm hover:shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg text-green-800">
+                            {status.athlete.name || `${status.athlete.first_name} ${status.athlete.last_name}`}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-4 mt-1 text-green-700">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              Age: {getAthleteAge(status.athlete.date_of_birth)}
+                            </span>
+                            <span className="capitalize">
+                              Experience: {status.athlete.experience}
+                            </span>
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="text-green-600 border-green-600 font-medium bg-green-50">
+                          Waiver Signed
+                        </Badge>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-green-700">Signed by:</span>
+                          <span className="text-sm font-medium">{status.waiver?.signer_name}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-green-700">Date signed:</span>
+                          <span className="text-sm font-medium">
+                            {status.waiver?.signed_at ? formatDate(status.waiver.signed_at) : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-green-700">Relationship:</span>
+                          <span className="text-sm font-medium">{status.waiver?.relationship_to_athlete}</span>
+                        </div>
+                        {status.waiver?.emergency_contact_number && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-700">Emergency Contact:</span>
+                            <span className="text-sm font-medium flex items-center gap-1">
+                              <Phone className="w-3 h-3" />
+                              {status.waiver.emergency_contact_number}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

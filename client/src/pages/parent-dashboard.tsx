@@ -21,7 +21,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, LogOut, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
+import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -571,71 +571,67 @@ function ParentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50/20 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F0276] dark:text-white drop-shadow-sm">Parent Dashboard</h1>
-          <Button 
-            onClick={() => logoutMutation.mutate()} 
-            variant="outline"
-            size="sm"
-            className="text-sm sm:text-base bg-white/70 backdrop-blur-sm hover:bg-white/90 dark:bg-gray-800 dark:hover:bg-gray-700"
-            disabled={logoutMutation.isPending}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 dark:text-white mb-2">Parent Portal</h1>
+          <p className="text-blue-600/80 dark:text-blue-400">Manage your athletes, sessions and waivers</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Athletes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{athletes.length}</div>
+          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
+                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Athletes</p>
+                  <p className="text-2xl font-bold text-blue-800 dark:text-white">{athletes.length}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Upcoming Sessions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{upcomingBookings.length}</div>
+          <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-green-100 dark:bg-green-900/50 p-3 rounded-full">
+                  <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Upcoming Sessions</p>
+                  <p className="text-2xl font-bold text-green-800 dark:text-white">{upcomingBookings.length}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{bookings.length}</div>
+          <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-full">
+                  <BookMarked className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Total Bookings</p>
+                  <p className="text-2xl font-bold text-purple-800 dark:text-white">{bookings.length}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-          <h2 className="text-2xl font-bold">Booking Management</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-blue-800 dark:text-white">Booking Management</h2>
+            <p className="text-blue-600/80 dark:text-blue-400 text-sm">Schedule and manage your coaching sessions</p>
+          </div>
           <div className="flex gap-2">
             <Button 
               onClick={() => setShowAthleteSelection(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1.5 min-h-[36px] md:text-sm md:px-3 md:py-2 md:min-h-[40px]"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-xs px-2 py-1.5 min-h-[36px] md:text-sm md:px-3 md:py-2 md:min-h-[40px] shadow-sm"
             >
+              <PlusCircle className="h-4 w-4 mr-1" />
               Book New Session
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                logoutMutation.mutate(undefined, {
-                  onSuccess: () => {
-                    setLocation('/parent-login');
-                  }
-                });
-              }}
-              disabled={logoutMutation.isPending}
-              className="text-xs px-2 py-1.5 min-h-[36px] md:text-sm md:px-3 md:py-2 md:min-h-[40px]"
-            >
-              {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
         </div>
