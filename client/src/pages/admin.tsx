@@ -1016,21 +1016,12 @@ export default function Admin() {
       {!isSidebarOpen && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          className="fixed z-50 top-4 left-4 md:hidden p-2 bg-[#0F0276] text-white rounded-full shadow-lg"
+          className="fixed z-40 top-20 left-4 md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md shadow-sm transition-all duration-200"
           aria-label="Open navigation menu"
         >
-          <Menu size={24} />
+          <Menu size={20} />
         </button>
       )}
-
-      {/* Floating Action Button - Quick New Booking */}
-      <button 
-        onClick={() => setShowUnifiedBooking(true)}
-        className="fixed z-40 bottom-6 right-6 p-4 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
-        aria-label="Create new booking"
-      >
-        <Plus size={24} />
-      </button>
       
       <div className="flex h-full">
         {/* Sidebar Navigation */}
@@ -1044,7 +1035,7 @@ export default function Admin() {
 
         {/* Main Content Area */}
         <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : ''} w-full`}>
-          <div className="max-w-full md:max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
+          <div className="max-w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
             {/* Dashboard Header */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 sm:mb-10 gap-4">
               <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F0276] dark:text-white drop-shadow-sm">
@@ -1064,14 +1055,7 @@ export default function Admin() {
               
               {/* Contextual Actions */}
               <div className="flex gap-4">
-                {activeTab === 'bookings' && (
-                  <Button 
-                    className="bg-gradient-to-r from-[#0F0276] to-[#2B3A8B] text-white font-bold px-6 py-2 rounded-2xl shadow-lg hover:scale-105 transition-transform duration-200"
-                    onClick={() => setShowUnifiedBooking(true)}
-                  >
-                    <Plus className="mr-2 h-5 w-5" /> New Booking
-                  </Button>
-                )}
+                {/* Removed New Booking button as it's redundant with the buttons in the booking manager */}
               </div>
             </div>
 
