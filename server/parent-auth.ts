@@ -14,9 +14,19 @@ export const isParentAuthenticated = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log("🔍 Parent Auth Check - Session Info:", {
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    parentId: req.session?.parentId,
+    parentEmail: req.session?.parentEmail,
+    cookies: req.headers.cookie
+  });
+  
   if (!req.session.parentId) {
+    console.log("❌ Parent authentication failed - No parentId in session");
     return res.status(401).json({ error: 'Parent authentication required' });
   }
+  console.log("✅ Parent authenticated successfully:", req.session.parentId);
   next();
 };
 

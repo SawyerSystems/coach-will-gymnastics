@@ -2310,6 +2310,11 @@ export class SupabaseStorage implements IStorage {
 
   async updateBookingAttendanceStatus(id: number, attendanceStatus: AttendanceStatusEnum): Promise<Booking | undefined> {
     console.log('[STORAGE] Updating booking attendance status:', { id, attendanceStatus });
+    
+    // Enhanced logging for debugging
+    console.log(`[STORAGE-DEBUG] UPDATING attendance_status to ${attendanceStatus} for booking ID ${id}`);
+    
+    // Use service role key for privileged operations to bypass RLS
     const { data: booking, error } = await supabaseAdmin
       .from('bookings')
       .update({ attendance_status: attendanceStatus })
@@ -2319,10 +2324,16 @@ export class SupabaseStorage implements IStorage {
 
     if (error) {
       console.error('Error updating booking attendance status:', error);
+      console.error('Supabase error details:', JSON.stringify(error));
       return undefined;
     }
 
-    console.log('[STORAGE] Successfully updated booking attendance status:', { id, attendanceStatus });
+    if (!booking) {
+      console.error(`[STORAGE-ERROR] No booking returned after update for ID ${id}`);
+      return undefined;
+    }
+
+    console.log(`[STORAGE] Successfully updated booking attendance status to "${attendanceStatus}" for ID ${id}`);
     return booking ? this.mapBookingFromDb(booking) : undefined;
   }
 

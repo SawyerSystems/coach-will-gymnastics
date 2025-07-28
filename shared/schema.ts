@@ -171,12 +171,12 @@ export const bookings = pgTable("bookings", {
   focusAreas: text("focus_areas").array(), // Array of focus areas/skills worked on during the session
   progressNote: text("progress_note"), // For Adventure Log progress tracking
   coachName: text("coach_name").default("Coach Will"), // For Adventure Log coach tracking
-  dropoffPersonName: text("dropoff_person_name"),
-  dropoffPersonRelationship: text("dropoff_person_relationship"),
-  dropoffPersonPhone: text("dropoff_person_phone"),
-  pickupPersonName: text("pickup_person_name"),
-  pickupPersonRelationship: text("pickup_person_relationship"),
-  pickupPersonPhone: text("pickup_person_phone"),
+  dropoffPersonName: text("dropoff_person_name").notNull(),
+  dropoffPersonRelationship: text("dropoff_person_relationship").notNull(),
+  dropoffPersonPhone: text("dropoff_person_phone").notNull(),
+  pickupPersonName: text("pickup_person_name").notNull(),
+  pickupPersonRelationship: text("pickup_person_relationship").notNull(),
+  pickupPersonPhone: text("pickup_person_phone").notNull(),
   altPickupPersonName: text("alt_pickup_person_name"),
   altPickupPersonRelationship: text("alt_pickup_person_relationship"),
   altPickupPersonPhone: text("alt_pickup_person_phone"),
@@ -407,8 +407,12 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   
   safetyVerificationSignedAt: z.union([z.date(), z.string().transform(str => new Date(str))]).nullable().optional(),
   // Safety verification fields
-  dropoffPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]).nullable().optional(),
-  pickupPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]).nullable().optional(),
+  dropoffPersonName: z.string().min(1, "Dropoff person name is required"),
+  dropoffPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]),
+  dropoffPersonPhone: z.string().min(1, "Dropoff person phone is required"),
+  pickupPersonName: z.string().min(1, "Pickup person name is required"),
+  pickupPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]),
+  pickupPersonPhone: z.string().min(1, "Pickup person phone is required"),
   altPickupPersonRelationship: z.enum(["Parent", "Guardian", "Grandparent", "Aunt/Uncle", "Sibling", "Family Friend", "Other"]).nullable().optional(),
   // Athletes array for booking creation
   athletes: z.array(z.object({
@@ -633,6 +637,8 @@ export type Booking = typeof bookings.$inferSelect & {
     experience: string;
     photo?: string;
   }>;
+  // Track when attendance status was last manually changed
+  lastStatusChangeTime?: Date | string | null;
 };
 export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type BookingAthlete = typeof bookingAthletes.$inferSelect;

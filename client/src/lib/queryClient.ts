@@ -7,20 +7,51 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Get the API base URL based on environment
+function getApiBaseUrl(): string {
+  // For debugging purposes, we're using the direct backend URL
+  // This bypasses the Vite proxy which might be causing issues with cookies
+  if (import.meta.env.MODE === 'development') {
+    return 'http://localhost:5001';
+  }
+  // In production, the API is served from the same origin
+  return '';
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  // Ensure the URL always points to the API server
+  const apiBaseUrl = getApiBaseUrl();
+  const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
+  
+  console.log(`🌐 API Request: ${method} ${fullUrl}`);
+  
+  try {
+    const res = await fetch(fullUrl, {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include", // This ensures cookies are sent with the request
+    });
+    
+    // Enhanced logging for debugging
+    console.log(`📡 API Response: ${method} ${fullUrl} - ${res.status} ${res.statusText}`, {
+      headers: {
+        'content-type': res.headers.get('content-type'),
+        'set-cookie': res.headers.get('set-cookie'),
+      },
+      cookies: document.cookie ? 'Present' : 'None'
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error(`❌ API Request Error: ${method} ${fullUrl}`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -29,9 +60,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    // Ensure the URL always points to the API server
+    const apiBaseUrl = getApiBaseUrl();
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('http') ? url : `${apiBaseUrl}${url}`;
+    
+    console.log(`🔍 Query Request: GET ${fullUrl}`);
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
+    
+    // Log the response status for debugging
+    console.log(`📥 Query Response: GET ${fullUrl} - ${res.status} ${res.statusText}`);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

@@ -4,6 +4,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Sidebar Animation Styles */
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slideInFromLeft {
+  animation: slideInFromLeft 0.3s ease-out forwards;
+}
+
+@keyframes slideOutToLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+.animate-slideOutToLeft {
+  animation: slideOutToLeft 0.3s ease-in forwards;
+}
+
 /* Scrollbar hide utility */
 @layer utilities {
   .scrollbar-hide {

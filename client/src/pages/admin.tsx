@@ -7,6 +7,7 @@ import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { AdminBookingManager } from "@/components/admin-booking-manager";
 import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { ContentSection, SectionBasedContentEditor } from "@/components/section-based-content-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import {
   Edit,
   Eye,
   Mail,
+  Menu,
   MessageCircle,
   MessageSquare,
   Plus,
@@ -62,6 +64,24 @@ export default function Admin() {
   
   // ALL STATE HOOKS FIRST
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(window?.innerWidth >= 768); // Default to open on desktop only
+  const [activeTab, setActiveTab] = useState<string>("bookings");
+  
+  // Set sidebar open state based on window size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSidebarOpen(window.innerWidth >= 768); // Show sidebar by default on desktop
+    };
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    // Initial check
+    handleResize();
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [newPost, setNewPost] = useState<InsertBlogPost>({ title: "", content: "", excerpt: "", category: "", imageUrl: null });
   const [newPostSections, setNewPostSections] = useState<ContentSection[]>([]);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -986,21 +1006,75 @@ export default function Admin() {
 
   // RENDER
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-          <Button onClick={handleLogout} variant="outline">
-            Logout
-          </Button>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Mobile Hamburger Menu */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed z-50 top-4 left-4 md:hidden p-2 bg-[#0F0276] text-white rounded-full shadow-lg"
+          aria-label="Open navigation menu"
+        >
+          <Menu size={24} />
+        </button>
+      )}
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 mb-8">
+      {/* Floating Action Button - Quick New Booking */}
+      <button 
+        onClick={() => setShowUnifiedBooking(true)}
+        className="fixed z-40 bottom-6 right-6 p-4 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+        aria-label="Create new booking"
+      >
+        <Plus size={24} />
+      </button>
+      
+      <div className="flex h-full">
+        {/* Sidebar Navigation */}
+        <AdminSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab)}
+          onLogout={handleLogout}
+        />
+
+        {/* Main Content Area */}
+        <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : ''}`}>
+          <div className="max-w-7xl mx-auto px-4 py-10">
+            {/* Dashboard Header */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F0276] dark:text-white drop-shadow-sm">
+                {/* Show different titles based on active tab */}
+                {activeTab === 'bookings' && 'Booking Manager'}
+                {activeTab === 'upcoming' && 'Upcoming Sessions'}
+                {activeTab === 'athletes' && 'Athlete Management'}
+                {activeTab === 'parents' && 'Parent Management'}
+                {activeTab === 'content' && 'Content Management'}
+                {activeTab === 'analytics' && 'Analytics Dashboard'}
+                {activeTab === 'settings' && 'Admin Settings'}
+                {activeTab === 'schedule' && 'Schedule Management'}
+                {activeTab === 'parentcomm' && 'Parent Communications'}
+                {activeTab === 'waivers' && 'Waiver Management'}
+                {activeTab === 'payments' && 'Payment Management'}
+              </h1>
+              
+              {/* Contextual Actions */}
+              <div className="flex gap-4">
+                {activeTab === 'bookings' && (
+                  <Button 
+                    className="bg-gradient-to-r from-[#0F0276] to-[#2B3A8B] text-white font-bold px-6 py-2 rounded-2xl shadow-lg hover:scale-105 transition-transform duration-200"
+                    onClick={() => setShowUnifiedBooking(true)}
+                  >
+                    <Plus className="mr-2 h-5 w-5" /> New Booking
+                  </Button>
+                )}
+              </div>
+            </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {!bookings || !athletes ? (
-            // Loading skeletons
             [...Array(4)].map((_, index) => (
-              <Card key={index}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-4 rounded" />
                 </CardHeader>
@@ -1010,57 +1084,56 @@ export default function Admin() {
               </Card>
             ))
           ) : (
-            // Actual data cards
             <>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-8 border-[#0F0276] hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-black tracking-tight text-[#0F0276]">Total Bookings</CardTitle>
+                  <Calendar className="h-5 w-5 text-[#0F0276]" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalBookings}</div>
+                  <div className="text-3xl font-black text-[#0F0276]">{totalBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#D8BD2A]/[.08] to-white border-l-8 border-[#D8BD2A] hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-black tracking-tight text-[#D8BD2A]">Pending</CardTitle>
+                  <Clock className="h-5 w-5 text-[#D8BD2A]" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-orange-600">{pendingBookings}</div>
+                  <div className="text-3xl font-black text-[#D8BD2A]">{pendingBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-green-100 to-white border-l-8 border-green-500 hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-black tracking-tight text-green-600">Confirmed</CardTitle>
+                  <CheckCircle className="h-5 w-5 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{confirmedBookings}</div>
+                  <div className="text-3xl font-black text-green-600">{confirmedBookings}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Athletes</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-blue-100 to-white border-l-8 border-blue-500 hover:shadow-2xl transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-black tracking-tight text-blue-700">Total Athletes</CardTitle>
+                  <Users className="h-5 w-5 text-blue-700" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{athletes.length}</div>
+                  <div className="text-3xl font-black text-blue-700">{athletes.length}</div>
                 </CardContent>
               </Card>
 
               {missingWaivers.length > 0 && (
-                <Card className="border-orange-200 bg-orange-50">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-orange-800">Missing Waivers</CardTitle>
-                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#E10B0B]/[.08] to-white border-l-8 border-[#E10B0B] hover:shadow-2xl transition-shadow duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-black tracking-tight text-[#E10B0B]">Missing Waivers</CardTitle>
+                    <AlertCircle className="h-5 w-5 text-[#E10B0B]" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-orange-600">{missingWaivers.length}</div>
-                    <p className="text-xs text-orange-700 mt-1">
+                    <div className="text-3xl font-black text-[#E10B0B]">{missingWaivers.length}</div>
+                    <p className="text-xs text-[#E10B0B] mt-1">
                       Athletes need waivers signed
                     </p>
                   </CardContent>
@@ -1070,15 +1143,12 @@ export default function Admin() {
           )}
         </div>
 
-        <Tabs defaultValue="bookings" className="space-y-4">
-          <TabsList 
-            className="w-full grid grid-cols-3 grid-rows-4 gap-2 bg-gray-100 p-2 rounded-lg h-auto"
-            role="tablist"
-            aria-label="Admin dashboard sections"
-          >
+        <Tabs value={activeTab} className="w-full">
+          {/* TabsList is now hidden as we're using the sidebar instead */}
+          <TabsList className="hidden">
             <TabsTrigger 
               value="bookings" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="hidden"
               role="tab"
               aria-controls="bookings-panel"
               aria-label="Manage bookings and reservations"
@@ -1087,7 +1157,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger 
               value="upcoming" 
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              className="hidden"
               role="tab"
               aria-controls="upcoming-panel"
               aria-label="View upcoming sessions and schedule"
@@ -1096,7 +1166,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger 
               value="athletes" 
-              className="data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+              className="hidden"
               role="tab"
               aria-controls="athletes-panel"
               aria-label="Manage athlete profiles and information"
@@ -1105,7 +1175,7 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger 
               value="parents" 
-              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-pink-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+              className="hidden"
               role="tab"
               aria-controls="parents-panel"
               aria-label="Manage parent profiles and family relationships"
@@ -1114,56 +1184,60 @@ export default function Admin() {
             </TabsTrigger>
             <TabsTrigger 
               value="content" 
-              className="data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-purple-100"
+              className="hidden"
             >
               📝 Content
             </TabsTrigger>
             <TabsTrigger 
               value="schedule" 
-              className="data-[state=active]:bg-teal-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-teal-100"
+              className="hidden"
             >
               ⏰ Schedule
             </TabsTrigger>
             <TabsTrigger 
               value="parentcomm" 
-              className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-indigo-100"
+              className="hidden"
             >
               💬 Messages
             </TabsTrigger>
             <TabsTrigger 
               value="payments" 
-              className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-emerald-100"
+              className="hidden"
             >
               💳 Payments
             </TabsTrigger>
             <TabsTrigger 
               value="analytics" 
-              className="data-[state=active]:bg-rose-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-rose-100"
+              className="hidden"
             >
               📊 Analytics
             </TabsTrigger>
             <TabsTrigger 
               value="waivers" 
-              className="data-[state=active]:bg-amber-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-amber-100"
+              className="hidden"
             >
               📋 Waivers
             </TabsTrigger>
             <TabsTrigger 
               value="site-content" 
-              className="data-[state=active]:bg-violet-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-violet-100"
+              className="hidden"
             >
               🎨 Site Content
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
-              className="data-[state=active]:bg-slate-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all duration-200 hover:bg-slate-100"
+              className="hidden"
             >
               ⚙️ Settings
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab">
-            <AdminBookingManager openAthleteModal={openAthleteModal} />
+            <Card className="max-w-full mx-auto">
+              <CardContent className="p-6">
+                <AdminBookingManager openAthleteModal={openAthleteModal} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab">
@@ -2248,7 +2322,11 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <PaymentsTab />
+            <Card>
+              <CardContent className="p-6">
+                <PaymentsTab />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="analytics">
@@ -3438,6 +3516,8 @@ export default function Admin() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+          </div>
+        </div>
       </div>
     </div>
   );

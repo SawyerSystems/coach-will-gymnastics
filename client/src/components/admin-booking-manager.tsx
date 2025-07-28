@@ -40,6 +40,7 @@ import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@sha
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileX, Filter, HelpCircle, Plus, User, X, XCircle } from "lucide-react";
 import { useState } from "react";
+import { AdminBookingDetailActions } from "./admin-booking-detail-actions";
 
 // Helper function to get status badge variant and color
 export const getStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
@@ -705,7 +706,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   }
 
   return (
-    <div className="space-y-6">
+    <>
       {/* Tabs for Active/Archived */}
       <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived')} className="w-full">
         <TabsList className="mb-4">
@@ -920,8 +921,9 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">
-                              <DialogHeader>
+                              <DialogHeader className="flex flex-row items-center justify-between pr-6">
                                 <DialogTitle>Booking Details</DialogTitle>
+                                <AdminBookingDetailActions booking={booking} />
                               </DialogHeader>
                               <BookingDetailsView booking={booking} />
                             </DialogContent>
@@ -1151,7 +1153,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   );
 }
 
@@ -2099,6 +2101,68 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
           </div>
         </div>
       )}
+
+      {/* Safety Information Section */}
+      <div>
+        <h4 className="font-semibold mb-3">Safety Information</h4>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h5 className="font-medium mb-2">Drop-off Person</h5>
+            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
+              <div className="flex justify-between">
+                <span>Name:</span>
+                <span>{booking.dropoffPersonName || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Relationship:</span>
+                <span>{booking.dropoffPersonRelationship || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phone:</span>
+                <span>{booking.dropoffPersonPhone || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h5 className="font-medium mb-2">Pick-up Person</h5>
+            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
+              <div className="flex justify-between">
+                <span>Name:</span>
+                <span>{booking.pickupPersonName || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Relationship:</span>
+                <span>{booking.pickupPersonRelationship || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phone:</span>
+                <span>{booking.pickupPersonPhone || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {booking.altPickupPersonName && (
+          <div className="mt-4">
+            <h5 className="font-medium mb-2">Alternative Pick-up Person</h5>
+            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
+              <div className="flex justify-between">
+                <span>Name:</span>
+                <span>{booking.altPickupPersonName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Relationship:</span>
+                <span>{booking.altPickupPersonRelationship || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phone:</span>
+                <span>{booking.altPickupPersonPhone || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {booking.adminNotes && (
         <div>

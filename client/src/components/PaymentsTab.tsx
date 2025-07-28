@@ -191,9 +191,9 @@ export function PaymentsTab() {
   });
 
   return (
-    <div className="space-y-6">
+    <>
       {/* Enhanced Payment Analytics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -253,42 +253,42 @@ export function PaymentsTab() {
       </div>
 
       {/* Filters and Actions */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row gap-4 justify-between">
-            <CardTitle>Payment Management</CardTitle>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => syncStripeMutation.mutate()}
-                disabled={syncStripeMutation.isPending}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${syncStripeMutation.isPending ? 'animate-spin' : ''}`} />
-                Sync with Stripe
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Stripe Dashboard
-              </Button>
-            </div>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+          <h2 className="text-2xl font-bold">Payment Management</h2>
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={() => syncStripeMutation.mutate()}
+              disabled={syncStripeMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncStripeMutation.isPending ? 'animate-spin' : ''}`} />
+              Sync with Stripe
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
+              className="w-full sm:w-auto"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Stripe Dashboard
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div>
-              <Label htmlFor="search">Search</Label>
-              <Input
-                id="search"
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+        </div>
+
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div>
+            <Label htmlFor="search">Search</Label>
+            <Input
+              id="search"
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
             <div>
               <Label htmlFor="date">Date</Label>
               <Input
@@ -334,15 +334,15 @@ export function PaymentsTab() {
             </div>
           </div>
 
-          {/* Tabs for different views */}
-          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview">All Transactions</TabsTrigger>
-              <TabsTrigger value="pending">Pending Payments</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-            </TabsList>
-
-            {/* All Transactions Tab */}
+        {/* Tabs for different views */}
+        <Card>
+          <CardContent className="p-6">
+            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview">All Transactions</TabsTrigger>
+                <TabsTrigger value="pending">Pending Payments</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+              </TabsList>            {/* All Transactions Tab */}
             <TabsContent value="overview">
               <Table>
                 <TableHeader>
@@ -624,8 +624,9 @@ export function PaymentsTab() {
               </Table>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

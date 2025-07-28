@@ -103,12 +103,12 @@ const formSchema = z.object({
   adminNotes: z.string().default(""),
   
   // Safety verification
-  dropoffPersonName: z.string().default(""),
-  dropoffPersonRelationship: z.string().default("Parent"),
-  dropoffPersonPhone: z.string().default(""),
-  pickupPersonName: z.string().default(""),
-  pickupPersonRelationship: z.string().default("Parent"),
-  pickupPersonPhone: z.string().default(""),
+  dropoffPersonName: z.string().min(1, "Dropoff person name is required"),
+  dropoffPersonRelationship: z.string().min(1, "Dropoff person relationship is required").default("Parent"),
+  dropoffPersonPhone: z.string().min(1, "Dropoff person phone is required"),
+  pickupPersonName: z.string().min(1, "Pickup person name is required"),
+  pickupPersonRelationship: z.string().min(1, "Pickup person relationship is required").default("Parent"),
+  pickupPersonPhone: z.string().min(1, "Pickup person phone is required"),
   safetyVerificationSigned: z.boolean().default(false),
   
   // Status fields

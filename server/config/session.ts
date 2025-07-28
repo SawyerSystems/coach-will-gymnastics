@@ -50,13 +50,13 @@ export const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   
-  // Environment-aware cookie configuration
+    // Environment-aware cookie configuration
   cookie: {
     httpOnly: true,                              // Security: prevent XSS
     secure: isProd,                              // HTTPS only in production
     sameSite: isProd ? 'none' : 'lax',          // Cross-origin support
-    maxAge: 24 * 60 * 60 * 1000                 // 1 day session lifetime
-    // Removed domain: 'localhost' for dev to allow cookie for all localhost variants
+    maxAge: 24 * 60 * 60 * 1000,                // 1 day session lifetime
+    domain: isProd ? undefined : 'localhost'     // Set domain for development
   }
 });
 
@@ -64,13 +64,19 @@ export const sessionMiddleware = session({
  * CORS middleware configured for environment-specific origins
  */
 export const corsMiddleware = cors({
-  origin: isProd
-    ? ['https://coachwilltumbles.com'] // Production frontend
-    : [
-        'http://localhost:5173',        // Vite dev server
-        'http://localhost:3000',        // Alternative dev port
-        'http://localhost:5001'         // Backend port (for testing)
-      ],
+  origin: function(origin, callback) {
+    const allowedOrigins = isProd
+      ? ['https://coachwilltumbles.com']
+      : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5001'];
+    
+    // For null origins (like Postman) or allowed origins
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn('⚠️ CORS blocked request from:', origin);
+      callback(null, false);
+    }
+  },
   credentials: true, // Enable cookies to be sent cross-origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
