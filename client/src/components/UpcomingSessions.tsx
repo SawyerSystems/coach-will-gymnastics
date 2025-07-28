@@ -7,6 +7,7 @@ import { Clock, User } from "lucide-react";
 interface UpcomingSession {
   id: number;
   sessionDate: string;
+  sessionTime: string;
   lessonType: string;
   parentName: string;
   athleteNames: string[];
@@ -121,9 +122,11 @@ export function UpcomingSessions() {
         ) : (
           <div className="space-y-4">
             {sessions.map((session) => {
-              const dateTimeResult = formatSessionDateTime(session.sessionDate);
-              const date = typeof dateTimeResult === 'string' ? dateTimeResult : dateTimeResult.date;
-              const time = typeof dateTimeResult === 'string' ? '' : dateTimeResult.time;
+              // Format the date nicely
+              const dateObj = session.sessionDate ? new Date(session.sessionDate) : null;
+              const formattedDate = dateObj 
+                ? dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) 
+                : 'TBD';
               
               return (
                 <div key={session.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
@@ -132,7 +135,7 @@ export function UpcomingSessions() {
                       {/* Date and Time with lesson type badge */}
                       <div className="flex items-center gap-3">
                         <div className="font-semibold text-gray-900">
-                          {date}{time && ` at ${time}`}
+                          {formattedDate} at {session.sessionTime || 'TBD'}
                         </div>
                         <Badge variant="outline">
                           {session.lessonType.replace('-', ' ').replace('min', 'minute')}

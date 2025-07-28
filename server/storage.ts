@@ -669,6 +669,14 @@ With the right setup and approach, home practice can accelerate your child's gym
   // Bookings
   async createBooking(insertBooking: InsertBooking): Promise<Booking> {
     const id = this.currentBookingId++;
+    
+    // Extract parent name and phone for safety fields
+    const parentFullName = 
+      (insertBooking.parentFirstName && insertBooking.parentLastName) ? 
+      `${insertBooking.parentFirstName} ${insertBooking.parentLastName}` : 
+      "";
+    const parentPhone = insertBooking.parentPhone || "";
+    
     const booking: Booking = { 
       ...insertBooking,
       id,
@@ -697,12 +705,12 @@ With the right setup and approach, home practice can accelerate your child's gym
       specialRequests: insertBooking.specialRequests ?? null,
       adminNotes: insertBooking.adminNotes ?? null,
       // Safety verification fields
-      dropoffPersonName: insertBooking.dropoffPersonName ?? null,
-      dropoffPersonRelationship: insertBooking.dropoffPersonRelationship ?? null,
-      dropoffPersonPhone: insertBooking.dropoffPersonPhone ?? null,
-      pickupPersonName: insertBooking.pickupPersonName ?? null,
-      pickupPersonRelationship: insertBooking.pickupPersonRelationship ?? null,
-      pickupPersonPhone: insertBooking.pickupPersonPhone ?? null,
+      dropoffPersonName: insertBooking.dropoffPersonName || parentFullName || "Parent",
+      dropoffPersonRelationship: insertBooking.dropoffPersonRelationship || "Parent",
+      dropoffPersonPhone: insertBooking.dropoffPersonPhone || parentPhone || "000-000-0000",
+      pickupPersonName: insertBooking.pickupPersonName || parentFullName || "Parent",
+      pickupPersonRelationship: insertBooking.pickupPersonRelationship || "Parent",
+      pickupPersonPhone: insertBooking.pickupPersonPhone || parentPhone || "000-000-0000",
       altPickupPersonName: insertBooking.altPickupPersonName ?? null,
       altPickupPersonRelationship: insertBooking.altPickupPersonRelationship ?? null,
       altPickupPersonPhone: insertBooking.altPickupPersonPhone ?? null,
@@ -2099,6 +2107,7 @@ export class SupabaseStorage implements IStorage {
   async getUpcomingSessions(): Promise<{
     id: number;
     sessionDate: string;
+    sessionTime: string;
     lessonType: string;
     parentName: string;
     athleteNames: string[];
@@ -2112,6 +2121,7 @@ export class SupabaseStorage implements IStorage {
         .select(`
           id,
           preferred_date,
+          preferred_time,
           lesson_type_id,
           payment_status,
           attendance_status,
@@ -2197,6 +2207,7 @@ export class SupabaseStorage implements IStorage {
         return {
           id: booking.id,
           sessionDate: booking.preferred_date,
+          sessionTime: booking.preferred_time || 'TBD',
           lessonType: lessonTypeObj?.name || 'Unknown',
           totalPrice: lessonTypeObj?.total_price ? lessonTypeObj.total_price.toString() : '0',
           parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
@@ -2230,6 +2241,17 @@ export class SupabaseStorage implements IStorage {
     if (data.preferredDate !== undefined) dbUpdate.preferred_date = data.preferredDate;
     if (data.preferredTime !== undefined) dbUpdate.preferred_time = data.preferredTime;
     if (data.focusAreas !== undefined) dbUpdate.focus_areas = data.focusAreas;
+    
+    // Safety information fields
+    if (data.dropoffPersonName !== undefined) dbUpdate.dropoff_person_name = data.dropoffPersonName;
+    if (data.dropoffPersonRelationship !== undefined) dbUpdate.dropoff_person_relationship = data.dropoffPersonRelationship;
+    if (data.dropoffPersonPhone !== undefined) dbUpdate.dropoff_person_phone = data.dropoffPersonPhone;
+    if (data.pickupPersonName !== undefined) dbUpdate.pickup_person_name = data.pickupPersonName;
+    if (data.pickupPersonRelationship !== undefined) dbUpdate.pickup_person_relationship = data.pickupPersonRelationship;
+    if (data.pickupPersonPhone !== undefined) dbUpdate.pickup_person_phone = data.pickupPersonPhone;
+    if (data.altPickupPersonName !== undefined) dbUpdate.alt_pickup_person_name = data.altPickupPersonName;
+    if (data.altPickupPersonRelationship !== undefined) dbUpdate.alt_pickup_person_relationship = data.altPickupPersonRelationship;
+    if (data.altPickupPersonPhone !== undefined) dbUpdate.alt_pickup_person_phone = data.altPickupPersonPhone;
 
     // Update the updated_at timestamp
     dbUpdate.updated_at = new Date().toISOString();

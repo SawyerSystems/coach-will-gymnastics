@@ -355,11 +355,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: simpleQuery.data
       });
       
-      // Get bookings for this parent with athlete information
+      // Get bookings for this parent with athlete information and lesson type
       const parentBookingsQuery = await supabaseAdmin
         .from('bookings')
         .select(`
           *,
+          lesson_types(
+            id,
+            name
+          ),
           booking_athletes (
             athlete_id,
             slot_order,
@@ -372,7 +376,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               allergies,
               experience,
               gender,
-              parent_id
+              parent_id,
+              waiver_status
             )
           )
         `)
@@ -392,6 +397,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform the data to include athletes array and proper payment status
       const bookingsWithAthletes = parentBookingsQuery.data?.map((booking: any) => {
         const athletes = booking.booking_athletes?.map((ba: any) => ba.athletes) || [];
+        
+        // Check if all athletes have signed waivers
+        const allAthletesHaveWaivers = athletes.length > 0 && 
+          athletes.every((athlete: any) => athlete && athlete.waiver_status === 'signed');
         
         // Map payment status to user-friendly display
         let displayPaymentStatus = booking.payment_status;
@@ -416,6 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           athletes,
           displayPaymentStatus,
           status: displayStatus,
+          waiverSigned: allAthletesHaveWaivers,
           // Transform snake_case to camelCase for frontend compatibility
           attendanceStatus: booking.attendance_status,
           paymentStatus: booking.payment_status,
@@ -425,6 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           preferredTime: booking.preferred_time,
           parentId: booking.parent_id,
           lessonTypeId: booking.lesson_type_id,
+          lessonType: booking.lesson_types?.name || null,
           waiverId: booking.waiver_id,
           bookingMethod: booking.booking_method,
           reservationFeePaid: booking.reservation_fee_paid,
@@ -460,6 +471,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get ALL parent bookings (including archived/completed)
+  // PUT /api/parent/bookings/:id/safety - Update booking safety information
+  app.put('/api/parent/bookings/:id/safety', isParentAuthenticated, async (req, res) => {
+    try {
+      const bookingId = parseInt(req.params.id, 10);
+      if (isNaN(bookingId)) {
+        return res.status(400).json({ error: 'Invalid booking ID' });
+      }
+
+      console.log(`[PARENT-SAFETY-UPDATE] Request to update safety info for booking ${bookingId} by parent ${req.session.parentId}`);
+
+      // First verify this booking belongs to the authenticated parent
+      const { data: bookingData, error: bookingError } = await supabaseAdmin
+        .from('bookings')
+        .select('id, parent_id')
+        .eq('id', bookingId)
+        .single();
+      
+      if (bookingError || !bookingData) {
+        console.error('[PARENT-SAFETY-UPDATE] Booking not found:', bookingError);
+        return res.status(404).json({ error: 'Booking not found', code: 'BOOKING_404' });
+      }
+      
+      // Security check: ensure parent can only update their own bookings
+      if (bookingData.parent_id !== req.session.parentId) {
+        console.warn(`[PARENT-SAFETY-UPDATE] Unauthorized safety update attempt: Parent ${req.session.parentId} tried to update booking ${bookingId} owned by parent ${bookingData.parent_id}`);
+        return res.status(403).json({ error: 'You do not have permission to update this booking', code: 'UNAUTHORIZED' });
+      }
+
+      // Extract only allowed safety fields from request body (using camelCase for consistency with storage API)
+      const safetyFields: Partial<{
+        dropoffPersonName: string;
+        dropoffPersonRelationship: string;
+        dropoffPersonPhone: string;
+        pickupPersonName: string;
+        pickupPersonRelationship: string;
+        pickupPersonPhone: string;
+        altPickupPersonName: string | null;
+        altPickupPersonRelationship: string | null;
+        altPickupPersonPhone: string | null;
+        safetyVerificationSigned: boolean;
+        safetyVerificationSignedAt: Date;
+      }> = {
+        dropoffPersonName: req.body.dropoffPersonName,
+        dropoffPersonRelationship: req.body.dropoffPersonRelationship,
+        dropoffPersonPhone: req.body.dropoffPersonPhone,
+        pickupPersonName: req.body.pickupPersonName,
+        pickupPersonRelationship: req.body.pickupPersonRelationship, 
+        pickupPersonPhone: req.body.pickupPersonPhone,
+        altPickupPersonName: req.body.altPickupPersonName,
+        altPickupPersonRelationship: req.body.altPickupPersonRelationship,
+        altPickupPersonPhone: req.body.altPickupPersonPhone,
+        safetyVerificationSigned: true, // Always set to true when updated
+        safetyVerificationSignedAt: new Date() // Use actual Date object, not string
+      };
+
+      // Filter out undefined values
+      for (const key of Object.keys(safetyFields)) {
+        if (safetyFields[key as keyof typeof safetyFields] === undefined) {
+          delete safetyFields[key as keyof typeof safetyFields];
+        }
+      };
+
+      // Log the safety update operation
+      console.log(`[PARENT-SAFETY-UPDATE] Parent ${req.session.parentId} updating safety info for booking ${bookingId}:`, 
+        JSON.stringify(safetyFields, null, 2));
+
+      // Update only the safety fields using the storage API
+      const updatedBooking = await storage.updateBooking(bookingId, safetyFields);
+      
+      if (!updatedBooking) {
+        console.error('[PARENT-SAFETY-UPDATE] Update failed');
+        return res.status(500).json({ error: 'Failed to update booking safety information', code: 'UPDATE_FAILED' });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: 'Booking safety information updated successfully',
+        bookingId: updatedBooking.id,
+        safetyVerificationSigned: updatedBooking.safetyVerificationSigned
+      });
+    } catch (error) {
+      console.error('[PARENT-SAFETY-UPDATE] Error updating booking safety information:', error);
+      res.status(500).json({ error: 'An unexpected error occurred', code: 'SERVER_ERROR' });
+    }
+  });
+
   app.get('/api/parent/all-bookings', async (req, res) => {
     if (!req.session.parentId) {
       return res.status(401).json({ message: 'Not authenticated' });
@@ -2763,12 +2860,32 @@ setTimeout(async () => {
     }
   });
 
-  // General booking update endpoint (requires parent authentication)
+  // General booking update endpoint (requires parent or admin authentication)
+  // Using explicit authentication check inside the handler instead of middleware
   app.patch("/api/bookings/:id", async (req, res) => {
-    console.log("🚨 MAIN PATCH ENDPOINT HIT - /api/bookings/:id with ID:", req.params.id, "Body:", req.body);
+    console.log("🚨 MAIN PATCH ENDPOINT HIT - /api/bookings/:id with ID:", req.params.id);
+    console.log("📝 Session Info:", { 
+      parentId: req.session.parentId,
+      parentEmail: req.session.parentEmail,
+      adminId: req.session.adminId, 
+      cookies: req.headers.cookie ? 'Present' : 'None',
+      sessionID: req.sessionID
+    });
     try {
       const id = parseInt(req.params.id);
-      const { focusAreas, specialNotes } = req.body;
+      const { 
+        focusAreas, 
+        specialNotes, 
+        dropoffPersonName,
+        dropoffPersonRelationship,
+        dropoffPersonPhone,
+        pickupPersonName,
+        pickupPersonRelationship,
+        pickupPersonPhone,
+        altPickupPersonName,
+        altPickupPersonRelationship,
+        altPickupPersonPhone 
+      } = req.body;
       
       // Get the booking to check ownership
       const booking = await storage.getBooking(id);
@@ -2776,14 +2893,25 @@ setTimeout(async () => {
         return res.status(404).json({ error: "Booking not found" });
       }
       
+      // Debug the full booking object to identify any issues
+      console.log("🔍 Full booking object:", booking);
+      
       // If parent is authenticated, check ownership
       if (req.session.parentId) {
-        // Check if the booking belongs to this parent by email
-        if (booking.parentEmail !== req.session.parentEmail) {
+        console.log("👤 Parent authenticated:", req.session.parentId, req.session.parentEmail);
+        console.log("📚 Booking parent ID:", booking.parentId);
+        
+        // Check if the booking belongs to this parent by parent ID
+        if (booking.parentId !== req.session.parentId) {
+          console.log("⛔ Auth failure: Parent ID mismatch", { 
+            bookingParentId: booking.parentId, 
+            sessionParentId: req.session.parentId 
+          });
           return res.status(403).json({ error: "Not authorized to update this booking" });
         }
       } else if (!req.session.adminId) {
         // Not a parent or admin
+        console.log("🚫 Auth failure: No parent or admin ID in session");
         return res.status(401).json({ error: "Authentication required" });
       }
       
@@ -2808,6 +2936,17 @@ setTimeout(async () => {
         updateData.focusAreas = focusAreas;
       }
       if (specialNotes !== undefined) updateData.adminNotes = specialNotes;
+      
+      // Update safety information if provided
+      if (dropoffPersonName !== undefined) updateData.dropoffPersonName = dropoffPersonName;
+      if (dropoffPersonRelationship !== undefined) updateData.dropoffPersonRelationship = dropoffPersonRelationship;
+      if (dropoffPersonPhone !== undefined) updateData.dropoffPersonPhone = dropoffPersonPhone;
+      if (pickupPersonName !== undefined) updateData.pickupPersonName = pickupPersonName;
+      if (pickupPersonRelationship !== undefined) updateData.pickupPersonRelationship = pickupPersonRelationship;
+      if (pickupPersonPhone !== undefined) updateData.pickupPersonPhone = pickupPersonPhone;
+      if (altPickupPersonName !== undefined) updateData.altPickupPersonName = altPickupPersonName;
+      if (altPickupPersonRelationship !== undefined) updateData.altPickupPersonRelationship = altPickupPersonRelationship;
+      if (altPickupPersonPhone !== undefined) updateData.altPickupPersonPhone = altPickupPersonPhone;
       
       // Check if this is a reschedule (date or time changed)
       const isReschedule = req.body.preferredDate !== undefined || req.body.preferredTime !== undefined;
