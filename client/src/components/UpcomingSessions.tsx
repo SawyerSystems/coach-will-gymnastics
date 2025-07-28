@@ -4,6 +4,24 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, User } from "lucide-react";
 
+// Helper function to format date without timezone issues
+function formatDateWithoutTimezoneIssues(dateString: string): string {
+  // Split the date string into components
+  const [year, month, day] = dateString.split('-').map(Number);
+  
+  // Use the Date constructor with explicit year, month (0-based), and day parameters
+  // This avoids timezone issues
+  const date = new Date(year, month - 1, day);
+  
+  // Format the date as desired
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'short', 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
 interface UpcomingSession {
   id: number;
   sessionDate: string;
@@ -122,10 +140,9 @@ export function UpcomingSessions() {
         ) : (
           <div className="space-y-4">
             {sessions.map((session) => {
-              // Format the date nicely
-              const dateObj = session.sessionDate ? new Date(session.sessionDate) : null;
-              const formattedDate = dateObj 
-                ? dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) 
+              // Format the date nicely with timezone correction
+              const formattedDate = session.sessionDate 
+                ? formatDateWithoutTimezoneIssues(session.sessionDate) 
                 : 'TBD';
               
               return (
