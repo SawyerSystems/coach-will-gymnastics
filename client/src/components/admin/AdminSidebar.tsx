@@ -24,6 +24,7 @@ type AdminSidebarProps = {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
+  onCollapseChange?: (isCollapsed: boolean) => void;
 };
 
 export function AdminSidebar({ 
@@ -31,7 +32,8 @@ export function AdminSidebar({
   onClose, 
   activeTab,
   onTabChange,
-  onLogout
+  onLogout,
+  onCollapseChange
 }: AdminSidebarProps) {
   // State to track if sidebar is collapsed (only for desktop)
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -56,6 +58,11 @@ export function AdminSidebar({
 
   // Only apply desktop collapse if sidebar is open
   const effectivelyCollapsed = isOpen && isCollapsed;
+  
+  // Notify parent component about the collapse state
+  useEffect(() => {
+    onCollapseChange?.(isCollapsed);
+  }, [isCollapsed, onCollapseChange]);
 
   // Navigation items definition
   const navItems = [
@@ -145,7 +152,11 @@ export function AdminSidebar({
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => setIsCollapsed(!isCollapsed)} 
+              onClick={() => {
+                const newCollapsedState = !isCollapsed;
+                setIsCollapsed(newCollapsedState);
+                onCollapseChange?.(newCollapsedState);
+              }} 
               className="rounded-full p-1.5"
             >
               {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}

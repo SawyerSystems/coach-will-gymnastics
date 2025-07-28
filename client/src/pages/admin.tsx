@@ -69,6 +69,7 @@ export default function Admin() {
   // ALL STATE HOOKS FIRST
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(window?.innerWidth >= 768); // Default to open on desktop only
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false); // Track sidebar collapsed state
   const [activeTab, setActiveTab] = useState<string>("bookings");
   
   // Set sidebar open state based on window size with enhanced mobile support
@@ -1031,10 +1032,17 @@ export default function Admin() {
           activeTab={activeTab}
           onTabChange={(tab) => setActiveTab(tab)}
           onLogout={handleLogout}
+          onCollapseChange={(collapsed) => setIsSidebarCollapsed(collapsed)}
         />
 
         {/* Main Content Area */}
-        <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'md:ml-[280px]' : ''} w-full`}>
+        <div className={`transition-all duration-300 ${
+          isSidebarOpen 
+            ? isSidebarCollapsed 
+              ? 'md:ml-[80px] md:w-[calc(100%-80px)]' 
+              : 'md:ml-[280px] md:w-[calc(100%-280px)]'
+            : 'md:w-full'
+        } w-full`}>
           <div className="max-w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
             {/* Dashboard Header */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 sm:mb-10 gap-4">
