@@ -1,6 +1,7 @@
 import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { ParentAthleteDetailDialog } from '@/components/ParentAthleteDetailDialog';
+import { SafetyInformationDialog } from '@/components/safety-information-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, FileCheck, FileX, HelpCircle, LogOut, MapPin, Star, Trophy, User, Users, X, XCircle } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, FileCheck, FileX, HelpCircle, LogOut, MapPin, Shield, Star, Trophy, User, Users, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -114,21 +115,69 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
 function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () => void }) {
   const [selectedFocusAreas, setSelectedFocusAreas] = useState<string[]>(booking.focusAreas || []);
   const [specialNotes, setSpecialNotes] = useState(booking.adminNotes || '');
+  
+  // Safety Information
+  const [dropoffPersonName, setDropoffPersonName] = useState(booking.dropoffPersonName || '');
+  const [dropoffPersonRelationship, setDropoffPersonRelationship] = useState(booking.dropoffPersonRelationship || '');
+  const [dropoffPersonPhone, setDropoffPersonPhone] = useState(booking.dropoffPersonPhone || '');
+  const [pickupPersonName, setPickupPersonName] = useState(booking.pickupPersonName || '');
+  const [pickupPersonRelationship, setPickupPersonRelationship] = useState(booking.pickupPersonRelationship || '');
+  const [pickupPersonPhone, setPickupPersonPhone] = useState(booking.pickupPersonPhone || '');
+  const [altPickupPersonName, setAltPickupPersonName] = useState(booking.altPickupPersonName || '');
+  const [altPickupPersonRelationship, setAltPickupPersonRelationship] = useState(booking.altPickupPersonRelationship || '');
+  const [altPickupPersonPhone, setAltPickupPersonPhone] = useState(booking.altPickupPersonPhone || '');
+  
   const queryClient = useQueryClient();
 
+  // Check auth status before making the request
+  const { data: authStatus } = useQuery<{ loggedIn: boolean; parentId?: string; email?: string }>({
+    queryKey: ['/api/parent-auth/status'],
+    retry: false,
+  });
+
+  useEffect(() => {
+    console.log('🔑 Parent Authentication Status:', authStatus);
+  }, [authStatus]);
+
   const updateBookingMutation = useMutation({
-    mutationFn: async (data: { focusAreas: string[]; specialNotes: string }) => {
-      const response = await apiRequest('PATCH', `/api/bookings/${booking.id}`, data);
-      if (!response.ok) {
-        throw new Error('Failed to update booking');
+    mutationFn: async (data: { 
+      focusAreas: string[]; 
+      specialNotes: string;
+      dropoffPersonName: string;
+      dropoffPersonRelationship: string;
+      dropoffPersonPhone: string;
+      pickupPersonName: string;
+      pickupPersonRelationship: string;
+      pickupPersonPhone: string;
+      altPickupPersonName?: string;
+      altPickupPersonRelationship?: string;
+      altPickupPersonPhone?: string;
+    }) => {
+      console.log('� Auth Status before request:', authStatus);
+      console.log('�🔄 Sending booking update request for ID:', booking.id, 'with data:', data);
+      try {
+        // First, verify that we have an authentication cookie
+        console.log('🍪 Current cookies:', document.cookie || 'No cookies found');
+        
+        // Use the correct safety information endpoint with PUT method
+        const response = await apiRequest('PUT', `/api/parent/bookings/${booking.id}/safety`, data);
+        console.log('✅ Booking update response:', response.status, response.statusText);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Booking update failed:', response.status, errorText);
+          throw new Error(`Failed to update booking: ${response.status} ${errorText}`);
+        }
+        return response.json();
+      } catch (error) {
+        console.error('❌ Booking update error:', error);
+        throw error;
       }
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/parent/bookings'] });
       toast({
         title: "Booking Updated",
-        description: "Focus areas and notes have been updated successfully."
+        description: "Booking information has been updated successfully."
       });
       onClose();
     },
@@ -143,9 +192,30 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required safety fields
+    if (!dropoffPersonName || !dropoffPersonRelationship || !dropoffPersonPhone || 
+        !pickupPersonName || !pickupPersonRelationship || !pickupPersonPhone) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required pickup and drop-off information.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     updateBookingMutation.mutate({
       focusAreas: selectedFocusAreas,
-      specialNotes: specialNotes
+      specialNotes: specialNotes,
+      dropoffPersonName,
+      dropoffPersonRelationship,
+      dropoffPersonPhone,
+      pickupPersonName,
+      pickupPersonRelationship,
+      pickupPersonPhone,
+      altPickupPersonName,
+      altPickupPersonRelationship,
+      altPickupPersonPhone
     });
   };
 
@@ -199,7 +269,131 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
         </div>
       </div>
 
-      <div>
+      {/* Safety Information Section */}
+      <div className="mt-6 border-t pt-6">
+        <h3 className="text-lg font-semibold mb-4">Safety Information</h3>
+        
+        <div className="space-y-6">
+          {/* Drop-off Person Section */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Drop-off Person Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="dropoff-name">Name*</Label>
+                <input
+                  id="dropoff-name"
+                  value={dropoffPersonName}
+                  onChange={(e) => setDropoffPersonName(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Full name"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="dropoff-relationship">Relationship to Athlete*</Label>
+                <input
+                  id="dropoff-relationship"
+                  value={dropoffPersonRelationship}
+                  onChange={(e) => setDropoffPersonRelationship(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Parent, Guardian, etc."
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="dropoff-phone">Phone Number*</Label>
+                <input
+                  id="dropoff-phone"
+                  value={dropoffPersonPhone}
+                  onChange={(e) => setDropoffPersonPhone(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="(555) 123-4567"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Pick-up Person Section */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Pick-up Person Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="pickup-name">Name*</Label>
+                <input
+                  id="pickup-name"
+                  value={pickupPersonName}
+                  onChange={(e) => setPickupPersonName(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Full name"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="pickup-relationship">Relationship to Athlete*</Label>
+                <input
+                  id="pickup-relationship"
+                  value={pickupPersonRelationship}
+                  onChange={(e) => setPickupPersonRelationship(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Parent, Guardian, etc."
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="pickup-phone">Phone Number*</Label>
+                <input
+                  id="pickup-phone"
+                  value={pickupPersonPhone}
+                  onChange={(e) => setPickupPersonPhone(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="(555) 123-4567"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Alternative Pick-up Person Section */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Alternative Pick-up Person (Optional)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="alt-pickup-name">Name</Label>
+                <input
+                  id="alt-pickup-name"
+                  value={altPickupPersonName}
+                  onChange={(e) => setAltPickupPersonName(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Full name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="alt-pickup-relationship">Relationship to Athlete</Label>
+                <input
+                  id="alt-pickup-relationship"
+                  value={altPickupPersonRelationship}
+                  onChange={(e) => setAltPickupPersonRelationship(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Relative, Friend, etc."
+                />
+              </div>
+              <div>
+                <Label htmlFor="alt-pickup-phone">Phone Number</Label>
+                <input
+                  id="alt-pickup-phone"
+                  value={altPickupPersonPhone}
+                  onChange={(e) => setAltPickupPersonPhone(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-6">
         <Label htmlFor="special-notes">Special Notes</Label>
         <textarea
           id="special-notes"
@@ -210,7 +404,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
         />
       </div>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 mt-6">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
@@ -236,6 +430,7 @@ function ParentDashboard() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showAthleteSelection, setShowAthleteSelection] = useState(false);
   const [showUpdateProfile, setShowUpdateProfile] = useState(false);
+  const [showSafetyInfo, setShowSafetyInfo] = useState(false);
   const [showUpdateEmergencyContact, setShowUpdateEmergencyContact] = useState(false);
   const [showWaiverModal, setShowWaiverModal] = useState(false);
   const [selectedAthleteForWaiver, setSelectedAthleteForWaiver] = useState<any>(null);
@@ -954,6 +1149,14 @@ function ParentDashboard() {
                     </Button>
                     <Button 
                       variant="outline"
+                      onClick={() => setShowSafetyInfo(true)}
+                      className="bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Pickup/Dropoff Safety Info
+                    </Button>
+                    <Button 
+                      variant="outline"
                       onClick={() => {
                         const newEmail = prompt("Enter your new email address:", authStatus?.email || '');
                         if (newEmail && newEmail.includes('@')) {
@@ -1640,6 +1843,14 @@ function ParentDashboard() {
             }}
           />
         )}
+
+        {/* Safety Information Dialog */}
+        <SafetyInformationDialog
+          open={showSafetyInfo}
+          onOpenChange={setShowSafetyInfo}
+          parentInfo={parentInfo || undefined}
+          hasCurrentBookings={upcomingBookings.length > 0}
+        />
       </div>
     </div>
   );

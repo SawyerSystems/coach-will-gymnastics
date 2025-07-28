@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './server/supabase-client.js';
+import { supabaseAdmin } from '../server/supabase-client.js';
 
 async function checkRLSPolicies() {
   console.log('🔍 Checking RLS policies in the database...\n');

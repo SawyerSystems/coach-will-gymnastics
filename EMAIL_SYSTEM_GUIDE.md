@@ -42,7 +42,7 @@ We've created a comprehensive test script (`test-email-functionality.js`) that v
 
 ```bash
 # Make sure the development server is running first
-node test-email-functionality.js
+node Tests/test-email-functionality.js
 ```
 
 The script will:
