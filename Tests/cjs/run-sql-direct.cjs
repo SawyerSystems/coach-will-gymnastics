@@ -2,8 +2,8 @@
 
 /**
  * SQL Execution Script for Supabase Database
- * Usage: node Tests/cjs/run-sql-direct.cjs "SELECT * FROM bookings LIMIT 5;"
- * Usage: node Tests/cjs/run-sql-direct.cjs --file Tests/sql/migration.sql
+ * Usage: node run-sql.js "SELECT * FROM bookings LIMIT 5;"
+ * Usage: node run-sql.js --file migration.sql
  */
 
 const { Client } = require('pg');

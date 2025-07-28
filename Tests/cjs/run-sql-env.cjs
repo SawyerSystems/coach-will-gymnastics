@@ -2,7 +2,7 @@
 
 /**
  * Simple SQL Executor using environment variables
- * Usage: node Tests/cjs/run-sql-env.cjs "SQL COMMAND" or node Tests/cjs/run-sql-env.cjs Tests/sql/filename.sql
+ * Usage: node run-sql-env.cjs "SQL COMMAND" or node run-sql-env.cjs filename.sql
  */
 
 const { createClient } = require('@supabase/supabase-js');

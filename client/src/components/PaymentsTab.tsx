@@ -193,75 +193,81 @@ export function PaymentsTab() {
   return (
     <>
       {/* Enhanced Payment Analytics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Total Revenue
-            </CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-blue-800">Total Revenue</CardTitle>
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <DollarSign className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-3xl font-black text-blue-900">
               ${totals.totalRevenue.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Reservation Paid + Session Paid</p>
+            <p className="text-xs text-blue-600 mt-1 font-medium">Reservation Paid + Session Paid</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Pending Reservations
-            </CardTitle>
+
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-yellow-800">Pending Reservations</CardTitle>
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              <Clock className="h-4 w-4 text-yellow-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-3xl font-black text-yellow-900">
               ${totals.pendingReservations.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.paymentStatus === "reservation-pending").length} bookings</p>
+            <p className="text-xs text-yellow-600 mt-1 font-medium">{bookings.filter(b => b.paymentStatus === "reservation-pending").length} bookings</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <X className="h-4 w-4" />
-              Refunded
-            </CardTitle>
+
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-slate-25 to-slate-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-slate-800">Refunded</CardTitle>
+            <div className="p-2 bg-slate-100 rounded-lg">
+              <X className="h-4 w-4 text-slate-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">
+            <div className="text-3xl font-black text-slate-900">
               ${totals.refunded.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{bookings.filter(b => b.paymentStatus === "reservation-refunded" || b.paymentStatus === "session-refunded").length} refunds</p>
+            <p className="text-xs text-slate-600 mt-1 font-medium">{bookings.filter(b => b.paymentStatus === "reservation-refunded" || b.paymentStatus === "session-refunded").length} refunds</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Avg Booking Value
-            </CardTitle>
+
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-purple-800">Avg Booking Value</CardTitle>
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <TrendingUp className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-3xl font-black text-purple-900">
               ${totals.avgBookingValue.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Per booking</p>
+            <p className="text-xs text-purple-600 mt-1 font-medium">Per booking</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters and Actions */}
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <h2 className="text-2xl font-bold">Payment Management</h2>
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200/50 shadow-sm">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 mb-1">Payment Management</h2>
+            <p className="text-sm text-slate-600">Monitor transactions, sync with Stripe, and manage payment statuses</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <Button 
               variant="outline" 
               onClick={() => syncStripeMutation.mutate()}
               disabled={syncStripeMutation.isPending}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${syncStripeMutation.isPending ? 'animate-spin' : ''}`} />
               Sync with Stripe
@@ -269,7 +275,7 @@ export function PaymentsTab() {
             <Button 
               variant="outline" 
               onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto border-green-200 text-green-700 hover:bg-green-50 font-medium"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Stripe Dashboard
@@ -277,31 +283,35 @@ export function PaymentsTab() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div>
-            <Label htmlFor="search">Search</Label>
-            <Input
-              id="search"
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        {/* Enhanced Filters */}
+        <div className="bg-white rounded-xl border border-slate-200/50 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Filter & Search</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="search" className="text-sm font-semibold text-slate-700">Search</Label>
+              <Input
+                id="search"
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mt-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+              />
+            </div>
+            <div>
+              <Label htmlFor="date" className="text-sm font-semibold text-slate-700">Date</Label>
               <Input
                 id="date"
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
+                className="mt-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
               />
             </div>
             <div>
-              <Label htmlFor="status">Booking Status</Label>
+              <Label htmlFor="status" className="text-sm font-semibold text-slate-700">Booking Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger id="status">
+                <SelectTrigger id="status" className="mt-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -315,9 +325,9 @@ export function PaymentsTab() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="payment-status">Payment Status</Label>
+              <Label htmlFor="payment-status" className="text-sm font-semibold text-slate-700">Payment Status</Label>
               <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-                <SelectTrigger id="payment-status">
+                <SelectTrigger id="payment-status" className="mt-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -333,94 +343,120 @@ export function PaymentsTab() {
               </Select>
             </div>
           </div>
+        </div>
 
-        {/* Tabs for different views */}
-        <Card>
+        {/* Enhanced Tabs for different views */}
+        <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-blue-50/30 shadow-lg">
           <CardContent className="p-6">
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="overview">All Transactions</TabsTrigger>
-                <TabsTrigger value="pending">Pending Payments</TabsTrigger>
-                <TabsTrigger value="completed">Completed</TabsTrigger>
-              </TabsList>            {/* All Transactions Tab */}
+              <div className="flex items-center justify-between mb-6">
+                <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-1 rounded-xl shadow-sm">
+                  <TabsTrigger 
+                    value="overview" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+                  >
+                    All Transactions
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="pending" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+                  >
+                    Pending Payments
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="completed" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
+                  >
+                    Completed
+                  </TabsTrigger>
+                </TabsList>
+              </div>
             <TabsContent value="overview">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Booking Details</TableHead>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Paid Amount</TableHead>
-                    <TableHead>Balance Due</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Payment Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredBookings.map((booking) => {
-                    const totalPrice = getLessonPrice(booking);
-                    let displayPaidAmount = 0;
-                    let balanceDue = totalPrice;
+              <div className="overflow-x-auto rounded-lg border border-slate-100">
+                <Table>
+                  <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
+                    <TableRow className="border-b border-slate-200">
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Date</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Booking Details</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Parent</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Total Amount</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Paid Amount</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Balance Due</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Payment Status</TableHead>
+                      <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="divide-y divide-slate-100">
+                    {filteredBookings.map((booking, index) => {
+                      const totalPrice = getLessonPrice(booking);
+                      let displayPaidAmount = 0;
+                      let balanceDue = totalPrice;
 
-                    if (booking.paymentStatus === "session-paid") {
-                      displayPaidAmount = totalPrice;
-                      balanceDue = 0;
-                    } else if (booking.paymentStatus === "reservation-paid") {
-                      // Use paidAmount if present and > 0, otherwise default to $0.50
-                      displayPaidAmount = parseFloat(booking.paidAmount || "0");
-                      if (displayPaidAmount <= 0) displayPaidAmount = 0.50;
-                      balanceDue = totalPrice - displayPaidAmount;
-                    } else if (booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed" || booking.paymentStatus === "unpaid") {
-                      displayPaidAmount = 0;
-                      balanceDue = totalPrice;
-                    } else if (booking.paymentStatus === "reservation-refunded" || booking.paymentStatus === "session-refunded") {
-                      displayPaidAmount = 0;
-                      balanceDue = 0;
-                    }
+                      if (booking.paymentStatus === "session-paid") {
+                        displayPaidAmount = totalPrice;
+                        balanceDue = 0;
+                      } else if (booking.paymentStatus === "reservation-paid") {
+                        // Use paidAmount if present and > 0, otherwise default to $0.50
+                        displayPaidAmount = parseFloat(booking.paidAmount || "0");
+                        if (displayPaidAmount <= 0) displayPaidAmount = 0.50;
+                        balanceDue = totalPrice - displayPaidAmount;
+                      } else if (booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed" || booking.paymentStatus === "unpaid") {
+                        displayPaidAmount = 0;
+                        balanceDue = totalPrice;
+                      } else if (booking.paymentStatus === "reservation-refunded" || booking.paymentStatus === "session-refunded") {
+                        displayPaidAmount = 0;
+                        balanceDue = 0;
+                      }
 
-                    // Never show negative balance due
-                    if (balanceDue < 0) balanceDue = 0;
+                      // Never show negative balance due
+                      if (balanceDue < 0) balanceDue = 0;
 
-                    return (
-                      <TableRow key={booking.id}>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium">
-                              {formatDate(booking.preferredDate || '')}
-                            </p>
+                      return (
+                        <TableRow 
+                          key={booking.id}
+                          className={`hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200 ${
+                            index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+                          }`}
+                        >
+                          <TableCell className="px-6 py-4">
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold text-slate-900">
+                                {formatDate(booking.preferredDate || '')}
+                              </p>
                             <p className="text-xs text-muted-foreground">{booking.preferredTime}</p>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-6 py-4">
                           <div className="space-y-1">
-                            <p className="font-medium">
+                            <p className="font-semibold text-slate-900">
                               {typeof booking.lessonType === 'object' && booking.lessonType !== null
                                 ? getNameOrDescription(booking.lessonType)
                                 : booking.lessonType}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-slate-600">
                               {booking.athlete1Name}
                               {booking.athlete2Name && ` & ${booking.athlete2Name}`}
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-6 py-4">
                           <div className="space-y-1">
-                            <p className="text-sm">{booking.parentFirstName} {booking.parentLastName}</p>
-                            <p className="text-xs text-muted-foreground">{booking.parentEmail}</p>
+                            <p className="text-sm font-medium text-slate-900">{booking.parentFirstName} {booking.parentLastName}</p>
+                            <p className="text-xs text-slate-600">{booking.parentEmail}</p>
                           </div>
                         </TableCell>
-                        <TableCell>${totalPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-green-600">${displayPaidAmount.toFixed(2)}</TableCell>
-                        <TableCell className={balanceDue > 0 ? "text-orange-600 font-medium" : ""}>
+                        <TableCell className="px-6 py-4 text-slate-900 font-semibold">${totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="px-6 py-4 text-green-700 font-semibold">${displayPaidAmount.toFixed(2)}</TableCell>
+                        <TableCell className={`px-6 py-4 font-semibold ${balanceDue > 0 ? "text-orange-600" : "text-slate-600"}`}>
                           ${balanceDue.toFixed(2)}
                         </TableCell>
-                        <TableCell>
-                            <Badge variant="outline">{typeof booking.status === 'object' && booking.status !== null ? JSON.stringify(booking.status) : booking.status}</Badge>
+                        <TableCell className="px-6 py-4">
+                          <Badge variant="outline" className="font-medium">
+                            {typeof booking.status === 'object' && booking.status !== null ? JSON.stringify(booking.status) : booking.status}
+                          </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-6 py-4">
                           <Select
                             value={booking.paymentStatus || "unpaid"}
                             onValueChange={(value) => 
@@ -430,7 +466,7 @@ export function PaymentsTab() {
                               })
                             }
                           >
-                            <SelectTrigger className="h-8 w-[140px]">
+                            <SelectTrigger className="h-8 w-[160px] border-slate-200 focus:border-blue-400">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -444,11 +480,12 @@ export function PaymentsTab() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-6 py-4">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}`, '_blank')}
+                            className="border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
                           >
                             View Stripe
                           </Button>
@@ -456,71 +493,85 @@ export function PaymentsTab() {
                       </TableRow>
                     );
                   })}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
             </TabsContent>
 
             {/* Pending Payments Tab */}
             <TabsContent value="pending">
-              <div className="space-y-4">
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <h4 className="font-medium text-orange-900 mb-2">Pending Session Payments</h4>
-                  <p className="text-sm text-orange-800">
-                    These bookings have paid the reservation fee but still owe the remaining balance at the time of the lesson.
-                  </p>
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-start space-x-3">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <Clock className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-orange-900 mb-1">Pending Session Payments</h4>
+                      <p className="text-sm text-orange-800">
+                        These bookings have paid the reservation fee but still owe the remaining balance at the time of the lesson.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Session Date</TableHead>
-                      <TableHead>Athlete(s)</TableHead>
-                      <TableHead>Parent</TableHead>
-                      <TableHead>Lesson Type</TableHead>
-                      <TableHead>Total Price</TableHead>
-                      <TableHead>Reservation Paid</TableHead>
-                      <TableHead>Balance Due</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell>
+                <div className="overflow-x-auto rounded-lg border border-orange-100">
+                  <Table>
+                    <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
+                      <TableRow className="border-b border-slate-200">
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Session Date</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete(s)</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Parent</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Lesson Type</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Total Price</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Reservation Paid</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Balance Due</TableHead>
+                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-slate-100">
+                    {pendingPayments.map((payment, index) => (
+                      <TableRow 
+                        key={payment.id}
+                        className={`hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-amber-50/30 transition-all duration-200 ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+                        }`}
+                      >
+                        <TableCell className="px-6 py-4">
                           <div className="space-y-1">
-                            <p className="font-medium">
+                            <p className="font-semibold text-slate-900">
                               {formatDate(payment.preferredDate || '')}
                             </p>
-                            <p className="text-sm text-muted-foreground">{payment.preferredTime}</p>
+                            <p className="text-sm text-slate-600">{payment.preferredTime}</p>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <p className="text-sm">
+                        <TableCell className="px-6 py-4">
+                          <p className="text-sm font-medium text-slate-900">
                             {payment.athlete1Name}
                             {payment.athlete2Name && ` & ${payment.athlete2Name}`}
                           </p>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-6 py-4">
                           <div className="space-y-1">
-                            <p className="text-sm">{payment.parentFirstName} {payment.parentLastName}</p>
-                            <p className="text-xs text-muted-foreground">{payment.parentPhone}</p>
+                            <p className="text-sm font-medium text-slate-900">{payment.parentFirstName} {payment.parentLastName}</p>
+                            <p className="text-xs text-slate-600">{payment.parentPhone}</p>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
+                        <TableCell className="px-6 py-4">
+                          <Badge variant="outline" className="font-medium">
                             {typeof payment.lessonType === 'object' && payment.lessonType !== null
                               ? getNameOrDescription(payment.lessonType)
                               : payment.lessonType}
                           </Badge>
                         </TableCell>
-                        <TableCell>${payment.totalPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-green-600">
+                        <TableCell className="px-6 py-4 text-slate-900 font-semibold">${payment.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="px-6 py-4 text-green-700 font-semibold">
                           ${payment.paidAmount.toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-orange-600 font-medium">
+                        <TableCell className="px-6 py-4 text-orange-600 font-bold">
                           ${payment.remainingBalance.toFixed(2)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="px-6 py-4">
                           <Button
                             size="sm"
                             variant="default"
@@ -541,6 +592,7 @@ export function PaymentsTab() {
                               });
                             }}
                             disabled={updatePaymentStatusMutation.isPending}
+                            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium"
                           >
                             <Check className="h-3 w-3 mr-1" />
                             {payment.paymentStatus === "reservation-failed" || payment.paymentStatus === "reservation-pending" 
@@ -553,13 +605,18 @@ export function PaymentsTab() {
                     ))}
                     {pendingPayments.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          No pending session payments
+                        <TableCell colSpan={8} className="text-center text-slate-500 py-12">
+                          <div className="flex flex-col items-center space-y-2">
+                            <Check className="h-12 w-12 text-green-500" />
+                            <p className="font-medium">No pending session payments</p>
+                            <p className="text-sm">All payments are up to date!</p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             </TabsContent>
 

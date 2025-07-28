@@ -21,7 +21,7 @@ async function analyzeSchema() {
     console.log('🔍 Starting comprehensive database schema analysis...\n');
     
     // Read the SQL file
-    const sqlContent = fs.readFileSync(path.join(__dirname, 'sql', 'analyze-database-schema.sql'), 'utf8');
+    const sqlContent = fs.readFileSync(path.join(__dirname, 'sql/analyze-database-schema.sql'), 'utf8');
     
     // Split into individual queries (rough split by semicolon, but handle multi-line)
     const queries = sqlContent

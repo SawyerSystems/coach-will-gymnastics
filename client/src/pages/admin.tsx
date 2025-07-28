@@ -40,14 +40,18 @@ import {
   Calendar,
   CalendarX,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   DollarSign,
   Edit,
   Eye,
+  Loader2,
   Mail,
   Menu,
   MessageCircle,
   MessageSquare,
+  Phone,
   Plus,
   RefreshCw,
   Search,
@@ -1219,12 +1223,6 @@ export default function Admin() {
               📋 Waivers
             </TabsTrigger>
             <TabsTrigger 
-              value="site-content" 
-              className="hidden"
-            >
-              🎨 Site Content
-            </TabsTrigger>
-            <TabsTrigger 
               value="settings" 
               className="hidden"
             >
@@ -1233,115 +1231,184 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab">
-            <Card className="max-w-full mx-auto">
-              <CardContent className="p-6">
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <Calendar className="h-8 w-8 text-[#D8BD2A]" />
+                  Booking Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8 pt-0">
                 <AdminBookingManager openAthleteModal={openAthleteModal} />
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab">
-            <Card>
-              <CardHeader>
-                <CardTitle>Athletes Management</CardTitle>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <Users className="h-8 w-8 text-[#D8BD2A]" />
+                  Athletes Management
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+                <div className="space-y-6">
                   {/* Search Bar */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <div className="relative max-w-md">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
                     <Input
                       placeholder="Search athletes..."
                       value={athleteSearchTerm}
                       onChange={(e) => setAthleteSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 focus:ring-2 focus:ring-[#0F0276] focus:bg-white transition-all duration-200 text-base"
                     />
                   </div>
-                  {/* Render each athlete only once: yellow card if birthday in next 7 days, else white card */}
-                  {athletes
-                    .filter((athlete, index, self) =>
-                      index === self.findIndex((a) => a.id === athlete.id)
-                    )
-                    .filter(athlete => {
-                      // Search filter
-                      if (athleteSearchTerm) {
-                        const searchTerm = athleteSearchTerm.toLowerCase();
-                        const athleteName = (athlete.firstName && athlete.lastName 
-                          ? `${athlete.firstName} ${athlete.lastName}` 
-                          : athlete.name || 'Unknown Athlete').toLowerCase();
-                        if (!athleteName.includes(searchTerm)) {
-                          return false;
-                        }
-                      }
-                      return !!athlete.dateOfBirth;
-                    })
-                    .map((athlete) => {
-                      const today = new Date();
-                      const birthDate = new Date(athlete.dateOfBirth || "1970-01-01");
-                      const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-                      if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
-                      const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      const isUpcomingBirthday = daysUntilBirthday >= 0 && daysUntilBirthday <= 7;
-                      const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
-                      const parentInfo = parentMapping.get(athleteKey);
-                      return (
-                        <div
-                          key={athlete.id}
-                          className={
-                            isUpcomingBirthday
-                              ? 'relative bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-5 shadow-sm'
-                              : 'relative bg-gray-50 border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow'
+                  {/* Athletes Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                    {athletes
+                      .filter((athlete, index, self) =>
+                        index === self.findIndex((a) => a.id === athlete.id)
+                      )
+                      .filter(athlete => {
+                        // Search filter
+                        if (athleteSearchTerm) {
+                          const searchTerm = athleteSearchTerm.toLowerCase();
+                          const athleteName = (athlete.firstName && athlete.lastName 
+                            ? `${athlete.firstName} ${athlete.lastName}` 
+                            : athlete.name || 'Unknown Athlete').toLowerCase();
+                          if (!athleteName.includes(searchTerm)) {
+                            return false;
                           }
-                        >
-                          {/* Action buttons in top-right corner */}
-                          <div className={`absolute top-3 right-3 flex gap-2 ${isUpcomingBirthday ? '' : ''}`}>
-                            <Button size="sm" variant="outline" className={`h-8 w-8 p-0 ${isUpcomingBirthday ? 'hover:bg-yellow-100' : 'hover:bg-blue-100'}`} onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} title="View Details"><Eye className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="outline" className={`h-8 w-8 p-0 ${isUpcomingBirthday ? 'hover:bg-yellow-100' : 'hover:bg-blue-100'}`} onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} title="Edit Athlete"><Edit className="h-4 w-4" /></Button>
-                            <Button size="sm" variant="outline" className={`h-8 w-8 p-0 hover:bg-red-100 text-red-600`} onClick={() => { const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); if (activeBookings.length > 0) { setDeleteAthleteError({ athlete, activeBookings }); } else { deleteAthleteMutation.mutate(athlete.id); } }} title="Delete Athlete"><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                          {/* Card Content */}
-                          <div className="flex items-start space-x-4">
-                            {athlete.photo ? (
-                              <img src={athlete.photo} alt={`${athlete.name}'s photo`} className="w-16 h-16 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handlePhotoClick(athlete.photo!)} />
-                            ) : (
-                              <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-8 w-8 text-gray-400" /></div>
-                            )}
-                            <div className="flex-1 space-y-2">
-                              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}</h3>
-                              {isUpcomingBirthday && (
-                                <p className="text-sm font-medium text-orange-700 flex items-center gap-1">🎉 Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!</p>
+                        }
+                        return !!athlete.dateOfBirth;
+                      })
+                      .map((athlete) => {
+                        const today = new Date();
+                        const birthDate = new Date(athlete.dateOfBirth || "1970-01-01");
+                        const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                        if (nextBirthday < today) nextBirthday.setFullYear(today.getFullYear() + 1);
+                        const daysUntilBirthday = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        const isUpcomingBirthday = daysUntilBirthday >= 0 && daysUntilBirthday <= 7;
+                        const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
+                        const parentInfo = parentMapping.get(athleteKey);
+                        return (
+                          <div
+                            key={athlete.id}
+                            className={
+                              isUpcomingBirthday
+                                ? 'relative bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]'
+                                : 'relative bg-gradient-to-br from-white via-slate-50 to-white border border-slate-200 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]'
+                            }
+                          >
+                            {/* Action buttons in top-right corner */}
+                            <div className="absolute top-4 right-4 flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' : 'bg-white hover:bg-blue-50 text-blue-600'}`} 
+                                onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} 
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' : 'bg-white hover:bg-green-50 text-green-600'}`} 
+                                onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} 
+                                title="Edit Athlete"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-9 w-9 p-0 rounded-xl border-0 bg-white hover:bg-red-50 text-red-600 shadow-md transition-all duration-200" 
+                                onClick={() => { 
+                                  const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); 
+                                  if (activeBookings.length > 0) { 
+                                    setDeleteAthleteError({ athlete, activeBookings }); 
+                                  } else { 
+                                    deleteAthleteMutation.mutate(athlete.id); 
+                                  } 
+                                }} 
+                                title="Delete Athlete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {/* Card Content */}
+                            <div className="flex items-start space-x-4 pt-2">
+                              {athlete.photo ? (
+                                <img 
+                                  src={athlete.photo} 
+                                  alt={`${athlete.name}'s photo`} 
+                                  className="w-16 h-16 rounded-2xl object-cover cursor-pointer hover:opacity-80 transition-all duration-200 shadow-md ring-2 ring-slate-200" 
+                                  onClick={() => handlePhotoClick(athlete.photo!)} 
+                                />
+                              ) : (
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center shadow-md">
+                                  <User className="h-8 w-8 text-slate-500" />
+                                </div>
                               )}
-                              <p className="text-sm text-gray-600 flex items-center gap-2">🎂 Age: {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} | 🥇 {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}</p>
-                              {parentInfo && (<p className="text-sm text-gray-600 flex items-center gap-1">👨‍👦 Parent: {parentInfo.firstName} {parentInfo.lastName}</p>)}
+                              <div className="flex-1 space-y-3 pt-1">
+                                <h3 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2 leading-tight">
+                                  🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}
+                                </h3>
+                                {isUpcomingBirthday && (
+                                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200">
+                                    <span className="text-lg">🎉</span>
+                                    <span className="text-sm font-semibold text-amber-800">
+                                      Birthday in {daysUntilBirthday} {daysUntilBirthday === 1 ? 'day' : 'days'}!
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="space-y-2">
+                                  <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
+                                    🎂 <span className="font-semibold">Age:</span> {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} 
+                                    <span className="text-slate-400">|</span> 
+                                    🥇 <span className="font-semibold">Level:</span> {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}
+                                  </p>
+                                  {parentInfo && (
+                                    <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
+                                      👨‍👦 <span className="font-semibold">Parent:</span> {parentInfo.firstName} {parentInfo.lastName}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  👪 Parents Management
-                  <Badge variant="secondary">{parentsData?.parents?.length || 0} total</Badge>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <User className="h-8 w-8 text-[#D8BD2A]" />
+                  Parents Management
+                  <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-bold rounded-xl px-3 py-1">
+                    {parentsData?.parents?.length || 0} total
+                  </Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 {/* Search bar */}
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                  <div className="relative flex-1 max-w-xl">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                     <Input
                       type="text"
                       placeholder="Search parents by name, email, or phone..."
                       value={parentSearchTerm}
                       onChange={(e) => setParentSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 focus:ring-2 focus:ring-[#0F0276] focus:bg-white transition-all duration-200 text-base"
                     />
                   </div>
                   <Button
@@ -1349,152 +1416,179 @@ export default function Admin() {
                     variant="outline"
                     size="sm"
                     disabled={parentsLoading}
+                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-3 font-semibold"
                   >
-                    <RefreshCw className={`h-4 w-4 ${parentsLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`h-5 w-5 ${parentsLoading ? 'animate-spin' : ''}`} />
                   </Button>
                 </div>
 
                 {parentsLoading ? (
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2 flex-1">
-                            <Skeleton className="h-5 w-48" />
-                            <Skeleton className="h-4 w-64" />
-                            <Skeleton className="h-4 w-32" />
-                          </div>
-                          <Skeleton className="h-8 w-20" />
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center space-y-4">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0F0276]" />
+                      <p className="text-slate-600 font-medium">Loading parents data...</p>
+                    </div>
                   </div>
                 ) : parentsData?.parents?.length === 0 ? (
-                  <Card className="p-8 text-center border-dashed">
-                    <p className="text-gray-500 mb-4">No parents found</p>
-                    {parentSearchTerm && (
-                      <p className="text-sm text-gray-400">
-                        Try adjusting your search terms
-                      </p>
-                    )}
-                  </Card>
+                  <div className="text-center py-12">
+                    <div className="mx-auto w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mb-4">
+                      <User className="h-12 w-12 text-slate-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">No parents found</h3>
+                    <p className="text-slate-600 max-w-md mx-auto">
+                      {parentSearchTerm 
+                        ? `No parents match "${parentSearchTerm}". Try adjusting your search terms.`
+                        : "No parent accounts have been created yet. They'll appear here when parents complete bookings."
+                      }
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {filteredParents.map((parent: any) => {
-                      const athleteCount = typeof parent.athlete_count === 'number' ? parent.athlete_count : (parent.athletes?.length ?? 0);
-                      const bookingCount = typeof parent.booking_count === 'number' ? parent.booking_count : (parent.bookings?.length ?? 0);
-                      
-                      return (
-                        <Card key={parent.id} className="p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-lg">
-                                  {parent.first_name} {parent.last_name}
-                                </h3>
-                                <Badge variant="outline">{parent.id}</Badge>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
-                                <p className="flex items-center gap-1">
-                                  <Mail className="h-4 w-4" />
-                                  {parent.email}
-                                </p>
-                                <p className="flex items-center gap-1">
-                                  📞 {parent.phone}
-                                </p>
-                              </div>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                      {filteredParents.map((parent: any) => {
+                        const athleteCount = typeof parent.athlete_count === 'number' ? parent.athlete_count : (parent.athletes?.length ?? 0);
+                        const bookingCount = typeof parent.booking_count === 'number' ? parent.booking_count : (parent.bookings?.length ?? 0);
+                        
+                        return (
+                          <Card 
+                            key={parent.id} 
+                            className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          >
+                            <CardContent className="p-6">
+                              <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1 min-w-0 space-y-4">
+                                  <div className="flex items-center gap-3">
+                                    <h3 className="font-bold text-xl text-[#0F0276] group-hover:text-[#0F0276]/80 transition-colors">
+                                      {parent.first_name} {parent.last_name}
+                                    </h3>
+                                    <Badge variant="outline" className="text-xs font-medium bg-slate-50/80 border-slate-200 text-slate-600">
+                                      ID: {parent.id}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 gap-3">
+                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                      <Mail className="h-4 w-4 text-[#D8BD2A] flex-shrink-0" />
+                                      <span className="truncate font-medium">{parent.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                      <Phone className="h-4 w-4 text-[#D8BD2A] flex-shrink-0" />
+                                      <span className="font-medium">{parent.phone}</span>
+                                    </div>
+                                  </div>
 
-                              <div className="flex items-center gap-4 text-sm">
-                                <span className="flex items-center gap-1">
-                                  🏆 {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  📅 {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
-                                </span>
-                              </div>
+                                  <div className="flex items-center gap-6 text-sm">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 rounded-lg">
+                                      <Users className="h-4 w-4 text-[#0F0276]" />
+                                      <span className="font-semibold text-[#0F0276]">
+                                        {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg">
+                                      <Calendar className="h-4 w-4 text-blue-600" />
+                                      <span className="font-semibold text-blue-700">
+                                        {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
+                                      </span>
+                                    </div>
+                                  </div>
 
-                              {parent.athletes && parent.athletes.length > 0 && (
-                                <div className="text-sm">
-                                  <strong>Athletes:</strong>{' '}
-                                  {parent.athletes.map((athlete: any) => athlete.first_name + ' ' + athlete.last_name).join(', ')}
+                                  {parent.athletes && parent.athletes.length > 0 && (
+                                    <div className="pt-3 border-t border-slate-100">
+                                      <p className="text-sm font-semibold text-[#0F0276] mb-2">Athletes:</p>
+                                      <div className="flex flex-wrap gap-1">
+                                        {parent.athletes.map((athlete: any, index: number) => (
+                                          <Badge 
+                                            key={index}
+                                            variant="secondary" 
+                                            className="bg-gradient-to-r from-slate-100 to-slate-200/50 text-slate-700 text-xs font-medium rounded-lg px-2 py-1"
+                                          >
+                                            {athlete.first_name} {athlete.last_name}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
 
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Use filteredParents instead of parents
-                                  const validParent = filteredParents.find((p: any) => p.id === parent.id);
-                                  if (validParent) {
-                                    setSelectedParent(validParent);
-                                  } else {
-                                    console.warn(`Parent ${parent.id} not found in current parents list`);
-                                  }
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                                View
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Use filteredParents instead of parents
-                                  const validParent = filteredParents.find((p: any) => p.id === parent.id);
-                                  if (validParent) {
-                                    setSelectedParent(validParent);
-                                    setIsParentEditOpen(true);
-                                  } else {
-                                    console.warn(`Parent ${parent.id} not found in current parents list`);
-                                  }
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  if (confirm(`Are you sure you want to delete ${parent.first_name} ${parent.last_name}? This action cannot be undone.`)) {
-                                    deleteParentMutation.mutate(parent.id);
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
+                                <div className="flex flex-col gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const validParent = filteredParents.find((p: any) => p.id === parent.id);
+                                      if (validParent) {
+                                        setSelectedParent(validParent);
+                                      } else {
+                                        console.warn(`Parent ${parent.id} not found in current parents list`);
+                                      }
+                                    }}
+                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const validParent = filteredParents.find((p: any) => p.id === parent.id);
+                                      if (validParent) {
+                                        setSelectedParent(validParent);
+                                        setIsParentEditOpen(true);
+                                      } else {
+                                        console.warn(`Parent ${parent.id} not found in current parents list`);
+                                      }
+                                    }}
+                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm(`Are you sure you want to delete ${parent.first_name} ${parent.last_name}? This action cannot be undone.`)) {
+                                        deleteParentMutation.mutate(parent.id);
+                                      }
+                                    }}
+                                    className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
 
                     {/* Pagination */}
                     {parentsData?.pagination && parentsData.pagination.totalPages > 1 && (
-                      <div className="flex justify-center items-center gap-2 mt-6">
+                      <div className="flex justify-center items-center gap-4 pt-6 border-t border-slate-100">
                         <Button
                           variant="outline"
                           size="sm"
                           disabled={currentParentPage <= 1}
                           onClick={() => setCurrentParentPage(Math.max(1, currentParentPage - 1))}
+                          className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold disabled:opacity-50"
                         >
+                          <ChevronLeft className="h-4 w-4 mr-1" />
                           Previous
                         </Button>
-                        <span className="text-sm text-gray-600">
-                          Page {currentParentPage} of {parentsData.pagination.totalPages}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-600 px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
+                            Page {currentParentPage} of {parentsData.pagination.totalPages}
+                          </span>
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
                           disabled={currentParentPage >= parentsData.pagination.totalPages}
                           onClick={() => setCurrentParentPage(Math.min(parentsData.pagination.totalPages, currentParentPage + 1))}
+                          className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold disabled:opacity-50"
                         >
                           Next
+                          <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       </div>
                     )}
@@ -1505,26 +1599,49 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab">
-            <UpcomingSessions />
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <Clock className="h-8 w-8 text-[#D8BD2A]" />
+                  Upcoming Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8 pt-0">
+                <UpcomingSessions />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="content">
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Management</CardTitle>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
+                  Content Management
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 <Tabs defaultValue="blog" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="blog">Blog Posts</TabsTrigger>
-                    <TabsTrigger value="tips">Tips & Drills</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
+                    <TabsTrigger 
+                      value="blog"
+                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
+                    >
+                      Blog Posts
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="tips"
+                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
+                    >
+                      Tips & Drills
+                    </TabsTrigger>
                   </TabsList>
-                  <TabsContent value="blog" className="space-y-4">
+                  <TabsContent value="blog" className="space-y-6 mt-6">
                     <div className="flex justify-end">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button>
-                            <Plus className="h-4 w-4 mr-2" />
+                          <Button className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                            <Plus className="h-5 w-5 mr-2" />
                             New Blog Post
                           </Button>
                         </DialogTrigger>
@@ -1643,48 +1760,67 @@ export default function Admin() {
                       </DialogContent>
                     </Dialog>
                     
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-6">
                       {blogPosts.map((post) => (
-                        <div key={post.id} className="border rounded-lg p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold">{post.title}</h3>
-                              <p className="text-sm text-gray-600 mt-1">{post.excerpt}</p>
-                              <div className="flex gap-2 mt-2">
-                                <Badge variant="secondary">{post.category}</Badge>
-                                <span className="text-sm text-gray-500">
-                                  {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'No date'}
-                                </span>
+                        <Card 
+                          key={post.id} 
+                          className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 min-w-0 space-y-3">
+                                <h3 className="text-xl font-bold text-[#0F0276] group-hover:text-[#0F0276]/80 transition-colors line-clamp-2">
+                                  {post.title}
+                                </h3>
+                                <p className="text-slate-600 text-sm leading-relaxed line-clamp-3">
+                                  {post.excerpt}
+                                </p>
+                                <div className="flex items-center gap-3 pt-2">
+                                  <Badge 
+                                    variant="secondary" 
+                                    className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-medium rounded-lg px-3 py-1"
+                                  >
+                                    {post.category}
+                                  </Badge>
+                                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                                    <Calendar className="h-4 w-4" />
+                                    <span className="font-medium">
+                                      {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'No date'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingPost(post)}
+                                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteBlogPostMutation.mutate(post.id)}
+                                  className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setEditingPost(post)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => deleteBlogPostMutation.mutate(post.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="tips" className="space-y-4">
+                  <TabsContent value="tips" className="space-y-6 mt-6">
                     <div className="flex justify-end">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button>
-                            <Plus className="h-4 w-4 mr-2" />
+                          <Button className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                            <Plus className="h-5 w-5 mr-2" />
                             New Tip
                           </Button>
                         </DialogTrigger>
@@ -1857,36 +1993,59 @@ export default function Admin() {
                       </DialogContent>
                     </Dialog>
                     
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-6">
                       {tips.map((tip) => (
-                        <div key={tip.id} className="border rounded-lg p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold">{tip.title}</h3>
-                              <div className="flex gap-2 mt-2">
-                                <Badge variant="secondary">{tip.category}</Badge>
-                                <Badge variant="outline">{tip.difficulty}</Badge>
-                                {tip.videoUrl && <Badge>Has Video</Badge>}
+                        <Card 
+                          key={tip.id} 
+                          className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 min-w-0 space-y-3">
+                                <h3 className="text-xl font-bold text-[#0F0276] group-hover:text-[#0F0276]/80 transition-colors line-clamp-2">
+                                  {tip.title}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge 
+                                    variant="secondary" 
+                                    className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-medium rounded-lg px-3 py-1"
+                                  >
+                                    {tip.category}
+                                  </Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-blue-200 text-blue-700 font-medium rounded-lg px-3 py-1"
+                                  >
+                                    {tip.difficulty}
+                                  </Badge>
+                                  {tip.videoUrl && (
+                                    <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg px-3 py-1">
+                                      📹 Has Video
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingTip(tip)}
+                                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteTipMutation.mutate(tip.id)}
+                                  className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setEditingTip(tip)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => deleteTipMutation.mutate(tip.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   </TabsContent>
@@ -1896,35 +2055,58 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="schedule">
-            <Card>
-              <CardHeader>
-                <CardTitle>Schedule & Availability</CardTitle>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <Calendar className="h-8 w-8 text-[#D8BD2A]" />
+                  Schedule & Availability
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 <div className="space-y-6">
                   {/* Booking Cutoff System Overview */}
-                  <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-2 text-blue-800">🚀 Booking Cutoff System</h3>
-                    <p className="text-sm text-gray-700 mb-3">
-                      The system automatically prevents scheduling conflicts by restricting lesson bookings based on your availability and lesson duration.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div className="bg-white p-3 rounded border">
-                        <h4 className="font-medium text-green-700 mb-1">📅 30-minute Lessons</h4>
-                        <p>Quick Journey & Dual Quest lessons automatically cut off 30 minutes before your end time.</p>
-                        <p className="text-xs text-gray-600 mt-1">Example: If you end at 3:30 PM, last 30-min lesson starts at 3:00 PM</p>
+                  <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-green-50/50 to-blue-50/30 shadow-lg">
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold mb-3 text-blue-800 flex items-center gap-2">
+                        🚀 Booking Cutoff System
+                      </h3>
+                      <p className="text-sm text-slate-700 mb-4 leading-relaxed">
+                        The system automatically prevents scheduling conflicts by restricting lesson bookings based on your availability and lesson duration.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <Card className="rounded-lg border-0 bg-white/80 shadow-md">
+                          <CardContent className="p-4">
+                            <h4 className="font-bold text-green-700 mb-2 flex items-center gap-2">
+                              📅 30-minute Lessons
+                            </h4>
+                            <p className="text-slate-600 leading-relaxed">
+                              Quick Journey & Dual Quest lessons automatically cut off 30 minutes before your end time.
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="rounded-lg border-0 bg-white/80 shadow-md">
+                          <CardContent className="p-4">
+                            <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                              ⏰ 60-minute Lessons
+                            </h4>
+                            <p className="text-slate-600 leading-relaxed">
+                              Deep Dive & Partner Progression lessons automatically cut off 60 minutes before your end time.
+                            </p>
+                            <p className="text-xs text-slate-500 mt-2">
+                              Example: If you end at 3:30 PM, last 60-min lesson starts at 2:30 PM
+                            </p>
+                          </CardContent>
+                        </Card>
                       </div>
-                      <div className="bg-white p-3 rounded border">
-                        <h4 className="font-medium text-blue-700 mb-1">⏰ 60-minute Lessons</h4>
-                        <p>Deep Dive & Partner Progression lessons automatically cut off 60 minutes before your end time.</p>
-                        <p className="text-xs text-gray-600 mt-1">Example: If you end at 3:30 PM, last 60-min lesson starts at 2:30 PM</p>
-                      </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                   
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Weekly Availability</h3>
-                    <div className="space-y-4">
+                  <div className="space-y-6">
+                    <h3 className="text-2xl font-bold text-[#0F0276] flex items-center gap-3">
+                      <Clock className="h-7 w-7 text-[#D8BD2A]" />
+                      Weekly Availability
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
                       {[
                         { value: 0, label: 'Sunday' },
                         { value: 1, label: 'Monday' },
@@ -1936,9 +2118,10 @@ export default function Admin() {
                       ].map((day) => {
                         const dayAvailability = availability.find(a => a.dayOfWeek === day.value);
                         return (
-                          <div key={day.value} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-center">
-                              <h4 className="font-medium">{day.label}</h4>
+                          <Card key={day.value} className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white shadow-lg hover:shadow-xl transition-all duration-300">
+                            <CardContent className="p-6">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-lg font-bold text-[#0F0276]">{day.label}</h4>
                               {dayAvailability ? (
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-4">
@@ -2028,20 +2211,24 @@ export default function Admin() {
                                   </DialogContent>
                                 </Dialog>
                               )}
-                            </div>
-                          </div>
+                              </div>
+                            </CardContent>
+                          </Card>
                         );
                       })}
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Availability Exceptions</h3>
-                    <div className="flex justify-end mb-4">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-2xl font-bold text-[#0F0276] flex items-center gap-3">
+                        <CalendarX className="h-7 w-7 text-[#D8BD2A]" />
+                        Availability Exceptions
+                      </h3>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button>
-                            <CalendarX className="h-4 w-4 mr-2" />
+                          <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                            <CalendarX className="h-5 w-5 mr-2" />
                             Block Time
                           </Button>
                         </DialogTrigger>
@@ -2115,35 +2302,46 @@ export default function Admin() {
                       </Dialog>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-4">
                       {availabilityExceptions
                         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                         .map((exception) => (
-                          <div key={exception.id} className="border rounded-lg p-3 bg-red-50">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-medium">
-                                  {new Date(exception.date + 'T00:00:00').toLocaleDateString('en-US', {
-                                    weekday: 'short',
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {exception.startTime} - {exception.endTime}
-                                  {exception.reason && ` • ${exception.reason}`}
-                                </p>
+                          <Card key={exception.id} className="rounded-xl border-0 bg-gradient-to-br from-red-50 via-orange-50/50 to-red-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-center">
+                                <div className="space-y-1">
+                                  <p className="font-bold text-lg text-red-800">
+                                    {new Date(exception.date + 'T00:00:00').toLocaleDateString('en-US', {
+                                      weekday: 'short',
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-sm text-red-600">
+                                    <Clock className="h-4 w-4" />
+                                    <span className="font-medium">
+                                      {exception.startTime} - {exception.endTime}
+                                    </span>
+                                    {exception.reason && (
+                                      <>
+                                        <span className="text-red-400">•</span>
+                                        <span className="font-medium">{exception.reason}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteExceptionMutation.mutate(exception.id)}
+                                  className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => deleteExceptionMutation.mutate(exception.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
+                            </CardContent>
+                          </Card>
                         ))}
                     </div>
                   </div>
@@ -2153,21 +2351,30 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="parentcomm">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Parent Communication</CardTitle>
-                  <Badge variant="secondary">Frontend Only - Coming Soon</Badge>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                    <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
+                    Parent Communication
+                  </CardTitle>
+                  <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-blue-200/50 text-blue-700 font-bold rounded-xl px-4 py-2 w-fit">
+                    Frontend Only - Coming Soon
+                  </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Message List */}
-                  <div className="lg:col-span-1 border-r pr-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-semibold">Messages</h3>
-                      <Button size="sm" variant="outline">
-                        <MessageSquare className="h-4 w-4 mr-1" />
+                  <div className="lg:col-span-1">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-bold text-[#0F0276]">Messages</h3>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-2 font-semibold"
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
                         New
                       </Button>
                     </div>
@@ -2177,91 +2384,111 @@ export default function Admin() {
                         { id: 2, parent: "Mike Chen", athlete: "Lucas Chen", lastMessage: "Can we reschedule Friday's session?", time: "5h ago", unread: false },
                         { id: 3, parent: "Lisa Rodriguez", athlete: "Sofia Rodriguez", lastMessage: "Sofia loved the new routine!", time: "1d ago", unread: false },
                       ].map((thread) => (
-                        <div 
+                        <Card 
                           key={thread.id} 
-                          className={`p-3 rounded-lg cursor-pointer hover:bg-gray-100 ${thread.unread ? 'bg-blue-50' : ''}`}
+                          className={`rounded-xl border-0 cursor-pointer transition-all duration-300 ${
+                            thread.unread 
+                              ? 'bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl' 
+                              : 'bg-gradient-to-br from-white via-slate-50/50 to-white shadow-md hover:shadow-lg'
+                          }`}
                         >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">{thread.parent}</p>
-                              <p className="text-sm text-gray-600">{thread.athlete}</p>
-                              <p className="text-sm text-gray-500 mt-1">{thread.lastMessage}</p>
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-[#0F0276] truncate">{thread.parent}</p>
+                                <p className="text-sm text-slate-600 font-medium truncate">{thread.athlete}</p>
+                                <p className="text-sm text-slate-500 mt-2 line-clamp-2">{thread.lastMessage}</p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-xs text-slate-500 font-medium">{thread.time}</p>
+                                {thread.unread && (
+                                  <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mt-1 ml-auto shadow-sm"></div>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xs text-gray-500">{thread.time}</p>
-                              {thread.unread && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-auto"></div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   </div>
 
                   {/* Message Thread */}
                   <div className="lg:col-span-2">
-                    <div className="border-b pb-4 mb-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-semibold">Sarah Johnson</h3>
-                          <p className="text-sm text-gray-600">Parent of Emma Johnson</p>
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-white shadow-lg h-fit">
+                      <CardHeader className="pb-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="text-lg font-bold text-[#0F0276]">Sarah Johnson</h3>
+                            <p className="text-sm text-slate-600 font-medium">Parent of Emma Johnson</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <MessageCircle className="h-4 w-4" />
-                          </Button>
+                      </CardHeader>
+                      
+                      <CardContent className="space-y-6">
+                        <div className="space-y-4 max-h-96 overflow-y-auto px-2">
+                          <div className="flex justify-start">
+                            <div className="bg-gradient-to-br from-slate-100 to-slate-200/50 rounded-xl p-4 max-w-xs shadow-md">
+                              <p className="text-sm text-slate-700 leading-relaxed">Hi Coach Will! Emma is really excited about her upcoming competition.</p>
+                              <p className="text-xs text-slate-500 mt-2 font-medium">Yesterday, 3:45 PM</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-end">
+                            <div className="bg-gradient-to-br from-[#0F0276] to-[#0F0276]/90 text-white rounded-xl p-4 max-w-xs shadow-lg">
+                              <p className="text-sm leading-relaxed">That's wonderful! Emma has been working so hard. She's definitely ready!</p>
+                              <p className="text-xs text-blue-100 mt-2 font-medium">Yesterday, 4:10 PM</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-start">
+                            <div className="bg-gradient-to-br from-slate-100 to-slate-200/50 rounded-xl p-4 max-w-xs shadow-md">
+                              <p className="text-sm text-slate-700 leading-relaxed">Thank you for the great lesson!</p>
+                              <p className="text-xs text-slate-500 mt-2 font-medium">Today, 10:30 AM</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-                      <div className="flex justify-start">
-                        <div className="bg-gray-100 rounded-lg p-3 max-w-xs">
-                          <p className="text-sm">Hi Coach Will! Emma is really excited about her upcoming competition.</p>
-                          <p className="text-xs text-gray-500 mt-1">Yesterday, 3:45 PM</p>
+                        <div className="border-t border-slate-100 pt-4 space-y-4">
+                          <div className="flex gap-2">
+                            <Select defaultValue="custom">
+                              <SelectTrigger className="w-48 rounded-lg border-0 bg-slate-50 shadow-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="custom">Custom Message</SelectItem>
+                                <SelectItem value="reschedule">Reschedule Template</SelectItem>
+                                <SelectItem value="policy">Policy Reminder</SelectItem>
+                                <SelectItem value="thanks">Thank You</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-3">
+                            <Textarea 
+                              placeholder="Type your message..." 
+                              className="flex-1 rounded-lg border-0 bg-slate-50 focus:ring-2 focus:ring-[#0F0276] resize-none"
+                              rows={3}
+                            />
+                            <Button className="self-end bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6 py-2 font-semibold">
+                              Send
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex justify-end">
-                        <div className="bg-blue-500 text-white rounded-lg p-3 max-w-xs">
-                          <p className="text-sm">That's wonderful! Emma has been working so hard. She's definitely ready!</p>
-                          <p className="text-xs text-blue-100 mt-1">Yesterday, 4:10 PM</p>
-                        </div>
-                      </div>
-                      <div className="flex justify-start">
-                        <div className="bg-gray-100 rounded-lg p-3 max-w-xs">
-                          <p className="text-sm">Thank you for the great lesson!</p>
-                          <p className="text-xs text-gray-500 mt-1">Today, 10:30 AM</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-4">
-                      <div className="flex gap-2 mb-3">
-                        <Select defaultValue="custom">
-                          <SelectTrigger className="w-48">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="custom">Custom Message</SelectItem>
-                            <SelectItem value="reschedule">Reschedule Template</SelectItem>
-                            <SelectItem value="policy">Policy Reminder</SelectItem>
-                            <SelectItem value="thanks">Thank You</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex gap-2">
-                        <Textarea 
-                          placeholder="Type your message..." 
-                          className="flex-1"
-                          rows={3}
-                        />
-                        <Button className="self-end">Send</Button>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
 
@@ -2322,38 +2549,47 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <Card>
-              <CardContent className="p-6">
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
+                  Payment Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8 pt-0">
                 <PaymentsTab />
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics Dashboard</CardTitle>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <BarChart className="h-8 w-8 text-[#D8BD2A]" />
+                  Analytics Dashboard
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 <div className="space-y-6">
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                        <CardTitle className="text-sm font-bold text-blue-800">Total Bookings</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{bookings.length}</div>
-                        <p className="text-xs text-muted-foreground">All time</p>
+                        <div className="text-3xl font-black text-blue-900">{bookings.length}</div>
+                        <p className="text-xs text-blue-600 font-medium mt-1">All time</p>
                       </CardContent>
                     </Card>
                     
-                    <Card>
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">This Month</CardTitle>
+                        <CardTitle className="text-sm font-bold text-green-800">This Month</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">
+                        <div className="text-3xl font-black text-green-900">
                           {bookings.filter(b => {
                             if (!b.preferredDate) return false;
                             const bookingDate = new Date(b.preferredDate);
@@ -2362,30 +2598,30 @@ export default function Admin() {
                                    bookingDate.getFullYear() === thisMonth.getFullYear();
                           }).length}
                         </div>
-                        <p className="text-xs text-muted-foreground">Bookings</p>
+                        <p className="text-xs text-green-600 font-medium mt-1">Monthly bookings</p>
                       </CardContent>
                     </Card>
                     
-                    <Card>
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                        <CardTitle className="text-sm font-bold text-purple-800">Conversion Rate</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">
+                        <div className="text-3xl font-black text-purple-900">
                           {bookings.length > 0 
                             ? Math.round((bookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length / bookings.length) * 100)
                             : 0}%
                         </div>
-                        <p className="text-xs text-muted-foreground">Form to payment</p>
+                        <p className="text-xs text-purple-600 font-medium mt-1">Form to payment</p>
                       </CardContent>
                     </Card>
                     
-                    <Card>
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-orange-50 via-orange-25 to-orange-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">Avg Booking Value</CardTitle>
+                        <CardTitle className="text-sm font-bold text-orange-800">Avg Booking Value</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">
+                        <div className="text-3xl font-black text-orange-900">
                           $
                           {bookings.length > 0
                             ? (bookings.reduce((sum, b) => {
@@ -2397,78 +2633,94 @@ export default function Admin() {
                               }, 0) / bookings.length).toFixed(2)
                             : '0.00'}
                         </div>
-                        <p className="text-xs text-muted-foreground">Per booking</p>
+                        <p className="text-xs text-orange-600 font-medium mt-1">Per booking</p>
                       </CardContent>
                     </Card>
                   </div>
 
                   {/* Date Range Filter - Mobile Responsive */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div className="flex flex-col space-y-2">
-                      <Label>Start Date</Label>
-                      <Input
-                        type="date"
-                        value={analyticsDateRange.start}
-                        onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, start: e.target.value }))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-2">
-                      <Label>End Date</Label>
-                      <Input
-                        type="date"
-                        value={analyticsDateRange.end}
-                        onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, end: e.target.value }))}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-2">
-                      <Label>Lesson Type</Label>
-                      <Select value={analyticsLessonType} onValueChange={setAnalyticsLessonType}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All lessons" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All lessons</SelectItem>
-                          <SelectItem value="30-min-private">30-min Private</SelectItem>
-                          <SelectItem value="1-hour-private">1-hour Private</SelectItem>
-                          <SelectItem value="30-min-semi-private">30-min Semi-Private</SelectItem>
-                          <SelectItem value="1-hour-semi-private">1-hour Semi-Private</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex flex-col space-y-2">
-                      <Label className="opacity-0 md:opacity-100">Actions</Label>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setAnalyticsDateRange({ start: '', end: '' });
-                          setAnalyticsLessonType('all');
-                        }}
-                        className="w-full"
-                      >
-                        Reset Filters
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Popular Focus Areas Chart */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Popular Focus Areas</CardTitle>
+                  <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg font-bold text-[#0F0276] flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-[#D8BD2A]" />
+                        Date Range Filter
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-slate-700">Start Date</Label>
+                          <Input
+                            type="date"
+                            value={analyticsDateRange.start}
+                            onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, start: e.target.value }))}
+                            className="rounded-lg border-0 bg-slate-50 focus:ring-2 focus:ring-[#0F0276] transition-all duration-200"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-slate-700">End Date</Label>
+                          <Input
+                            type="date"
+                            value={analyticsDateRange.end}
+                            onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, end: e.target.value }))}
+                            className="rounded-lg border-0 bg-slate-50 focus:ring-2 focus:ring-[#0F0276] transition-all duration-200"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-slate-700">Lesson Type</Label>
+                          <Select value={analyticsLessonType} onValueChange={setAnalyticsLessonType}>
+                            <SelectTrigger className="rounded-lg border-0 bg-slate-50 focus:ring-2 focus:ring-[#0F0276] transition-all duration-200">
+                              <SelectValue placeholder="All lessons" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All lessons</SelectItem>
+                              <SelectItem value="30-min-private">30-min Private</SelectItem>
+                              <SelectItem value="1-hour-private">1-hour Private</SelectItem>
+                              <SelectItem value="30-min-semi-private">30-min Semi-Private</SelectItem>
+                              <SelectItem value="1-hour-semi-private">1-hour Semi-Private</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold text-slate-700 sm:opacity-0 lg:opacity-100">Actions</Label>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setAnalyticsDateRange({ start: '', end: '' });
+                              setAnalyticsLessonType('all');
+                            }}
+                            className="w-full bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold"
+                          >
+                            Reset Filters
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>                  {/* Popular Focus Areas Chart */}
+                  <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-white shadow-lg">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-2">
+                        <BarChart className="h-6 w-6 text-[#D8BD2A]" />
+                        Popular Focus Areas
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {focusAreaStats.slice(0, 10).map((stat) => (
+                        {focusAreaStats.slice(0, 10).map((stat, index) => (
                           <div key={stat.area} className="flex items-center gap-4">
-                            <div className="w-40 text-sm font-medium truncate">{stat.area}</div>
+                            <div className="w-40 text-sm font-bold text-slate-700 truncate">{stat.area}</div>
                             <div className="flex-1">
-                              <div className="bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                              <div className="bg-slate-200 rounded-full h-8 relative overflow-hidden shadow-inner">
                                 <div
-                                  className="absolute top-0 left-0 h-full bg-purple-500 rounded-full transition-all duration-500"
+                                  className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${
+                                    index % 4 === 0 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                                    index % 4 === 1 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                                    index % 4 === 2 ? 'bg-gradient-to-r from-purple-400 to-purple-500' :
+                                    'bg-gradient-to-r from-orange-400 to-orange-500'
+                                  }`}
                                   style={{ width: `${(stat.count / Math.max(...focusAreaStats.map(s => s.count), 1)) * 100}%` }}
                                 />
-                                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">
+                                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
                                   {stat.count} bookings
                                 </span>
                               </div>
@@ -2510,18 +2762,21 @@ export default function Admin() {
                   </Card>
 
                   {/* Lesson Type Distribution */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Lesson Type Distribution</CardTitle>
+                  <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-white shadow-lg">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-2">
+                        <DollarSign className="h-6 w-6 text-[#D8BD2A]" />
+                        Lesson Type Distribution
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {(() => {
                           const lessonTypes = [
-                            { key: 'quick-journey', label: 'Quick Journey' },
-                            { key: 'deep-dive', label: 'Deep Dive' },
-                            { key: 'dual-quest', label: 'Dual Quest' },
-                            { key: 'partner-progression', label: 'Partner Progression' }
+                            { key: 'quick-journey', label: 'Quick Journey', color: 'blue' },
+                            { key: 'deep-dive', label: 'Deep Dive', color: 'green' },
+                            { key: 'dual-quest', label: 'Dual Quest', color: 'purple' },
+                            { key: 'partner-progression', label: 'Partner Progression', color: 'orange' }
                           ];
                           
                           return lessonTypes.map(type => {
@@ -2537,11 +2792,23 @@ export default function Admin() {
                               : 0;
                             
                             return (
-                              <div key={type.key} className="text-center p-4 border rounded-lg">
-                                <div className="text-3xl font-bold text-blue-600">{percentage}%</div>
-                                <p className="text-sm font-medium mt-1">{type.label}</p>
-                                <p className="text-xs text-gray-500 mt-1">{count} bookings</p>
-                              </div>
+                              <Card key={type.key} className={`text-center rounded-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                                type.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-blue-100/50' :
+                                type.color === 'green' ? 'bg-gradient-to-br from-green-50 to-green-100/50' :
+                                type.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-purple-100/50' :
+                                'bg-gradient-to-br from-orange-50 to-orange-100/50'
+                              }`}>
+                                <CardContent className="p-6">
+                                  <div className={`text-4xl font-black mb-2 ${
+                                    type.color === 'blue' ? 'text-blue-700' :
+                                    type.color === 'green' ? 'text-green-700' :
+                                    type.color === 'purple' ? 'text-purple-700' :
+                                    'text-orange-700'
+                                  }`}>{percentage}%</div>
+                                  <p className="text-sm font-bold text-slate-700 mb-1">{type.label}</p>
+                                  <p className="text-xs text-slate-500 font-medium">{count} bookings</p>
+                                </CardContent>
+                              </Card>
                             );
                           });
                         })()}
@@ -2554,43 +2821,75 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="waivers">
-            <AdminWaiverManagement />
-          </TabsContent>
-
-          <TabsContent value="site-content">
-            <AdminSiteContentManager />
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
+                  Waiver Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8 pt-0">
+                <AdminWaiverManagement />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Settings</CardTitle>
+            <Card className="rounded-2xl sm:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                  <AlertCircle className="h-8 w-8 text-[#D8BD2A]" />
+                  Settings
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 lg:p-8">
                 <Tabs defaultValue="developer" className="w-full">
-                  <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
-                    <TabsTrigger value="developer">Developer Settings</TabsTrigger>
-                    <TabsTrigger value="general">General Settings</TabsTrigger>
-                    <TabsTrigger value="backup">Backup & Restore</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
+                    <TabsTrigger 
+                      value="developer"
+                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
+                    >
+                      Developer
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="general"
+                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
+                    >
+                      General
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="site-content"
+                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
+                    >
+                      Site Content
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="backup"
+                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
+                    >
+                      Backup
+                    </TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="developer" className="space-y-6">
-                    <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="h-5 w-5 text-yellow-600" />
-                        <h3 className="font-semibold text-yellow-800">Developer Tools</h3>
-                      </div>
-                      <p className="text-sm text-yellow-700">
-                        These tools are for testing and development purposes only. Use with caution as they can alter or delete data.
-                      </p>
-                    </div>
+                  <TabsContent value="developer" className="space-y-6 mt-6">
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-orange-50/50 to-yellow-50/30 shadow-lg">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <AlertCircle className="h-6 w-6 text-yellow-600" />
+                          <h3 className="text-lg font-bold text-yellow-800">Developer Tools</h3>
+                        </div>
+                        <p className="text-sm text-yellow-700 leading-relaxed">
+                          These tools are for testing and development purposes only. Use with caution as they can alter or delete data.
+                        </p>
+                      </CardContent>
+                    </Card>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Data Management */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Trash2 className="h-5 w-5" />
+                      <Card className="rounded-xl border-0 bg-gradient-to-br from-red-50 via-red-25 to-red-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-bold text-red-800 flex items-center gap-3">
+                            <Trash2 className="h-6 w-6 text-red-600" />
                             Data Management
                           </CardTitle>
                         </CardHeader>
@@ -2645,10 +2944,10 @@ export default function Admin() {
                       </Card>
 
                       {/* Test Data Generation */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Plus className="h-5 w-5" />
+                      <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-3">
+                            <Plus className="h-6 w-6 text-blue-600" />
                             Test Data Generation
                           </CardTitle>
                         </CardHeader>
@@ -2717,10 +3016,10 @@ export default function Admin() {
                       </Card>
 
                       {/* Payment Testing */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <DollarSign className="h-5 w-5" />
+                      <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
+                            <DollarSign className="h-6 w-6 text-green-600" />
                             Payment Testing
                           </CardTitle>
                         </CardHeader>
@@ -2768,10 +3067,10 @@ export default function Admin() {
                       </Card>
 
                       {/* System Status */}
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <BarChart className="h-5 w-5" />
+                      <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-bold text-purple-800 flex items-center gap-3">
+                            <BarChart className="h-6 w-6 text-purple-600" />
                             System Status
                           </CardTitle>
                         </CardHeader>
@@ -2821,22 +3120,42 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="general">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>General Settings</CardTitle>
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
+                          <AlertCircle className="h-6 w-6 text-[#D8BD2A]" />
+                          General Settings
+                        </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="p-6">
                         <p className="text-gray-600">General application settings will be implemented here.</p>
                       </CardContent>
                     </Card>
                   </TabsContent>
                   
-                  <TabsContent value="backup">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Backup & Restore</CardTitle>
+                  <TabsContent value="site-content">
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
+                          <MessageSquare className="h-6 w-6 text-[#D8BD2A]" />
+                          Site Content Management
+                        </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="p-6">
+                        <AdminSiteContentManager />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="backup">
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
+                          <RefreshCw className="h-6 w-6 text-[#D8BD2A]" />
+                          Backup & Restore
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-6">
                         <p className="text-gray-600">Data backup and restore functionality will be implemented here.</p>
                       </CardContent>
                     </Card>

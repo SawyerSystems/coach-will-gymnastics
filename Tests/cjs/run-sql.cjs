@@ -3,7 +3,7 @@
 /**
  * SQL Execution Script for Supabase Database
  * Usage: node run-sql.js "SELECT * FROM bookings LIMIT 5;"
- * Usage: node Tests/cjs/run-sql.cjs --file Tests/sql/migration.sql
+ * Usage: node run-sql.js --file migration.sql
  */
 
 const { Client } = require('pg');

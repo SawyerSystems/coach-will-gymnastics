@@ -63,8 +63,8 @@ Usage:
   node Tests/cjs/supabase-sql.cjs --file Tests/sql/path/to/script.sql
   
 Examples:
-  node Tests/cjs/supabase-sql.cjs "SELECT COUNT(*) FROM bookings;"
-  node Tests/cjs/supabase-sql.cjs "SELECT column_name FROM information_schema.columns WHERE table_name='bookings';"
+  node supabase-sql.cjs "SELECT COUNT(*) FROM bookings;"
+  node supabase-sql.cjs "SELECT column_name FROM information_schema.columns WHERE table_name='bookings';"
     `);
     return;
   }

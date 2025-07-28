@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Image, Mail, MapPin, Phone, Save, Upload, Video } from 'lucide-react';
+import { Clock, HelpCircle, Image, Mail, MapPin, Phone, Save, Star, Upload, Users, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface SiteContent {
@@ -226,33 +226,91 @@ export function AdminSiteContentManager() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Site Content Management</h2>
-        <Button onClick={handleSave} disabled={saving} className="btn-athletic-gold">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+            <Upload className="h-8 w-8 text-[#D8BD2A]" />
+            Site Content Management
+          </h2>
+          <p className="text-slate-600 mt-1">Manage website content, media, and information</p>
+        </div>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving} 
+          className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold shadow-lg hover:shadow-xl transition-all duration-200 border-0 rounded-xl px-6 py-3"
+        >
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Saving...' : 'Save All Changes'}
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="media">Media</TabsTrigger>
-          <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="hours">Hours</TabsTrigger>
-          <TabsTrigger value="programs">Programs</TabsTrigger>
-          <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-          <TabsTrigger value="faqs">FAQs</TabsTrigger>
-          <TabsTrigger value="emails">Emails</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
+          <TabsTrigger 
+            value="media"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <Video className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Media</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="about"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <Users className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">About</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="contact"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <MapPin className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Contact</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="hours"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <Clock className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Hours</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="programs"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <Upload className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Programs</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="testimonials"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <Star className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Reviews</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="faqs"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <HelpCircle className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">FAQs</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="emails"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
+          >
+            <Mail className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Emails</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Media Tab */}
-        <TabsContent value="media" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Video className="w-5 h-5" />
+        <TabsContent value="media" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-purple-800 flex items-center gap-3">
+                <Video className="h-6 w-6 text-purple-600" />
                 Banner Video
               </CardTitle>
             </CardHeader>
@@ -303,10 +361,10 @@ export function AdminSiteContentManager() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Image className="w-5 h-5" />
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-3">
+                <Image className="h-6 w-6 text-blue-600" />
                 Hero Images
               </CardTitle>
             </CardHeader>
@@ -342,10 +400,13 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* About Tab */}
-        <TabsContent value="about" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>About Coach Will</CardTitle>
+        <TabsContent value="about" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
+                <Users className="h-6 w-6 text-green-600" />
+                About Coach Will
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -405,11 +466,11 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* Contact Tab */}
-        <TabsContent value="contact" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="w-5 h-5" />
+        <TabsContent value="contact" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-orange-50 via-orange-25 to-orange-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-orange-800 flex items-center gap-3">
+                <Phone className="h-6 w-6 text-orange-600" />
                 Contact Information
               </CardTitle>
             </CardHeader>
@@ -497,11 +558,11 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* Hours Tab */}
-        <TabsContent value="hours" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
+        <TabsContent value="hours" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-indigo-50 via-indigo-25 to-indigo-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-indigo-800 flex items-center gap-3">
+                <Clock className="h-6 w-6 text-indigo-600" />
                 Hours of Operation
               </CardTitle>
             </CardHeader>
@@ -544,10 +605,13 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* Programs Tab */}
-        <TabsContent value="programs" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Apparatus & Equipment</CardTitle>
+        <TabsContent value="programs" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-teal-50 via-teal-25 to-teal-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-teal-800 flex items-center gap-3">
+                <Video className="h-6 w-6 text-teal-600" />
+                Apparatus & Equipment
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -613,10 +677,13 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* Testimonials Tab */}
-        <TabsContent value="testimonials" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Parent Testimonials</CardTitle>
+        <TabsContent value="testimonials" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-pink-50 via-pink-25 to-pink-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-pink-800 flex items-center gap-3">
+                <Star className="h-6 w-6 text-pink-600" />
+                Parent Testimonials
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {content.testimonials.map((testimonial, index) => (
@@ -682,10 +749,13 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* FAQs Tab */}
-        <TabsContent value="faqs" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Frequently Asked Questions</CardTitle>
+        <TabsContent value="faqs" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-yellow-800 flex items-center gap-3">
+                <HelpCircle className="h-6 w-6 text-yellow-600" />
+                Frequently Asked Questions
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {content.faqs.map((faq, index) => (
@@ -749,11 +819,11 @@ export function AdminSiteContentManager() {
         </TabsContent>
 
         {/* Emails Tab */}
-        <TabsContent value="emails" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="w-5 h-5" />
+        <TabsContent value="emails" className="mt-6 space-y-6 p-6">
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-cyan-50 via-cyan-25 to-cyan-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-cyan-800 flex items-center gap-3">
+                <Mail className="h-6 w-6 text-cyan-600" />
                 Email Template Management
               </CardTitle>
             </CardHeader>

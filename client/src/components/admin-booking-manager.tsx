@@ -707,48 +707,99 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
 
   return (
     <>
-      {/* Tabs for Active/Archived */}
+      {/* Modern Tabs for Active/Archived */}
       <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived')} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="active">Active Bookings</TabsTrigger>
-          <TabsTrigger value="archived">Archived Bookings</TabsTrigger>
+        <TabsList className="mb-6 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
+          <TabsTrigger 
+            value="active"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 px-6"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Active Bookings
+          </TabsTrigger>
+          <TabsTrigger 
+            value="archived"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 px-6"
+          >
+            <FileCheck className="h-4 w-4 mr-2" />
+            Archived Bookings
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="active">
-          {/* Header with actions - Mobile Responsive */}
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-            <h2 className="text-2xl font-bold">Booking Management</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <Input
-                  type="date"
-                  className="w-full min-w-0"
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  placeholder="Filter by date"
-                />
+          {/* Modern Header Section */}
+          <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 mb-6">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3 mb-2">
+                  <Calendar className="h-8 w-8 text-[#D8BD2A]" />
+                  Active Bookings
+                </h2>
+                <p className="text-slate-600">Manage upcoming sessions and bookings</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <Select value={bookingFilter} onValueChange={setBookingFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
-                    <SelectItem value="manual-paid">Manual Paid</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="no-show">No Show</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={() => {
+                    setAdminBookingContext('new-athlete');
+                    setPreSelectedAthleteId(undefined);
+                    setShowUnifiedBooking(true);
+                  }}
+                  className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold shadow-lg hover:shadow-xl transition-all duration-200 border-0 rounded-xl"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Athlete Booking
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAdminBookingContext('existing-athlete');
+                    setPreSelectedAthleteId(undefined);
+                    setShowUnifiedBooking(true);
+                  }}
+                  className="border-[#0F0276]/20 text-[#0F0276] hover:bg-[#0F0276]/5 rounded-xl font-semibold"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Existing Athlete
+                </Button>
+              </div>
+            </div>
+            
+            {/* Modern Filter Section */}
+            <div className="mt-6 flex flex-col lg:flex-row gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    type="date"
+                    className="pl-10 rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    placeholder="Filter by date"
+                  />
+                </div>
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Select value={bookingFilter} onValueChange={setBookingFilter}>
+                    <SelectTrigger className="pl-10 rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="manual">Manual</SelectItem>
+                      <SelectItem value="manual-paid">Manual Paid</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="no-show">No Show</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Select value={sortOption} onValueChange={setSortOption}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
+                  <SelectTrigger className="rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                    <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="recent">Most Recent</SelectItem>
@@ -759,43 +810,21 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                 </Select>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  setAdminBookingContext('new-athlete');
-                  setPreSelectedAthleteId(undefined);
-                  setShowUnifiedBooking(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Athlete Booking
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setAdminBookingContext('existing-athlete');
-                  setPreSelectedAthleteId(undefined);
-                  setShowUnifiedBooking(true);
-                }}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Existing Athlete Booking
-              </Button>
-            </div>
           </div>
+          
           {/* Bookings table (active) */}
-          <Card>
+          <Card className="rounded-xl border-0 shadow-lg">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Athletes</TableHead>
-                    <TableHead>Lesson Type</TableHead>
-                    <TableHead>Payment Status</TableHead>
-                    <TableHead>Attendance</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="border-slate-200">
+                    <TableHead className="font-semibold text-slate-700">Date & Time</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Athletes</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Lesson Type</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Payment Status</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Attendance</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Amount</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -818,35 +847,37 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                     </TableRow>
                   ) : (
                     filteredAndSortedBookings.map((booking: Booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-500" />
+                    <TableRow key={booking.id} className="hover:bg-slate-50/50 transition-colors border-slate-100">
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
+                            <Calendar className="h-4 w-4 text-[#D8BD2A]" />
+                          </div>
                           <div>
-                            <div className="font-medium">{booking.preferredDate}</div>
-                            <div className="text-sm text-gray-500">{booking.preferredTime}</div>
+                            <div className="font-semibold text-slate-900">{booking.preferredDate}</div>
+                            <div className="text-sm text-slate-500">{booking.preferredTime}</div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">
                         <div className="space-y-1">
                           {booking.athletes?.map((athlete: any, index: number) => (
-                            <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
+                            <div key={index} className={index === 0 ? "font-semibold text-slate-900" : "text-sm text-slate-600"}>
                               {athlete.name}
                             </div>
                           )) || (
                             <div className="space-y-1">
-                              {booking.athlete1Name && <div className="font-medium">{booking.athlete1Name}</div>}
-                              {booking.athlete2Name && <div className="text-sm text-muted-foreground">{booking.athlete2Name}</div>}
+                              {booking.athlete1Name && <div className="font-semibold text-slate-900">{booking.athlete1Name}</div>}
+                              {booking.athlete2Name && <div className="text-sm text-slate-600">{booking.athlete2Name}</div>}
                               {!booking.athlete1Name && !booking.athlete2Name && (
-                                <div className="text-muted-foreground">No athletes</div>
+                                <div className="text-slate-500 italic">No athletes</div>
                               )}
                             </div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
+                      <TableCell className="py-4">
+                        <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50 font-medium">
                           {(() => {
                             const lessonType = booking.lessonType;
                             if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
@@ -856,7 +887,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                           })()}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4">
                         <Select
                           value={booking.paymentStatus || "unpaid"}
                           onValueChange={(value) => 
@@ -867,7 +898,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                           }
                           disabled={updatePaymentStatusMutation.isPending}
                         >
-                          <SelectTrigger className="h-8 w-[140px]">
+                          <SelectTrigger className="h-9 w-[150px] rounded-lg border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -997,24 +1028,32 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
           />
         </TabsContent>
         <TabsContent value="archived">
-          <h2 className="text-2xl font-bold mb-4">Archived Bookings</h2>
+          {/* Modern Archived Header */}
+          <div className="bg-gradient-to-r from-slate-100/50 to-slate-200/30 rounded-xl border border-slate-200/50 p-6 mb-6">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-700 tracking-tight flex items-center gap-3">
+              <FileCheck className="h-8 w-8 text-slate-500" />
+              Archived Bookings
+            </h2>
+            <p className="text-slate-600 mt-1">Completed, cancelled, and no-show sessions</p>
+          </div>
+          
           {loadingArchived ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
             </div>
           ) : (
-            <Card>
+            <Card className="rounded-xl border-0 shadow-lg">
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Athletes</TableHead>
-                      <TableHead>Lesson Type</TableHead>
-                      <TableHead>Payment Status</TableHead>
-                      <TableHead>Attendance</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Details</TableHead>
+                    <TableRow className="border-slate-200">
+                      <TableHead className="font-semibold text-slate-700">Date & Time</TableHead>
+                      <TableHead className="font-semibold text-slate-700">Athletes</TableHead>
+                      <TableHead className="font-semibold text-slate-700">Lesson Type</TableHead>
+                      <TableHead className="font-semibold text-slate-700">Payment Status</TableHead>
+                      <TableHead className="font-semibold text-slate-700">Attendance</TableHead>
+                      <TableHead className="font-semibold text-slate-700">Amount</TableHead>
+                      <TableHead className="font-semibold text-slate-700">Details</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
