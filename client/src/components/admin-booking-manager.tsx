@@ -38,7 +38,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileX, Filter, HelpCircle, Plus, User, X, XCircle } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileText, FileX, Filter, HelpCircle, Mail, Medal, Phone, Plus, Shield, Target, User, Users, X, XCircle } from "lucide-react";
 import { useState } from "react";
 import { AdminBookingDetailActions } from "./admin-booking-detail-actions";
 
@@ -2003,13 +2003,16 @@ function ManualBookingForm({
 function BookingDetailsView({ booking }: { booking: Booking }) {
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <h4 className="font-semibold mb-3">Lesson Details</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Type:</span>
-              <span>{(() => {
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-gradient-to-r from-white to-blue-50 p-3 sm:p-4 rounded-xl border border-blue-100 shadow-sm">
+          <h4 className="font-semibold text-blue-800 flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4" />
+            Lesson Details
+          </h4>
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700">Type:</span>
+              <span className="text-gray-900">{(() => {
                 const lessonType = booking.lessonType;
                 if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
                   return (lessonType as any).name;
@@ -2017,29 +2020,41 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
                 return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
               })()}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Date:</span>
-              <span>{booking.preferredDate}</span>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700">Date:</span>
+              <span className="text-gray-900">{booking.preferredDate}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Time:</span>
-              <span>{booking.preferredTime}</span>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700">Time:</span>
+              <span className="text-gray-900">{booking.preferredTime}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Payment Status:</span>
-              <Badge {...getPaymentStatusBadgeProps(booking.paymentStatus || 'unpaid')}>
-                {booking.displayPaymentStatus || (booking.paymentStatus || 'unpaid').charAt(0).toUpperCase() + (booking.paymentStatus || 'unpaid').slice(1)}
-              </Badge>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700">Payment Status:</span>
+              {(() => {
+                const badgeProps = getPaymentStatusBadgeProps(booking.paymentStatus || 'unpaid');
+                return (
+                  <Badge className={`${badgeProps.className} flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium`}>
+                    {badgeProps.icon}
+                    {booking.displayPaymentStatus || badgeProps.text || (booking.paymentStatus || 'unpaid').charAt(0).toUpperCase() + (booking.paymentStatus || 'unpaid').slice(1)}
+                  </Badge>
+                );
+              })()}
             </div>
-            <div className="flex justify-between">
-              <span>Attendance Status:</span>
-              <Badge {...getAttendanceStatusBadgeProps(booking.attendanceStatus || 'pending')}>
-                {(booking.attendanceStatus || 'pending').charAt(0).toUpperCase() + (booking.attendanceStatus || 'pending').slice(1).replace(/-/g, ' ')}
-              </Badge>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700">Attendance Status:</span>
+              {(() => {
+                const badgeProps = getAttendanceStatusBadgeProps(booking.attendanceStatus || 'pending');
+                return (
+                  <Badge className={`${badgeProps.className} flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium`}>
+                    {badgeProps.icon}
+                    {badgeProps.text || (booking.attendanceStatus || 'pending').charAt(0).toUpperCase() + (booking.attendanceStatus || 'pending').slice(1).replace(/-/g, ' ')}
+                  </Badge>
+                );
+              })()}
             </div>
-            <div className="flex justify-between">
-              <span>Amount:</span>
-              <span>{(() => {
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700">Amount:</span>
+              <span className="text-gray-900 font-medium">{(() => {
                 const price = getLessonPrice(booking.lessonType);
                 if (price && price > 0) return `$${price.toFixed(2)}`;
                 const amt = parseFloat(booking.amount || '0');
@@ -2049,46 +2064,74 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
           </div>
         </div>
 
-        <div>
-          <h4 className="font-semibold mb-3">Parent Information</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Name:</span>
-              <span>{booking.parent?.firstName || booking.parentFirstName} {booking.parent?.lastName || booking.parentLastName}</span>
+        <div className="bg-gradient-to-r from-white to-purple-50 p-3 sm:p-4 rounded-xl border border-purple-100 shadow-sm">
+          <h4 className="font-semibold text-purple-800 flex items-center gap-2 mb-3">
+            <User className="w-4 h-4" />
+            Parent Information
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg sm:col-span-2">
+              <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-purple-500" />
+                Name:
+              </span>
+              <span className="text-gray-900 font-medium">{booking.parent?.firstName || booking.parentFirstName} {booking.parent?.lastName || booking.parentLastName}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Email:</span>
-              <span>{booking.parent?.email || booking.parentEmail}</span>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg sm:col-span-2">
+              <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-purple-500" />
+                Email:
+              </span>
+              <span className="text-gray-900">{booking.parent?.email || booking.parentEmail}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Phone:</span>
-              <span>{booking.parent?.phone || booking.parentPhone}</span>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg sm:col-span-2">
+              <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-purple-500" />
+                Phone:
+              </span>
+              <span className="text-gray-900">{booking.parent?.phone || booking.parentPhone}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Emergency:</span>
-              <span>{booking.parent?.emergencyContactName || booking.emergencyContactName}</span>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                Emergency:
+              </span>
+              <span className="text-gray-900">{booking.parent?.emergencyContactName || booking.emergencyContactName}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Emergency Phone:</span>
-              <span>{booking.parent?.emergencyContactPhone || booking.emergencyContactPhone}</span>
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+              <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-red-500" />
+                Emergency Phone:
+              </span>
+              <span className="text-gray-900">{booking.parent?.emergencyContactPhone || booking.emergencyContactPhone}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div>
-        <h4 className="font-semibold mb-3">Athletes</h4>
+      <div className="bg-gradient-to-r from-white to-green-50 p-3 sm:p-4 rounded-xl border border-green-100 shadow-sm">
+        <h4 className="font-semibold text-green-800 flex items-center gap-2 mb-3">
+          <Users className="w-4 h-4" />
+          Athletes
+        </h4>
         <div className="space-y-3">
           {booking.athletes && booking.athletes.length > 0 ? (
             booking.athletes.map((athlete: any, index: number) => (
-              <div key={athlete.id || index} className="p-3 bg-gray-50 rounded-lg">
-                <div className="font-medium">{athlete.firstName} {athlete.lastName}</div>
-                <div className="text-sm text-gray-600">
-                  Age: {calculateAge(athlete.dateOfBirth || '')} | Experience: {athlete.experience}
+              <div key={athlete.id || index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="font-medium flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-green-600" />
+                  {athlete.firstName} {athlete.lastName}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3 text-gray-500" />
+                  Age: {calculateAge(athlete.dateOfBirth || '')} | 
+                  <Medal className="w-3 h-3 text-gray-500" />
+                  Experience: {athlete.experience}
                 </div>
                 {athlete.allergies && (
-                  <div className="text-sm text-red-600 mt-1">
-                    Allergies: {athlete.allergies}
+                  <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
+                    <span>Allergies: {athlete.allergies}</span>
                   </div>
                 )}
               </div>
@@ -2097,27 +2140,41 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
             // Fallback to legacy fields
             <>
               {booking.athlete1Name && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="font-medium">{booking.athlete1Name}</div>
-                  <div className="text-sm text-gray-600">
-                    Age: {calculateAge(booking.athlete1DateOfBirth || '')} | Experience: {booking.athlete1Experience}
+                <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
+                  <div className="font-medium flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-green-600" />
+                    {booking.athlete1Name}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 text-gray-500" />
+                    Age: {calculateAge(booking.athlete1DateOfBirth || '')} | 
+                    <Medal className="w-3 h-3 text-gray-500" />
+                    Experience: {booking.athlete1Experience}
                   </div>
                   {booking.athlete1Allergies && (
-                    <div className="text-sm text-red-600 mt-1">
-                      Allergies: {booking.athlete1Allergies}
+                    <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
+                      <span>Allergies: {booking.athlete1Allergies}</span>
                     </div>
                   )}
                 </div>
               )}
               {booking.athlete2Name && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="font-medium">{booking.athlete2Name}</div>
-                  <div className="text-sm text-gray-600">
-                    Age: {booking.athlete2DateOfBirth ? calculateAge(booking.athlete2DateOfBirth) : "N/A"} | Experience: {booking.athlete2Experience}
+                <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
+                  <div className="font-medium flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-green-600" />
+                    {booking.athlete2Name}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
+                    <Calendar className="w-3 h-3 text-gray-500" />
+                    Age: {booking.athlete2DateOfBirth ? calculateAge(booking.athlete2DateOfBirth) : "N/A"} | 
+                    <Medal className="w-3 h-3 text-gray-500" />
+                    Experience: {booking.athlete2Experience}
                   </div>
                   {booking.athlete2Allergies && (
-                    <div className="text-sm text-red-600 mt-1">
-                      Allergies: {booking.athlete2Allergies}
+                    <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
+                      <span>Allergies: {booking.athlete2Allergies}</span>
                     </div>
                   )}
                 </div>
@@ -2125,58 +2182,79 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
             </>
           )}
           {(!booking.athletes || booking.athletes.length === 0) && !booking.athlete1Name && (
-            <div className="text-muted-foreground">No athletes assigned</div>
+            <div className="text-center py-4 text-gray-500">
+              <Users className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+              No athletes assigned
+            </div>
           )}
         </div>
       </div>
 
       {booking.focusAreas && booking.focusAreas.length > 0 && (
-        <div>
-          <h4 className="font-semibold mb-3">Focus Areas</h4>
+        <div className="bg-gradient-to-r from-white to-amber-50 p-3 sm:p-4 rounded-xl border border-amber-100 shadow-sm">
+          <h4 className="font-semibold text-amber-800 flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4" />
+            Focus Areas
+          </h4>
           <div className="flex flex-wrap gap-2">
             {booking.focusAreas.map((area: any, index: number) => (
-              <Badge key={index} variant="secondary">{area}</Badge>
+              <Badge 
+                key={index} 
+                variant="secondary"
+                className="bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200"
+              >
+                {area}
+              </Badge>
             ))}
           </div>
         </div>
       )}
 
       {/* Safety Information Section */}
-      <div>
-        <h4 className="font-semibold mb-3">Safety Information</h4>
-        <div className="grid md:grid-cols-2 gap-6">
+      <div className="bg-gradient-to-r from-white to-red-50 p-3 sm:p-4 rounded-xl border border-red-100 shadow-sm">
+        <h4 className="font-semibold text-red-800 flex items-center gap-2 mb-3">
+          <Shield className="w-4 h-4" />
+          Safety Information
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div>
-            <h5 className="font-medium mb-2">Drop-off Person</h5>
-            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
-              <div className="flex justify-between">
-                <span>Name:</span>
-                <span>{booking.dropoffPersonName || 'N/A'}</span>
+            <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2">
+              <User className="w-3.5 h-3.5" />
+              Drop-off Person
+            </h5>
+            <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Name:</span>
+                <span className="text-gray-900">{booking.dropoffPersonName || 'N/A'}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Relationship:</span>
-                <span>{booking.dropoffPersonRelationship || 'N/A'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Relationship:</span>
+                <span className="text-gray-900">{booking.dropoffPersonRelationship || 'N/A'}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Phone:</span>
-                <span>{booking.dropoffPersonPhone || 'N/A'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Phone:</span>
+                <span className="text-gray-900">{booking.dropoffPersonPhone || 'N/A'}</span>
               </div>
             </div>
           </div>
           
           <div>
-            <h5 className="font-medium mb-2">Pick-up Person</h5>
-            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
-              <div className="flex justify-between">
-                <span>Name:</span>
-                <span>{booking.pickupPersonName || 'N/A'}</span>
+            <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2">
+              <User className="w-3.5 h-3.5" />
+              Pick-up Person
+            </h5>
+            <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Name:</span>
+                <span className="text-gray-900">{booking.pickupPersonName || 'N/A'}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Relationship:</span>
-                <span>{booking.pickupPersonRelationship || 'N/A'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Relationship:</span>
+                <span className="text-gray-900">{booking.pickupPersonRelationship || 'N/A'}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Phone:</span>
-                <span>{booking.pickupPersonPhone || 'N/A'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Phone:</span>
+                <span className="text-gray-900">{booking.pickupPersonPhone || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -2184,19 +2262,22 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
 
         {booking.altPickupPersonName && (
           <div className="mt-4">
-            <h5 className="font-medium mb-2">Alternative Pick-up Person</h5>
-            <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
-              <div className="flex justify-between">
-                <span>Name:</span>
-                <span>{booking.altPickupPersonName}</span>
+            <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2">
+              <Users className="w-3.5 h-3.5" />
+              Alternative Pick-up Person
+            </h5>
+            <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Name:</span>
+                <span className="text-gray-900">{booking.altPickupPersonName}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Relationship:</span>
-                <span>{booking.altPickupPersonRelationship || 'N/A'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Relationship:</span>
+                <span className="text-gray-900">{booking.altPickupPersonRelationship || 'N/A'}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Phone:</span>
-                <span>{booking.altPickupPersonPhone || 'N/A'}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">Phone:</span>
+                <span className="text-gray-900">{booking.altPickupPersonPhone || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -2204,9 +2285,12 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
       </div>
 
       {booking.adminNotes && (
-        <div>
-          <h4 className="font-semibold mb-3">Admin Notes</h4>
-          <p className="text-sm bg-gray-50 p-3 rounded-lg">{booking.adminNotes}</p>
+        <div className="bg-gradient-to-r from-white to-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 shadow-sm">
+          <h4 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+            <FileText className="w-4 h-4" />
+            Admin Notes
+          </h4>
+          <p className="text-sm bg-white p-3 rounded-lg border border-gray-100 text-gray-700 leading-relaxed">{booking.adminNotes}</p>
         </div>
       )}
     </div>
