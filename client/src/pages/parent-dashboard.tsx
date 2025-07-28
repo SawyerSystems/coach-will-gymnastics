@@ -21,7 +21,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, FileCheck, FileX, HelpCircle, LogOut, MapPin, Shield, Star, Trophy, User, Users, X, XCircle } from 'lucide-react';
+import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, LogOut, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -426,6 +426,7 @@ function ParentDashboard() {
   const [editingAthleteId, setEditingAthleteId] = useState<number | null>(null);
   const [editingAthleteInfo, setEditingAthleteInfo] = useState<any>(null);
   const [editingAthleteGender, setEditingAthleteGender] = useState<string>('');
+  const [addingNewAthlete, setAddingNewAthlete] = useState<boolean>(false);
   const [selectedAthleteForBooking, setSelectedAthleteForBooking] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showAthleteSelection, setShowAthleteSelection] = useState(false);
@@ -568,13 +569,15 @@ function ParentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50/20 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F0276] dark:text-white drop-shadow-sm">Parent Dashboard</h1>
           <Button 
             onClick={() => logoutMutation.mutate()} 
             variant="outline"
+            size="sm"
+            className="text-sm sm:text-base bg-white/70 backdrop-blur-sm hover:bg-white/90 dark:bg-gray-800 dark:hover:bg-gray-700"
             disabled={logoutMutation.isPending}
           >
             <LogOut className="w-4 h-4 mr-2" />
@@ -637,208 +640,263 @@ function ParentDashboard() {
           </div>
         </div>
 
-        <Tabs defaultValue="upcoming" className="space-y-4">
-          <TabsList className="w-full grid grid-cols-2 lg:grid-cols-3 gap-2 bg-gray-100 p-2 rounded-lg h-auto mb-6">
+        <Tabs defaultValue="upcoming" className="space-y-4 sm:space-y-6 w-full">
+          <TabsList className="w-full grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-1 sm:p-2 rounded-lg h-auto mb-4 sm:mb-6 shadow-sm overflow-x-auto">
             <TabsTrigger 
               value="upcoming" 
-              className="min-h-[48px] border-2 border-green-300 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-green-500 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-green-100"
+              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
             >
-              🏃 Upcoming
+              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="hidden xs:inline">Upcoming</span>
+              <span className="xs:hidden">Next</span>
             </TabsTrigger>
             <TabsTrigger 
               value="past" 
-              className="min-h-[48px] border-2 border-blue-300 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:border-blue-500 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-blue-100"
+              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
             >
-              🎯 Adventure Log
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="hidden xs:inline">Adventure Log</span>
+              <span className="xs:hidden">Past</span>
             </TabsTrigger>
             <TabsTrigger 
               value="athletes" 
-              className="min-h-[48px] border-2 border-orange-300 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-orange-100"
+              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
             >
-              ⭐ Athletes
+              <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span>Athletes</span>
             </TabsTrigger>
             <TabsTrigger 
               value="waivers" 
-              className="min-h-[48px] border-2 border-red-300 data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:border-red-500 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-red-100"
+              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
             >
-              🛡️ Waivers
+              <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span>Waivers</span>
             </TabsTrigger>
             <TabsTrigger 
               value="my-info" 
-              className="min-h-[48px] border-2 border-purple-300 data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:border-purple-500 data-[state=active]:shadow-sm transition-all duration-200 hover:bg-purple-100 col-span-2 lg:col-span-1"
+              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200 col-span-2 xs:col-span-1"
             >
-              👤 My Info
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="hidden xs:inline">My Info</span>
+              <span className="xs:hidden">Profile</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Sessions</CardTitle>
+          <TabsContent value="upcoming" className="space-y-4">
+            <Card className="overflow-hidden border-0 shadow-md">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 py-4">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Upcoming Sessions
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {upcomingBookings.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No upcoming sessions</p>
+                  <div className="text-center py-10">
+                    <div className="text-5xl mb-4">🗓️</div>
+                    <p className="text-gray-500 text-lg mb-1">No upcoming sessions</p>
+                    <p className="text-gray-400 text-sm">Book a new session to see it here!</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {upcomingBookings.map((booking) => (
-                      <div key={booking.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2">
+                      <div 
+                        key={booking.id} 
+                        className="border rounded-xl p-3 sm:p-4 bg-gradient-to-r from-white to-blue-50 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex flex-col xs:flex-row justify-between gap-4">
+                          <div className="space-y-3">
+                            {/* Athlete Info */}
                             <div className="flex items-center gap-2">
-                              <User className="w-4 h-4 text-gray-500" />
+                              <div className="bg-blue-100 p-1.5 rounded-full">
+                                <User className="w-3.5 h-3.5 text-blue-600" />
+                              </div>
                               {booking.athletes && booking.athletes.length > 0 ? (
-                                <span className="font-medium">
+                                <span className="font-medium text-sm sm:text-base">
                                   {booking.athletes.map((athlete: any) => athlete.name).join(' & ')}
                                 </span>
                               ) : (
                                 <>
-                                  <span className="font-medium">{booking.athlete1Name}</span>
+                                  <span className="font-medium text-sm sm:text-base">{booking.athlete1Name}</span>
                                   {booking.athlete2Name && (
-                                    <span className="font-medium">& {booking.athlete2Name}</span>
+                                    <span className="font-medium text-sm sm:text-base">& {booking.athlete2Name}</span>
                                   )}
                                 </>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-500" />
-                              <span>{booking.preferredDate ? formatDate(booking.preferredDate) : 'Date TBD'}</span>
-                            </div>
+                            {/* Date and Time */}
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                                <span className="text-xs sm:text-sm">{booking.preferredDate ? formatDate(booking.preferredDate) : 'Date TBD'}</span>
+                              </div>
 
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-gray-500" />
-                              <span>{booking.preferredTime}</span>
-                              <Badge variant="secondary">
+                              <div className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-gray-500" />
+                                <span className="text-xs sm:text-sm">{booking.preferredTime}</span>
+                              </div>
+                              
+                              <Badge 
+                                variant="secondary"
+                                className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto"
+                              >
                                 {booking.lessonType?.replace('-', ' ').replace('min', 'minute') || 'Unknown Lesson Type'}
                               </Badge>
                             </div>
 
-                            {/* Payment Status - Enhanced Automatic Display */}
-                            <div className="flex items-center gap-2">
-                              {booking.paymentStatus === 'reservation-pending' && <Clock className="w-4 h-4 text-yellow-600" />}
-                              {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-4 h-4 text-green-600" />}
-                              {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-4 h-4 text-red-600" />}
-                              {booking.paymentStatus === 'failed' && <Clock className="w-4 h-4 text-gray-600" />}
-                              {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-4 h-4 text-orange-600" />}
-                              {!booking.paymentStatus && <HelpCircle className="w-4 h-4 text-gray-600" />}
-                              
-                              <Badge 
-                                variant="outline"
-                                className={
-                                  booking.paymentStatus === 'session-paid' ? 'border-green-300 text-green-700 bg-green-50' :
-                                  booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50' :
-                                  booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
-                                  booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50' :
-                                  booking.paymentStatus === 'failed' ? 'border-gray-300 text-gray-700 bg-gray-50' :
-                                  booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50' :
-                                  'border-gray-300 text-gray-700 bg-gray-50'
-                                }
-                              >
-                                {booking.paymentStatus === 'session-paid' ? 'Full Payment ✓' : 
-                                 booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
-                                 booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
-                                 booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
-                                 booking.paymentStatus === 'failed' ? 'Failed' :
-                                 booking.paymentStatus === 'unpaid' ? 'Unpaid' :
-                                 booking.paymentStatus || 'Unknown'}
-                              </Badge>
+                            {/* Status Row */}
+                            <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
+                              {/* Payment Status */}
+                              <div className="flex items-center gap-1.5">
+                                {booking.paymentStatus === 'reservation-pending' && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-600" />}
+                                {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />}
+                                {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-600" />}
+                                {booking.paymentStatus === 'failed' && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
+                                {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600" />}
+                                {!booking.paymentStatus && <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
+                                
+                                <Badge 
+                                  variant="outline"
+                                  className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto ${
+                                    booking.paymentStatus === 'session-paid' ? 'border-green-300 text-green-700 bg-green-50' :
+                                    booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50' :
+                                    booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
+                                    booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50' :
+                                    booking.paymentStatus === 'failed' ? 'border-gray-300 text-gray-700 bg-gray-50' :
+                                    booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50' :
+                                    'border-gray-300 text-gray-700 bg-gray-50'
+                                  }`}
+                                >
+                                  {booking.paymentStatus === 'session-paid' ? 'Full Payment ✓' : 
+                                  booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
+                                  booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
+                                  booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
+                                  booking.paymentStatus === 'failed' ? 'Failed' :
+                                  booking.paymentStatus === 'unpaid' ? 'Unpaid' :
+                                  booking.paymentStatus || 'Unknown'}
+                                </Badge>
+                              </div>
+
+                              {/* Attendance Status */}
+                              <div className="flex items-center gap-1.5">
+                                {booking.attendanceStatus === 'pending' && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" />}
+                                {booking.attendanceStatus === 'confirmed' && <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />}
+                                {booking.attendanceStatus === 'completed' && <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />}
+                                {booking.attendanceStatus === 'no-show' && <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-600" />}
+                                {booking.attendanceStatus === 'cancelled' && <X className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
+                                {!booking.attendanceStatus && <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
+                                
+                                <Badge 
+                                  variant="outline"
+                                  className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto ${
+                                    booking.attendanceStatus === 'completed' ? 'border-green-300 text-green-700 bg-green-50' :
+                                    booking.attendanceStatus === 'confirmed' ? 'border-green-300 text-green-700 bg-green-50' :
+                                    booking.attendanceStatus === 'pending' ? 'border-blue-300 text-blue-700 bg-blue-50' :
+                                    booking.attendanceStatus === 'no-show' ? 'border-red-300 text-red-700 bg-red-50' :
+                                    booking.attendanceStatus === 'cancelled' ? 'border-gray-300 text-gray-700 bg-gray-50' :
+                                    'border-gray-300 text-gray-700 bg-gray-50'
+                                  }`}
+                                >
+                                  {booking.attendanceStatus === 'completed' ? 'Completed ✓' :
+                                  booking.attendanceStatus === 'confirmed' ? 'Confirmed ✓' :
+                                  booking.attendanceStatus === 'pending' ? 'Scheduled' :
+                                  booking.attendanceStatus === 'no-show' ? 'No Show' :
+                                  booking.attendanceStatus === 'cancelled' ? 'Cancelled' :
+                                  booking.attendanceStatus || 'Pending'}
+                                </Badge>
+                              </div>
+
+                              {/* Waiver Status */}
+                              <div className="flex items-center gap-1.5">
+                                {booking.waiverSigned ? (
+                                  <FileCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />
+                                ) : (
+                                  <FileX className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600" />
+                                )}
+                                <Badge 
+                                  variant="outline"
+                                  className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto ${
+                                    booking.waiverSigned ? 'border-green-300 text-green-700 bg-green-50' : 
+                                    'border-orange-300 text-orange-700 bg-orange-50'
+                                  }`}
+                                >
+                                  {booking.waiverSigned ? 'Waiver Signed ✓' : 'Waiver Required'}
+                                </Badge>
+                              </div>
+                            </div>
+
+                            {/* Status Notifications */}
+                            <div className="space-y-1 text-[10px] sm:text-xs">
                               {booking.paymentStatus === 'reservation-pending' && (
-                                <span className="text-xs text-gray-500">(Auto-expires 24hr)</span>
+                                <p className="text-yellow-600">(Payment auto-expires in 24hr)</p>
                               )}
-                            </div>
-
-                            {/* Attendance Status - Enhanced Automatic Display */}
-                            <div className="flex items-center gap-2">
-                              {booking.attendanceStatus === 'pending' && <Clock className="w-4 h-4 text-blue-600" />}
-                              {booking.attendanceStatus === 'confirmed' && <CheckCircle className="w-4 h-4 text-green-600" />}
-                              {booking.attendanceStatus === 'completed' && <CheckCircle2 className="w-4 h-4 text-green-600" />}
-                              {booking.attendanceStatus === 'no-show' && <XCircle className="w-4 h-4 text-red-600" />}
-                              {booking.attendanceStatus === 'cancelled' && <X className="w-4 h-4 text-gray-600" />}
-                              {!booking.attendanceStatus && <HelpCircle className="w-4 h-4 text-gray-600" />}
-                              
-                              <Badge 
-                                variant="outline"
-                                className={
-                                  booking.attendanceStatus === 'completed' ? 'border-green-300 text-green-700 bg-green-50' :
-                                  booking.attendanceStatus === 'confirmed' ? 'border-green-300 text-green-700 bg-green-50' :
-                                  booking.attendanceStatus === 'pending' ? 'border-blue-300 text-blue-700 bg-blue-50' :
-                                  booking.attendanceStatus === 'no-show' ? 'border-red-300 text-red-700 bg-red-50' :
-                                  booking.attendanceStatus === 'cancelled' ? 'border-gray-300 text-gray-700 bg-gray-50' :
-                                  'border-gray-300 text-gray-700 bg-gray-50'
-                                }
-                              >
-                                {booking.attendanceStatus === 'completed' ? 'Completed ✓' :
-                                 booking.attendanceStatus === 'confirmed' ? 'Confirmed ✓' :
-                                 booking.attendanceStatus === 'pending' ? 'Scheduled' :
-                                 booking.attendanceStatus === 'no-show' ? 'No Show' :
-                                 booking.attendanceStatus === 'cancelled' ? 'Cancelled' :
-                                 booking.attendanceStatus || 'Pending'}
-                              </Badge>
                               {booking.paymentStatus === 'reservation-paid' && booking.attendanceStatus === 'pending' && (
-                                <span className="text-xs text-gray-500">(Auto-confirms on payment)</span>
+                                <p className="text-blue-600">(Session will auto-confirm)</p>
                               )}
-                            </div>
-
-                            {/* Waiver Status - Enhanced Display */}
-                            <div className="flex items-center gap-2">
-                              {booking.waiverSigned ? (
-                                <FileCheck className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <FileX className="w-4 h-4 text-orange-600" />
-                              )}
-                              <Badge 
-                                variant="outline"
-                                className={booking.waiverSigned ? 'border-green-300 text-green-700 bg-green-50' : 'border-orange-300 text-orange-700 bg-orange-50'}
-                              >
-                                {booking.waiverSigned ? 'Waiver Signed ✓' : 'Waiver Required'}
-                              </Badge>
                               {!booking.waiverSigned && booking.paymentStatus === 'reservation-paid' && (
-                                <span className="text-xs text-red-500">(Required before session)</span>
+                                <p className="text-red-500">(Waiver required before session)</p>
                               )}
                             </div>
 
+                            {/* Focus Areas (mobile only) */}
                             {booking.focusAreas && booking.focusAreas.length > 0 && (
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm text-gray-600">
+                              <div className="flex items-center gap-1.5 xs:hidden mt-1">
+                                <MapPin className="w-3 h-3 text-gray-500" />
+                                <span className="text-[10px] text-gray-600">
                                   Focus: {booking.focusAreas.join(', ')}
                                 </span>
                               </div>
                             )}
                           </div>
 
-                          <div className="flex flex-col gap-2">
+                          {/* Right Column - Status & Actions */}
+                          <div className="flex xs:flex-col justify-between xs:justify-start gap-2 pt-1">
                             <Badge 
                               variant={booking.status === 'confirmed' ? 'default' : 'secondary'}
+                              className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto"
                             >
                               {booking.status === 'confirmed' ? 'Confirmed' : booking.status}
                             </Badge>
 
+                            {/* Focus Areas (desktop only) */}
+                            {booking.focusAreas && booking.focusAreas.length > 0 && (
+                              <div className="hidden xs:flex items-center gap-1.5 mt-1">
+                                <MapPin className="w-3.5 h-3.5 text-gray-500" />
+                                <span className="text-xs text-gray-600">
+                                  Focus: {booking.focusAreas.join(', ')}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Actions */}
                             {booking.status !== 'cancelled' && (
-                              <div className="flex flex-col gap-2">
+                              <div className="flex xs:flex-col gap-2 mt-auto">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-blue-600 hover:text-blue-700"
+                                  className="h-7 text-xs text-blue-600 hover:text-blue-700 px-2"
                                   onClick={() => handleReschedule(booking.id)}
                                 >
+                                  <Calendar className="h-3 w-3 mr-1" />
                                   Reschedule
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-green-600 hover:text-green-700"
+                                  className="h-7 text-xs text-green-600 hover:text-green-700 px-2"
                                   onClick={() => handleEditBooking(booking.id)}
                                 >
-                                  Edit Details
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-red-600 hover:text-red-700"
+                                  className="h-7 text-xs text-red-600 hover:text-red-700 px-2"
                                   onClick={() => setCancelBookingId(booking.id)}
                                 >
+                                  <X className="h-3 w-3 mr-1" />
                                   Cancel
                                 </Button>
                               </div>
@@ -853,39 +911,40 @@ function ParentDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="past">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  🎯 Adventure Log
-                  <span className="text-sm font-normal text-gray-500">Progress & Growth Tracking</span>
+          <TabsContent value="past" className="space-y-4">
+            <Card className="overflow-hidden border-0 shadow-md">
+              <CardHeader className="bg-gradient-to-r from-purple-500 to-blue-600 py-4">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <BookMarked className="h-5 w-5" />
+                  Adventure Log
+                  <span className="text-xs xs:text-sm font-normal text-white/80 hidden xs:inline">Progress & Growth Tracking</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {pastBookings.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🎯</div>
-                    <p className="text-gray-500 text-lg mb-2">No adventures completed yet!</p>
+                  <div className="text-center py-10">
+                    <div className="text-5xl mb-4">🎯</div>
+                    <p className="text-gray-500 text-lg mb-1">No adventures completed yet!</p>
                     <p className="text-gray-400 text-sm">Complete your first session to start tracking progress</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Summary Statistics */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-700">{pastBookings.length}</div>
-                        <div className="text-sm text-blue-600">Sessions Completed</div>
+                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 xs:gap-4 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                      <div className="text-center p-2">
+                        <div className="text-xl xs:text-2xl font-bold text-blue-700">{pastBookings.length}</div>
+                        <div className="text-[10px] xs:text-xs sm:text-sm text-blue-600">Sessions Completed</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-700">
+                      <div className="text-center p-2">
+                        <div className="text-xl xs:text-2xl font-bold text-purple-700">
                           {pastBookings.reduce((total, booking) => {
                             return total + (booking.focusAreas?.length || 0);
                           }, 0)}
                         </div>
-                        <div className="text-sm text-purple-600">Skills Practiced</div>
+                        <div className="text-[10px] xs:text-xs sm:text-sm text-purple-600">Skills Practiced</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-700 flex items-center justify-center gap-1">
+                      <div className="text-center p-2 col-span-2 xs:col-span-1">
+                        <div className="text-xl xs:text-2xl font-bold text-green-700 flex items-center justify-center gap-1">
                           {(() => {
                             const sessionsPerMonth = pastBookings.length / Math.max(1, 
                               Math.ceil((new Date().getTime() - new Date(Math.min(...pastBookings.map(b => b.createdAt ? new Date(b.createdAt).getTime() : Date.now()))).getTime()) / (1000 * 60 * 60 * 24 * 30))
@@ -895,28 +954,31 @@ function ParentDashboard() {
                             return <>💤 Low</>;
                           })()}
                         </div>
-                        <div className="text-sm text-green-600">Consistency</div>
+                        <div className="text-[10px] xs:text-xs sm:text-sm text-green-600">Consistency</div>
                       </div>
                     </div>
 
                     {/* Adventure Log Entries */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        📜 Adventure History
-                        <span className="text-sm font-normal text-gray-500">({pastBookings.length} completed)</span>
+                      <h3 className="text-base xs:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        Adventure History
+                        <span className="text-xs font-normal text-gray-500">({pastBookings.length} completed)</span>
                       </h3>
                       
                       {pastBookings.map((booking) => (
-                        <div key={booking.id} className="border rounded-xl p-6 bg-gradient-to-r from-gray-50 to-blue-50 hover:shadow-md transition-all duration-200">
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div key={booking.id} className="border rounded-xl p-3 xs:p-4 sm:p-6 bg-gradient-to-r from-white to-blue-50 hover:shadow-md transition-all duration-200">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                             {/* Left Column - Session Info */}
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                               {/* Athlete and Date */}
                               <div className="flex items-start justify-between">
                                 <div>
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <User className="w-5 h-5 text-blue-600" />
-                                    <span className="font-semibold text-lg text-gray-800">
+                                  <div className="flex items-center gap-2 mb-1 xs:mb-2">
+                                    <div className="bg-blue-100 p-1 rounded-full">
+                                      <User className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600" />
+                                    </div>
+                                    <span className="font-medium text-sm xs:text-base sm:text-lg text-gray-800">
                                       {booking.athletes && booking.athletes.length > 0 ? (
                                         booking.athletes.map((athlete: any) => athlete.name).join(' & ')
                                       ) : (
@@ -927,24 +989,24 @@ function ParentDashboard() {
                                       )}
                                     </span>
                                   </div>
-                                  <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
                                     <div className="flex items-center gap-1">
-                                      <Calendar className="w-4 h-4" />
-                                      {booking.preferredDate ? format(new Date(booking.preferredDate), 'MMMM d, yyyy') : 'Date TBD'}
+                                      <Calendar className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
+                                      {booking.preferredDate ? format(new Date(booking.preferredDate), 'MMM d, yyyy') : 'Date TBD'}
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <Clock className="w-4 h-4" />
+                                      <Clock className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
                                       {booking.preferredTime || 'Time TBD'}
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <User className="w-4 h-4" />
+                                      <User className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
                                       {booking.coachName || 'Coach Will'}
                                     </div>
                                   </div>
                                 </div>
                                 <Badge 
                                   variant="outline"
-                                  className="bg-green-50 text-green-700 border-green-200"
+                                  className="bg-green-50 text-green-700 border-green-200 text-[10px] xs:text-xs h-auto py-0.5"
                                 >
                                   ✅ Completed
                                 </Badge>
@@ -953,15 +1015,16 @@ function ParentDashboard() {
                               {/* Focus Areas */}
                               {booking.focusAreas && booking.focusAreas.length > 0 && (
                                 <div>
-                                  <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                    🎯 Skills Practiced
+                                  <h4 className="font-medium text-xs xs:text-sm text-gray-700 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                    <Target className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600" />
+                                    Skills Practiced
                                   </h4>
-                                  <div className="flex flex-wrap gap-2">
+                                  <div className="flex flex-wrap gap-1 xs:gap-2">
                                     {booking.focusAreas.map((area, index) => (
                                       <Badge 
                                         key={index}
                                         variant="secondary"
-                                        className="bg-blue-100 text-blue-800 border-blue-200"
+                                        className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] xs:text-xs h-auto py-0.5"
                                       >
                                         {area}
                                       </Badge>
@@ -972,14 +1035,15 @@ function ParentDashboard() {
                             </div>
 
                             {/* Right Column - Progress & Notes */}
-                            <div className="space-y-4">
+                            <div className="space-y-3 sm:space-y-4">
                               {/* Progress Note */}
                               <div>
-                                <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                  📈 Progress Note
+                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                  <TrendingUp className="w-3 h-3 xs:w-4 xs:h-4 text-green-600" />
+                                  Progress Note
                                 </h4>
-                                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                                  <p className="text-gray-700 leading-relaxed">
+                                <div className="bg-white rounded-lg p-2 xs:p-3 sm:p-4 border border-gray-200">
+                                  <p className="text-xs xs:text-sm text-gray-700 leading-relaxed">
                                     {booking.progressNote || 
                                      booking.adminNotes || 
                                      "Great session! The athlete showed excellent focus and made steady progress in their skills. Keep up the fantastic work! 🌟"}
@@ -989,11 +1053,12 @@ function ParentDashboard() {
 
                               {/* Coach Recommendation (placeholder) */}
                               <div>
-                                <h4 className="font-medium text-gray-700 mb-2 flex items-center gap-2">
-                                  💡 Coach Recommendation
+                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                  <Lightbulb className="w-3 h-3 xs:w-4 xs:h-4 text-amber-600" />
+                                  Coach Recommendation
                                 </h4>
-                                <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
-                                  <p className="text-amber-800 text-sm">
+                                <div className="bg-amber-50 rounded-lg p-2 xs:p-3 border border-amber-200">
+                                  <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800">
                                     {(() => {
                                       if (booking.focusAreas?.some(area => area.includes('Tumbling'))) {
                                         return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
@@ -1016,14 +1081,18 @@ function ParentDashboard() {
                     </div>
 
                     {/* Export Option */}
-                    <div className="border-t pt-6">
-                      <div className="flex justify-between items-center">
+                    <div className="border-t pt-4 xs:pt-6">
+                      <div className="flex flex-col xs:flex-row justify-between xs:items-center gap-3">
                         <div>
-                          <h4 className="font-medium text-gray-700">📄 Export Progress Report</h4>
-                          <p className="text-sm text-gray-500">Download a complete progress report for your records</p>
+                          <h4 className="font-medium text-sm xs:text-base text-gray-700 flex items-center gap-1 xs:gap-2">
+                            <FileText className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-gray-700" />
+                            Export Progress Report
+                          </h4>
+                          <p className="text-[10px] xs:text-xs text-gray-500">Download a complete progress report for your records</p>
                         </div>
                         <Button 
                           variant="outline"
+                          size="sm"
                           onClick={() => {
                             // TODO: Implement PDF export
                             toast({
@@ -1031,9 +1100,10 @@ function ParentDashboard() {
                               description: "PDF export will be available in the next update.",
                             });
                           }}
-                          className="flex items-center gap-2"
+                          className="flex items-center gap-2 text-xs h-8 xs:h-9"
                         >
-                          📥 Export PDF
+                          <Download className="w-3.5 h-3.5" />
+                          Export PDF
                         </Button>
                       </div>
                     </div>
@@ -1043,94 +1113,140 @@ function ParentDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="athletes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Athletes</CardTitle>
+          <TabsContent value="athletes" className="space-y-4">
+            <Card className="overflow-hidden border-0 shadow-md">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-green-600 py-4">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Your Athletes
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {athletes.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No athletes registered</p>
+                  <div className="text-center py-10">
+                    <div className="text-5xl mb-4">👤</div>
+                    <p className="text-gray-500 text-lg mb-1">No athletes registered</p>
+                    <p className="text-gray-400 text-sm">Add athletes to get started with bookings</p>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 xs:gap-4">
                     {athletes.map((athlete) => (
-                      <div key={athlete.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-semibold text-lg">{athlete.name}</h3>
+                      <div key={athlete.id} className="border rounded-xl p-3 xs:p-4 bg-gradient-to-r from-white to-blue-50 hover:shadow-md transition-all duration-200">
+                        <div className="flex justify-between items-start mb-2 xs:mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="bg-blue-100 p-1.5 rounded-full">
+                              <User className="w-3.5 h-3.5 text-blue-600" />
+                            </div>
+                            <h3 className="font-semibold text-sm xs:text-base sm:text-lg">{athlete.name}</h3>
+                          </div>
                           <Button
                             size="sm"
                             variant="outline"
+                            className="h-7 text-xs px-2 text-blue-600 hover:text-blue-700"
                             onClick={() => setEditingAthleteId(athlete.id)}
                           >
-                            View Details
+                            <Eye className="h-3 w-3 mr-1" />
+                            <span className="hidden xs:inline">View Details</span>
+                            <span className="xs:hidden">View</span>
                           </Button>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          Born: {athlete.dateOfBirth ? format(new Date(athlete.dateOfBirth), 'MMMM d, yyyy') : 'Unknown'}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Experience: {athlete.experience}
-                        </p>
-                        {athlete.allergies && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium flex items-center gap-1">
-                              <AlertCircle className="w-4 h-4 text-orange-500" />
-                              Allergies:
+                        
+                        <div className="space-y-2 mt-3">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                            <p className="text-xs xs:text-sm text-gray-600">
+                              Born: {athlete.dateOfBirth ? format(new Date(athlete.dateOfBirth), 'MMM d, yyyy') : 'Unknown'}
                             </p>
-                            <p className="text-sm text-gray-600">{athlete.allergies}</p>
                           </div>
-                        )}
+                          
+                          <div className="flex items-center gap-1.5">
+                            <Medal className="w-3.5 h-3.5 text-gray-500" />
+                            <p className="text-xs xs:text-sm text-gray-600">
+                              Experience: {athlete.experience}
+                            </p>
+                          </div>
+                          
+                          {athlete.allergies && (
+                            <div className="flex items-start gap-1.5">
+                              <AlertCircle className="w-3.5 h-3.5 text-orange-500 mt-0.5" />
+                              <div>
+                                <p className="text-xs xs:text-sm font-medium text-orange-700">
+                                  Allergies:
+                                </p>
+                                <p className="text-[10px] xs:text-xs text-gray-600">{athlete.allergies}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
+                
+                <div className="mt-6 flex justify-center">
+                  <Button 
+                    className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-md transition-all duration-200 flex items-center gap-2"
+                    onClick={() => setAddingNewAthlete(true)}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Add New Athlete
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="my-info">
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold">My Information</h3>
-                <p className="text-sm text-gray-600">Manage your personal and emergency contact information</p>
+          <TabsContent value="my-info" className="space-y-4">
+            <Card className="overflow-hidden border-0 shadow-md">
+              <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-600 py-4">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <UserCircle className="h-5 w-5" />
+                  My Information
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="p-4 sm:p-6 space-y-6">
                 {authStatus?.email && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     {/* Personal Information */}
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-gray-900">Personal Information</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-sm font-medium text-gray-700">First Name</label>
-                          <p className="mt-1 text-gray-900">{parentInfo?.firstName || 'Not provided'}</p>
+                    <div className="bg-gradient-to-r from-white to-purple-50 p-3 sm:p-4 rounded-xl border border-purple-100 shadow-sm hover:shadow-md transition-all">
+                      <h4 className="font-medium text-base sm:text-lg text-purple-800 flex items-center gap-2 mb-3 sm:mb-4">
+                        <User className="w-4 h-4" />
+                        Personal Information
+                      </h4>
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700">First Name</label>
+                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.firstName || 'Not provided'}</p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-700">Last Name</label>
-                          <p className="mt-1 text-gray-900">{parentInfo?.lastName || 'Not provided'}</p>
+                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700">Last Name</label>
+                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.lastName || 'Not provided'}</p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-700">Email</label>
-                          <p className="mt-1 text-gray-900">{parentInfo?.email || authStatus.email}</p>
+                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700">Email</label>
+                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.email || authStatus.email}</p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-700">Phone</label>
-                          <p className="mt-1 text-gray-900">{parentInfo?.phone || 'Not provided'}</p>
+                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700">Phone</label>
+                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.phone || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Emergency Contact */}
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-gray-900">Emergency Contact</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-sm font-medium text-gray-700">Emergency Contact Name</label>
-                          <p className="mt-1 text-gray-900">{parentInfo?.emergencyContactName || 'Not provided'}</p>
+                    <div className="bg-gradient-to-r from-white to-red-50 p-3 sm:p-4 rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-all">
+                      <h4 className="font-medium text-base sm:text-lg text-red-800 flex items-center gap-2 mb-3 sm:mb-4">
+                        <AlertCircle className="w-4 h-4" />
+                        Emergency Contact
+                      </h4>
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700">Emergency Contact Name</label>
+                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.emergencyContactName || 'Not provided'}</p>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-700">Emergency Contact Phone</label>
-                          <p className="mt-1 text-gray-900">{parentInfo?.emergencyContactPhone || 'Not provided'}</p>
+                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700">Emergency Contact Phone</label>
+                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.emergencyContactPhone || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
@@ -1138,24 +1254,32 @@ function ParentDashboard() {
                 )}
 
                 {/* Account Actions */}
-                <div className="border-t pt-6">
-                  <h4 className="font-medium text-gray-900 mb-4">Account Actions</h4>
-                  <div className="flex flex-wrap gap-3">
+                <div className="border-t pt-4 sm:pt-6">
+                  <h4 className="font-medium text-base sm:text-lg text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-gray-700" />
+                    Account Actions
+                  </h4>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
                     <Button 
+                      size="sm"
                       variant="outline"
                       onClick={() => setShowUpdateProfile(true)}
+                      className="h-9 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
                     >
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                       Update Profile
                     </Button>
                     <Button 
+                      size="sm"
                       variant="outline"
                       onClick={() => setShowSafetyInfo(true)}
-                      className="bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
+                      className="h-9 text-xs sm:text-sm bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 flex items-center gap-1 sm:gap-2"
                     >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Pickup/Dropoff Safety Info
+                      <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Safety Info
                     </Button>
                     <Button 
+                      size="sm"
                       variant="outline"
                       onClick={() => {
                         const newEmail = prompt("Enter your new email address:", authStatus?.email || '');
@@ -1167,72 +1291,81 @@ function ParentDashboard() {
                           // TODO: Implement email change verification flow
                         }
                       }}
+                      className="h-9 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
                     >
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
                       Change Email
                     </Button>
                     <Button 
+                      size="sm"
                       variant="outline"
                       onClick={() => setShowUpdateEmergencyContact(true)}
+                      className="h-9 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
                     >
+                      <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                       Update Emergency Contact
                     </Button>
                   </div>
                 </div>
 
                 {/* Game-Style Statistics Dashboard */}
-                <div className="border-t pt-6">
-                  <h4 className="font-bold text-gray-900 mb-6 flex items-center">
-                    <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
-                    Adventure Progress 🎮
+                <div className="border-t pt-4 sm:pt-6">
+                  <h4 className="font-medium text-base sm:text-lg text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-yellow-500" />
+                    Adventure Progress
+                    <span className="text-sm font-normal text-gray-500">🎮</span>
                   </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="relative text-center p-4 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shadow-md border-2 border-blue-300 hover:shadow-lg transition-all">
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                        <Star className="h-3 w-3 text-white" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-blue-300 hover:shadow-md transition-all">
+                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
                       </div>
-                      <div className="text-2xl font-bold text-blue-700">{bookings.length}</div>
-                      <div className="text-sm font-medium text-blue-600">Total Quests</div>
+                      <div className="text-xl sm:text-2xl font-bold text-blue-700">{bookings.length}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-blue-600">Total Quests</div>
                     </div>
-                    <div className="relative text-center p-4 bg-gradient-to-br from-green-100 to-green-200 rounded-xl shadow-md border-2 border-green-300 hover:shadow-lg transition-all">
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <Users className="h-3 w-3 text-white" />
+                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-green-100 to-green-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-green-300 hover:shadow-md transition-all">
+                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center">
+                        <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
                       </div>
-                      <div className="text-2xl font-bold text-green-700">{athletes.length}</div>
-                      <div className="text-sm font-medium text-green-600">Active Heroes</div>
+                      <div className="text-xl sm:text-2xl font-bold text-green-700">{athletes.length}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-green-600">Active Heroes</div>
                     </div>
-                    <div className="relative text-center p-4 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl shadow-md border-2 border-orange-300 hover:shadow-lg transition-all">
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                        <Calendar className="h-3 w-3 text-white" />
+                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-orange-300 hover:shadow-md transition-all">
+                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                        <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
                       </div>
-                      <div className="text-2xl font-bold text-orange-700">{upcomingBookings.length}</div>
-                      <div className="text-sm font-medium text-orange-600">Next Adventures</div>
+                      <div className="text-xl sm:text-2xl font-bold text-orange-700">{upcomingBookings.length}</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-orange-600">Next Adventures</div>
                     </div>
-                    <div className="relative text-center p-4 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl shadow-md border-2 border-purple-300 hover:shadow-lg transition-all">
-<div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                        <Trophy className="h-3 w-3 text-white" />
+                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-purple-300 hover:shadow-md transition-all">
+                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                        <Trophy className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
                       </div>
-                      <div className="text-2xl font-bold text-purple-700">
+                      <div className="text-xl sm:text-2xl font-bold text-purple-700">
                         {bookings.filter(b => b.status === 'completed').length}
                       </div>
-                      <div className="text-sm font-medium text-purple-600">Victories</div>
+                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-purple-600">Victories</div>
                     </div>
                   </div>
 
                   {/* Experience Bar */}
-                  <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg border border-yellow-300">
+                  <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg border border-yellow-300">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-yellow-800">Adventure Level</span>
-                      <span className="text-sm font-bold text-yellow-700">Level {Math.floor(bookings.filter(b => b.status === 'completed').length / 3) + 1}</span>
+                      <span className="text-xs sm:text-sm font-bold text-yellow-800 flex items-center gap-1">
+                        <Award className="w-3.5 h-3.5 text-yellow-600" />
+                        Adventure Level
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-yellow-700">Level {Math.floor(bookings.filter(b => b.status === 'completed').length / 3) + 1}</span>
                     </div>
-                    <div className="w-full bg-yellow-200 rounded-full h-3 relative overflow-hidden">
+                    <div className="w-full bg-yellow-200 rounded-full h-2 sm:h-3 relative overflow-hidden">
                       <div 
-                        className="bg-gradient-to-r from-yellow-400 to-orange-400 h-3 rounded-full transition-all duration-500 relative"
+                        className="bg-gradient-to-r from-yellow-400 to-orange-400 h-2 sm:h-3 rounded-full transition-all duration-500 relative"
                         style={{ width: `${Math.min(((bookings.filter(b => b.status === 'completed').length % 3) / 3) * 100, 100)}%` }}
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
                       </div>
                     </div>
-                    <div className="text-xs text-yellow-700 mt-1 text-center">
+                    <div className="text-[10px] sm:text-xs text-yellow-700 mt-1 text-center">
                       {3 - (bookings.filter(b => b.status === 'completed').length % 3)} more sessions to level up! 🎯
                     </div>
                   </div>
