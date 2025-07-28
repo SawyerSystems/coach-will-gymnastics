@@ -4,7 +4,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { z } from "zod";
-import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific } from "../shared/timezone-utils";
+import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
 import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
@@ -1675,21 +1675,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[STATUS SYNC] Auto-confirmed attendance for paid booking ${bookingId}`);
         }
 
-        // Auto-complete past sessions
-        const sessionDate = booking.preferredDate ? new Date(booking.preferredDate) : null;
-        const now = new Date();
-        if (sessionDate && sessionDate < now && booking.attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
-          await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.COMPLETED);
-          console.log(`[STATUS SYNC] Auto-completed past session for booking ${bookingId}`);
+        // Auto-complete past sessions using gold standard timezone handling with date AND time
+        const sessionDateStr = booking.preferredDate;
+        const sessionTimeStr = booking.preferredTime;
+        
+        // Respect manually confirmed sessions - don't auto-complete them
+        if (sessionDateStr && booking.attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
+          // Check if this is a manually confirmed past session - use date AND time
+          const isPastSession = isSessionDateTimeInPast(sessionDateStr, sessionTimeStr);
+          
+          // Get today's date in Pacific Time for logging
+          const pacificToday = getTodayInPacific();
+          const pacificTodayStr = formatToPacificISO(pacificToday);
+          
+          // Enhanced logging for debugging
+          const nowPacific = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+          console.log(`[DATE-DEBUG] Session: ${sessionDateStr} at ${sessionTimeStr}, Pacific Now: ${nowPacific}, isPast: ${isPastSession}`);
+          
+          // Only auto-complete if the session is TRULY in the past (date + time)
+          if (isPastSession) {
+            await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.COMPLETED);
+            console.log(`[STATUS SYNC] Auto-completed past session for booking ${bookingId} (date: ${sessionDateStr} at ${sessionTimeStr})`);
+          }
         }
 
         // Auto-expire unpaid bookings after 24 hours
-        const bookingCreated = new Date(booking.createdAt || booking.preferredDate);
-        const hoursSinceCreated = (now.getTime() - bookingCreated.getTime()) / (1000 * 60 * 60);
-        if (hoursSinceCreated > 24 && booking.paymentStatus === PaymentStatusEnum.RESERVATION_PENDING) {
-          await storage.updateBookingPaymentStatus(bookingId, PaymentStatusEnum.RESERVATION_FAILED);
-          await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.CANCELLED);
-          console.log(`[STATUS SYNC] Auto-expired booking ${bookingId} after 24 hours`);
+        const now = new Date();
+        if (booking.createdAt) {
+          const bookingCreated = new Date(booking.createdAt);
+          // Ensure we're comparing with timezone consideration
+          const hoursSinceCreated = (now.getTime() - bookingCreated.getTime()) / (1000 * 60 * 60);
+          
+          if (hoursSinceCreated > 24 && booking.paymentStatus === PaymentStatusEnum.RESERVATION_PENDING) {
+            await storage.updateBookingPaymentStatus(bookingId, PaymentStatusEnum.RESERVATION_FAILED);
+            await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.CANCELLED);
+            console.log(`[STATUS SYNC] Auto-expired booking ${bookingId} after 24 hours (created: ${booking.createdAt})`);
+          }
         }
       } catch (error) {
         console.error(`[STATUS SYNC] Error syncing statuses for booking ${bookingId}:`, error);
