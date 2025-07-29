@@ -725,6 +725,7 @@ With the right setup and approach, home practice can accelerate your child's gym
         insertBooking.preferredDate,
       // Map focusAreaIds to focusAreas for backward compatibility
       focusAreas: Array.isArray(insertBooking.focusAreaIds) ? insertBooking.focusAreaIds.map(String) : [],
+      focusAreaOther: insertBooking.focusAreaOther || null,
       // Ensure required fields are set for legacy athlete fields
       athlete1Allergies: Array.isArray(insertBooking.athletes) && insertBooking.athletes[0] ? insertBooking.athletes[0].allergies : null,
       athlete2Name: Array.isArray(insertBooking.athletes) && insertBooking.athletes[1] ? insertBooking.athletes[1].name : null,
@@ -2109,6 +2110,7 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: undefined,
       emergencyContactPhone: undefined,
       focusAreas: [], // Now handled via booking_focus_areas junction table
+      focusAreaOther: data.focus_area_other,
       amount: undefined, // Now calculated from lesson type
       preferredDate: data.preferred_date,
       preferredTime: data.preferred_time,
@@ -3929,7 +3931,8 @@ export class SupabaseStorage implements IStorage {
         
         // Empty arrays for relations not yet implemented
         apparatus: [],
-        focusAreas: [],
+        focusAreas: booking.focus_areas || [],
+        focusAreaOther: booking.focus_area_other || null,
         sideQuests: [],
         
         // Legacy waiver fields (set to defaults since waivers are separate now)

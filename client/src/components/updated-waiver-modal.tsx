@@ -203,12 +203,15 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent 
+        className="max-w-4xl max-h-[90vh] overflow-hidden"
+        aria-describedby="waiver-modal-description"
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-amber-600">
             CoachWillTumbles.com - Waiver & Adventure Agreement
           </DialogTitle>
-          <DialogDescription className="text-gray-600">
+          <DialogDescription id="waiver-modal-description" className="text-gray-600">
             Welcome to the journey! Every hero needs a guide, and every quest begins with a few ground rules.
           </DialogDescription>
         </DialogHeader>

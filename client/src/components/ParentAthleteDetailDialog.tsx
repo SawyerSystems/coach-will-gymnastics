@@ -366,10 +366,13 @@ export function ParentAthleteDetailDialog({
 
       {/* Photo Enlargement Modal */}
       <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent 
+          className="max-w-2xl"
+          aria-describedby="athlete-photo-description"
+        >
           <DialogHeader>
             <DialogTitle>Athlete Photo</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="athlete-photo-description">
               Enlarged view of {athleteData.name || 'athlete'}'s photo
             </DialogDescription>
           </DialogHeader>

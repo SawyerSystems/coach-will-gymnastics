@@ -93,6 +93,7 @@ export function UnifiedBookingModal({
       safetyContact: null,
       waiverStatus: { signed: false },
       focusAreas: suggestedFocusAreas,
+      focusAreaOther: '',
       isAdminFlow,
       adminNotes: '',
     };
@@ -159,11 +160,15 @@ export function UnifiedBookingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-full max-h-full sm:max-w-4xl sm:max-h-[90vh] overflow-y-auto p-0 [&>button]:hidden">
+      <DialogContent 
+        className="w-full h-full max-w-full max-h-full sm:max-w-4xl sm:max-h-[90vh] overflow-y-auto p-0 [&>button]:hidden"
+        aria-describedby="booking-flow-description"
+      >
         <VisuallyHidden>
           <DialogTitle>
             {isAdminFlow ? 'Admin Booking Management' : 'Book a Gymnastics Session'}
           </DialogTitle>
+          <span id="booking-flow-description">Complete the booking process by following the steps</span>
         </VisuallyHidden>
         <BookingFlowProvider flowType={flowType} initialState={initialState}>
           <BookingWizard onClose={onClose} />

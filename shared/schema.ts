@@ -169,6 +169,7 @@ export const bookings = pgTable("bookings", {
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
   focusAreas: text("focus_areas").array(), // Array of focus areas/skills worked on during the session
+  focusAreaOther: text("focus_area_other"), // Custom focus area text when "Other" is selected
   progressNote: text("progress_note"), // For Adventure Log progress tracking
   coachName: text("coach_name").default("Coach Will"), // For Adventure Log coach tracking
   dropoffPersonName: text("dropoff_person_name").notNull(),
@@ -292,6 +293,7 @@ export const focusAreas = pgTable("focus_areas", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   apparatusId: integer("apparatus_id").references(() => apparatus.id),
+  level: varchar("level", { length: 20 }).notNull().default('intermediate'),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -392,6 +394,7 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   // Arrays for junction table relationships
   apparatusIds: z.array(z.number()).max(4).default([]),
   focusAreaIds: z.array(z.number()).max(8).default([]),
+  focusAreaOther: z.string().optional(), // Custom focus area text when "Other" is selected
   sideQuestIds: z.array(z.number()).max(4).default([]),
   
   // Legacy support for parent info (will be used to find/create parentId)

@@ -59,6 +59,7 @@ export interface BookingFlowState {
     signedAt?: Date;
   };
   focusAreas: string[];
+  focusAreaOther: string; // Custom focus area text when "Other" is selected
   // Admin-specific properties
   isAdminFlow?: boolean;
   adminPaymentMethod?: 'stripe' | 'cash' | 'check' | 'pending';
@@ -150,6 +151,7 @@ const initialState: BookingFlowState = {
   safetyContact: null,
   waiverStatus: { signed: false },
   focusAreas: [],
+  focusAreaOther: '',
 };
 
 interface BookingFlowProviderProps {

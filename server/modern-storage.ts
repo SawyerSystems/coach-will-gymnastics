@@ -279,6 +279,7 @@ export class ModernSupabaseStorage {
       preferredDate: data.preferred_date,
       preferredTime: data.preferred_time,
       focusAreas: data.focus_areas || [],
+      focusAreaOther: data.focus_area_other || null,
       parentFirstName: data.parent_first_name,
       parentLastName: data.parent_last_name,
       parentEmail: data.parent_email,

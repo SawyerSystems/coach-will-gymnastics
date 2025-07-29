@@ -2921,7 +2921,8 @@ setTimeout(async () => {
         adminNotes,
         specialRequests,
         lessonTypeId,
-        focusAreas, 
+        focusAreas,
+        focusAreaOther,
         athletes,
         parentId,
         specialNotes, // backward compatibility
@@ -2986,23 +2987,47 @@ setTimeout(async () => {
       if (specialNotes !== undefined) updateData.adminNotes = specialNotes;
       
       // Handle focus areas
-      if (focusAreas !== undefined) {
+      if (focusAreas !== undefined || focusAreaOther !== undefined) {
         // First get the current booking to validate focus areas against lesson type
         const currentBooking = await storage.getBooking(id);
         if (!currentBooking) {
           return res.status(404).json({ error: "Booking not found" });
         }
         
-        // Validate focus areas
-        const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], currentBooking.lessonType || '');
-        if (!focusAreaValidation.isValid) {
-          return res.status(400).json({
-            message: "Focus area validation failed",
-            details: focusAreaValidation.message
-          });
+        // If only focus areas are changing
+        if (focusAreas !== undefined) {
+          // Validate focus areas
+          const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], currentBooking.lessonType || '');
+          if (!focusAreaValidation.isValid) {
+            return res.status(400).json({
+              message: "Focus area validation failed",
+              details: focusAreaValidation.message
+            });
+          }
+          
+          updateData.focusAreas = focusAreas;
         }
         
-        updateData.focusAreas = focusAreas;
+        // If custom focus area is changing
+        if (focusAreaOther !== undefined) {
+          updateData.focusAreaOther = focusAreaOther;
+          
+          // If custom focus area is provided and not empty, ensure "Other:" entry exists in focus areas
+          if (focusAreaOther && typeof focusAreaOther === 'string' && focusAreaOther.trim() !== '') {
+            const currentAreas = focusAreas !== undefined 
+              ? (Array.isArray(focusAreas) ? focusAreas : []) 
+              : (currentBooking.focusAreas || []);
+              
+            // Remove any existing "Other:" entries
+            const filteredAreas = currentAreas.filter(area => !area.startsWith('Other:'));
+            
+            // Add the new "Other:" entry with the custom text
+            filteredAreas.push(`Other: ${focusAreaOther.trim()}`);
+            
+            // Update focus areas
+            updateData.focusAreas = filteredAreas;
+          }
+        }
       }
       
       // Update safety information if provided
