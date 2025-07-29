@@ -11,21 +11,21 @@ import type { Athlete, Booking, LessonType, Parent } from '@shared/schema';
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    AlertTriangle,
-    Bookmark,
-    CheckCircle,
-    ClipboardList,
-    Clock,
-    CreditCard,
-    DollarSign,
-    Filter,
-    MessageSquare,
-    Tag,
-    Target,
-    User,
-    UserCheck,
-    Users,
-    X
+  AlertTriangle,
+  Bookmark,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Filter,
+  MessageSquare,
+  Tag,
+  Target,
+  User,
+  UserCheck,
+  Users,
+  X
 } from "lucide-react";
 import React, { useEffect, useState } from 'react';
 
@@ -35,6 +35,13 @@ interface FocusArea {
   name: string;
   level?: string;
   apparatusId?: number;
+}
+
+// Define the Apparatus interface
+interface Apparatus {
+  id: number;
+  name: string;
+  sortOrder?: number;
 }
 
 type BookingEditModalProps = {
@@ -61,6 +68,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   const [selectedLessonTypeId, setSelectedLessonTypeId] = useState<number>(booking.lessonTypeId || 0);
   const [focusAreas, setFocusAreas] = useState<string[]>(booking.focusAreas || []);
   const [tempFocusArea, setTempFocusArea] = useState('');
+  const [focusAreaOther, setFocusAreaOther] = useState(booking.focusAreaOther || '');
+  const [selectedApparatusId, setSelectedApparatusId] = useState<number | null>(null);
   const [bookingAthletes, setBookingAthletes] = useState<{ athleteId: number | null }[]>([]);
   const [isValidationError, setIsValidationError] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -115,77 +124,111 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   
   // Determine athlete experience levels based on selected athletes
   const getAthleteExperienceLevels = (): string[] => {
-    // First, check if we need to use the booking details for athletes (when data is first loaded)
-    if (bookingDetails?.athletes && (!bookingAthletes || bookingAthletes.length === 0 || 
-        !bookingAthletes.some(ba => ba && ba.athleteId))) {
+    try {
+      // First, check if we need to use the booking details for athletes (when data is first loaded)
+      if (bookingDetails?.athletes && (!bookingAthletes || bookingAthletes.length === 0 || 
+          !bookingAthletes.some(ba => ba && ba.athleteId))) {
+        
+        // Use booking details to determine athlete experience levels
+        if (!Array.isArray(bookingDetails.athletes) || bookingDetails.athletes.length === 0) {
+          return ['intermediate']; // Default fallback
+        }
+        
+        // Map experience levels directly from booking details
+        const athleteLevels = bookingDetails.athletes.map((athlete: any) => {
+          if (!athlete) return 'intermediate'; // Handle null athlete
+          
+          // Handle both formats: { experience: '...' } and { athlete: { experience: '...' } }
+          const exp = ((athlete.experience || athlete?.athlete?.experience) || '').toLowerCase();
+          if (exp.includes('beginner') || exp.includes('new')) return 'beginner';
+          if (exp.includes('advanced') || exp.includes('expert')) return 'advanced';
+          return 'intermediate'; // Default
+        });
+        
+        return athleteLevels.length > 0 ? athleteLevels : ['intermediate'];
+      }
       
-      // Use booking details to determine athlete experience levels
-      if (!Array.isArray(bookingDetails.athletes) || bookingDetails.athletes.length === 0) {
+      // Otherwise, use the current bookingAthletes state
+      if (!Array.isArray(bookingAthletes) || bookingAthletes.length === 0) {
         return ['intermediate']; // Default fallback
       }
       
-      // Map experience levels directly from booking details
-      const athleteLevels = bookingDetails.athletes.map((athlete: any) => {
-        // Handle both formats: { experience: '...' } and { athlete: { experience: '...' } }
-        const exp = ((athlete.experience || athlete?.athlete?.experience) || '').toLowerCase();
+      // Get the experience levels of all valid selected athletes
+      const selectedAthleteIds = bookingAthletes
+        .filter(ba => ba && ba.athleteId)
+        .map(ba => ba.athleteId);
+      
+      if (selectedAthleteIds.length === 0) {
+        return ['intermediate']; // Default fallback
+      }
+      
+      // Find the athletes in the allAthletes array
+      const selectedAthletes = Array.isArray(allAthletes) 
+        ? allAthletes.filter(a => a && selectedAthleteIds.includes(a.id))
+        : [];
+      
+      if (selectedAthletes.length === 0) {
+        return ['intermediate']; // Default fallback
+      }
+      
+      // Map experience levels to standard levels (beginner, intermediate, advanced)
+      const athleteLevels = selectedAthletes.map((athlete: Athlete) => {
+        if (!athlete) return 'intermediate'; // Handle null athlete
+        const exp = (athlete.experience || '').toLowerCase();
         if (exp.includes('beginner') || exp.includes('new')) return 'beginner';
         if (exp.includes('advanced') || exp.includes('expert')) return 'advanced';
         return 'intermediate'; // Default
       });
       
-      return athleteLevels;
+      return athleteLevels.length > 0 ? athleteLevels : ['intermediate'];
+    } catch (error) {
+      console.error("Error in getAthleteExperienceLevels:", error);
+      return ['intermediate']; // Fail safely with intermediate level
     }
-    
-    // Otherwise, use the current bookingAthletes state
-    if (!Array.isArray(bookingAthletes) || bookingAthletes.length === 0) {
-      return ['intermediate']; // Default fallback
-    }
-    
-    // Get the experience levels of all valid selected athletes
-    const selectedAthleteIds = bookingAthletes
-      .filter(ba => ba && ba.athleteId)
-      .map(ba => ba.athleteId);
-    
-    if (selectedAthleteIds.length === 0) {
-      return ['intermediate']; // Default fallback
-    }
-    
-    // Find the athletes in the allAthletes array
-    const selectedAthletes = Array.isArray(allAthletes) 
-      ? allAthletes.filter(a => selectedAthleteIds.includes(a.id))
-      : [];
-    
-    if (selectedAthletes.length === 0) {
-      return ['intermediate']; // Default fallback
-    }
-    
-    // Map experience levels to standard levels (beginner, intermediate, advanced)
-    const athleteLevels = selectedAthletes.map((athlete: Athlete) => {
-      const exp = (athlete.experience || '').toLowerCase();
-      if (exp.includes('beginner') || exp.includes('new')) return 'beginner';
-      if (exp.includes('advanced') || exp.includes('expert')) return 'advanced';
-      return 'intermediate'; // Default
-    });
-    
-    return athleteLevels;
   };
   
-  // Get appropriate focus areas based on athlete experience levels
-  const { data: dynamicFocusAreas = [] } = useQuery<FocusArea[]>({
-    queryKey: ['/api/focus-areas', getAthleteExperienceLevels()],
+  // Fetch all apparatus
+  const { data: apparatus = [] } = useQuery<Apparatus[]>({
+    queryKey: ['/api/apparatus'],
     queryFn: async () => {
-      const levels = getAthleteExperienceLevels();
-      // Use the most restrictive level (beginner < intermediate < advanced)
-      const level = levels.includes('beginner') ? 'beginner' : 
-                   (levels.includes('intermediate') ? 'intermediate' : 'advanced');
-                   
-      const response = await fetch(`/api/focus-areas?level=${level}`);
+      const response = await fetch('/api/apparatus');
       if (!response.ok) {
-        throw new Error('Failed to fetch focus areas');
+        throw new Error('Failed to fetch apparatus');
       }
       return response.json();
+    }
+  });
+
+  // Get appropriate focus areas based on athlete experience levels and selected apparatus
+  const { data: dynamicFocusAreas = [], isLoading: isFocusAreasLoading } = useQuery<FocusArea[]>({
+    queryKey: ['/api/focus-areas', getAthleteExperienceLevels().join('-'), selectedApparatusId],
+    queryFn: async () => {
+      try {
+        const levels = getAthleteExperienceLevels();
+        // Use the most restrictive level (beginner < intermediate < advanced)
+        const level = levels.includes('beginner') ? 'beginner' : 
+                     (levels.includes('intermediate') ? 'intermediate' : 'advanced');
+        
+        // Build the query URL with apparatus filter if one is selected
+        let url = `/api/focus-areas?level=${level}`;
+        if (selectedApparatusId) {
+          url += `&apparatusId=${selectedApparatusId}`;
+        }
+                     
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error('Failed to fetch focus areas:', await response.text());
+          return [];
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("Error fetching focus areas:", error);
+        return [];
+      }
     },
-    enabled: bookingDetails !== undefined && bookingAthletes.some(ba => ba && ba.athleteId) // Only fetch when booking details are loaded and athletes are selected
+    enabled: open && bookingDetails !== undefined,
+    staleTime: 30000, // Cache results for 30 seconds to reduce repeated fetches
   });
 
   // Get the selected lesson type
@@ -223,6 +266,11 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       if (bookingDetails.focusAreas && Array.isArray(bookingDetails.focusAreas)) {
         // Server returns array of strings for focusAreas 
         setFocusAreas(bookingDetails.focusAreas);
+      }
+      
+      // Set custom focus area if available
+      if (bookingDetails.focusAreaOther) {
+        setFocusAreaOther(bookingDetails.focusAreaOther);
       }
       
       // Set safety information
@@ -265,7 +313,11 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         // If no athletes but modal is open, set at least one empty slot
         setBookingAthletes([{ athleteId: null }]);
       }
+      
+      // Add debug log to track data
+      console.log("Loading booking details into form:", bookingDetails);
     }
+    // Only depend on bookingDetails and open status to prevent infinite loops
   }, [bookingDetails, open]);
   
   // Log filtered athletes whenever parent changes
@@ -278,6 +330,27 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       setBookingAthletes([{ athleteId: null }]);
     }
   }, [selectedParentId, parentAthletes.length]);
+  
+  // Separate effect to handle apparatus selection based on focus areas
+  useEffect(() => {
+    // Only run this when we have booking details, focus areas, and dynamicFocusAreas are loaded
+    if (bookingDetails?.focusAreas && 
+        Array.isArray(bookingDetails.focusAreas) && 
+        bookingDetails.focusAreas.length > 0 && 
+        dynamicFocusAreas.length > 0 &&
+        !selectedApparatusId) { // Don't override if user has already selected an apparatus
+      
+      // Look for any focus area that has an apparatus ID
+      for (const areaName of bookingDetails.focusAreas) {
+        const matchingArea = dynamicFocusAreas.find(area => area.name === areaName);
+        if (matchingArea?.apparatusId) {
+          console.log("Setting apparatus ID from focus area:", matchingArea.name, matchingArea.apparatusId);
+          setSelectedApparatusId(matchingArea.apparatusId);
+          break;
+        }
+      }
+    }
+  }, [bookingDetails?.focusAreas, dynamicFocusAreas, selectedApparatusId]);
 
   // Note: Booking data initialization is now handled by the useEffect above
 
@@ -295,6 +368,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     setSelectedLessonTypeId(booking.lessonTypeId || 0);
     setFocusAreas(booking.focusAreas || []);
     setTempFocusArea('');
+    setFocusAreaOther(booking.focusAreaOther || '');
+    setSelectedApparatusId(null);
     
     // Reset athletes
     setBookingAthletes([]);
@@ -789,6 +864,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         specialRequests,
         lessonTypeId: selectedLessonTypeId,
         focusAreas,
+        focusAreaOther,
         athletes: cleanedAthletes,
         parentId: selectedParentId,
         
@@ -876,12 +952,12 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         }
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0" aria-describedby="booking-edit-description">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="bg-gradient-to-r from-blue-700 to-blue-900 text-white px-6 py-4 rounded-t-lg">
           <DialogTitle className="text-xl font-bold">
             Edit Booking #{booking.id}
           </DialogTitle>
-          <p id="booking-edit-description" className="text-sm text-blue-100 mt-1">
+          <p className="text-sm text-blue-100 mt-1">
             Edit booking details including status, payment, athletes, and safety information
           </p>
         </DialogHeader>
@@ -1017,66 +1093,133 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     <span>Level: {getAthleteExperienceLevels().join(', ')}</span>
                   </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <Select
-                        value="custom"
-                        onValueChange={(value) => {
-                          if (value !== "custom") {
-                            setTempFocusArea(value);
-                            if (focusAreas.length < getMaxFocusAreas() && !focusAreas.includes(value)) {
-                              setFocusAreas([...focusAreas, value]);
-                            }
-                          }
-                        }}
+                
+                {/* Step 1: Select Apparatus */}
+                <div className="mb-4 bg-white p-3 rounded-lg">
+                  <Label className="text-sm font-medium text-blue-700 flex items-center gap-1.5 mb-2">
+                    <Target className="h-4 w-4 text-blue-600" />
+                    Step 1: Select Apparatus
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {apparatus.map((app) => (
+                      <Button
+                        key={app.id}
+                        type="button"
+                        variant={selectedApparatusId === app.id ? "default" : "outline"}
+                        className={selectedApparatusId === app.id 
+                          ? "bg-blue-600 hover:bg-blue-700" 
+                          : "border-blue-200 hover:bg-blue-50 text-blue-700"}
+                        onClick={() => setSelectedApparatusId(app.id)}
                       >
-                        <SelectTrigger className="bg-white border-teal-100">
-                          <SelectValue placeholder="Select focus area" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="custom">Custom focus area...</SelectItem>
-                          
-                          {/* Dynamically load focus areas from API */}
-                          {dynamicFocusAreas.map((area: FocusArea) => (
-                            <SelectItem key={area.id} value={area.name}>
-                              {area.name} {area.level && `(${area.level.charAt(0).toUpperCase() + area.level.slice(1)})`}
-                            </SelectItem>
-                          ))}
-                          
-                          {/* Always available for all levels */}
-                          <SelectItem value="Strength Training">Strength Training</SelectItem>
-                          <SelectItem value="Flexibility">Flexibility</SelectItem>
-                          <SelectItem value="Basic Tumbling">Basic Tumbling</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <Input 
-                        value={tempFocusArea} 
-                        onChange={(e) => setTempFocusArea(e.target.value)} 
-                        placeholder="Custom focus area"
-                        disabled={focusAreas.length >= getMaxFocusAreas()}
-                        className="w-48 bg-white border-teal-100"
-                      />
-                      <Button 
-                        type="button" 
-                        onClick={addFocusArea}
-                        disabled={focusAreas.length >= getMaxFocusAreas() || !tempFocusArea.trim()}
-                        className="bg-teal-600 hover:bg-teal-700"
-                      >
-                        Add
+                        {app.name}
                       </Button>
-                    </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant={selectedApparatusId === null ? "default" : "outline"}
+                      className={selectedApparatusId === null 
+                        ? "bg-purple-600 hover:bg-purple-700" 
+                        : "border-purple-200 hover:bg-purple-50 text-purple-700"}
+                      onClick={() => setSelectedApparatusId(null)}
+                    >
+                      All Apparatus
+                    </Button>
                   </div>
-                  
-                  <div className="bg-white bg-opacity-70 p-3 rounded-lg">
+                </div>
+
+                {/* Step 2: Select Focus Areas */}
+                <div className="flex flex-col gap-3">
+                  <div className="bg-white p-3 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-medium text-teal-700 flex items-center gap-1.5">
+                        <Target className="h-4 w-4 text-teal-600" />
+                        Step 2: Select Focus Areas
+                      </Label>
+                      {selectedApparatusId && (
+                        <div className="text-xs flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-1 rounded-full">
+                          <Filter className="h-3 w-3" />
+                          <span>Filtered by: {apparatus.find(a => a.id === selectedApparatusId)?.name || 'Selected Apparatus'}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 mb-3">
+                      <div className="flex-1">
+                        <Select
+                          value="custom"
+                          onValueChange={(value) => {
+                            if (value !== "custom" && 
+                                value !== "no-focus-areas-empty" && 
+                                value !== "no-focus-areas-apparatus") {
+                              setTempFocusArea(value);
+                              if (focusAreas.length < getMaxFocusAreas() && !focusAreas.includes(value)) {
+                                setFocusAreas([...focusAreas, value]);
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger className={`bg-white border-teal-100 ${isFocusAreasLoading ? 'opacity-50' : ''}`}>
+                            <SelectValue placeholder={isFocusAreasLoading ? "Loading focus areas..." : (selectedApparatusId ? "Select focus area for selected apparatus" : "Select focus area")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="custom">Custom focus area...</SelectItem>
+                            
+                            {/* Dynamically load focus areas from API */}
+                            {dynamicFocusAreas.length > 0 ? (
+                              dynamicFocusAreas.map((area: FocusArea) => (
+                                <SelectItem key={area.id} value={area.name}>
+                                  {area.name} {area.level && `(${area.level.charAt(0).toUpperCase() + area.level.slice(1)})`}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="no-focus-areas-empty" disabled>
+                                {selectedApparatusId ? "No focus areas found for this apparatus" : "No focus areas available"}
+                              </SelectItem>
+                            )}
+                            
+                            {/* Always available general focus areas */}
+                            {selectedApparatusId && dynamicFocusAreas.length === 0 && !isFocusAreasLoading && (
+                              <SelectItem disabled value="no-focus-areas-apparatus">
+                                No focus areas found for this apparatus
+                              </SelectItem>
+                            )}
+                            
+                            {/* Always available for all levels */}
+                            <SelectItem value="Strength Training">Strength Training</SelectItem>
+                            <SelectItem value="Flexibility">Flexibility</SelectItem>
+                            <SelectItem value="Basic Tumbling">Basic Tumbling</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <Input 
+                          value={tempFocusArea} 
+                          onChange={(e) => setTempFocusArea(e.target.value)} 
+                          placeholder="Custom focus area"
+                          disabled={focusAreas.length >= getMaxFocusAreas()}
+                          className="w-48 bg-white border-teal-100"
+                        />
+                        <Button 
+                          type="button" 
+                          onClick={addFocusArea}
+                          disabled={focusAreas.length >= getMaxFocusAreas() || !tempFocusArea.trim()}
+                          className="bg-teal-600 hover:bg-teal-700"
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+
                     <div className="flex flex-wrap gap-2">
                       {focusAreas.map((area, index) => {
                         // Find matching focus area to get level, or determine from name
                         const matchingFocusArea = dynamicFocusAreas.find((fa: FocusArea) => fa.name === area);
                         let level = matchingFocusArea?.level || 'intermediate';
                         let levelColor = 'bg-teal-50 border-teal-200 text-teal-800';
+                        
+                        // Identify the apparatus for this focus area
+                        const focusApparatus = matchingFocusArea?.apparatusId 
+                          ? apparatus.find(a => a.id === matchingFocusArea.apparatusId)?.name 
+                          : (selectedApparatusId ? apparatus.find(a => a.id === selectedApparatusId)?.name : null);
                         
                         // Fallback logic for custom areas or if no match found
                         if (!matchingFocusArea) {
@@ -1089,6 +1232,11 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                           } else if (area.toLowerCase().includes('advanced') || 
                                     area.toLowerCase().includes('competition')) {
                             level = 'advanced';
+                          } else if (area === "Strength Training" || 
+                                     area === "Flexibility" || 
+                                     area === "Basic Tumbling") {
+                            // These are general areas that apply to all apparatus
+                            level = 'general';
                           }
                         }
                         
@@ -1097,11 +1245,18 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                           levelColor = 'bg-green-50 border-green-200 text-green-800';
                         } else if (level === 'advanced') {
                           levelColor = 'bg-orange-50 border-orange-200 text-orange-800';
+                        } else if (level === 'general') {
+                          levelColor = 'bg-blue-50 border-blue-200 text-blue-800';
                         }
                         
                         return (
                           <div key={index} className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 border ${levelColor}`}>
                             <span>{area}</span>
+                            {focusApparatus && (
+                              <span className="ml-1 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                                {focusApparatus}
+                              </span>
+                            )}
                             <div className="flex items-center ml-1">
                               <Tag className="h-3 w-3 mr-1 opacity-70" />
                               <span className="text-xs opacity-70">{level}</span>
@@ -1122,6 +1277,20 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         <div className="text-gray-500 text-sm italic py-2">No focus areas added yet</div>
                       )}
                     </div>
+                  </div>
+                  
+                  {/* Step 3: Custom Focus Area (Other) */}
+                  <div className="bg-white p-3 rounded-lg">
+                    <Label className="text-sm font-medium text-purple-700 flex items-center gap-1.5 mb-2">
+                      <Target className="h-4 w-4 text-purple-600" />
+                      Step 3: Additional Custom Focus Area (Optional)
+                    </Label>
+                    <Textarea
+                      value={focusAreaOther}
+                      onChange={(e) => setFocusAreaOther(e.target.value)}
+                      placeholder="Enter additional custom focus areas or specific skills not listed above"
+                      className="min-h-[80px] bg-white border-purple-100"
+                    />
                   </div>
                 </div>
               </div>
