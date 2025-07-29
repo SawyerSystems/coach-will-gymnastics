@@ -1,9 +1,9 @@
+import { BookingEditModal } from "@/components/BookingEditModal";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Booking } from "@shared/schema";
+import { useQueryClient } from '@tanstack/react-query';
 import { Edit } from "lucide-react";
 import { useState } from 'react';
-import { AdminEditBookingForm } from "./admin-edit-booking-form";
 
 type AdminBookingDetailActionsProps = {
   booking: Booking;
@@ -11,20 +11,21 @@ type AdminBookingDetailActionsProps = {
 
 export function AdminBookingDetailActions({ booking }: AdminBookingDetailActionsProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleEditSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+    setIsEditing(false);
+  };
   
   if (isEditing) {
     return (
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Edit Booking</DialogTitle>
-          </DialogHeader>
-          <AdminEditBookingForm 
-            booking={booking} 
-            onClose={() => setIsEditing(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <BookingEditModal
+        booking={booking}
+        open={isEditing}
+        onClose={() => setIsEditing(false)}
+        onSuccess={handleEditSuccess}
+      />
     );
   }
   

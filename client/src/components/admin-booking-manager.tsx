@@ -2091,14 +2091,14 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
               </span>
               <span className="text-gray-900">{booking.parent?.phone || booking.parentPhone}</span>
             </div>
-            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg sm:col-span-2">
               <span className="font-medium text-gray-700 flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                Emergency:
+                Emergency Contact:
               </span>
               <span className="text-gray-900">{booking.parent?.emergencyContactName || booking.emergencyContactName}</span>
             </div>
-            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
+            <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg sm:col-span-2">
               <span className="font-medium text-gray-700 flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-red-500" />
                 Emergency Phone:
