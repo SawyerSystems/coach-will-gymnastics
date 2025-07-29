@@ -10,7 +10,21 @@ import { useToast } from '@/hooks/use-toast';
 import type { Athlete, Booking, LessonType, Parent } from '@shared/schema';
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Clock, FileText, MessageSquare, User, Users, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Bookmark,
+  CheckCircle,
+  ClipboardList,
+  Clock,
+  CreditCard,
+  DollarSign,
+  MessageSquare,
+  Target,
+  User,
+  UserCheck,
+  Users,
+  X
+} from "lucide-react";
 import React, { useEffect, useState } from 'react';
 
 type BookingEditModalProps = {
@@ -109,78 +123,287 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     }
   }, [selectedParentId, parentAthletes.length]);
 
-  // Initialize booking athletes when booking details are loaded
-  useEffect(() => {
+  // Function to populate all booking data from bookingDetails
+  const populateBookingData = () => {
     try {
-      console.log("BookingDetails loaded:", bookingDetails);
+      if (!bookingDetails) return;
       
-      if (bookingDetails?.athletes && Array.isArray(bookingDetails.athletes)) {
+      console.log("Populating booking data from:", bookingDetails);
+      
+      // Set all basic booking fields
+      setStatus(bookingDetails.status || 'pending');
+      setPaymentStatus(bookingDetails.paymentStatus || 'unpaid');
+      setAttendanceStatus(bookingDetails.attendanceStatus || 'pending');
+      setPaidAmount(bookingDetails.paidAmount?.toString() || '0.00');
+      setAdminNotes(bookingDetails.adminNotes || '');
+      setSpecialRequests(bookingDetails.specialRequests || '');
+      
+      // Set lesson type
+      if (bookingDetails.lessonTypeId) {
+        setSelectedLessonTypeId(bookingDetails.lessonTypeId);
+      }
+      
+      // Set focus areas
+      if (bookingDetails.focusAreas && Array.isArray(bookingDetails.focusAreas)) {
+        setFocusAreas(bookingDetails.focusAreas);
+      }
+      
+      // Set safety information
+      setDropoffPersonName(bookingDetails.dropoffPersonName || '');
+      setDropoffPersonRelationship(bookingDetails.dropoffPersonRelationship || '');
+      setDropoffPersonPhone(bookingDetails.dropoffPersonPhone || '');
+      setPickupPersonName(bookingDetails.pickupPersonName || '');
+      setPickupPersonRelationship(bookingDetails.pickupPersonRelationship || '');
+      setPickupPersonPhone(bookingDetails.pickupPersonPhone || '');
+      setAltPickupPersonName(bookingDetails.altPickupPersonName || '');
+      setAltPickupPersonRelationship(bookingDetails.altPickupPersonRelationship || '');
+      setAltPickupPersonPhone(bookingDetails.altPickupPersonPhone || '');
+      
+      // Set parent ID
+      if (bookingDetails.parentId) {
+        console.log("Setting parent ID:", bookingDetails.parentId);
+        setSelectedParentId(bookingDetails.parentId);
+      }
+      
+      // Set athletes
+      if (bookingDetails.athletes && Array.isArray(bookingDetails.athletes)) {
         const mappedAthletes = bookingDetails.athletes.map((athlete: Athlete) => ({ 
           athleteId: athlete && athlete.id ? athlete.id : null 
         }));
         console.log("Mapped athletes:", mappedAthletes);
         
-        // Only update if we have valid athletes or if there are none yet
-        if (mappedAthletes.length > 0 || bookingAthletes.length === 0) {
-          setBookingAthletes(mappedAthletes.length > 0 ? mappedAthletes : [{ athleteId: null }]);
-        }
-        
-        // Also ensure parent ID is set correctly
-        if (bookingDetails.parentId && (!selectedParentId || selectedParentId !== bookingDetails.parentId)) {
-          console.log("Setting parent ID:", bookingDetails.parentId);
-          setSelectedParentId(bookingDetails.parentId);
-        }
-      } else if (open && (!bookingAthletes || bookingAthletes.length === 0)) {
+        setBookingAthletes(mappedAthletes.length > 0 ? mappedAthletes : [{ athleteId: null }]);
+      } else {
         // If no athletes but modal is open, set at least one empty slot
         console.log("No athletes found, initializing with empty slot");
         setBookingAthletes([{ athleteId: null }]);
       }
     } catch (error) {
-      console.error('Error initializing booking athletes:', error);
-      // Fallback to empty array with one slot
-      setBookingAthletes([{ athleteId: null }]);
+      console.error('Error populating booking data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load booking details. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Initialize booking data when booking details are loaded
+  useEffect(() => {
+    if (bookingDetails && open) {
+      populateBookingData();
     }
   }, [bookingDetails, open]);
 
-  // Update mutation
+  // Reset all form fields to initial state
+  const resetForm = () => {
+    console.log("Resetting form state");
+    
+    // Reset general booking info
+    setStatus(booking.status || 'pending');
+    setPaymentStatus(booking.paymentStatus || 'unpaid');
+    setAttendanceStatus(booking.attendanceStatus || 'pending');
+    setPaidAmount(booking.paidAmount?.toString() || '0.00');
+    setAdminNotes(booking.adminNotes || '');
+    setSpecialRequests(booking.specialRequests || '');
+    setSelectedLessonTypeId(booking.lessonTypeId || 0);
+    setFocusAreas(booking.focusAreas || []);
+    setTempFocusArea('');
+    
+    // Reset athletes
+    setBookingAthletes([]);
+    
+    // Reset safety information
+    setDropoffPersonName(booking.dropoffPersonName || '');
+    setDropoffPersonRelationship(booking.dropoffPersonRelationship || '');
+    setDropoffPersonPhone(booking.dropoffPersonPhone || '');
+    setPickupPersonName(booking.pickupPersonName || '');
+    setPickupPersonRelationship(booking.pickupPersonRelationship || '');
+    setPickupPersonPhone(booking.pickupPersonPhone || '');
+    setAltPickupPersonName(booking.altPickupPersonName || '');
+    setAltPickupPersonRelationship(booking.altPickupPersonRelationship || '');
+    setAltPickupPersonPhone(booking.altPickupPersonPhone || '');
+    
+    // Reset validation state
+    setIsValidationError(false);
+    setValidationMessage('');
+    
+    // Reset tab
+    setTab('general');
+  };
+  
+  // Update mutation with comprehensive error handling and data validation
   const updateBookingMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch(`/api/bookings/${booking.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      console.log("Sending booking update data:", data);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update booking');
+      try {
+        // Validate athletes before sending
+        if (!Array.isArray(data.athletes) || data.athletes.length === 0) {
+          throw new Error("At least one athlete is required");
+        }
+        
+        // Ensure all athlete IDs are valid
+        const validAthletes = data.athletes.filter((a: {athleteId?: number | null}) => a && a.athleteId);
+        if (validAthletes.length === 0) {
+          throw new Error("Please select valid athletes");
+        }
+        
+        // Validate parent ID
+        if (!data.parentId) {
+          throw new Error("Parent selection is required");
+        }
+        
+        // Send update request
+        const response = await fetch(`/api/bookings/${booking.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Booking update failed:", errorData);
+          throw new Error(errorData.message || 'Failed to update booking');
+        }
+        
+        const result = await response.json();
+        console.log("Booking update successful:", result);
+        return result;
+      } catch (error: any) {
+        console.error("Error in update mutation:", error);
+        throw error;
       }
-      
-      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings', booking.id, 'details'] });
       
+      // Reset form state
+      resetForm();
+      
+      // Format updated fields for success message
+      const updatedFields = [];
+      if (data.status) updatedFields.push('Status');
+      if (data.paymentStatus) updatedFields.push('Payment Status');
+      if (data.attendanceStatus) updatedFields.push('Attendance');
+      if (data.focusAreas?.length > 0) updatedFields.push('Focus Areas');
+      if (data.athletes?.length > 0) updatedFields.push('Athletes');
+      if (data.dropoffPersonName) updatedFields.push('Safety Info');
+      
+      const updatedFieldsText = updatedFields.length > 0 
+        ? `Updated: ${updatedFields.join(', ')}`
+        : 'All changes saved';
+      
+      // Show success toast with more details
       toast({
-        title: "Booking Updated",
-        description: "Booking information has been updated successfully."
+        title: "Booking Updated Successfully",
+        description: `Booking #${booking.id} has been updated. ${updatedFieldsText}`,
+        variant: "default"
       });
       
+      // Call success callback if provided
       if (onSuccess) {
         onSuccess();
       }
       
+      // Close the modal
       onClose();
     },
     onError: (error: Error) => {
+      // Log the detailed error for debugging
+      console.error("Booking update error:", error);
+      
+      // Create a user-friendly error message
+      let errorMessage = error.message || "Failed to update booking";
+      
+      // Check for common error patterns and provide specific guidance
+      if (errorMessage.includes("athlete")) {
+        errorMessage = "There was an issue with the selected athletes. Please check your athlete selections.";
+        setTab('athletes');
+      } else if (errorMessage.includes("parent")) {
+        errorMessage = "There was an issue with the parent selection. Please select a valid parent.";
+        setTab('general');
+      } else if (errorMessage.includes("focus")) {
+        errorMessage = "Please provide at least one focus area for the lesson.";
+        setTab('general');
+      } else if (errorMessage.toLowerCase().includes("database") || errorMessage.toLowerCase().includes("connection")) {
+        errorMessage = "Database connection error. Please try again or contact support if the problem persists.";
+      }
+      
+      // Show toast with the user-friendly error message
       toast({
         title: "Update Failed",
-        description: error.message || "Could not update booking. Please try again.",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      // Set validation error for in-form display
+      setIsValidationError(true);
+      setValidationMessage(errorMessage);
+    }
+  });
+  
+  // Delete mutation
+  const deleteBookingMutation = useMutation({
+    mutationFn: async (bookingId: number) => {
+      console.log("Sending booking delete request for ID:", bookingId);
+      
+      try {
+        // Send delete request
+        const response = await fetch(`/api/bookings/${bookingId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Booking delete failed:", errorData);
+          throw new Error(errorData.message || 'Failed to delete booking');
+        }
+        
+        return { success: true, id: bookingId };
+      } catch (error: any) {
+        console.error("Error in delete mutation:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+      
+      // Show success toast
+      toast({
+        title: "Booking Deleted",
+        description: `Booking #${booking.id} has been permanently deleted`,
+        variant: "default"
+      });
+      
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Close the modal
+      onClose();
+    },
+    onError: (error: Error) => {
+      // Log the detailed error for debugging
+      console.error("Booking delete error:", error);
+      
+      // Show toast with the error message
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete booking. Please try again.",
         variant: "destructive"
       });
     }
   });
+  
+  // Function to handle booking deletion
+  const handleDeleteBooking = (bookingId: number) => {
+    deleteBookingMutation.mutate(bookingId);
+  };
 
   const handleLessonTypeChange = (lessonTypeId: string) => {
     const newLessonTypeId = parseInt(lessonTypeId);
@@ -340,30 +563,96 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   };
   
   const validateForm = () => {
-    // Validate required safety fields
-    if (!dropoffPersonName || !dropoffPersonRelationship || !dropoffPersonPhone || 
-        !pickupPersonName || !pickupPersonRelationship || !pickupPersonPhone) {
+    // Reset validation state first
+    setIsValidationError(false);
+    setValidationMessage("");
+    
+    // Validate required booking information
+    if (!selectedLessonTypeId) {
       setIsValidationError(true);
-      setValidationMessage("Please fill in all required pickup and drop-off information.");
+      setValidationMessage("Please select a lesson type.");
+      setTab('general');
       return false;
     }
     
-    // Validate at least one athlete is selected
+    if (!selectedParentId) {
+      setIsValidationError(true);
+      setValidationMessage("Please select a parent for this booking.");
+      setTab('general');
+      return false;
+    }
+    
+    if (!status) {
+      setIsValidationError(true);
+      setValidationMessage("Please select a booking status.");
+      setTab('general');
+      return false;
+    }
+    
+    if (!paymentStatus) {
+      setIsValidationError(true);
+      setValidationMessage("Please select a payment status.");
+      setTab('general');
+      return false;
+    }
+    
+          // Validate at least one athlete is selected
     if (!Array.isArray(bookingAthletes) || 
         bookingAthletes.length === 0 || 
-        bookingAthletes.some(a => !a || a.athleteId === null || a.athleteId === 0 || a.athleteId === undefined)) {
+        bookingAthletes.every((a: { athleteId: number | null }) => !a || a.athleteId === null || a.athleteId === 0 || a.athleteId === undefined)) {
       setIsValidationError(true);
       setValidationMessage("Please select at least one athlete.");
+      setTab('athletes');
       return false;
     }
     
     // Validate at least one focus area
-    if (focusAreas.length === 0) {
+    if (!Array.isArray(focusAreas) || focusAreas.length === 0) {
       setIsValidationError(true);
       setValidationMessage("Please add at least one focus area.");
+      setTab('general');
       return false;
     }
     
+    // Validate required safety fields
+    if (!dropoffPersonName || !dropoffPersonRelationship || !dropoffPersonPhone) {
+      setIsValidationError(true);
+      setValidationMessage("Please fill in all required drop-off information.");
+      setTab('safety');
+      return false;
+    }
+    
+    if (!pickupPersonName || !pickupPersonRelationship || !pickupPersonPhone) {
+      setIsValidationError(true);
+      setValidationMessage("Please fill in all required pickup information.");
+      setTab('safety');
+      return false;
+    }
+    
+    // Check for any non-numeric characters in phone numbers
+    const phoneRegex = /^[\d\+\-\(\)\s\.]+$/;
+    if (dropoffPersonPhone && !phoneRegex.test(dropoffPersonPhone)) {
+      setIsValidationError(true);
+      setValidationMessage("Drop-off person phone number contains invalid characters.");
+      setTab('safety');
+      return false;
+    }
+    
+    if (pickupPersonPhone && !phoneRegex.test(pickupPersonPhone)) {
+      setIsValidationError(true);
+      setValidationMessage("Pickup person phone number contains invalid characters.");
+      setTab('safety');
+      return false;
+    }
+    
+    if (altPickupPersonPhone && !phoneRegex.test(altPickupPersonPhone)) {
+      setIsValidationError(true);
+      setValidationMessage("Alternative pickup person phone number contains invalid characters.");
+      setTab('safety');
+      return false;
+    }
+    
+    // All validations passed
     setIsValidationError(false);
     setValidationMessage("");
     return true;
@@ -372,42 +661,79 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
-    }
-    
-    // Convert paid amount to decimal
-    const numericPaidAmount = parseFloat(paidAmount);
-    if (isNaN(numericPaidAmount)) {
+    try {
+      // Run form validation
+      if (!validateForm()) {
+        return;
+      }
+      
+      // Convert paid amount to decimal
+      const numericPaidAmount = parseFloat(paidAmount);
+      if (isNaN(numericPaidAmount)) {
+        toast({
+          title: "Invalid Amount",
+          description: "Please enter a valid number for paid amount.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Clean up athlete data before sending
+      const cleanedAthletes = Array.isArray(bookingAthletes) 
+        ? bookingAthletes
+            .filter((a: { athleteId: number | null }) => a && (a.athleteId !== null && a.athleteId !== undefined)) 
+            .map((a: { athleteId: number | null }) => ({ athleteId: a.athleteId }))
+        : [];
+      
+      // Add validation for at least one athlete
+      if (cleanedAthletes.length === 0) {
+        setIsValidationError(true);
+        setValidationMessage("Please select at least one athlete.");
+        setTab('athletes'); // Switch to athletes tab
+        return;
+      }
+      
+      // Prepare complete booking data for update
+      const bookingData = {
+        status,
+        paymentStatus,
+        attendanceStatus,
+        paidAmount: numericPaidAmount,
+        adminNotes,
+        specialRequests,
+        lessonTypeId: selectedLessonTypeId,
+        focusAreas,
+        athletes: cleanedAthletes,
+        parentId: selectedParentId,
+        
+        // Safety information
+        dropoffPersonName,
+        dropoffPersonRelationship,
+        dropoffPersonPhone,
+        pickupPersonName,
+        pickupPersonRelationship,
+        pickupPersonPhone,
+        altPickupPersonName,
+        altPickupPersonRelationship,
+        altPickupPersonPhone,
+        
+        // Add timestamp for the update
+        updatedAt: new Date().toISOString(),
+      };
+      
+      console.log("Submitting booking update:", bookingData);
+      
+      // Submit data to the mutation
+      updateBookingMutation.mutate(bookingData);
+      
+    } catch (error: any) {
+      console.error("Error in form submission:", error);
       toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid number for paid amount.",
+        title: "Form Submission Error",
+        description: error.message || "An error occurred while processing your form. Please try again.",
         variant: "destructive"
       });
-      return;
     }
-    
-    updateBookingMutation.mutate({
-      status,
-      paymentStatus,
-      attendanceStatus,
-      paidAmount: numericPaidAmount,
-      adminNotes,
-      specialRequests,
-      lessonTypeId: selectedLessonTypeId,
-      focusAreas,
-      athletes: bookingAthletes,
-      parentId: selectedParentId,
-      dropoffPersonName,
-      dropoffPersonRelationship,
-      dropoffPersonPhone,
-      pickupPersonName,
-      pickupPersonRelationship,
-      pickupPersonPhone,
-      altPickupPersonName,
-      altPickupPersonRelationship,
-      altPickupPersonPhone,
-    });
   };
 
   // Calculate total price
@@ -437,21 +763,26 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="booking-edit-description">
-        <DialogHeader>
-          <DialogTitle className="text-xl flex items-center justify-between">
-            <span>Edit Booking #{booking.id}</span>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-              <X className="h-4 w-4" />
-            </Button>
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          resetForm();
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0" aria-describedby="booking-edit-description">
+        <DialogHeader className="bg-gradient-to-r from-blue-700 to-blue-900 text-white px-6 py-4 rounded-t-lg">
+          <DialogTitle className="text-xl font-bold">
+            Edit Booking #{booking.id}
           </DialogTitle>
-          <p id="booking-edit-description" className="sr-only">
-            Edit booking details including status, payment, athletes, and more
+          <p id="booking-edit-description" className="text-sm text-blue-100 mt-1">
+            Edit booking details including status, payment, athletes, and safety information
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 px-6 py-4">
           {isValidationError && (
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
@@ -460,19 +791,22 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
           )}
           
           <Tabs value={tab} onValueChange={setTab} className="w-full">
-            <TabsList className="grid grid-cols-4">
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="athletes">Athletes</TabsTrigger>
-              <TabsTrigger value="safety">Safety Info</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsList className="grid grid-cols-4 bg-gray-100 p-1 rounded-lg">
+              <TabsTrigger value="general" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">General</TabsTrigger>
+              <TabsTrigger value="athletes" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">Athletes</TabsTrigger>
+              <TabsTrigger value="safety" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">Safety Info</TabsTrigger>
+              <TabsTrigger value="notes" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">Notes</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general" className="space-y-4 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Booking Status</Label>
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                    Booking Status
+                  </Label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-gray-200 mt-1.5">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -485,10 +819,13 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                   </Select>
                 </div>
                 
-                <div>
-                  <Label>Payment Status</Label>
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                    <CreditCard className="h-4 w-4 text-green-500" />
+                    Payment Status
+                  </Label>
                   <Select value={paymentStatus} onValueChange={setPaymentStatus}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-gray-200 mt-1.5">
                       <SelectValue placeholder="Select payment status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -503,10 +840,13 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Attendance Status</Label>
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                    <UserCheck className="h-4 w-4 text-purple-500" />
+                    Attendance Status
+                  </Label>
                   <Select value={attendanceStatus} onValueChange={setAttendanceStatus}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-gray-200 mt-1.5">
                       <SelectValue placeholder="Select attendance status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -519,91 +859,152 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                   </Select>
                 </div>
                 
-                <div>
-                  <Label>Paid Amount ($)</Label>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    value={paidAmount} 
-                    onChange={(e) => setPaidAmount(e.target.value)} 
-                    placeholder="0.00"
-                  />
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                    Paid Amount
+                  </Label>
+                  <div className="relative mt-1.5">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={paidAmount} 
+                      onChange={(e) => setPaidAmount(e.target.value)} 
+                      placeholder="0.00"
+                      className="pl-8 bg-white border-gray-200"
+                    />
+                  </div>
                 </div>
               </div>
               
               <div className="pt-2">
-                <Label>Lesson Type</Label>
-                <Select 
-                  value={selectedLessonTypeId?.toString()} 
-                  onValueChange={handleLessonTypeChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select lesson type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lessonTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id.toString()}>
-                        {type.name} - {type.duration} min ({type.isPrivate ? 'Private' : `Semi-private (${type.maxAthletes})`}) - ${type.price}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="bg-gradient-to-r from-white to-indigo-50 p-3 rounded-lg border border-indigo-100 shadow-sm">
+                  <Label className="text-sm font-medium text-indigo-700 flex items-center gap-1.5">
+                    <Bookmark className="h-4 w-4 text-indigo-600" />
+                    Lesson Type
+                  </Label>
+                  <Select 
+                    value={selectedLessonTypeId?.toString()} 
+                    onValueChange={handleLessonTypeChange}
+                  >
+                    <SelectTrigger className="bg-white border-indigo-100 mt-1.5">
+                      <SelectValue placeholder="Select lesson type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lessonTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          {type.name} - {type.duration} min ({type.isPrivate ? 'Private' : `Semi-private (${type.maxAthletes})`}) - ${type.price}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <Label>Focus Areas ({focusAreas.length}/{getMaxFocusAreas()})</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={tempFocusArea} 
-                    onChange={(e) => setTempFocusArea(e.target.value)} 
-                    placeholder="Add focus area"
-                    disabled={focusAreas.length >= getMaxFocusAreas()}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={addFocusArea}
-                    disabled={focusAreas.length >= getMaxFocusAreas() || !tempFocusArea.trim()}
-                  >
-                    Add
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {focusAreas.map((area, index) => (
-                    <div key={index} className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full flex items-center gap-1">
-                      <span>{area}</span>
+              <div className="bg-gradient-to-r from-white to-teal-50 p-4 rounded-lg border border-teal-100 shadow-sm mt-4">
+                <Label className="text-sm font-medium text-teal-700 flex items-center gap-1.5 mb-2">
+                  <Target className="h-4 w-4 text-teal-600" />
+                  Focus Areas ({focusAreas.length}/{getMaxFocusAreas()})
+                </Label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Select
+                        value="custom"
+                        onValueChange={(value) => {
+                          if (value !== "custom") {
+                            setTempFocusArea(value);
+                            if (focusAreas.length < getMaxFocusAreas() && !focusAreas.includes(value)) {
+                              setFocusAreas([...focusAreas, value]);
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="bg-white border-teal-100">
+                          <SelectValue placeholder="Select focus area" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="custom">Custom focus area...</SelectItem>
+                          <SelectItem value="Floor Skills">Floor Skills</SelectItem>
+                          <SelectItem value="Balance Beam">Balance Beam</SelectItem>
+                          <SelectItem value="Bars">Bars</SelectItem>
+                          <SelectItem value="Vault">Vault</SelectItem>
+                          <SelectItem value="Strength Training">Strength Training</SelectItem>
+                          <SelectItem value="Flexibility">Flexibility</SelectItem>
+                          <SelectItem value="Tumbling">Tumbling</SelectItem>
+                          <SelectItem value="Handstands">Handstands</SelectItem>
+                          <SelectItem value="Cartwheels">Cartwheels</SelectItem>
+                          <SelectItem value="Forward Rolls">Forward Rolls</SelectItem>
+                          <SelectItem value="Backward Rolls">Backward Rolls</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Input 
+                        value={tempFocusArea} 
+                        onChange={(e) => setTempFocusArea(e.target.value)} 
+                        placeholder="Custom focus area"
+                        disabled={focusAreas.length >= getMaxFocusAreas()}
+                        className="w-48 bg-white border-teal-100"
+                      />
                       <Button 
                         type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-5 w-5 rounded-full"
-                        onClick={() => removeFocusArea(index)}
+                        onClick={addFocusArea}
+                        disabled={focusAreas.length >= getMaxFocusAreas() || !tempFocusArea.trim()}
+                        className="bg-teal-600 hover:bg-teal-700"
                       >
-                        <X className="h-3 w-3" />
+                        Add
                       </Button>
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div className="bg-white bg-opacity-70 p-3 rounded-lg">
+                    <div className="flex flex-wrap gap-2">
+                      {focusAreas.map((area, index) => (
+                        <div key={index} className="bg-teal-50 text-teal-800 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-teal-200">
+                          <span>{area}</span>
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5 rounded-full hover:bg-teal-100"
+                            onClick={() => removeFocusArea(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      {focusAreas.length === 0 && (
+                        <div className="text-gray-500 text-sm italic py-2">No focus areas added yet</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <Card className="mt-4 border-blue-200">
+              <Card className="mt-4 border-blue-100 shadow-sm bg-gradient-to-r from-white to-blue-50">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-blue-600" />
-                      <span className="text-sm font-medium">Session Details</span>
+                      <div className="bg-blue-100 p-1.5 rounded-full">
+                        <Clock className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <span className="text-sm font-medium text-blue-800">Session Details</span>
                     </div>
-                    <span className="text-lg font-bold">${calculatePrice()}</span>
+                    <span className="text-lg font-bold bg-blue-50 px-3 py-1 rounded-full text-blue-700">${calculatePrice()}</span>
                   </div>
                   
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      <span>{getLessonTypeDuration()}</span>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg">
+                      <Clock className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium text-gray-700">Duration:</span>
+                      <span className="ml-auto">{getLessonTypeDuration()}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-gray-500" />
-                      <span>{getMaxAthletes()} Athlete{getMaxAthletes() > 1 ? 's' : ''}</span>
+                    <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg">
+                      <Users className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium text-gray-700">Capacity:</span>
+                      <span className="ml-auto">{getMaxAthletes()} Athlete{getMaxAthletes() > 1 ? 's' : ''}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -650,20 +1051,25 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                 </Select>
               </div>
               
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Athletes ({Array.isArray(bookingAthletes) ? bookingAthletes.length : 0}/{getMaxAthletes()})</Label>
+              <div className="bg-gradient-to-r from-white to-orange-50 p-4 rounded-lg border border-orange-100 shadow-sm mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-medium text-orange-700 flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-orange-600" />
+                    Athletes ({Array.isArray(bookingAthletes) ? bookingAthletes.length : 0}/{getMaxAthletes()})
+                  </Label>
                   <Button 
                     type="button" 
                     variant="outline" 
                     size="sm"
                     onClick={addAthleteSlot}
                     disabled={Array.isArray(bookingAthletes) && bookingAthletes.length >= getMaxAthletes()}
+                    className="border-orange-200 hover:bg-orange-50 text-orange-700"
                   >
                     Add Athlete
                   </Button>
                 </div>
                 
+                <div className="space-y-3 bg-white bg-opacity-70 p-3 rounded-lg">
                 {Array.isArray(bookingAthletes) ? bookingAthletes.map((bookingAthlete, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <div className="flex-1">
@@ -673,9 +1079,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         defaultValue="select-athlete"
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select athlete">
-                            {bookingAthlete && bookingAthlete.athleteId ? "" : "Select athlete"}
-                          </SelectValue>
+                          <SelectValue placeholder="Select athlete" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="select-athlete" disabled>Select an athlete</SelectItem>
@@ -688,7 +1092,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                               </SelectItem>
                             ))
                           ) : (
-                            <SelectItem value="no-athletes" disabled>No athletes found for this parent</SelectItem>
+                            <SelectItem value="no-athletes" disabled>
+                              {selectedParentId ? "No athletes found for this parent" : "Please select a parent first"}
+                            </SelectItem>
                           )}
                         </SelectContent>
                       </Select>
@@ -706,6 +1112,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                 )) : <div className="p-4 text-center bg-gray-50 rounded-md text-gray-500 text-sm">
                   No athletes added yet. Please select a parent and add athletes.
                 </div>}
+                </div>
               </div>
             </TabsContent>
             
@@ -829,51 +1236,70 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
             </TabsContent>
             
             <TabsContent value="notes" className="space-y-4 pt-4">
-              <div>
-                <Label htmlFor="admin-notes" className="flex items-center gap-1.5">
-                  <FileText className="w-4 h-4" />
+              <div className="bg-gradient-to-r from-white to-purple-50 p-4 rounded-lg border border-purple-100 shadow-sm">
+                <Label htmlFor="admin-notes" className="text-sm font-medium text-purple-700 flex items-center gap-1.5 mb-2">
+                  <ClipboardList className="h-4 w-4 text-purple-600" />
                   Admin Notes
                 </Label>
                 <Textarea
                   id="admin-notes"
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="h-24 mt-2"
+                  className="min-h-[100px] bg-white border-purple-100"
                   placeholder="Internal notes visible only to admin"
                 />
               </div>
               
-              <div className="pt-2">
-                <Label htmlFor="special-requests" className="flex items-center gap-1.5">
-                  <MessageSquare className="w-4 h-4" />
+              <div className="bg-gradient-to-r from-white to-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm mt-4">
+                <Label htmlFor="special-requests" className="text-sm font-medium text-blue-700 flex items-center gap-1.5 mb-2">
+                  <MessageSquare className="h-4 w-4 text-blue-600" />
                   Special Requests
                 </Label>
                 <Textarea
                   id="special-requests"
                   value={specialRequests}
                   onChange={(e) => setSpecialRequests(e.target.value)}
-                  className="h-24 mt-2"
+                  className="min-h-[100px] bg-white border-blue-100"
                   placeholder="Special requests from parents"
                 />
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-end gap-4 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={updateBookingMutation.isPending}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-            >
-              {updateBookingMutation.isPending ? 'Updating...' : 'Update Booking'}
-            </Button>
+          <div className="flex justify-between gap-4 pt-6 mt-2">
+            <div>
+              {booking.id && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to delete this booking? This action cannot be undone.")) {
+                      handleDeleteBooking(booking.id);
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Delete Booking
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onClose()}
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={updateBookingMutation.isPending}
+                className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800"
+              >
+                {updateBookingMutation.isPending ? 'Updating...' : 'Update Booking'}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
