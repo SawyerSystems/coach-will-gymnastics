@@ -42,6 +42,9 @@ export interface IStorage {
   getParentAthletes(parentId: number): Promise<Athlete[]>;
 // ...rest of interface unchanged...
 
+  // Lesson Types
+  getAllLessonTypes(): Promise<any[]>;
+  
   // Athletes
   getAllAthletes(): Promise<Athlete[]>;
   getAllAthletesWithWaiverStatus(): Promise<AthleteWithWaiverStatus[]>;
@@ -153,6 +156,7 @@ export interface IStorage {
 
   getAllFocusAreas(): Promise<FocusArea[]>;
   getFocusAreasByApparatus(apparatusId: number): Promise<FocusArea[]>;
+  getFocusAreasByLevel(level: string): Promise<FocusArea[]>;
   createFocusArea(focusArea: InsertFocusArea): Promise<FocusArea>;
   updateFocusArea(id: number, focusArea: Partial<InsertFocusArea>): Promise<FocusArea | undefined>;
   deleteFocusArea(id: number): Promise<boolean>;
@@ -204,6 +208,34 @@ export class MemStorage implements IStorage {
     // Not implemented in MemStorage
     return [];
   }
+  
+  // Get all lesson types (stub)
+  async getAllLessonTypes(): Promise<any[]> {
+    // Return a simple implementation for MemStorage with mock data
+    return [
+      {
+        id: 1,
+        name: "Quick Journey",
+        description: "30-minute private session",
+        price: 40,
+        duration: 30,
+        isPrivate: true,
+        maxAthletes: 1,
+        isActive: true
+      },
+      {
+        id: 2,
+        name: "Dual Quest",
+        description: "30-minute semi-private session",
+        price: 50, 
+        duration: 30,
+        isPrivate: false,
+        maxAthletes: 2,
+        isActive: true
+      }
+    ];
+  }
+  
   async getAllWaivers(): Promise<Waiver[]> {
     // In-memory stub for test/dev only
     return [];
@@ -1147,6 +1179,19 @@ With the right setup and approach, home practice can accelerate your child's gym
   async getFocusAreasByApparatus(apparatusId: number): Promise<FocusArea[]> {
     return Array.from(this.focusAreas.values()).filter(fa => (fa as any).apparatusId === apparatusId);
   }
+  
+  async getFocusAreasByLevel(level: string): Promise<FocusArea[]> {
+    const allFocusAreas = Array.from(this.focusAreas.values());
+    
+    if (level === 'beginner') {
+      return allFocusAreas.filter(fa => fa.level === 'beginner');
+    } else if (level === 'intermediate') {
+      return allFocusAreas.filter(fa => ['beginner', 'intermediate'].includes(fa.level || 'intermediate'));
+    } else {
+      // For advanced, return all levels
+      return allFocusAreas;
+    }
+  }
 
   async createFocusArea(focusArea: InsertFocusArea): Promise<FocusArea> {
     const id = this.currentFocusAreaId++;
@@ -1155,7 +1200,8 @@ With the right setup and approach, home practice can accelerate your child's gym
       id,
       createdAt: new Date(),
       sortOrder: focusArea.sortOrder || 0,
-      apparatusId: focusArea.apparatusId || null
+      apparatusId: focusArea.apparatusId || null,
+      level: focusArea.level || 'intermediate'
     };
     this.focusAreas.set(id, newFocusArea);
     return newFocusArea;
@@ -1598,6 +1644,30 @@ export class SupabaseStorage implements IStorage {
       latestWaiverId: athlete.latest_waiver_id || null,
       waiverStatus: athlete.waiver_status || 'pending',
       waiverSigned: athlete.waiver_signed || false
+    }));
+  }
+
+  // Lesson Types
+  async getAllLessonTypes(): Promise<any[]> {
+    const { data, error } = await supabaseAdmin
+      .from('lesson_types')
+      .select('*')
+      .order('id');
+
+    if (error) {
+      console.error('Error fetching all lesson types:', error);
+      return [];
+    }
+
+    return data.map(lt => ({
+      id: lt.id,
+      name: lt.name,
+      description: lt.description,
+      price: parseFloat(lt.total_price || '0'),
+      duration: lt.duration_minutes,
+      isPrivate: lt.is_private,
+      maxAthletes: lt.max_athletes || (lt.is_private ? 1 : 2),
+      isActive: lt.is_active !== false // Default to true if not set
     }));
   }
 
@@ -3547,6 +3617,31 @@ export class SupabaseStorage implements IStorage {
       console.error('Error fetching focus areas by apparatus:', error);
       return [];
     }
+    
+    return data || [];
+  }
+  
+  async getFocusAreasByLevel(level: string): Promise<FocusArea[]> {
+    // For 'beginner' level, we only return beginner focus areas
+    // For 'intermediate' level, we return beginner and intermediate focus areas
+    // For 'advanced' level, we return all focus areas
+    let query = supabase.from('focus_areas').select('*');
+    
+    if (level === 'beginner') {
+      query = query.eq('level', 'beginner');
+    } else if (level === 'intermediate') {
+      query = query.in('level', ['beginner', 'intermediate']);
+    }
+    // For 'advanced', we return all levels
+    
+    const { data, error } = await query.order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching focus areas by level:', error);
+      return [];
+    }
+    
+    return data || [];
 
     return data || [];
   }
@@ -3557,6 +3652,7 @@ export class SupabaseStorage implements IStorage {
       .insert({
         name: focusArea.name,
         apparatus_id: focusArea.apparatusId,
+        level: focusArea.level || 'intermediate',
         sort_order: focusArea.sortOrder || 0
       })
       .select()
@@ -3576,6 +3672,7 @@ export class SupabaseStorage implements IStorage {
       .update({
         name: focusArea.name,
         apparatus_id: focusArea.apparatusId,
+        level: focusArea.level,
         sort_order: focusArea.sortOrder
       })
       .eq('id', id)
@@ -3918,7 +4015,8 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id)
       .order('slot_order', { ascending: true });
 
-    return {
+    // Prepare the complete booking data with all relations
+    const bookingWithRelations = {
       ...booking,
       parent,
       lessonType,
@@ -3929,16 +4027,37 @@ export class SupabaseStorage implements IStorage {
       athletes: athletesData?.map(item => {
         const athlete = item.athletes as any;
         return {
-          athleteId: athlete.id,
-          slotOrder: item.slot_order || 1, // Get slot_order from booking_athletes
+          id: athlete.id,
           name: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
-          dateOfBirth: athlete.date_of_birth || '',
+          firstName: athlete.first_name || '',
+          lastName: athlete.last_name || '',
+          parentId: athlete.parent_id || null,
+          createdAt: athlete.created_at || null,
+          updatedAt: athlete.updated_at || null,
+          gender: athlete.gender || null,
+          latestWaiverId: athlete.latest_waiver_id || null,
+          waiverSigned: athlete.waiver_signed || false,
+          waiverStatus: athlete.waiver_status || 'pending',
           allergies: athlete.allergies || '',
           experience: athlete.experience || 'beginner',
-          photo: athlete.photo || ''
+          dateOfBirth: athlete.date_of_birth || null,
+          photo: athlete.photo || '',
+          // Add additional fields for UI consumption
+          athleteId: athlete.id, // Include athleteId for easier access
+          slotOrder: item.slot_order || 1 // Get slot_order from booking_athletes
         };
       }) || []
     } as BookingWithRelations;
+
+    console.log("Returning booking with relations:", {
+      id: bookingWithRelations.id,
+      hasLessonType: !!bookingWithRelations.lessonType,
+      hasParent: !!bookingWithRelations.parent,
+      athleteCount: bookingWithRelations.athletes?.length || 0,
+      focusAreaCount: bookingWithRelations.focusAreas?.length || 0
+    });
+
+    return bookingWithRelations;
   }
 
   async createBookingWithRelations(

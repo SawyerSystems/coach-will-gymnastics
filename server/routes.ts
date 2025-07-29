@@ -2881,6 +2881,25 @@ setTimeout(async () => {
     }
   });
 
+  // Get booking with all related entities (for detailed edit view)
+  app.get("/api/bookings/:id/details", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      console.log(`Fetching detailed booking info for ID: ${id}`);
+      const booking = await storage.getBookingWithRelations(id);
+      
+      if (!booking) {
+        res.status(404).json({ message: "Booking not found" });
+        return;
+      }
+      
+      res.json(booking);
+    } catch (error) {
+      console.error("Error fetching detailed booking:", error);
+      res.status(500).json({ message: "Failed to fetch booking details" });
+    }
+  });
+
   // General booking update endpoint (requires parent or admin authentication)
   // Using explicit authentication check inside the handler instead of middleware
   app.patch("/api/bookings/:id", async (req, res) => {
@@ -2895,8 +2914,17 @@ setTimeout(async () => {
     try {
       const id = parseInt(req.params.id);
       const { 
+        status,
+        paymentStatus,
+        attendanceStatus,
+        paidAmount,
+        adminNotes,
+        specialRequests,
+        lessonTypeId,
         focusAreas, 
-        specialNotes, 
+        athletes,
+        parentId,
+        specialNotes, // backward compatibility
         dropoffPersonName,
         dropoffPersonRelationship,
         dropoffPersonPhone,
@@ -2916,6 +2944,7 @@ setTimeout(async () => {
       
       // Debug the full booking object to identify any issues
       console.log("🔍 Full booking object:", booking);
+      console.log("📄 Request body:", req.body);
       
       // If parent is authenticated, check ownership
       if (req.session.parentId) {
@@ -2938,6 +2967,25 @@ setTimeout(async () => {
       
       // Update the booking
       const updateData: any = {};
+      
+      // Handle status fields (admin only)
+      if (req.session.adminId) {
+        if (status !== undefined) updateData.status = status;
+        if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
+        if (attendanceStatus !== undefined) updateData.attendanceStatus = attendanceStatus;
+        if (paidAmount !== undefined) updateData.paidAmount = paidAmount;
+      }
+      
+      // Handle regular fields
+      if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
+      if (specialRequests !== undefined) updateData.specialRequests = specialRequests;
+      if (lessonTypeId !== undefined) updateData.lessonTypeId = lessonTypeId;
+      if (parentId !== undefined) updateData.parentId = parentId;
+      
+      // For backward compatibility
+      if (specialNotes !== undefined) updateData.adminNotes = specialNotes;
+      
+      // Handle focus areas
       if (focusAreas !== undefined) {
         // First get the current booking to validate focus areas against lesson type
         const currentBooking = await storage.getBooking(id);
@@ -2956,7 +3004,6 @@ setTimeout(async () => {
         
         updateData.focusAreas = focusAreas;
       }
-      if (specialNotes !== undefined) updateData.adminNotes = specialNotes;
       
       // Update safety information if provided
       if (dropoffPersonName !== undefined) updateData.dropoffPersonName = dropoffPersonName;
@@ -2985,6 +3032,40 @@ setTimeout(async () => {
         
         if (req.body.preferredDate !== undefined) updateData.preferredDate = req.body.preferredDate;
         if (req.body.preferredTime !== undefined) updateData.preferredTime = req.body.preferredTime;
+      }
+      
+      // Update athletes relationship if provided
+      if (req.body.athletes && Array.isArray(req.body.athletes)) {
+        try {
+          console.log("📊 Updating athletes for booking:", id, req.body.athletes);
+          
+          // First remove all existing athlete relationships
+          await supabaseAdmin
+            .from('booking_athletes')
+            .delete()
+            .eq('booking_id', id);
+            
+          // Then add the new athlete relationships
+          const athleteRelations = req.body.athletes.map((a: any, index: number) => ({
+            booking_id: id,
+            athlete_id: a.athleteId,
+            slot_order: index + 1
+          }));
+          
+          if (athleteRelations.length > 0) {
+            const { error } = await supabaseAdmin
+              .from('booking_athletes')
+              .insert(athleteRelations);
+              
+            if (error) {
+              console.error("Error updating athlete relationships:", error);
+              return res.status(500).json({ error: "Failed to update athletes" });
+            }
+          }
+        } catch (err) {
+          console.error("Error processing athlete relationships:", err);
+          return res.status(500).json({ error: "Failed to process athlete relationships" });
+        }
       }
       
       const updatedBooking = await storage.updateBooking(id, updateData);
@@ -6515,17 +6596,140 @@ setTimeout(async () => {
     }
   });
 
+  // Lesson Types endpoints
+  app.get("/api/lesson-types", async (req, res) => {
+    try {
+      console.log('🔍 [ADMIN] Getting lesson types data...');
+      
+      // Fetch lesson types from the database
+      const { data: lessonTypes, error } = await supabaseAdmin
+        .from('lesson_types')
+        .select('*')
+        .order('id', { ascending: true });
+      
+      if (error) {
+        console.error('❌ [ADMIN] Error fetching lesson types:', error);
+        return res.status(500).json({ error: 'Failed to fetch lesson types' });
+      }
+      
+      // Transform data to match the client's expected format
+      const transformedLessonTypes = lessonTypes.map(lt => ({
+        id: lt.id,
+        name: lt.name,
+        description: lt.description,
+        price: parseFloat(lt.total_price || lt.price || '0'),
+        duration: lt.duration_minutes,
+        isPrivate: lt.is_private,
+        maxAthletes: lt.max_athletes || 1,
+        isActive: lt.is_active,
+        sortOrder: lt.sort_order
+      }));
+      
+      console.log('✅ [ADMIN] Successfully retrieved lesson types:', transformedLessonTypes.length);
+      res.json(transformedLessonTypes);
+    } catch (error: any) {
+      console.error('❌ [ADMIN] Error fetching lesson types:', error);
+      res.status(500).json({ error: 'Failed to fetch lesson types' });
+    }
+  });
+
+  // Get a specific lesson type by ID
+  app.get("/api/lesson-types/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log(`🔍 [ADMIN] Getting lesson type data for ID: ${id}...`);
+      
+      // Fetch lesson type from the database
+      const { data: lessonType, error } = await supabaseAdmin
+        .from('lesson_types')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error(`❌ [ADMIN] Error fetching lesson type with ID ${id}:`, error);
+        return res.status(500).json({ error: 'Failed to fetch lesson type' });
+      }
+      
+      if (!lessonType) {
+        return res.status(404).json({ error: 'Lesson type not found' });
+      }
+      
+      // Transform data to match the client's expected format
+      const transformedLessonType = {
+        id: lessonType.id,
+        name: lessonType.name,
+        description: lessonType.description,
+        price: parseFloat(lessonType.total_price || lessonType.price || '0'),
+        duration: lessonType.duration_minutes,
+        isPrivate: lessonType.is_private,
+        maxAthletes: lessonType.max_athletes || 1,
+        isActive: lessonType.is_active,
+        sortOrder: lessonType.sort_order
+      };
+      
+      console.log(`✅ [ADMIN] Successfully retrieved lesson type: ${transformedLessonType.name}`);
+      res.json(transformedLessonType);
+    } catch (error: any) {
+      console.error('❌ [ADMIN] Error fetching lesson type:', error);
+      res.status(500).json({ error: 'Failed to fetch lesson type' });
+    }
+  });
+  
   // Focus Areas endpoints
   app.get("/api/focus-areas", async (req, res) => {
     try {
       console.log('🔍 [ADMIN] Getting focus areas data...');
-      const { apparatusId } = req.query;
+      const { apparatusId, athleteLevel, athleteIds } = req.query;
       let focusAreas;
       
       if (apparatusId) {
         focusAreas = await storage.getFocusAreasByApparatus(parseInt(apparatusId as string));
       } else {
         focusAreas = await storage.getAllFocusAreas();
+      }
+
+      // Filter by athlete level if specified
+      if (athleteLevel || athleteIds) {
+        // If athleteIds are provided, we'll look up those athletes' experience levels
+        if (athleteIds) {
+          try {
+            const ids = (athleteIds as string).split(',').map(id => parseInt(id.trim()));
+            const athletes = await Promise.all(ids.map(id => storage.getAthlete(id)));
+            
+            // Get the valid athletes (not undefined)
+            const validAthletes = athletes.filter(a => a !== undefined) as any[];
+            
+            // Map experience levels to standard levels (beginner, intermediate, advanced)
+            const athleteLevels = validAthletes.map(athlete => {
+              const exp = athlete.experience?.toLowerCase() || 'intermediate';
+              if (exp.includes('beginner') || exp.includes('new')) return 'beginner';
+              if (exp.includes('advanced') || exp.includes('expert')) return 'advanced';
+              return 'intermediate';
+            });
+            
+            // If we have multiple athletes with different levels, include focus areas for all levels
+            if (athleteLevels.length > 0) {
+              // Filter focus areas to match any of the athlete levels
+              focusAreas = focusAreas.filter((fa: any) => 
+                !fa.level || // Include if no level is specified
+                athleteLevels.includes(fa.level) || // Match any athlete level
+                fa.level === 'beginner' // Always include beginner level
+              );
+            }
+          } catch (error) {
+            console.error('Error filtering focus areas by athlete IDs:', error);
+          }
+        } 
+        // If athleteLevel is directly specified
+        else if (athleteLevel) {
+          const level = (athleteLevel as string).toLowerCase();
+          focusAreas = focusAreas.filter((fa: any) => 
+            !fa.level || // Include if no level is specified
+            fa.level === level || // Match the specified level
+            fa.level === 'beginner' // Always include beginner level
+          );
+        }
       }
       
       console.log('✅ [ADMIN] Successfully retrieved focus areas:', focusAreas.length);
@@ -6538,8 +6742,8 @@ setTimeout(async () => {
 
   app.post("/api/focus-areas", isAdminAuthenticated, async (req, res) => {
     try {
-      const { name, apparatusId, sortOrder } = req.body;
-      const focusArea = await storage.createFocusArea({ name, apparatusId, sortOrder });
+      const { name, apparatusId, sortOrder, level } = req.body;
+      const focusArea = await storage.createFocusArea({ name, apparatusId, sortOrder, level });
       res.json(focusArea);
     } catch (error: any) {
       console.error('Error creating focus area:', error);
@@ -6550,8 +6754,8 @@ setTimeout(async () => {
   app.put("/api/focus-areas/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { name, apparatusId, sortOrder } = req.body;
-      const focusArea = await storage.updateFocusArea(id, { name, apparatusId, sortOrder });
+      const { name, apparatusId, sortOrder, level } = req.body;
+      const focusArea = await storage.updateFocusArea(id, { name, apparatusId, sortOrder, level });
       if (!focusArea) {
         return res.status(404).json({ error: 'Focus area not found' });
       }
@@ -6689,6 +6893,32 @@ setTimeout(async () => {
     } catch (error: any) {
       console.error('Error updating booking relations:', error);
       res.status(500).json({ error: 'Failed to update booking relations' });
+    }
+  });
+
+  // Focus Areas API Endpoint with level filtering
+  // Get all lesson types
+  app.get('/api/lesson-types', async (req, res) => {
+    try {
+      const lessonTypes = await storage.getAllLessonTypes();
+      return res.status(200).json(lessonTypes);
+    } catch (error) {
+      logger.error('Error fetching lesson types:', error);
+      return res.status(500).json({ message: 'Failed to fetch lesson types' });
+    }
+  });
+
+  app.get('/api/focus-areas', async (req, res) => {
+    try {
+      const level = req.query.level as string;
+      const focusAreas = level 
+        ? await storage.getFocusAreasByLevel(level)
+        : await storage.getAllFocusAreas();
+      
+      return res.status(200).json(focusAreas);
+    } catch (error) {
+      logger.error('Error fetching focus areas:', error);
+      return res.status(500).json({ message: 'Failed to fetch focus areas' });
     }
   });
 
