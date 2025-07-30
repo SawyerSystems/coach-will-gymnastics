@@ -108,6 +108,7 @@ export const BOOKING_FLOWS = {
     'focusAreas',
     'schedule',
     'parentInfoForm',
+    'safety',
     'adminPayment',
   ],
   'admin-existing-athlete': [
@@ -116,6 +117,7 @@ export const BOOKING_FLOWS = {
     'focusAreas',
     'schedule',
     'parentConfirm',
+    'safety',
     'adminPayment',
   ],
   'admin-from-athlete': [
@@ -123,6 +125,7 @@ export const BOOKING_FLOWS = {
     'focusAreas',
     'schedule',
     'parentConfirm',
+    'safety',
     'adminPayment',
   ]
 } as const;

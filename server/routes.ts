@@ -2484,6 +2484,166 @@ setTimeout(async () => {
     }
   });
 
+  // Admin booking creation endpoint
+  app.post("/api/admin/bookings", isAdminAuthenticated, async (req, res) => {
+    const perfTimer = logger.performance.api.request('POST', '/api/admin/bookings');
+    
+    try {
+      console.log("Admin booking request body:", JSON.stringify(req.body, null, 2));
+      
+      const bookingData = req.body;
+      
+      // Resolve lesson type to ID
+      let lessonTypeId: number | null = null;
+      if (bookingData.lessonType) {
+        const lessonTypeMapping: { [key: string]: number } = {
+          'quick-journey': 1,
+          'dual-quest': 2,  
+          'deep-dive': 3,
+          'partner-progression': 4
+        };
+        lessonTypeId = lessonTypeMapping[bookingData.lessonType] || null;
+        
+        if (!lessonTypeId) {
+          return res.status(400).json({
+            message: "Invalid lesson type",
+            details: `Unknown lesson type: ${bookingData.lessonType}`
+          });
+        }
+      }
+      
+      // Check if parent exists or create one
+      let parent: any = null;
+      
+      if (bookingData.parentInfo?.id) {
+        parent = await storage.getParentById(bookingData.parentInfo.id);
+      }
+      
+      if (!parent && bookingData.parentInfo?.email) {
+        // Try to find parent by email
+        const parentsByEmail = await storage.getParentByEmail(bookingData.parentInfo.email);
+        if (parentsByEmail) {
+          parent = parentsByEmail;
+        }
+      }
+      
+      if (!parent && bookingData.parentInfo) {
+        // Create parent account
+        parent = await storage.createParent({
+          firstName: bookingData.parentInfo.firstName,
+          lastName: bookingData.parentInfo.lastName,
+          email: bookingData.parentInfo.email,
+          phone: bookingData.parentInfo.phone,
+          emergencyContactName: bookingData.parentInfo.emergencyContactName,
+          emergencyContactPhone: bookingData.parentInfo.emergencyContactPhone,
+          passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
+        });
+      }
+      
+      if (!parent) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Could not identify or create parent" 
+        });
+      }
+
+      // Prepare the safety information
+      const safetyInfo = bookingData.safetyContact || {};
+      
+      // Create booking
+      const booking = await storage.createBooking({
+        parentId: parent.id,
+        lessonTypeId: lessonTypeId as number,
+        preferredDate: bookingData.selectedTimeSlot?.date || '',
+        preferredTime: bookingData.selectedTimeSlot?.time || '',
+        bookingMethod: 'ADMIN',
+        status: bookingData.status || 'CONFIRMED',
+        paymentStatus: bookingData.paymentStatus || 'UNPAID',
+        notes: bookingData.adminNotes || '',
+        // Safety information
+        dropoffPersonName: safetyInfo.willDropOff 
+          ? `${parent.firstName} ${parent.lastName}` 
+          : safetyInfo.dropoffPersonName || '',
+        dropoffPersonRelationship: safetyInfo.willDropOff 
+          ? 'Parent' 
+          : safetyInfo.dropoffPersonRelationship || '',
+        dropoffPersonPhone: safetyInfo.willDropOff 
+          ? parent.phone 
+          : safetyInfo.dropoffPersonPhone || '',
+        pickupPersonName: safetyInfo.willPickUp 
+          ? `${parent.firstName} ${parent.lastName}` 
+          : safetyInfo.pickupPersonName || '',
+        pickupPersonRelationship: safetyInfo.willPickUp 
+          ? 'Parent' 
+          : safetyInfo.pickupPersonRelationship || '',
+        pickupPersonPhone: safetyInfo.willPickUp 
+          ? parent.phone 
+          : safetyInfo.pickupPersonPhone || '',
+        safetyVerificationSignedAt: new Date()
+      });
+
+      // Debug log the booking object
+      console.log('[DEBUG] Created admin booking:', booking);
+      
+      // Process athletes
+      if (booking) {
+        if (bookingData.athleteInfo && bookingData.athleteInfo.length > 0) {
+          // For new athletes from form
+          for (let i = 0; i < bookingData.athleteInfo.length; i++) {
+            const athlete = bookingData.athleteInfo[i];
+            const newAthlete = await storage.createAthlete({
+              parentId: parent.id,
+              firstName: athlete.firstName,
+              lastName: athlete.lastName,
+              dateOfBirth: athlete.dateOfBirth,
+              gender: athlete.gender || '',
+              allergies: athlete.allergies || '',
+              experience: athlete.experience || 'intermediate',
+            });
+            
+            if (newAthlete && booking.id) {
+              await storage.addAthleteSlot(booking.id, newAthlete.id, i + 1);
+            }
+          }
+        } else if (bookingData.selectedAthletes && bookingData.selectedAthletes.length > 0) {
+          // For existing athletes
+          for (let i = 0; i < bookingData.selectedAthletes.length; i++) {
+            const athleteId = bookingData.selectedAthletes[i];
+            if (booking.id) {
+              await storage.addAthleteSlot(booking.id, athleteId, i + 1);
+            }
+          }
+        }
+        
+        // Process focus areas if provided
+        if (bookingData.focusAreas && bookingData.focusAreas.length > 0 && booking.id) {
+          const focusAreas = await storage.getAllFocusAreas();
+          for (const focusAreaName of bookingData.focusAreas) {
+            const focusArea = focusAreas.find(fa => fa.name === focusAreaName);
+            if (focusArea && focusArea.id) {
+              await storage.addBookingFocusArea(booking.id, focusArea.id);
+            }
+          }
+        }
+      }
+      
+      perfTimer.end();
+      return res.status(201).json({
+        success: true,
+        message: "Booking created successfully",
+        booking
+      });
+    } catch (error) {
+      perfTimer.end();
+      console.error("Error creating admin booking:", error);
+      return res.status(500).json({
+        success: false, 
+        message: "Error creating booking", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Bookings routes
   app.post("/api/bookings", async (req, res) => {
     const perfTimer = logger.performance.api.request('POST', '/api/bookings');

@@ -147,7 +147,7 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
     return titles[stepName] || 'Booking';
   };
 
-  const totalSteps = state.flowType.startsWith('admin-') ? 7 : // Admin flows have one more step now (parentSelection)
+  const totalSteps = state.flowType.startsWith('admin-') ? 8 : // Admin flows now include safety step
                     state.flowType === 'parent-portal' ? 8 : 
                     state.flowType === 'athlete-modal' ? 8 : 9; // new-user flow now has 9 steps
   const progress = ((state.currentStep + 1) / totalSteps) * 100;

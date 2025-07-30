@@ -58,6 +58,15 @@ export function AdminPaymentStep() {
         parentInfo: state.parentInfo,
         selectedTimeSlot: state.selectedTimeSlot,
         focusAreas: state.focusAreas,
+        // Include safety information
+        safetyContact: state.safetyContact || {
+          dropoffPersonName: '',
+          dropoffPersonRelationship: '',
+          dropoffPersonPhone: '',
+          pickupPersonName: '',
+          pickupPersonRelationship: '',
+          pickupPersonPhone: ''
+        },
         adminPaymentMethod: state.adminPaymentMethod || 'pending',
         adminNotes: state.adminNotes || '',
         amount: lessonPrice,
@@ -135,6 +144,27 @@ export function AdminPaymentStep() {
                 <br />
                 {state.parentInfo?.email} • {state.parentInfo?.phone}
               </p>
+            </div>
+            <div className="col-span-2">
+              <Label className="font-medium">Safety Information</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1 text-xs">
+                <div>
+                  <span className="font-semibold">Drop-off:</span>{' '}
+                  {state.safetyContact?.willDropOff 
+                    ? `Parent (${state.parentInfo?.firstName} ${state.parentInfo?.lastName})` 
+                    : state.safetyContact?.dropoffPersonName 
+                      ? `${state.safetyContact.dropoffPersonName} (${state.safetyContact.dropoffPersonRelationship})` 
+                      : 'Not provided'}
+                </div>
+                <div>
+                  <span className="font-semibold">Pick-up:</span>{' '}
+                  {state.safetyContact?.willPickUp 
+                    ? `Parent (${state.parentInfo?.firstName} ${state.parentInfo?.lastName})` 
+                    : state.safetyContact?.pickupPersonName 
+                      ? `${state.safetyContact.pickupPersonName} (${state.safetyContact.pickupPersonRelationship})` 
+                      : 'Not provided'}
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
