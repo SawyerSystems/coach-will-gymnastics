@@ -5996,8 +5996,9 @@ setTimeout(async () => {
         .eq('parent_id', athlete.parentId)
         .in('status', ['confirmed', 'scheduled']);
 
-      // Get last login (if available from session logs or parent login tracking)
-      // For now, we'll use the updated_at field as a proxy
+      // Get last login timestamp (now properly tracked)
+      // If last_login_at is not available, fall back to updated_at as before
+      const lastLoginTimestamp = parentData.last_login_at || parentData.updated_at;
       
       const enhancedParentInfo = {
         id: parentData.id,
@@ -6013,7 +6014,7 @@ setTimeout(async () => {
         totalChildren: childrenCount?.length || 0,
         totalBookings: totalBookings?.length || 0,
         activeBookings: activeBookings?.length || 0,
-        lastLoginAt: parentData.updated_at // Using updated_at as proxy for last activity
+        lastLoginAt: lastLoginTimestamp
       };
 
       res.json(enhancedParentInfo);

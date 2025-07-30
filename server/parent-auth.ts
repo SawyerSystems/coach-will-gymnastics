@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { storage } from './storage';
+import { supabaseAdmin } from './supabase-client';
 
 export const parentAuthRouter = Router();
 
@@ -137,8 +138,29 @@ parentAuthRouter.post('/login', [
       });
     }
 
+    // Set session data
     req.session.parentId = parent.id;
     req.session.parentEmail = parent.email;
+    
+    // Update lastLoginAt timestamp
+    try {
+      // Update directly through supabaseAdmin to avoid storage layer abstraction issues
+      const { error } = await supabaseAdmin
+        .from('parents')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', parent.id);
+        
+      if (error) {
+        console.warn('Failed to update parent last login timestamp:', error);
+        // Continue login process anyway
+      } else {
+        console.log(`Updated lastLoginAt for parent ${parent.id}`);
+      }
+    } catch (updateError) {
+      console.error('Error updating lastLoginAt:', updateError);
+      // Continue login process even if timestamp update fails
+    }
+
     res.json({ success: true, parentId: parent.id, parentEmail: parent.email });
   } catch (error) {
     console.error('Parent login error:', error);

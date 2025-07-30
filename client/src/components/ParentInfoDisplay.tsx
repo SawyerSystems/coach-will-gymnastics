@@ -161,7 +161,7 @@ export function ParentInfoDisplay({ athleteId, parentInfo: fallbackParentInfo }:
               {parentDetails.lastLoginAt && (
                 <div className="mt-1 pt-1 border-t border-gray-200">
                   <span className="font-medium">Last Login:</span>{' '}
-                  {new Date(parentDetails.lastLoginAt).toLocaleDateString()}
+                  {new Date(parentDetails.lastLoginAt).toLocaleDateString()} at {new Date(parentDetails.lastLoginAt).toLocaleTimeString()}
                 </div>
               )}
             </div>
