@@ -11,119 +11,36 @@ interface ParentInfoStepProps {
   isPrefilled?: boolean;
 }
 
+// Define the shape of parent data for TypeScript safety
+interface ParentData {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+}
+
 export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   const { state, updateState, nextStep } = useBookingFlow();
   const [isEditing, setIsEditing] = useState(!isPrefilled);
+  const [isManuallyFetchingParent, setIsManuallyFetchingParent] = useState(false);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const isAdminFlow = state.isAdminFlow || state.flowType.startsWith('admin-');
   
-  // For existing athlete flows, fetch athlete data to get parent info
-  const shouldFetchAthleteParent = isAdminFlow && 
-    (state.flowType === 'admin-existing-athlete' || state.flowType === 'admin-from-athlete') &&
-    state.selectedAthletes.length > 0;
-
-  const { data: athleteData, isLoading: isLoadingAthlete } = useQuery({
-    queryKey: ['/api/athletes', state.selectedAthletes[0]],
-    enabled: shouldFetchAthleteParent,
-  }) as { data: any; isLoading: boolean };
-
-  // Fetch parent data if we have a parent ID from the athlete
-  const { data: parentData, isLoading: isLoadingParent } = useQuery({
-    queryKey: ['/api/parents', athleteData?.parentId],
-    enabled: shouldFetchAthleteParent && !!athleteData?.parentId,
-  }) as { data: any; isLoading: boolean };
-
-  // Check if we're at the parent info step in the booking flow
-  const currentStepName = state.flowType ? BOOKING_FLOWS[state.flowType][state.currentStep] : '';
-  const isParentStep = ['parentConfirm', 'parentInfoForm'].includes(currentStepName);
-
-  // Direct fetch of athlete and parent data for admin-existing-athlete flow
-  const { data: directAthleteData } = useQuery({
-    queryKey: ['/api/athletes', state.selectedAthletes[0]],
-    enabled: state.flowType === 'admin-existing-athlete' && state.selectedAthletes.length > 0,
-  }) as { data: { id: number; parentId: number } | undefined };
-
-  const { data: directParentData } = useQuery({
-    queryKey: ['/api/parents', directAthleteData?.parentId],
-    enabled: !!directAthleteData?.parentId,
-  }) as { data: { 
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    emergencyContactName: string;
-    emergencyContactPhone: string;
-  } | undefined };
-
-  // This effect runs when the component mounts to ensure parent data is loaded immediately
-  useEffect(() => {
-    if (state.flowType === 'admin-existing-athlete' && directParentData && 
-        (!state.parentInfo || !state.parentId)) {
-      console.log("Immediately setting parent data from direct query:", directParentData);
-      setIsEditing(false);
-      updateState({
-        parentId: directParentData.id,
-        parentInfo: {
-          firstName: directParentData.firstName || '',
-          lastName: directParentData.lastName || '',
-          email: directParentData.email || '',
-          phone: directParentData.phone || '',
-          emergencyContactName: directParentData.emergencyContactName || '',
-          emergencyContactPhone: directParentData.emergencyContactPhone || ''
-        }
-      });
-    }
-  }, [directParentData, state.flowType, state.parentInfo, state.parentId, updateState]);
+  // Determine which flow we're using
+  const isAdminExistingAthlete = state.flowType === 'admin-existing-athlete';
+  const hasSelectedAthletes = state.selectedAthletes.length > 0;
+  const isOtherAdminFlow = isAdminFlow && !isAdminExistingAthlete;
   
-  // Also handle the case when we reach the parent step without parent info
-  useEffect(() => {
-    if (state.flowType === 'admin-existing-athlete' && isParentStep && 
-        state.selectedAthletes.length > 0 && !state.parentInfo && !isLoadingParent && 
-        !isLoadingAthlete && directAthleteData && !directParentData) {
-      
-      console.log("Parent step reached without parent info - forcing data fetch");
-      
-      // Force a direct fetch of parent data if we somehow reached this step without it
-      fetch(`/api/parents/${directAthleteData.parentId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.id) {
-            setIsEditing(false);
-            updateState({
-              parentId: data.id,
-              parentInfo: {
-                firstName: data.firstName || '',
-                lastName: data.lastName || '',
-                email: data.email || '',
-                phone: data.phone || '',
-                emergencyContactName: data.emergencyContactName || '',
-                emergencyContactPhone: data.emergencyContactPhone || ''
-              }
-            });
-          }
-        })
-        .catch(err => console.error("Error fetching parent data:", err));
-    }
-  }, [
-    state.flowType, isParentStep, state.selectedAthletes, state.parentInfo, 
-    isLoadingParent, isLoadingAthlete, directAthleteData, directParentData, updateState
-  ]);
-
-  // Auto-populate parent info when it becomes available
-  useEffect(() => {
-    console.log("Athlete parent data effect running:", { 
-      shouldFetchAthleteParent, 
-      athleteData: athleteData || 'No athlete data',
-      athleteParentId: athleteData?.parentId || 'No parentId in athlete data',
-      parentData: parentData || 'No parent data yet',
-      directParentData: directParentData || 'No direct parent data yet',
-      selectedAthletes: state.selectedAthletes
-    });
-
-    if (shouldFetchAthleteParent && parentData && !state.parentInfo) {
-      console.log("Setting parent info from athlete's parent:", parentData);
-      setIsEditing(false); // Set to read-only mode since we're pre-filling
+  // Utility function to safely set parent info from any parent data object
+  const setParentInfoFromData = (parentData: ParentData | null | undefined): boolean => {
+    if (!parentData || !parentData.id) return false;
+    
+    try {
+      setIsEditing(false);
       updateState({
         parentId: parentData.id,
         parentInfo: {
@@ -135,30 +52,130 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           emergencyContactPhone: parentData.emergencyContactPhone || ''
         }
       });
+      return true;
+    } catch (error) {
+      console.error("Error setting parent info:", error);
+      return false;
     }
-  }, [parentData, athleteData, shouldFetchAthleteParent, state.selectedAthletes, state.parentInfo, directParentData, updateState]);
+  };
+  
+  // Check if we're at the parent info step in the booking flow
+  const currentStepName = state.flowType ? BOOKING_FLOWS[state.flowType][state.currentStep] : '';
+  const isParentStep = ['parentConfirm', 'parentInfoForm'].includes(currentStepName);
+  
+  // APPROACH 1: For admin-existing-athlete flow
+  // Query all athletes to find the selected one
+  const { data: athletes = [], isLoading: isLoadingAthletes } = useQuery({
+    queryKey: ['/api/athletes'],
+    enabled: isAdminExistingAthlete && hasSelectedAthletes,
+  }) as { data: any[]; isLoading: boolean };
+  
+  // Find the selected athlete
+  const selectedAthlete = hasSelectedAthletes ? 
+    athletes.find((a: any) => a.id === state.selectedAthletes[0]) : 
+    null;
+    
+  // Only fetch parent data if we have a valid parentId
+  const { data: parentDataForExistingAthlete, isLoading: isLoadingParentForExistingAthlete } = useQuery({
+    queryKey: ['/api/parents', selectedAthlete?.parentId],
+    enabled: isAdminExistingAthlete && !!selectedAthlete?.parentId,
+  }) as { data: ParentData | null; isLoading: boolean };
+  
+  // APPROACH 2: For other admin flows
+  // For admin-from-athlete flow, fetch athlete and parent directly
+  const { data: directAthleteData, isLoading: isLoadingDirectAthlete } = useQuery({
+    queryKey: ['/api/athletes', state.selectedAthletes[0]],
+    enabled: isOtherAdminFlow && hasSelectedAthletes,
+  }) as { data: { id: number; parentId: number } | null; isLoading: boolean };
 
+  // Fetch parent data if we have a parent ID from the athlete
+  const { data: parentDataForOtherFlows, isLoading: isLoadingParentForOtherFlows } = useQuery({
+    queryKey: ['/api/parents', directAthleteData?.parentId],
+    enabled: isOtherAdminFlow && !!directAthleteData?.parentId,
+  }) as { data: ParentData | null; isLoading: boolean };
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("ParentInfoStep data status:", { 
+      flowType: state.flowType,
+      currentStepName,
+      isAdminExistingAthlete,
+      hasSelectedAthletes,
+      selectedAthleteId: state.selectedAthletes[0] || 'none',
+      selectedAthlete: selectedAthlete || 'No selected athlete found',
+      parentId: selectedAthlete?.parentId || 'No parentId',
+      parentData: parentDataForExistingAthlete || parentDataForOtherFlows || 'No parent data yet',
+      isLoadingAthletes,
+      isLoadingParentForExistingAthlete,
+      isLoadingDirectAthlete,
+      isLoadingParentForOtherFlows,
+      parentInfo: state.parentInfo,
+      isEditing
+    });
+  }, [
+    state.flowType, currentStepName, isAdminExistingAthlete, hasSelectedAthletes, state.selectedAthletes,
+    selectedAthlete, parentDataForExistingAthlete, parentDataForOtherFlows, isLoadingAthletes, 
+    isLoadingParentForExistingAthlete, isLoadingDirectAthlete, isLoadingParentForOtherFlows,
+    state.parentInfo, isEditing
+  ]);
+  
+  // For admin-existing-athlete flow: set parent info when data is available
+  useEffect(() => {
+    if (isAdminExistingAthlete && parentDataForExistingAthlete && !state.parentInfo) {
+      console.log("Setting parent info for admin-existing-athlete flow:", parentDataForExistingAthlete);
+      setParentInfoFromData(parentDataForExistingAthlete);
+    }
+  }, [isAdminExistingAthlete, parentDataForExistingAthlete, state.parentInfo]);
+  
+  // For other admin flows: set parent info when data is available
+  useEffect(() => {
+    if (isOtherAdminFlow && parentDataForOtherFlows && !state.parentInfo) {
+      console.log("Setting parent info for other admin flows:", parentDataForOtherFlows);
+      setParentInfoFromData(parentDataForOtherFlows);
+    }
+  }, [isOtherAdminFlow, parentDataForOtherFlows, state.parentInfo]);
+  
+  // Fallback fetch if queries don't work
+  useEffect(() => {
+    if (isAdminExistingAthlete && hasSelectedAthletes && !state.parentInfo && 
+        !isLoadingParentForExistingAthlete && !isManuallyFetchingParent && 
+        selectedAthlete?.parentId) {
+      
+      console.log("Fallback: manually fetching parent data for ID:", selectedAthlete.parentId);
+      setIsManuallyFetchingParent(true);
+      setLoadingError(null);
+      
+      fetch(`/api/parents/${selectedAthlete.parentId}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch parent');
+          return res.json();
+        })
+        .then(data => {
+          console.log("Manual parent fetch successful:", data);
+          if (!setParentInfoFromData(data)) {
+            setLoadingError("Could not set parent info from fetched data");
+          }
+        })
+        .catch(err => {
+          console.error("Error in manual parent fetch:", err);
+          setLoadingError(`Error fetching parent data: ${err.message}`);
+        })
+        .finally(() => setIsManuallyFetchingParent(false));
+    }
+  }, [
+    isAdminExistingAthlete, hasSelectedAthletes, state.parentInfo, 
+    isLoadingParentForExistingAthlete, selectedAthlete, isManuallyFetchingParent
+  ]);
+  
   // Handle selectedParent from admin parent selection
   useEffect(() => {
-    if (state.selectedParent && state.parentInfo && !isEditing) {
-      // If we have a selected parent and parent info is populated, we can show read-only mode
-      setIsEditing(false);
-    } else if (state.selectedParent && !state.parentInfo) {
+    if (state.selectedParent && !state.parentInfo) {
       // If we have selected parent but no parent info, populate it
-      updateState({
-        parentInfo: {
-          firstName: state.selectedParent.firstName || '',
-          lastName: state.selectedParent.lastName || '',
-          email: state.selectedParent.email || '',
-          phone: state.selectedParent.phone || '',
-          emergencyContactName: state.selectedParent.emergencyContactName || '',
-          emergencyContactPhone: state.selectedParent.emergencyContactPhone || ''
-        }
-      });
-      setIsEditing(false); // Show in read-only mode since this is pre-selected
+      setParentInfoFromData(state.selectedParent);
+      setIsEditing(false);
     }
-  }, [state.selectedParent, state.parentInfo, isEditing, updateState]);
-
+  }, [state.selectedParent, state.parentInfo]);
+  
   console.log("ParentInfoStep state:", {
     parentId: state.parentId,
     flowType: state.flowType,
@@ -195,9 +212,12 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   parentInfo.email && parentInfo.phone && 
                   parentInfo.emergencyContactName && parentInfo.emergencyContactPhone;
 
-  // Show loading state when fetching athlete and parent data for any flow type
-  if ((shouldFetchAthleteParent && (isLoadingAthlete || isLoadingParent)) || 
-      (state.flowType === 'admin-existing-athlete' && !directParentData && !state.parentInfo)) {
+  // Show loading state when fetching data
+  const isLoading = isManuallyFetchingParent || isLoadingParentForExistingAthlete || 
+                   (isAdminExistingAthlete && isLoadingAthletes) ||
+                   (isOtherAdminFlow && (isLoadingDirectAthlete || isLoadingParentForOtherFlows));
+                   
+  if (isLoading) {
     return (
       <div className="space-y-6 py-4 flex flex-col items-center justify-center min-h-[400px]">
         <div className="animate-spin w-8 h-8 border-2 border-[#0F0276] border-t-transparent rounded-full"></div>
@@ -206,10 +226,29 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     );
   }
   
-  // If this is a returning parent with existing info (or at least email), show confirmation interface
-  if ((state.parentId && (parentInfo.firstName || parentInfo.email) && !isEditing) || 
-      (shouldFetchAthleteParent && (parentData || directParentData))) {
-    const isAutoLinked = Boolean(shouldFetchAthleteParent && parentData);
+  // Show error state if we have one
+  if (loadingError) {
+    return (
+      <div className="space-y-6 py-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+          <p className="font-semibold">Error loading parent information</p>
+          <p className="text-sm">{loadingError}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => nextStep()}
+          >
+            Continue anyway
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  // If we have parent info and aren't editing, show read-only view
+  if (state.parentId && (parentInfo.firstName || parentInfo.email) && !isEditing) {
+    const isAutoLinked = Boolean(isAdminExistingAthlete && selectedAthlete?.parentId);
     
     return (
       <div className="space-y-6 py-4">
@@ -227,323 +266,171 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
         {isAutoLinked && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-medium">Parent Automatically Linked</span>
+              <CheckCircle className="h-4 w-4" />
+              <span className="font-semibold">Parent account automatically linked</span>
             </div>
-            <p className="text-sm text-green-700 mt-1">
-              The selected athlete is already associated with this parent account.
-            </p>
           </div>
         )}
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Parent Information
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                Edit
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-500">First Name</Label>
-                <p className="text-lg">{parentInfo.firstName}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-500">Last Name</Label>
-                <p className="text-lg">{parentInfo.lastName}</p>
-              </div>
-            </div>
-            
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Email Address</Label>
-              <p className="text-lg">{parentInfo.email}</p>
-            </div>
-            
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Phone Number</Label>
-              <p className="text-lg">{parentInfo.phone}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Contact className="h-5 w-5" />
-              Emergency Contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Emergency Contact Name</Label>
-              <p className="text-lg">{parentInfo.emergencyContactName || 'Not provided'}</p>
-            </div>
-            
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-500">Emergency Contact Phone</Label>
-              <p className="text-lg">{parentInfo.emergencyContactPhone || 'Not provided'}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Button 
-          onClick={handleConfirmInfo}
-          className="w-full min-h-[48px]"
-        >
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Confirm Information
-        </Button>
-      </div>
-    );
-  }
-
-  // If editing mode for returning parent
-  if (state.flowType === 'parent-portal' && isEditing) {
-    return (
-      <div className="space-y-6 py-4">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">Update Your Information</h2>
-          <p className="text-muted-foreground">
-            Make any necessary changes to your contact information.
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5 text-blue-600" />
               Parent Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={parentInfo.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className="min-h-[48px]"
-                />
+          <CardContent>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
+              <div>
+                <dt className="font-semibold text-gray-500">First Name</dt>
+                <dd>{parentInfo.firstName}</dd>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={parentInfo.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className="min-h-[48px]"
-                />
+              <div>
+                <dt className="font-semibold text-gray-500">Last Name</dt>
+                <dd>{parentInfo.lastName}</dd>
               </div>
-            </div>
+              <div>
+                <dt className="font-semibold text-gray-500">Email</dt>
+                <dd>{parentInfo.email}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-gray-500">Phone</dt>
+                <dd>{parentInfo.phone}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-gray-500">Emergency Contact</dt>
+                <dd>{parentInfo.emergencyContactName}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-gray-500">Emergency Phone</dt>
+                <dd>{parentInfo.emergencyContactPhone}</dd>
+              </div>
+            </dl>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={parentInfo.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className="min-h-[48px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={parentInfo.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="min-h-[48px]"
-              />
+            <div className="flex justify-between mt-6">
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-1"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit Information
+              </Button>
+              <Button type="button" onClick={handleConfirmInfo}>
+                Confirm
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Contact className="h-5 w-5" />
-              Emergency Contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
-              <Input
-                id="emergencyContactName"
-                value={parentInfo.emergencyContactName}
-                onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
-                placeholder="Full name of emergency contact"
-                className="min-h-[48px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
-              <Input
-                id="emergencyContactPhone"
-                type="tel"
-                value={parentInfo.emergencyContactPhone}
-                onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
-                placeholder="Emergency contact phone number"
-                className="min-h-[48px]"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex gap-3">
-          <Button 
-            variant="outline"
-            onClick={() => setIsEditing(false)}
-            className="flex-1 min-h-[48px]"
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSaveChanges}
-            disabled={!isValid}
-            className="flex-1 min-h-[48px]"
-          >
-            Save Changes
-          </Button>
-        </div>
       </div>
     );
   }
 
-  // For new users or athlete-modal flow, show full form
+  // Edit mode or new information mode
   return (
     <div className="space-y-6 py-4">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Parent Information</h2>
-        <p className="text-muted-foreground">
-          We need your contact information for scheduling and emergency purposes.
-        </p>
-      </div>
+      <h2 className="text-2xl font-bold">Parent Information</h2>
+      
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        if (isValid) {
+          if (isEditing) {
+            handleSaveChanges();
+          } else {
+            handleConfirmInfo();
+          }
+        }
+      }}>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <User className="h-5 w-5" /> 
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="First Name"
+                    value={parentInfo.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Last Name"
+                    value={parentInfo.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Email"
+                    value={parentInfo.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    placeholder="Phone"
+                    value={parentInfo.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Contact Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
-              <Input
-                id="firstName"
-                value={parentInfo.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                required
-                className="min-h-[48px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
-              <Input
-                id="lastName"
-                value={parentInfo.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                required
-                className="min-h-[48px]"
-              />
-            </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Contact className="h-5 w-5" />
+                Emergency Contact
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+                  <Input
+                    id="emergencyContactName"
+                    placeholder="Emergency Contact Name"
+                    value={parentInfo.emergencyContactName}
+                    onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+                  <Input
+                    id="emergencyContactPhone"
+                    placeholder="Emergency Contact Phone"
+                    value={parentInfo.emergencyContactPhone}
+                    onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end">
+            <Button type="submit" disabled={!isValid}>
+              {isEditing ? "Save Changes" : "Continue"}
+            </Button>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={parentInfo.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="your.email@example.com"
-              required
-              className="min-h-[48px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={parentInfo.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="(555) 123-4567"
-              required
-              className="min-h-[48px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Contact className="h-5 w-5" />
-            Emergency Contact
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContactName">Emergency Contact Name *</Label>
-            <Input
-              id="emergencyContactName"
-              value={parentInfo.emergencyContactName}
-              onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
-              placeholder="Full name of emergency contact"
-              required
-              className="min-h-[48px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContactPhone">Emergency Contact Phone *</Label>
-            <Input
-              id="emergencyContactPhone"
-              type="tel"
-              value={parentInfo.emergencyContactPhone}
-              onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
-              placeholder="Emergency contact phone number"
-              required
-              className="min-h-[48px]"
-            />
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            <p>
-              Emergency contact should be someone other than yourself who can be reached 
-              if there's an issue during the lesson.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Button 
-        onClick={nextStep}
-        disabled={!isValid}
-        className="w-full min-h-[48px]"
-      >
-        Next Step
-      </Button>
+        </div>
+      </form>
     </div>
   );
 }
