@@ -17,6 +17,7 @@ const getLessonPrice = (booking: any): number => {
   if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
   return 0;
 };
+import { BookingCalendar } from "@/components/BookingCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -397,11 +398,12 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   const [adminBookingContext, setAdminBookingContext] = useState<'new-athlete' | 'existing-athlete' | 'from-athlete'>('new-athlete');
   const [preSelectedAthleteId, setPreSelectedAthleteId] = useState<number | undefined>();
   const [bookingFilter, setBookingFilter] = useState<string>("all");
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [sortOption, setSortOption] = useState<string>("recent");
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [dateFilter, setDateFilter] = useState<string>("");
-  const [tab, setTab] = useState<'active' | 'archived'>("active");
+  const [tab, setTab] = useState<'active' | 'archived' | 'calendar'>("active");
 
   // Auth status check to ensure queries are enabled only when admin is logged in
   const { data: authStatus } = useQuery<{ loggedIn: boolean; adminId?: number }>({
@@ -708,7 +710,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   return (
     <>
       {/* Modern Tabs for Active/Archived */}
-      <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived')} className="w-full">
+      <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')} className="w-full">
         <TabsList className="mb-6 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
           <TabsTrigger 
             value="active"
@@ -716,6 +718,13 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
           >
             <Calendar className="h-4 w-4 mr-2" />
             Active Bookings
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendar"
+            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 px-6"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Calendar View
           </TabsTrigger>
           <TabsTrigger 
             value="archived"
@@ -1027,6 +1036,54 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
             preSelectedAthleteId={preSelectedAthleteId}
           />
         </TabsContent>
+        <TabsContent value="calendar">
+          {/* Calendar Header */}
+          <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-[#0F0276]">Calendar View</h2>
+                <p className="text-slate-600">Manage bookings in a visual calendar format</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-white text-[#0F0276] border-slate-200"
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/bookings'] })}
+                >
+                  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="bg-[#0F0276] hover:bg-[#0F0276]/90 flex items-center gap-2"
+                  onClick={() => {
+                    setAdminBookingContext("new-athlete");
+                    setShowUnifiedBooking(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  New Booking
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Calendar Component */}
+          <div className="h-[700px] border rounded-xl bg-white shadow-sm p-2">
+            <BookingCalendar 
+              bookings={bookings || []} 
+              onBookingSelect={(bookingId) => {
+                const booking = bookings?.find((b: any) => b.id === bookingId);
+                if (booking) {
+                  setSelectedBooking(booking);
+                  setShowDetailModal(true);
+                }
+              }} 
+            />
+          </div>
+        </TabsContent>
         <TabsContent value="archived">
           {/* Modern Archived Header */}
           <div className="bg-gradient-to-r from-slate-100/50 to-slate-200/30 rounded-xl border border-slate-200/50 p-6 mb-6">
@@ -1192,6 +1249,28 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Booking Detail Modal */}
+      {selectedBooking && (
+        <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[#0F0276]">
+                Booking Details
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-2">
+              <BookingDetailsView booking={selectedBooking} />
+            </div>
+            <div className="flex justify-between mt-4">
+              <AdminBookingDetailActions booking={selectedBooking} />
+              <Button variant="outline" onClick={() => setShowDetailModal(false)}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

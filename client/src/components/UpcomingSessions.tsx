@@ -1,8 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import { BookingCalendar } from "@/components/BookingCalendar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, User } from "lucide-react";
+import { Calendar, Clock, List, User } from "lucide-react";
+import { useState } from "react";
 
 // Helper function to format date without timezone issues
 function formatDateWithoutTimezoneIssues(dateString: string): string {
@@ -34,6 +37,7 @@ interface UpcomingSession {
 }
 
 export function UpcomingSessions() {
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const { data: sessions = [], isLoading, error } = useQuery<UpcomingSession[]>({
     queryKey: ['/api/upcoming-sessions'],
     queryFn: async () => {
@@ -93,6 +97,13 @@ export function UpcomingSessions() {
     }
   };
 
+  // Handle booking selection for the calendar view
+  const handleBookingSelect = (bookingId: number) => {
+    // This would typically open a modal or navigate to booking details
+    console.log(`Selected booking ID: ${bookingId}`);
+    // In a real implementation, you'd trigger the existing booking details view/modal
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -109,7 +120,7 @@ export function UpcomingSessions() {
         <Card className="rounded-xl border-0 shadow-lg">
           <CardContent className="p-8">
             <div className="flex items-center justify-center">
-              <div className="animate-spin w-8 h-8 border-4 border-[#D8BD2A] border-t-transparent rounded-full"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F0276]"></div>
             </div>
           </CardContent>
         </Card>
@@ -121,13 +132,13 @@ export function UpcomingSessions() {
     return (
       <div className="space-y-6">
         {/* Modern Error State */}
-        <div className="bg-gradient-to-r from-red-50/50 to-red-100/30 rounded-xl border border-red-200/50 p-6">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="bg-gradient-to-r from-red-100 to-red-50 rounded-xl border border-red-200 p-6">
+          <h3 className="text-2xl font-black text-red-800 tracking-tight flex items-center gap-3">
             <div className="p-2 bg-red-100 rounded-lg">
               <Clock className="h-6 w-6 text-red-600" />
             </div>
-            <h3 className="text-2xl font-black text-red-800 tracking-tight">Upcoming Sessions</h3>
-          </div>
+            Upcoming Sessions
+          </h3>
           <p className="text-red-600">Error loading session information</p>
         </div>
         <Card className="rounded-xl border-0 shadow-lg">
@@ -141,11 +152,27 @@ export function UpcomingSessions() {
     );
   }
 
+  // Convert sessions to calendar events format
+  const calendarBookings = sessions.map(session => {
+    // Format for calendar
+    const dateTime = `${session.sessionDate}T${session.sessionTime}`;
+    
+    return {
+      id: session.id,
+      preferred_date: session.sessionDate,
+      preferred_time: session.sessionTime,
+      lesson_type: session.lessonType,
+      athlete_names: session.athleteNames.join(', '),
+      payment_status: session.paymentStatus,
+      attendance_status: session.attendanceStatus
+    };
+  });
+
   return (
     <div className="space-y-6">
       {/* Modern Header Section */}
       <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3 mb-2">
               <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
@@ -162,84 +189,211 @@ export function UpcomingSessions() {
             {sessions.length} sessions
           </Badge>
         </div>
+        
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'calendar')}>
+          <TabsList className="bg-white/50 p-1 rounded-lg w-fit">
+            <TabsTrigger value="list" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <List className="h-4 w-4 mr-2" />
+              List View
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Calendar className="h-4 w-4 mr-2" />
+              Calendar View
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <Card className="rounded-xl border-0 shadow-lg">
-        <CardContent className="p-6">
-          {sessions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                <Clock className="h-8 w-8 text-slate-400" />
-              </div>
-              <h4 className="text-lg font-semibold text-slate-700 mb-2">No Upcoming Sessions</h4>
-              <p className="text-slate-500">There are no sessions scheduled at this time.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sessions.map((session) => {
-                // Format the date nicely with timezone correction
-                const formattedDate = session.sessionDate 
-                  ? formatDateWithoutTimezoneIssues(session.sessionDate) 
-                  : 'TBD';
-                
-                return (
-                  <div 
-                    key={session.id} 
-                    className="border border-slate-200 rounded-xl p-6 hover:bg-slate-50/50 hover:border-[#D8BD2A]/20 transition-all duration-200 hover:shadow-md"
-                  >
-                    <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
-                      <div className="space-y-3 flex-1">
-                        {/* Date and Time with lesson type badge */}
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-[#0F0276]/5 rounded-lg">
-                              <Clock className="h-4 w-4 text-[#0F0276]" />
+      <Tabs value={viewMode} className="mt-0 hidden">
+        <TabsContent value="list">
+          <Card className="rounded-xl border-0 shadow-lg">
+            <CardContent className="p-6">
+              {sessions.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <Calendar className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-600 font-medium">No upcoming sessions scheduled</p>
+                  <p className="text-slate-500 text-sm mt-2">When you book sessions, they will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sessions.map((session) => {
+                    // Format the session date and time
+                    const formattedDateTime = formatSessionDateTime(session.sessionDate);
+                    
+                    return (
+                      <div 
+                        key={session.id}
+                        className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-md transition-all duration-300"
+                      >
+                        <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
+                          <div className="space-y-4">
+                            {/* Date and time */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 rounded-lg">
+                                  <Clock className="h-4 w-4 text-indigo-600" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-indigo-900">
+                                    {formattedDateTime !== 'TBD' ? formattedDateTime.date : 'Date TBD'}
+                                  </p>
+                                  <p className="text-sm text-slate-600">
+                                    {formattedDateTime !== 'TBD' ? formattedDateTime.time : 'Time TBD'}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge 
+                                variant="outline" 
+                                className="border-slate-300 text-slate-700 bg-slate-50 font-semibold"
+                              >
+                                {session.lessonType.replace('-', ' ').replace('min', 'minute')}
+                              </Badge>
                             </div>
-                            <div className="font-bold text-slate-900 text-lg">
-                              {formattedDate} at {session.sessionTime || 'TBD'}
+                            
+                            {/* Athletes */}
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-50 rounded-lg">
+                                <User className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <span className="font-semibold text-slate-800">
+                                {session.athleteNames.join(', ') || 'No athletes listed'}
+                              </span>
+                            </div>
+                            
+                            {/* Parent */}
+                            <div className="text-slate-600 ml-11">
+                              <span className="font-medium">Parent:</span> {session.parentName}
                             </div>
                           </div>
-                          <Badge 
-                            variant="outline" 
-                            className="border-slate-300 text-slate-700 bg-slate-50 font-semibold"
-                          >
-                            {session.lessonType.replace('-', ' ').replace('min', 'minute')}
+                          
+                          {/* Status badges */}
+                          <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
+                            <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
+                              {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </Badge>
+                            <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
+                              {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="calendar">
+          <Card className="rounded-xl border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="h-[600px]">
+                <BookingCalendar 
+                  bookings={calendarBookings} 
+                  onBookingSelect={handleBookingSelect}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {viewMode === 'list' && (
+        <Card className="rounded-xl border-0 shadow-lg">
+          <CardContent className="p-6">
+            {sessions.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                  <Calendar className="h-8 w-8 text-slate-400" />
+                </div>
+                <p className="text-slate-600 font-medium">No upcoming sessions scheduled</p>
+                <p className="text-slate-500 text-sm mt-2">When you book sessions, they will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sessions.map((session) => {
+                  // Format the session date and time
+                  const formattedDateTime = formatSessionDateTime(session.sessionDate);
+                  
+                  return (
+                    <div 
+                      key={session.id}
+                      className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
+                        <div className="space-y-4">
+                          {/* Date and time */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-indigo-50 rounded-lg">
+                                <Clock className="h-4 w-4 text-indigo-600" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-indigo-900">
+                                  {formattedDateTime !== 'TBD' ? formattedDateTime.date : 'Date TBD'}
+                                </p>
+                                <p className="text-sm text-slate-600">
+                                  {formattedDateTime !== 'TBD' ? formattedDateTime.time : 'Time TBD'}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge 
+                              variant="outline" 
+                              className="border-slate-300 text-slate-700 bg-slate-50 font-semibold"
+                            >
+                              {session.lessonType.replace('-', ' ').replace('min', 'minute')}
+                            </Badge>
+                          </div>
+                          
+                          {/* Athletes */}
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                              <User className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <span className="font-semibold text-slate-800">
+                              {session.athleteNames.join(', ') || 'No athletes listed'}
+                            </span>
+                          </div>
+                          
+                          {/* Parent */}
+                          <div className="text-slate-600 ml-11">
+                            <span className="font-medium">Parent:</span> {session.parentName}
+                          </div>
+                        </div>
+                        
+                        {/* Status badges */}
+                        <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
+                          <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
+                            {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Badge>
+                          <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
+                            {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
                           </Badge>
                         </div>
-                        
-                        {/* Athletes */}
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 rounded-lg">
-                            <User className="h-4 w-4 text-blue-600" />
-                          </div>
-                          <span className="font-semibold text-slate-800">
-                            {session.athleteNames.join(', ') || 'No athletes listed'}
-                          </span>
-                        </div>
-                        
-                        {/* Parent */}
-                        <div className="text-slate-600 ml-11">
-                          <span className="font-medium">Parent:</span> {session.parentName}
-                        </div>
-                      </div>
-                      
-                      {/* Status badges */}
-                      <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
-                        <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
-                          {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </Badge>
-                        <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
-                          {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
-                        </Badge>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
+      {viewMode === 'calendar' && (
+        <Card className="rounded-xl border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="h-[600px]">
+              <BookingCalendar 
+                bookings={calendarBookings} 
+                onBookingSelect={handleBookingSelect}
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
