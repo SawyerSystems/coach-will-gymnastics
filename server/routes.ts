@@ -1,4 +1,4 @@
-import { AttendanceStatusEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
+import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
 import bcrypt from 'bcryptjs';
 import type { Express } from "express";
 import { createServer, type Server } from "http";
@@ -2554,12 +2554,17 @@ setTimeout(async () => {
       const booking = await storage.createBooking({
         parentId: parent.id,
         lessonTypeId: lessonTypeId as number,
-        preferredDate: bookingData.selectedTimeSlot?.date || '',
+        preferredDate: new Date(bookingData.selectedTimeSlot?.date || new Date()),
         preferredTime: bookingData.selectedTimeSlot?.time || '',
-        bookingMethod: 'ADMIN',
-        status: bookingData.status || 'CONFIRMED',
-        paymentStatus: bookingData.paymentStatus || 'UNPAID',
-        notes: bookingData.adminNotes || '',
+        bookingMethod: BookingMethodEnum.ADMIN,
+        status: bookingData.status || BookingStatusEnum.CONFIRMED,
+        paymentStatus: bookingData.paymentStatus || PaymentStatusEnum.UNPAID,
+        adminNotes: bookingData.adminNotes || '',
+        // Add missing required fields with defaults
+        attendanceStatus: AttendanceStatusEnum.PENDING,
+        apparatusIds: [],
+        focusAreaIds: [],
+        sideQuestIds: [],
         // Safety information
         dropoffPersonName: safetyInfo.willDropOff 
           ? `${parent.firstName} ${parent.lastName}` 

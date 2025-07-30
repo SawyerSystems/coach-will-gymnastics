@@ -54,6 +54,7 @@ export interface IStorage {
   updateAthlete(id: number, athlete: Partial<InsertAthlete>): Promise<Athlete | undefined>;
   deleteAthlete(id: number): Promise<boolean>;
   getAthleteBookingHistory(athleteId: number): Promise<Booking[]>;
+  addAthleteSlot(bookingId: number, athleteId: number, slotOrder: number): Promise<void>;
 
   // Bookings
   createBooking(booking: InsertBooking): Promise<Booking>;
@@ -160,6 +161,7 @@ export interface IStorage {
   createFocusArea(focusArea: InsertFocusArea): Promise<FocusArea>;
   updateFocusArea(id: number, focusArea: Partial<InsertFocusArea>): Promise<FocusArea | undefined>;
   deleteFocusArea(id: number): Promise<boolean>;
+  addBookingFocusArea(bookingId: number, focusAreaId: number | number[]): Promise<void>;
 
   getAllSideQuests(): Promise<SideQuest[]>;
   createSideQuest(sideQuest: InsertSideQuest): Promise<SideQuest>;
@@ -195,6 +197,15 @@ export class MemStorage implements IStorage {
   async archiveBookingsByParentId(parentId: number, reason: string): Promise<void> {
     // Not implemented in MemStorage
     return;
+  }
+  
+  // Athlete and focus area association methods
+  async addAthleteSlot(bookingId: number, athleteId: number, slotOrder: number): Promise<void> {
+    throw new Error("addAthleteSlot not implemented in MemStorage");
+  }
+  
+  async addBookingFocusArea(bookingId: number, focusAreaId: number | number[]): Promise<void> {
+    throw new Error("addBookingFocusArea not implemented in MemStorage");
   }
 
   // Archive all bookings for an athlete (stub)
@@ -4379,6 +4390,41 @@ export class SupabaseStorage implements IStorage {
     const allEmails = [...parentEmails, ...signupEmails];
     
     return Array.from(new Set(allEmails)); // Remove duplicates
+  }
+
+  // Add an athlete to a booking with a specific slot order
+  async addAthleteSlot(bookingId: number, athleteId: number, slotOrder: number): Promise<void> {
+    const { error } = await supabaseAdmin
+      .from('booking_athletes')
+      .insert({
+        booking_id: bookingId,
+        athlete_id: athleteId,
+        slot_order: slotOrder
+      });
+
+    if (error) {
+      console.error('Error adding athlete to booking:', error);
+      throw error;
+    }
+  }
+
+  // Add focus areas to a booking
+  async addBookingFocusArea(bookingId: number, focusAreaId: number | number[]): Promise<void> {
+    const focusAreaIds = Array.isArray(focusAreaId) ? focusAreaId : [focusAreaId];
+    
+    const focusAreaInserts = focusAreaIds.map((id: number) => ({
+      booking_id: bookingId,
+      focus_area_id: id
+    }));
+    
+    const { error } = await supabaseAdmin
+      .from('booking_focus_areas')
+      .insert(focusAreaInserts);
+
+    if (error) {
+      console.error('Error adding focus areas to booking:', error);
+      throw error;
+    }
   }
 }
 
