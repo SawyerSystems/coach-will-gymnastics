@@ -2265,7 +2265,7 @@ export default function Admin() {
                               />
                               {newException.date && (
                                 <p className="text-sm text-gray-600 mt-1">
-                                  Selected: {new Date(newException.date + 'T00:00:00').toLocaleDateString('en-US', {
+                                  Selected: {new Date(`${newException.date}T12:00:00Z`).toLocaleDateString('en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
                                     month: 'long',
@@ -2324,7 +2324,7 @@ export default function Admin() {
                               <div className="flex justify-between items-center">
                                 <div className="space-y-1">
                                   <p className="font-bold text-lg text-red-800">
-                                    {new Date(exception.date + 'T00:00:00').toLocaleDateString('en-US', {
+                                    {new Date(`${exception.date}T12:00:00Z`).toLocaleDateString('en-US', {
                                       weekday: 'short',
                                       year: 'numeric',
                                       month: 'short',
@@ -3388,7 +3388,7 @@ export default function Admin() {
                                 <div className="flex items-center gap-2">
                                   <CalendarDays className="h-4 w-4 text-blue-600" />
                                   <span className="font-medium text-blue-900">
-                                    {new Date(booking.preferred_date).toLocaleDateString()}
+                                    {new Date(`${booking.preferred_date}T12:00:00Z`).toLocaleDateString()}
                                   </span>
                                   <Badge variant="outline" className="bg-white border-blue-200 text-blue-700 font-medium">#{booking.id}</Badge>
                                 </div>

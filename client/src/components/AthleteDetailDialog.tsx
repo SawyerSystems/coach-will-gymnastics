@@ -3,11 +3,11 @@ import { ParentInfoDisplay } from "@/components/ParentInfoDisplay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +15,7 @@ import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Plus, Star, User, Clock, AlertCircle, Dumbbell, Calendar } from "lucide-react";
+import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Plus, Star, User } from "lucide-react";
 import React, { useState } from "react";
 
 interface AthleteDetailDialogProps {
@@ -304,7 +304,7 @@ export function AthleteDetailDialog({
                       <p className="flex items-center text-slate-700">
                         <Clock className="h-4 w-4 mr-1.5 text-blue-500" />
                         <span className="font-medium">Born:</span>
-                        <span className="ml-1">{athleteData.dateOfBirth ? new Date(athleteData.dateOfBirth).toLocaleDateString() : 'Unknown'}</span>
+                        <span className="ml-1">{athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}</span>
                       </p>
                     </div>
                     <p className="text-xs text-blue-600 font-medium mt-2 flex items-center">

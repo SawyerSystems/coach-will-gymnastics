@@ -252,7 +252,7 @@ export function ParentAthleteDetailDialog({
                   <div>
                     <span className="font-medium text-gray-600">Date of Birth:</span>
                     <span className="ml-2 text-gray-900">
-                      {athleteData.dateOfBirth ? new Date(athleteData.dateOfBirth).toLocaleDateString() : 'Unknown'}
+                      {athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}
                     </span>
                   </div>
                   

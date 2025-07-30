@@ -121,7 +121,7 @@ export function ParentWaiverManagement() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(`${dateString}T12:00:00Z`).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

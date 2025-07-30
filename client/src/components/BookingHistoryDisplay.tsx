@@ -148,7 +148,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
 
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
+      return new Date(`${dateString}T12:00:00Z`).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'

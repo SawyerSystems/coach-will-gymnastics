@@ -988,7 +988,7 @@ function ParentDashboard() {
                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
                                     <div className="flex items-center gap-1">
                                       <Calendar className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
-                                      {booking.preferredDate ? format(new Date(booking.preferredDate), 'MMM d, yyyy') : 'Date TBD'}
+                                      {booking.preferredDate ? format(new Date(`${booking.preferredDate}T12:00:00Z`), 'MMM d, yyyy') : 'Date TBD'}
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Clock className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
@@ -1151,7 +1151,7 @@ function ParentDashboard() {
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5 text-gray-500" />
                             <p className="text-xs xs:text-sm text-gray-600">
-                              Born: {athlete.dateOfBirth ? format(new Date(athlete.dateOfBirth), 'MMM d, yyyy') : 'Unknown'}
+                              Born: {athlete.dateOfBirth ? format(new Date(`${athlete.dateOfBirth}T12:00:00Z`), 'MMM d, yyyy') : 'Unknown'}
                             </p>
                           </div>
                           
@@ -1545,7 +1545,7 @@ function ParentDashboard() {
                         <div>
                           <h3 className="font-medium text-gray-900">{athlete.name}</h3>
                           <p className="text-sm text-gray-600">
-                            {athlete.dateOfBirth ? Math.floor((new Date().getTime() - new Date(athlete.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 'Unknown'} years old • {athlete.experience}
+                            {athlete.dateOfBirth ? Math.floor((new Date().getTime() - new Date(`${athlete.dateOfBirth}T12:00:00Z`).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 'Unknown'} years old • {athlete.experience}
                           </p>
                         </div>
                         <Button size="sm">Select</Button>

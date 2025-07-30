@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useStripePricing } from "@/hooks/useStripePricing";
 import { LESSON_TYPES } from "@/lib/constants";
+import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { AlertCircle, CreditCard, Info, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
@@ -159,10 +159,8 @@ export function PaymentStep() {
     createBooking.mutate();
   };
 
-  // Format date for display
-  const formattedDate = state.selectedTimeSlot?.date 
-    ? format(new Date(state.selectedTimeSlot.date + 'T00:00:00'), 'EEEE, MMMM d, yyyy')
-    : 'Not selected';
+  // Format date for display using our utility function
+  const formattedDate = formatBookingDate(state.selectedTimeSlot?.date);
 
   return (
     <div className="space-y-6 py-4">

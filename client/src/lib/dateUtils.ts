@@ -1,3 +1,5 @@
+import { format as formatDateFns } from 'date-fns';
+
 /**
  * Calculate age from date of birth string in YYYY-MM-DD format
  * Handles timezone issues by parsing the date components directly
@@ -32,4 +34,35 @@ export function formatDate(dateString: string): string {
     month: 'long',
     day: 'numeric'
   });
+}
+
+/**
+ * Parse a date string (YYYY-MM-DD) into a JavaScript Date object
+ * This ensures consistent date handling across the application and avoids timezone issues
+ */
+export function parseDate(dateString: string | null | undefined): Date | null {
+  if (!dateString) return null;
+  
+  // For ISO format with time component already included
+  if (dateString.includes('T')) {
+    return new Date(dateString);
+  }
+  
+  // For YYYY-MM-DD format, add a noon UTC time to avoid timezone issues
+  return new Date(`${dateString}T12:00:00Z`);
+}
+
+/**
+ * Format a date string for display in the booking flow
+ * @param dateString Date string in YYYY-MM-DD format
+ * @param formatPattern Format pattern for date-fns (default: 'EEEE, MMMM d, yyyy')
+ */
+export function formatBookingDate(dateString: string | null | undefined, formatPattern = 'EEEE, MMMM d, yyyy'): string {
+  if (!dateString) return 'Not selected';
+  
+  // Use the safe parseDate function and then format with date-fns
+  const date = parseDate(dateString);
+  if (!date) return 'Invalid date';
+  
+  return formatDateFns(date, formatPattern);
 }

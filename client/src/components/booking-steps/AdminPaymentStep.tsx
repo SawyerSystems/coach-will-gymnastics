@@ -4,12 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { useToast } from "@/hooks/use-toast";
 import { useStripePricing } from "@/hooks/use-stripe-products";
+import { useToast } from "@/hooks/use-toast";
 import { LESSON_TYPES } from "@/lib/constants";
+import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
+
 import { CheckCircle, CreditCard, DollarSign, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -113,7 +114,7 @@ export function AdminPaymentStep() {
             <div>
               <Label className="font-medium">Date & Time</Label>
               <p>
-                {state.selectedTimeSlot?.date && format(new Date(state.selectedTimeSlot.date), 'MMMM d, yyyy')}
+                {state.selectedTimeSlot?.date && formatBookingDate(state.selectedTimeSlot.date, 'MMMM d, yyyy')}
                 {' at '}
                 {state.selectedTimeSlot?.time}
               </p>

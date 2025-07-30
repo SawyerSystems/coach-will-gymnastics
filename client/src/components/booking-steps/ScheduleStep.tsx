@@ -1,25 +1,26 @@
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
-import { useAvailableTimes } from "@/hooks/useAvailableTimes";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar } from "lucide-react";
+import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useAvailableTimes } from "@/hooks/useAvailableTimes";
+import { formatBookingDate, parseDate } from "@/lib/dateUtils";
 import { format } from "date-fns";
-import { useState } from "react";
-import { CalendarIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 
 export function ScheduleStep() {
   const { state, updateState } = useBookingFlow();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    state.selectedTimeSlot?.date ? new Date(state.selectedTimeSlot.date) : undefined
+    state.selectedTimeSlot?.date ? parseDate(state.selectedTimeSlot.date) || undefined : undefined
   );
 
   const { data: availableTimes = [], isLoading } = useAvailableTimes(
@@ -138,7 +139,7 @@ export function ScheduleStep() {
       {state.selectedTimeSlot?.date && state.selectedTimeSlot?.time && (
         <div className="bg-green-50 p-4 rounded-lg">
           <p className="text-sm text-green-900">
-            <strong>✅ Selected:</strong> {format(new Date(state.selectedTimeSlot.date), 'EEEE, MMMM d, yyyy')} at {state.selectedTimeSlot.time}
+            <strong>✅ Selected:</strong> {formatBookingDate(state.selectedTimeSlot.date)} at {state.selectedTimeSlot.time}
           </p>
         </div>
       )}

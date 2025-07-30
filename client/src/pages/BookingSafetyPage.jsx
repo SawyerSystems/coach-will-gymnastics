@@ -109,7 +109,7 @@ export default function BookingSafetyPage() {
         </Button>
         <h1 className="text-3xl font-bold">Update Safety Information</h1>
         <p className="text-gray-600 mt-2">
-          Session Date: {new Date(booking.preferredDate).toLocaleDateString()}
+          Session Date: {new Date(`${booking.preferredDate}T12:00:00Z`).toLocaleDateString()}
           {booking.preferredTime && ` at ${booking.preferredTime}`}
         </p>
       </div>

@@ -82,7 +82,7 @@ export function AdminBookingDetail({ booking, onRefresh }: AdminBookingDetailPro
   const formatDate = (dateString: string) => {
     try {
       if (!dateString) return '';
-      return format(new Date(dateString), 'MMM d, yyyy');
+      return format(new Date(`${dateString}T12:00:00Z`), 'MMM d, yyyy');
     } catch (e) {
       return dateString;
     }
