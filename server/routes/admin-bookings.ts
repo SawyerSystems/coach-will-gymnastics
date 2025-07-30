@@ -163,7 +163,31 @@ export function initAdminBookingRoutes(app: Express) {
         }
       }
       
-      // Send email confirmation if needed (can be added later)
+      // Send email confirmation for cash/check payments
+      if (bookingData.adminPaymentMethod && ["cash", "check"].includes(bookingData.adminPaymentMethod.toLowerCase())) {
+        try {
+          console.log(`[EMAIL] Preparing to send confirmation email for ${bookingData.adminPaymentMethod} payment`);
+          console.log(`[EMAIL] Parent email: ${parent.email}, Parent name: ${parent.firstName || 'Parent'}`);
+          
+          const { sendManualBookingConfirmation } = require('../lib/email');
+          const { getBaseUrl } = require('../utils');
+          const confirmLink = `${getBaseUrl()}/parent/confirm-booking?bookingId=${booking.id}`;
+          
+          console.log(`[EMAIL] Confirmation link: ${confirmLink}`);
+          
+          await sendManualBookingConfirmation(
+            parent.email,
+            parent.firstName || 'Parent',
+            confirmLink
+          );
+          console.log(`[EMAIL] ✅ Sent manual booking confirmation email to ${parent.email}`);
+        } catch (emailError) {
+          console.error("[EMAIL] ❌ Failed to send confirmation email:", emailError);
+          // Don't fail the booking creation if email fails
+        }
+      } else {
+        console.log(`[EMAIL] No confirmation email sent - Payment method: ${bookingData.adminPaymentMethod}`);
+      }
       
       perfTimer.end();
       return res.status(201).json({

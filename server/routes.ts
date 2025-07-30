@@ -2589,7 +2589,7 @@ setTimeout(async () => {
 
       // Debug log the booking object
       console.log('[DEBUG] Created admin booking:', booking);
-      
+
       // Process athletes
       if (booking) {
         if (bookingData.athleteInfo && bookingData.athleteInfo.length > 0) {
@@ -2605,7 +2605,6 @@ setTimeout(async () => {
               allergies: athlete.allergies || '',
               experience: athlete.experience || 'intermediate',
             });
-            
             if (newAthlete && booking.id) {
               await storage.addAthleteSlot(booking.id, newAthlete.id, i + 1);
             }
@@ -2619,7 +2618,6 @@ setTimeout(async () => {
             }
           }
         }
-        
         // Process focus areas if provided
         if (bookingData.focusAreas && bookingData.focusAreas.length > 0 && booking.id) {
           const focusAreas = await storage.getAllFocusAreas();
@@ -2631,13 +2629,60 @@ setTimeout(async () => {
           }
         }
       }
-      
+
+      // Send confirmation email for cash/check bookings
+      if (["cash", "check"].includes((bookingData.paymentMethod || '').toLowerCase())) {
+        const confirmLink = `${getBaseUrl()}/parent/confirm-booking?bookingId=${booking.id}`;
+        await sendManualBookingConfirmation(
+          parent.email,
+          parent.firstName || 'Parent',
+          confirmLink
+        );
+      }
+
       perfTimer.end();
       return res.status(201).json({
         success: true,
         message: "Booking created successfully",
         booking
       });
+  // Endpoint for parent to confirm booking (updates attendance_status)
+  app.post("/api/parent/confirm-booking", async (req, res) => {
+    const { bookingId } = req.body;
+    if (!bookingId) {
+      return res.status(400).json({ success: false, message: "Missing bookingId" });
+    }
+    try {
+      const booking = await storage.getBooking(bookingId);
+      if (!booking) {
+        return res.status(404).json({ success: false, message: "Booking not found" });
+      }
+      
+      // Fetch the parent to check if this is a valid parent-initiated confirmation
+      if (!booking.parentId) {
+        return res.status(400).json({ success: false, message: "Booking has no associated parent" });
+      }
+      
+      const parent = await storage.getParentById(booking.parentId);
+      if (!parent) {
+        return res.status(404).json({ success: false, message: "Parent not found" });
+      }
+
+      // Only allow confirmation for bookings that are pending attendance and unpaid
+      if (booking.attendanceStatus !== AttendanceStatusEnum.PENDING || 
+          booking.paymentStatus !== PaymentStatusEnum.UNPAID) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Booking is not eligible for confirmation" 
+        });
+      }
+      await storage.updateBooking(bookingId, { attendanceStatus: AttendanceStatusEnum.CONFIRMED });
+      return res.json({ success: true, message: "Booking confirmed" });
+    } catch (error) {
+      console.error("Error confirming booking:", error);
+      return res.status(500).json({ success: false, message: "Error confirming booking" });
+    }
+  });
     } catch (error) {
       perfTimer.end();
       console.error("Error creating admin booking:", error);

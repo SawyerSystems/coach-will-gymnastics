@@ -11,7 +11,7 @@ import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 
-import { CheckCircle, CreditCard, DollarSign, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, CreditCard, DollarSign, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 
@@ -48,8 +48,15 @@ export function AdminPaymentStep() {
   });
 
   const handleCreateBooking = async () => {
+    if (!state.parentInfo || !state.selectedParent?.id) {
+      toast({
+        title: "Parent Required",
+        description: "You must select or create a parent before completing the booking.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsProcessing(true);
-    
     try {
       const bookingData = {
         lessonType: state.lessonType,
@@ -71,7 +78,11 @@ export function AdminPaymentStep() {
         adminNotes: state.adminNotes || '',
         amount: lessonPrice,
         status: 'confirmed',
-        paymentStatus: state.adminPaymentMethod === 'pending' ? 'unpaid' : 'paid',
+        // Set payment status based on payment method
+        paymentStatus: ['cash', 'check'].includes(state.adminPaymentMethod || '') ? 'unpaid' : 
+                      state.adminPaymentMethod === 'stripe' ? 'paid' : 'unpaid',
+        // Set attendance status based on payment method
+        attendanceStatus: ['cash', 'check'].includes(state.adminPaymentMethod || '') ? 'pending' : 'confirmed',
         bookingMethod: 'admin'
       };
 
@@ -201,10 +212,10 @@ export function AdminPaymentStep() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-2 text-blue-800">
                 <CreditCard className="h-4 w-4" />
-                <span className="font-medium">Stripe Payment</span>
+                <span className="font-medium">Credit Card Payment (Stripe)</span>
               </div>
               <p className="text-blue-700 text-sm mt-1">
-                A payment link will be sent to the parent's email for online payment.
+                The booking will be marked as <b>paid</b> and <b>confirmed</b> immediately. The parent will receive a booking confirmation email.
               </p>
             </div>
           )}
@@ -213,10 +224,22 @@ export function AdminPaymentStep() {
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-2 text-green-800">
                 <CheckCircle className="h-4 w-4" />
-                <span className="font-medium">In-Person Payment</span>
+                <span className="font-medium">In-Person Payment ({state.adminPaymentMethod === 'cash' ? 'Cash' : 'Check'})</span>
               </div>
               <p className="text-green-700 text-sm mt-1">
-                Booking will be marked as paid. Collect {state.adminPaymentMethod} during the lesson.
+                The booking will be marked as <b>unpaid</b> and attendance status as <b>pending</b>. An email will be sent to the parent with a confirmation link they must click to confirm their attendance. After they confirm, the attendance status will update to <b>confirmed</b>.
+              </p>
+            </div>
+          )}
+          
+          {state.adminPaymentMethod === 'pending' && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-yellow-800">
+                <AlertCircle className="h-4 w-4" />
+                <span className="font-medium">Pending Payment</span>
+              </div>
+              <p className="text-yellow-700 text-sm mt-1">
+                The booking will be marked as <b>unpaid</b>. No confirmation email will be sent to the parent yet. You'll need to update the payment method later.
               </p>
             </div>
           )}

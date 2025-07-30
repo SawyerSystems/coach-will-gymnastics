@@ -315,6 +315,19 @@ export class AsyncUtils {
   }
 }
 
+/**
+ * Get the base URL for the application
+ * Uses environment variables in production, localhost in development
+ */
+export function getBaseUrl(): string {
+  // In production, use the environment variable or default to Render subdomain
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.BASE_URL || `https://${process.env.RENDER_SERVICE_NAME || 'coachwilltumbles'}.onrender.com`;
+  }
+  // In development, use localhost
+  return process.env.BASE_URL || 'http://localhost:5173';
+}
+
 export default {
   SupabaseUtils,
   ValidationUtils,
