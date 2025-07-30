@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { BOOKING_FLOWS, useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, Contact, Edit2, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,9 +33,96 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     enabled: shouldFetchAthleteParent && !!athleteData?.parentId,
   }) as { data: any; isLoading: boolean };
 
+  // Check if we're at the parent info step in the booking flow
+  const currentStepName = state.flowType ? BOOKING_FLOWS[state.flowType][state.currentStep] : '';
+  const isParentStep = ['parentConfirm', 'parentInfoForm'].includes(currentStepName);
+
+  // Direct fetch of athlete and parent data for admin-existing-athlete flow
+  const { data: directAthleteData } = useQuery({
+    queryKey: ['/api/athletes', state.selectedAthletes[0]],
+    enabled: state.flowType === 'admin-existing-athlete' && state.selectedAthletes.length > 0,
+  }) as { data: { id: number; parentId: number } | undefined };
+
+  const { data: directParentData } = useQuery({
+    queryKey: ['/api/parents', directAthleteData?.parentId],
+    enabled: !!directAthleteData?.parentId,
+  }) as { data: { 
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    emergencyContactName: string;
+    emergencyContactPhone: string;
+  } | undefined };
+
+  // This effect runs when the component mounts to ensure parent data is loaded immediately
+  useEffect(() => {
+    if (state.flowType === 'admin-existing-athlete' && directParentData && 
+        (!state.parentInfo || !state.parentId)) {
+      console.log("Immediately setting parent data from direct query:", directParentData);
+      setIsEditing(false);
+      updateState({
+        parentId: directParentData.id,
+        parentInfo: {
+          firstName: directParentData.firstName || '',
+          lastName: directParentData.lastName || '',
+          email: directParentData.email || '',
+          phone: directParentData.phone || '',
+          emergencyContactName: directParentData.emergencyContactName || '',
+          emergencyContactPhone: directParentData.emergencyContactPhone || ''
+        }
+      });
+    }
+  }, [directParentData, state.flowType, state.parentInfo, state.parentId, updateState]);
+  
+  // Also handle the case when we reach the parent step without parent info
+  useEffect(() => {
+    if (state.flowType === 'admin-existing-athlete' && isParentStep && 
+        state.selectedAthletes.length > 0 && !state.parentInfo && !isLoadingParent && 
+        !isLoadingAthlete && directAthleteData && !directParentData) {
+      
+      console.log("Parent step reached without parent info - forcing data fetch");
+      
+      // Force a direct fetch of parent data if we somehow reached this step without it
+      fetch(`/api/parents/${directAthleteData.parentId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.id) {
+            setIsEditing(false);
+            updateState({
+              parentId: data.id,
+              parentInfo: {
+                firstName: data.firstName || '',
+                lastName: data.lastName || '',
+                email: data.email || '',
+                phone: data.phone || '',
+                emergencyContactName: data.emergencyContactName || '',
+                emergencyContactPhone: data.emergencyContactPhone || ''
+              }
+            });
+          }
+        })
+        .catch(err => console.error("Error fetching parent data:", err));
+    }
+  }, [
+    state.flowType, isParentStep, state.selectedAthletes, state.parentInfo, 
+    isLoadingParent, isLoadingAthlete, directAthleteData, directParentData, updateState
+  ]);
+
   // Auto-populate parent info when it becomes available
   useEffect(() => {
-    if (shouldFetchAthleteParent && parentData) {
+    console.log("Athlete parent data effect running:", { 
+      shouldFetchAthleteParent, 
+      athleteData: athleteData || 'No athlete data',
+      athleteParentId: athleteData?.parentId || 'No parentId in athlete data',
+      parentData: parentData || 'No parent data yet',
+      directParentData: directParentData || 'No direct parent data yet',
+      selectedAthletes: state.selectedAthletes
+    });
+
+    if (shouldFetchAthleteParent && parentData && !state.parentInfo) {
+      console.log("Setting parent info from athlete's parent:", parentData);
       setIsEditing(false); // Set to read-only mode since we're pre-filling
       updateState({
         parentId: parentData.id,
@@ -49,7 +136,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
         }
       });
     }
-  }, [parentData, shouldFetchAthleteParent, state.parentId, updateState]);
+  }, [parentData, athleteData, shouldFetchAthleteParent, state.selectedAthletes, state.parentInfo, directParentData, updateState]);
 
   // Handle selectedParent from admin parent selection
   useEffect(() => {
@@ -108,8 +195,9 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   parentInfo.email && parentInfo.phone && 
                   parentInfo.emergencyContactName && parentInfo.emergencyContactPhone;
 
-  // Show loading state when fetching athlete and parent data
-  if (shouldFetchAthleteParent && (isLoadingAthlete || isLoadingParent)) {
+  // Show loading state when fetching athlete and parent data for any flow type
+  if ((shouldFetchAthleteParent && (isLoadingAthlete || isLoadingParent)) || 
+      (state.flowType === 'admin-existing-athlete' && !directParentData && !state.parentInfo)) {
     return (
       <div className="space-y-6 py-4 flex flex-col items-center justify-center min-h-[400px]">
         <div className="animate-spin w-8 h-8 border-2 border-[#0F0276] border-t-transparent rounded-full"></div>
@@ -120,7 +208,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   
   // If this is a returning parent with existing info (or at least email), show confirmation interface
   if ((state.parentId && (parentInfo.firstName || parentInfo.email) && !isEditing) || 
-      (shouldFetchAthleteParent && parentData)) {
+      (shouldFetchAthleteParent && (parentData || directParentData))) {
     const isAutoLinked = Boolean(shouldFetchAthleteParent && parentData);
     
     return (
