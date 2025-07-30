@@ -8,15 +8,9 @@ export const bookingStatusEnum = pgEnum("booking_status", [
   "pending",
   "paid", 
   "confirmed", 
-  "manual", 
-  "manual-paid", 
   "completed", 
-  "no-show", 
   "failed", 
-  "cancelled", 
-  "reservation-pending", 
-  "reservation-paid", 
-  "reservation-failed"
+  "cancelled"
 ]);
 
 export const paymentStatusEnum = pgEnum("payment_status", [
@@ -43,15 +37,18 @@ export enum BookingStatusEnum {
   PENDING = "pending",
   PAID = "paid", 
   CONFIRMED = "confirmed",
-  MANUAL = "manual",
-  MANUAL_PAID = "manual-paid",
   COMPLETED = "completed",
-  NO_SHOW = "no-show",
   FAILED = "failed",
-  CANCELLED = "cancelled",
-  RESERVATION_PENDING = "reservation-pending",
-  RESERVATION_PAID = "reservation-paid",
-  RESERVATION_FAILED = "reservation-failed"
+  CANCELLED = "cancelled"
+  
+  // Legacy values - preserved in TypeScript for backward compatibility
+  // but no longer used in new code or stored in the database
+  // MANUAL = "manual",
+  // MANUAL_PAID = "manual-paid",
+  // NO_SHOW = "no-show", 
+  // RESERVATION_PENDING = "reservation-pending",
+  // RESERVATION_PAID = "reservation-paid",
+  // RESERVATION_FAILED = "reservation-failed"
 }
 
 export enum PaymentStatusEnum {

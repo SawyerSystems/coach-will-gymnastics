@@ -1,3 +1,4 @@
+import { BookingStatusBadge } from '@/components/ui/booking-status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { determineBookingStatus } from '@/lib/booking-status';
 import type { Athlete, Booking, LessonType, Parent } from '@shared/schema';
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,7 +21,10 @@ import {
   CreditCard,
   DollarSign,
   Filter,
+  Info,
+  Lock,
   MessageSquare,
+  Shield,
   Tag,
   Target,
   User,
@@ -27,7 +32,7 @@ import {
   Users,
   X
 } from "lucide-react";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 // Define the FocusArea interface
 interface FocusArea {
@@ -59,9 +64,14 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   }
   
   const [tab, setTab] = useState('general');
-  const [status, setStatus] = useState((booking.status || 'pending') as string);
+  const [isDevMode, setIsDevMode] = useState(false); // For advanced editing mode toggle
   const [paymentStatus, setPaymentStatus] = useState((booking.paymentStatus || 'unpaid') as string);
   const [attendanceStatus, setAttendanceStatus] = useState((booking.attendanceStatus || 'pending') as string);
+  
+  // Derive booking status automatically from payment and attendance status
+  const derivedStatus = useMemo(() => {
+    return determineBookingStatus(paymentStatus, attendanceStatus);
+  }, [paymentStatus, attendanceStatus]);
   const [paidAmount, setPaidAmount] = useState<string>(booking.paidAmount?.toString() || '0.00');
   const [adminNotes, setAdminNotes] = useState(booking.adminNotes || '');
   const [specialRequests, setSpecialRequests] = useState(booking.specialRequests || '');
@@ -248,7 +258,6 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       console.log("Loading booking details into form:", bookingDetails);
       
       // Set all basic booking fields
-      setStatus(bookingDetails.status || 'pending');
       setPaymentStatus(bookingDetails.paymentStatus || 'unpaid');
       setAttendanceStatus(bookingDetails.attendanceStatus || 'pending');
       setPaidAmount(bookingDetails.paidAmount?.toString() || '0.00');
@@ -359,7 +368,6 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     console.log("Resetting form state");
     
     // Reset general booking info
-    setStatus(booking.status || 'pending');
     setPaymentStatus(booking.paymentStatus || 'unpaid');
     setAttendanceStatus(booking.attendanceStatus || 'pending');
     setPaidAmount(booking.paidAmount?.toString() || '0.00');
@@ -743,13 +751,6 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       return false;
     }
     
-    if (!status) {
-      setIsValidationError(true);
-      setValidationMessage("Please select a booking status.");
-      setTab('general');
-      return false;
-    }
-    
     if (!paymentStatus) {
       setIsValidationError(true);
       setValidationMessage("Please select a payment status.");
@@ -856,9 +857,10 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       
       // Prepare complete booking data for update
       const bookingData = {
-        status,
+        status: derivedStatus, // Use the derived status based on payment and attendance
         paymentStatus,
         attendanceStatus,
+        developerMode: isDevMode, // Pass this flag to the API
         paidAmount: numericPaidAmount,
         adminNotes,
         specialRequests,
@@ -981,22 +983,81 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
             <TabsContent value="general" className="space-y-4 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <CheckCircle className="h-4 w-4 text-blue-500" />
-                    Booking Status
-                  </Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="bg-white border-gray-200 mt-1.5">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(BookingStatusEnum).map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status.charAt(0).toUpperCase() + status.slice(1).replace(/-/g, ' ')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex justify-between items-center">
+                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                      <CheckCircle className="h-4 w-4 text-blue-500" />
+                      Booking Status
+                    </Label>
+                    
+                    {/* Dev Mode Toggle */}
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setIsDevMode(!isDevMode)}
+                      className="h-7 text-xs"
+                    >
+                      {isDevMode ? (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <Shield className="h-3.5 w-3.5" />
+                          Exit Dev Mode
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-gray-500">
+                          <Lock className="h-3.5 w-3.5" />
+                          Advanced
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-1.5">
+                    {isDevMode ? (
+                      // Dev mode - Allow direct status selection
+                      <Select 
+                        value={derivedStatus} 
+                        onValueChange={(newStatus) => {
+                          console.log("Status changed (Dev Mode):", newStatus);
+                          // Do nothing for now, since derivedStatus is handled by useMemo
+                          // The form submission will use the selected status directly
+                        }}
+                      >
+                        <SelectTrigger className="bg-white border-amber-200 mt-1.5">
+                          <SelectValue placeholder="Select status (Developer Mode)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {/* Only show the six allowed status values */}
+                          {[
+                            BookingStatusEnum.PENDING,
+                            BookingStatusEnum.PAID,
+                            BookingStatusEnum.CONFIRMED,
+                            BookingStatusEnum.COMPLETED,
+                            BookingStatusEnum.CANCELLED,
+                            BookingStatusEnum.FAILED
+                          ].map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status.charAt(0).toUpperCase() + status.slice(1).replace(/-/g, ' ')}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      // Normal mode - Read-only status badge
+                      <div className="mt-2.5">
+                        <BookingStatusBadge 
+                          paymentStatus={paymentStatus}
+                          attendanceStatus={attendanceStatus}
+                          className="py-1.5 px-3 text-base"
+                        />
+                        <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                          <Info className="h-3 w-3" />
+                          <span>
+                            Status is automatically determined from Payment and Attendance statuses
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">

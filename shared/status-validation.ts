@@ -67,19 +67,14 @@ export function validateStatusCombination(state: BookingStatusState): StatusVali
     suggestedChanges.attendanceStatus = AttendanceStatusEnum.COMPLETED;
   }
 
-  // Rule 3: If attendance is no-show, booking should be no-show
+  // Rule 3: If attendance is no-show, booking should be completed (updated logic)
   if (attendanceStatus === AttendanceStatusEnum.NO_SHOW && 
-      bookingStatus !== BookingStatusEnum.NO_SHOW) {
-    errors.push("Booking status should be 'no-show' when attendance is 'no-show'");
-    suggestedChanges.bookingStatus = BookingStatusEnum.NO_SHOW;
+      bookingStatus !== BookingStatusEnum.COMPLETED) {
+    errors.push("Booking status should be 'completed' when attendance is 'no-show'");
+    suggestedChanges.bookingStatus = BookingStatusEnum.COMPLETED;
   }
 
-  // Rule 4: If booking is no-show, attendance should be no-show
-  if (bookingStatus === BookingStatusEnum.NO_SHOW && 
-      attendanceStatus !== AttendanceStatusEnum.NO_SHOW) {
-    errors.push("Attendance status should be 'no-show' when booking is 'no-show'");
-    suggestedChanges.attendanceStatus = AttendanceStatusEnum.NO_SHOW;
-  }
+  // Rule 4 removed - no-show is now mapped to completed status
 
   // Rule 5: If attendance is cancelled, booking should be cancelled
   if (attendanceStatus === AttendanceStatusEnum.CANCELLED && 
@@ -105,7 +100,7 @@ export function validateStatusCombination(state: BookingStatusState): StatusVali
 
   // Rule 8: Session payment should correspond to confirmed/completed status
   if (paymentStatus === PaymentStatusEnum.SESSION_PAID) {
-    if (![BookingStatusEnum.CONFIRMED, BookingStatusEnum.COMPLETED, BookingStatusEnum.MANUAL_PAID].includes(bookingStatus)) {
+    if (![BookingStatusEnum.CONFIRMED, BookingStatusEnum.COMPLETED].includes(bookingStatus)) {
       warnings.push("Session paid status typically corresponds to confirmed or completed bookings");
     }
   }
@@ -152,7 +147,7 @@ export function synchronizeStatuses(
         newState.bookingStatus = BookingStatusEnum.COMPLETED;
         break;
       case AttendanceStatusEnum.NO_SHOW:
-        newState.bookingStatus = BookingStatusEnum.NO_SHOW;
+        newState.bookingStatus = BookingStatusEnum.COMPLETED; // Updated to match new mapping
         break;
       case AttendanceStatusEnum.CANCELLED:
         newState.bookingStatus = BookingStatusEnum.CANCELLED;
@@ -163,9 +158,7 @@ export function synchronizeStatuses(
       case BookingStatusEnum.COMPLETED:
         newState.attendanceStatus = AttendanceStatusEnum.COMPLETED;
         break;
-      case BookingStatusEnum.NO_SHOW:
-        newState.attendanceStatus = AttendanceStatusEnum.NO_SHOW;
-        break;
+      // NO_SHOW case removed - now maps to COMPLETED
       case BookingStatusEnum.CANCELLED:
         newState.attendanceStatus = AttendanceStatusEnum.CANCELLED;
         break;
@@ -196,12 +189,13 @@ export function getStatusDescription(status: string, type: 'booking' | 'payment'
       [BookingStatusEnum.PENDING]: "Awaiting confirmation",
       [BookingStatusEnum.PAID]: "Payment received",
       [BookingStatusEnum.CONFIRMED]: "Confirmed and scheduled",
-      [BookingStatusEnum.MANUAL]: "Manually created",
-      [BookingStatusEnum.MANUAL_PAID]: "Manually marked as paid",
       [BookingStatusEnum.COMPLETED]: "Session completed",
-      [BookingStatusEnum.NO_SHOW]: "Student did not attend",
       [BookingStatusEnum.FAILED]: "Booking failed",
       [BookingStatusEnum.CANCELLED]: "Booking cancelled",
+      // Legacy values as string literals
+      'manual': "Manually created",
+      'manual-paid': "Manually marked as paid",
+      'no-show': "Student did not attend",
     } as Record<string, string>,
     payment: {
       [PaymentStatusEnum.UNPAID]: "No payment received",

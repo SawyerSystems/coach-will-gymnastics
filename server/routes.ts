@@ -1349,8 +1349,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             BookingStatusEnum.CONFIRMED, 
             BookingStatusEnum.PENDING, 
             BookingStatusEnum.PAID, 
-            BookingStatusEnum.MANUAL, 
-            BookingStatusEnum.MANUAL_PAID
+            // Legacy status values (as strings)
+            'manual', 
+            'manual-paid'
           ].includes(booking.status)
         );
         
@@ -2607,7 +2608,7 @@ setTimeout(async () => {
         parentId: parent.id,
         lessonTypeId: lessonTypeId,
         bookingMethod: 'Admin', // Must match DB allowed values
-        status: BookingStatusEnum.MANUAL,
+        status: BookingStatusEnum.PENDING, // Changed from MANUAL to PENDING
         paymentStatus: PaymentStatusEnum.UNPAID
       });
 
@@ -2912,9 +2913,12 @@ setTimeout(async () => {
       sessionID: req.sessionID
     });
     try {
+      // Import booking status utility
+      const { determineBookingStatus } = require('./utils/booking-status');
+      
       const id = parseInt(req.params.id);
       const { 
-        status,
+        status, // This may be provided but will be overridden unless in dev mode
         paymentStatus,
         attendanceStatus,
         paidAmount,
@@ -2971,10 +2975,31 @@ setTimeout(async () => {
       
       // Handle status fields (admin only)
       if (req.session.adminId) {
-        if (status !== undefined) updateData.status = status;
+        // Check for dev mode flag to allow manual status override
+        const isDeveloperMode = req.body.developerMode === true;
+        
+        // Allow explicit status override only in developer mode
+        if (status !== undefined && isDeveloperMode) {
+          updateData.status = status;
+          console.log("🔧 Developer mode: Manual booking status set to", status);
+        }
+        
+        // Update payment and attendance status
         if (paymentStatus !== undefined) updateData.paymentStatus = paymentStatus;
         if (attendanceStatus !== undefined) updateData.attendanceStatus = attendanceStatus;
         if (paidAmount !== undefined) updateData.paidAmount = paidAmount;
+        
+        // If payment or attendance status changed (or this is not dev mode), 
+        // derive the booking status automatically
+        if (!isDeveloperMode || paymentStatus !== undefined || attendanceStatus !== undefined) {
+          // Get current values if not provided in the request
+          const currentPaymentStatus = paymentStatus !== undefined ? paymentStatus : booking.paymentStatus;
+          const currentAttendanceStatus = attendanceStatus !== undefined ? attendanceStatus : booking.attendanceStatus;
+          
+          // Derive the booking status
+          updateData.status = determineBookingStatus(currentPaymentStatus, currentAttendanceStatus);
+          console.log("🔄 Auto-derived booking status:", updateData.status);
+        }
       }
       
       // Handle regular fields
@@ -3150,44 +3175,66 @@ setTimeout(async () => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
+      const { isDeveloperMode } = req.body;
       
-      const validStatuses = [
-        BookingStatusEnum.PENDING,
-        BookingStatusEnum.PAID,
-        BookingStatusEnum.CONFIRMED,
-        BookingStatusEnum.MANUAL,
-        BookingStatusEnum.MANUAL_PAID,
-        BookingStatusEnum.COMPLETED,
-        BookingStatusEnum.NO_SHOW,
-        BookingStatusEnum.FAILED,
-        BookingStatusEnum.CANCELLED
-      ];
-      if (!validStatuses.includes(status)) {
-        res.status(400).json({ message: `Invalid status. Valid statuses are: ${validStatuses.join(", ")}` });
-        return;
-      }
-
-      // Get booking details for time-based validation
+      // Import booking status utility
+      const { determineBookingStatus } = require('./utils/booking-status');
+      
+      // Get booking details for validation
       const existingBooking = await storage.getBooking(id);
       if (!existingBooking) {
         res.status(404).json({ message: "Booking not found" });
         return;
       }
+      
+      // Handle status updates based on developer mode
+      let finalStatus;
+      
+      if (isDeveloperMode === true) {
+        console.log("🔧 Developer mode: Allowing manual status override to:", status);
+        
+        const validStatuses = [
+          BookingStatusEnum.PENDING,
+          BookingStatusEnum.PAID,
+          BookingStatusEnum.CONFIRMED,
+          BookingStatusEnum.COMPLETED,
+          BookingStatusEnum.CANCELLED,
+          BookingStatusEnum.FAILED
+        ];
+        
+        if (!validStatuses.includes(status)) {
+          res.status(400).json({ 
+            message: `Invalid status. Valid statuses in developer mode are: ${validStatuses.join(", ")}` 
+          });
+          return;
+        }
+        
+        finalStatus = status;
+      } else {
+        // In normal mode, we derive the status based on payment and attendance status
+        console.log("🔄 Normal mode: Deriving booking status automatically");
+        
+        // Prevent direct status updates in normal mode
+        res.status(400).json({ 
+          message: "Direct status updates are not allowed. Please update payment_status or attendance_status instead, or use developer mode." 
+        });
+        return;
+      }
 
-      // Time-based restrictions for completed/no-show statuses
-      if (status === "completed" || status === "no-show") {
+      // Time-based restrictions for completed status
+      if (finalStatus === "completed") {
         const bookingDateTime = new Date(`${existingBooking.preferredDate}T${existingBooking.preferredTime}`);
         const now = new Date();
         
         if (bookingDateTime > now) {
           res.status(400).json({ 
-            message: `Cannot mark lesson as ${status} before the scheduled time (${existingBooking.preferredDate} at ${existingBooking.preferredTime})` 
+            message: `Cannot mark lesson as completed before the scheduled time (${existingBooking.preferredDate} at ${existingBooking.preferredTime})` 
           });
           return;
         }
       }
 
-      const booking = await storage.updateBookingStatus(id, status);
+      const booking = await storage.updateBookingStatus(id, finalStatus);
       if (!booking) {
         res.status(404).json({ message: "Booking not found" });
         return;
@@ -3266,6 +3313,9 @@ setTimeout(async () => {
         return;
       }
 
+      // Import booking status utility
+      const { determineBookingStatus } = require('./utils/booking-status');
+      
       // Automatic attendance status updates based on payment status
       let attendanceStatus = booking.attendanceStatus;
       if (paymentStatus === "reservation-pending" || paymentStatus === "reservation-failed") {
@@ -3275,6 +3325,11 @@ setTimeout(async () => {
         attendanceStatus = AttendanceStatusEnum.CONFIRMED;
         await storage.updateBookingAttendanceStatus(id, AttendanceStatusEnum.CONFIRMED);
       }
+      
+      // Derive and update booking status based on payment and attendance status
+      const derivedStatus = determineBookingStatus(paymentStatus, attendanceStatus);
+      await storage.updateBookingStatus(id, derivedStatus);
+      console.log("🔄 Auto-derived booking status from payment change:", derivedStatus);
 
       // Calculate lesson price based on type
       const getLessonPrice = (lessonType: string): number => {
@@ -3976,6 +4031,9 @@ setTimeout(async () => {
       //   }
       // }
 
+      // Import booking status utility
+      const { determineBookingStatus } = require('./utils/booking-status');
+      
       const booking = await storage.updateBookingAttendanceStatus(id, attendanceStatus);
       if (!booking) {
         res.status(404).json({ message: "Booking not found" });
@@ -3990,6 +4048,11 @@ setTimeout(async () => {
           booking.paymentStatus = PaymentStatusEnum.SESSION_PAID;
         }
       }
+      
+      // Derive and update booking status based on payment and attendance status
+      const derivedStatus = determineBookingStatus(booking.paymentStatus, attendanceStatus);
+      await storage.updateBookingStatus(id, derivedStatus);
+      console.log("🔄 Auto-derived booking status from attendance change:", derivedStatus);
       
       res.json(booking);
     } catch (error) {
