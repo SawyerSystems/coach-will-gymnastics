@@ -12,6 +12,7 @@ interface GenderSelectProps {
   id?: string;
   "aria-label"?: string;
   "aria-describedby"?: string;
+  className?: string;
 }
 
 export function GenderSelect({ 
@@ -24,6 +25,7 @@ export function GenderSelect({
   id = "gender-select",
   "aria-label": ariaLabel = "Select gender",
   "aria-describedby": ariaDescribedBy,
+  className,
   ...props 
 }: GenderSelectProps) {
   const { genders, loading, error } = useGenders();
@@ -46,7 +48,7 @@ export function GenderSelect({
           id={id}
           aria-label={ariaLabel}
           aria-describedby={ariaDescribedBy}
-          className="w-full"
+          className={`w-full ${className || ''}`}
         >
           <SelectValue placeholder={loading ? "Loading genders..." : "Select gender..."} />
         </SelectTrigger>

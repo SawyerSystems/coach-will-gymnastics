@@ -13,13 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability } from "@/hooks/use-availability";
+import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
 import { calculateAge } from "@/lib/dateUtils";
@@ -35,30 +36,36 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertCircle,
-  BarChart,
-  Calendar,
-  CalendarX,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  DollarSign,
-  Edit,
-  Eye,
-  Loader2,
-  Mail,
-  Menu,
-  MessageCircle,
-  MessageSquare,
-  Phone,
-  Plus,
-  RefreshCw,
-  Search,
-  Trash2,
-  User,
-  Users,
-  X
+    AlertCircle,
+    BarChart,
+    Calendar,
+    CalendarDays,
+    CalendarX,
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    DollarSign,
+    Dumbbell,
+    Edit,
+    Eye,
+    Info,
+    Loader2,
+    Mail,
+    Menu,
+    MessageCircle,
+    MessageSquare,
+    Phone,
+    Plus,
+    RefreshCw,
+    Save,
+    Search,
+    Star,
+    Trash2,
+    User,
+    UserCircle,
+    Users,
+    X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -134,6 +141,7 @@ export default function Admin() {
   
   // Parent management state
   const [isParentEditOpen, setIsParentEditOpen] = useState(false);
+  const [editingParent, setEditingParent] = useState<any>(null);
   
   // Athletes search state
   const [athleteSearchTerm, setAthleteSearchTerm] = useState<string>("");
@@ -160,6 +168,9 @@ export default function Admin() {
   // ALL UTILITY HOOKS
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Fix dialog accessibility issues
+  useFixDialogAccessibility();
   
   // ALL QUERIES
   const { data: authStatus, isLoading: authLoading } = useQuery<{ loggedIn: boolean; adminId?: number }>({
@@ -1533,7 +1544,8 @@ export default function Admin() {
                                     onClick={() => {
                                       const validParent = filteredParents.find((p: any) => p.id === parent.id);
                                       if (validParent) {
-                                        setSelectedParent(validParent);
+                                        // Store the parent data in the edit form state without opening the details modal
+                                        setEditingParent(validParent);
                                         setIsParentEditOpen(true);
                                       } else {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
@@ -3168,65 +3180,85 @@ export default function Admin() {
         </Tabs>
         
         {/* Parent Details Dialog */}
-        <Dialog open={!!selectedParent} onOpenChange={() => setSelectedParent(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                👪 Parent Details
-                {selectedParent && (
-                  <Badge variant="outline">ID: {selectedParent.id}</Badge>
+        <Dialog 
+          open={!!editingParent} 
+          onOpenChange={() => setEditingParent(null)}
+        >
+          <DialogContent 
+            className="max-w-4xl max-h-[90vh] overflow-y-auto p-0"
+            // Adding explicit ARIA attributes to prevent accessibility issues
+            aria-labelledby="parent-details-title"
+            aria-describedby="parent-details-description"
+          >
+            <DialogHeader className="bg-gradient-to-r from-purple-100 to-indigo-100 px-6 py-4 rounded-t-lg mb-0">
+              <DialogTitle id="parent-details-title" className="text-2xl font-bold text-indigo-900 flex items-center gap-3">
+                <div className="p-2 bg-indigo-200 rounded-lg shadow-sm">
+                  <User className="h-6 w-6 text-indigo-700" />
+                </div>
+                Parent Details
+                {editingParent && (
+                  <Badge variant="outline" className="ml-2 bg-white border-indigo-200 text-indigo-700 font-medium">ID: {editingParent.id}</Badge>
                 )}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="parent-details-description" className="text-indigo-700/70 font-medium">
                 Complete parent profile with athletes and booking history
               </DialogDescription>
             </DialogHeader>
             
-            {selectedParent && (() => {
-              // Use detailed data if available, fallback to basic parent data
-              const parentData = selectedParentDetails || selectedParent;
+            {editingParent && (() => {
               return (
-              <div className="space-y-6">
+              <div className="space-y-6 p-6 bg-gradient-to-br from-white to-slate-50">
                 {/* Basic Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Basic Information</CardTitle>
+                <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
+                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-t-xl">
+                    <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                      <User className="h-5 w-5 text-blue-700" />
+                      Basic Information
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="pt-4 space-y-4 bg-gradient-to-br from-white to-blue-50/30">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Full Name</Label>
-                        <p className="text-lg font-semibold">
-                          {parentData.firstName || parentData.first_name} {parentData.lastName || parentData.last_name}
+                        <p className="text-lg font-semibold text-blue-900">
+                          {editingParent.firstName || editingParent.first_name} {editingParent.lastName || editingParent.last_name}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Parent ID</Label>
-                        <p className="text-lg">{parentData.id}</p>
+                        <p className="text-lg text-gray-800">{editingParent.id}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Email</Label>
-                        <p className="text-lg">{parentData.email}</p>
+                        <p className="text-lg text-gray-800 flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-blue-600" />
+                          {editingParent.email}
+                        </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Phone</Label>
-                        <p className="text-lg">{parentData.phone}</p>
+                        <p className="text-lg text-gray-800 flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-blue-600" />
+                          {editingParent.phone}
+                        </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Emergency Contact</Label>
-                        <p className="text-lg">
-                          {parentData.emergencyContactName || 'Not provided'}
-                          {parentData.emergencyContactPhone && (
-                            <span className="block text-sm text-gray-600">
-                              {parentData.emergencyContactPhone}
+                        <p className="text-lg text-gray-800">
+                          {editingParent.emergencyContactName || 'Not provided'}
+                          {editingParent.emergencyContactPhone && (
+                            <span className="block text-sm text-gray-600 flex items-center gap-2 mt-1">
+                              <AlertCircle className="h-4 w-4 text-amber-500" />
+                              {editingParent.emergencyContactPhone}
                             </span>
                           )}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Member Since</Label>
-                        <p className="text-lg">
-                          {(parentData.createdAt || parentData.created_at) ? new Date(parentData.createdAt || parentData.created_at).toLocaleDateString() : 'Unknown'}
+                        <p className="text-lg text-gray-800 flex items-center gap-2">
+                          <CalendarDays className="h-4 w-4 text-blue-600" />
+                          {(editingParent.createdAt || editingParent.created_at) ? new Date(editingParent.createdAt || editingParent.created_at).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                     </div>
@@ -3234,20 +3266,21 @@ export default function Admin() {
                 </Card>
 
                 {/* Athletes */}
-                {parentData.athletes && parentData.athletes.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        🏆 Athletes
-                        <Badge variant="secondary">{parentData.athletes.length}</Badge>
+                {editingParent.athletes && editingParent.athletes.length > 0 && (
+                  <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-teal-100 to-green-100 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-teal-800 flex items-center gap-2">
+                        <Dumbbell className="h-5 w-5 text-teal-700" />
+                        Athletes
+                        <Badge variant="secondary" className="bg-teal-100 text-teal-800 border-teal-200">{editingParent.athletes.length}</Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4 bg-gradient-to-br from-white to-teal-50/30">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {parentData.athletes.map((athlete: any) => (
+                        {editingParent.athletes.map((athlete: any) => (
                           <Card
                             key={athlete.id}
-                            className="p-4 cursor-pointer hover:bg-blue-50 focus:bg-blue-100 transition"
+                            className="p-4 cursor-pointer border border-teal-100 shadow-sm hover:shadow-md hover:bg-gradient-to-br hover:from-teal-50/50 hover:to-blue-50/50 focus:bg-blue-100 transition-all duration-300"
                             tabIndex={0}
                             role="button"
                             aria-label={`View details for ${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
@@ -3276,10 +3309,11 @@ export default function Admin() {
                           >
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <h4 className="font-semibold">
+                                <h4 className="font-semibold text-teal-900 flex items-center gap-2">
+                                  <UserCircle className="h-4 w-4 text-teal-600" />
                                   {athlete.firstName || athlete.first_name || ''} {athlete.lastName || athlete.last_name || athlete.name?.split(' ').slice(1).join(' ') || ''}
                                 </h4>
-                                <Badge variant="outline">ID: {athlete.id}</Badge>
+                                <Badge variant="outline" className="bg-white border-teal-200 text-teal-700 font-medium">ID: {athlete.id}</Badge>
                               </div>
                               <div className="text-sm text-gray-600 space-y-1">
                                 <p>
@@ -3333,34 +3367,38 @@ export default function Admin() {
                 )}
 
                 {/* Booking History */}
-                {parentData.bookings && parentData.bookings.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        📅 Booking History
-                        <Badge variant="secondary">{parentData.bookings.length}</Badge>
+                {editingParent.bookings && editingParent.bookings.length > 0 && (
+                  <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-blue-900 flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-blue-700" />
+                        Booking History
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">{editingParent.bookings.length}</Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-4 bg-gradient-to-br from-white to-blue-50/30">
                       <div className="space-y-3">
-                        {parentData.bookings
+                        {editingParent.bookings
                           .sort((a: any, b: any) => new Date(b.preferred_date).getTime() - new Date(a.preferred_date).getTime())
                           .slice(0, 10) // Show last 10 bookings
                           .map((booking: any) => (
-                          <div key={booking.id} className="border rounded-lg p-3">
+                          <div key={booking.id} className="border border-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-300 bg-gradient-to-r from-white to-blue-50/20">
                             <div className="flex justify-between items-start">
-                              <div className="space-y-1">
+                              <div className="space-y-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium">
+                                  <CalendarDays className="h-4 w-4 text-blue-600" />
+                                  <span className="font-medium text-blue-900">
                                     {new Date(booking.preferred_date).toLocaleDateString()}
                                   </span>
-                                  <Badge variant="outline">#{booking.id}</Badge>
+                                  <Badge variant="outline" className="bg-white border-blue-200 text-blue-700 font-medium">#{booking.id}</Badge>
                                 </div>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-700 flex items-center gap-2">
+                                  <Dumbbell className="h-4 w-4 text-blue-600" />
                                   <strong>Lesson:</strong> {booking.lesson_type}
                                 </p>
                                 {booking.special_requests && (
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-sm text-gray-700 flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4 text-blue-600" />
                                     <strong>Notes:</strong> {booking.special_requests}
                                   </p>
                                 )}
@@ -3371,7 +3409,9 @@ export default function Admin() {
                                     booking.payment_status === 'reservation-paid' ? 'default' :
                                     booking.payment_status === 'reservation-pending' ? 'secondary' : 'destructive'
                                   }
+                                  className={`px-3 py-1 ${booking.payment_status === 'reservation-paid' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}`}
                                 >
+                                  <DollarSign className="h-3 w-3 mr-1" />
                                   {booking.payment_status}
                                 </Badge>
                                 <Badge 
@@ -3379,8 +3419,9 @@ export default function Admin() {
                                     booking.attendance_status === 'confirmed' ? 'default' :
                                     booking.attendance_status === 'completed' ? 'default' : 'secondary'
                                   }
-                                  className="block"
+                                  className={`block mt-1 px-3 py-1 ${booking.attendance_status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}`}
                                 >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
                                   {booking.attendance_status}
                                 </Badge>
                               </div>
@@ -3388,10 +3429,13 @@ export default function Admin() {
                           </div>
                         ))}
                         
-                        {parentData.bookings.length > 10 && (
-                          <p className="text-sm text-gray-500 text-center">
-                            Showing 10 most recent bookings of {parentData.bookings.length} total
-                          </p>
+                        {editingParent.bookings.length > 10 && (
+                          <div className="flex items-center justify-center bg-blue-50 rounded-lg p-2 mt-2">
+                            <Info className="h-4 w-4 text-blue-600 mr-2" />
+                            <p className="text-sm text-blue-700 font-medium">
+                              Showing 10 most recent bookings of {editingParent.bookings.length} total
+                            </p>
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -3405,31 +3449,49 @@ export default function Admin() {
         
         {/* Photo Enlargement Modal */}
         <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Athlete Photo</DialogTitle>
-              <DialogDescription>
-                Enlarged view of the athlete's photo.
+          <DialogContent 
+            className="max-w-4xl max-h-[90vh] overflow-y-auto" 
+            aria-labelledby="athlete-photo-title"
+            aria-describedby="athlete-photo-description"
+          >
+            <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
+              <DialogTitle id="athlete-photo-title" className="text-2xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
+                  <User className="h-5 w-5 text-[#D8BD2A]" />
+                </div>
+                Athlete Photo
+              </DialogTitle>
+              <DialogDescription id="athlete-photo-description" className="text-slate-600">
+                Enlarged view of the athlete's photo
               </DialogDescription>
             </DialogHeader>
             {enlargedPhoto && (
-              <img
-                src={enlargedPhoto}
-                alt="Enlarged athlete photo"
-                className="w-full h-auto rounded-lg"
-              />
+              <div className="flex justify-center">
+                <img
+                  src={enlargedPhoto}
+                  alt="Enlarged athlete photo"
+                  className="max-w-full max-h-[70vh] rounded-lg shadow-lg border-4 border-white"
+                />
+              </div>
             )}
           </DialogContent>
         </Dialog>
 
         {/* Athlete Edit Modal */}
         <Dialog open={isAthleteEditOpen} onOpenChange={setIsAthleteEditOpen}>
-          <DialogContent aria-describedby="edit-athlete-description">
-            <DialogHeader>
-              <DialogTitle id="edit-athlete-title">
+          <DialogContent 
+            className="max-w-2xl max-h-[90vh] overflow-y-auto"
+            aria-labelledby="edit-athlete-title"
+            aria-describedby="edit-athlete-description"
+          >
+            <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
+              <DialogTitle id="edit-athlete-title" className="text-2xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+                <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
+                  <Edit className="h-5 w-5 text-[#D8BD2A]" />
+                </div>
                 Edit Athlete
               </DialogTitle>
-              <DialogDescription id="edit-athlete-description">
+              <DialogDescription id="edit-athlete-description" className="text-slate-600">
                 {selectedAthlete ? `Update information for ${selectedAthlete.name}` : "Edit athlete information"}
               </DialogDescription>
             </DialogHeader>
@@ -3454,19 +3516,19 @@ export default function Admin() {
               }}>
                 <div className="space-y-4">
                   {/* Photo Upload Section */}
-                  <div className="flex flex-col items-center space-y-3">
-                    <Label>Athlete Photo</Label>
+                  <div className="flex flex-col items-center space-y-3 mb-4">
+                    <Label className="text-blue-800 font-medium">Athlete Photo</Label>
                     <div className="relative">
                       {selectedAthlete.photo ? (
                         <img
                           src={selectedAthlete.photo}
                           alt={`${selectedAthlete.name}'s photo`}
-                          className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          className="w-28 h-28 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-blue-100 ring-offset-2 shadow-md"
                           onClick={() => handlePhotoClick(selectedAthlete.photo!)}
                         />
                       ) : (
-                        <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="h-10 w-10 text-gray-400" />
+                        <div className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center ring-2 ring-blue-100 ring-offset-2 shadow-md">
+                          <User className="h-12 w-12 text-blue-300" />
                         </div>
                       )}
                       <input
@@ -3482,112 +3544,181 @@ export default function Admin() {
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 text-center">Click photo to upload new image</p>
+                    <p className="text-xs text-blue-600 font-medium flex items-center">
+                      <span className="p-1 bg-blue-100 rounded-full mr-1">
+                        <Edit className="h-3 w-3" />
+                      </span>
+                      Click photo to enlarge or upload new
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="edit-firstName" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-                        First Name
-                      </Label>
-                      <Input
-                        id="edit-firstName"
-                        name="firstName"
-                        defaultValue={selectedAthlete.firstName || (selectedAthlete.name ? selectedAthlete.name.split(' ')[0] : '')}
-                        required
-                        aria-describedby="edit-firstName-error"
-                        autoComplete="given-name"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-lastName" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-                        Last Name
-                      </Label>
-                      <Input
-                        id="edit-lastName"
-                        name="lastName"
-                        defaultValue={selectedAthlete.lastName || (selectedAthlete.name ? selectedAthlete.name.split(' ').slice(1).join(' ') : '')}
-                        required
-                        aria-describedby="edit-lastName-error"
-                        autoComplete="family-name"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-dob" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-                      Date of Birth
-                    </Label>
-                    <Input
-                      id="edit-dob"
-                      name="dateOfBirth"
-                      type="date"
-                      defaultValue={selectedAthlete.dateOfBirth || ''}
-                      required
-                      aria-describedby="edit-dob-help"
-                      autoComplete="bday"
-                    />
-                    <p id="edit-dob-help" className="text-xs text-gray-500 mt-1">
-                      Used to calculate age for appropriate class placement
-                    </p>
-                  </div>
-                  <GenderSelect
-                    name="gender"
-                    defaultValue={selectedAthlete.gender || ""}
-                    id="edit-gender"
-                    aria-describedby="edit-gender-help"
-                  />
-                  <div>
-                    <Label htmlFor="edit-experience" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-                      Experience Level
-                    </Label>
-                    <Select
-                      name="experience"
-                      defaultValue={selectedAthlete.experience}
-                      required
-                    >
-                      <SelectTrigger 
-                        id="edit-experience"
-                        aria-describedby="edit-experience-help"
-                      >
-                        <SelectValue placeholder="Select experience level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="beginner" aria-label="Beginner level">Beginner</SelectItem>
-                        <SelectItem value="intermediate" aria-label="Intermediate level">Intermediate</SelectItem>
-                        <SelectItem value="advanced" aria-label="Advanced level">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p id="edit-experience-help" className="text-xs text-gray-500 mt-1">
-                      Used to match appropriate coaching and skill development
-                    </p>
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-allergies">Allergies/Medical Notes</Label>
-                    <Textarea
-                      id="edit-allergies"
-                      name="allergies"
-                      defaultValue={selectedAthlete.allergies || ''}
-                      placeholder="Any allergies or medical conditions..."
-                      aria-describedby="edit-allergies-help"
-                      rows={3}
-                    />
-                    <p id="edit-allergies-help" className="text-xs text-gray-500 mt-1">
-                      Important medical information for coaches to be aware of
-                    </p>
-                  </div>
-                  <div className="flex justify-end space-x-2 pt-4">
+                  {/* Basic Info Card */}
+                  <Card className="rounded-xl border shadow-sm mb-6">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                        <User className="h-5 w-5 text-blue-600" />
+                        Basic Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="edit-firstName" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
+                            First Name
+                          </Label>
+                          <Input
+                            id="edit-firstName"
+                            name="firstName"
+                            defaultValue={selectedAthlete.firstName || (selectedAthlete.name ? selectedAthlete.name.split(' ')[0] : '')}
+                            required
+                            aria-describedby="edit-firstName-error"
+                            autoComplete="given-name"
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-lastName" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
+                            Last Name
+                          </Label>
+                          <Input
+                            id="edit-lastName"
+                            name="lastName"
+                            defaultValue={selectedAthlete.lastName || (selectedAthlete.name ? selectedAthlete.name.split(' ').slice(1).join(' ') : '')}
+                            required
+                            aria-describedby="edit-lastName-error"
+                            autoComplete="family-name"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="edit-dob" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
+                            Date of Birth
+                          </Label>
+                          <Input
+                            id="edit-dob"
+                            name="dateOfBirth"
+                            type="date"
+                            defaultValue={selectedAthlete.dateOfBirth || ''}
+                            required
+                            aria-describedby="edit-dob-help"
+                            autoComplete="bday"
+                            className="mt-1"
+                          />
+                          <p id="edit-dob-help" className="text-xs text-blue-600 mt-2 flex items-center">
+                            <span className="p-1 bg-blue-100 rounded-full mr-1">
+                              <Calendar className="h-3 w-3" />
+                            </span>
+                            Used to calculate age for appropriate class placement
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="edit-gender" className="text-slate-700 font-medium">
+                            Gender
+                          </Label>
+                          <GenderSelect
+                            name="gender"
+                            defaultValue={selectedAthlete.gender || ""}
+                            id="edit-gender"
+                            aria-describedby="edit-gender-help"
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Training Info Card */}
+                  <Card className="rounded-xl border shadow-sm mb-6">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-green-800 flex items-center gap-2">
+                        <Dumbbell className="h-5 w-5 text-green-600" />
+                        Training Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="edit-experience" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
+                          Experience Level
+                        </Label>
+                        <Select
+                          name="experience"
+                          defaultValue={selectedAthlete.experience}
+                          required
+                        >
+                          <SelectTrigger 
+                            id="edit-experience"
+                            aria-describedby="edit-experience-help"
+                            className="mt-1"
+                          >
+                            <SelectValue placeholder="Select experience level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="beginner" aria-label="Beginner level">Beginner</SelectItem>
+                            <SelectItem value="intermediate" aria-label="Intermediate level">Intermediate</SelectItem>
+                            <SelectItem value="advanced" aria-label="Advanced level">Advanced</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p id="edit-experience-help" className="text-xs text-blue-600 mt-2 flex items-center">
+                          <span className="p-1 bg-blue-100 rounded-full mr-1">
+                            <Star className="h-3 w-3" />
+                          </span>
+                          Used to match appropriate coaching and skill development
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Medical Info Card */}
+                  <Card className="rounded-xl border shadow-sm mb-6">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-red-800 flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                        Medical Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4 space-y-4">
+                      <div>
+                        <Label htmlFor="edit-allergies" className="text-slate-700 font-medium">Allergies/Medical Notes</Label>
+                        <Textarea
+                          id="edit-allergies"
+                          name="allergies"
+                          defaultValue={selectedAthlete.allergies || ''}
+                          placeholder="Any allergies or medical conditions..."
+                          aria-describedby="edit-allergies-help"
+                          rows={3}
+                          className="mt-1"
+                        />
+                        <p id="edit-allergies-help" className="text-xs text-blue-600 mt-2 flex items-center">
+                          <span className="p-1 bg-red-100 rounded-full mr-1">
+                            <AlertCircle className="h-3 w-3" />
+                          </span>
+                          Important medical information for coaches to be aware of
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <div className="flex justify-between pt-6 mt-2 border-t border-dashed border-slate-200">
                     <Button 
                       type="button" 
                       variant="outline" 
                       onClick={() => setIsAthleteEditOpen(false)}
+                      className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-800"
                     >
+                      <X className="h-4 w-4 mr-1" />
                       Cancel
                     </Button>
                     <Button 
                       type="submit"
                       aria-label={`Save changes for ${selectedAthlete.name}`}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
                     >
-                      Save Changes
+                      <div className="flex items-center gap-1">
+                        <Save className="h-4 w-4 mr-1" />
+                        Save Changes
+                      </div>
                     </Button>
                   </div>
                 </div>
@@ -3656,77 +3787,132 @@ export default function Admin() {
 
         {/* Parent Edit Modal */}
         <Dialog open={isParentEditOpen} onOpenChange={setIsParentEditOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Parent Information</DialogTitle>
-              <DialogDescription>
+          <DialogContent 
+            className="max-w-2xl"
+            // Adding explicit ARIA attributes to prevent accessibility issues
+            aria-labelledby="edit-parent-title"
+            aria-describedby="edit-parent-description"
+          >
+            <DialogHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
+              <DialogTitle id="edit-parent-title" className="text-2xl font-bold text-indigo-800 flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <User className="h-6 w-6 text-indigo-600" />
+                </div>
+                Edit Parent Information
+              </DialogTitle>
+              <DialogDescription id="edit-parent-description" className="text-slate-600">
                 Update the parent's information below.
               </DialogDescription>
             </DialogHeader>
-            {selectedParent && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="parent-first-name">First Name</Label>
-                    <Input 
-                      id="parent-first-name"
-                      defaultValue={selectedParent.first_name}
-                      placeholder="First Name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="parent-last-name">Last Name</Label>
-                    <Input 
-                      id="parent-last-name"
-                      defaultValue={selectedParent.last_name}
-                      placeholder="Last Name"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="parent-email">Email</Label>
-                  <Input 
-                    id="parent-email"
-                    type="email"
-                    defaultValue={selectedParent.email}
-                    placeholder="Email"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="parent-phone">Phone</Label>
-                  <Input 
-                    id="parent-phone"
-                    defaultValue={selectedParent.phone}
-                    placeholder="Phone Number"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="emergency-name">Emergency Contact Name</Label>
-                    <Input 
-                      id="emergency-name"
-                      defaultValue={selectedParent.emergencyContactName}
-                      placeholder="Emergency Contact Name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-phone">Emergency Contact Phone</Label>
-                    <Input 
-                      id="emergency-phone"
-                      defaultValue={selectedParent.emergencyContactPhone}
-                      placeholder="Emergency Contact Phone"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsParentEditOpen(false)}>
+            {editingParent && (
+              <div className="space-y-6">
+                {/* Contact Info Card */}
+                <Card className="rounded-xl border shadow-sm mb-6">
+                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                    <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                      <User className="h-5 w-5 text-blue-600" />
+                      Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="parent-first-name" className="text-slate-700 font-medium">First Name</Label>
+                        <Input 
+                          id="parent-first-name"
+                          defaultValue={editingParent.first_name}
+                          placeholder="First Name"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="parent-last-name" className="text-slate-700 font-medium">Last Name</Label>
+                        <Input 
+                          id="parent-last-name"
+                          defaultValue={editingParent.last_name}
+                          placeholder="Last Name"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="parent-email" className="text-slate-700 font-medium">Email</Label>
+                      <Input 
+                        id="parent-email"
+                        type="email"
+                        defaultValue={editingParent.email}
+                        placeholder="Email"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-blue-600 mt-2 flex items-center">
+                        <span className="p-1 bg-blue-100 rounded-full mr-1">
+                          <Mail className="h-3 w-3" />
+                        </span>
+                        Used for account access and communication
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="parent-phone" className="text-slate-700 font-medium">Phone</Label>
+                      <Input 
+                        id="parent-phone"
+                        defaultValue={editingParent.phone}
+                        placeholder="Phone Number"
+                        className="mt-1"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Emergency Contact Card */}
+                <Card className="rounded-xl border shadow-sm mb-6">
+                  <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-xl">
+                    <CardTitle className="text-lg font-semibold text-red-800 flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      Emergency Contact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="emergency-name" className="text-slate-700 font-medium">Contact Name</Label>
+                        <Input 
+                          id="emergency-name"
+                          defaultValue={editingParent.emergencyContactName}
+                          placeholder="Emergency Contact Name"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="emergency-phone" className="text-slate-700 font-medium">Contact Phone</Label>
+                        <Input 
+                          id="emergency-phone"
+                          defaultValue={editingParent.emergencyContactPhone}
+                          placeholder="Emergency Contact Phone"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-dashed border-slate-200">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsParentEditOpen(false)}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-800"
+                  >
+                    <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button onClick={() => {
-                    // TODO: Implement save functionality
-                    console.log('Save parent changes');
-                    setIsParentEditOpen(false);
-                  }}>
+                  <Button 
+                    onClick={() => {
+                      // TODO: Implement save functionality
+                      console.log('Save parent changes');
+                      setIsParentEditOpen(false);
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
                     Save Changes
                   </Button>
                 </div>
