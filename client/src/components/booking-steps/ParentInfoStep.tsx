@@ -20,22 +20,23 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   // For existing athlete flows, fetch athlete data to get parent info
   const shouldFetchAthleteParent = isAdminFlow && 
     (state.flowType === 'admin-existing-athlete' || state.flowType === 'admin-from-athlete') &&
-    state.selectedAthletes.length > 0 && !state.parentId;
+    state.selectedAthletes.length > 0;
 
-  const { data: athleteData } = useQuery({
+  const { data: athleteData, isLoading: isLoadingAthlete } = useQuery({
     queryKey: ['/api/athletes', state.selectedAthletes[0]],
     enabled: shouldFetchAthleteParent,
-  }) as { data: any };
+  }) as { data: any; isLoading: boolean };
 
   // Fetch parent data if we have a parent ID from the athlete
-  const { data: parentData } = useQuery({
+  const { data: parentData, isLoading: isLoadingParent } = useQuery({
     queryKey: ['/api/parents', athleteData?.parentId],
     enabled: shouldFetchAthleteParent && !!athleteData?.parentId,
-  }) as { data: any };
+  }) as { data: any; isLoading: boolean };
 
   // Auto-populate parent info when it becomes available
   useEffect(() => {
-    if (shouldFetchAthleteParent && parentData && !state.parentId) {
+    if (shouldFetchAthleteParent && parentData) {
+      setIsEditing(false); // Set to read-only mode since we're pre-filling
       updateState({
         parentId: parentData.id,
         parentInfo: {
@@ -107,8 +108,19 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   parentInfo.email && parentInfo.phone && 
                   parentInfo.emergencyContactName && parentInfo.emergencyContactPhone;
 
+  // Show loading state when fetching athlete and parent data
+  if (shouldFetchAthleteParent && (isLoadingAthlete || isLoadingParent)) {
+    return (
+      <div className="space-y-6 py-4 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-8 h-8 border-2 border-[#0F0276] border-t-transparent rounded-full"></div>
+        <p className="text-muted-foreground">Loading parent information...</p>
+      </div>
+    );
+  }
+  
   // If this is a returning parent with existing info (or at least email), show confirmation interface
-  if (state.parentId && (parentInfo.firstName || parentInfo.email) && !isEditing) {
+  if ((state.parentId && (parentInfo.firstName || parentInfo.email) && !isEditing) || 
+      (shouldFetchAthleteParent && parentData)) {
     const isAutoLinked = Boolean(shouldFetchAthleteParent && parentData);
     
     return (
