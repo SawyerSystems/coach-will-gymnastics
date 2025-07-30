@@ -1,6 +1,7 @@
 import { BookingHistoryDisplay } from "@/components/BookingHistoryDisplay";
 import { ParentInfoDisplay } from "@/components/ParentInfoDisplay";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Plus, User } from "lucide-react";
+import { Edit, Plus, Star, User, Clock, AlertCircle, Dumbbell, Calendar } from "lucide-react";
 import React, { useState } from "react";
 
 interface AthleteDetailDialogProps {
@@ -222,87 +223,122 @@ export function AthleteDetailDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-3xl max-h-[90vh] overflow-y-auto" 
+          className="max-w-3xl max-h-[90vh] overflow-y-auto"
           aria-describedby="athlete-profile-description"
         >
-          <DialogHeader>
-            <DialogTitle id="athlete-profile-title">
+          <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
+            <DialogTitle id="athlete-profile-title" className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+              <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
+                <Star className="h-6 w-6 text-[#D8BD2A]" />
+              </div>
               Athlete Profile
             </DialogTitle>
-            <DialogDescription id="athlete-profile-description">
+            <DialogDescription id="athlete-profile-description" className="text-slate-600">
               Viewing profile for {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
             </DialogDescription>
           </DialogHeader>
           
           {/* Basic Info */}
-          <div className="border rounded-lg p-4" role="region" aria-labelledby="basic-info-heading">
-            <h3 id="basic-info-heading" className="font-semibold mb-3">Basic Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
-                <div className="relative w-20 h-20 group">
-                  {athleteData.photo ? (
-                    <img
-                      src={athleteData.photo}
-                      alt={`${athleteData.name || 'Athlete'}'s photo`}
-                      className="w-20 h-20 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => handlePhotoClick(athleteData.photo!)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handlePhotoClick(athleteData.photo!);
-                        }
-                      }}
-                      aria-label={`View ${athleteData.name || 'athlete'}'s photo in full size`}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center" aria-label="No photo available">
-                      <User className="h-8 w-8 text-gray-400" />
+          <Card className="rounded-xl border shadow-sm mb-6">
+            <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+              <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                <User className="h-5 w-5 text-blue-600" />
+                Basic Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    <div className="relative w-24 h-24 group">
+                      {athleteData.photo ? (
+                        <img
+                          src={athleteData.photo}
+                          alt={`${athleteData.name || 'Athlete'}'s photo`}
+                          className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-blue-100 ring-offset-2"
+                          onClick={() => handlePhotoClick(athleteData.photo!)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handlePhotoClick(athleteData.photo!);
+                            }
+                          }}
+                          aria-label={`View ${athleteData.name || 'athlete'}'s photo in full size`}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center ring-2 ring-blue-100 ring-offset-2" aria-label="No photo available">
+                          <User className="h-12 w-12 text-blue-300" />
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handlePhotoUpload(e, athleteData.id)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploadingPhoto}
+                        aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
+                      />
+                      {uploadingPhoto && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
+                          <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                          <span className="sr-only">Uploading photo...</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload(e, athleteData.id)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    disabled={uploadingPhoto}
-                    aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
-                  />
-                  {uploadingPhoto && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
-                      <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-                      <span className="sr-only">Uploading photo...</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-xl text-slate-800">
+                      {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
+                    </h3>
+                    <div className="mt-1 space-y-1">
+                      <p className="flex items-center text-slate-700">
+                        <Calendar className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span className="font-medium">Age:</span>
+                        <span className="ml-1">{athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old</span>
+                      </p>
+                      <p className="flex items-center text-slate-700">
+                        <Clock className="h-4 w-4 mr-1.5 text-blue-500" />
+                        <span className="font-medium">Born:</span>
+                        <span className="ml-1">{athleteData.dateOfBirth ? new Date(athleteData.dateOfBirth).toLocaleDateString() : 'Unknown'}</span>
+                      </p>
                     </div>
+                    <p className="text-xs text-blue-600 font-medium mt-2 flex items-center">
+                      <span className="p-1 bg-blue-100 rounded-full mr-1">
+                        <Edit className="h-3 w-3" />
+                      </span>
+                      Click photo to enlarge or upload new
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-lg" role="group" aria-label="Athlete details">
+                  <p className="flex items-center mb-2">
+                    <Dumbbell className="h-4 w-4 mr-2 text-indigo-500" />
+                    <span className="font-medium text-slate-700">Experience:</span>
+                    <span className="ml-1 capitalize">{athleteData.experience || 'Not specified'}</span>
+                  </p>
+                  <p className="flex items-center mb-2">
+                    <User className="h-4 w-4 mr-2 text-indigo-500" />
+                    <span className="font-medium text-slate-700">Gender:</span>
+                    <span className="ml-1 capitalize">{athleteData.gender || 'Not specified'}</span>
+                  </p>
+                  {athleteData.allergies && (
+                    <p className="flex items-start text-red-600 mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
+                      <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>
+                        <span className="font-medium">Allergies:</span>
+                        <span className="ml-1">{athleteData.allergies}</span>
+                      </span>
+                    </p>
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-lg">{athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}</p>
-                  <p className="text-sm text-gray-600">
-                    Age: {athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Born: {athleteData.dateOfBirth ? new Date(athleteData.dateOfBirth).toLocaleDateString() : 'Unknown'}
-                  </p>
-                  <p className="text-sm text-blue-600 font-medium mt-1">
-                    Click photo to enlarge or click to upload new
-                  </p>
-                </div>
               </div>
-              <div role="group" aria-label="Athlete details">
-                <p className="text-sm"><span className="font-medium">Experience:</span> {athleteData.experience}</p>
-                <p className="text-sm"><span className="font-medium">Gender:</span> {athleteData.gender || 'Not specified'}</p>
-                {athleteData.allergies && (
-                  <p className="text-sm text-red-600 mt-1">
-                    <span className="font-medium">⚠️ Allergies:</span> {athleteData.allergies}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Parent Info */}
           <ParentInfoDisplay 
@@ -328,15 +364,15 @@ export function AthleteDetailDialog({
 
           {/* Action Buttons */}
           {showActionButtons && (
-            <div className="flex justify-between pt-4 border-t" role="group" aria-label="Athlete actions">
+            <div className="flex justify-between pt-6 mt-2 border-t border-dashed border-slate-200" role="group" aria-label="Athlete actions">
               {onBookSession && (
-                <Button onClick={onBookSession} className="bg-green-600 hover:bg-green-700 text-white">
+                <Button onClick={onBookSession} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all">
                   <Plus className="h-4 w-4 mr-2" />
                   Book Session
                 </Button>
               )}
               {onEditAthlete && (
-                <Button onClick={onEditAthlete} variant="outline">
+                <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Athlete
                 </Button>
@@ -349,15 +385,17 @@ export function AthleteDetailDialog({
       {/* Photo Enlargement Modal */}
       <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Athlete Photo</DialogTitle>
+          <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
+            <DialogTitle className="text-2xl font-bold text-[#0F0276] tracking-tight">
+              Athlete Photo
+            </DialogTitle>
           </DialogHeader>
           {enlargedPhoto && (
-            <div className="flex justify-center">
+            <div className="flex justify-center p-2 bg-slate-50 rounded-xl shadow-inner">
               <img
                 src={enlargedPhoto}
                 alt={`${athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Athlete'}'s enlarged photo`}
-                className="max-w-full max-h-96 object-contain rounded-lg"
+                className="max-w-full max-h-96 object-contain rounded-lg border-2 border-white shadow-lg"
               />
             </div>
           )}

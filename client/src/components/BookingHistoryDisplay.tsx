@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import {
     AlertCircle,
@@ -78,25 +79,39 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
 
   if (isLoading) {
     return (
-      <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
-        <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History</h3>
-        <div className="flex items-center justify-center py-4">
-          <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-          <span className="ml-2 text-gray-600">Loading booking history...</span>
-        </div>
-      </div>
+      <Card className="rounded-xl border shadow-sm mb-6" role="region" aria-labelledby="booking-history-heading">
+        <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-t-xl">
+          <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            Booking History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <span className="ml-2 text-gray-600">Loading booking history...</span>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error && fallbackBookings.length === 0) {
     return (
-      <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
-        <h3 id="booking-history-heading" className="font-semibold mb-3">Booking History</h3>
-        <div className="flex items-center justify-center py-4 text-amber-600">
-          <AlertCircle className="w-5 h-5 mr-2" />
-          <span>Unable to load detailed booking history</span>
-        </div>
-      </div>
+      <Card className="rounded-xl border shadow-sm mb-6" role="region" aria-labelledby="booking-history-heading">
+        <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-t-xl">
+          <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            Booking History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="flex items-center justify-center py-4 text-amber-600">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            <span>Unable to load detailed booking history</span>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -160,11 +175,14 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
   };
 
   return (
-    <div className="border rounded-lg p-4" role="region" aria-labelledby="booking-history-heading">
-      <h3 id="booking-history-heading" className="font-semibold mb-3 flex items-center">
-        <Calendar className="w-5 h-5 mr-2" />
-        Booking History ({bookings.length})
-      </h3>
+    <Card className="rounded-xl border shadow-sm mb-6" role="region" aria-labelledby="booking-history-heading">
+      <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-t-xl">
+        <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-blue-600" />
+          Booking History ({bookings.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4">
       
       {bookings.length === 0 ? (
         <div className="text-center py-8">
@@ -409,6 +427,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
             })}
         </div>
       )}
-    </div>
+    </CardContent>
+    </Card>
   );
 }
