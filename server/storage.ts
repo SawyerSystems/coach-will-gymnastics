@@ -2421,17 +2421,64 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteBooking(id: number): Promise<boolean> {
-    const { error } = await supabaseAdmin
-      .from('bookings')
-      .delete()
-      .eq('id', id);
+    try {
+      // First delete related records in junction tables
+      // 1. Delete booking-athlete associations
+      const { error: athleteSlotError } = await supabaseAdmin
+        .from('booking_athletes')
+        .delete()
+        .eq('booking_id', id);
+        
+      if (athleteSlotError) {
+        console.error('Error deleting booking athlete slots:', athleteSlotError);
+      }
+      
+      // 2. Delete booking-focus area associations
+      const { error: focusAreaError } = await supabaseAdmin
+        .from('booking_focus_areas')
+        .delete()
+        .eq('booking_id', id);
+        
+      if (focusAreaError) {
+        console.error('Error deleting booking focus areas:', focusAreaError);
+      }
+      
+      // 3. Delete booking-apparatus associations
+      const { error: apparatusError } = await supabaseAdmin
+        .from('booking_apparatus')
+        .delete()
+        .eq('booking_id', id);
+        
+      if (apparatusError) {
+        console.error('Error deleting booking apparatus:', apparatusError);
+      }
+      
+      // 4. Delete booking-side quest associations
+      const { error: sideQuestError } = await supabaseAdmin
+        .from('booking_side_quests')
+        .delete()
+        .eq('booking_id', id);
+        
+      if (sideQuestError) {
+        console.error('Error deleting booking side quests:', sideQuestError);
+      }
+      
+      // Finally delete the booking itself
+      const { error } = await supabaseAdmin
+        .from('bookings')
+        .delete()
+        .eq('id', id);
 
-    if (error) {
-      console.error('Error deleting booking:', error);
+      if (error) {
+        console.error('Error deleting booking:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Unexpected error in deleteBooking:', error);
       return false;
     }
-
-    return true;
   }
 
   // Payment Logs
@@ -4394,16 +4441,71 @@ export class SupabaseStorage implements IStorage {
 
   // Add an athlete to a booking with a specific slot order
   async addAthleteSlot(bookingId: number, athleteId: number, slotOrder: number): Promise<void> {
-    const { error } = await supabaseAdmin
-      .from('booking_athletes')
-      .insert({
-        booking_id: bookingId,
-        athlete_id: athleteId,
-        slot_order: slotOrder
-      });
+    console.log(`[STORAGE] Attempting to add athlete ${athleteId} to booking ${bookingId} with slot order ${slotOrder}`);
+    
+    try {
+      // Check if this combination already exists
+      const { data: existing } = await supabaseAdmin
+        .from('booking_athletes')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .eq('athlete_id', athleteId);
 
-    if (error) {
-      console.error('Error adding athlete to booking:', error);
+      if (existing && existing.length > 0) {
+        console.log(`[STORAGE] Athlete ${athleteId} is already linked to booking ${bookingId}`);
+        return; // Already exists, no need to insert
+      }
+
+      // Before inserting, let's get detailed database schema information
+      console.log(`[STORAGE] DETAILED DATABASE INFO - Before insert operation`);
+      try {
+        const { data: tableDetails, error: tableError } = await supabaseAdmin
+          .from('pg_tables')
+          .select('*')
+          .eq('tablename', 'booking_athletes');
+        
+        if (tableError) {
+          console.error(`[STORAGE] Error getting table details:`, tableError);
+        } else {
+          console.log(`[STORAGE] booking_athletes table details:`, tableDetails);
+        }
+      } catch (e) {
+        console.log(`[STORAGE] Could not get table details:`, e);
+      }
+
+      console.log(`[STORAGE] Trying insert operation now...`);
+      const { error } = await supabaseAdmin
+        .from('booking_athletes')
+        .insert({
+          booking_id: bookingId,
+          athlete_id: athleteId,
+          slot_order: slotOrder
+        });
+
+      if (error) {
+        console.error(`[STORAGE] Error adding athlete ${athleteId} to booking ${bookingId}:`, {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        // Try directly with the JavaScript client
+        console.log(`[STORAGE] Attempting alternative insert approach...`);
+        try {
+          await supabaseAdmin.from('booking_athletes').insert([
+            { booking_id: bookingId, athlete_id: athleteId, slot_order: slotOrder }
+          ]);
+          console.log(`[STORAGE] Alternative insert approach succeeded`);
+        } catch (altError) {
+          console.error(`[STORAGE] Alternative insert approach also failed:`, altError);
+          throw new Error(`Failed to link athlete ${athleteId} to booking ${bookingId}: ${error.message}`);
+        }
+      }
+
+      console.log(`[STORAGE] Successfully added athlete ${athleteId} to booking ${bookingId}`);
+    } catch (error) {
+      console.error(`[STORAGE] Exception in addAthleteSlot:`, error);
       throw error;
     }
   }

@@ -171,7 +171,7 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
         {renderStep()}
       </div>
       
-      {getCurrentStepName() !== 'payment' && (
+      {getCurrentStepName() !== 'payment' && getCurrentStepName() !== 'adminPayment' && (
         <div className="flex justify-between items-center p-6 pt-4 border-t">
           <Button
             variant="outline"

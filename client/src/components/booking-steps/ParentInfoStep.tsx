@@ -41,8 +41,12 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     
     try {
       setIsEditing(false);
+      
+      // Consolidate all parent-related state in a single update to maintain consistency
       updateState({
         parentId: parentData.id,
+        // Always set selectedParent to ensure it's available in the payment step
+        selectedParent: parentData,
         parentInfo: {
           firstName: parentData.firstName || '',
           lastName: parentData.lastName || '',
@@ -52,6 +56,8 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           emergencyContactPhone: parentData.emergencyContactPhone || ''
         }
       });
+      
+      console.log("Successfully set parent info and selectedParent with ID:", parentData.id);
       return true;
     } catch (error) {
       console.error("Error setting parent info:", error);
@@ -124,6 +130,11 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     if (isAdminExistingAthlete && parentDataForExistingAthlete && !state.parentInfo) {
       console.log("Setting parent info for admin-existing-athlete flow:", parentDataForExistingAthlete);
       setParentInfoFromData(parentDataForExistingAthlete);
+      
+      // Also set the selectedParent to ensure it's available for the payment step
+      updateState({
+        selectedParent: parentDataForExistingAthlete
+      });
     }
   }, [isAdminExistingAthlete, parentDataForExistingAthlete, state.parentInfo]);
   
@@ -132,6 +143,11 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     if (isOtherAdminFlow && parentDataForOtherFlows && !state.parentInfo) {
       console.log("Setting parent info for other admin flows:", parentDataForOtherFlows);
       setParentInfoFromData(parentDataForOtherFlows);
+      
+      // Also set the selectedParent to ensure it's available for the payment step
+      updateState({
+        selectedParent: parentDataForOtherFlows
+      });
     }
   }, [isOtherAdminFlow, parentDataForOtherFlows, state.parentInfo]);
   
@@ -154,6 +170,11 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           console.log("Manual parent fetch successful:", data);
           if (!setParentInfoFromData(data)) {
             setLoadingError("Could not set parent info from fetched data");
+          } else {
+            // Also set selectedParent to ensure it's available in payment step
+            updateState({
+              selectedParent: data
+            });
           }
         })
         .catch(err => {
