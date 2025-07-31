@@ -444,7 +444,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         lessonType: bookingData.lessonType as any,
         preferredDate: new Date(bookingData.preferredDate),
         preferredTime: bookingData.preferredTime,
-        focusAreaIds: bookingData.focusAreas.map(() => 1), // Map to focus area IDs (placeholder)
+        focusAreas: bookingData.focusAreas, // Send the actual focus area names
         apparatusIds: [],
         sideQuestIds: [],
         parentFirstName: bookingData.parentFirstName,
@@ -516,9 +516,14 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
       });
       invalidateBookingQueries();
       setShowManualForm(false);
+      // Ensure modal is closed
       if (onClose) {
         onClose();
       }
+      // Force a small delay to ensure state updates are processed
+      setTimeout(() => {
+        if (onClose) onClose();
+      }, 100);
     },
     onError: (error: any) => {
       console.error("Manual booking error:", error);
