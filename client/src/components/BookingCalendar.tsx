@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { addHours, format, parseISO } from 'date-fns';
 import { X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar } from 'react-big-calendar';
 
 // Default localizer using date-fns
@@ -52,28 +52,88 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   const [dateEvents, setDateEvents] = useState<CalendarEvent[]>([]);
   const [view, setView] = useState('month');
 
+  // Log booking data for debugging
+  useEffect(() => {
+    if (bookings && bookings.length > 0) {
+      console.log('Calendar received bookings:', bookings.length);
+      
+      // Check the first booking to see what fields are available
+      const sampleBooking = bookings[0];
+      console.log('Sample booking structure:', {
+        id: sampleBooking.id,
+        preferredDate: sampleBooking.preferredDate || sampleBooking.preferred_date,
+        preferredTime: sampleBooking.preferredTime || sampleBooking.preferred_time,
+        lessonType: sampleBooking.lessonType?.name || sampleBooking.lesson_type,
+        athletes: sampleBooking.athletes?.length ? `${sampleBooking.athletes.length} athletes` : 'No athlete array',
+        athlete1Name: sampleBooking.athlete1Name,
+        status: sampleBooking.attendanceStatus || sampleBooking.attendance_status || sampleBooking.status
+      });
+    }
+  }, [bookings]);
+
   // Convert bookings to calendar events
-  const events = useMemo(() => {
+  const events = useMemo<CalendarEvent[]>(() => {
     if (!bookings) return [];
 
     return bookings.map((booking) => {
       // Parse the preferred date and time
-      const dateTimeStr = `${booking.preferred_date}T${booking.preferred_time}`;
-      const start = parseISO(dateTimeStr);
+      const preferredDate = booking.preferredDate || booking.preferred_date;
+      const preferredTime = booking.preferredTime || booking.preferred_time;
       
-      // Default to 1-hour sessions if duration is not specified
-      const end = booking.duration 
-        ? addHours(start, parseFloat(booking.duration)) 
-        : addHours(start, 1);
+      if (!preferredDate || !preferredTime) {
+        console.warn(`Booking ${booking.id} missing date/time:`, { preferredDate, preferredTime });
+        return null;
+      }
       
-      // Generate a title
-      const title = `${booking.lesson_type} - ${booking.athlete_names || 'No athletes'}`;
+      const dateTimeStr = `${preferredDate}T${preferredTime}`;
+      let start;
+      try {
+        start = parseISO(dateTimeStr);
+        
+        // Check if date is valid
+        if (isNaN(start.getTime())) {
+          console.warn(`Invalid date/time for booking ${booking.id}:`, dateTimeStr);
+          return null;
+        }
+      } catch (error) {
+        console.error(`Error parsing date for booking ${booking.id}:`, error);
+        return null;
+      }
+      
+      // Get lesson duration from lessonType if available, or default to 1 hour
+      const duration = booking.lessonType?.duration || 
+                       (booking.duration ? parseFloat(booking.duration) : 1);
+      
+      const end = addHours(start, duration);
+      
+      // Get lesson type name and athlete names
+      const lessonTypeName = booking.lessonType?.name || 
+                           booking.lessonTypeName || 
+                           booking.lesson_type || 
+                           'Unknown Lesson';
+      
+      // Generate athlete names string from athletes array or use provided value
+      let athleteNames = '';
+      if (booking.athletes && booking.athletes.length > 0) {
+        athleteNames = booking.athletes.map((a: any) => a.name).join(', ');
+      } else if (booking.athlete1Name) {
+        athleteNames = booking.athlete2Name 
+          ? `${booking.athlete1Name}, ${booking.athlete2Name}` 
+          : booking.athlete1Name;
+      } else {
+        athleteNames = booking.athlete_names || 'No athletes';
+      }
+      
+      const title = `${lessonTypeName} - ${athleteNames}`;
       
       // Set color based on status
       let color;
-      if (booking.payment_status === 'reservation-paid' && booking.attendance_status === 'completed') {
+      const paymentStatus = booking.paymentStatus || booking.payment_status;
+      const attendanceStatus = booking.attendanceStatus || booking.attendance_status;
+      
+      if (paymentStatus === 'reservation-paid' && attendanceStatus === 'completed') {
         color = 'bg-green-100 border-green-300';
-      } else if (booking.payment_status === 'reservation-paid') {
+      } else if (paymentStatus === 'reservation-paid' || paymentStatus === 'session-paid') {
         color = 'bg-blue-100 border-blue-300';
       } else {
         color = 'bg-amber-100 border-amber-300';
@@ -85,12 +145,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         start,
         end,
         bookingId: booking.id,
-        status: booking.attendance_status || booking.status || 'Unknown',
-        lessonType: booking.lesson_type,
-        athleteNames: booking.athlete_names || '',
+        status: attendanceStatus || booking.status || 'Unknown',
+        lessonType: lessonTypeName,
+        athleteNames,
         color,
-      };
-    });
+      } as CalendarEvent;
+    }).filter((event): event is CalendarEvent => event !== null); // Filter out null events
   }, [bookings]);
 
   // Handle event click
@@ -111,9 +171,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       const endDate = new Date(start);
       endDate.setHours(23, 59, 59, 999);
       
-      const filteredEvents = events.filter(
-        (event) => event.start >= startDate && event.start <= endDate
-      );
+      const filteredEvents = events
+        .filter((event): event is CalendarEvent => event !== null)
+        .filter((event) => event.start >= startDate && event.start <= endDate);
       
       setSelectedDate(start);
       setDateEvents(filteredEvents);
@@ -131,35 +191,41 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     <div 
       className={`rounded p-1 ${event.color || 'bg-blue-100 border-blue-300'} border`}
       style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      title={`${event.title} - ${event.status}`}
     >
       <span className="text-xs font-medium text-blue-900">
         {format(event.start, 'h:mm a')} - {event.title}
       </span>
+      {event.status && event.status !== 'Unknown' && (
+        <span className="text-xs ml-1 font-bold">
+          {event.status === 'completed' ? '✓' : 
+           event.status === 'cancelled' ? '✗' : 
+           event.status === 'no-show' ? '⊘' : ''}
+        </span>
+      )}
     </div>
   );
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 relative">
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: '100%', minHeight: '600px' }}
-          views={{ month: true, week: true, day: true }}
-          view={view as any}
-          onView={handleViewChange as any}
-          onSelectEvent={handleEventClick}
-          onSelectSlot={handleDateClick}
-          selectable
-          popup
-          components={{
-            event: EventComponent,
-          }}
-        />
-        
-        {selectedDate && dateEvents.length > 0 && (
+          <Calendar
+            localizer={localizer}
+            events={events.filter((event): event is CalendarEvent => event !== null)}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: '100%', minHeight: '600px' }}
+            views={{ month: true, week: true, day: true }}
+            view={view as any}
+            onView={handleViewChange as any}
+            onSelectEvent={handleEventClick}
+            onSelectSlot={handleDateClick}
+            selectable
+            popup
+            components={{
+              event: EventComponent,
+            }}
+          />        {selectedDate && dateEvents.length > 0 && (
           <div className="absolute bottom-4 right-4 w-72 shadow-xl rounded-xl border border-gray-200 bg-white z-10">
             <Card>
               <div className="flex items-center justify-between p-3 border-b">
@@ -191,6 +257,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                             className={
                               event.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' : 
                               event.status === 'confirmed' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                              event.status === 'cancelled' ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                              event.status === 'no-show' ? 'bg-red-100 text-red-800 border-red-200' :
                               'bg-amber-100 text-amber-800 border-amber-200'
                             }
                           >

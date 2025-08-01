@@ -1099,16 +1099,37 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
 
           {/* Calendar Component */}
           <div className="h-[700px] border rounded-xl bg-white shadow-sm p-2">
-            <BookingCalendar 
-              bookings={bookings || []} 
-              onBookingSelect={(bookingId) => {
-                const booking = bookings?.find((b: any) => b.id === bookingId);
-                if (booking) {
-                  setSelectedBooking(booking);
-                  setShowDetailModal(true);
-                }
-              }} 
-            />
+            {bookings?.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center text-center p-8">
+                <Calendar className="h-16 w-16 text-gray-300 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700">No Bookings Available</h3>
+                <p className="text-gray-500 max-w-md mt-2">
+                  There are no active bookings to display on the calendar. Create a new booking to see it here.
+                </p>
+                <Button 
+                  variant="default" 
+                  className="mt-6 bg-[#0F0276] hover:bg-[#0F0276]/90"
+                  onClick={() => {
+                    setAdminBookingContext("new-athlete");
+                    setShowUnifiedBooking(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Booking
+                </Button>
+              </div>
+            ) : (
+              <BookingCalendar 
+                bookings={bookings || []} 
+                onBookingSelect={(bookingId) => {
+                  const booking = bookings?.find((b: any) => b.id === bookingId);
+                  if (booking) {
+                    setSelectedBooking(booking);
+                    setShowDetailModal(true);
+                  }
+                }} 
+              />
+            )}
           </div>
         </TabsContent>
         <TabsContent value="archived">
