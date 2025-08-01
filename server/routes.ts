@@ -2745,15 +2745,21 @@ setTimeout(async () => {
         }
       }
 
-      // Send confirmation email for cash/check bookings
+      // Send confirmation email for cash/check bookings - for both new and existing athlete bookings
       if (["cash", "check"].includes((bookingData.adminPaymentMethod || '').toLowerCase())) {
         console.log(`[ADMIN-BOOKING] Sending confirmation email for ${bookingData.adminPaymentMethod} payment to ${parent.email}`);
         const confirmLink = `${getBaseUrl()}/parent/confirm-booking?bookingId=${booking.id}`;
-        await sendManualBookingConfirmation(
-          parent.email,
-          parent.firstName || 'Parent',
-          confirmLink
-        );
+        try {
+          await sendManualBookingConfirmation(
+            parent.email,
+            parent.firstName || 'Parent',
+            confirmLink
+          );
+          console.log(`[ADMIN-BOOKING] Successfully sent confirmation email to ${parent.email} for booking ${booking.id}`);
+        } catch (emailError) {
+          console.error(`[ADMIN-BOOKING] Failed to send confirmation email:`, emailError);
+          // Don't fail the booking creation if email sending fails
+        }
       }
 
       perfTimer.end();

@@ -56,7 +56,8 @@ export default function ConfirmBookingPage() {
   };
 
   const handleReturn = () => {
-    setLocation('/parent-portal');
+    // Redirect to parent dashboard or login page
+    setLocation('/parent/dashboard');
   };
 
   if (isLoading) {
