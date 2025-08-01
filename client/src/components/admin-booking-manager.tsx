@@ -347,6 +347,7 @@ interface ManualBookingFormData {
   bookingMethod: string;
   adminNotes?: string;
   isNewAthlete?: boolean;
+  selectedAthletes?: number[]; // Added for existing athlete selection
 }
 
 
@@ -447,12 +448,14 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         focusAreas: bookingData.focusAreas, // Send the actual focus area names
         apparatusIds: [],
         sideQuestIds: [],
-        parentFirstName: bookingData.parentFirstName,
-        parentLastName: bookingData.parentLastName,
-        parentEmail: bookingData.parentEmail,
-        parentPhone: bookingData.parentPhone,
-        emergencyContactName: bookingData.emergencyContactName,
-        emergencyContactPhone: bookingData.emergencyContactPhone,
+        parentInfo: {
+          firstName: bookingData.parentFirstName,
+          lastName: bookingData.parentLastName,
+          email: bookingData.parentEmail,
+          phone: bookingData.parentPhone,
+          emergencyContactName: bookingData.emergencyContactName,
+          emergencyContactPhone: bookingData.emergencyContactPhone,
+        },
         amount: bookingData.amount,
         status: BookingStatusEnum.CONFIRMED,
         attendanceStatus: AttendanceStatusEnum.PENDING,
@@ -464,37 +467,46 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
         specialRequests: "",
         adminNotes: bookingData.adminNotes || "",
         // Safety verification fields (defaults for admin-created bookings)
-        dropoffPersonName: bookingData.parentFirstName + " " + bookingData.parentLastName,
-        dropoffPersonRelationship: "Parent",
-        dropoffPersonPhone: bookingData.parentPhone,
-        pickupPersonName: bookingData.parentFirstName + " " + bookingData.parentLastName,
-        pickupPersonRelationship: "Parent",
-        pickupPersonPhone: bookingData.parentPhone,
+        safetyContact: {
+          willDropOff: true,
+          willPickUp: true,
+          dropoffPersonName: bookingData.parentFirstName + " " + bookingData.parentLastName,
+          dropoffPersonRelationship: "Parent",
+          dropoffPersonPhone: bookingData.parentPhone,
+          pickupPersonName: bookingData.parentFirstName + " " + bookingData.parentLastName,
+          pickupPersonRelationship: "Parent",
+          pickupPersonPhone: bookingData.parentPhone,
+        },
         safetyVerificationSigned: false,
-        // Include gender info in athletes array for proper athlete creation
-        athletes: [
-          {
-            athleteId: null,
-            slotOrder: 1,
-            name: bookingData.athlete1Name,
-            dateOfBirth: athlete1DOB.toISOString().split('T')[0],
-            allergies: bookingData.allergies1 || "",
-            experience: bookingData.athlete1Experience,
-            gender: bookingData.athlete1Gender || undefined,
-          },
-          ...(bookingData.athlete2Name ? [{
-            athleteId: null,
-            slotOrder: 2,
-            name: bookingData.athlete2Name,
-            dateOfBirth: athlete2DOB ? athlete2DOB.toISOString().split('T')[0] : "",
-            allergies: bookingData.allergies2 || "",
-            experience: bookingData.athlete2Experience || "beginner",
-            gender: bookingData.athlete2Gender || undefined,
-          }] : [])
-        ]
+        // Handle athletes based on booking type
+        ...(bookingData.isNewAthlete ? {
+          // For new athletes, send athleteInfo
+          athleteInfo: [
+            {
+              firstName: bookingData.athlete1Name.split(' ')[0] || '',
+              lastName: bookingData.athlete1Name.split(' ').slice(1).join(' ') || '',
+              dateOfBirth: athlete1DOB.toISOString().split('T')[0],
+              allergies: bookingData.allergies1 || "",
+              experience: bookingData.athlete1Experience,
+              gender: bookingData.athlete1Gender || "",
+            },
+            ...(bookingData.athlete2Name ? [{
+              firstName: bookingData.athlete2Name.split(' ')[0] || '',
+              lastName: bookingData.athlete2Name.split(' ').slice(1).join(' ') || '',
+              dateOfBirth: athlete2DOB ? athlete2DOB.toISOString().split('T')[0] : "",
+              allergies: bookingData.allergies2 || "",
+              experience: bookingData.athlete2Experience || "beginner",
+              gender: bookingData.athlete2Gender || "",
+            }] : [])
+          ]
+        } : {
+          // For existing athletes, use the bookingData.selectedAthletes
+          selectedAthletes: bookingData.selectedAthletes || []
+        })
       };
 
-      const response = await apiRequest("POST", "/api/bookings", formattedData);
+      // Use the admin-specific endpoint for admin bookings
+      const response = await apiRequest("POST", "/api/admin/bookings", formattedData);
       const result = await response.json();
 
       // If this is a new athlete, trigger automated email workflows
@@ -509,7 +521,17 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
 
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (!data || !data.booking) {
+        console.error("Received invalid response from booking creation:", data);
+        toast({
+          title: "Warning",
+          description: "Booking might have been created but returned an unexpected response. Please check the bookings list.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Booking Created",
         description: "Manual booking has been successfully created.",

@@ -190,10 +190,18 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   
   // Handle selectedParent from admin parent selection
   useEffect(() => {
-    if (state.selectedParent && !state.parentInfo) {
-      // If we have selected parent but no parent info, populate it
-      setParentInfoFromData(state.selectedParent);
-      setIsEditing(false);
+    if (state.selectedParent) {
+      // Check if we need to populate parent info
+      const needsToPopulate = !state.parentInfo || 
+        !state.parentInfo.firstName || 
+        !state.parentInfo.lastName || 
+        !state.parentInfo.email;
+      
+      if (needsToPopulate) {
+        console.log("Populating parent info from selectedParent:", state.selectedParent);
+        setParentInfoFromData(state.selectedParent);
+        setIsEditing(false);
+      }
     }
   }, [state.selectedParent, state.parentInfo]);
   

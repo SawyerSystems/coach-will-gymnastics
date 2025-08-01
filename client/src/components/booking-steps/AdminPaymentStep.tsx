@@ -8,11 +8,10 @@ import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
 import { LESSON_TYPES } from "@/lib/constants";
 import { formatBookingDate } from "@/lib/dateUtils";
-import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 
 import { AlertCircle, CheckCircle, CreditCard, DollarSign, FileText, Loader2 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation } from "wouter";
 
 export function AdminPaymentStep() {
@@ -27,46 +26,196 @@ export function AdminPaymentStep() {
 
   const createAdminBooking = useMutation({
     mutationFn: async (bookingData: any) => {
-      const response = await apiRequest('POST', '/api/admin/bookings', bookingData);
-      return await response.json();
+      console.log("Submitting booking data:", JSON.stringify(bookingData, null, 2));
+      
+      try {
+        // Use raw fetch for more control over error handling
+        const fetchResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/bookings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bookingData),
+          credentials: 'include'
+        });
+        
+        // Get the response as text first
+        const responseText = await fetchResponse.text();
+        
+        // Try to parse as JSON
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse response as JSON:', responseText);
+          throw new Error(`Server returned invalid JSON: ${responseText.substring(0, 100)}...`);
+        }
+        
+        // Check if request was successful based on HTTP status
+        if (!fetchResponse.ok) {
+          console.error('Server returned error status:', fetchResponse.status, data);
+          throw new Error(`Error ${fetchResponse.status}: ${data.message || 'Unknown server error'}`);
+        }
+        
+        // Additional check for success field
+        if (!data.success) {
+          throw new Error(data.message || "Booking creation failed without specific error");
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('Error in booking creation:', error);
+        throw error;
+      }
     },
-    onSuccess: (booking) => {
+    onSuccess: (data) => {
+      // Reset processing state immediately
+      setIsProcessing(false);
+      
       toast({
         title: "Booking Created Successfully",
-        description: `Booking #${booking.id} has been created.`,
+        description: `Booking #${data.booking?.id || 'New'} has been created.`,
       });
-      // Reset flow and close modal (handled by parent)
+      
+      // Update global state to reflect booking creation
+      updateState({
+        currentStep: 0,
+        // Store the booking ID for reference if needed by parent components
+        parentId: state.parentId // Keep the existing parent ID
+      });
+      
+      // Reset flow and close modal will be handled by parent
     },
     onError: (error) => {
+      // Reset processing state immediately
+      setIsProcessing(false);
+      
       console.error('Admin booking creation failed:', error);
+      let errorMessage = "There was an error creating the booking. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      // Show detailed error message
       toast({
         title: "Booking Creation Failed",
-        description: "There was an error creating the booking. Please try again.",
+        description: errorMessage,
         variant: "destructive",
+        duration: 6000, // Show longer for error messages
       });
     }
   });
 
+  // Use a ref to track if a submission is in progress
+  const isSubmittingRef = React.useRef(false);
+  
   const handleCreateBooking = async () => {
-    if (!state.parentInfo || !state.selectedParent?.id) {
+    // Prevent multiple submissions using both state and ref
+    if (isProcessing || createAdminBooking.isPending || isSubmittingRef.current) {
+      console.log("Submission already in progress, preventing duplicate submit");
+      return;
+    }
+    
+    // Set the ref to true to prevent any possible race conditions
+    isSubmittingRef.current = true;
+    
+    // More detailed validation with logging
+    if (!state.parentInfo) {
+      console.error("Missing parent info in booking state:", state);
       toast({
         title: "Parent Required",
-        description: "You must select or create a parent before completing the booking.",
+        description: "Parent information is missing. Please go back and select a parent.",
         variant: "destructive",
       });
       return;
     }
+    
+    if (!state.selectedParent?.id) {
+      console.error("Missing parent ID in booking state:", { 
+        parentInfo: state.parentInfo,
+        selectedParent: state.selectedParent,
+        parentId: state.parentId
+      });
+      toast({
+        title: "Parent Required",
+        description: "Parent ID is missing. Please go back and reselect the parent.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate required athlete information with more detailed checks
+    const hasValidSelectedAthletes = state.selectedAthletes && 
+                                  Array.isArray(state.selectedAthletes) && 
+                                  state.selectedAthletes.length > 0;
+                                  
+    const hasValidAthleteInfo = state.athleteInfo && 
+                              Array.isArray(state.athleteInfo) && 
+                              state.athleteInfo.length > 0 && 
+                              state.athleteInfo.every(athlete => 
+                                athlete.firstName && 
+                                athlete.lastName && 
+                                athlete.dateOfBirth);
+                                
+    if (!hasValidSelectedAthletes && !hasValidAthleteInfo) {
+      console.error("Missing or invalid athlete data:", { 
+        selectedAthletes: state.selectedAthletes,
+        athleteInfo: state.athleteInfo
+      });
+      
+      toast({
+        title: "Athletes Required",
+        description: "At least one valid athlete must be selected or created for this booking.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate payment method selection
+    if (!state.adminPaymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please select a payment method before creating the booking.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsProcessing(true);
     try {
+      // Create a clean copy of the data - this helps avoid any unexpected reference issues
       const bookingData = {
         lessonType: state.lessonType,
-        selectedAthletes: state.selectedAthletes,
-        athleteInfo: state.athleteInfo,
-        parentInfo: state.parentInfo,
-        selectedTimeSlot: state.selectedTimeSlot,
-        focusAreas: state.focusAreas,
-        // Include safety information
-        safetyContact: state.safetyContact || {
+        // Ensure we have valid athlete data - default to empty arrays if missing
+        selectedAthletes: Array.isArray(state.selectedAthletes) ? [...state.selectedAthletes] : [],
+        athleteInfo: Array.isArray(state.athleteInfo) ? state.athleteInfo.map(athlete => ({
+          firstName: athlete.firstName || '',
+          lastName: athlete.lastName || '',
+          dateOfBirth: athlete.dateOfBirth || '',
+          allergies: athlete.allergies || '',
+          experience: athlete.experience || 'intermediate'
+          // Note: gender is not included in the BookingFlowState athleteInfo type
+        })) : [],
+        // Include parent info with explicit ID
+        parentInfo: state.selectedParent ? {
+          firstName: state.selectedParent.firstName,
+          lastName: state.selectedParent.lastName,
+          email: state.selectedParent.email,
+          phone: state.selectedParent.phone,
+          emergencyContactName: state.selectedParent.emergencyContactName,
+          emergencyContactPhone: state.selectedParent.emergencyContactPhone,
+          id: state.selectedParent.id
+        } : state.parentInfo ? {
+          ...state.parentInfo,
+          id: state.parentId
+        } : null,
+        selectedTimeSlot: state.selectedTimeSlot ? { ...state.selectedTimeSlot } : null,
+        focusAreas: Array.isArray(state.focusAreas) ? [...state.focusAreas] : [],
+        // Include safety information with defaults
+        safetyContact: state.safetyContact ? {
+          ...state.safetyContact
+        } : {
           dropoffPersonName: '',
           dropoffPersonRelationship: '',
           dropoffPersonPhone: '',
@@ -86,11 +235,27 @@ export function AdminPaymentStep() {
         bookingMethod: 'admin'
       };
 
-      await createAdminBooking.mutateAsync(bookingData);
+      // Log the request data for debugging
+      console.log('Submitting admin booking with data:', {
+        lessonType: bookingData.lessonType,
+        athleteCount: bookingData.selectedAthletes?.length || 0,
+        newAthleteCount: bookingData.athleteInfo?.length || 0,
+        parentId: bookingData.parentInfo?.id,
+        paymentMethod: bookingData.adminPaymentMethod
+      });
+      
+      const result = await createAdminBooking.mutateAsync(bookingData);
+      console.log('Booking created successfully:', result);
+      
+      // Return success from the function to allow the modal to close
+      return true;
     } catch (error) {
       console.error('Admin booking error:', error);
+      // Don't swallow the error - allow it to bubble up
+      return false;
     } finally {
       setIsProcessing(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -264,15 +429,20 @@ export function AdminPaymentStep() {
       {/* Create Booking Button */}
       <div className="flex justify-center pt-4">
         <Button
-          onClick={handleCreateBooking}
-          disabled={isProcessing || createAdminBooking.isPending}
+          onClick={isProcessing || createAdminBooking.isPending || isSubmittingRef.current ? undefined : handleCreateBooking}
+          disabled={isProcessing || createAdminBooking.isPending || isSubmittingRef.current || !state.adminPaymentMethod}
           size="lg"
-          className="min-w-[200px]"
+          className={`min-w-[200px] ${(!state.adminPaymentMethod) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {isProcessing || createAdminBooking.isPending ? (
+          {isProcessing || createAdminBooking.isPending || isSubmittingRef.current ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Creating Booking...
+            </>
+          ) : !state.adminPaymentMethod ? (
+            <>
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Select Payment Method
             </>
           ) : (
             <>

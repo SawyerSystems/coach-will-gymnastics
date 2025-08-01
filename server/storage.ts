@@ -1812,7 +1812,8 @@ export class SupabaseStorage implements IStorage {
       photo: insertAthlete.photo || null
     };
 
-    const { data, error } = await supabase
+    // Use supabaseAdmin to bypass RLS when creating athletes from admin interface
+    const { data, error } = await supabaseAdmin
       .from('athletes')
       .insert(supabaseData)
       .select()

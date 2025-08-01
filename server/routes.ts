@@ -2515,37 +2515,55 @@ setTimeout(async () => {
       // Check if parent exists or create one
       let parent: any = null;
       
+      // First check for explicit parent ID passed from the client
       if (bookingData.parentInfo?.id) {
+        console.log("[ADMIN-BOOKING] Using explicit parent ID:", bookingData.parentInfo.id);
         parent = await storage.getParentById(bookingData.parentInfo.id);
+        if (!parent) {
+          console.warn("[ADMIN-BOOKING] Parent ID provided but parent not found:", bookingData.parentInfo.id);
+        }
       }
       
       if (!parent && bookingData.parentInfo?.email) {
         // Try to find parent by email
+        console.log("[ADMIN-BOOKING] Looking up parent by email:", bookingData.parentInfo.email);
         const parentsByEmail = await storage.getParentByEmail(bookingData.parentInfo.email);
         if (parentsByEmail) {
           parent = parentsByEmail;
+          console.log("[ADMIN-BOOKING] Found parent by email:", parent.id);
         }
       }
       
       if (!parent && bookingData.parentInfo) {
         // Create parent account
+        console.log("[ADMIN-BOOKING] Creating new parent account");
         parent = await storage.createParent({
           firstName: bookingData.parentInfo.firstName,
           lastName: bookingData.parentInfo.lastName,
           email: bookingData.parentInfo.email,
           phone: bookingData.parentInfo.phone,
-          emergencyContactName: bookingData.parentInfo.emergencyContactName,
-          emergencyContactPhone: bookingData.parentInfo.emergencyContactPhone,
+          emergencyContactName: bookingData.parentInfo.emergencyContactName || '',
+          emergencyContactPhone: bookingData.parentInfo.emergencyContactPhone || '',
           passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
         });
+        console.log("[ADMIN-BOOKING] Created new parent account:", parent?.id);
       }
       
       if (!parent) {
+        console.error("[ADMIN-BOOKING] Failed to identify or create parent with data:", 
+          JSON.stringify({
+            id: bookingData.parentInfo?.id,
+            email: bookingData.parentInfo?.email,
+            name: `${bookingData.parentInfo?.firstName || ''} ${bookingData.parentInfo?.lastName || ''}`
+          })
+        );
         return res.status(400).json({ 
           success: false, 
           message: "Could not identify or create parent" 
         });
       }
+
+      console.log("[ADMIN-BOOKING] Using parent ID:", parent.id);
 
       // Prepare the safety information
       const safetyInfo = bookingData.safetyContact || {};
@@ -2590,33 +2608,130 @@ setTimeout(async () => {
       // Debug log the booking object
       console.log('[DEBUG] Created admin booking:', booking);
 
-      // Process athletes
+      // Validate we have at least one athlete source (either athleteInfo or selectedAthletes)
+      if (!bookingData.athleteInfo && !bookingData.selectedAthletes) {
+        console.error("[ADMIN-BOOKING] No athlete data provided for booking");
+        return res.status(400).json({
+          success: false,
+          message: "Athlete data is missing"
+        });
+      }
+
+      // Verify athlete data has proper format and content
+      const hasValidAthleteInfo = bookingData.athleteInfo && 
+                                 Array.isArray(bookingData.athleteInfo) && 
+                                 bookingData.athleteInfo.length > 0 &&
+                                 bookingData.athleteInfo.every((a: any) => a.firstName && a.lastName);
+                                 
+      const hasValidSelectedAthletes = bookingData.selectedAthletes && 
+                                     Array.isArray(bookingData.selectedAthletes) && 
+                                     bookingData.selectedAthletes.length > 0 &&
+                                     bookingData.selectedAthletes.every((id: any) => typeof id === 'number');
+      
+      if (!hasValidAthleteInfo && !hasValidSelectedAthletes) {
+        console.error("[ADMIN-BOOKING] Invalid athlete data:", {
+          athleteInfo: bookingData.athleteInfo,
+          selectedAthletes: bookingData.selectedAthletes
+        });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid athlete data provided. Please ensure at least one athlete is selected or created."
+        });
+      }
+
+      // Process athletes - with additional safeguards and validation
       if (booking) {
-        if (bookingData.athleteInfo && bookingData.athleteInfo.length > 0) {
-          // For new athletes from form
-          for (let i = 0; i < bookingData.athleteInfo.length; i++) {
-            const athlete = bookingData.athleteInfo[i];
-            const newAthlete = await storage.createAthlete({
-              parentId: parent.id,
-              firstName: athlete.firstName,
-              lastName: athlete.lastName,
-              dateOfBirth: athlete.dateOfBirth,
-              gender: athlete.gender || '',
-              allergies: athlete.allergies || '',
-              experience: athlete.experience || 'intermediate',
-            });
-            if (newAthlete && booking.id) {
-              await storage.addAthleteSlot(booking.id, newAthlete.id, i + 1);
+        try {
+          if (bookingData.athleteInfo && Array.isArray(bookingData.athleteInfo) && bookingData.athleteInfo.length > 0) {
+            // For new athletes from form
+            console.log("[ADMIN-BOOKING] Processing new athletes:", JSON.stringify(bookingData.athleteInfo));
+            
+            // Validate all athlete entries first
+            for (let i = 0; i < bookingData.athleteInfo.length; i++) {
+              const athlete = bookingData.athleteInfo[i];
+              if (!athlete || typeof athlete !== 'object') {
+                throw new Error(`Invalid athlete data at index ${i}: ${JSON.stringify(athlete)}`);
+              }
+              
+              if (!athlete.firstName || !athlete.lastName) {
+                throw new Error(`Missing required athlete information for athlete #${i+1}: ${JSON.stringify(athlete)}`);
+              }
             }
-          }
-        } else if (bookingData.selectedAthletes && bookingData.selectedAthletes.length > 0) {
-          // For existing athletes
-          for (let i = 0; i < bookingData.selectedAthletes.length; i++) {
-            const athleteId = bookingData.selectedAthletes[i];
-            if (booking.id) {
+            
+            // Now create all athletes
+            for (let i = 0; i < bookingData.athleteInfo.length; i++) {
+              const athlete = bookingData.athleteInfo[i];
+              console.log(`[ADMIN-BOOKING] Creating athlete #${i+1}:`, athlete.firstName, athlete.lastName);
+              
+              const newAthlete = await storage.createAthlete({
+                parentId: parent.id,
+                firstName: athlete.firstName,
+                lastName: athlete.lastName,
+                dateOfBirth: athlete.dateOfBirth || new Date().toISOString(),
+                gender: '', // Default to empty string as gender is not in the athleteInfo type
+                allergies: athlete.allergies || '',
+                experience: athlete.experience || 'intermediate',
+              });
+              
+              if (!newAthlete || !newAthlete.id) {
+                console.error("[ADMIN-BOOKING] Failed to create athlete:", athlete);
+                throw new Error(`Failed to create athlete: ${athlete.firstName} ${athlete.lastName}`);
+              }
+              
+              console.log(`[ADMIN-BOOKING] Created new athlete #${i+1} with ID:`, newAthlete.id);
+              
+              if (booking.id) {
+                await storage.addAthleteSlot(booking.id, newAthlete.id, i + 1);
+                console.log(`[ADMIN-BOOKING] Linked athlete ${newAthlete.id} to booking ${booking.id}`);
+              } else {
+                throw new Error('Booking ID is missing when trying to link athlete');
+              }
+            }
+          } else if (bookingData.selectedAthletes && Array.isArray(bookingData.selectedAthletes) && bookingData.selectedAthletes.length > 0) {
+            // For existing athletes
+            console.log("[ADMIN-BOOKING] Processing existing athletes:", bookingData.selectedAthletes);
+            
+            // Validate all athlete IDs first
+            for (let i = 0; i < bookingData.selectedAthletes.length; i++) {
+              const athleteId = bookingData.selectedAthletes[i];
+              if (!athleteId || typeof athleteId !== 'number') {
+                throw new Error(`Invalid athlete ID at index ${i}: ${athleteId}`);
+              }
+              
+              // Verify athlete exists
+              const athlete = await storage.getAthlete(athleteId);
+              if (!athlete) {
+                throw new Error(`Athlete with ID ${athleteId} not found`);
+              }
+            }
+            
+            // Now link all athletes
+            for (let i = 0; i < bookingData.selectedAthletes.length; i++) {
+              const athleteId = bookingData.selectedAthletes[i];
+              
+              if (!booking.id) {
+                throw new Error('Booking ID is missing when trying to link athlete');
+              }
+              
               await storage.addAthleteSlot(booking.id, athleteId, i + 1);
+              console.log(`[ADMIN-BOOKING] Linked existing athlete ${athleteId} to booking ${booking.id}`);
             }
+          } else {
+            throw new Error('No valid athlete data found in request');
           }
+        } catch (error) {
+          console.error("[ADMIN-BOOKING] Error processing athletes:", error);
+          
+          // Attempt to clean up the booking if athlete processing fails
+          if (booking && booking.id) {
+            await storage.deleteBooking(booking.id);
+            console.log(`[ADMIN-BOOKING] Deleted booking ${booking.id} due to athlete processing failure`);
+          }
+          
+          return res.status(400).json({
+            success: false,
+            message: `Failed to process athletes: ${error instanceof Error ? error.message : 'Unknown error'}`
+          });
         }
         // Process focus areas if provided
         if (bookingData.focusAreas && bookingData.focusAreas.length > 0 && booking.id) {
@@ -2631,7 +2746,8 @@ setTimeout(async () => {
       }
 
       // Send confirmation email for cash/check bookings
-      if (["cash", "check"].includes((bookingData.paymentMethod || '').toLowerCase())) {
+      if (["cash", "check"].includes((bookingData.adminPaymentMethod || '').toLowerCase())) {
+        console.log(`[ADMIN-BOOKING] Sending confirmation email for ${bookingData.adminPaymentMethod} payment to ${parent.email}`);
         const confirmLink = `${getBaseUrl()}/parent/confirm-booking?bookingId=${booking.id}`;
         await sendManualBookingConfirmation(
           parent.email,
@@ -2646,6 +2762,17 @@ setTimeout(async () => {
         message: "Booking created successfully",
         booking
       });
+    } catch (error) {
+      perfTimer.end();
+      console.error("Error creating admin booking:", error);
+      return res.status(500).json({
+        success: false, 
+        message: "Error creating booking", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Endpoint for parent to confirm booking (updates attendance_status)
   app.post("/api/parent/confirm-booking", async (req, res) => {
     const { bookingId } = req.body;
@@ -2681,16 +2808,6 @@ setTimeout(async () => {
     } catch (error) {
       console.error("Error confirming booking:", error);
       return res.status(500).json({ success: false, message: "Error confirming booking" });
-    }
-  });
-    } catch (error) {
-      perfTimer.end();
-      console.error("Error creating admin booking:", error);
-      return res.status(500).json({
-        success: false, 
-        message: "Error creating booking", 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
     }
   });
 

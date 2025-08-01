@@ -178,6 +178,19 @@ export function ParentSelectionStep() {
 
   const handleContinueWithSelected = () => {
     if (selectedParent) {
+      // Update booking state with selected parent
+      updateState({
+        parentInfo: {
+          firstName: selectedParent.firstName,
+          lastName: selectedParent.lastName,
+          email: selectedParent.email,
+          phone: selectedParent.phone,
+          emergencyContactName: selectedParent.emergencyContactName,
+          emergencyContactPhone: selectedParent.emergencyContactPhone,
+        },
+        parentId: selectedParent.id,
+        selectedParent: selectedParent,
+      });
       nextStep();
     }
   };
