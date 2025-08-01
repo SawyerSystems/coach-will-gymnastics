@@ -85,7 +85,7 @@ export default function ConfirmBookingPage() {
           </CardHeader>
           <CardFooter>
             <Button onClick={handleReturn} className="w-full">
-              Return to Parent Portal
+              Go to Parent Dashboard
             </Button>
           </CardFooter>
         </Card>

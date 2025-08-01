@@ -2801,14 +2801,15 @@ setTimeout(async () => {
         return res.status(404).json({ success: false, message: "Parent not found" });
       }
 
-      // Only allow confirmation for bookings that are pending attendance and unpaid
-      if (booking.attendanceStatus !== AttendanceStatusEnum.PENDING || 
-          booking.paymentStatus !== PaymentStatusEnum.UNPAID) {
+      // Allow confirmation for all unpaid bookings, regardless of attendance status
+      if (booking.paymentStatus !== PaymentStatusEnum.UNPAID) {
         return res.status(400).json({ 
           success: false, 
-          message: "Booking is not eligible for confirmation" 
+          message: "Booking is not eligible for confirmation - only unpaid bookings can be confirmed" 
         });
       }
+
+      // Update to confirmed attendance status
       await storage.updateBooking(bookingId, { attendanceStatus: AttendanceStatusEnum.CONFIRMED });
       return res.json({ success: true, message: "Booking confirmed" });
     } catch (error) {
