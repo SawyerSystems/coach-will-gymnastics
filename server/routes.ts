@@ -1,15 +1,17 @@
 import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
+import { passwordSetupRouter } from "./password-setup";
 import { SupabaseStorage } from "./storage";
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { timeSlotLocksRouter } from "./time-slot-locks";
@@ -330,6 +332,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Parent auth routes
   app.use('/api/parent-auth', parentAuthRouter);
+  
+  // Parent password setup routes
+  app.use('/api/parent-auth', passwordSetupRouter);
   
   // Time slot locking routes
   app.use('/api/time-slot-locks', timeSlotLocksRouter);
@@ -2534,6 +2539,7 @@ setTimeout(async () => {
         }
       }
       
+      // Case 1: No parent found, create a new one
       if (!parent && bookingData.parentInfo) {
         // Create parent account
         console.log("[ADMIN-BOOKING] Creating new parent account");
@@ -2547,6 +2553,46 @@ setTimeout(async () => {
           passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
         });
         console.log("[ADMIN-BOOKING] Created new parent account:", parent?.id);
+        
+        // Set flags to indicate this is a new parent
+        bookingData.isNewParentCreated = true;
+        // Add a marker to the parent object to track it as new
+        if (parent) parent.__new = true;
+      }
+      
+      // Flag to track if this is a new parent (either created just now or indicated by the frontend)
+      const isNewParent = bookingData.isNewParentCreated === true || 
+                         bookingData.parentInfo?.isNewParentCreated === true || 
+                         (parent && parent.__new === true); // This is set by storage.createParent
+      
+      console.log(`[ADMIN-BOOKING] Parent status check - isNewParent: ${isNewParent}, parentId: ${parent?.id}`);
+      
+      // Send password setup email when a new parent is created
+      if (isNewParent && parent) {
+        console.log(`[ADMIN-BOOKING] Preparing to send password setup email for new parent: ${parent.email}`);
+        try {
+          // Generate a reset token
+          const resetToken = crypto.randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+          
+          // Store the reset token
+          await storage.createPasswordResetToken({
+            parentId: parent.id,
+            token: resetToken,
+            expiresAt,
+          });
+
+          // Send the password setup email
+          await sendPasswordSetupEmail(
+            parent.email,
+            parent.firstName,
+            resetToken
+          );
+          console.log(`[ADMIN-BOOKING] Password setup email sent to new parent ${parent.email}`);
+        } catch (emailError) {
+          console.error(`[ADMIN-BOOKING] Failed to send password setup email to ${parent.email}:`, emailError);
+          // Continue with booking creation even if email fails
+        }
       }
       
       if (!parent) {
@@ -2745,21 +2791,29 @@ setTimeout(async () => {
         }
       }
 
-      // Send confirmation email for cash/check bookings - for both new and existing athlete bookings
-      if (["cash", "check"].includes((bookingData.adminPaymentMethod || '').toLowerCase())) {
-        console.log(`[ADMIN-BOOKING] Sending confirmation email for ${bookingData.adminPaymentMethod} payment to ${parent.email}`);
-        const confirmLink = `${getBaseUrl()}/parent/confirm-booking?bookingId=${booking.id}`;
+      // Send confirmation email for all admin bookings - with different content based on payment method
+      if (parent && parent.email) {
+        const paymentMethod = (bookingData.adminPaymentMethod || '').toLowerCase();
+        const needsConfirmation = ["cash", "check"].includes(paymentMethod);
+        
+        console.log(`[ADMIN-BOOKING] Sending ${needsConfirmation ? 'confirmation required' : 'confirmation'} email for ${paymentMethod} payment to ${parent.email}`);
+        
+        const baseUrl = getBaseUrl();
+        const confirmLink = `${baseUrl}/parent/confirm-booking?bookingId=${booking.id}`;
+        
         try {
           await sendManualBookingConfirmation(
             parent.email,
             parent.firstName || 'Parent',
             confirmLink
           );
-          console.log(`[ADMIN-BOOKING] Successfully sent confirmation email to ${parent.email} for booking ${booking.id}`);
+          console.log(`[ADMIN-BOOKING] Successfully sent booking confirmation email to ${parent.email} for booking ${booking.id}`);
         } catch (emailError) {
           console.error(`[ADMIN-BOOKING] Failed to send confirmation email:`, emailError);
           // Don't fail the booking creation if email sending fails
         }
+      } else {
+        console.warn(`[ADMIN-BOOKING] Cannot send confirmation email - missing parent email (parentId: ${parent?.id})`);
       }
 
       perfTimer.end();
@@ -7368,6 +7422,40 @@ setTimeout(async () => {
     } catch (error: any) {
       console.error('SQL execution error:', error);
       res.status(500).json({ error: 'SQL execution failed' });
+    }
+  });
+  
+  // Test endpoint to send booking confirmation emails
+  app.post('/api/test/send-booking-confirmation', async (req, res) => {
+    try {
+      const { parentId, bookingId } = req.body;
+      
+      if (!parentId || !bookingId) {
+        return res.status(400).json({ error: 'Missing parentId or bookingId' });
+      }
+      
+      // Get parent info
+      const parent = await storage.getParentById(parentId);
+      if (!parent) {
+        return res.status(404).json({ error: 'Parent not found' });
+      }
+      
+      // Generate confirmation link
+      const baseUrl = getBaseUrl();
+      const confirmLink = `${baseUrl}/parent/confirm-booking?bookingId=${bookingId}`;
+      
+      // Send confirmation email
+      await sendManualBookingConfirmation(
+        parent.email,
+        parent.firstName,
+        confirmLink
+      );
+      
+      console.log(`[TEST] Sent booking confirmation email to ${parent.email} for booking ${bookingId}`);
+      return res.status(200).json({ success: true, message: `Confirmation email sent to ${parent.email}` });
+    } catch (error) {
+      console.error("[TEST] Error sending confirmation email:", error);
+      return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

@@ -197,7 +197,7 @@ export function AdminPaymentStep() {
           experience: athlete.experience || 'intermediate'
           // Note: gender is not included in the BookingFlowState athleteInfo type
         })) : [],
-        // Include parent info with explicit ID
+        // Include parent info with explicit ID and new parent flag
         parentInfo: state.selectedParent ? {
           firstName: state.selectedParent.firstName,
           lastName: state.selectedParent.lastName,
@@ -205,10 +205,12 @@ export function AdminPaymentStep() {
           phone: state.selectedParent.phone,
           emergencyContactName: state.selectedParent.emergencyContactName,
           emergencyContactPhone: state.selectedParent.emergencyContactPhone,
-          id: state.selectedParent.id
+          id: state.selectedParent.id,
+          isNewParentCreated: state.isNewParentCreated || false
         } : state.parentInfo ? {
           ...state.parentInfo,
-          id: state.parentId
+          id: state.parentId,
+          isNewParentCreated: state.isNewParentCreated || false
         } : null,
         selectedTimeSlot: state.selectedTimeSlot ? { ...state.selectedTimeSlot } : null,
         focusAreas: Array.isArray(state.focusAreas) ? [...state.focusAreas] : [],
@@ -232,7 +234,9 @@ export function AdminPaymentStep() {
                       state.adminPaymentMethod === 'stripe' ? 'paid' : 'unpaid',
         // Set attendance status based on payment method
         attendanceStatus: ['cash', 'check'].includes(state.adminPaymentMethod || '') ? 'pending' : 'confirmed',
-        bookingMethod: 'admin'
+        bookingMethod: 'admin',
+        // Flag to indicate if a new parent was created
+        isNewParentCreated: state.isNewParentCreated || false
       };
 
       // Log the request data for debugging
@@ -241,7 +245,8 @@ export function AdminPaymentStep() {
         athleteCount: bookingData.selectedAthletes?.length || 0,
         newAthleteCount: bookingData.athleteInfo?.length || 0,
         parentId: bookingData.parentInfo?.id,
-        paymentMethod: bookingData.adminPaymentMethod
+        paymentMethod: bookingData.adminPaymentMethod,
+        isNewParentCreated: bookingData.isNewParentCreated
       });
       
       const result = await createAdminBooking.mutateAsync(bookingData);

@@ -26,6 +26,7 @@ export interface BookingFlowState {
   currentStep: number;
   parentId?: number;
   selectedParent?: any; // Parent object when selected from existing parents
+  isNewParentCreated?: boolean; // Flag to track if a new parent was created
   lessonType: string;
   selectedAthletes: number[];
   selectedTimeSlot: { date: string; time: string } | null;

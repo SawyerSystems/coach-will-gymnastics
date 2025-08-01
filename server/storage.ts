@@ -127,6 +127,13 @@ export interface IStorage {
   deleteVerificationToken(token: string): Promise<void>;
   deleteVerificationTokensByParentId(parentId: number): Promise<void>;
 
+  // Password Reset
+  createPasswordResetToken(token: { parentId: number; token: string; expiresAt: Date }): Promise<any>;
+  getPasswordResetToken(token: string): Promise<any>;
+  markPasswordResetTokenAsUsed(token: string): Promise<void>;
+  deletePasswordResetToken(token: string): Promise<void>;
+  deletePasswordResetTokensByParentId(parentId: number): Promise<void>;
+
   // Slot Reservations
   getActiveReservations(date: string): Promise<{ startTime: string; lessonType: string }[]>;
   reserveSlot(date: string, startTime: string, lessonType: string, sessionId: string): Promise<boolean>;
@@ -1130,6 +1137,27 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
 
   async cleanupExpiredAuthCodes(): Promise<void> {
+    // Not implemented
+  }
+  
+  // Password reset token methods - Not implemented in MemStorage
+  async createPasswordResetToken(token: { parentId: number; token: string; expiresAt: Date }): Promise<any> {
+    throw new Error("Password reset token creation not implemented in MemStorage");
+  }
+  
+  async getPasswordResetToken(token: string): Promise<any> {
+    return undefined;
+  }
+  
+  async markPasswordResetTokenAsUsed(token: string): Promise<void> {
+    // Not implemented
+  }
+  
+  async deletePasswordResetToken(token: string): Promise<void> {
+    // Not implemented
+  }
+  
+  async deletePasswordResetTokensByParentId(parentId: number): Promise<void> {
     // Not implemented
   }
 
@@ -4311,6 +4339,81 @@ export class SupabaseStorage implements IStorage {
 
     if (error) {
       console.error('Error deleting verification tokens by parent ID:', error);
+      throw error;
+    }
+  }
+
+  // Password Reset methods
+  async createPasswordResetToken(token: { parentId: number; token: string; expiresAt: Date }): Promise<any> {
+    const supabaseData = {
+      parent_id: token.parentId,
+      token: token.token,
+      expires_at: token.expiresAt.toISOString(),
+      used: false
+    };
+
+    const { data, error } = await supabaseServiceRole
+      .from('parent_password_reset_tokens')
+      .insert(supabaseData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating password reset token:', error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  async getPasswordResetToken(token: string): Promise<any> {
+    const { data, error } = await supabaseServiceRole
+      .from('parent_password_reset_tokens')
+      .select('*')
+      .eq('token', token)
+      .eq('used', false)
+      .single();
+
+    if (error) {
+      console.error('Error fetching password reset token:', error);
+      return undefined;
+    }
+
+    return data;
+  }
+
+  async markPasswordResetTokenAsUsed(token: string): Promise<void> {
+    const { error } = await supabaseServiceRole
+      .from('parent_password_reset_tokens')
+      .update({ used: true })
+      .eq('token', token);
+
+    if (error) {
+      console.error('Error marking password reset token as used:', error);
+      throw error;
+    }
+  }
+
+  async deletePasswordResetToken(token: string): Promise<void> {
+    const { error } = await supabaseServiceRole
+      .from('parent_password_reset_tokens')
+      .delete()
+      .eq('token', token);
+
+    if (error) {
+      console.error('Error deleting password reset token:', error);
+      throw error;
+    }
+  }
+
+  async deletePasswordResetTokensByParentId(parentId: number): Promise<void> {
+    const { error } = await supabaseServiceRole
+      .from('parent_password_reset_tokens')
+      .delete()
+      .eq('parent_id', parentId);
+
+    if (error) {
+      console.error('Error deleting password reset tokens by parent ID:', error);
       throw error;
     }
   }

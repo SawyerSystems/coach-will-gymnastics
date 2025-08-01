@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BOOKING_FLOWS, useBookingFlow } from "@/contexts/BookingFlowContext";
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, Contact, Edit2, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,7 +25,15 @@ interface ParentData {
 
 export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   const { state, updateState, nextStep } = useBookingFlow();
-  const [isEditing, setIsEditing] = useState(!isPrefilled);
+  // Initialize isEditing based on whether we have parent info or not
+  const [isEditing, setIsEditing] = useState(() => {
+    // If we already have parent info, don't start in editing mode
+    if (state.parentInfo && Object.values(state.parentInfo).some(val => !!val)) {
+      return false;
+    }
+    // Otherwise, start in editing mode
+    return !isPrefilled;
+  });
   const [isManuallyFetchingParent, setIsManuallyFetchingParent] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
@@ -151,6 +160,14 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     }
   }, [isOtherAdminFlow, parentDataForOtherFlows, state.parentInfo]);
   
+  // For admin-new-athlete flow: check if we already have parent info from the parent selection step
+  useEffect(() => {
+    if (state.flowType === 'admin-new-athlete' && state.selectedParent && state.parentId && !state.parentInfo) {
+      console.log("Using selected parent from previous step:", state.selectedParent);
+      setParentInfoFromData(state.selectedParent);
+    }
+  }, [state.flowType, state.selectedParent, state.parentId, state.parentInfo]);
+  
   // Fallback fetch if queries don't work
   useEffect(() => {
     if (isAdminExistingAthlete && hasSelectedAthletes && !state.parentInfo && 
@@ -205,6 +222,32 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     }
   }, [state.selectedParent, state.parentInfo]);
   
+  // Make sure parent info is properly initialized when the component mounts
+  useEffect(() => {
+    // If we have a selectedParent but no parentInfo, initialize it
+    if (state.selectedParent && !state.parentInfo) {
+      console.log("Initializing parent info from selectedParent on mount:", state.selectedParent);
+      setParentInfoFromData(state.selectedParent);
+    }
+    // If we have parentId but no parentInfo, try to fetch the parent
+    else if (state.parentId && !state.parentInfo && !isManuallyFetchingParent) {
+      console.log("Fetching parent info for ID on mount:", state.parentId);
+      setIsManuallyFetchingParent(true);
+      
+      apiRequest('GET', `/api/parents/${state.parentId}`)
+        .then((response: Response) => response.json())
+        .then((parentData: any) => {
+          if (parentData && parentData.id) {
+            setParentInfoFromData(parentData);
+          }
+        })
+        .catch((error: Error) => {
+          console.error("Error fetching parent data on mount:", error);
+        })
+        .finally(() => setIsManuallyFetchingParent(false));
+    }
+  }, []);
+  
   console.log("ParentInfoStep state:", {
     parentId: state.parentId,
     flowType: state.flowType,
@@ -229,7 +272,49 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     });
   };
 
-  const handleConfirmInfo = () => {
+  const handleConfirmInfo = async () => {
+    // If we're in the new parent creation flow, we should create the parent first
+    if (!state.parentId && parentInfo) {
+      try {
+        // Prepare data for API call - match InsertParent schema requirements
+        const parentData = {
+          firstName: parentInfo.firstName.trim(),
+          lastName: parentInfo.lastName.trim(),
+          email: parentInfo.email.trim(),
+          phone: parentInfo.phone.trim(),
+          emergencyContactName: parentInfo.emergencyContactName.trim(),
+          emergencyContactPhone: parentInfo.emergencyContactPhone.trim(),
+          passwordHash: '', // Will be set by backend if needed
+          isVerified: false,
+          blogEmails: false,
+        };
+
+        const response = await apiRequest('POST', '/api/parents', parentData);
+
+        if (response.ok) {
+          const createdParent = await response.json();
+          // Update state with the newly created parent
+          const updatedState = {
+            parentId: createdParent.id,
+            isNewParentCreated: true, // Set flag to track new parent creation
+            selectedParent: {
+              ...createdParent,
+              firstName: createdParent.firstName || parentInfo.firstName,
+              lastName: createdParent.lastName || parentInfo.lastName
+            }
+          };
+          
+          updateState(updatedState);
+          console.log("Created new parent with ID:", createdParent.id);
+          console.log("Updated booking flow state with isNewParentCreated:", updatedState);
+        }
+      } catch (error) {
+        console.error('Error creating parent:', error);
+        return; // Don't proceed if there was an error
+      }
+    }
+    
+    // Move to next step after parent is created (or if it already exists)
     nextStep();
   };
 
@@ -455,7 +540,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           
           <div className="flex justify-end">
             <Button type="submit" disabled={!isValid}>
-              {isEditing ? "Save Changes" : "Continue"}
+              {isEditing ? "Save Changes" : state.parentId ? "Continue" : "Create Parent & Continue"}
             </Button>
           </div>
         </div>

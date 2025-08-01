@@ -133,7 +133,8 @@ export function ParentSelectionStep() {
           updatedAt: new Date(createdParent.updatedAt || Date.now()),
         };
 
-        // Update booking state with new parent
+        // Update booking state with new parent - set all necessary parent state
+        // This ensures the parent info persists through the whole flow
         updateState({
           parentInfo: {
             firstName: newParent.firstName,
@@ -147,6 +148,7 @@ export function ParentSelectionStep() {
           selectedParent: newParent,
         });
 
+        console.log("Created and selected new parent:", newParent);
         nextStep();
       }
     } catch (error) {

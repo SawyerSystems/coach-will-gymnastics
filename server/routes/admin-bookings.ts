@@ -1,7 +1,9 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { Express, Request, Response } from 'express';
 import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, FocusArea, PaymentStatusEnum } from '../../shared/schema';
 import { isAdminAuthenticated } from '../auth';
+import { sendPasswordSetupEmail } from '../lib/email';
 import { logger } from '../logger';
 import { SupabaseStorage } from '../storage';
 
@@ -54,6 +56,31 @@ export function initAdminBookingRoutes(app: Express) {
             emergencyContactPhone: bookingData.parentInfo.emergencyContactPhone,
             passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
           });
+          
+          // Send password setup email to the new parent
+          try {
+            // Generate a reset token
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+            
+            // Store the reset token
+            await storage.createPasswordResetToken({
+              parentId: parent.id,
+              token: resetToken,
+              expiresAt,
+            });
+
+            // Send the password setup email
+            await sendPasswordSetupEmail(
+              parent.email,
+              parent.firstName,
+              resetToken
+            );
+            console.log(`[ADMIN-BOOKING] Password setup email sent to new parent ${parent.email}`);
+          } catch (emailError) {
+            console.error(`[ADMIN-BOOKING] Failed to send password setup email to ${parent.email}:`, emailError);
+            // Continue with booking creation even if email fails
+          }
           
           if (!parent) {
             return res.status(500).json({

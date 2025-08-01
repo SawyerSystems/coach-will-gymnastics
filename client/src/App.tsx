@@ -71,6 +71,7 @@ function Router() {
           <Route path="/admin/login" component={AdminLogin} />
           <Route path="/parent/login" component={ParentLogin} />
           <Route path="/parent/confirm-booking" component={lazy(() => import("@/pages/parent/confirm-booking"))} />
+          <Route path="/parent/set-password" component={lazy(() => import("@/pages/parent/set-password"))} />
           <Route path="/parent-register" component={ParentRegister} />
           <Route path="/parent-dashboard" component={ParentDashboard} />
           <Route path="/checkout" component={Checkout} />

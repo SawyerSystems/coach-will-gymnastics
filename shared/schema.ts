@@ -110,6 +110,15 @@ export const parentVerificationTokens = pgTable("parent_verification_tokens", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const parentPasswordResetTokens = pgTable("parent_password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  parentId: integer("parent_id").notNull().references(() => parents.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const athletes = pgTable('athletes', {
   id: serial('id').primaryKey(),
   parentId: integer('parent_id').references(() => parents.id), // Can be NULL in actual DB
@@ -589,8 +598,6 @@ export type Parent = typeof parents.$inferSelect;
 export type InsertParent = z.infer<typeof insertParentSchema>;
 export type BlogEmailSignup = typeof blogEmailSignups.$inferSelect;
 export type InsertBlogEmailSignup = typeof blogEmailSignups.$inferInsert;
-export type ParentVerificationToken = typeof parentVerificationTokens.$inferSelect;
-export type InsertParentVerificationToken = typeof parentVerificationTokens.$inferInsert;
 // Legacy aliases for backward compatibility
 export type Customer = Parent;
 export type InsertCustomer = InsertParent;
@@ -661,6 +668,10 @@ export type AvailabilityException = typeof availabilityExceptions.$inferSelect;
 export type InsertAvailabilityException = z.infer<typeof insertAvailabilityExceptionSchema>;
 export type Admin = typeof admins.$inferSelect;
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+export type ParentVerificationToken = typeof parentVerificationTokens.$inferSelect;
+export type InsertParentVerificationToken = typeof parentVerificationTokens.$inferInsert;
+export type ParentPasswordResetToken = typeof parentPasswordResetTokens.$inferSelect;
+export type InsertParentPasswordResetToken = typeof parentPasswordResetTokens.$inferInsert;
 
 // Lesson types
 export type LessonType = typeof lessonTypes.$inferSelect;
