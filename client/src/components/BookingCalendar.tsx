@@ -131,8 +131,13 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       const paymentStatus = booking.paymentStatus || booking.payment_status;
       const attendanceStatus = booking.attendanceStatus || booking.attendance_status;
       
-      if (paymentStatus === 'reservation-paid' && attendanceStatus === 'completed') {
+      // Status-based coloring
+      if (attendanceStatus === 'completed') {
         color = 'bg-green-100 border-green-300';
+      } else if (attendanceStatus === 'no-show') {
+        color = 'bg-red-100 border-red-300';
+      } else if (attendanceStatus === 'cancelled') {
+        color = 'bg-gray-100 border-gray-300';
       } else if (paymentStatus === 'reservation-paid' || paymentStatus === 'session-paid') {
         color = 'bg-blue-100 border-blue-300';
       } else {
@@ -187,24 +192,42 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   }, []);
 
   // Custom event component to show colored events
-  const EventComponent = ({ event }: { event: CalendarEvent }) => (
-    <div 
-      className={`rounded p-1 ${event.color || 'bg-blue-100 border-blue-300'} border`}
-      style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-      title={`${event.title} - ${event.status}`}
-    >
-      <span className="text-xs font-medium text-blue-900">
-        {format(event.start, 'h:mm a')} - {event.title}
-      </span>
-      {event.status && event.status !== 'Unknown' && (
-        <span className="text-xs ml-1 font-bold">
-          {event.status === 'completed' ? '✓' : 
-           event.status === 'cancelled' ? '✗' : 
-           event.status === 'no-show' ? '⊘' : ''}
+  const EventComponent = ({ event }: { event: CalendarEvent }) => {
+    // Define status-specific styles
+    let statusClass = '';
+    let statusIcon = '';
+    
+    switch(event.status) {
+      case 'completed':
+        statusClass = 'text-green-700';
+        statusIcon = '✓';
+        break;
+      case 'cancelled':
+        statusClass = 'text-gray-500 line-through';
+        statusIcon = '✗';
+        break;
+      case 'no-show':
+        statusClass = 'text-red-700';
+        statusIcon = '⊘';
+        break;
+      default:
+        statusClass = '';
+        statusIcon = '';
+    }
+    
+    return (
+      <div 
+        className={`rounded p-1 ${event.color || 'bg-blue-100 border-blue-300'} border`}
+        style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        title={`${event.title} - ${event.status}`}
+      >
+        <span className={`text-xs font-medium ${statusClass || 'text-blue-900'}`}>
+          {format(event.start, 'h:mm a')} - {event.title}
+          {statusIcon && <span className="ml-1 font-bold">{statusIcon}</span>}
         </span>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -257,12 +280,15 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                             className={
                               event.status === 'completed' ? 'bg-green-100 text-green-800 border-green-200' : 
                               event.status === 'confirmed' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                              event.status === 'cancelled' ? 'bg-gray-100 text-gray-800 border-gray-200' :
+                              event.status === 'cancelled' ? 'bg-gray-100 text-gray-500 border-gray-200 line-through' :
                               event.status === 'no-show' ? 'bg-red-100 text-red-800 border-red-200' :
                               'bg-amber-100 text-amber-800 border-amber-200'
                             }
                           >
-                            {event.status}
+                            {event.status === 'completed' ? `${event.status} ✓` : 
+                             event.status === 'cancelled' ? `${event.status} ✗` : 
+                             event.status === 'no-show' ? `${event.status} ⊘` : 
+                             event.status}
                           </Badge>
                         </div>
                         <p className="text-sm text-gray-700">{event.title}</p>

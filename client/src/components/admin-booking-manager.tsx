@@ -40,7 +40,7 @@ import type { Booking } from "@shared/schema";
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileText, FileX, Filter, HelpCircle, Mail, Medal, Phone, Plus, Shield, Target, User, Users, X, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminBookingDetailActions } from "./admin-booking-detail-actions";
 
 // Helper function to get status badge variant and color
@@ -405,6 +405,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [dateFilter, setDateFilter] = useState<string>("");
   const [tab, setTab] = useState<'active' | 'archived' | 'calendar'>("active");
+  const [showArchivedInCalendar, setShowArchivedInCalendar] = useState<boolean>(false);
 
   // Auth status check to ensure queries are enabled only when admin is logged in
   const { data: authStatus } = useQuery<{ loggedIn: boolean; adminId?: number }>({
@@ -423,8 +424,14 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   const { data: archivedBookings = [], isLoading: loadingArchived } = useQuery<Booking[]>({
     queryKey: ["/api/archived-bookings"],
     queryFn: () => apiRequest('GET', '/api/archived-bookings').then(res => res.json()),
-    enabled: !!authStatus?.loggedIn && tab === 'archived',
+    enabled: !!authStatus?.loggedIn && (tab === 'archived' || showArchivedInCalendar),
   });
+
+  // Combined bookings for calendar view
+  const allBookingsForCalendar = useMemo(() => {
+    if (!showArchivedInCalendar) return bookings || [];
+    return [...(bookings || []), ...(archivedBookings || [])];
+  }, [bookings, archivedBookings, showArchivedInCalendar]);
 
   // Helper function to invalidate booking caches
   const invalidateBookingQueries = () => {
@@ -1072,10 +1079,31 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                 <p className="text-slate-600">Manage bookings in a visual calendar format</p>
               </div>
               <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-white text-[#0F0276] border border-slate-200 rounded-md px-3 py-1.5">
+                  <Checkbox 
+                    id="show-archived" 
+                    checked={showArchivedInCalendar}
+                    onCheckedChange={(checked) => {
+                      setShowArchivedInCalendar(!!checked);
+                      // If we're showing archived bookings now, make sure they're loaded
+                      if (checked && !archivedBookings.length) {
+                        queryClient.invalidateQueries({ queryKey: ['/api/archived-bookings'] });
+                      }
+                    }}
+                  />
+                  <Label htmlFor="show-archived" className="text-sm cursor-pointer">
+                    Show completed/cancelled
+                  </Label>
+                </div>
                 <Button 
                   variant="outline" 
                   className="flex items-center gap-2 bg-white text-[#0F0276] border-slate-200"
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/bookings'] })}
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+                    if (showArchivedInCalendar) {
+                      queryClient.invalidateQueries({ queryKey: ['/api/archived-bookings'] });
+                    }
+                  }}
                 >
                   <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1099,12 +1127,14 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
 
           {/* Calendar Component */}
           <div className="h-[700px] border rounded-xl bg-white shadow-sm p-2">
-            {bookings?.length === 0 ? (
+            {allBookingsForCalendar?.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center p-8">
                 <Calendar className="h-16 w-16 text-gray-300 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-700">No Bookings Available</h3>
                 <p className="text-gray-500 max-w-md mt-2">
-                  There are no active bookings to display on the calendar. Create a new booking to see it here.
+                  {showArchivedInCalendar 
+                    ? "There are no bookings (active or archived) to display on the calendar."
+                    : "There are no active bookings to display on the calendar. Create a new booking to see it here or toggle 'Show completed/cancelled' to see past bookings."}
                 </p>
                 <Button 
                   variant="default" 
@@ -1120,9 +1150,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
               </div>
             ) : (
               <BookingCalendar 
-                bookings={bookings || []} 
+                bookings={allBookingsForCalendar} 
                 onBookingSelect={(bookingId) => {
-                  const booking = bookings?.find((b: any) => b.id === bookingId);
+                  // Look in both active and archived bookings
+                  const booking = allBookingsForCalendar.find((b: any) => b.id === bookingId);
                   if (booking) {
                     setSelectedBooking(booking);
                     setShowDetailModal(true);
