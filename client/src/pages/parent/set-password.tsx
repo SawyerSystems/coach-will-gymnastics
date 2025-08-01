@@ -75,7 +75,7 @@ export default function SetPasswordPage() {
   };
 
   const handleLogin = () => {
-    setLocation('/parent-login');
+    setLocation('/parent/login');
   };
 
   if (tokenError) {

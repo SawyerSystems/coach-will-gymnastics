@@ -2,6 +2,7 @@ import { render } from '@react-email/render';
 import React from 'react';
 import { Resend } from 'resend';
 import { BirthdayEmail } from '../../emails/BirthdayEmail';
+import { EmailVerification } from '../../emails/EmailVerification';
 import { ManualBookingConfirmation } from '../../emails/ManualBookingConfirmation';
 import { NewTipOrBlog } from '../../emails/NewTipOrBlog';
 import { ParentAuthorization } from '../../emails/ParentAuthorization';
@@ -26,6 +27,10 @@ export const emailTemplates = {
   'parent-welcome': {
     subject: '🤸‍♀️ Welcome to Coach Will Tumbles!',
     component: ParentWelcome
+  },
+  'email-verification': {
+    subject: '✉️ Verify Your Email — Coach Will Tumbles',
+    component: EmailVerification
   },
   'password-setup': {
     subject: '🔐 Set Up Your Password — Coach Will Tumbles',
@@ -438,6 +443,25 @@ export async function sendParentWelcomeEmail(
     data: {
       parentName,
       loginLink,
+    },
+  });
+}
+
+// Helper function to send email verification link
+export async function sendEmailVerificationLink(
+  to: string,
+  firstName: string,
+  verificationToken: string
+) {
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+  
+  return sendEmail({
+    type: 'email-verification',
+    to,
+    data: {
+      firstName,
+      verificationUrl,
     },
   });
 }

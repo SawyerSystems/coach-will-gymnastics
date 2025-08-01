@@ -62,12 +62,15 @@ export default function ParentRegister() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
         title: 'Registration Successful',
-        description: 'Welcome! You can now log in to your parent dashboard.',
+        description: 'An email has been sent with instructions to verify your account.',
       });
-      setLocation('/parent-dashboard');
+      
+      // Redirect to the parent setup success page with the email
+      const emailParam = encodeURIComponent(variables.email);
+      setLocation(`/parent-setup-success?email=${emailParam}`);
     },
     onError: (error: Error) => {
       toast({

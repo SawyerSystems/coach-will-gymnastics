@@ -146,6 +146,7 @@ export function ParentSelectionStep() {
           },
           parentId: newParent.id,
           selectedParent: newParent,
+          isNewParentCreated: true,  // Set flag to identify new parent creation
         });
 
         console.log("Created and selected new parent:", newParent);

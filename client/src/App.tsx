@@ -27,6 +27,8 @@ const Admin = lazy(() => import("@/pages/admin"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
 const ParentLogin = lazy(() => import("@/pages/parent-login"));
 const ParentRegister = lazy(() => import("@/pages/parent-register"));
+const ParentSetupSuccess = lazy(() => import("@/pages/parent-setup-success"));
+const VerifyEmail = lazy(() => import("@/pages/verify-email"));
 const Checkout = lazy(() => import("@/pages/checkout"));
 const BlogPost = lazy(() => import("@/pages/blog-post"));
 const TipDetail = lazy(() => import("@/pages/tip-detail"));
@@ -73,6 +75,8 @@ function Router() {
           <Route path="/parent/confirm-booking" component={lazy(() => import("@/pages/parent/confirm-booking"))} />
           <Route path="/parent/set-password" component={lazy(() => import("@/pages/parent/set-password"))} />
           <Route path="/parent-register" component={ParentRegister} />
+          <Route path="/parent-setup-success" component={ParentSetupSuccess} />
+          <Route path="/verify-email" component={VerifyEmail} />
           <Route path="/parent-dashboard" component={ParentDashboard} />
           <Route path="/checkout" component={Checkout} />
           <Route path="/booking-success" component={BookingSuccess} />

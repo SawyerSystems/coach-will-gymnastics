@@ -1187,7 +1187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send welcome email to manually created parent
       if (parent.email) {
         try {
-          const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent-login`;
+          const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
           await sendParentWelcomeEmail(parent.email, parent.firstName || 'Gymnastics Parent', loginLink);
           console.log(`Welcome email sent to manually created parent ${parent.email}`);
         } catch (emailError) {

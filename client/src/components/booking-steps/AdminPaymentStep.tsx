@@ -252,6 +252,13 @@ export function AdminPaymentStep() {
       const result = await createAdminBooking.mutateAsync(bookingData);
       console.log('Booking created successfully:', result);
       
+      // If this was a new parent, redirect to the parent setup success page instead of regular flow
+      if (bookingData.isNewParentCreated && bookingData.parentInfo?.email) {
+        const emailParam = encodeURIComponent(bookingData.parentInfo.email);
+        setLocation(`/parent-setup-success?email=${emailParam}`);
+        return true;
+      }
+      
       // Return success from the function to allow the modal to close
       return true;
     } catch (error) {
