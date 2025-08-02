@@ -17,10 +17,10 @@ interface EmailVerificationProps {
   verificationUrl: string;
 }
 
-export const EmailVerification = ({
+export function EmailVerification({
   firstName = 'Gymnastics Parent',
   verificationUrl = 'https://example.com/verify',
-}: EmailVerificationProps) => {
+}: EmailVerificationProps) {
   return (
     <Html>
       <Head />
@@ -88,6 +88,6 @@ export const EmailVerification = ({
       </Body>
     </Html>
   );
-};
+}
 
 export default EmailVerification;

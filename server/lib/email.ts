@@ -125,6 +125,9 @@ export async function sendEmail<T extends EmailType>({ type, to, data }: SendEma
   }
 
   try {
+    // Make React available globally for email components
+    (global as any).React = React;
+    
     // Render the email component to HTML
     const EmailComponent = template.component as React.ComponentType<any>;
     const html = await render(React.createElement(EmailComponent, data));
