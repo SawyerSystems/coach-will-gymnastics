@@ -42,6 +42,11 @@ const sendVerificationEmail = async (email: string, firstName: string, token: st
   try {
     await sendEmailVerificationLink(email, firstName, token);
     console.log(`Verification email sent to ${email}`);
+    // Log the token in development mode for testing
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 DEV: Verification token for ${email}: ${token}`);
+      console.log(`🔍 DEV: Verification URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`);
+    }
   } catch (error) {
     console.error(`Failed to send verification email to ${email}:`, error);
     // Log the token in development mode only
@@ -219,12 +224,12 @@ parentAuthRouter.get('/verify-email', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid or expired verification token' });
     }
 
-    if (new Date() > new Date(verificationToken.expiresAt || verificationToken.expires_at)) {
+    if (new Date() > new Date(verificationToken.expires_at)) {
       return res.status(400).json({ error: 'Verification token has expired' });
     }
 
     // Mark the parent as verified
-    const parentId = verificationToken.parentId || verificationToken.parent_id;
+    const parentId = verificationToken.parent_id;
     await storage.markParentAsVerified(parentId);
     
     // Delete the used verification token

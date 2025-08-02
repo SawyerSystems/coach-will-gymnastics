@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, CheckCircle, Loader2, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function VerifyEmail() {
@@ -10,9 +10,13 @@ export default function VerifyEmail() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [, setLocation] = useLocation();
+  const hasVerifiedRef = useRef(false); // Ref to prevent double verification
 
   useEffect(() => {
     const verifyEmail = async () => {
+      if (hasVerifiedRef.current) return; // Prevent double execution
+      hasVerifiedRef.current = true;
+      
       try {
         setLoading(true);
         const params = new URLSearchParams(window.location.search);
@@ -42,7 +46,7 @@ export default function VerifyEmail() {
     };
 
     verifyEmail();
-  }, []);
+  }, []); // Empty dependency array is fine with the ref protection
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 p-4">
