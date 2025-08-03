@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAvailableTimes } from "@/hooks/useAvailableTimes";
 import { useGenders } from "@/hooks/useGenders";
 import { EXPERIENCE_LEVELS, LESSON_TYPES } from "@/lib/constants";
+import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { loadStripe } from '@stripe/stripe-js';
@@ -193,7 +194,9 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
   // Update local parent auth state when data changes
   useEffect(() => {
+    console.log('🔍 Booking modal useEffect - parentAuthData:', parentAuthData);
     if (parentAuthData) {
+      console.log('🔍 Setting parentAuth to:', parentAuthData);
       setParentAuth(parentAuthData);
     }
   }, [parentAuthData]);
@@ -413,16 +416,9 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       const lessonAmount = data.amount || getLessonPrice(data.lessonType);
       
       // Create payment intent with actual lesson price
-      const response = await fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: lessonAmount,
-          bookingId: booking.id,
-          lessonType: data.lessonType
-        }),
+      const response = await apiRequest('POST', '/api/create-payment-intent', {
+        bookingId: booking.id,
+        amount: lessonAmount,
       });
       
       const { clientSecret } = await response.json();
@@ -1148,6 +1144,22 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
           emergencyContactNumber: form.watch("emergencyContactPhone"),
           relationshipToAthlete: "Parent/Guardian",
         }}
+        athleteId={undefined} // Will be created during booking process
+        parentId={(() => {
+          console.log('🔍 Booking modal parentAuth:', parentAuth);
+          console.log('🔍 Booking modal parentAuthData:', parentAuthData);
+          // Ensure we have a valid parentId (never return 0)
+          const parentId = parentAuth?.parentId || parentAuthData?.parentId || undefined;
+          console.log('🔍 Booking modal sending parentId:', parentId);
+          return parentId;
+        })()}
+        athleteData={form.watch("athletes")?.[0] ? {
+          name: form.watch("athletes")[0].name,
+          dateOfBirth: form.watch("athletes")[0].dateOfBirth,
+          gender: form.watch("athletes")[0].gender,
+          allergies: form.watch("athletes")[0].allergies,
+          experience: form.watch("athletes")[0].experience,
+        } : undefined}
       />
     </Dialog>
   );

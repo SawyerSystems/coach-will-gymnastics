@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiRequest } from "@/lib/queryClient";
 import type { BlogPost, Parent } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpDown, Calendar, CheckCircle, Filter, Mail, Search, User } from "lucide-react";
@@ -46,13 +47,7 @@ export default function Blog() {
   // Mutation for parent blog email opt-in
   const parentOptInMutation = useMutation({
     mutationFn: async (optIn: boolean) => {
-      const response = await fetch("/api/parent/blog-email-opt-in", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ optIn }),
-      });
-      if (!response.ok) throw new Error("Failed to update blog email preference");
+      const response = await apiRequest("PATCH", "/api/parent/blog-email-opt-in", { optIn });
       return response.json();
     },
     onSuccess: (data) => {
@@ -69,15 +64,7 @@ export default function Blog() {
   // Mutation for guest email signup
   const guestSignupMutation = useMutation({
     mutationFn: async (email: string) => {
-      const response = await fetch("/api/blog-email-signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to subscribe");
-      }
+      const response = await apiRequest("POST", "/api/blog-email-signup", { email });
       return response.json();
     },
     onSuccess: (data) => {

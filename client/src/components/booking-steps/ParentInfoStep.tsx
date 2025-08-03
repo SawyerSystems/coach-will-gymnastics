@@ -178,7 +178,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
       setIsManuallyFetchingParent(true);
       setLoadingError(null);
       
-      fetch(`/api/parents/${selectedAthlete.parentId}`)
+      apiRequest('GET', `/api/parents/${selectedAthlete.parentId}`)
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch parent');
           return res.json();

@@ -1,12 +1,13 @@
-import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { Tip } from "@shared/schema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDateField } from "@/lib/date-utils";
+import { apiRequest } from "@/lib/queryClient";
+import { Tip } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ArrowLeft, Calendar } from "lucide-react";
+import { Link, useParams } from "wouter";
 
 export default function TipDetail() {
   const { id } = useParams();
@@ -14,7 +15,7 @@ export default function TipDetail() {
   const { data: tip, isLoading, error } = useQuery<Tip>({
     queryKey: ['/api/tips', id],
     queryFn: async () => {
-      const response = await fetch(`/api/tips/${id}`);
+      const response = await apiRequest('GET', `/api/tips/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch tip');
       }

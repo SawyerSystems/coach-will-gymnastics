@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle, Mail, Phone, Shield, User } from "lucide-react";
 
@@ -28,7 +29,7 @@ export function ParentInfoDisplay({ athleteId, parentInfo: fallbackParentInfo }:
   const { data: parentDetails, isLoading, error } = useQuery<ParentInfo>({
     queryKey: [`/api/athletes/${athleteId}/parent-details`],
     queryFn: async () => {
-      const response = await fetch(`/api/athletes/${athleteId}/parent-details`);
+      const response = await apiRequest('GET', `/api/athletes/${athleteId}/parent-details`);
       if (!response.ok) {
         throw new Error('Failed to fetch parent details');
       }

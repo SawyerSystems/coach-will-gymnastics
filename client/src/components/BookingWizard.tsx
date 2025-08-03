@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { BOOKING_FLOWS, useBookingFlow } from "@/contexts/BookingFlowContext";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AdminPaymentStep } from "./booking-steps/AdminPaymentStep";
 import { AthleteInfoFormStep } from "./booking-steps/AthleteInfoFormStep";
@@ -13,6 +13,7 @@ import { PaymentStep } from "./booking-steps/PaymentStep";
 import { SafetyStep } from "./booking-steps/SafetyStep";
 import { ScheduleStep } from "./booking-steps/ScheduleStep";
 import { WaiverStep } from "./booking-steps/WaiverStep";
+import { BookingFlowDebugger } from "./BookingFlowDebugger";
 
 interface BookingWizardProps {
   onClose: () => void;
@@ -92,6 +93,27 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
   const renderStep = () => {
     const stepName = getCurrentStepName();
     
+    // Debug logging to trace the issue
+    console.log('🎯 BOOKING WIZARD DEBUG:', {
+      currentStepName: stepName,
+      currentStepIndex: state.currentStep,
+      flowType: state.flowType,
+      steps: BOOKING_FLOWS[state.flowType] || [],
+      hasParentInfo: !!state.parentInfo,
+      parentInfo: state.parentInfo ? { email: state.parentInfo.email } : null
+    });
+
+    // CRITICAL: ParentSelectionStep should NEVER render for logged-in parents
+    if (stepName === 'parentSelection' && state.parentInfo) {
+      console.error('🚨 CRITICAL BUG: ParentSelectionStep rendering for logged-in parent!', {
+        stepName,
+        parentInfo: state.parentInfo ? { email: state.parentInfo.email } : null,
+        flowType: state.flowType,
+        currentStep: state.currentStep,
+        expectedSteps: BOOKING_FLOWS[state.flowType]
+      });
+    }
+    
     switch (stepName) {
       case 'lessonType':
         return <LessonTypeStep />;
@@ -154,6 +176,7 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
 
   return (
     <div className="flex flex-col h-full">
+      <BookingFlowDebugger />
       <div className="p-6 pb-4 relative">
         <Button
           variant="ghost"

@@ -627,7 +627,13 @@ function ParentDashboard() {
           </div>
           <div className="flex gap-2">
             <Button 
-              onClick={() => setShowAthleteSelection(true)}
+              onClick={() => {
+                console.log('🎯 PARENT DASHBOARD: Book New Session clicked!', {
+                  hasParentInfo: !!parentInfo,
+                  parentInfo: parentInfo ? { id: parentInfo.id, email: parentInfo.email } : null
+                });
+                setShowAthleteSelection(true);
+              }}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-xs px-2 py-1.5 min-h-[36px] md:text-sm md:px-3 md:py-2 md:min-h-[40px] shadow-sm"
             >
               <PlusCircle className="h-4 w-4 mr-1" />
@@ -1558,6 +1564,10 @@ function ParentDashboard() {
                   <p className="text-gray-600 mb-4">No athletes registered yet</p>
                   <Button 
                     onClick={() => {
+                      console.log('🎯 PARENT DASHBOARD: Add New Athlete clicked from athlete selection!', {
+                        hasParentInfo: !!parentInfo,
+                        parentInfo: parentInfo ? { id: parentInfo.id, email: parentInfo.email } : null
+                      });
                       setShowAthleteSelection(false);
                       setShowBookingModal(true);
                     }}
@@ -1970,6 +1980,8 @@ function ParentDashboard() {
               relationshipToAthlete: "Parent/Guardian",
               emergencyContactNumber: parentInfo?.phone || "",
             }}
+            athleteId={selectedAthleteForWaiver.id}
+            parentId={parentInfo?.id || 0}
           />
         )}
 

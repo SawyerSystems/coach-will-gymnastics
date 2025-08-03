@@ -1,11 +1,11 @@
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { Button } from "@/components/ui/button";
-import { FileText, CheckCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { UpdatedWaiverModal } from "../updated-waiver-modal";
+import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useToast } from "@/hooks/use-toast";
 import { useWaiverStatus } from "@/hooks/use-waiver-status";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { UpdatedWaiverModal } from "../updated-waiver-modal";
 
 export function WaiverStep() {
   const { state, updateState, nextStep } = useBookingFlow();
@@ -139,6 +139,8 @@ export function WaiverStep() {
           emergencyContactNumber: (parentInfo as any)?.emergencyContactPhone || "",
           relationshipToAthlete: "Parent/Guardian",
         }}
+        parentId={(parentInfo as any)?.id || 0}
+        athleteId={undefined} // This component is used in booking flow where athlete doesn't exist yet
       />
     </div>
   );

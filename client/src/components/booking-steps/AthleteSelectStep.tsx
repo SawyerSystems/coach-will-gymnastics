@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { BOOKING_FLOWS, useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -57,12 +57,26 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
   };
 
   const handleAddNewAthlete = () => {
+    console.log('👆 Add New Athlete clicked, current flow:', state.flowType);
+    
     if (isAdminFlow) {
       // For admin flows, show option to create new athlete
       setShowNewAthleteOption(true);
+    } else if (state.flowType === 'parent-portal') {
+      // For parent portal, keep the parent-portal flow type but move to athleteInfoForm step
+      const currentFlow = BOOKING_FLOWS['parent-portal'];
+      const athleteInfoFormIndex = currentFlow.indexOf('athleteInfoForm');
+      
+      updateState({ 
+        currentStep: athleteInfoFormIndex,
+        athleteInfo: [] // Clear any existing athlete info
+      });
+      
+      console.log('✅ Maintained parent-portal flow, moving to athleteInfoForm step', { athleteInfoFormIndex });
     } else {
-      // For public flows, switch to new athlete form flow
+      // For all other public flows, switch to new athlete form flow
       updateState({ flowType: 'new-user' });
+      console.log('⚠️ Changed flow to new-user');
     }
   };
 

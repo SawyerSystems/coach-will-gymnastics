@@ -1,3 +1,4 @@
+import { apiRequest } from '@/lib/queryClient';
 import { useEffect, useState } from 'react';
 
 export interface Gender {
@@ -17,7 +18,7 @@ export function useGenders() {
     async function fetchGenders() {
       try {
         setLoading(true);
-        const response = await fetch('/api/genders');
+        const response = await apiRequest('GET', '/api/genders');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch genders: ${response.status}`);

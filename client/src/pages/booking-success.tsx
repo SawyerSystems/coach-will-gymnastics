@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LESSON_TYPES } from "@/lib/constants";
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -24,7 +25,7 @@ export default function BookingSuccess() {
     queryKey: ["/api/booking-by-session", sessionId],
     queryFn: async () => {
       if (!sessionId) return null;
-      const response = await fetch(`/api/booking-by-session/${sessionId}`);
+      const response = await apiRequest('GET', `/api/booking-by-session/${sessionId}`);
       if (!response.ok) {
         console.error(`Failed to fetch booking: ${response.status} ${response.statusText}`);
         throw new Error("Failed to fetch booking");

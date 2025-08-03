@@ -74,6 +74,7 @@ export const BOOKING_FLOWS = {
   'parent-portal': [
     'lessonType',
     'athleteSelect',
+    'athleteInfoForm', // Add step for creating new athletes
     'focusAreas',
     'schedule',
     'parentConfirm',
@@ -199,11 +200,30 @@ export function BookingFlowProvider({
 
   const getCurrentStepName = () => {
     const flow = getCurrentFlow();
-    return flow[state.currentStep] || flow[0];
+    const stepName = flow[state.currentStep] || flow[0];
+    console.log('📍 GETTING CURRENT STEP:', {
+      flowType: state.flowType,
+      currentStepIndex: state.currentStep,
+      stepName,
+      fullFlow: flow,
+      totalSteps: flow.length
+    });
+    return stepName;
   };
 
   const nextStep = () => {
     const flow = getCurrentFlow();
+    const currentStepName = flow[state.currentStep];
+    const nextStepName = flow[state.currentStep + 1];
+    
+    console.log('➡️ NEXT STEP NAVIGATION:', {
+      from: currentStepName,
+      to: nextStepName,
+      currentIndex: state.currentStep,
+      nextIndex: state.currentStep + 1,
+      flowType: state.flowType
+    });
+    
     if (state.currentStep < flow.length - 1) {
       setState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
     }

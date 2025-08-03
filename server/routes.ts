@@ -5697,8 +5697,48 @@ setTimeout(async () => {
   app.post("/api/waivers", async (req, res) => {
     try {
       console.log('🔍 Raw waiver request body:', JSON.stringify(req.body, null, 2));
-      const waiverData = insertWaiverSchema.parse(req.body);
-      console.log('✅ Parsed waiver data:', JSON.stringify(waiverData, null, 2));
+      
+      // Handle the case where athleteId is missing but athleteData is provided (new booking flow)
+      let { athleteId, parentId, athleteData, ...waiverFields } = req.body;
+      
+      // If no athleteId but we have athleteData, create the athlete first
+      if (!athleteId && athleteData && parentId) {
+        console.log('🔄 Creating athlete from waiver data for parent ID:', parentId);
+        try {
+          const newAthlete = await storage.createAthlete({
+            parentId: parentId,
+            name: athleteData.name,
+            firstName: athleteData.name.split(' ')[0],
+            lastName: athleteData.name.split(' ').slice(1).join(' ') || '',
+            dateOfBirth: athleteData.dateOfBirth,
+            gender: athleteData.gender,
+            allergies: athleteData.allergies,
+            experience: athleteData.experience as "beginner" | "intermediate" | "advanced",
+          });
+          athleteId = newAthlete.id;
+          console.log('✅ Created athlete with ID:', athleteId);
+        } catch (athleteError) {
+          console.error('❌ Error creating athlete for waiver:', athleteError);
+          return res.status(500).json({ error: "Failed to create athlete for waiver" });
+        }
+      }
+      
+      // Validate that we now have both athleteId and parentId
+      if (!athleteId || !parentId) {
+        console.log('❌ Missing required IDs:', { athleteId, parentId });
+        return res.status(400).json({ 
+          error: "Both athleteId and parentId are required, or provide athleteData with parentId" 
+        });
+      }
+      
+      const waiverData = {
+        ...waiverFields,
+        athleteId,
+        parentId,
+      };
+      
+      const parsedWaiverData = insertWaiverSchema.parse(waiverData);
+      console.log('✅ Waiver validation passed for athlete ID:', athleteId);
       
       // Capture IP address and user agent
       const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
@@ -5706,7 +5746,7 @@ setTimeout(async () => {
       
       // Create waiver record
       const waiver = await storage.createWaiver({
-        ...waiverData,
+        ...parsedWaiverData,
         ipAddress,
         userAgent,
       } as any);

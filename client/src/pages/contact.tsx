@@ -48,7 +48,7 @@ export default function Contact() {
   // Fetch site content data
   const { data: siteContent } = useQuery({
     queryKey: ['/api/site-content'],
-    queryFn: () => fetch('/api/site-content').then(res => res.json())
+    queryFn: () => apiRequest('GET', '/api/site-content').then(res => res.json())
   });
 
   const form = useForm<ContactFormData>({

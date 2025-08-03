@@ -2,6 +2,7 @@ import { BookingEditModal } from '@/components/BookingEditModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, LessonType } from '@shared/schema';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -20,7 +21,7 @@ export function AdminBookingDetail({ booking, onRefresh }: AdminBookingDetailPro
   const { data: bookingDetails, isLoading } = useQuery({
     queryKey: ['/api/bookings', booking.id, 'details'],
     queryFn: async () => {
-      const response = await fetch(`/api/bookings/${booking.id}/details`);
+      const response = await apiRequest('GET', `/api/bookings/${booking.id}/details`);
       if (!response.ok) {
         throw new Error('Failed to fetch booking details');
       }
@@ -32,7 +33,7 @@ export function AdminBookingDetail({ booking, onRefresh }: AdminBookingDetailPro
   const { data: lessonType } = useQuery<LessonType>({
     queryKey: ['/api/lesson-types', booking.lessonTypeId],
     queryFn: async () => {
-      const response = await fetch(`/api/lesson-types/${booking.lessonTypeId}`);
+      const response = await apiRequest('GET', `/api/lesson-types/${booking.lessonTypeId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch lesson type details');
       }

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import {
     AlertCircle,
@@ -66,7 +67,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
   const { data: bookingHistory, isLoading, error } = useQuery<BookingDetails[]>({
     queryKey: [`/api/athletes/${athleteId}/booking-history`],
     queryFn: async () => {
-      const response = await fetch(`/api/athletes/${athleteId}/booking-history`);
+      const response = await apiRequest('GET', `/api/athletes/${athleteId}/booking-history`);
       if (!response.ok) {
         throw new Error('Failed to fetch booking history');
       }

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Clock, HelpCircle, Image, Mail, MapPin, Phone, Save, Star, Upload, Users, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -127,7 +128,7 @@ export function AdminSiteContentManager() {
   useEffect(() => {
     const loadSiteContent = async () => {
       try {
-        const response = await fetch('/api/site-content');
+        const response = await apiRequest('GET', '/api/site-content');
         if (response.ok) {
           const data = await response.json();
           setContent(prevContent => ({
@@ -154,11 +155,7 @@ export function AdminSiteContentManager() {
     setSaving(true);
     try {
       // Save content to backend
-      const response = await fetch('/api/admin/site-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(content)
-      });
+      const response = await apiRequest('POST', '/api/admin/site-content', content);
 
       if (response.ok) {
         toast({

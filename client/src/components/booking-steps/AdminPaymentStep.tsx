@@ -8,6 +8,7 @@ import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
 import { LESSON_TYPES } from "@/lib/constants";
 import { formatBookingDate } from "@/lib/dateUtils";
+import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 
 import { AlertCircle, CheckCircle, CreditCard, DollarSign, FileText, Loader2 } from "lucide-react";
@@ -29,15 +30,8 @@ export function AdminPaymentStep() {
       console.log("Submitting booking data:", JSON.stringify(bookingData, null, 2));
       
       try {
-        // Use raw fetch for more control over error handling
-        const fetchResponse = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/bookings`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(bookingData),
-          credentials: 'include'
-        });
+        // Use apiRequest utility 
+        const fetchResponse = await apiRequest('POST', '/api/admin/bookings', bookingData);
         
         // Get the response as text first
         const responseText = await fetchResponse.text();

@@ -10,6 +10,10 @@ declare module 'express-session' {
     adminId?: number;
     parentId?: number;
     parentEmail?: string;
+    // Parent auth code system
+    parentAuthCode?: string;
+    parentAuthEmail?: string;
+    parentAuthCodeExpires?: number;
   }
 }
 

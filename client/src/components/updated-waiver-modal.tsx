@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ChevronRight, FileText, Heart, Shield, Users } from "lucide-react";
@@ -44,11 +45,19 @@ interface UpdatedWaiverModalProps {
     emergencyContactNumber?: string;
     relationshipToAthlete?: string;
   };
-  athleteId?: number;
-  parentId?: number;
+  athleteId?: number;  // Optional - for existing athletes
+  parentId: number;    // Required - parent must exist
+  // For new booking flow - athlete data when athleteId is not available
+  athleteData?: {
+    name: string;
+    dateOfBirth?: string;
+    gender?: string;
+    allergies?: string;
+    experience?: string;
+  };
 }
 
-export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingData, athleteId, parentId }: UpdatedWaiverModalProps) {
+export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingData, athleteId, parentId, athleteData }: UpdatedWaiverModalProps) {
   const [step, setStep] = useState(1);
   const [signatureData, setSignatureData] = useState<string>("");
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
@@ -75,15 +84,9 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
 
   const createWaiverMutation = useMutation({
     mutationFn: async (waiverData: any) => {
-      const response = await fetch("/api/waivers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(waiverData),
-      });
+      const response = await apiRequest("POST", "/api/waivers", waiverData);
       if (!response.ok) {
-        throw new Error("Failed to create waiver");
+        throw new Error(`Failed to create waiver: ${response.status}`);
       }
       return response.json();
     },
@@ -175,6 +178,10 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
   };
 
   const onSubmit = async (data: WaiverFormData) => {
+    console.log('🔍 Waiver modal received parentId:', parentId);
+    console.log('🔍 Waiver modal received athleteId:', athleteId);
+    console.log('🔍 Waiver modal received athleteData:', athleteData);
+    
     if (!signatureData) {
       toast({
         title: "Signature Required",
@@ -184,14 +191,30 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
       return;
     }
 
-    const waiverData = {
+    const waiverData: any = {
       ...data,
       signature: signatureData,
       signedAt: new Date(),
-      athleteId,
-      parentId,
+      parentId, // Always include parentId (required)
     };
+    
+    // Only include athleteId if it exists
+    if (athleteId) {
+      waiverData.athleteId = athleteId;
+    }
+    
+    // Include athlete data for new booking flow when athleteId is not available
+    if (athleteData && !athleteId) {
+      waiverData.athleteData = {
+        name: athleteData.name,
+        dateOfBirth: athleteData.dateOfBirth,
+        gender: athleteData.gender,
+        allergies: athleteData.allergies,
+        experience: athleteData.experience,
+      };
+    }
 
+    console.log('📤 Submitting waiver data:', waiverData);
     createWaiverMutation.mutate(waiverData);
   };
 

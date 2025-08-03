@@ -292,3 +292,115 @@ parentAuthRouter.post('/resend-verification', [
     res.status(500).json({ error: 'Failed to resend verification email' });
   }
 });
+
+// POST /api/parent-auth/send-code
+parentAuthRouter.post('/send-code', [
+  body('email').isEmail().normalizeEmail(),
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { email } = req.body;
+    
+    // Check if parent exists
+    const parent = await storage.getParentByEmail(email);
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found with this email address' });
+    }
+
+    // Generate a 6-digit verification code
+    const authCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store the code in session with expiration (10 minutes)
+    req.session.parentAuthCode = authCode;
+    req.session.parentAuthEmail = email;
+    req.session.parentAuthCodeExpires = Date.now() + (10 * 60 * 1000); // 10 minutes
+    
+    // Send the code via email
+    const { sendParentAuthCode } = await import('./lib/email');
+    await sendParentAuthCode(email, parent.firstName || 'Parent', authCode);
+    
+    // Log the code in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 DEV: Auth code for ${email}: ${authCode}`);
+    }
+
+    res.json({ success: true, message: 'Verification code sent to your email' });
+  } catch (error) {
+    console.error('Send code error:', error);
+    res.status(500).json({ error: 'Failed to send verification code' });
+  }
+});
+
+// POST /api/parent-auth/verify-code
+parentAuthRouter.post('/verify-code', [
+  body('email').isEmail().normalizeEmail(),
+  body('code').isString().isLength({ min: 6, max: 6 }),
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { email, code } = req.body;
+    
+    // Check if code matches and hasn't expired
+    if (!req.session.parentAuthCode || 
+        !req.session.parentAuthEmail || 
+        !req.session.parentAuthCodeExpires) {
+      return res.status(400).json({ error: 'No verification code found. Please request a new code.' });
+    }
+
+    if (req.session.parentAuthEmail !== email) {
+      return res.status(400).json({ error: 'Email mismatch. Please request a new code.' });
+    }
+
+    if (Date.now() > req.session.parentAuthCodeExpires) {
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' });
+    }
+
+    if (req.session.parentAuthCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+
+    // Get parent info
+    const parent = await storage.getParentByEmail(email);
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found' });
+    }
+
+    // Clear the verification code from session
+    delete req.session.parentAuthCode;
+    delete req.session.parentAuthEmail;
+    delete req.session.parentAuthCodeExpires;
+
+    // Set parent session data (log them in)
+    req.session.parentId = parent.id;
+    req.session.parentEmail = parent.email;
+    
+    // Update lastLoginAt timestamp
+    try {
+      const { error } = await supabaseAdmin
+        .from('parents')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', parent.id);
+        
+      if (error) {
+        console.warn('Failed to update parent last login timestamp:', error);
+      } else {
+        console.log(`Updated lastLoginAt for parent ${parent.id}`);
+      }
+    } catch (updateError) {
+      console.error('Error updating lastLoginAt:', updateError);
+    }
+
+    res.json({ success: true, parentId: parent.id, parentEmail: parent.email });
+  } catch (error) {
+    console.error('Verify code error:', error);
+    res.status(500).json({ error: 'Failed to verify code' });
+  }
+});

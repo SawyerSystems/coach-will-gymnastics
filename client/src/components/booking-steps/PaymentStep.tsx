@@ -23,9 +23,10 @@ export function PaymentStep() {
     queryFn: async () => {
       if (!state.selectedAthletes || state.selectedAthletes.length === 0) return [];
 
-      const athletePromises = state.selectedAthletes.map(athleteId => 
-        fetch(`/api/athletes/${athleteId}`).then(res => res.json())
-      );
+      const athletePromises = state.selectedAthletes.map(async athleteId => {
+        const response = await apiRequest('GET', `/api/athletes/${athleteId}`);
+        return response.json();
+      });
 
       return Promise.all(athletePromises);
     },

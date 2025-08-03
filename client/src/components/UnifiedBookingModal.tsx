@@ -36,6 +36,15 @@ export function UnifiedBookingModal({
   suggestedFocusAreas = []
 }: UnifiedBookingModalProps) {
   
+  console.log('🚀 UNIFIED BOOKING MODAL MOUNTED/OPENED:', {
+    isOpen,
+    parentData: parentData ? { id: parentData.id, email: parentData.email, firstName: parentData.firstName } : null,
+    selectedAthletes: selectedAthletes?.length || 0,
+    isAdminFlow,
+    isNewParent,
+    adminContext
+  });
+  
   // Check if user is a logged-in parent (only if no parent data provided and not admin)
   const { data: parentAuthStatus } = useQuery({
     queryKey: ['/api/parent-auth/status'],
@@ -46,36 +55,50 @@ export function UnifiedBookingModal({
     enabled: !isAdminFlow && !parentData, // Only check if not admin and no parent data provided
   });
 
+  // Define helper variables for flow determination
+  const loggedInParent = !!parentData || parentAuthStatus?.loggedIn;
+  const isAdmin = isAdminFlow;
+  
+  console.log('🔧 HELPER VARIABLES:', {
+    parentData: parentData ? { id: parentData.id, email: parentData.email } : null,
+    parentAuthStatus,
+    loggedInParent,
+    isAdmin
+  });
+
   // Determine flow type based on context
   const determineFlowType = (): BookingFlowType => {
-    // Admin flows
-    if (isAdminFlow) {
-      if (adminContext === 'new-athlete') return 'admin-new-athlete';
-      if (adminContext === 'existing-athlete') return 'admin-existing-athlete';
-      if (adminContext === 'from-athlete' || preSelectedAthleteId) return 'admin-from-athlete';
-      return 'admin-new-athlete'; // Default admin flow
-    }
+    console.log('🔍 FLOW DETERMINATION DEBUG:', {
+      loggedInParent: !!loggedInParent,
+      hasParentData: !!parentData,
+      selectedAthletes: selectedAthletes?.length || 0,
+      selectedAthletesData: selectedAthletes,
+      isAdmin: !!isAdmin,
+      parentId: parentData?.id,
+      parentEmail: parentData?.email
+    });
 
-    // Public flows - prioritize explicit parent data over auth status
-    const hasParentData = parentData !== null && parentData !== undefined;
-    const loggedInParent = hasParentData || parentAuthStatus?.loggedIn;
-    
-    // New user flow (no parent, or explicitly marked as new)
-    if (isNewParent || (!loggedInParent && !hasParentData)) {
-      return 'new-user';
-    }
-    
-    // Athlete-specific flow (from athlete modal or pre-selected)
-    if (preSelectedAthleteId || selectedAthletes.length > 0) {
-      return 'athlete-modal';
-    }
-    
-    // Logged-in parent flow (parent portal or home/booking page access)
+    // Check logged-in parent status FIRST (this was the fix)
     if (loggedInParent) {
+      console.log('✅ FLOW: parent-portal (logged-in parent)', { hasParentData: !!parentData });
       return 'parent-portal';
     }
-    
-    return 'new-user'; // Default fallback
+
+    // Athlete-specific flow for admin or existing athlete selection
+    if (selectedAthletes && selectedAthletes.length > 0) {
+      console.log('✅ FLOW: athlete-modal (selected athletes)');
+      return 'athlete-modal';
+    }
+
+    // Admin creating new athlete booking
+    if (isAdmin) {
+      console.log('✅ FLOW: admin-new-athlete (admin user)');
+      return 'admin-new-athlete';
+    }
+
+    // Default: New user flow
+    console.log('✅ FLOW: new-user (default)');
+    return 'new-user';
   };
 
   const flowType = determineFlowType();

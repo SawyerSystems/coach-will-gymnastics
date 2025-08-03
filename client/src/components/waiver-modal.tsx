@@ -1,22 +1,22 @@
-import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, FileText, Shield, Users, Heart, Camera, ChevronRight } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AlertTriangle, ChevronRight, FileText, Heart, Shield, Users } from "lucide-react";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import SignatureCanvas from "react-signature-canvas";
+import { z } from "zod";
 
 // Waiver form schema - updated to match new requirements
 const waiverSchema = z.object({
@@ -55,6 +55,8 @@ interface WaiverModalProps {
   isOpen: boolean;
   onClose: () => void;
   onWaiverSigned: (waiverData: any) => void;
+  athleteId: number; // Required for backend
+  parentId: number; // Required for backend
   bookingData?: {
     athleteName?: string;
     parentName?: string;
@@ -63,7 +65,7 @@ interface WaiverModalProps {
   };
 }
 
-export function WaiverModal({ isOpen, onClose, onWaiverSigned, bookingData }: WaiverModalProps) {
+export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parentId, bookingData }: WaiverModalProps) {
   const [step, setStep] = useState(1);
   const [signatureData, setSignatureData] = useState<string>("");
   const signatureRef = useRef<SignatureCanvas>(null);
@@ -94,13 +96,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, bookingData }: Wa
 
   const createWaiverMutation = useMutation({
     mutationFn: async (waiverData: any) => {
-      const response = await fetch("/api/waivers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(waiverData),
-      });
+      const response = await apiRequest("POST", "/api/waivers", waiverData);
       if (!response.ok) {
         throw new Error("Failed to create waiver");
       }
@@ -192,6 +188,8 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, bookingData }: Wa
 
     const waiverData = {
       ...data,
+      athleteId,
+      parentId,
       signature: signatureData,
       signedAt: new Date(),
     };

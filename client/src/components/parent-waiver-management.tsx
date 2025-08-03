@@ -413,7 +413,7 @@ export function ParentWaiverManagement() {
           onClose={() => setShowWaiverModal(false)}
           onWaiverSigned={handleWaiverSigned}
           athleteId={selectedAthlete.id}
-          parentId={parentInfo?.id}
+          parentId={parentInfo?.id || 0}
           bookingData={{
             athleteName: selectedAthlete.name,
             parentName: parentInfo ? `${parentInfo.firstName || ''} ${parentInfo.lastName || ''}`.trim() : '',

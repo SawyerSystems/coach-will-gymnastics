@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import type { Booking } from '@shared/schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, MessageSquare, Shield, User, Users } from "lucide-react";
@@ -42,11 +43,7 @@ export function AdminEditBookingForm({ booking, onClose }: AdminEditBookingFormP
       adminNotes?: string;
       specialRequests?: string;
     }) => {
-      const response = await fetch(`/api/bookings/${booking.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('PATCH', `/api/bookings/${booking.id}`, data);
       if (!response.ok) {
         throw new Error('Failed to update booking');
       }

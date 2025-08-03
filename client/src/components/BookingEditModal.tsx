@@ -9,28 +9,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { determineBookingStatus } from '@/lib/booking-status';
+import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, LessonType, Parent } from '@shared/schema';
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertTriangle,
-  Bookmark,
-  CheckCircle,
-  ClipboardList,
-  Clock,
-  CreditCard,
-  DollarSign,
-  Filter,
-  Info,
-  Lock,
-  MessageSquare,
-  Shield,
-  Tag,
-  Target,
-  User,
-  UserCheck,
-  Users,
-  X
+    AlertTriangle,
+    Bookmark,
+    CheckCircle,
+    ClipboardList,
+    Clock,
+    CreditCard,
+    DollarSign,
+    Filter,
+    Info,
+    Lock,
+    MessageSquare,
+    Shield,
+    Tag,
+    Target,
+    User,
+    UserCheck,
+    Users,
+    X
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -121,7 +122,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   const { data: bookingDetails } = useQuery({
     queryKey: ['/api/bookings', booking.id, 'details'],
     queryFn: async () => {
-      const response = await fetch(`/api/bookings/${booking.id}/details`);
+      const response = await apiRequest('GET', `/api/bookings/${booking.id}/details`);
       if (!response.ok) {
         throw new Error('Failed to fetch booking details');
       }
@@ -201,7 +202,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   const { data: apparatus = [] } = useQuery<Apparatus[]>({
     queryKey: ['/api/apparatus'],
     queryFn: async () => {
-      const response = await fetch('/api/apparatus');
+      const response = await apiRequest('GET', '/api/apparatus');
       if (!response.ok) {
         throw new Error('Failed to fetch apparatus');
       }
@@ -225,7 +226,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
           url += `&apparatusId=${selectedApparatusId}`;
         }
                      
-        const response = await fetch(url);
+        const response = await apiRequest('GET', url);
         if (!response.ok) {
           console.error('Failed to fetch focus areas:', await response.text());
           return [];
@@ -424,11 +425,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         }
         
         // Send update request
-        const response = await fetch(`/api/bookings/${booking.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
+        const response = await apiRequest('PATCH', `/api/bookings/${booking.id}`, data);
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -521,9 +518,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       
       try {
         // Send delete request
-        const response = await fetch(`/api/bookings/${bookingId}`, {
-          method: 'DELETE',
-        });
+        const response = await apiRequest('DELETE', `/api/bookings/${bookingId}`);
         
         if (!response.ok) {
           const errorData = await response.json();
