@@ -68,7 +68,7 @@ export function FocusAreasStep() {
     if (state.selectedAthletes.length === 0) {
       // Determine which step we should navigate to
       const targetStep = state.flowType === 'parent-portal' ? 'athleteSelect' : 'athleteInfoForm';
-      const targetStepIndex = BOOKING_FLOWS[state.flowType as BookingFlowType].indexOf(targetStep);
+      const targetStepIndex = BOOKING_FLOWS[state.flowType as BookingFlowType].indexOf(targetStep as any);
       
       if (targetStepIndex >= 0) {
         console.log('⚠️ No athlete selected in FocusAreasStep! Redirecting to', targetStep);

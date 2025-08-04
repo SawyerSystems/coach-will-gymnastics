@@ -20,7 +20,7 @@ export default function BookingSuccess() {
   const sessionId = urlParams.get("session_id");
 
   // Fetch booking details using session ID
-  const { data: booking, isLoading, error } = useQuery({
+  const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: ["/api/booking-by-session", sessionId],
     queryFn: async () => {
       if (!sessionId) return null;
@@ -34,12 +34,33 @@ export default function BookingSuccess() {
     enabled: !!sessionId,
     retry: 3,
     retryDelay: 1000,
+    // Increase staleTime to reduce unnecessary fetches
+    staleTime: 5000,
+    // But make sure we refetch when page is visible to get updated payment status
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
     // Reset any booking state when user reaches success page
     window.scrollTo(0, 0);
-  }, []);
+    
+    // Set up a periodic refetch to catch any webhook updates
+    // This ensures we get the latest payment status
+    const refetchInterval = setInterval(() => {
+      console.log("Refetching booking data to get updated payment status...");
+      refetch();
+    }, 5000); // Check every 5 seconds for the first minute
+    
+    // Clear the interval after 1 minute (typical webhook processing time)
+    setTimeout(() => {
+      clearInterval(refetchInterval);
+      console.log("Stopped automatic refetching of booking data");
+      // One final refetch
+      refetch();
+    }, 60000);
+    
+    return () => clearInterval(refetchInterval);
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -114,6 +135,9 @@ export default function BookingSuccess() {
   const totalLessonPrice = parseFloat(booking?.amount || booking?.lessonType?.price?.toString() || '0');
   const actualPaidAmount = parseFloat(booking?.paidAmount || '0');
   const remainingBalance = totalLessonPrice - actualPaidAmount;
+  
+  // Check if reservation fee has been paid based on the flag from the database
+  const reservationFeePaid = booking?.reservationFeePaid === true;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 py-12 px-4">
@@ -190,16 +214,31 @@ export default function BookingSuccess() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Lesson Total:</span>
-                <span className="font-medium">${totalLessonPrice}</span>
+                <span className="font-medium">${totalLessonPrice.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-green-700">
-                <span>Reservation Fee Paid:</span>
-                <span className="font-medium">-${actualPaidAmount}</span>
-              </div>
+              
+              {reservationFeePaid ? (
+                <div className="flex justify-between text-sm text-green-700">
+                  <span>Reservation Fee Paid:</span>
+                  <span className="font-medium">-${actualPaidAmount.toFixed(2)}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm text-yellow-700">
+                  <span>Reservation Fee:</span>
+                  <span className="font-medium">Payment processing...</span>
+                </div>
+              )}
+              
               <div className="border-t pt-2 flex justify-between">
                 <span className="font-semibold">Remaining Balance:</span>
-                <span className="font-bold text-lg">${remainingBalance}</span>
+                <span className="font-semibold">${remainingBalance.toFixed(2)}</span>
               </div>
+              
+              {booking?.paidAmount && (
+                <p className="text-xs text-green-700 mt-2">
+                  Payment ID: {booking.stripeSessionId || 'Processing...'}
+                </p>
+              )}
             </div>
             <p className="text-sm text-green-700 bg-green-100 p-3 rounded">
               The remaining balance of ${remainingBalance} is due at the time of

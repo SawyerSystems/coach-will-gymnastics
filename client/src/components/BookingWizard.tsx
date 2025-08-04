@@ -245,7 +245,8 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
       
       // Determine which step we should navigate to
       let targetStep = state.flowType === 'parent-portal' ? 'athleteSelect' : 'athleteInfoForm';
-      const targetStepIndex = BOOKING_FLOWS[state.flowType].indexOf(targetStep);
+      // Use a type assertion to tell TypeScript that targetStep is a valid step
+      const targetStepIndex = BOOKING_FLOWS[state.flowType].indexOf(targetStep as any);
       
       // Navigate to the correct athlete step
       if (targetStepIndex >= 0) {

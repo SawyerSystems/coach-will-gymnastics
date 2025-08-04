@@ -2407,6 +2407,10 @@ export class SupabaseStorage implements IStorage {
     if (data.altPickupPersonName !== undefined) dbUpdate.alt_pickup_person_name = data.altPickupPersonName;
     if (data.altPickupPersonRelationship !== undefined) dbUpdate.alt_pickup_person_relationship = data.altPickupPersonRelationship;
     if (data.altPickupPersonPhone !== undefined) dbUpdate.alt_pickup_person_phone = data.altPickupPersonPhone;
+    
+    // Safety verification fields
+    if (data.safetyVerificationSigned !== undefined) dbUpdate.safety_verification_signed = data.safetyVerificationSigned;
+    if (data.safetyVerificationSignedAt !== undefined) dbUpdate.safety_verification_signed_at = data.safetyVerificationSignedAt;
 
     // Update the updated_at timestamp
     dbUpdate.updated_at = new Date().toISOString();
@@ -2447,9 +2451,25 @@ export class SupabaseStorage implements IStorage {
 
   async updateBookingPaymentStatus(id: number, paymentStatus: PaymentStatusEnum): Promise<Booking | undefined> {
     console.log('[STORAGE] Updating booking payment status:', { id, paymentStatus });
+    
+    // Determine if we should set reservation_fee_paid based on payment status
+    const reservationFeePaid = 
+      paymentStatus === PaymentStatusEnum.RESERVATION_PAID || 
+      paymentStatus === PaymentStatusEnum.SESSION_PAID;
+    
+    const updateData: any = { 
+      payment_status: paymentStatus
+    };
+    
+    // Set reservation_fee_paid = true when appropriate
+    if (reservationFeePaid) {
+      updateData.reservation_fee_paid = true;
+      console.log('[STORAGE] Setting reservation_fee_paid = true for status:', paymentStatus);
+    }
+    
     const { data: booking, error } = await supabaseAdmin
       .from('bookings')
-      .update({ payment_status: paymentStatus })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -4734,18 +4754,19 @@ export class SupabaseStorage implements IStorage {
             if (session.payment_status === 'paid') {
               newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
               newStatus = BookingStatusEnum.CONFIRMED;
+            } else if (session.payment_status === 'no_payment_required') {
+              // Handle case where no payment was required
+              newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
+              newStatus = BookingStatusEnum.CONFIRMED;
             }
             break;
           case 'expired':
-            // If session expired and still in pending, mark as abandoned
-            if (booking.payment_status === PaymentStatusEnum.PENDING) {
-              newPaymentStatus = PaymentStatusEnum.ABANDONED;
+            // If session expired and still in unpaid or pending reservation, mark as failed
+            if (booking.payment_status === PaymentStatusEnum.UNPAID || 
+                booking.payment_status === PaymentStatusEnum.RESERVATION_PENDING) {
+              newPaymentStatus = PaymentStatusEnum.RESERVATION_FAILED;
               newStatus = BookingStatusEnum.CANCELLED;
             }
-            break;
-          case 'no_payment_required':
-            newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
-            newStatus = BookingStatusEnum.CONFIRMED;
             break;
           default:
             // Default case for pending sessions

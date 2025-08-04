@@ -33,7 +33,7 @@ export function PaymentStep() {
     if (state.selectedAthletes.length === 0) {
       // Determine which step we should navigate to
       const targetStep = state.flowType === 'parent-portal' ? 'athleteSelect' : 'athleteInfoForm';
-      const targetStepIndex = BOOKING_FLOWS[state.flowType as BookingFlowType].indexOf(targetStep);
+      const targetStepIndex = BOOKING_FLOWS[state.flowType as BookingFlowType].indexOf(targetStep as any);
       
       if (targetStepIndex >= 0) {
         console.log('⚠️ No athlete selected in PaymentStep! Redirecting to', targetStep);
@@ -127,6 +127,9 @@ export function PaymentStep() {
         pickupPersonName: state.safetyContact?.pickupPersonName || null,
         pickupPersonRelationship: state.safetyContact?.pickupPersonRelationship === '' ? null : state.safetyContact?.pickupPersonRelationship || null,
         pickupPersonPhone: state.safetyContact?.pickupPersonPhone || null,
+        // Add safety verification fields
+        safetyVerificationSigned: state.safetyContact ? true : false,
+        safetyVerificationSignedAt: state.safetyContact ? new Date().toISOString() : null,
         // Removed unsupported fields:
         // - waiverSigned
         // - waiverSignedAt  
@@ -167,7 +170,8 @@ export function PaymentStep() {
       // Check if we need to fetch parentId for auth status
       if (!bookingData.parentId) {
         // Try to get parentId from parent auth status
-        const { data: parentAuthData } = await apiRequest('GET', '/api/parent-auth/status');
+        const response = await apiRequest('GET', '/api/parent-auth/status');
+        const parentAuthData = await response.json();
         if (parentAuthData && parentAuthData.parentId) {
           bookingData.parentId = parentAuthData.parentId;
           console.log(`Detected parentId ${parentAuthData.parentId} from auth status`);

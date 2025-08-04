@@ -36,7 +36,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-06-30.basil",
+  apiVersion: "2025-07-30.basil",
 });
 
 // Focus area validation helper
@@ -384,9 +384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               experience,
               gender,
               parent_id,
-              waiver_status,
-              waiver_signed,
-              latest_waiver_id
+              computed_waiver_status:waiver_status
             )
           )
         `)
@@ -399,21 +397,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: parentBookingsQuery.data?.slice(0, 1) // Log just first booking to avoid overwhelming logs
       });
         
+      // Add proper error handling instead of throwing
       if (parentBookingsQuery.error) {
-        throw parentBookingsQuery.error;
+        console.error('[PARENT-BOOKINGS] Error fetching bookings:', parentBookingsQuery.error);
+        return res.status(500).json({ 
+          error: 'Failed to fetch bookings', 
+          details: parentBookingsQuery.error.message 
+        });
       }        
+      
+      // Handle the case where data is null or empty
+      if (!parentBookingsQuery.data || parentBookingsQuery.data.length === 0) {
+        console.log('[PARENT-BOOKINGS] No bookings found for parent:', req.session.parentId);
+        return res.json([]);
+      }
       // Transform the data to include athletes array and proper payment status
-      const bookingsWithAthletes = parentBookingsQuery.data?.map((booking: any) => {
+      const bookingsWithAthletes = parentBookingsQuery.data.map((booking: any) => {
         // Extract athletes from booking_athletes array
         const athletes = booking.booking_athletes?.map((ba: any) => {
           if (!ba.athletes) {
             console.warn(`[PARENT-BOOKINGS] Missing athletes data for booking_athletes entry:`, ba);
             return null;
           }
-          return {
+          
+          // Ensure athlete data has proper structure
+          const athlete = {
             ...ba.athletes,
-            slotOrder: ba.slot_order || 1
+            slotOrder: ba.slot_order || 1,
+            // Ensure these fields exist with proper fallbacks
+            name: ba.athletes.name || `${ba.athletes.first_name || ''} ${ba.athletes.last_name || ''}`.trim() || 'Unnamed Athlete',
+            // Handle waiver status consistently using the computed_waiver_status field
+            waiver_status: ba.athletes.computed_waiver_status || 'none',
+            waiver_signed: ba.athletes.computed_waiver_status === 'signed'
           };
+          
+          return athlete;
         }).filter(Boolean) || [];
         
         // Debug any issues with athlete data
@@ -424,8 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check if all athletes have signed waivers
         const allAthletesHaveWaivers = athletes.length > 0 && 
-          athletes.every((athlete: any) => athlete && 
-            (athlete.waiver_status === 'signed' || athlete.waiver_signed === true));
+          athletes.every((athlete: any) => athlete && athlete.waiver_status === 'signed');
         
         // Map payment status to user-friendly display
         let displayPaymentStatus = booking.payment_status;
@@ -447,53 +464,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Derive waiver status from athletes instead of the booking record
         // A booking's waiver is signed if all athletes have signed waivers
-        const waiverSigned = allAthletesHaveWaivers;        return {
+        const waiverSigned = allAthletesHaveWaivers;
+        
+        // Create a safe copy of booking with all expected fields
+        return {
           ...booking,
           athletes,
           displayPaymentStatus,
           status: displayStatus,
           waiverSigned: waiverSigned, // Use the computed waiver status from athletes
           // Transform snake_case to camelCase for frontend compatibility
-          attendanceStatus: booking.attendance_status,
-          paymentStatus: booking.payment_status,
+          attendanceStatus: booking.attendance_status || 'pending',
+          paymentStatus: booking.payment_status || 'unpaid',
           createdAt: booking.created_at,
           updatedAt: booking.updated_at,
           preferredDate: booking.preferred_date,
           preferredTime: booking.preferred_time,
           parentId: booking.parent_id,
           lessonTypeId: booking.lesson_type_id,
-          lessonType: booking.lesson_types?.name || null,
+          lessonType: booking.lesson_types?.name || 'Unknown Lesson Type',
           waiverId: booking.waiver_id,
-          bookingMethod: booking.booking_method,
-          reservationFeePaid: booking.reservation_fee_paid,
-          paidAmount: booking.paid_amount,
-          specialRequests: booking.special_requests,
-          adminNotes: booking.admin_notes,
-          dropoffPersonName: booking.dropoff_person_name,
-          dropoffPersonRelationship: booking.dropoff_person_relationship,
-          dropoffPersonPhone: booking.dropoff_person_phone,
-          pickupPersonName: booking.pickup_person_name,
-          pickupPersonRelationship: booking.pickup_person_relationship,
-          pickupPersonPhone: booking.pickup_person_phone,
-          altPickupPersonName: booking.alt_pickup_person_name,
-          altPickupPersonRelationship: booking.alt_pickup_person_relationship,
-          altPickupPersonPhone: booking.alt_pickup_person_phone,
-          safetyVerificationSigned: booking.safety_verification_signed,
-          safetyVerificationSignedAt: booking.safety_verification_signed_at,
-          stripeSessionId: booking.stripe_session_id,
-          focusAreas: booking.focus_areas,
-          progressNote: booking.progress_note,
-          coachName: booking.coach_name,
+          bookingMethod: booking.booking_method || 'online',
+          reservationFeePaid: booking.reservation_fee_paid || false,
+          paidAmount: booking.paid_amount || 0,
+          specialRequests: booking.special_requests || '',
+          adminNotes: booking.admin_notes || '',
+          dropoffPersonName: booking.dropoff_person_name || '',
+          dropoffPersonRelationship: booking.dropoff_person_relationship || '',
+          dropoffPersonPhone: booking.dropoff_person_phone || '',
+          pickupPersonName: booking.pickup_person_name || '',
+          pickupPersonRelationship: booking.pickup_person_relationship || '',
+          pickupPersonPhone: booking.pickup_person_phone || '',
+          altPickupPersonName: booking.alt_pickup_person_name || '',
+          altPickupPersonRelationship: booking.alt_pickup_person_relationship || '',
+          altPickupPersonPhone: booking.alt_pickup_person_phone || '',
+          safetyVerificationSigned: booking.safety_verification_signed || false,
+          safetyVerificationSignedAt: booking.safety_verification_signed_at || null,
+          stripeSessionId: booking.stripe_session_id || null,
+          focusAreas: booking.focus_areas || [],
+          progressNote: booking.progress_note || '',
+          coachName: booking.coach_name || 'Coach Will',
           // Legacy fields for backward compatibility
           athlete1Name: athletes[0]?.name || '',
           athlete2Name: athletes[1]?.name || '',
         };
-      }) || [];
+      });
       
+      console.log(`[PARENT-BOOKINGS-END] Successfully returned ${bookingsWithAthletes.length} bookings for parent ${req.session.parentId}`);
       res.json(bookingsWithAthletes);
     } catch (error) {
-      console.error('Error fetching parent bookings:', error);
-      res.status(500).json({ message: 'Failed to fetch bookings' });
+      console.error('[PARENT-BOOKINGS] Error processing parent bookings:', error);
+      res.status(500).json({ 
+        error: 'Failed to process bookings',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
   
@@ -1634,25 +1658,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: booking.id,
         idType: typeof booking.id,
         stripeSessionId: booking.stripeSessionId,
+        reservationFeePaid: booking.reservationFeePaid,
+        paidAmount: booking.paidAmount,
+        paymentStatus: booking.paymentStatus,
         athlete1Name: booking.athlete1Name,
         hasAthletes: !!booking.athletes,
         athletesCount: booking.athletes?.length || 0
       });
       
-      // Try to get booking with relations first
+      // Try to get booking with relations first, using admin client to bypass RLS
       try {
-        const bookingWithAthletes = await storage.getBookingWithRelations(booking.id);
-        if (bookingWithAthletes && bookingWithAthletes.athletes && bookingWithAthletes.athletes.length > 0) {
-          logger.debug(` Returning booking with ${bookingWithAthletes.athletes.length} athletes`);
-          return res.json(bookingWithAthletes);
+        const bookingWithRelations = await storage.getBookingWithRelations(booking.id);
+        
+        if (bookingWithRelations) {
+          // Ensure payment data is included in the response
+          const enhancedBooking = {
+            ...bookingWithRelations,
+            // Ensure these payment fields are always included and correctly typed
+            reservationFeePaid: bookingWithRelations.reservationFeePaid === true,
+            paidAmount: bookingWithRelations.paidAmount || "0.00",
+            paymentStatus: bookingWithRelations.paymentStatus || "unknown"
+          };
+          
+          logger.debug(` Returning booking with relations and payment data: 
+            reservationFeePaid: ${enhancedBooking.reservationFeePaid}
+            paidAmount: ${enhancedBooking.paidAmount}
+            paymentStatus: ${enhancedBooking.paymentStatus}`);
+            
+          return res.json(enhancedBooking);
         }
       } catch (relationError) {
         console.warn('[DEBUG] Failed to get booking with relations:', relationError instanceof Error ? relationError.message : String(relationError));
       }
       
-      // If it's a legacy booking or relations failed, return as-is
-      console.log('[DEBUG] Returning legacy booking format');
-      res.json(booking);
+      // If it's a legacy booking or relations failed, return as-is but ensure payment data
+      const enhancedLegacyBooking = {
+        ...booking,
+        // Ensure these payment fields are always included and correctly typed
+        reservationFeePaid: booking.reservationFeePaid === true,
+        paidAmount: booking.paidAmount || "0.00",
+        paymentStatus: booking.paymentStatus || "unknown"
+      };
+      
+      console.log('[DEBUG] Returning legacy booking format with payment data');
+      res.json(enhancedLegacyBooking);
     } catch (error: any) {
       console.error("Error fetching booking by session:", error);
       res.status(500).json({ message: "Error fetching booking: " + error.message });
@@ -2000,14 +2049,18 @@ setTimeout(async () => {
             await storage.updateBookingPaymentStatus(parseInt(bookingId), PaymentStatusEnum.RESERVATION_PAID);
             await storage.updateBookingAttendanceStatus(parseInt(bookingId), AttendanceStatusEnum.CONFIRMED);
             
-            // Store Stripe session ID for tracking
+            // Retrieve the complete session data to ensure we have the most accurate information
+            const completeSession = await stripe.checkout.sessions.retrieve(session.id);
+            console.log(`[STRIPE WEBHOOK] Retrieved complete session data for ${session.id}`);
+            
+            // Store Stripe session ID and payment details for tracking
             await storage.updateBooking(parseInt(bookingId), {
               stripeSessionId: session.id,
               reservationFeePaid: true,
-              paidAmount: session.amount_total ? (session.amount_total / 100).toFixed(2) : booking.amount
+              paidAmount: completeSession.amount_total ? (completeSession.amount_total / 100).toFixed(2) : booking.amount
             });
             
-            console.log(`[STRIPE WEBHOOK] AUTOMATIC STATUS UPDATE - Booking ${bookingId}: Payment → reservation-paid, Attendance → confirmed`);
+            console.log(`[STRIPE WEBHOOK] AUTOMATIC STATUS UPDATE - Booking ${bookingId}: Payment → reservation-paid, Attendance → confirmed, Payment Amount: ${completeSession.amount_total ? (completeSession.amount_total / 100).toFixed(2) : booking.amount}`);
             
             // Get booking with relations to access parent data
             const bookingWithRelations = await storage.getBookingWithRelations(parseInt(bookingId));
@@ -2167,11 +2220,38 @@ setTimeout(async () => {
             
             // Automatic confirmation email
             try {
+              // If parent is missing from relations, fetch it directly
+              let parentRecord = bookingWithRelations.parent;
+              if (!parentRecord && booking.parentId) {
+                console.log(`[STRIPE WEBHOOK] Parent missing from relations, fetching parent with ID: ${booking.parentId}`);
+                parentRecord = await storage.getParentById(booking.parentId);
+                
+                if (parentRecord) {
+                  console.log(`[STRIPE WEBHOOK] Successfully retrieved parent with ID: ${booking.parentId}`);
+                  // Attach the parent to bookingWithRelations for future use
+                  bookingWithRelations.parent = parentRecord;
+                } else {
+                  console.warn(`[STRIPE WEBHOOK] Could not find parent with ID: ${booking.parentId}`);
+                }
+              }
+              
               // Use parent from relations if available, otherwise fall back to booking fields
-              const parentFirstName = bookingWithRelations.parent?.firstName || booking.parentFirstName || 'Parent';
-              const parentLastName = bookingWithRelations.parent?.lastName || booking.parentLastName || '';
+              const parentFirstName = parentRecord?.firstName || booking.parentFirstName || 'Parent';
+              const parentLastName = parentRecord?.lastName || booking.parentLastName || '';
               const parentName = `${parentFirstName} ${parentLastName}`.trim();
-              const emailToUse = bookingWithRelations.parent?.email || booking.parentEmail;
+              
+              // Try multiple sources to get a valid email address
+              let emailToUse = parentRecord?.email || booking.parentEmail;
+              
+              // Additional fallback if email is still missing
+              if (!emailToUse && booking.parentId) {
+                console.log(`[STRIPE WEBHOOK] No email found, trying to derive from parent record`);
+                const parent = await storage.getParentById(booking.parentId);
+                if (parent?.email) {
+                  emailToUse = parent.email;
+                  console.log(`[STRIPE WEBHOOK] Retrieved email from parent record: ${emailToUse}`);
+                }
+              }
               
               const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -2190,22 +2270,29 @@ setTimeout(async () => {
                 athleteName = booking.athlete1Name;
               }
               
+              // Always attempt to send the confirmation email, with appropriate logging
               if (emailToUse) {
                 console.log(`[STRIPE WEBHOOK] Sending confirmation email to ${emailToUse} for ${athleteName}`);
                 
-                await sendSessionConfirmation(
-                  emailToUse,
-                  parentName,
-                  athleteName,
-                  sessionDate,
-                  booking.preferredTime || 'Unknown Time'
-                );
-                console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
+                try {
+                  await sendSessionConfirmation(
+                    emailToUse,
+                    parentName,
+                    athleteName,
+                    sessionDate,
+                    booking.preferredTime || 'Unknown Time'
+                  );
+                  console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
+                } catch (sendError) {
+                  console.error(`[STRIPE WEBHOOK] Error sending confirmation email:`, sendError);
+                  // Log the error but continue processing - don't return early
+                }
               } else {
-                console.error(`[STRIPE WEBHOOK] Cannot send confirmation email - no parent email found`);
+                console.error(`[STRIPE WEBHOOK] Cannot send confirmation email - no parent email found despite fallbacks`);
               }
             } catch (emailError) {
-              console.error('[STRIPE WEBHOOK] ❌ Failed to auto-send confirmation email:', emailError);
+              console.error('[STRIPE WEBHOOK] ❌ Failed to prepare confirmation email:', emailError);
+              // Even if preparation fails, we'll continue with other processing
             }
             
             // Log payment event
