@@ -8,13 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useGenders } from "@/hooks/useGenders";
+import { useCreateAthlete } from "@/hooks/use-athlete";
+import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, PlusCircle, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { BOOKING_FLOWS } from "@/contexts/BookingFlowContext";
 
 export function AthleteInfoFormStep() {
-  const { state, updateState } = useBookingFlow();
+  const { state, updateState, prevStep } = useBookingFlow();
   const { genderOptions } = useGenders();
   const [ageErrors, setAgeErrors] = useState<{ [key: number]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createAthleteMutation = useCreateAthlete();
+  const { toast } = useToast();
+
+  // Get parent ID for the query invalidation
+  const { data: parentData } = useQuery({
+    queryKey: ['/api/parent-auth/status'],
+  }) as { data: any };
+
+  const parentId = state.parentId || parentData?.parentId;
 
   // Function to calculate age and validate minimum age requirement
   const validateAge = (dateOfBirth: string, index: number) => {
@@ -74,6 +88,79 @@ export function AthleteInfoFormStep() {
     }
   };
 
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    if (Object.keys(ageErrors).length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the age validation errors before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (state.athleteInfo.length === 0) {
+      toast({
+        title: "No Athlete Information",
+        description: "Please add athlete information before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For each athlete in the form, create it via API
+    setIsSubmitting(true);
+    
+    try {
+      for (const athlete of state.athleteInfo) {
+        if (!athlete.firstName || !athlete.lastName || !athlete.dateOfBirth || !athlete.experience) {
+          toast({
+            title: "Missing Information",
+            description: "Please fill in all required fields for each athlete.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        await createAthleteMutation.mutateAsync({
+          firstName: athlete.firstName,
+          lastName: athlete.lastName,
+          dateOfBirth: athlete.dateOfBirth,
+          gender: (athlete as any).gender || undefined,
+          allergies: athlete.allergies,
+          experience: athlete.experience,
+        });
+      }
+      
+      // Show toast to guide user that they need to select the athlete
+      toast({
+        title: "Athlete Created Successfully",
+        description: "Now please select the athlete from your list to continue.",
+      });
+      
+      // Clear the athlete info and selected athletes after successful creation
+      updateState({ 
+        athleteInfo: [],
+        selectedAthletes: [] // Clear selected athletes to force user to explicitly choose
+      });
+      
+      // Go back to athlete selection step
+      if (state.flowType === 'parent-portal') {
+        const currentFlow = BOOKING_FLOWS['parent-portal'];
+        const athleteSelectIndex = currentFlow.indexOf('athleteSelect');
+        updateState({ currentStep: athleteSelectIndex });
+      } else {
+        prevStep();
+      }
+    } catch (error) {
+      console.error("Error creating athlete:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Initialize with one athlete if none exist
   useEffect(() => {
     if (state.athleteInfo.length === 0) {
@@ -96,7 +183,7 @@ export function AthleteInfoFormStep() {
   const maxAthletes = state.lessonType.includes('semi-private') ? 2 : 1;
 
   return (
-    <div className="space-y-6 py-4">
+    <form onSubmit={handleSubmit} className="space-y-6 py-4">
       <div>
         <h3 className="text-lg font-semibold mb-2">Athlete Information</h3>
         <p className="text-muted-foreground">
@@ -113,6 +200,7 @@ export function AthleteInfoFormStep() {
               </CardTitle>
               {state.athleteInfo.length > 1 && (
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveAthlete(index)}
@@ -225,6 +313,7 @@ export function AthleteInfoFormStep() {
 
       {state.lessonType.includes('semi-private') && state.athleteInfo.length < maxAthletes && (
         <Button 
+          type="button"
           variant="outline" 
           onClick={handleAddAthlete}
           className="w-full"
@@ -233,6 +322,16 @@ export function AthleteInfoFormStep() {
           Add Another Athlete
         </Button>
       )}
-    </div>
+
+      <div className="flex justify-end mt-6">
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || Object.keys(ageErrors).length > 0}
+          className="min-h-[48px]"
+        >
+          {isSubmitting ? "Creating..." : "Create Athlete"}
+        </Button>
+      </div>
+    </form>
   );
 }

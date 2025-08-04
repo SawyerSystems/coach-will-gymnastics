@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BOOKING_FLOWS, useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AdminPaymentStep } from "./booking-steps/AdminPaymentStep";
 import { AthleteInfoFormStep } from "./booking-steps/AthleteInfoFormStep";
@@ -20,7 +21,8 @@ interface BookingWizardProps {
 }
 
 export function BookingWizard({ onClose }: BookingWizardProps) {
-  const { state, nextStep, prevStep, getCurrentStepName, isLastStep, resetFlow } = useBookingFlow();
+  const { state, updateState, nextStep, prevStep, getCurrentStepName, isLastStep, resetFlow } = useBookingFlow();
+  const { toast } = useToast();
 
   // Step validation logic
   const isCurrentStepComplete = () => {
@@ -174,6 +176,47 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
                     state.flowType === 'athlete-modal' ? 8 : 9; // new-user flow now has 9 steps
   const progress = ((state.currentStep + 1) / totalSteps) * 100;
 
+  const handleNextClick = () => {
+    const stepName = getCurrentStepName();
+    
+    // For athleteInfoForm step, we let the form handle submission
+    if (stepName === 'athleteInfoForm') {
+      // Find the form and submit it programmatically
+      const athleteForm = document.querySelector('form');
+      if (athleteForm) {
+        athleteForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      }
+      return; // Return early as the form submission will handle navigation
+    }
+    
+    // Add defensive check for downstream steps that require athlete selection
+    if ((stepName === 'focusAreas' || stepName === 'schedule' || 
+         stepName === 'safety' || stepName === 'waiver' || stepName === 'payment') && 
+        state.selectedAthletes.length === 0 && !state.flowType.startsWith('admin-')) {
+      
+      // Determine which step we should navigate to
+      let targetStep = state.flowType === 'parent-portal' ? 'athleteSelect' : 'athleteInfoForm';
+      const targetStepIndex = BOOKING_FLOWS[state.flowType].indexOf(targetStep);
+      
+      // Navigate to the correct athlete step
+      if (targetStepIndex >= 0) {
+        console.log('⚠️ No athlete selected! Redirecting to', targetStep);
+        updateState({ currentStep: targetStepIndex });
+        
+        // Show toast message to guide the user
+        toast({
+          title: "Athlete Selection Required",
+          description: "Please select or create an athlete before continuing.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    // Proceed with normal flow
+    nextStep();
+  };
+
   return (
     <div className="flex flex-col h-full">
       <BookingFlowDebugger />
@@ -211,7 +254,7 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
           </span>
           
           <Button
-            onClick={nextStep}
+            onClick={handleNextClick}
             disabled={isLastStep() || !isCurrentStepComplete()}
             className="min-h-[48px]"
           >

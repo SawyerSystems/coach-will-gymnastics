@@ -6580,6 +6580,44 @@ setTimeout(async () => {
   });
 
 
+  // Create a new athlete (parent portal endpoint)
+  app.post("/api/parent/athletes", isParentAuthenticated, async (req, res) => {
+    try {
+      const parentId = req.session.parentId;
+      
+      if (!parentId) {
+        return res.status(401).json({ error: 'Parent authentication required' });
+      }
+
+      // Validate required fields
+      const { firstName, lastName, dateOfBirth, gender, allergies, experience } = req.body;
+      
+      if (!firstName || !lastName || !dateOfBirth || !experience) {
+        return res.status(400).json({ 
+          error: "Missing required fields", 
+          details: "First name, last name, date of birth, and experience level are required"
+        });
+      }
+      
+      // Create athlete with parentId from the session
+      const athleteData = {
+        firstName,
+        lastName,
+        dateOfBirth,
+        gender: gender || null,
+        allergies: allergies || null,
+        experience,
+        parentId
+      };
+      
+      const athlete = await storage.createAthlete(athleteData);
+      res.status(201).json(athlete);
+    } catch (error: any) {
+      console.error("Error creating athlete:", error);
+      res.status(500).json({ error: "Failed to create athlete" });
+    }
+  });
+
   // Get waivers for a specific parent (parent portal endpoint)
   app.get("/api/parent/waivers", isParentAuthenticated, async (req, res) => {
     try {

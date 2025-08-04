@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useToast } from "@/hooks/use-toast";
+import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
 import { useStripePricing } from "@/hooks/useStripePricing";
 import { LESSON_TYPES } from "@/lib/constants";
 import { formatBookingDate } from "@/lib/dateUtils";
@@ -11,11 +13,42 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export function PaymentStep() {
-  const { state } = useBookingFlow();
+  const { state, updateState } = useBookingFlow();
+  const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [athleteNames, setAthleteNames] = useState<string[]>([]);
   const { getReservationFee, isLoading: isPricingLoading } = useStripePricing();
+  
+  // Check if athlete is selected and redirect if needed
+  useEffect(() => {
+    // Skip check for admin flows and 'new-user' flow (which creates athlete later)
+    if (state.flowType.startsWith('admin-') || state.flowType === 'new-user') {
+      return;
+    }
+    
+    // Check if athlete is selected for parent-portal and athlete-modal flows
+    if (state.selectedAthletes.length === 0) {
+      // Determine which step we should navigate to
+      const targetStep = state.flowType === 'parent-portal' ? 'athleteSelect' : 'athleteInfoForm';
+      const targetStepIndex = BOOKING_FLOWS[state.flowType as BookingFlowType].indexOf(targetStep);
+      
+      if (targetStepIndex >= 0) {
+        console.log('⚠️ No athlete selected in PaymentStep! Redirecting to', targetStep);
+        
+        toast({
+          title: "Athlete Selection Required",
+          description: "Please select or create an athlete before proceeding to payment.",
+          variant: "destructive",
+        });
+        
+        // Update step in next render cycle to avoid state update during render
+        setTimeout(() => {
+          updateState({ currentStep: targetStepIndex });
+        }, 0);
+      }
+    }
+  }, [state.flowType, state.selectedAthletes, updateState, toast]);
 
   // Fetch existing athlete names if needed
   const { data: existingAthletes } = useQuery({

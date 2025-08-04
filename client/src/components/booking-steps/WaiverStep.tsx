@@ -17,16 +17,19 @@ export function WaiverStep() {
   const athleteInfo = state.athleteInfo?.[0] || {};
   const athleteName = `${athleteInfo.firstName || ''} ${athleteInfo.lastName || ''}`.trim();
 
+  // Get the selected athlete ID (if any)
+  const selectedAthleteId = state.selectedAthletes[0];
+
   // Check if waiver already signed for this athlete
   const { data: waiverStatus, isLoading: waiverLoading } = useWaiverStatus(
     athleteName,
     athleteInfo.dateOfBirth
   );
 
-  // Check if waiver already signed for returning parents
-  const { data: parentData } = useQuery({
+  // Check parent authentication status to get the parentId
+  const { data: parentAuthData } = useQuery({
     queryKey: ['/api/parent-auth/status'],
-  });
+  }) as { data: { parentId?: number } };
 
   // Auto-skip if waiver already signed
   useEffect(() => {
@@ -139,8 +142,15 @@ export function WaiverStep() {
           emergencyContactNumber: (parentInfo as any)?.emergencyContactPhone || "",
           relationshipToAthlete: "Parent/Guardian",
         }}
-        parentId={(parentInfo as any)?.id || 0}
-        athleteId={undefined} // This component is used in booking flow where athlete doesn't exist yet
+        parentId={state.parentId || parentAuthData?.parentId}
+        athleteId={selectedAthleteId}
+        athleteData={selectedAthleteId ? undefined : {
+          name: athleteName,
+          dateOfBirth: athleteInfo.dateOfBirth,
+          gender: (athleteInfo as any).gender,
+          allergies: athleteInfo.allergies,
+          experience: athleteInfo.experience
+        }}
       />
     </div>
   );

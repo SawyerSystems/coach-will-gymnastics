@@ -25,10 +25,27 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
 
   const parentId = state.parentId || parentData?.parentId;
 
-  const { data: athletes = [] } = useQuery({
+  // Fetch athletes with higher refetch frequency to ensure new athletes appear
+  const { data: athletes = [], isLoading: isLoadingAthletes, refetch: refetchAthletes } = useQuery({
     queryKey: isAdminFlow ? ['/api/athletes'] : [`/api/parents/${parentId}/athletes`],
     enabled: isAdminFlow || !!parentId,
-  }) as { data: any[] };
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Consider the data immediately stale for refetching
+  }) as { data: any[], isLoading: boolean, refetch: () => Promise<any> };
+  
+  // Refetch athletes when this component is shown (may be returning from athlete creation)
+  useEffect(() => {
+    console.log('🔄 AthleteSelectStep mounted/updated - refreshing athlete list');
+    if (parentId) {
+      refetchAthletes();
+    }
+  }, [parentId, refetchAthletes]);
+
+  // Log when new athletes are loaded
+  useEffect(() => {
+    console.log('👥 Athletes loaded:', { count: athletes.length, athleteIds: athletes.map((a: any) => a.id) });
+    console.log('🔍 Currently selected athletes:', state.selectedAthletes);
+  }, [athletes, state.selectedAthletes]);
 
   // Auto-skip for non-semi-private lessons
   useEffect(() => {
@@ -140,7 +157,12 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
       )}
 
       <div className="space-y-3">
-        {athletes.length === 0 ? (
+        {isLoadingAthletes ? (
+          <Card className="p-8 text-center">
+            <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading athletes...</p>
+          </Card>
+        ) : athletes.length === 0 ? (
           <Card className="p-8 text-center border-dashed">
             <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 mb-4">
@@ -209,6 +231,15 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
           <PlusCircle className="h-4 w-4 mr-2" />
           {isAdminFlow ? "Create New Athlete" : "Add New Athlete"}
         </Button>
+      )}
+
+      {/* Display guidance message if athletes exist but none selected */}
+      {athletes.length > 0 && state.selectedAthletes.length === 0 && (
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <p className="text-sm text-blue-900">
+            <strong>Please select</strong> an athlete from the list above to continue.
+          </p>
+        </div>
       )}
 
       {state.lessonType.includes('semi-private') && state.selectedAthletes.length === 1 && (

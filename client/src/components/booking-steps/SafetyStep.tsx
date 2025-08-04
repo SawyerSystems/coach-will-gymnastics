@@ -4,12 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useToast } from "@/hooks/use-toast";
+import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
 import { Shield, UserCheck, AlertTriangle, Plus, X, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function SafetyStep() {
   const { state, updateState } = useBookingFlow();
+  const { toast } = useToast();
   const [showAdditionalPerson, setShowAdditionalPerson] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -35,6 +38,36 @@ export function SafetyStep() {
     relationship: '',
     phone: ''
   });
+  
+  // Check if athlete is selected and redirect if needed
+  useEffect(() => {
+    // Skip check for admin flows and 'new-user' flow (which creates athlete later)
+    if (state.flowType.startsWith('admin-') || state.flowType === 'new-user') {
+      return;
+    }
+    
+    // Check if athlete is selected for parent-portal and athlete-modal flows
+    if (state.selectedAthletes.length === 0) {
+      // Determine which step we should navigate to
+      const targetStep = state.flowType === 'parent-portal' ? 'athleteSelect' : 'athleteInfoForm';
+      const targetStepIndex = BOOKING_FLOWS[state.flowType as BookingFlowType].indexOf(targetStep);
+      
+      if (targetStepIndex >= 0) {
+        console.log('⚠️ No athlete selected in SafetyStep! Redirecting to', targetStep);
+        
+        toast({
+          title: "Athlete Selection Required",
+          description: "Please select or create an athlete before providing safety information.",
+          variant: "destructive",
+        });
+        
+        // Update step in next render cycle to avoid state update during render
+        setTimeout(() => {
+          updateState({ currentStep: targetStepIndex });
+        }, 0);
+      }
+    }
+  }, [state.flowType, state.selectedAthletes, updateState, toast]);
 
   const handleSafetyChange = (field: string, value: string) => {
     updateState({
