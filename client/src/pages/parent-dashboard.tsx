@@ -430,7 +430,6 @@ function ParentDashboard() {
   const [showAddAthleteModal, setShowAddAthleteModal] = useState<boolean>(false);
   const [selectedAthleteForBooking, setSelectedAthleteForBooking] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showAthleteSelection, setShowAthleteSelection] = useState(false);
   const [showUpdateProfile, setShowUpdateProfile] = useState(false);
   const [showSafetyInfo, setShowSafetyInfo] = useState(false);
   const [showUpdateEmergencyContact, setShowUpdateEmergencyContact] = useState(false);
@@ -633,7 +632,9 @@ function ParentDashboard() {
                   hasParentInfo: !!parentInfo,
                   parentInfo: parentInfo ? { id: parentInfo.id, email: parentInfo.email } : null
                 });
-                setShowAthleteSelection(true);
+                // Open booking modal directly (wizard will handle athlete selection)
+                setSelectedAthleteForBooking(null); // Clear any pre-selection
+                setShowBookingModal(true);
               }}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-xs px-2 py-1.5 min-h-[36px] md:text-sm md:px-3 md:py-2 md:min-h-[40px] shadow-sm"
             >
@@ -1524,84 +1525,6 @@ function ParentDashboard() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        {/* Athlete Selection Modal */}
-        <Dialog open={showAthleteSelection} onOpenChange={setShowAthleteSelection}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-md md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Select Athlete</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                Choose which athlete you'd like to book a session for
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3 px-0 pb-0">
-              {athletes && athletes.length > 0 ? (
-                athletes.map((athlete) => (
-                  <Card 
-                    key={athlete.id}
-                    className="cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => {
-                      setSelectedAthleteForBooking(athlete);
-                      setShowAthleteSelection(false);
-                      setShowBookingModal(true);
-                    }}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-medium text-gray-900">{athlete.name}</h3>
-                          <p className="text-sm text-gray-600">
-                            {athlete.dateOfBirth ? Math.floor((new Date().getTime() - new Date(`${athlete.dateOfBirth}T12:00:00Z`).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 'Unknown'} years old • {athlete.experience}
-                          </p>
-                        </div>
-                        <Button size="sm">Select</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-4">No athletes registered yet</p>
-                  <Button 
-                    onClick={() => {
-                      console.log('🎯 PARENT DASHBOARD: Add New Athlete clicked from athlete selection!', {
-                        hasParentInfo: !!parentInfo,
-                        parentInfo: parentInfo ? { id: parentInfo.id, email: parentInfo.email } : null
-                      });
-                      setShowAthleteSelection(false);
-                      setShowBookingModal(true);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Add New Athlete
-                  </Button>
-                </div>
-              )}
-
-              <div className="flex justify-between gap-3 pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowAthleteSelection(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setShowAthleteSelection(false);
-                    setSelectedAthleteForBooking(null);
-                    setShowBookingModal(true);
-                  }}
-                >
-                  Add New Athlete
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-
 
         {/* Edit Athlete Modal */}
         <Dialog open={editingAthleteInfo !== null} onOpenChange={() => {
