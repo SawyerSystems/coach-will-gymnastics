@@ -25,7 +25,7 @@ const Tips = lazy(() => import("@/pages/tips"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Admin = lazy(() => import("@/pages/admin"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
-const ParentLogin = lazy(() => import("@/pages/parent-login"));
+const ParentLogin = lazy(() => import("@/pages/parent/login"));
 const ParentRegister = lazy(() => import("@/pages/parent-register"));
 const ParentSetupSuccess = lazy(() => import("@/pages/parent-setup-success"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));

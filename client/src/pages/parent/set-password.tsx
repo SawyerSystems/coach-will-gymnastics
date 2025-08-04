@@ -90,7 +90,7 @@ export default function SetPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button onClick={() => setLocation('/parent-login')} className="w-full">
+            <Button onClick={() => setLocation('/parent/login')} className="w-full">
               Go to Login Page
             </Button>
           </CardFooter>

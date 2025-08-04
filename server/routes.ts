@@ -736,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test endpoint for parent login (temporary)
-  app.post('/api/test/parent-login', async (req, res) => {
+  app.post('/api/test/parent/login', async (req, res) => {
     const { email } = req.body;
     
     // Validate email
@@ -2010,7 +2010,7 @@ setTimeout(async () => {
                 
                 // Send welcome email for automatically created parent accounts
                 try {
-                  const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent-login`;
+                  const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
                   await sendParentWelcomeEmail(booking.parentEmail, booking.parentFirstName || 'Gymnastics Parent', loginLink);
                   console.log(`[STRIPE WEBHOOK] Welcome email sent to new parent ${booking.parentEmail}`);
                 } catch (emailError) {
@@ -2421,7 +2421,7 @@ setTimeout(async () => {
       
       // Create parent login link with proper redirect
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5001';
-      const parentLoginLink = `${baseUrl}/parent-login?redirect=dashboard&booking_id=${bookingId}`;
+      const parentLoginLink = `${baseUrl}/parent/login?redirect=dashboard&booking_id=${bookingId}`;
       
       // Send all three emails using helper functions
       const emailPromises = [];
@@ -3025,7 +3025,7 @@ setTimeout(async () => {
         await sendManualBookingConfirmation(
           bookingData.parentEmail, 
           parentName,
-          `${getBaseUrl()}/parent-login`
+          `${getBaseUrl()}/parent/login`
         );
       } catch (emailError) {
         console.error('Failed to send manual booking email:', emailError);
@@ -5697,9 +5697,21 @@ setTimeout(async () => {
   app.post("/api/waivers", async (req, res) => {
     try {
       console.log('🔍 Raw waiver request body:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 Session data:', {
+        sessionID: req.sessionID,
+        parentId: req.session.parentId,
+        adminId: req.session.adminId,
+        isAuthenticated: !!req.session.parentId || !!req.session.adminId
+      });
       
       // Handle the case where athleteId is missing but athleteData is provided (new booking flow)
       let { athleteId, parentId, athleteData, ...waiverFields } = req.body;
+      
+      // If no parentId in body, try to get it from session (for authenticated parents)
+      if (!parentId && req.session.parentId) {
+        parentId = req.session.parentId;
+        console.log('🔄 Using session parentId:', parentId);
+      }
       
       // If no athleteId but we have athleteData, create the athlete first
       if (!athleteId && athleteData && parentId) {
@@ -5727,7 +5739,12 @@ setTimeout(async () => {
       if (!athleteId || !parentId) {
         console.log('❌ Missing required IDs:', { athleteId, parentId });
         return res.status(400).json({ 
-          error: "Both athleteId and parentId are required, or provide athleteData with parentId" 
+          error: "Both athleteId and parentId are required, or provide athleteData with parentId",
+          details: { 
+            providedAthleteId: athleteId || null, 
+            providedParentId: parentId || null,
+            hasAthleteData: !!athleteData
+          }
         });
       }
       
@@ -5737,102 +5754,114 @@ setTimeout(async () => {
         parentId,
       };
       
-      const parsedWaiverData = insertWaiverSchema.parse(waiverData);
-      console.log('✅ Waiver validation passed for athlete ID:', athleteId);
-      
-      // Capture IP address and user agent
-      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
-      const userAgent = req.get('User-Agent') || 'unknown';
-      
-      // Create waiver record
-      const waiver = await storage.createWaiver({
-        ...parsedWaiverData,
-        ipAddress,
-        userAgent,
-      } as any);
-      
-      // Generate PDF
-      let pdfPath = null;
       try {
-        pdfPath = await saveWaiverPDF({
-          athleteName: waiver.athleteName || 'Unknown Athlete',
-          signerName: waiver.signerName || 'Unknown Signer',
-          relationshipToAthlete: waiver.relationshipToAthlete || 'Parent/Guardian',
-          emergencyContactNumber: waiver.emergencyContactNumber,
-          signature: waiver.signature,
-          signedAt: waiver.signedAt || new Date(),
-          understandsRisks: waiver.understandsRisks ?? false,
-          agreesToPolicies: waiver.agreesToPolicies ?? false,
-          authorizesEmergencyCare: waiver.authorizesEmergencyCare ?? false,
-          allowsPhotoVideo: waiver.allowsPhotoVideo ?? false,
-          confirmsAuthority: waiver.confirmsAuthority ?? false,
-        }, waiver.id);
+        const parsedWaiverData = insertWaiverSchema.parse(waiverData);
+        console.log('✅ Waiver validation passed for athlete ID:', athleteId);
         
-        // Update waiver with PDF path
-        await storage.updateWaiverPdfPath(waiver.id, pdfPath);
-      } catch (pdfError) {
-        console.error('Error generating waiver PDF:', pdfError);
-      }
+        // Capture IP address and user agent
+        const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+        const userAgent = req.get('User-Agent') || 'unknown';
+        
+        // Create waiver record
+        const waiver = await storage.createWaiver({
+          ...parsedWaiverData,
+          ipAddress,
+          userAgent,
+        } as any);
       
-      // Send email with PDF attachment (if configured)
-      try {
-        if (process.env.RESEND_API_KEY) {
-          const { Resend } = await import('resend');
-          const resend = new Resend(process.env.RESEND_API_KEY);
+        // Generate PDF
+        let pdfPath = null;
+        try {
+          pdfPath = await saveWaiverPDF({
+            athleteName: waiver.athleteName || 'Unknown Athlete',
+            signerName: waiver.signerName || 'Unknown Signer',
+            relationshipToAthlete: waiver.relationshipToAthlete || 'Parent/Guardian',
+            emergencyContactNumber: waiver.emergencyContactNumber,
+            signature: waiver.signature,
+            signedAt: waiver.signedAt || new Date(),
+            understandsRisks: waiver.understandsRisks ?? false,
+            agreesToPolicies: waiver.agreesToPolicies ?? false,
+            authorizesEmergencyCare: waiver.authorizesEmergencyCare ?? false,
+            allowsPhotoVideo: waiver.allowsPhotoVideo ?? false,
+            confirmsAuthority: waiver.confirmsAuthority ?? false,
+          }, waiver.id);
           
-          // Get parent email from waiver or booking data
-          let parentEmail = null;
-          if (waiver.parentId) {
-            const parent = await storage.getParentById(waiver.parentId);
-            parentEmail = parent?.email;
-          } else if (waiver.bookingId) {
-            const booking = await storage.getBooking(waiver.bookingId);
-            parentEmail = booking?.parentEmail;
-          }
-          
-          if (parentEmail) {
-            // Prepare PDF buffer if available
-            let pdfBuffer: Buffer | undefined;
-            if (pdfPath) {
-              try {
-                const fs = await import('fs/promises');
-                pdfBuffer = await fs.readFile(pdfPath);
-              } catch (attachError) {
-                console.error('Error reading PDF for email attachment:', attachError);
-              }
-            }
-
-            // Send signed waiver confirmation using helper function
-            await sendSignedWaiverConfirmation(
-              parentEmail,
-              waiver.signerName || 'Unknown Parent',
-              waiver.athleteName || 'Unknown Athlete',
-              pdfBuffer
-            );
+          // Update waiver with PDF path
+          await storage.updateWaiverPdfPath(waiver.id, pdfPath);
+        } catch (pdfError) {
+          console.error('Error generating waiver PDF:', pdfError);
+        }
+        
+        // Send email with PDF attachment (if configured)
+        try {
+          if (process.env.RESEND_API_KEY) {
+            const { Resend } = await import('resend');
+            const resend = new Resend(process.env.RESEND_API_KEY);
             
-            await storage.updateWaiverEmailSent(waiver.id);
-            console.log(`Waiver email sent to: ${parentEmail}`);
+            // Get parent email from waiver or booking data
+            let parentEmail = null;
+            if (waiver.parentId) {
+              const parent = await storage.getParentById(waiver.parentId);
+              parentEmail = parent?.email;
+            } else if (waiver.bookingId) {
+              const booking = await storage.getBooking(waiver.bookingId);
+              parentEmail = booking?.parentEmail;
+            }
+            
+            if (parentEmail) {
+              // Prepare PDF buffer if available
+              let pdfBuffer: Buffer | undefined;
+              if (pdfPath) {
+                try {
+                  const fs = await import('fs/promises');
+                  pdfBuffer = await fs.readFile(pdfPath);
+                } catch (attachError) {
+                  console.error('Error reading PDF for email attachment:', attachError);
+                }
+              }
+
+              // Send signed waiver confirmation using helper function
+              await sendSignedWaiverConfirmation(
+                parentEmail,
+                waiver.signerName || 'Unknown Parent',
+                waiver.athleteName || 'Unknown Athlete',
+                pdfBuffer
+              );
+              
+              await storage.updateWaiverEmailSent(waiver.id);
+              console.log(`Waiver email sent to: ${parentEmail}`);
+            }
           }
+        } catch (emailError) {
+          console.error('Error sending waiver email:', emailError);
+          // Don't fail the request if email fails
         }
-      } catch (emailError) {
-        console.error('Error sending waiver email:', emailError);
-        // Don't fail the request if email fails
+        
+        res.json({
+          success: true,
+          waiver: {
+            id: waiver.id,
+            athleteName: waiver.athleteName,
+            signerName: waiver.signerName,
+            signedAt: waiver.signedAt,
+            pdfGenerated: !!pdfPath,
+          }
+        });
+      } catch (validationError) {
+        console.error('❌ Waiver validation error:', validationError);
+        return res.status(400).json({ 
+          error: "Invalid waiver data", 
+          details: validationError instanceof Error ? validationError.message : String(validationError)
+        });
       }
-      
-      res.json({
-        success: true,
-        waiver: {
-          id: waiver.id,
-          athleteName: waiver.athleteName,
-          signerName: waiver.signerName,
-          signedAt: waiver.signedAt,
-          pdfGenerated: !!pdfPath,
-        }
-      });
       
     } catch (error: any) {
       console.error("Error creating waiver:", error);
-      res.status(500).json({ error: "Failed to create waiver" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ 
+        error: "Failed to create waiver", 
+        details: errorMessage
+      });
     }
   });
   

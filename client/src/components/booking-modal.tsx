@@ -23,9 +23,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { useParentAuthStatus } from "@/hooks/optimized-queries";
 import { useCreateBooking } from "@/hooks/use-booking";
+import { useValidParentId } from "@/hooks/use-parent-id";
 import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedAuth } from "@/hooks/use-unified-auth";
 import { useAvailableTimes } from "@/hooks/useAvailableTimes";
 import { useGenders } from "@/hooks/useGenders";
 import { EXPERIENCE_LEVELS, LESSON_TYPES } from "@/lib/constants";
@@ -33,7 +36,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import { loadStripe } from '@stripe/stripe-js';
-import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, ArrowRight, CalendarDays, CheckCircle, Clock, CreditCard, FileText, User, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -145,7 +147,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const [waiverSigned, setWaiverSigned] = useState(false);
   const [waiverData, setWaiverData] = useState<any>(null);
   const [showWaiverModal, setShowWaiverModal] = useState(false);
-  const [parentAuth, setParentAuth] = useState<{ loggedIn: boolean; parentId?: number; parentEmail?: string } | null>(null);
+  
   const createBooking = useCreateBooking();
   const { getLessonPrice } = useStripePricing();
 
@@ -186,21 +188,15 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
     },
   });
 
-  // Check parent authentication status using useQuery
-  const { data: parentAuthData } = useQuery<{ loggedIn: boolean; parentId?: number; email?: string }>({
-    queryKey: ['/api/parent-auth/status'],
-    enabled: modalOpen,
-  });
+  // Use our custom hook to get a validated parent ID (never 0 or undefined)
+  const validParentId = useValidParentId();
+  
+  // Use unified authentication to handle both parent and admin authentication
+  const { isAuthenticated, parentId: unifiedParentId, isParent, isAdmin } = useUnifiedAuth();
 
-  // Update local parent auth state when data changes
-  useEffect(() => {
-    console.log('🔍 Booking modal useEffect - parentAuthData:', parentAuthData);
-    if (parentAuthData) {
-      console.log('🔍 Setting parentAuth to:', parentAuthData);
-      setParentAuth(parentAuthData);
-    }
-  }, [parentAuthData]);
-
+  // For parent authentication - use our optimized hook (for compatibility)
+  const { data: parentAuthData } = useParentAuthStatus();
+  
   const watchedLessonType = form.watch("lessonType");
   const watchedFocusAreaIds = form.watch("focusAreaIds");
   const watchedDate = form.watch("preferredDate");
@@ -285,7 +281,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       case 3: // Schedule
         return !!values.preferredDate && !!values.preferredTime && values.focusAreaIds?.length > 0;
       case 4: // Parent Info - skip validation if parent is logged in
-        if (parentAuth?.loggedIn || (prefilledParent && isReturningParent)) {
+        if (parentAuthData?.loggedIn || (prefilledParent && isReturningParent)) {
           return true; // Skip validation if parent is already authenticated
         }
         return !!values.parentFirstName && !!values.parentLastName && !!values.parentEmail && 
@@ -312,7 +308,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       let nextStepNumber = currentStep + 1;
       
       // Skip parent info step (step 4) if parent is already logged in OR has prefilled data
-      if (currentStep === 3 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
+      if (currentStep === 3 && (parentAuthData?.loggedIn || (prefilledParent && isReturningParent))) {
         nextStepNumber = 5; // Skip directly to waiver step
       }
       // Skip waiver step (step 5) if waiver is already signed  
@@ -347,7 +343,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       let prevStepNumber = currentStep - 1;
       
       // Skip parent info step (step 4) when going backwards if parent is logged in
-      if (currentStep === 5 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
+      if (currentStep === 5 && (parentAuthData?.loggedIn || (prefilledParent && isReturningParent))) {
         prevStepNumber = 3; // Skip back to schedule step
       }
       
@@ -357,10 +353,10 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
   // Automatically skip parent info step if parent is already logged in
   useEffect(() => {
-    if (currentStep === 4 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
+    if (currentStep === 4 && (parentAuthData?.loggedIn || (prefilledParent && isReturningParent))) {
       setCurrentStep(5); // Skip to waiver step
     }
-  }, [currentStep, parentAuth?.loggedIn, prefilledParent, isReturningParent]);
+  }, [currentStep, parentAuthData?.loggedIn, prefilledParent, isReturningParent]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -496,7 +492,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
               { step: 6, label: "Payment", fullLabel: "Payment" }
             ].filter(stepData => {
               // Hide parent info step if parent is logged in
-              if (stepData.step === 4 && (parentAuth?.loggedIn || (prefilledParent && isReturningParent))) {
+              if (stepData.step === 4 && (parentAuthData?.loggedIn || (prefilledParent && isReturningParent))) {
                 return false;
               }
               return true;
@@ -847,7 +843,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
 
             {/* Step 4: Parent/Guardian Information - Skip if parent is logged in */}
             {(() => {
-              const shouldSkipParentInfo = parentAuth?.loggedIn || (prefilledParent && isReturningParent);
+              const shouldSkipParentInfo = parentAuthData?.loggedIn || (prefilledParent && isReturningParent);
 
               
               if (currentStep !== 4 || shouldSkipParentInfo) {
@@ -1145,14 +1141,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
           relationshipToAthlete: "Parent/Guardian",
         }}
         athleteId={undefined} // Will be created during booking process
-        parentId={(() => {
-          console.log('🔍 Booking modal parentAuth:', parentAuth);
-          console.log('🔍 Booking modal parentAuthData:', parentAuthData);
-          // Ensure we have a valid parentId (never return 0)
-          const parentId = parentAuth?.parentId || parentAuthData?.parentId || undefined;
-          console.log('🔍 Booking modal sending parentId:', parentId);
-          return parentId;
-        })()}
+        parentId={unifiedParentId || validParentId}
         athleteData={form.watch("athletes")?.[0] ? {
           name: form.watch("athletes")[0].name,
           dateOfBirth: form.watch("athletes")[0].dateOfBirth,

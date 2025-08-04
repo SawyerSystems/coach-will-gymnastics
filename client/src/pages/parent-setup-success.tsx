@@ -77,7 +77,7 @@ export default function ParentSetupSuccess() {
             </Button>
             <Button 
               className="bg-[#0F0276] hover:bg-[#0F0276]/90"
-              onClick={() => setLocation("/parent-login")}
+              onClick={() => setLocation("/parent/login")}
             >
               Go to Login
             </Button>

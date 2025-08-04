@@ -1,5 +1,5 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys, apiRequest } from "@/lib/queryClient";
+import { queryKeys } from "@/lib/queryClient";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Optimized auth hooks with shorter cache times
 export function useAuthStatus() {
@@ -11,10 +11,20 @@ export function useAuthStatus() {
 }
 
 export function useParentAuthStatus() {
-  return useQuery({
+  return useQuery<{ loggedIn?: boolean; parentId?: number; email?: string }>({
     queryKey: queryKeys.auth.parentStatus(),
     staleTime: 30 * 1000, // 30 seconds for auth status
     gcTime: 1 * 60 * 1000, // 1 minute
+    select: (data) => {
+      // Ensure parentId is either a positive number or undefined (never 0)
+      if (data && typeof data.parentId !== 'undefined') {
+        return {
+          ...data,
+          parentId: data.parentId > 0 ? data.parentId : undefined
+        };
+      }
+      return data;
+    }
   });
 }
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedAuth } from "@/hooks/use-unified-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +47,7 @@ interface UpdatedWaiverModalProps {
     relationshipToAthlete?: string;
   };
   athleteId?: number;  // Optional - for existing athletes
-  parentId: number;    // Required - parent must exist
+  parentId?: number;   // Optional but required for submission
   // For new booking flow - athlete data when athleteId is not available
   athleteData?: {
     name: string;
@@ -65,6 +66,12 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use unified authentication to handle both parent and admin login
+  const { isAuthenticated, parentId: authParentId, isParent, isAdmin } = useUnifiedAuth();
+  
+  // Determine the actual parentId to use - prefer prop, fallback to auth
+  const effectiveParentId = parentId || authParentId;
 
   const form = useForm<WaiverFormData>({
     resolver: zodResolver(waiverSchema),
@@ -84,13 +91,17 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
 
   const createWaiverMutation = useMutation({
     mutationFn: async (waiverData: any) => {
+      console.log('🔄 Sending waiver data to API:', JSON.stringify(waiverData, null, 2));
       const response = await apiRequest("POST", "/api/waivers", waiverData);
       if (!response.ok) {
-        throw new Error(`Failed to create waiver: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error('❌ Waiver API error:', errorData);
+        throw new Error(`Failed to create waiver: ${errorData.error || response.status}`);
       }
       return response.json();
     },
     onSuccess: (data) => {
+      console.log('✅ Waiver created successfully:', data);
       toast({
         title: "Waiver Signed Successfully",
         description: "Your waiver has been signed and saved. You'll receive a copy via email.",
@@ -103,9 +114,23 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
       queryClient.invalidateQueries({ queryKey: ["/api/parent/waivers"] });
     },
     onError: (error: any) => {
+      console.error('❌ Waiver mutation error:', error);
+      let errorMessage = "Failed to sign waiver. Please try again.";
+      
+      // Extract specific error messages for common issues
+      if (error.message?.includes("Both athleteId and parentId are required")) {
+        errorMessage = "Parent authentication is required. Please log in again or refresh the page.";
+      } else if (error.message?.includes("400") || error.message?.includes("Invalid waiver data")) {
+        errorMessage = "Invalid waiver data. Please check all fields and try again.";
+      } else if (error.message?.includes("500")) {
+        errorMessage = "Server error. Please try again later or contact support.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error Signing Waiver",
-        description: error.message || "Failed to sign waiver. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -178,9 +203,16 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
   };
 
   const onSubmit = async (data: WaiverFormData) => {
-    console.log('🔍 Waiver modal received parentId:', parentId);
-    console.log('🔍 Waiver modal received athleteId:', athleteId);
-    console.log('🔍 Waiver modal received athleteData:', athleteData);
+    console.log('🔍 Waiver modal authentication check:', {
+      isAuthenticated,
+      isParent,
+      isAdmin,
+      effectiveParentId,
+      propParentId: parentId,
+      authParentId,
+      athleteId,
+      hasAthleteData: !!athleteData
+    });
     
     if (!signatureData) {
       toast({
@@ -191,14 +223,37 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
       return;
     }
 
+    // Construct waiver data with formData and signature
     const waiverData: any = {
       ...data,
       signature: signatureData,
       signedAt: new Date(),
-      parentId, // Always include parentId (required)
     };
     
-    // Only include athleteId if it exists
+    // Include parentId if we have one (prefer prop, then auth)
+    if (effectiveParentId && effectiveParentId > 0) {
+      waiverData.parentId = effectiveParentId;
+      console.log('✅ Using effective parentId:', effectiveParentId);
+    } else {
+      console.warn('⚠️ No valid parentId available:', { 
+        providedParentId: parentId, 
+        authParentId,
+        isAuthenticated,
+        isParent
+      });
+      
+      // If we're in parent context but no valid ID, show authentication error
+      if (isParent && !effectiveParentId) {
+        toast({
+          title: "Authentication Error",
+          description: "Your parent session may have expired. Please try logging in again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    // Only include athleteId if it exists and is valid
     if (athleteId) {
       waiverData.athleteId = athleteId;
     }
@@ -215,6 +270,9 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
     }
 
     console.log('📤 Submitting waiver data:', waiverData);
+    
+    // Let the server handle the validation - it will return appropriate errors
+    // if authentication or required data is missing
     createWaiverMutation.mutate(waiverData);
   };
 

@@ -320,6 +320,12 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
 
   const handleSaveChanges = () => {
     setIsEditing(false);
+    
+    // If we're saving changes in edit mode, we should still be able to continue
+    // This ensures that both "Save Changes" and "Confirm" buttons allow navigation
+    if (isValid && !state.parentId) {
+      handleConfirmInfo();
+    }
   };
 
   const isValid = parentInfo.firstName && parentInfo.lastName && 
@@ -431,8 +437,11 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                 <Edit2 className="h-4 w-4" />
                 Edit Information
               </Button>
-              <Button type="button" onClick={handleConfirmInfo}>
-                Confirm
+              <Button 
+                type="button" 
+                onClick={handleConfirmInfo}
+              >
+                {isAutoLinked ? "Continue" : "Confirm & Continue"}
               </Button>
             </div>
           </CardContent>
@@ -450,8 +459,14 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
         e.preventDefault();
         if (isValid) {
           if (isEditing) {
+            // Save changes and continue if we're editing
             handleSaveChanges();
+            // If we already have a parentId, we can continue directly
+            if (state.parentId) {
+              nextStep();
+            }
           } else {
+            // If not editing, confirm and continue
             handleConfirmInfo();
           }
         }
@@ -540,7 +555,9 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           
           <div className="flex justify-end">
             <Button type="submit" disabled={!isValid}>
-              {isEditing ? "Save Changes" : state.parentId ? "Continue" : "Create Parent & Continue"}
+              {isEditing 
+                ? (state.parentId ? "Save & Continue" : "Save Changes") 
+                : (state.parentId ? "Continue" : "Create Parent & Continue")}
             </Button>
           </div>
         </div>

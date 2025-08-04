@@ -3,7 +3,7 @@
 
 export function addParentTestRoutes(app: any, storage: any) {
   // Test endpoint to directly authenticate a parent for testing
-  app.post('/api/test/parent-login', async (req, res) => {
+  app.post('/api/test/parent/login', async (req, res) => {
     const { email } = req.body;
     
     if (!email) {

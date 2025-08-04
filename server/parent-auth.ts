@@ -102,7 +102,7 @@ parentAuthRouter.post('/register', [
     await sendVerificationEmail(email, firstName, token);
 
     // Send welcome email to new parent
-    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent-login`;
+    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
     try {
       await sendParentWelcomeEmail(email, firstName, loginLink);
       console.log(`Welcome email sent to ${email}`);
