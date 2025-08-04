@@ -341,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Parent dashboard routes
   app.get('/api/parent/bookings', isParentAuthenticated, async (req, res) => {
-    console.log('🚨 PARENT BOOKINGS ENDPOINT REACHED 🚨');
+      console.log('🚨 PARENT BOOKINGS ENDPOINT REACHED 🚨');
     console.log(`[PARENT-BOOKINGS-START] Endpoint called, parentId: ${req.session.parentId}`);
     
     try {
@@ -367,9 +367,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           *,
           lesson_types(
             id,
-            name
+            name,
+            price
           ),
           booking_athletes (
+            id,
             athlete_id,
             slot_order,
             athletes:athlete_id (
@@ -382,7 +384,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               experience,
               gender,
               parent_id,
-              waiver_status
+              waiver_status,
+              waiver_signed,
+              latest_waiver_id
             )
           )
         `)
@@ -392,20 +396,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[PARENT-BOOKINGS] Query result:`, {
         error: parentBookingsQuery.error,
         dataLength: parentBookingsQuery.data?.length,
-        data: parentBookingsQuery.data
+        data: parentBookingsQuery.data?.slice(0, 1) // Log just first booking to avoid overwhelming logs
       });
         
       if (parentBookingsQuery.error) {
         throw parentBookingsQuery.error;
-      }
-      
+      }        
       // Transform the data to include athletes array and proper payment status
       const bookingsWithAthletes = parentBookingsQuery.data?.map((booking: any) => {
-        const athletes = booking.booking_athletes?.map((ba: any) => ba.athletes) || [];
+        // Extract athletes from booking_athletes array
+        const athletes = booking.booking_athletes?.map((ba: any) => {
+          if (!ba.athletes) {
+            console.warn(`[PARENT-BOOKINGS] Missing athletes data for booking_athletes entry:`, ba);
+            return null;
+          }
+          return {
+            ...ba.athletes,
+            slotOrder: ba.slot_order || 1
+          };
+        }).filter(Boolean) || [];
+        
+        // Debug any issues with athlete data
+        if (athletes.length === 0 && booking.booking_athletes?.length > 0) {
+          console.warn(`[PARENT-BOOKINGS] Booking ${booking.id} has booking_athletes entries but no resolved athlete data:`, 
+            booking.booking_athletes);
+        }
         
         // Check if all athletes have signed waivers
         const allAthletesHaveWaivers = athletes.length > 0 && 
-          athletes.every((athlete: any) => athlete && athlete.waiver_status === 'signed');
+          athletes.every((athlete: any) => athlete && 
+            (athlete.waiver_status === 'signed' || athlete.waiver_signed === true));
         
         // Map payment status to user-friendly display
         let displayPaymentStatus = booking.payment_status;
@@ -425,12 +445,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           displayStatus = BookingStatusEnum.CONFIRMED;
         }
         
-        return {
+        // Derive waiver status from athletes instead of the booking record
+        // A booking's waiver is signed if all athletes have signed waivers
+        const waiverSigned = allAthletesHaveWaivers;        return {
           ...booking,
           athletes,
           displayPaymentStatus,
           status: displayStatus,
-          waiverSigned: allAthletesHaveWaivers,
+          waiverSigned: waiverSigned, // Use the computed waiver status from athletes
           // Transform snake_case to camelCase for frontend compatibility
           attendanceStatus: booking.attendance_status,
           paymentStatus: booking.payment_status,
@@ -2328,6 +2350,7 @@ setTimeout(async () => {
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
+        locale: 'en',
         line_items: [{
           price_data: {
             currency: 'usd',
@@ -2420,6 +2443,7 @@ setTimeout(async () => {
       // Create Stripe payment link for reservation
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
+        locale: 'en',
         line_items: [
           {
             price_data: {

@@ -1,6 +1,7 @@
 // ...existing code...
 // ...existing code...
 import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
 
@@ -2080,13 +2081,23 @@ export class SupabaseStorage implements IStorage {
         }
         
         // Create booking_athletes relationship
-        await supabase
-          .from('booking_athletes')
-          .insert({
-            booking_id: booking.id,
-            athlete_id: athleteId,
-            slot_order: athleteData.slotOrder || (i + 1)
-          });
+        try {
+          const { error: athleteInsertError } = await supabaseAdmin
+            .from('booking_athletes')
+            .insert({
+              booking_id: booking.id,
+              athlete_id: athleteId,
+              slot_order: athleteData.slotOrder || (i + 1)
+            });
+            
+          if (athleteInsertError) {
+            console.error(`Error linking athlete ${athleteId} to booking ${booking.id}:`, athleteInsertError);
+            throw new Error(`Failed to link athlete ${athleteId} to booking ${booking.id}: ${athleteInsertError.message}`);
+          }
+        } catch (err) {
+          console.error(`Exception linking athlete ${athleteId} to booking ${booking.id}:`, err);
+          throw err;
+        }
       }
     }
 
@@ -2097,9 +2108,19 @@ export class SupabaseStorage implements IStorage {
         focus_area_id: focusAreaId
       }));
       
-      await supabase
-        .from('booking_focus_areas')
-        .insert(focusAreaInserts);
+      try {
+        const { error: focusAreaInsertError } = await supabaseAdmin
+          .from('booking_focus_areas')
+          .insert(focusAreaInserts);
+          
+        if (focusAreaInsertError) {
+          console.error(`Error adding focus areas to booking ${booking.id}:`, focusAreaInsertError);
+          // Continue execution instead of throwing to not block the whole booking
+        }
+      } catch (err) {
+        console.error(`Exception adding focus areas to booking ${booking.id}:`, err);
+        // Continue execution instead of throwing to not block the whole booking
+      }
     }
 
     // Create apparatus relationships if provided
@@ -2107,9 +2128,21 @@ export class SupabaseStorage implements IStorage {
       const apparatusInserts = insertBooking.apparatusIds.map((apparatusId: number) => ({
         booking_id: booking.id,
         apparatus_id: apparatusId
-      }));      await supabase
-        .from('booking_apparatus')
-        .insert(apparatusInserts);
+      }));
+      
+      try {
+        const { error: apparatusInsertError } = await supabaseAdmin
+          .from('booking_apparatus')
+          .insert(apparatusInserts);
+          
+        if (apparatusInsertError) {
+          console.error(`Error adding apparatus to booking ${booking.id}:`, apparatusInsertError);
+          // Continue execution instead of throwing to not block the whole booking
+        }
+      } catch (err) {
+        console.error(`Exception adding apparatus to booking ${booking.id}:`, err);
+        // Continue execution instead of throwing to not block the whole booking
+      }
     }
 
     // Create side quest relationships if provided
@@ -2119,9 +2152,19 @@ export class SupabaseStorage implements IStorage {
         side_quest_id: sideQuestId
       }));
       
-      await supabase
-        .from('booking_side_quests')
-        .insert(sideQuestInserts);
+      try {
+        const { error: sideQuestInsertError } = await supabaseAdmin
+          .from('booking_side_quests')
+          .insert(sideQuestInserts);
+          
+        if (sideQuestInsertError) {
+          console.error(`Error adding side quests to booking ${booking.id}:`, sideQuestInsertError);
+          // Continue execution instead of throwing to not block the whole booking
+        }
+      } catch (err) {
+        console.error(`Exception adding side quests to booking ${booking.id}:`, err);
+        // Continue execution instead of throwing to not block the whole booking
+      }
     }
 
     return booking;
@@ -4072,7 +4115,7 @@ export class SupabaseStorage implements IStorage {
     }
 
     // Get related apparatus
-    const { data: apparatusData } = await supabase
+    const { data: apparatusData } = await supabaseAdmin
       .from('booking_apparatus')
       .select(`
         apparatus_id,
@@ -4081,7 +4124,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related focus areas
-    const { data: focusAreasData } = await supabase
+    const { data: focusAreasData } = await supabaseAdmin
       .from('booking_focus_areas')
       .select(`
         focus_area_id,
@@ -4090,7 +4133,7 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related side quests
-    const { data: sideQuestsData } = await supabase
+    const { data: sideQuestsData } = await supabaseAdmin
       .from('booking_side_quests')
       .select(`
         side_quest_id,
@@ -4099,12 +4142,24 @@ export class SupabaseStorage implements IStorage {
       .eq('booking_id', id);
 
     // Get related athletes
-    const { data: athletesData } = await supabase
+    const { data: athletesData } = await supabaseAdmin
       .from('booking_athletes')
       .select(`
         athlete_id,
         slot_order,
-        athletes!inner(id, first_name, last_name, date_of_birth, gender, allergies, experience, parent_id)
+        athletes!inner(
+          id, 
+          first_name, 
+          last_name, 
+          date_of_birth, 
+          gender, 
+          allergies, 
+          experience, 
+          parent_id,
+          waiver_status,
+          latest_waiver_id,
+          waiver_signed
+        )
       `)
       .eq('booking_id', id)
       .order('slot_order', { ascending: true });
@@ -4635,6 +4690,94 @@ export class SupabaseStorage implements IStorage {
       console.error('Error adding focus areas to booking:', error);
       throw error;
     }
+  }
+
+  /**
+   * Synchronizes booking payment status with Stripe
+   * @param stripeClient - Initialized Stripe client instance
+   * @param logger - Logger instance for recording results
+   * @returns Object containing count of updated bookings and total processed
+   */
+  async syncPaymentStatus(stripeClient: Stripe, logger: { admin: (message: string) => void }): Promise<{ updatedCount: number, totalCount: number }> {
+    // Get all bookings with stripe session IDs that are in "pending" or "reservation-paid" status
+    const { data: bookings, error } = await supabaseAdmin
+      .from('bookings')
+      .select('*')
+      .not('stripe_session_id', 'is', null)
+      .in('payment_status', ['pending', 'reservation-paid']);
+
+    if (error) {
+      console.error('Error fetching bookings for payment sync:', error);
+      throw error;
+    }
+
+    let updatedCount = 0;
+    const totalCount = bookings.length;
+
+    logger.admin(`Starting payment sync for ${totalCount} bookings with Stripe sessions`);
+
+    for (const booking of bookings) {
+      try {
+        // Skip if no stripe session ID
+        if (!booking.stripe_session_id) continue;
+
+        // Retrieve the session from Stripe
+        const session = await stripeClient.checkout.sessions.retrieve(booking.stripe_session_id);
+        
+        // Determine new payment and booking status based on Stripe session
+        let newPaymentStatus = booking.payment_status;
+        let newStatus = booking.status;
+        
+        switch (session.status) {
+          case 'complete':
+            // If session is paid, update booking status
+            if (session.payment_status === 'paid') {
+              newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
+              newStatus = BookingStatusEnum.CONFIRMED;
+            }
+            break;
+          case 'expired':
+            // If session expired and still in pending, mark as abandoned
+            if (booking.payment_status === PaymentStatusEnum.PENDING) {
+              newPaymentStatus = PaymentStatusEnum.ABANDONED;
+              newStatus = BookingStatusEnum.CANCELLED;
+            }
+            break;
+          case 'no_payment_required':
+            newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
+            newStatus = BookingStatusEnum.CONFIRMED;
+            break;
+          default:
+            // Default case for pending sessions
+            newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+            newStatus = BookingStatusEnum.PENDING;
+        }
+
+        // Update booking if status changed
+        if (newPaymentStatus !== booking.payment_status || newStatus !== booking.status) {
+          const { error: updateError } = await supabaseAdmin
+            .from('bookings')
+            .update({
+              payment_status: newPaymentStatus,
+              status: newStatus
+            })
+            .eq('id', booking.id);
+
+          if (updateError) {
+            console.error(`Error updating booking ${booking.id}:`, updateError);
+            continue;
+          }
+
+          updatedCount++;
+          logger.admin(`Updated booking ${booking.id}: ${booking.payment_status} → ${newPaymentStatus}`);
+        }
+      } catch (stripeError) {
+        console.warn(`Failed to check Stripe session ${booking.stripe_session_id}:`, stripeError);
+      }
+    }
+
+    logger.admin(`✅ Synced ${updatedCount} bookings with Stripe`);
+    return { updatedCount, totalCount };
   }
 }
 

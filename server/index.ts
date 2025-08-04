@@ -2,6 +2,7 @@ import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import express, { NextFunction, type Request, Response } from "express";
 import fs from "fs";
 import path from "path";
+import Stripe from "stripe";
 import { isAdminAuthenticated } from "./auth";
 import { configureSessionAndCors, sessionConfig } from "./config/session";
 import { logger } from "./logger";
@@ -40,6 +41,20 @@ if (!serviceRoleKey) {
 }
 
 console.log('✅ Service role key configured for admin operations');
+
+// Initialize Stripe client
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+  console.error('❌ CRITICAL: Missing Stripe secret key!');
+  console.error('   Set STRIPE_SECRET_KEY environment variable');
+  console.error('   Without this key, payment processing and syncing will fail');
+  process.exit(1);
+}
+
+const stripe = new Stripe(stripeKey, {
+  apiVersion: '2023-10-16',
+});
+console.log('✅ Stripe client initialized');
 
 // Validate other required environment variables
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -994,5 +1009,18 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     console.log(`serving on port ${port}`);
+    
+    // Set up scheduled payment sync job - run every 30 minutes
+    const PAYMENT_SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
+    
+    setInterval(async () => {
+      try {
+        console.log('Running scheduled payment status sync');
+        const result = await storage.syncPaymentStatus(stripe, logger);
+        console.log(`Scheduled payment sync complete: updated ${result.updatedCount}/${result.totalCount} bookings`);
+      } catch (error) {
+        console.error('Failed to run scheduled payment sync:', error);
+      }
+    }, PAYMENT_SYNC_INTERVAL);
   });
 })();

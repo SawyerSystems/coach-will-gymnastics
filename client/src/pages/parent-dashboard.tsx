@@ -717,11 +717,17 @@ function ParentDashboard() {
                               </div>
                               {booking.athletes && booking.athletes.length > 0 ? (
                                 <span className="font-medium text-sm sm:text-base">
-                                  {booking.athletes.map((athlete: any) => athlete.name).join(' & ')}
+                                  {booking.athletes.map((athlete: any) => 
+                                    athlete.name || 
+                                    `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || 
+                                    'Athlete'
+                                  ).join(' & ')}
                                 </span>
                               ) : (
                                 <>
-                                  <span className="font-medium text-sm sm:text-base">{booking.athlete1Name}</span>
+                                  <span className="font-medium text-sm sm:text-base">
+                                    {booking.athlete1Name || 'Your Athlete'}
+                                  </span>
                                   {booking.athlete2Name && (
                                     <span className="font-medium text-sm sm:text-base">& {booking.athlete2Name}</span>
                                   )}
