@@ -2,6 +2,7 @@ import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { ParentAthleteDetailDialog } from '@/components/ParentAthleteDetailDialog';
 import { SafetyInformationDialog } from '@/components/safety-information-dialog';
+import { AddAthleteModal } from '@/components/AddAthleteModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -426,7 +427,7 @@ function ParentDashboard() {
   const [editingAthleteId, setEditingAthleteId] = useState<number | null>(null);
   const [editingAthleteInfo, setEditingAthleteInfo] = useState<any>(null);
   const [editingAthleteGender, setEditingAthleteGender] = useState<string>('');
-  const [addingNewAthlete, setAddingNewAthlete] = useState<boolean>(false);
+  const [showAddAthleteModal, setShowAddAthleteModal] = useState<boolean>(false);
   const [selectedAthleteForBooking, setSelectedAthleteForBooking] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showAthleteSelection, setShowAthleteSelection] = useState(false);
@@ -1188,7 +1189,7 @@ function ParentDashboard() {
                 <div className="mt-6 flex justify-center">
                   <Button 
                     className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-md transition-all duration-200 flex items-center gap-2"
-                    onClick={() => setAddingNewAthlete(true)}
+                    onClick={() => setShowAddAthleteModal(true)}
                   >
                     <PlusCircle className="h-4 w-4" />
                     Add New Athlete
@@ -1984,6 +1985,12 @@ function ParentDashboard() {
             parentId={parentInfo?.id || 0}
           />
         )}
+
+        {/* Add Athlete Modal */}
+        <AddAthleteModal
+          isOpen={showAddAthleteModal}
+          onClose={() => setShowAddAthleteModal(false)}
+        />
 
         {/* Safety Information Dialog */}
         <SafetyInformationDialog
