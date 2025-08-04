@@ -4,7 +4,8 @@ import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useToast } from "@/hooks/use-toast";
 import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
 import { useStripePricing } from "@/hooks/useStripePricing";
-import { LESSON_TYPES } from "@/lib/constants";
+import { useFocusAreas } from "@/hooks/useFocusAreas";
+import { LESSON_TYPES, LESSON_TYPE_IDS } from "@/lib/constants";
 import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ export function PaymentStep() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [athleteNames, setAthleteNames] = useState<string[]>([]);
   const { getReservationFee, isLoading: isPricingLoading } = useStripePricing();
+  const { mapFocusAreaNamesToIds, isLoading: areFocusAreasLoading } = useFocusAreas();
   
   // Check if athlete is selected and redirect if needed
   useEffect(() => {
@@ -89,14 +91,30 @@ export function PaymentStep() {
       }
 
       const [lessonKey, lessonData] = lessonEntry;
-
-      // Prepare booking data based on flow type
+      
+      // Validate lessonTypeId exists for the selected lesson type
+      if (!LESSON_TYPE_IDS[state.lessonType]) {
+        console.error(`No lesson type ID mapping found for "${state.lessonType}"`);
+        throw new Error(`Unknown lesson type: ${state.lessonType}`);
+      }
+      
+      // Check if we have an "Other" focus area and handle separately
+      const focusAreasList = state.focusAreas.length > 0 ? state.focusAreas : ['General Skills'];
+      const hasOtherFocusArea = focusAreasList.includes('Other');
+      const focusAreaOther = hasOtherFocusArea ? state.focusAreaOther : undefined;
+      
+      // Map focus areas to focus area IDs
+      const focusAreaIds = mapFocusAreaNamesToIds(focusAreasList);
+      
+      // Prepare booking data based on flow type - aligned with insertBookingSchema
       let bookingData: any = {
-        lessonType: state.lessonType,
+        parentId: state.parentId, // Add parentId as required by schema
+        lessonTypeId: LESSON_TYPE_IDS[state.lessonType], // Use shared constant mapping
+        lessonType: state.lessonType, // Keep for backward compatibility
         preferredDate: state.selectedTimeSlot?.date,
         preferredTime: state.selectedTimeSlot?.time,
-        amount: lessonData.price.toString(),
-        focusAreas: state.focusAreas.length > 0 ? state.focusAreas : ['General Skills'],
+        focusAreaIds: focusAreaIds, // Use mapped IDs instead of names
+        focusAreaOther: focusAreaOther, // Include other focus area text if applicable
         parentFirstName: state.parentInfo?.firstName,
         parentLastName: state.parentInfo?.lastName,
         parentEmail: state.parentInfo?.email,
@@ -109,10 +127,12 @@ export function PaymentStep() {
         pickupPersonName: state.safetyContact?.pickupPersonName || null,
         pickupPersonRelationship: state.safetyContact?.pickupPersonRelationship === '' ? null : state.safetyContact?.pickupPersonRelationship || null,
         pickupPersonPhone: state.safetyContact?.pickupPersonPhone || null,
-        waiverSigned: state.waiverStatus.signed,
-        waiverSignedAt: state.waiverStatus.signedAt ? new Date(state.waiverStatus.signedAt).toISOString() : new Date().toISOString(),
-        waiverSignatureName: `${state.parentInfo?.firstName} ${state.parentInfo?.lastName}`,
-        reservationFeePaid: true,
+        // Removed unsupported fields:
+        // - waiverSigned
+        // - waiverSignedAt  
+        // - waiverSignatureName
+        // - reservationFeePaid
+        // - amount
       };
 
       // Handle athlete data based on flow
@@ -144,7 +164,29 @@ export function PaymentStep() {
       // Add athletes array to booking data
       bookingData.athletes = athletes;
 
-      console.log("Final booking data being sent:", bookingData);
+      // Check if we need to fetch parentId for auth status
+      if (!bookingData.parentId) {
+        // Try to get parentId from parent auth status
+        const { data: parentAuthData } = await apiRequest('GET', '/api/parent-auth/status');
+        if (parentAuthData && parentAuthData.parentId) {
+          bookingData.parentId = parentAuthData.parentId;
+          console.log(`Detected parentId ${parentAuthData.parentId} from auth status`);
+        }
+      }
+
+      console.log("Final booking data being sent:", JSON.stringify(bookingData, null, 2));
+      console.log("Focus areas transformation:", {
+        original: state.focusAreas,
+        mapped: bookingData.focusAreaIds,
+        hasOther: bookingData.focusAreaOther ? true : false,
+        otherText: bookingData.focusAreaOther
+      });
+      console.log("Lesson type mapping:", {
+        original: state.lessonType,
+        mappedId: bookingData.lessonTypeId,
+        mappingUsed: 'LESSON_TYPE_IDS constant'
+      });
+      
       // Determine API endpoint based on flow
       const endpoint = state.flowType === 'new-user' 
         ? '/api/booking/new-user-flow' 
@@ -159,7 +201,7 @@ export function PaymentStep() {
         setIsProcessing(true);
 
         // Pass full lesson price to backend - let backend determine actual Stripe charge
-        const fullPrice = parseFloat(booking.amount);
+        const fullPrice = lessonInfo?.price || 0;
 
         // Create Stripe checkout session (backend will determine actual charge amount from Stripe products)
         const response = await apiRequest('POST', '/api/create-checkout-session', {
@@ -179,9 +221,23 @@ export function PaymentStep() {
         }
       } catch (error) {
         console.error('Payment error:', error);
+        toast({
+          title: "Payment Error",
+          description: "There was a problem setting up the payment. Please try again.",
+          variant: "destructive",
+        });
         setIsProcessing(false);
       }
     },
+    onError: (error) => {
+      console.error('Booking creation error:', error);
+      toast({
+        title: "Booking Error",
+        description: "There was a problem creating your booking. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
   });
 
   const lessonInfo = LESSON_TYPES[state.lessonType as keyof typeof LESSON_TYPES];
@@ -190,6 +246,16 @@ export function PaymentStep() {
   const remainingBalance = lessonPrice - reservationFee;
 
   const handlePayment = () => {
+    // Check if focus areas are still loading
+    if (areFocusAreasLoading) {
+      toast({
+        title: "Loading Focus Areas",
+        description: "Please wait while we prepare your booking data.",
+        variant: "default",
+      });
+      return;
+    }
+    
     createBooking.mutate();
   };
 
@@ -298,7 +364,7 @@ export function PaymentStep() {
 
       <Button 
         onClick={handlePayment}
-        disabled={createBooking.isPending || isProcessing}
+        disabled={createBooking.isPending || isProcessing || areFocusAreasLoading}
         className="w-full min-h-[48px] text-lg"
         size="lg"
       >
@@ -306,6 +372,11 @@ export function PaymentStep() {
           <>
             <Loader2 className="h-5 w-5 mr-2 animate-spin" />
             Processing...
+          </>
+        ) : areFocusAreasLoading ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Loading Focus Areas...
           </>
         ) : (
           <>

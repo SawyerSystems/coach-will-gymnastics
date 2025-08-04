@@ -41,6 +41,14 @@ export const LESSON_TYPES = {
   }
 } as const;
 
+// Map lesson types to their database IDs
+export const LESSON_TYPE_IDS: { [key: string]: number } = {
+  'quick-journey': 1,
+  'dual-quest': 2,  
+  'deep-dive': 3,
+  'partner-progression': 4
+};
+
 // Event-based skills structure for two-step dropdown selection
 export const GYMNASTICS_EVENTS = {
   tumbling: {
