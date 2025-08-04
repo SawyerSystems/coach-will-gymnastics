@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LESSON_TYPES } from "@/lib/constants";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -92,10 +91,6 @@ export default function BookingSuccess() {
       </div>
     );
   }
-
-  const lessonInfo = booking
-    ? LESSON_TYPES[booking.lessonType as keyof typeof LESSON_TYPES]
-    : null;
     
   // Handle both legacy and normalized athlete data
   const athleteNames = [];
@@ -115,9 +110,9 @@ export default function BookingSuccess() {
       )
     : "";
 
-  // Calculate payment amounts correctly
-  const totalLessonPrice = parseFloat(booking?.amount || '0');
-  const actualPaidAmount = parseFloat(booking?.paidAmount || '10'); // Default to $10 if not set
+  // Calculate payment amounts correctly using lessonType price
+  const totalLessonPrice = parseFloat(booking?.amount || booking?.lessonType?.price?.toString() || '0');
+  const actualPaidAmount = parseFloat(booking?.paidAmount || '0');
   const remainingBalance = totalLessonPrice - actualPaidAmount;
 
   return (
@@ -150,7 +145,7 @@ export default function BookingSuccess() {
                   <div>
                     <p className="text-sm text-gray-600">Athletes</p>
                     <p className="font-semibold">
-                      {athleteNames.length > 0 ? athleteNames.join(", ") : "Athlete information not available"}
+                      {athleteNames.length > 0 ? athleteNames.join(", ") : "No athlete information available - please contact us"}
                     </p>
                   </div>
                 </div>
@@ -175,7 +170,7 @@ export default function BookingSuccess() {
                   <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-600">Lesson Type</p>
-                    <p className="font-semibold">{lessonInfo?.name}</p>
+                    <p className="font-semibold">{booking.lessonType?.name || "Lesson information not available"}</p>
                   </div>
                 </div>
               </div>

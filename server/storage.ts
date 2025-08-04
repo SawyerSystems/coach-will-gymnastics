@@ -4056,9 +4056,13 @@ export class SupabaseStorage implements IStorage {
           name: data.name,
           duration: data.duration_minutes,
           price: parseFloat(data.total_price || '0'),
-          description: data.description
+          description: data.description,
+          key: data.name.toLowerCase().replace(/\s+/g, '-') // Add slug/key for the lessonType
         };
       }
+      
+      // Set the booking amount if it's not already set
+      booking.amount = booking.amount ?? lessonType?.price?.toString() ?? '0';
     }
 
     // Get waiver data

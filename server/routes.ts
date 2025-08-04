@@ -1987,37 +1987,51 @@ setTimeout(async () => {
             
             console.log(`[STRIPE WEBHOOK] AUTOMATIC STATUS UPDATE - Booking ${bookingId}: Payment → reservation-paid, Attendance → confirmed`);
             
+            // Get booking with relations to access parent data
+            const bookingWithRelations = await storage.getBookingWithRelations(parseInt(bookingId));
+            if (!bookingWithRelations) {
+              console.error(`[STRIPE WEBHOOK] Could not fetch booking with relations for booking ${bookingId}`);
+              break;
+            }
+
             // Automatic parent and athlete profile creation with booking linkage
             try {
-              if (!booking.parentEmail) {
-                console.error(`[STRIPE WEBHOOK] No parent email for booking ${bookingId}`);
-                return res.status(200).json({ received: true });
+              // Use parent from relations or booking.parentEmail as fallback
+              const parentEmail = bookingWithRelations.parent?.email || booking.parentEmail;
+              
+              if (!parentEmail) {
+                console.error(`[STRIPE WEBHOOK] No parent email found for booking ${bookingId}`);
+                break;
               }
 
-              let parentRecord = await storage.identifyParent(booking.parentEmail, booking.parentPhone || '');
+              let parentRecord = bookingWithRelations.parent;
+              
+              if (!parentRecord) {
+                parentRecord = await storage.identifyParent(parentEmail, booking.parentPhone || '');
+              }
               
               if (!parentRecord) {
                 parentRecord = await storage.createParent({
                   firstName: booking.parentFirstName || 'Unknown',
                   lastName: booking.parentLastName || 'Parent',
-                  email: booking.parentEmail,
+                  email: parentEmail,
                   phone: booking.parentPhone || '',
                   emergencyContactName: booking.emergencyContactName || '',
                   emergencyContactPhone: booking.emergencyContactPhone || '',
                   passwordHash: await bcrypt.hash(Math.random().toString(36).slice(2), 10)
                 });
-                console.log(`[STRIPE WEBHOOK] AUTO-CREATED parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
+                console.log(`[STRIPE WEBHOOK] AUTO-CREATED parent account for ${parentEmail} (ID: ${parentRecord.id})`);
                 
                 // Send welcome email for automatically created parent accounts
                 try {
                   const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
-                  await sendParentWelcomeEmail(booking.parentEmail, booking.parentFirstName || 'Gymnastics Parent', loginLink);
-                  console.log(`[STRIPE WEBHOOK] Welcome email sent to new parent ${booking.parentEmail}`);
+                  await sendParentWelcomeEmail(parentEmail, booking.parentFirstName || 'Gymnastics Parent', loginLink);
+                  console.log(`[STRIPE WEBHOOK] Welcome email sent to new parent ${parentEmail}`);
                 } catch (emailError) {
-                  console.error(`[STRIPE WEBHOOK] Failed to send welcome email to ${booking.parentEmail}:`, emailError);
+                  console.error(`[STRIPE WEBHOOK] Failed to send welcome email to ${parentEmail}:`, emailError);
                 }
               } else {
-                console.log(`[STRIPE WEBHOOK] Using existing parent account for ${booking.parentEmail} (ID: ${parentRecord.id})`);
+                console.log(`[STRIPE WEBHOOK] Using existing parent account for ${parentEmail} (ID: ${parentRecord.id})`);
               }
               
               // Track created athlete IDs for booking linkage
@@ -2131,7 +2145,12 @@ setTimeout(async () => {
             
             // Automatic confirmation email
             try {
-              const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
+              // Use parent from relations if available, otherwise fall back to booking fields
+              const parentFirstName = bookingWithRelations.parent?.firstName || booking.parentFirstName || 'Parent';
+              const parentLastName = bookingWithRelations.parent?.lastName || booking.parentLastName || '';
+              const parentName = `${parentFirstName} ${parentLastName}`.trim();
+              const emailToUse = bookingWithRelations.parent?.email || booking.parentEmail;
+              
               const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -2141,23 +2160,27 @@ setTimeout(async () => {
               
               // Get athlete name with better fallback logic
               let athleteName = 'Athlete';
-              if (booking.athletes && booking.athletes.length > 0) {
+              if (bookingWithRelations.athletes && bookingWithRelations.athletes.length > 0) {
+                athleteName = bookingWithRelations.athletes[0].name;
+              } else if (booking.athletes && booking.athletes.length > 0) {
                 athleteName = booking.athletes[0].name;
               } else if (booking.athlete1Name) {
                 athleteName = booking.athlete1Name;
               }
               
-              if (booking.parentEmail) {
-                console.log(`[STRIPE WEBHOOK] Sending confirmation email to ${booking.parentEmail} for ${athleteName}`);
+              if (emailToUse) {
+                console.log(`[STRIPE WEBHOOK] Sending confirmation email to ${emailToUse} for ${athleteName}`);
                 
                 await sendSessionConfirmation(
-                  booking.parentEmail,
+                  emailToUse,
                   parentName,
                   athleteName,
                   sessionDate,
                   booking.preferredTime || 'Unknown Time'
                 );
                 console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
+              } else {
+                console.error(`[STRIPE WEBHOOK] Cannot send confirmation email - no parent email found`);
               }
             } catch (emailError) {
               console.error('[STRIPE WEBHOOK] ❌ Failed to auto-send confirmation email:', emailError);
