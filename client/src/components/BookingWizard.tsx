@@ -189,6 +189,31 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
       return; // Return early as the form submission will handle navigation
     }
     
+    // Skip athlete info form if athletes are already selected in parent-portal flow
+    if (stepName === 'athleteSelect' && 
+        state.selectedAthletes.length > 0 && 
+        state.flowType === 'parent-portal') {
+      
+      const flow = BOOKING_FLOWS[state.flowType];
+      const nextStepIndex = state.currentStep + 1;
+      
+      if (flow[nextStepIndex] === 'athleteInfoForm') {
+        // Skip to the step after athleteInfoForm (which should be focusAreas)
+        console.log('⏭️ Skipping athleteInfoForm step as athletes are already selected', {
+          flowType: state.flowType,
+          currentStep: state.currentStep,
+          currentStepName: stepName,
+          nextStepIndex,
+          nextStepName: flow[nextStepIndex],
+          skippingToStep: flow[nextStepIndex + 1],
+          skippingToStepIndex: nextStepIndex + 1,
+          selectedAthletes: state.selectedAthletes
+        });
+        updateState({ currentStep: nextStepIndex + 1 });
+        return;
+      }
+    }
+    
     // Add defensive check for downstream steps that require athlete selection
     if ((stepName === 'focusAreas' || stepName === 'schedule' || 
          stepName === 'safety' || stepName === 'waiver' || stepName === 'payment') && 
