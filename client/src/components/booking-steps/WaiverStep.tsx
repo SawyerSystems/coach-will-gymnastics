@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWaiverStatus } from "@/hooks/use-waiver-status";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UpdatedWaiverModal } from "../updated-waiver-modal";
 
 export function WaiverStep() {
@@ -31,9 +31,13 @@ export function WaiverStep() {
     queryKey: ['/api/parent-auth/status'],
   }) as { data: { parentId?: number } };
 
+  // Flag to track if we've already skipped this step
+  const skippedRef = useRef(false);
+
   // Auto-skip if waiver already signed
   useEffect(() => {
-    if (waiverStatus?.hasWaiver || state.waiverStatus.signed) {
+    if (!skippedRef.current && (waiverStatus?.hasWaiver || state.waiverStatus.signed)) {
+      skippedRef.current = true;
       updateState({ 
         waiverStatus: { 
           signed: true, 
@@ -41,9 +45,11 @@ export function WaiverStep() {
         } 
       });
       // Add a small delay to allow user to see the confirmation
-      setTimeout(() => nextStep(), 1500);
+      const timer = setTimeout(() => nextStep(), 1500);
+      return () => clearTimeout(timer);
     }
-  }, [waiverStatus?.hasWaiver, state.waiverStatus.signed, updateState, nextStep]);
+  }, [waiverStatus?.hasWaiver, state.waiverStatus.signed]);
+  // ^ removed updateState and nextStep from dependencies
 
   // Show loading state while checking waiver status
   if (waiverLoading && athleteName) {

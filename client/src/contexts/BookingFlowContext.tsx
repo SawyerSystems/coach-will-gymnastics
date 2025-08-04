@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
 export type BookingFlowType = 'parent-portal' | 'athlete-modal' | 'new-user' | 'admin-new-athlete' | 'admin-existing-athlete' | 'admin-from-athlete';
 
@@ -192,57 +192,73 @@ export function BookingFlowProvider({
 
   const [state, setState] = useState<BookingFlowState>(mergedState);
 
-  const updateState = (updates: Partial<BookingFlowState>) => {
+  // Use useCallback to stabilize function references
+  const updateState = useCallback((updates: Partial<BookingFlowState>) => {
     setState(prev => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const getCurrentFlow = () => BOOKING_FLOWS[state.flowType];
+  const getCurrentFlow = useCallback(() => BOOKING_FLOWS[state.flowType], [state.flowType]);
 
-  const getCurrentStepName = () => {
+  const getCurrentStepName = useCallback(() => {
     const flow = getCurrentFlow();
-    const stepName = flow[state.currentStep] || flow[0];
+    // Clamp the current step to a valid range
+    const safeIndex = Math.min(Math.max(0, state.currentStep), flow.length - 1);
+    
+    // If the currentStep is out of range, silently correct it
+    if (state.currentStep !== safeIndex) {
+      console.warn(`Correcting out-of-range step index: ${state.currentStep} → ${safeIndex}`);
+      setState(prev => ({ ...prev, currentStep: safeIndex }));
+    }
+    
+    const stepName = flow[safeIndex];
+    
     console.log('📍 GETTING CURRENT STEP:', {
       flowType: state.flowType,
       currentStepIndex: state.currentStep,
+      safeIndex,
       stepName,
       fullFlow: flow,
       totalSteps: flow.length
     });
+    
     return stepName;
-  };
+  }, [state.flowType, state.currentStep, getCurrentFlow]);
 
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     const flow = getCurrentFlow();
-    const currentStepName = flow[state.currentStep];
-    const nextStepName = flow[state.currentStep + 1];
+    const currentStepIndex = Math.min(state.currentStep, flow.length - 1);
+    const nextStepIndex = Math.min(currentStepIndex + 1, flow.length - 1);
+    
+    const currentStepName = flow[currentStepIndex];
+    const nextStepName = flow[nextStepIndex];
     
     console.log('➡️ NEXT STEP NAVIGATION:', {
       from: currentStepName,
       to: nextStepName,
-      currentIndex: state.currentStep,
-      nextIndex: state.currentStep + 1,
+      currentIndex: currentStepIndex,
+      nextIndex: nextStepIndex,
       flowType: state.flowType
     });
     
-    if (state.currentStep < flow.length - 1) {
-      setState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    if (currentStepIndex < flow.length - 1) {
+      setState(prev => ({ ...prev, currentStep: nextStepIndex }));
     }
-  };
+  }, [state.currentStep, state.flowType, getCurrentFlow]);
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (state.currentStep > 0) {
       setState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
     }
-  };
+  }, [state.currentStep]);
 
-  const isLastStep = () => {
+  const isLastStep = useCallback(() => {
     const flow = getCurrentFlow();
     return state.currentStep >= flow.length - 1;
-  };
+  }, [state.currentStep, getCurrentFlow]);
 
-  const resetFlow = () => {
+  const resetFlow = useCallback(() => {
     setState(initialState);
-  };
+  }, []);
 
   const value = {
     state,

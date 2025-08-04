@@ -214,6 +214,30 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
       }
     }
     
+    // Skip waiver step if waiver already signed
+    if (stepName === 'safety' && 
+        (state.waiverStatus.signed || state.skipWaiver === true)) {
+      
+      const flow = BOOKING_FLOWS[state.flowType];
+      const nextStepIndex = state.currentStep + 1;
+      
+      if (flow[nextStepIndex] === 'waiver') {
+        // Skip to the step after waiver (which should be payment)
+        console.log('⏭️ Skipping waiver step as waiver is already signed', {
+          flowType: state.flowType,
+          currentStep: state.currentStep,
+          currentStepName: stepName,
+          nextStepIndex,
+          nextStepName: flow[nextStepIndex],
+          skippingToStep: flow[nextStepIndex + 1],
+          skippingToStepIndex: nextStepIndex + 1,
+          waiverStatus: state.waiverStatus
+        });
+        updateState({ currentStep: nextStepIndex + 1 });
+        return;
+      }
+    }
+    
     // Add defensive check for downstream steps that require athlete selection
     if ((stepName === 'focusAreas' || stepName === 'schedule' || 
          stepName === 'safety' || stepName === 'waiver' || stepName === 'payment') && 
