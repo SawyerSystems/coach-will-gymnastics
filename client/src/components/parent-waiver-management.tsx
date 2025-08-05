@@ -343,7 +343,7 @@ export function ParentWaiverManagement() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-green-700">Date signed:</span>
                           <span className="text-sm font-medium">
-                            {status.waiver?.signed_at ? formatDate(status.waiver.signed_at) : 'N/A'}
+                            {status.waiver?.signed_at ? new Date(status.waiver.signed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">

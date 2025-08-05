@@ -6814,6 +6814,14 @@ setTimeout(async () => {
       const athleteWaiverStatus = athleteWaiverData.map((athleteData: any) => {
         const hasWaiver = athleteData.computed_waiver_status === 'signed' || athleteData.athlete_waiver_status === 'signed';
         
+        // Debug to check available fields in the response
+        console.log("Waiver fields available:", {
+          id: athleteData.latest_waiver_id,
+          signer_name: athleteData.waiver_signer_name,
+          relationship_to_athlete: athleteData.waiver_relationship_to_athlete,
+          signed_at: athleteData.waiver_signed_at
+        });
+        
         return {
           athlete: {
             id: athleteData.id,
@@ -6833,6 +6841,8 @@ setTimeout(async () => {
             signed_at: athleteData.waiver_signed_at,
             signature_id: athleteData.waiver_signature_id,
             signature_data: athleteData.waiver_signature_data,
+            signer_name: athleteData.waiver_signer_name,
+            relationship_to_athlete: athleteData.waiver_relationship_to_athlete,
             created_at: athleteData.waiver_created_at
           } : null,
           hasWaiver: hasWaiver,
