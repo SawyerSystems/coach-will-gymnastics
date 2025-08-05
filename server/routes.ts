@@ -1666,6 +1666,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         athletesCount: booking.athletes?.length || 0
       });
       
+      // Check if payment is recorded, if not, check Stripe directly
+      // This handles cases where webhook hasn't processed yet
+      if (booking.stripeSessionId && !booking.reservationFeePaid) {
+        try {
+          console.log(`[BOOKING-SESSION] Payment not recorded yet, checking Stripe for session ${booking.stripeSessionId}`);
+          const session = await stripe.checkout.sessions.retrieve(booking.stripeSessionId);
+          
+          if (session.payment_status === 'paid') {
+            console.log(`[BOOKING-SESSION] Stripe shows payment is complete! Updating booking ${booking.id}`);
+            
+            // Update payment status
+            await storage.updateBookingPaymentStatus(booking.id, PaymentStatusEnum.RESERVATION_PAID);
+            
+            // Update booking with payment details
+            await storage.updateBooking(booking.id, {
+              reservationFeePaid: true,
+              paidAmount: session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00",
+              stripeSessionId: session.id,
+            });
+            
+            // Update the local booking object to reflect changes
+            booking.reservationFeePaid = true;
+            booking.paidAmount = session.amount_total ? (session.amount_total / 100).toFixed(2) : "0.00";
+            booking.paymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+            
+            console.log(`[BOOKING-SESSION] Successfully updated booking payment status. Amount: ${booking.paidAmount}`);
+          } else {
+            console.log(`[BOOKING-SESSION] Stripe payment status is still: ${session.payment_status}`);
+          }
+        } catch (stripeError) {
+          console.error('[BOOKING-SESSION] Error checking Stripe payment status:', stripeError);
+        }
+      }
+      
       // Try to get booking with relations first, using admin client to bypass RLS
       try {
         const bookingWithRelations = await storage.getBookingWithRelations(booking.id);
@@ -2437,7 +2471,7 @@ setTimeout(async () => {
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        locale: 'en',
+        locale: 'auto',
         line_items: [{
           price_data: {
             currency: 'usd',
@@ -2530,7 +2564,7 @@ setTimeout(async () => {
       // Create Stripe payment link for reservation
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        locale: 'en',
+        locale: 'auto',
         line_items: [
           {
             price_data: {
