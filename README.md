@@ -22,12 +22,22 @@ A comprehensive gymnastics coaching platform that enables parents to book sessio
 
 ## Getting Started
 
+For detailed setup instructions, see the [setup/](./setup/) folder which contains comprehensive guides for:
+- Environment configuration
+- Database setup
+- Storage configuration  
+- Email system setup
+- Payment processing setup
+- Development workflow
+
+### Quick Start
+
 1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Set up environment variables (see `.env.example`)
+2. Set up environment variables (copy from `setup/example.env` to `.env`)
 
 3. Run database migrations:
    ```bash
@@ -45,4 +55,7 @@ A comprehensive gymnastics coaching platform that enables parents to book sessio
 - `server/` - Express.js backend API
 - `shared/` - Shared types and database schema
 - `emails/` - React Email templates
+- `scripts/` - Database utilities and build scripts
+- `setup/` - Complete setup documentation and configuration files
+- `Tests/` - Test files, debug scripts, and development utilities
 - `attached_assets/` - Static assets and documentation

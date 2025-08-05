@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from 'multer';
 import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
@@ -31,6 +32,22 @@ function getBaseUrl(): string {
 
 // Initialize storage
 const storage = new SupabaseStorage();
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow videos and images
+    if (file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video and image files are allowed'));
+    }
+  }
+});
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -5249,6 +5266,54 @@ setTimeout(async () => {
     } catch (error) {
       console.error("Error fetching site content:", error);
       res.status(500).json({ error: "Failed to fetch site content" });
+    }
+  });
+
+  // Admin media upload endpoint
+  app.post("/api/admin/media", isAdminAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const file = req.file;
+      const fileExtension = file.originalname.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
+      const filePath = `site-media/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabaseAdmin.storage
+        .from('site-media')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false
+        });
+
+      if (error) {
+        console.error("Error uploading to Supabase Storage:", error);
+        return res.status(500).json({ error: "Failed to upload file to storage" });
+      }
+
+      // Get the public URL
+      const { data: publicData } = supabaseAdmin.storage
+        .from('site-media')
+        .getPublicUrl(filePath);
+
+      if (!publicData?.publicUrl) {
+        return res.status(500).json({ error: "Failed to get public URL" });
+      }
+
+      res.json({ 
+        success: true, 
+        url: publicData.publicUrl,
+        fileName: fileName,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype
+      });
+    } catch (error: any) {
+      console.error("Error handling media upload:", error);
+      res.status(500).json({ error: `Failed to upload media: ${error.message}` });
     }
   });
 

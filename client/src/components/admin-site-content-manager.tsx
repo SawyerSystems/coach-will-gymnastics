@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -125,6 +126,7 @@ export function AdminSiteContentManager() {
   const [activeTab, setActiveTab] = useState('media');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Load site content on component mount
   useEffect(() => {
@@ -463,15 +465,45 @@ export function AdminSiteContentManager() {
                   <Input
                     type="file"
                     accept="video/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        // For now, just show the filename
-                        updateContent('bannerVideo', file.name);
-                        toast({
-                          title: "Video Selected",
-                          description: `Selected: ${file.name}`,
-                        });
+                        try {
+                          setSaving(true);
+                          toast({
+                            title: "Uploading Video",
+                            description: `Uploading: ${file.name}...`,
+                          });
+
+                          const formData = new FormData();
+                          formData.append('file', file);
+
+                          const response = await fetch('http://localhost:5001/api/admin/media', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include'
+                          });
+
+                          if (response.ok) {
+                            const result = await response.json();
+                            updateContent('bannerVideo', result.url);
+                            toast({
+                              title: "Video Uploaded",
+                              description: `Successfully uploaded: ${file.name}`,
+                            });
+                          } else {
+                            throw new Error('Upload failed');
+                          }
+                        } catch (error) {
+                          console.error('Error uploading video:', error);
+                          toast({
+                            title: "Upload Failed",
+                            description: "Failed to upload video. Please try again.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setSaving(false);
+                        }
                       }
                     }}
                     className="hidden"
@@ -487,7 +519,11 @@ export function AdminSiteContentManager() {
                     Upload Video
                   </Button>
                 </div>
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => setPreviewOpen(true)}
+                  disabled={!content.bannerVideo}
+                >
                   <Video className="w-4 h-4 mr-2" />
                   Preview
                 </Button>
@@ -514,6 +550,59 @@ export function AdminSiteContentManager() {
                     }}
                     placeholder="Image URL or path"
                   />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          setSaving(true);
+                          const formData = new FormData();
+                          formData.append('file', file);
+
+                          const response = await fetch('http://localhost:5001/api/admin/media', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include'
+                          });
+
+                          if (response.ok) {
+                            const result = await response.json();
+                            const newImages = [...content.heroImages];
+                            newImages[index] = result.url;
+                            updateContent('heroImages', newImages);
+                            toast({
+                              title: "Image Uploaded",
+                              description: `Successfully uploaded: ${file.name}`,
+                            });
+                          } else {
+                            throw new Error('Upload failed');
+                          }
+                        } catch (error) {
+                          console.error('Error uploading image:', error);
+                          toast({
+                            title: "Upload Failed",
+                            description: "Failed to upload image. Please try again.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setSaving(false);
+                        }
+                      }
+                    }}
+                    className="hidden"
+                    id={`hero-image-upload-${index}`}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      document.getElementById(`hero-image-upload-${index}`)?.click();
+                    }}
+                  >
+                    <Upload className="w-4 h-4" />
+                  </Button>
                   <Button
                     variant="destructive"
                     size="sm"
@@ -1094,6 +1183,31 @@ export function AdminSiteContentManager() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Banner Video Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Banner Video Preview</DialogTitle>
+          </DialogHeader>
+          <div className="aspect-video">
+            {content.bannerVideo ? (
+              <video 
+                src={content.bannerVideo} 
+                controls 
+                className="w-full h-full object-cover rounded-lg"
+                preload="metadata"
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">No video available to preview</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
