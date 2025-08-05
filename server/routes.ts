@@ -368,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lesson_types(
             id,
             name,
-            price
+            total_price
           ),
           booking_athletes (
             id,
@@ -384,7 +384,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               experience,
               gender,
               parent_id,
-              computed_waiver_status:waiver_status
+              waiver_status,
+              waiver_signed
             )
           )
         `)
@@ -426,9 +427,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             slotOrder: ba.slot_order || 1,
             // Ensure these fields exist with proper fallbacks
             name: ba.athletes.name || `${ba.athletes.first_name || ''} ${ba.athletes.last_name || ''}`.trim() || 'Unnamed Athlete',
-            // Handle waiver status consistently using the computed_waiver_status field
-            waiver_status: ba.athletes.computed_waiver_status || 'none',
-            waiver_signed: ba.athletes.computed_waiver_status === 'signed'
+            // Handle waiver status consistently using the waiver_status field
+            waiver_status: ba.athletes.waiver_status || 'none',
+            waiver_signed: ba.athletes.waiver_signed || ba.athletes.waiver_status === 'signed'
           };
           
           return athlete;
@@ -438,6 +439,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (athletes.length === 0 && booking.booking_athletes?.length > 0) {
           console.warn(`[PARENT-BOOKINGS] Booking ${booking.id} has booking_athletes entries but no resolved athlete data:`, 
             booking.booking_athletes);
+        } else {
+          console.log(`[PARENT-BOOKINGS] Booking ${booking.id} athletes data:`, athletes);
         }
         
         // Check if all athletes have signed waivers

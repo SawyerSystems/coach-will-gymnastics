@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -16,6 +17,7 @@ import { useEffect } from "react";
 import { Link } from "wouter";
 
 export default function BookingSuccess() {
+  const { toast } = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("session_id");
 
@@ -44,23 +46,42 @@ export default function BookingSuccess() {
     // Reset any booking state when user reaches success page
     window.scrollTo(0, 0);
     
+    // If payment is already confirmed, no need to poll
+    if (booking?.reservationFeePaid) {
+      console.log("Payment already confirmed, no need to poll");
+      return;
+    }
+    
     // Set up a periodic refetch to catch any webhook updates
     // This ensures we get the latest payment status
     const refetchInterval = setInterval(() => {
       console.log("Refetching booking data to get updated payment status...");
       refetch();
-    }, 5000); // Check every 5 seconds for the first minute
+    }, 5000); // Check every 5 seconds
     
     // Clear the interval after 1 minute (typical webhook processing time)
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       clearInterval(refetchInterval);
-      console.log("Stopped automatic refetching of booking data");
+      console.log("Stopped automatic refetching of booking data after timeout");
       // One final refetch
       refetch();
+      
+      // Show toast if payment is still pending after a minute
+      if (!booking?.reservationFeePaid) {
+        toast({
+          title: "Payment Status Update",
+          description: "We're still processing your payment. You'll receive an email confirmation once complete.",
+          variant: "default",
+          duration: 10000,
+        });
+      }
     }, 60000);
     
-    return () => clearInterval(refetchInterval);
-  }, [refetch]);
+    return () => {
+      clearInterval(refetchInterval);
+      clearTimeout(timeoutId);
+    };
+  }, [refetch, booking?.reservationFeePaid]);
 
   if (isLoading) {
     return (
