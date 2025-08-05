@@ -134,6 +134,9 @@ export function AdminSiteContentManager() {
     ]
   });
 
+  // Ordered days array for consistent display
+  const orderedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
   const [activeTab, setActiveTab] = useState('media');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -455,6 +458,32 @@ export function AdminSiteContentManager() {
       toast({
         title: 'Save Failed',
         description: 'Failed to save media section. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveHoursSection = async () => {
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/site-content/hours', {
+        hours: content.hours
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Hours Saved',
+          description: 'Hours of operation have been saved successfully.',
+        });
+      } else {
+        throw new Error('Failed to save hours');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save hours. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -1102,38 +1131,51 @@ export function AdminSiteContentManager() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.entries(content.hours).map(([day, hours]) => (
-                <div key={day} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className="font-medium w-24">{day}</div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="time"
-                      value={hours.start}
-                      onChange={(e) => updateContent(`hours.${day}.start`, e.target.value)}
-                      className="w-32"
-                    />
-                    <span>to</span>
-                    <Input
-                      type="time"
-                      value={hours.end}
-                      onChange={(e) => updateContent(`hours.${day}.end`, e.target.value)}
-                      className="w-32"
-                    />
+              {orderedDays.map((day) => {
+                const hours = content.hours[day.toLowerCase() as keyof typeof content.hours];
+                return (
+                  <div key={day} className="flex items-center gap-4 p-4 border rounded-lg">
+                    <div className="font-medium w-24">{day}</div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={hours.start}
+                        onChange={(e) => updateContent(`hours.${day.toLowerCase()}.start`, e.target.value)}
+                        className="w-32"
+                      />
+                      <span>to</span>
+                      <Input
+                        type="time"
+                        value={hours.end}
+                        onChange={(e) => updateContent(`hours.${day.toLowerCase()}.end`, e.target.value)}
+                        className="w-32"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={hours.available}
+                        onChange={(e) => updateContent(`hours.${day.toLowerCase()}.available`, e.target.checked)}
+                      />
+                      Available
+                    </label>
                   </div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={hours.available}
-                      onChange={(e) => updateContent(`hours.${day}.available`, e.target.checked)}
-                    />
-                    Available
-                  </label>
-                </div>
-              ))}
+                );
+              })}
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-700">
                   Days marked as unavailable will show "Ask us about availability!" on the website.
                 </p>
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleSaveHoursSection}
+                  disabled={saving}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {saving ? 'Saving...' : 'Save Hours'}
+                </Button>
               </div>
             </CardContent>
           </Card>

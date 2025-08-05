@@ -2,7 +2,7 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube, MessageCircle } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Instagram, Youtube, MessageCircle, Facebook } from "lucide-react";
 import cwtLogo from "@assets/CWT_Circle_LogoSPIN.png";
 
 interface HourSchedule {
@@ -16,6 +16,9 @@ interface SiteHours {
 }
 
 export function Footer() {
+  // Ordered days array for consistent display
+  const orderedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
   // Fetch dynamic site content
   const { data: siteContent } = useQuery({
     queryKey: ['/api/site-content'],
@@ -155,10 +158,11 @@ export function Footer() {
               <div className="flex items-center space-x-2 lg:justify-end">
                 <Clock className="w-4 h-4" />
                 <div className="lg:text-right">
-                  {Object.entries(hours).map(([day, schedule]) => {
+                  {orderedDays.map((day) => {
+                    const schedule = hours[day.toLowerCase()];
                     const shortDay = day.slice(0, 3);
                     
-                    if (!schedule.available) {
+                    if (!schedule?.available) {
                       return (
                         <div key={day} className="text-xs">
                           {shortDay}: Ask about availability

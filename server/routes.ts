@@ -5445,6 +5445,23 @@ setTimeout(async () => {
   });
 
   // Admin site content management endpoints
+  app.post("/api/admin/site-content/hours", isAdminAuthenticated, async (req, res) => {
+    try {
+      const hoursData = req.body;
+      const currentContent = await storage.getSiteContent();
+      
+      const updatedContent = await storage.updateSiteContent({
+        ...currentContent,
+        hours: hoursData
+      });
+      
+      res.json({ success: true, hours: updatedContent.hours });
+    } catch (error: any) {
+      console.error("Error updating hours:", error);
+      res.status(500).json({ error: `Failed to update hours: ${error.message}` });
+    }
+  });
+
   app.post("/api/admin/site-content", isAdminAuthenticated, async (req, res) => {
     try {
       const content = req.body;

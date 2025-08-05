@@ -42,10 +42,19 @@ const contactSchema = z.object({
 type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function Contact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
 
-  // Fetch site content data
+  // Ordered days array for consistent display
+  const orderedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  // Fetch dynamic site content
   const { data: siteContent } = useQuery({
     queryKey: ['/api/site-content'],
     queryFn: () => apiRequest('GET', '/api/site-content').then(res => res.json())
@@ -68,6 +77,7 @@ export default function Contact() {
       return response.json();
     },
     onSuccess: () => {
+      setIsSubmitting(false);
       setIsSubmitted(true);
       form.reset();
       toast({
@@ -280,11 +290,14 @@ export default function Contact() {
                         <p className="font-medium text-gray-800">Hours</p>
                         <div className="text-gray-600">
                           {siteContent?.hours ? (
-                            Object.entries(siteContent.hours).map(([day, hours]: [string, any]) => (
-                              <div key={day}>
-                                {day}: {hours.available ? `${hours.start} - ${hours.end}` : 'Ask about availability'}
-                              </div>
-                            ))
+                            orderedDays.map((day) => {
+                              const hours = siteContent.hours[day.toLowerCase()];
+                              return (
+                                <div key={day}>
+                                  {day}: {hours?.available ? `${hours.start} - ${hours.end}` : 'Ask about availability'}
+                                </div>
+                              );
+                            })
                           ) : (
                             <>
                               Mon/Wed/Fri: 9:00 AM – 4:00 PM<br />
