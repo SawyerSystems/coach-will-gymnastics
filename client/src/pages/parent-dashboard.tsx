@@ -2,6 +2,7 @@ import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { ParentAthleteDetailDialog } from '@/components/ParentAthleteDetailDialog';
 import { SafetyInformationDialog } from '@/components/safety-information-dialog';
+import { TwoStepFocusAreas } from '@/components/two-step-focus-areas-edit';
 import { AddAthleteModal } from '@/components/AddAthleteModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,21 @@ import { format } from 'date-fns';
 import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+
+// Helper function to format focus areas for display
+const formatFocusAreas = (focusAreas: any[]): string => {
+  if (!focusAreas || focusAreas.length === 0) return 'No specific focus areas';
+  
+  return focusAreas.map(area => {
+    if (typeof area === 'string') {
+      return area; // Legacy string format
+    } else if (area && typeof area === 'object' && area.name) {
+      // New object format with apparatus info
+      return area.apparatusName ? `${area.apparatusName}: ${area.name}` : area.name;
+    }
+    return 'Unknown'; // Fallback
+  }).join(', ');
+};
 
 // RescheduleForm component
 function RescheduleForm({ booking, onSubmit, onCancel }: { 
@@ -114,7 +130,25 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
 
 // EditBookingForm component
 function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () => void }) {
-  const [selectedFocusAreas, setSelectedFocusAreas] = useState<string[]>(booking.focusAreas || []);
+  // Initialize focus areas - handle both legacy (strings) and new (objects) formats
+  const initializeFocusAreas = () => {
+    if (!booking.focusAreas || booking.focusAreas.length === 0) return [];
+    
+    // If the first item is an object, it's the new format
+    if (typeof booking.focusAreas[0] === 'object' && booking.focusAreas[0] !== null) {
+      return booking.focusAreas as any[];
+    }
+    
+    // Legacy format - convert strings to objects for consistency
+    return (booking.focusAreas as string[]).map((name, index) => ({
+      id: `legacy-${index}`,
+      name,
+      apparatus_id: 0,
+      apparatusName: 'Legacy'
+    }));
+  };
+  
+  const [selectedFocusAreas, setSelectedFocusAreas] = useState<any[]>(initializeFocusAreas());
   const [specialNotes, setSpecialNotes] = useState(booking.adminNotes || '');
   
   // Safety Information
@@ -130,6 +164,17 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
   
   const queryClient = useQueryClient();
 
+  // Determine lesson duration and focus area limits
+  const getLessonConfig = () => {
+    const lessonType = booking.lessonType?.toLowerCase() || '';
+    if (lessonType.includes('deep-dive') || lessonType.includes('partner-progression') || lessonType.includes('1-hour')) {
+      return { maxFocusAreas: 4, duration: '60 minutes' };
+    }
+    return { maxFocusAreas: 2, duration: '30 minutes' };
+  };
+  
+  const lessonConfig = getLessonConfig();
+
   // Check auth status before making the request
   const { data: authStatus } = useQuery<{ loggedIn: boolean; parentId?: string; email?: string }>({
     queryKey: ['/api/parent-auth/status'],
@@ -142,7 +187,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
 
   const updateBookingMutation = useMutation({
     mutationFn: async (data: { 
-      focusAreas: string[]; 
+      focusAreas: any[]; 
       specialNotes: string;
       dropoffPersonName: string;
       dropoffPersonRelationship: string;
@@ -220,58 +265,20 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
     });
   };
 
-  // Get focus area options based on lesson type
-  const getFocusAreaOptions = () => {
-    const allOptions = [
-      { value: "Tumbling: Forward Roll", label: "Tumbling: Forward Roll" },
-      { value: "Tumbling: Backward Roll", label: "Tumbling: Backward Roll" },
-      { value: "Tumbling: Cartwheel", label: "Tumbling: Cartwheel" },
-      { value: "Tumbling: Round Off", label: "Tumbling: Round Off" },
-      { value: "Tumbling: Back Handspring", label: "Tumbling: Back Handspring" },
-      { value: "Beam: Balance", label: "Beam: Balance" },
-      { value: "Beam: Cartwheel", label: "Beam: Cartwheel" },
-      { value: "Beam: Back Walkover", label: "Beam: Back Walkover" },
-      { value: "Vault: Run and Jump", label: "Vault: Run and Jump" },
-      { value: "Vault: Handstand Flat Back", label: "Vault: Handstand Flat Back" },
-      { value: "Rings: Support Hold", label: "Rings: Support Hold" },
-      { value: "Rings: Pull-ups", label: "Rings: Pull-ups" },
-      { value: "Parallel Bars: Support Swing", label: "Parallel Bars: Support Swing" },
-      { value: "Parallel Bars: L-Sit", label: "Parallel Bars: L-Sit" },
-      { value: "Side Quests: Flexibility Training", label: "Side Quests: Flexibility Training" },
-      { value: "Side Quests: Strength Building", label: "Side Quests: Strength Building" },
-      { value: "Side Quests: Mental Blocks", label: "Side Quests: Mental Blocks" }
-    ];
-    return allOptions;
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Focus Areas</Label>
-        <div className="grid grid-cols-1 gap-2 mt-2 max-h-[200px] overflow-y-auto">
-          {getFocusAreaOptions().map((option) => (
-            <label key={option.value} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-50">
-              <input
-                type="checkbox"
-                value={option.value}
-                checked={selectedFocusAreas.includes(option.value)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedFocusAreas([...selectedFocusAreas, option.value]);
-                  } else {
-                    setSelectedFocusAreas(selectedFocusAreas.filter(area => area !== option.value));
-                  }
-                }}
-                className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-              />
-              <span className="text-sm">{option.label}</span>
-            </label>
-          ))}
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Focus Areas Section */}
+      <div className="border rounded-lg p-4">
+        <TwoStepFocusAreas
+          selectedFocusAreas={selectedFocusAreas}
+          onFocusAreasChange={setSelectedFocusAreas}
+          maxFocusAreas={lessonConfig.maxFocusAreas}
+          lessonDuration={lessonConfig.duration}
+        />
       </div>
 
       {/* Safety Information Section */}
-      <div className="mt-6 border-t pt-6">
+      <div className="border-t pt-6">
         <h3 className="text-lg font-semibold mb-4">Safety Information</h3>
         
         <div className="space-y-6">
@@ -854,7 +861,7 @@ function ParentDashboard() {
                               <div className="flex items-center gap-1.5 xs:hidden mt-1">
                                 <MapPin className="w-3 h-3 text-gray-500" />
                                 <span className="text-[10px] text-gray-600">
-                                  Focus: {booking.focusAreas.join(', ')}
+                                  Focus: {formatFocusAreas(booking.focusAreas)}
                                 </span>
                               </div>
                             )}
@@ -874,7 +881,7 @@ function ParentDashboard() {
                               <div className="hidden xs:flex items-center gap-1.5 mt-1">
                                 <MapPin className="w-3.5 h-3.5 text-gray-500" />
                                 <span className="text-xs text-gray-600">
-                                  Focus: {booking.focusAreas.join(', ')}
+                                  Focus: {formatFocusAreas(booking.focusAreas)}
                                 </span>
                               </div>
                             )}
@@ -1492,7 +1499,7 @@ function ParentDashboard() {
                   <div className="space-y-3">
                     <div>
                       <Label className="text-sm font-medium">Current Focus Areas</Label>
-                      <p className="text-sm text-gray-600">{booking.focusAreas?.join(', ') || 'No specific focus areas'}</p>
+                      <p className="text-sm text-gray-600">{formatFocusAreas(booking.focusAreas || [])}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Lesson Details</Label>

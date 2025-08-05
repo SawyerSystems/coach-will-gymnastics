@@ -360,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: simpleQuery.data
       });
       
-      // Get bookings for this parent with athlete information and lesson type
+      // Get bookings for this parent with athlete information, lesson type, and focus areas
       const parentBookingsQuery = await supabaseAdmin
         .from('bookings')
         .select(`
@@ -387,6 +387,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               waiver_status,
               waiver_signed
             )
+          ),
+          booking_focus_areas (
+            focus_area_id,
+            focus_areas!inner(id, name, apparatus_id, apparatus!inner(id, name))
           )
         `)
         .eq('parent_id', req.session.parentId!)
@@ -412,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('[PARENT-BOOKINGS] No bookings found for parent:', req.session.parentId);
         return res.json([]);
       }
-      // Transform the data to include athletes array and proper payment status
+      // Transform the data to include athletes array, focus areas, and proper payment status
       const bookingsWithAthletes = parentBookingsQuery.data.map((booking: any) => {
         // Extract athletes from booking_athletes array
         const athletes = booking.booking_athletes?.map((ba: any) => {
@@ -435,6 +439,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return athlete;
         }).filter(Boolean) || [];
         
+        // Extract focus areas from booking_focus_areas array
+        const focusAreas = booking.booking_focus_areas?.map((bfa: any) => ({
+          id: bfa.focus_areas.id,
+          name: bfa.focus_areas.name,
+          apparatusId: bfa.focus_areas.apparatus_id,
+          apparatusName: bfa.focus_areas.apparatus?.name
+        })) || [];
+        
         // Debug any issues with athlete data
         if (athletes.length === 0 && booking.booking_athletes?.length > 0) {
           console.warn(`[PARENT-BOOKINGS] Booking ${booking.id} has booking_athletes entries but no resolved athlete data:`, 
@@ -442,6 +454,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.log(`[PARENT-BOOKINGS] Booking ${booking.id} athletes data:`, athletes);
         }
+        
+        // Debug focus areas data
+        console.log(`[PARENT-BOOKINGS] Booking ${booking.id} focus areas:`, focusAreas);
         
         // Check if all athletes have signed waivers
         const allAthletesHaveWaivers = athletes.length > 0 && 
@@ -504,7 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           safetyVerificationSigned: booking.safety_verification_signed || false,
           safetyVerificationSignedAt: booking.safety_verification_signed_at || null,
           stripeSessionId: booking.stripe_session_id || null,
-          focusAreas: booking.focus_areas || [],
+          focusAreas: focusAreas, // Use the focus areas from the join instead of the legacy array
           progressNote: booking.progress_note || '',
           coachName: booking.coach_name || 'Coach Will',
           // Legacy fields for backward compatibility
@@ -553,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'You do not have permission to update this booking', code: 'UNAUTHORIZED' });
       }
 
-      // Extract only allowed safety fields from request body (using camelCase for consistency with storage API)
+      // Extract only allowed safety fields and focus areas from request body
       const safetyFields: Partial<{
         dropoffPersonName: string;
         dropoffPersonRelationship: string;
@@ -580,6 +595,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         safetyVerificationSignedAt: new Date() // Use actual Date object, not string
       };
 
+      // Handle focus areas if provided
+      const focusAreas = req.body.focusAreas;
+      let focusAreaIds: number[] = [];
+      
+      if (focusAreas && Array.isArray(focusAreas)) {
+        // If focus areas are provided as objects with id, extract IDs
+        if (focusAreas.length > 0 && typeof focusAreas[0] === 'object' && focusAreas[0].id) {
+          focusAreaIds = focusAreas.map((fa: any) => fa.id).filter((id: any) => !isNaN(parseInt(id)));
+        }
+        // If focus areas are provided as strings (legacy format), convert to IDs
+        else if (focusAreas.length > 0 && typeof focusAreas[0] === 'string') {
+          // For now, we'll need to map string names to IDs via the database
+          // This is for backward compatibility with the static list approach
+          const allFocusAreas = await storage.getAllFocusAreas();
+          focusAreaIds = focusAreas.map((name: string) => {
+            const match = allFocusAreas.find((fa: any) => fa.name === name);
+            return match ? match.id : null;
+          }).filter((id: any) => id !== null) as number[];
+        }
+        // If focus areas are provided as IDs directly
+        else if (focusAreas.length > 0 && typeof focusAreas[0] === 'number') {
+          focusAreaIds = focusAreas;
+        }
+      }
+
       // Filter out undefined values
       for (const key of Object.keys(safetyFields)) {
         if (safetyFields[key as keyof typeof safetyFields] === undefined) {
@@ -590,6 +630,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the safety update operation
       console.log(`[PARENT-SAFETY-UPDATE] Parent ${req.session.parentId} updating safety info for booking ${bookingId}:`, 
         JSON.stringify(safetyFields, null, 2));
+      
+      if (focusAreaIds.length > 0) {
+        console.log(`[PARENT-SAFETY-UPDATE] Also updating focus areas for booking ${bookingId}:`, focusAreaIds);
+      }
 
       // Update only the safety fields using the storage API
       const updatedBooking = await storage.updateBooking(bookingId, safetyFields);
@@ -597,6 +641,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedBooking) {
         console.error('[PARENT-SAFETY-UPDATE] Update failed');
         return res.status(500).json({ error: 'Failed to update booking safety information', code: 'UPDATE_FAILED' });
+      }
+      
+      // Update focus areas if provided
+      if (focusAreaIds.length > 0) {
+        try {
+          // First, delete existing focus areas for this booking
+          await supabaseAdmin
+            .from('booking_focus_areas')
+            .delete()
+            .eq('booking_id', bookingId);
+          
+          // Then insert the new focus areas
+          for (const focusAreaId of focusAreaIds) {
+            await supabaseAdmin
+              .from('booking_focus_areas')
+              .insert({
+                booking_id: bookingId,
+                focus_area_id: focusAreaId
+              });
+          }
+          
+          console.log(`[PARENT-SAFETY-UPDATE] Successfully updated focus areas for booking ${bookingId}`);
+        } catch (error) {
+          console.error('[PARENT-SAFETY-UPDATE] Failed to update focus areas:', error);
+          // Don't fail the entire request if focus area update fails
+        }
       }
       
       res.json({ 
