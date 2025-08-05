@@ -1621,7 +1621,13 @@ export default function Admin() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
-                <UpcomingSessions />
+                <UpcomingSessions 
+                  onBookingSelect={(bookingId) => {
+                    // Switch to bookings tab and set the selected booking
+                    setActiveTab("bookings");
+                    // Note: The bookings tab should handle highlighting/scrolling to the specific booking
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>

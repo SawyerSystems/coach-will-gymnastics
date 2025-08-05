@@ -590,6 +590,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   const updatePaymentStatusMutation = useMutation({
     mutationFn: async ({ id, paymentStatus }: { id: number; paymentStatus: string }) => {
       const response = await apiRequest("PATCH", `/api/bookings/${id}/payment-status`, { paymentStatus });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || "Failed to update payment status");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -599,10 +603,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
       });
       invalidateBookingQueries();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to update payment status.",
+        description: error.message || "Failed to update payment status.",
         variant: "destructive",
       });
     },
@@ -612,6 +616,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
   const updateAttendanceStatusMutation = useMutation({
     mutationFn: async ({ id, attendanceStatus }: { id: number; attendanceStatus: string }) => {
       const response = await apiRequest("PATCH", `/api/bookings/${id}/attendance-status`, { attendanceStatus });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || "Failed to update attendance status");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -621,10 +629,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
       });
       invalidateBookingQueries();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to update attendance status.",
+        description: error.message || "Failed to update attendance status.",
         variant: "destructive",
       });
     },

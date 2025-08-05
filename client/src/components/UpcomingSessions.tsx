@@ -32,11 +32,16 @@ interface UpcomingSession {
   lessonType: string;
   parentName: string;
   athleteNames: string[];
+  focusAreas: string[];
   paymentStatus: string;
   attendanceStatus: string;
 }
 
-export function UpcomingSessions() {
+interface UpcomingSessionsProps {
+  onBookingSelect?: (bookingId: number) => void;
+}
+
+export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}) {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const { data: sessions = [], isLoading, error } = useQuery<UpcomingSession[]>({
     queryKey: ['/api/upcoming-sessions'],
@@ -99,9 +104,12 @@ export function UpcomingSessions() {
 
   // Handle booking selection for the calendar view
   const handleBookingSelect = (bookingId: number) => {
-    // This would typically open a modal or navigate to booking details
-    console.log(`Selected booking ID: ${bookingId}`);
-    // In a real implementation, you'd trigger the existing booking details view/modal
+    if (onBookingSelect) {
+      onBookingSelect(bookingId);
+    } else {
+      // Fallback behavior when no callback is provided
+      console.log(`Selected booking ID: ${bookingId}`);
+    }
   };
 
   if (isLoading) {
@@ -163,6 +171,7 @@ export function UpcomingSessions() {
       preferred_time: session.sessionTime,
       lesson_type: session.lessonType,
       athlete_names: session.athleteNames.join(', '),
+      focusAreas: session.focusAreas,
       payment_status: session.paymentStatus,
       attendance_status: session.attendanceStatus
     };
@@ -261,6 +270,13 @@ export function UpcomingSessions() {
                                 {session.athleteNames.join(', ') || 'No athletes listed'}
                               </span>
                             </div>
+                            
+                            {/* Focus Areas */}
+                            {session.focusAreas && session.focusAreas.length > 0 && (
+                              <div className="text-slate-600 ml-11">
+                                <span className="font-medium">Focus Areas:</span> {session.focusAreas.join(', ')}
+                              </div>
+                            )}
                             
                             {/* Parent */}
                             <div className="text-slate-600 ml-11">

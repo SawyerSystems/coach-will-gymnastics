@@ -231,7 +231,21 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   return (
     <div className="h-full flex flex-col">
+      {/* Add CSS for React Big Calendar scrolling */}
+      <style>{`
+        .rbc-time-content {
+          overflow-y: auto !important;
+          max-height: 600px;
+        }
+        .rbc-time-view {
+          overflow: hidden;
+        }
+        .rbc-time-view .rbc-time-content {
+          flex: 1;
+        }
+      `}</style>
       <div className="flex-1 relative">
+        <div className="h-full overflow-y-auto">
           <Calendar
             localizer={localizer}
             events={events.filter((event): event is CalendarEvent => event !== null)}
@@ -248,7 +262,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             components={{
               event: EventComponent,
             }}
-          />        {selectedDate && dateEvents.length > 0 && (
+          />
+        </div>
+        {selectedDate && dateEvents.length > 0 && (
           <div className="absolute bottom-4 right-4 w-72 shadow-xl rounded-xl border border-gray-200 bg-white z-10">
             <Card>
               <div className="flex items-center justify-between p-3 border-b">

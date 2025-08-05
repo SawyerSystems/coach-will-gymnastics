@@ -155,15 +155,20 @@ export function PaymentsTab() {
   const updatePaymentStatusMutation = useMutation({
     mutationFn: async ({ id, paymentStatus }: { id: number; paymentStatus: string }) => {
       const response = await apiRequest("PATCH", `/api/bookings/${id}/payment-status`, { paymentStatus });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || "Failed to update payment status");
+      }
       return response.json();
     },
     onSuccess: () => {
       toast({ title: "Payment status updated successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({ 
         title: "Error updating payment status", 
+        description: error.message,
         variant: "destructive" 
       });
     },

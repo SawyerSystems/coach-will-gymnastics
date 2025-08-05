@@ -3896,26 +3896,32 @@ setTimeout(async () => {
       const id = parseInt(req.params.id);
       const { paymentStatus } = req.body;
       
+      // Validate paymentStatus input
+      if (!paymentStatus) {
+        return res.status(400).json({ message: "Payment status is required" });
+      }
+      
       console.log('[PAYMENT-STATUS-UPDATE] Starting payment status update', { bookingId: id, newStatus: paymentStatus });
       
-      const validStatuses = ["unpaid", "paid", "failed", "refunded", "reservation-pending", "reservation-failed", "reservation-paid", "session-paid", "reservation-refunded", "session-refunded"];
+      // Use enum values for validation
+      const validStatuses = Object.values(PaymentStatusEnum);
       if (!validStatuses.includes(paymentStatus)) {
-        res.status(400).json({ message: `Invalid payment status. Valid statuses are: ${validStatuses.join(", ")}` });
-        return;
+        return res.status(400).json({ 
+          message: `Invalid payment status. Valid statuses are: ${validStatuses.join(", ")}` 
+        });
       }
 
       // Get current booking for calculations
       const currentBooking = await storage.getBooking(id);
       if (!currentBooking) {
-        res.status(404).json({ message: "Booking not found" });
-        return;
+        return res.status(404).json({ message: "Booking not found" });
       }
 
       let paidAmount = parseFloat(currentBooking.paidAmount || "0");
       
-      // Sync with Stripe if we have a payment intent ID
+      // Guard Stripe sync: only call if both stripePaymentIntentId and stripe are defined
       const stripePaymentIntentId = (currentBooking as any).stripe_payment_intent_id;
-      if (stripePaymentIntentId) {
+      if (stripePaymentIntentId && stripe) {
         try {
           const paymentIntent = await stripe.paymentIntents.retrieve(stripePaymentIntentId);
           console.log('[PAYMENT-SYNC] Retrieved Stripe PaymentIntent', { 
@@ -3931,15 +3937,14 @@ setTimeout(async () => {
           }
         } catch (stripeError) {
           console.error('[PAYMENT-SYNC] Stripe sync failed:', stripeError);
-          // Continue without Stripe sync
+          // Continue without Stripe sync - log but don't fail the request
         }
       }
 
       // Update payment status
       const booking = await storage.updateBookingPaymentStatus(id, paymentStatus);
       if (!booking) {
-        res.status(404).json({ message: "Booking not found" });
-        return;
+        return res.status(404).json({ message: "Booking not found after update" });
       }
 
       // Import booking status utility
@@ -4014,7 +4019,13 @@ setTimeout(async () => {
       res.json(updatedBooking);
     } catch (error) {
       console.error("[PAYMENT-SYNC] Error updating payment status:", error);
-      res.status(500).json({ message: "Failed to update payment status" });
+      
+      // Surface the actual error message instead of generic message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      res.status(500).json({ 
+        message: "Failed to update payment status", 
+        error: errorMessage 
+      });
     }
   });
 
@@ -4632,19 +4643,25 @@ setTimeout(async () => {
       const id = parseInt(req.params.id);
       const { attendanceStatus } = req.body;
       
+      // Validate attendanceStatus input
+      if (!attendanceStatus) {
+        return res.status(400).json({ message: "Attendance status is required" });
+      }
+      
       console.log('[ATTENDANCE-STATUS-UPDATE] Starting attendance status update', { bookingId: id, newStatus: attendanceStatus });
       
-      const validStatuses = ["pending", "confirmed", "completed", "cancelled", "no-show", "manual"];
+      // Use enum values for validation
+      const validStatuses = Object.values(AttendanceStatusEnum);
       if (!validStatuses.includes(attendanceStatus)) {
-        res.status(400).json({ message: `Invalid attendance status. Valid statuses are: ${validStatuses.join(", ")}` });
-        return;
+        return res.status(400).json({ 
+          message: `Invalid attendance status. Valid statuses are: ${validStatuses.join(", ")}` 
+        });
       }
 
       // Get booking details for time-based validation
       const existingBooking = await storage.getBooking(id);
       if (!existingBooking) {
-        res.status(404).json({ message: "Booking not found" });
-        return;
+        return res.status(404).json({ message: "Booking not found" });
       }
 
       // Time-based restrictions for completed/no-show statuses (temporarily disabled for testing)
@@ -4665,8 +4682,7 @@ setTimeout(async () => {
       
       const booking = await storage.updateBookingAttendanceStatus(id, attendanceStatus);
       if (!booking) {
-        res.status(404).json({ message: "Booking not found" });
-        return;
+        return res.status(404).json({ message: "Booking not found after update" });
       }
       
       // Synchronize payment status when attendance is marked as completed
@@ -4685,7 +4701,14 @@ setTimeout(async () => {
       
       res.json(booking);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update attendance status" });
+      console.error("[ATTENDANCE-SYNC] Error updating attendance status:", error);
+      
+      // Surface the actual error message instead of generic message
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      res.status(500).json({ 
+        message: "Failed to update attendance status", 
+        error: errorMessage 
+      });
     }
   });
 

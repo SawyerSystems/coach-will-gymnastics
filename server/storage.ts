@@ -72,6 +72,7 @@ export interface IStorage {
     lessonType: string;
     parentName: string;
     athleteNames: string[];
+    focusAreas: string[];
     paymentStatus: string;
     attendanceStatus: string;
   }[]>;
@@ -807,6 +808,7 @@ With the right setup and approach, home practice can accelerate your child's gym
     lessonType: string;
     parentName: string;
     athleteNames: string[];
+    focusAreas: string[];
     paymentStatus: string;
     attendanceStatus: string;
   }[]> {
@@ -2266,6 +2268,7 @@ export class SupabaseStorage implements IStorage {
     lessonType: string;
     parentName: string;
     athleteNames: string[];
+    focusAreas: string[];
     paymentStatus: string;
     attendanceStatus: string;
   }[]> {
@@ -2334,6 +2337,21 @@ export class SupabaseStorage implements IStorage {
         console.error('Error fetching booking athletes:', bookingAthletesError);
       }
 
+      // Get focus areas for all bookings
+      const { data: bookingFocusAreasData, error: bookingFocusAreasError } = await supabaseAdmin
+        .from('booking_focus_areas')
+        .select(`
+          booking_id,
+          focus_areas!inner (
+            name
+          )
+        `)
+        .in('booking_id', bookingIds);
+
+      if (bookingFocusAreasError) {
+        console.error('Error fetching booking focus areas:', bookingFocusAreasError);
+      }
+
       // Create lookup maps
       const parentsMap = new Map();
       parentsData?.forEach(parent => {
@@ -2356,6 +2374,18 @@ export class SupabaseStorage implements IStorage {
         }
       });
 
+      // Create focus areas map
+      const focusAreasMap = new Map();
+      bookingFocusAreasData?.forEach(bfa => {
+        if (!focusAreasMap.has(bfa.booking_id)) {
+          focusAreasMap.set(bfa.booking_id, []);
+        }
+        if (bfa.focus_areas && typeof bfa.focus_areas === 'object' && 'name' in bfa.focus_areas) {
+          const focusArea = bfa.focus_areas as any;
+          focusAreasMap.get(bfa.booking_id)!.push(focusArea.name);
+        }
+      });
+
       // Transform to expected format
       return bookingsData.map(booking => {
         const lessonTypeObj = lessonTypesMap.get(booking.lesson_type_id);
@@ -2367,6 +2397,7 @@ export class SupabaseStorage implements IStorage {
           totalPrice: lessonTypeObj?.total_price ? lessonTypeObj.total_price.toString() : '0',
           parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
           athleteNames: athletesMap.get(booking.id) || [],
+          focusAreas: focusAreasMap.get(booking.id) || [],
           paymentStatus: booking.payment_status || 'unpaid',
           attendanceStatus: booking.attendance_status || 'pending'
         };
