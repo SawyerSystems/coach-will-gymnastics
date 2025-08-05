@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 interface SiteContent {
   bannerVideo: string;
   heroImages: string[];
+  equipmentImages: string[];
   about: {
     bio: string;
     certifications: string[];
@@ -57,6 +58,14 @@ export function AdminSiteContentManager() {
   const [content, setContent] = useState<SiteContent>({
     bannerVideo: '',
     heroImages: [],
+    equipmentImages: [
+      "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+      "https://images.unsplash.com/photo-1540479859555-17af45c78602?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
+    ],
     about: {
       bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson...',
       certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked'],
@@ -344,6 +353,113 @@ export function AdminSiteContentManager() {
     }
   };
 
+  // Sectional save handlers
+  const handleSaveHeroSection = async () => {
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/site-content/hero', {
+        heroImages: content.heroImages,
+        bannerVideo: content.bannerVideo
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Hero Section Saved',
+          description: 'Hero section content has been saved successfully.',
+        });
+      } else {
+        throw new Error('Failed to save hero section');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save hero section. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveAboutSection = async () => {
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/site-content/about', {
+        about: content.about
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'About Section Saved',
+          description: 'About section content has been saved successfully.',
+        });
+      } else {
+        throw new Error('Failed to save about section');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save about section. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveContactSection = async () => {
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/site-content/contact', {
+        contact: content.contact
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Contact Section Saved',
+          description: 'Contact section content has been saved successfully.',
+        });
+      } else {
+        throw new Error('Failed to save contact section');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save contact section. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveMediaSection = async () => {
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/site-content/media', {
+        equipmentImages: content.equipmentImages,
+        bannerVideo: content.bannerVideo
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Media Section Saved',
+          description: 'Media section content has been saved successfully.',
+        });
+      } else {
+        throw new Error('Failed to save media section');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save media section. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 p-6">
@@ -620,6 +736,106 @@ export function AdminSiteContentManager() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Equipment Images Card */}
+          <Card className="rounded-xl border-0 bg-gradient-to-br from-orange-50 via-orange-25 to-orange-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-orange-800 flex items-center gap-3">
+                <Image className="h-6 w-6 text-orange-600" />
+                Training Equipment Images
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {content.equipmentImages.map((image, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    value={image}
+                    onChange={(e) => {
+                      const newImages = [...content.equipmentImages];
+                      newImages[index] = e.target.value;
+                      updateContent('equipmentImages', newImages);
+                    }}
+                    placeholder="Equipment image URL or path"
+                  />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          setSaving(true);
+                          const formData = new FormData();
+                          formData.append('file', file);
+
+                          const response = await fetch('http://localhost:5001/api/admin/media', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include'
+                          });
+
+                          if (response.ok) {
+                            const result = await response.json();
+                            const newImages = [...content.equipmentImages];
+                            newImages[index] = result.url;
+                            updateContent('equipmentImages', newImages);
+                            toast({
+                              title: "Equipment Image Uploaded",
+                              description: `Successfully uploaded: ${file.name}`,
+                            });
+                          } else {
+                            throw new Error('Upload failed');
+                          }
+                        } catch (error) {
+                          console.error('Error uploading equipment image:', error);
+                          toast({
+                            title: "Upload Failed",
+                            description: "Failed to upload equipment image. Please try again.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setSaving(false);
+                        }
+                      }
+                    }}
+                    className="hidden"
+                    id={`equipment-image-upload-${index}`}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      document.getElementById(`equipment-image-upload-${index}`)?.click();
+                    }}
+                  >
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removeArrayItem('equipmentImages', index)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                onClick={() => addArrayItem('equipmentImages', '')}
+              >
+                Add Equipment Image
+              </Button>
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleSaveMediaSection}
+                  disabled={saving}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {saving ? 'Saving...' : 'Save Media Section'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* About Tab */}
@@ -683,6 +899,15 @@ export function AdminSiteContentManager() {
                     Add Certification
                   </Button>
                 </div>
+              </div>
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleSaveAboutSection}
+                  disabled={saving}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {saving ? 'Saving...' : 'Save About Section'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -775,6 +1000,15 @@ export function AdminSiteContentManager() {
                     placeholder="12345"
                   />
                 </div>
+              </div>
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleSaveContactSection}
+                  disabled={saving}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  {saving ? 'Saving...' : 'Save Contact Section'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -952,13 +1186,31 @@ export function AdminSiteContentManager() {
                       rows={3}
                     />
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeArrayItem('testimonials', index)}
-                  >
-                    Remove Testimonial
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`featured-${index}`}
+                        checked={testimonial.featured || false}
+                        onChange={async (e) => {
+                          if (e.target.checked) {
+                            await handleSetFeaturedTestimonial(index);
+                          }
+                        }}
+                        className="rounded border-gray-300 text-pink-600 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
+                      />
+                      <Label htmlFor={`featured-${index}`} className="text-sm">
+                        Featured testimonial {testimonial.featured && <span className="text-pink-600 font-semibold">(Currently Featured)</span>}
+                      </Label>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeArrayItem('testimonials', index)}
+                    >
+                      Remove Testimonial
+                    </Button>
+                  </div>
                 </div>
               ))}
               <Button

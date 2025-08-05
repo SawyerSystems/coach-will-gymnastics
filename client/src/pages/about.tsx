@@ -265,75 +265,134 @@ export default function About() {
             </h2>
           </div>
 
+          {/* Featured Testimonial */}
+          {siteContent?.testimonials?.find((t: any) => t.featured) && (
+            <div className="mb-16">
+              <Card className="p-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200">
+                <CardContent className="pt-6 text-center">
+                  <div className="flex items-center justify-center space-x-1 mb-6">
+                    {[...Array(siteContent.testimonials.find((t: any) => t.featured)?.rating || 5)].map((_, i) => (
+                      <Star key={i} className="h-6 w-6 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-lg text-gray-700 mb-6 italic">
+                    "{siteContent.testimonials.find((t: any) => t.featured)?.text}"
+                  </p>
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {siteContent.testimonials.find((t: any) => t.featured)?.name?.charAt(0) || 'P'}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800 text-lg">
+                        {siteContent.testimonials.find((t: any) => t.featured)?.name}
+                      </p>
+                      <p className="text-orange-600 font-medium">Featured Parent Review</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Regular Testimonials Grid */}
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="p-6">
-              <CardContent className="pt-6">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "Coach Will has been amazing with our daughter Emma. She went from being afraid 
-                  of cartwheels to confidently doing back handsprings in just 6 months!"
-                </p>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                    S
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">Sarah Johnson</p>
-                    <p className="text-sm text-gray-600">Emma's Mom</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {siteContent?.testimonials?.filter((t: any) => !t.featured).length > 0 ? (
+              siteContent.testimonials.filter((t: any) => !t.featured).slice(0, 3).map((testimonial: any, index: number) => (
+                <Card key={index} className="p-6">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-1 mb-4">
+                      {[...Array(testimonial.rating || 5)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      "{testimonial.text}"
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        {testimonial.name?.charAt(0) || 'P'}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">{testimonial.name}</p>
+                        <p className="text-sm text-gray-600">Parent</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              // Fallback testimonials if no dynamic content available
+              <>
+                <Card className="p-6">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      "Coach Will has been amazing with our daughter Emma. She went from being afraid 
+                      of cartwheels to confidently doing back handsprings in just 6 months!"
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        S
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Sarah Johnson</p>
+                        <p className="text-sm text-gray-600">Emma's Mom</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card className="p-6">
-              <CardContent className="pt-6">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "My twins love their semi-private lessons. Coach Will makes learning fun while 
-                  keeping them challenged. Highly recommend!"
-                </p>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                    M
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">Maria Rodriguez</p>
-                    <p className="text-sm text-gray-600">Alex & Sam's Mom</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <Card className="p-6">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      "My twins love their semi-private lessons. Coach Will makes learning fun while 
+                      keeping them challenged. Highly recommend!"
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                        M
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Maria Rodriguez</p>
+                        <p className="text-sm text-gray-600">Alex & Sam's Mom</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card className="p-6">
-              <CardContent className="pt-6">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "The best investment we've made for our son's confidence and physical development. 
-                  Coach Will is patient, encouraging, and truly cares about each child."
-                </p>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold">
-                    D
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">David Chen</p>
-                    <p className="text-sm text-gray-600">Lily's Dad</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <Card className="p-6">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      "The best investment we've made for our son's confidence and physical development. 
+                      Coach Will is patient, encouraging, and truly cares about each child."
+                    </p>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-white font-bold">
+                        D
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">David Chen</p>
+                        <p className="text-sm text-gray-600">Lily's Dad</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         </div>
       </section>

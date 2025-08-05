@@ -4992,6 +4992,14 @@ export class SupabaseStorage implements IStorage {
       return {
         bannerVideo: siteContentData?.banner_video || '',
         heroImages: siteContentData?.hero_images || [],
+        equipmentImages: siteContentData?.equipment_images || [
+          "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1540479859555-17af45c78602?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
+        ],
         about: siteContentData?.about || {
           bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
           experience: 'Nearly 10 years of coaching experience with athletes of all levels',
@@ -5026,6 +5034,14 @@ export class SupabaseStorage implements IStorage {
       return {
         bannerVideo: '',
         heroImages: [],
+        equipmentImages: [
+          "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1540479859555-17af45c78602?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+          "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
+        ],
         about: {
           bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
           experience: 'Nearly 10 years of coaching experience with athletes of all levels',
@@ -5063,6 +5079,7 @@ export class SupabaseStorage implements IStorage {
       
       if (content.bannerVideo !== undefined) updateData.banner_video = content.bannerVideo;
       if (content.heroImages !== undefined) updateData.hero_images = content.heroImages;
+      if (content.equipmentImages !== undefined) updateData.equipment_images = content.equipmentImages;
       if (content.about !== undefined) updateData.about = content.about;
       if (content.contact !== undefined) updateData.contact = content.contact;
       if (content.hours !== undefined) updateData.hours = content.hours;

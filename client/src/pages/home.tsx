@@ -48,6 +48,15 @@ export default function Home() {
     enabled: parentAuth?.loggedIn || false,
   });
 
+  // Fetch site content for dynamic content
+  const { data: siteContent } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-content");
+      return response.json();
+    },
+  });
+
   // Get parent athletes for logged-in parents
   const { data: parentAthletes } = useQuery({
     queryKey: ['/api/parent/athletes'],
@@ -574,14 +583,14 @@ export default function Home() {
           <div className="mt-16">
             <h3 className="text-2xl font-bold text-gray-800 text-center mb-8">Our Training Equipment</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[
+              {(siteContent?.equipmentImages || [
                 "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
                 "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
                 "https://images.unsplash.com/photo-1540479859555-17af45c78602?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
                 "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
                 "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
                 "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
-              ].map((src, index) => (
+              ]).map((src: string, index: number) => (
                 <div key={index} className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
                   <img 
                     src={src}

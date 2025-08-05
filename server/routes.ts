@@ -5269,6 +5269,133 @@ setTimeout(async () => {
     }
   });
 
+  // Sectional site content endpoints for granular updates
+  app.get("/api/site-content/hero", async (req, res) => {
+    try {
+      const content = await storage.getSiteContent();
+      res.json({
+        heroImages: content.heroImages || [],
+        bannerVideo: content.bannerVideo || ""
+      });
+    } catch (error) {
+      console.error("Error fetching hero content:", error);
+      res.status(500).json({ error: "Failed to fetch hero content" });
+    }
+  });
+
+  app.post("/api/admin/site-content/hero", isAdminAuthenticated, async (req, res) => {
+    try {
+      const heroData = req.body;
+      const currentContent = await storage.getSiteContent();
+      
+      const updatedContent = await storage.updateSiteContent({
+        ...currentContent,
+        heroImages: heroData.heroImages,
+        bannerVideo: heroData.bannerVideo
+      });
+      
+      res.json({ success: true, heroImages: updatedContent.heroImages, bannerVideo: updatedContent.bannerVideo });
+    } catch (error: any) {
+      console.error("Error updating hero content:", error);
+      res.status(500).json({ error: `Failed to update hero content: ${error.message}` });
+    }
+  });
+
+  app.get("/api/site-content/about", async (req, res) => {
+    try {
+      const content = await storage.getSiteContent();
+      res.json({
+        about: content.about || { title: "", content: "", imageUrl: "" },
+        testimonials: content.testimonials || []
+      });
+    } catch (error) {
+      console.error("Error fetching about content:", error);
+      res.status(500).json({ error: "Failed to fetch about content" });
+    }
+  });
+
+  app.post("/api/admin/site-content/about", isAdminAuthenticated, async (req, res) => {
+    try {
+      const aboutData = req.body;
+      const currentContent = await storage.getSiteContent();
+      
+      const updatedContent = await storage.updateSiteContent({
+        ...currentContent,
+        about: aboutData.about
+      });
+      
+      res.json({ success: true, about: updatedContent.about });
+    } catch (error: any) {
+      console.error("Error updating about content:", error);
+      res.status(500).json({ error: `Failed to update about content: ${error.message}` });
+    }
+  });
+
+  app.get("/api/site-content/contact", async (req, res) => {
+    try {
+      const content = await storage.getSiteContent();
+      res.json({
+        contact: content.contact || { phone: "", email: "", address: "", hours: "" }
+      });
+    } catch (error) {
+      console.error("Error fetching contact content:", error);
+      res.status(500).json({ error: "Failed to fetch contact content" });
+    }
+  });
+
+  app.post("/api/admin/site-content/contact", isAdminAuthenticated, async (req, res) => {
+    try {
+      const contactData = req.body;
+      const currentContent = await storage.getSiteContent();
+      
+      const updatedContent = await storage.updateSiteContent({
+        ...currentContent,
+        contact: contactData.contact
+      });
+      
+      res.json({ success: true, contact: updatedContent.contact });
+    } catch (error: any) {
+      console.error("Error updating contact content:", error);
+      res.status(500).json({ error: `Failed to update contact content: ${error.message}` });
+    }
+  });
+
+  app.get("/api/site-content/media", async (req, res) => {
+    try {
+      const content = await storage.getSiteContent();
+      res.json({
+        equipmentImages: content.equipmentImages || [],
+        bannerVideo: content.bannerVideo || ""
+      });
+    } catch (error) {
+      console.error("Error fetching media content:", error);
+      res.status(500).json({ error: "Failed to fetch media content" });
+    }
+  });
+
+  app.post("/api/admin/site-content/media", isAdminAuthenticated, async (req, res) => {
+    try {
+      const mediaData = req.body;
+      const currentContent = await storage.getSiteContent();
+      
+      const updatedContent = await storage.updateSiteContent({
+        ...currentContent,
+        equipmentImages: mediaData.equipmentImages,
+        bannerVideo: mediaData.bannerVideo
+      });
+      
+      res.json({ 
+        success: true, 
+        equipmentImages: updatedContent.equipmentImages,
+        bannerVideo: updatedContent.bannerVideo
+      });
+    } catch (error: any) {
+      console.error("Error updating media content:", error);
+      res.status(500).json({ error: `Failed to update media content: ${error.message}` });
+    }
+  });
+
+
   // Admin media upload endpoint
   app.post("/api/admin/media", isAdminAuthenticated, upload.single('file'), async (req, res) => {
     try {
