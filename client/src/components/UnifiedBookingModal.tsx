@@ -90,10 +90,20 @@ export function UnifiedBookingModal({
       return 'athlete-modal';
     }
 
-    // Admin creating new athlete booking
+    // Admin flows - check adminContext to determine correct flow
     if (isAdmin) {
-      console.log('✅ FLOW: admin-new-athlete (admin user)');
-      return 'admin-new-athlete';
+      switch (adminContext) {
+        case 'existing-athlete':
+          console.log('✅ FLOW: admin-existing-athlete (admin - existing athlete)');
+          return 'admin-existing-athlete';
+        case 'from-athlete':
+          console.log('✅ FLOW: admin-from-athlete (admin - from athlete profile)');
+          return 'admin-from-athlete';
+        case 'new-athlete':
+        default:
+          console.log('✅ FLOW: admin-new-athlete (admin - new athlete)');
+          return 'admin-new-athlete';
+      }
     }
 
     // Default: New user flow

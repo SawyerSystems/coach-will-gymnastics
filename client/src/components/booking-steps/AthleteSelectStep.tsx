@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BOOKING_FLOWS, useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useQuery } from "@tanstack/react-query";
-import { PlusCircle, User } from "lucide-react";
+import { PlusCircle, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface AthleteSelectStepProps {
@@ -14,6 +15,7 @@ interface AthleteSelectStepProps {
 export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepProps) {
   const { state, updateState, nextStep } = useBookingFlow();
   const [showNewAthleteOption, setShowNewAthleteOption] = useState(false);
+  const [search, setSearch] = useState('');
   
   // For admin flows, fetch all athletes; for parent flows, fetch parent's athletes
   const isAdminFlow = state.isAdminFlow || state.flowType.startsWith('admin-');
@@ -114,6 +116,18 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
 
   const maxAthletes = state.lessonType.includes('semi-private') ? 2 : 1;
 
+  // Filter athletes based on search term
+  const filteredAthletes = athletes.filter((athlete: any) => {
+    if (!search) return true;
+    const fullName = `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim();
+    const searchTerm = search.toLowerCase();
+    return (
+      fullName.toLowerCase().includes(searchTerm) ||
+      athlete.name?.toLowerCase().includes(searchTerm) ||
+      athlete.experience?.toLowerCase().includes(searchTerm)
+    );
+  });
+
   return (
     <div className="space-y-6 py-4">
       <div>
@@ -156,6 +170,19 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
         </Card>
       )}
 
+      {/* Search input for admin flows with multiple athletes */}
+      {isAdminFlow && athletes.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search athletes by name or experience..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
+
       <div className="space-y-3">
         {isLoadingAthletes ? (
           <Card className="p-8 text-center">
@@ -173,8 +200,22 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
               Add First Athlete
             </Button>
           </Card>
+        ) : filteredAthletes.length === 0 ? (
+          <Card className="p-8 text-center border-dashed">
+            <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-4">
+              No athletes match your search criteria
+            </p>
+            <Button 
+              onClick={() => setSearch('')} 
+              variant="outline"
+              size="sm"
+            >
+              Clear Search
+            </Button>
+          </Card>
         ) : (
-          athletes.map((athlete: any) => (
+          filteredAthletes.map((athlete: any) => (
             <Card 
               key={athlete.id}
               className={`cursor-pointer transition-all ${
