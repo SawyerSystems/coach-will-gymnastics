@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Clock, HelpCircle, Image, Mail, MapPin, Phone, Save, Star, Upload, Users, Video } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import TestimonialForm from './TestimonialForm';
 
 interface SiteContent {
   bannerVideo: string;
@@ -19,6 +20,7 @@ interface SiteContent {
     bio: string;
     certifications: string[];
     experience: string;
+    photo?: string;
   };
   contact: {
     phone: string;
@@ -859,6 +861,82 @@ export function AdminSiteContentManager() {
                 />
               </div>
               
+              {/* Coach Photo Uploader */}
+              <div>
+                <Label>Coach Photo</Label>
+                <div className="mt-2 flex items-start gap-4">
+                  {content.about.photo ? (
+                    <div className="relative w-40 h-40 rounded-lg overflow-hidden border shadow-md">
+                      <img
+                        src={content.about.photo}
+                        alt="Coach Will"
+                        className="w-full h-full object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => updateContent('about.photo', '')}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500">
+                      <Upload className="h-8 w-8 mb-2" />
+                      <p className="text-sm">No photo</p>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            toast({
+                              title: "Uploading Photo",
+                              description: `Uploading: ${file.name}...`,
+                            });
+                            
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            
+                            const response = await fetch('/api/admin/uploads/image', {
+                              method: 'POST',
+                              body: formData,
+                            });
+                            
+                            if (response.ok) {
+                              const data = await response.json();
+                              updateContent('about.photo', data.url);
+                              toast({
+                                title: "Photo Uploaded",
+                                description: `Successfully uploaded: ${file.name}`,
+                              });
+                            } else {
+                              throw new Error('Upload failed');
+                            }
+                          } catch (error) {
+                            console.error('Error uploading photo:', error);
+                            toast({
+                              title: "Upload Failed",
+                              description: "Failed to upload photo. Please try again.",
+                              variant: "destructive",
+                            });
+                          }
+                        }
+                      }}
+                      className="mb-2"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Upload a photo of Coach Will for the About page. Square images (1:1 ratio) work best.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <div>
                 <Label htmlFor="experience">Experience</Label>
                 <Input
@@ -1144,74 +1222,18 @@ export function AdminSiteContentManager() {
             </CardHeader>
             <CardContent className="space-y-4">
               {content.testimonials.map((testimonial, index) => (
-                <div key={index} className="p-4 border rounded-lg space-y-3">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Parent Name</Label>
-                      <Input
-                        value={testimonial.name}
-                        onChange={(e) => {
-                          const newTestimonials = [...content.testimonials];
-                          newTestimonials[index].name = e.target.value;
-                          updateContent('testimonials', newTestimonials);
-                        }}
-                        placeholder="Parent name"
-                      />
-                    </div>
-                    <div>
-                      <Label>Rating</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={testimonial.rating}
-                        onChange={(e) => {
-                          const newTestimonials = [...content.testimonials];
-                          newTestimonials[index].rating = Number(e.target.value);
-                          updateContent('testimonials', newTestimonials);
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Testimonial Text</Label>
-                    <Textarea
-                      value={testimonial.text}
-                      onChange={(e) => {
-                        const newTestimonials = [...content.testimonials];
-                        newTestimonials[index].text = e.target.value;
-                        updateContent('testimonials', newTestimonials);
-                      }}
-                      placeholder="Parent testimonial..."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={`featured-${index}`}
-                        checked={testimonial.featured || false}
-                        onChange={async (e) => {
-                          if (e.target.checked) {
-                            await handleSetFeaturedTestimonial(index);
-                          }
-                        }}
-                        className="rounded border-gray-300 text-pink-600 shadow-sm focus:border-pink-300 focus:ring focus:ring-pink-200 focus:ring-opacity-50"
-                      />
-                      <Label htmlFor={`featured-${index}`} className="text-sm">
-                        Featured testimonial {testimonial.featured && <span className="text-pink-600 font-semibold">(Currently Featured)</span>}
-                      </Label>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeArrayItem('testimonials', index)}
-                    >
-                      Remove Testimonial
-                    </Button>
-                  </div>
-                </div>
+                <TestimonialForm 
+                  key={testimonial.id || index}
+                  testimonial={testimonial}
+                  index={index}
+                  onSave={(index, updatedTestimonial) => {
+                    const newTestimonials = [...content.testimonials];
+                    newTestimonials[index] = updatedTestimonial;
+                    updateContent('testimonials', newTestimonials);
+                  }}
+                  onRemove={(index) => removeArrayItem('testimonials', index)}
+                  onSetFeatured={handleSetFeaturedTestimonial}
+                />
               ))}
               <Button
                 variant="outline"

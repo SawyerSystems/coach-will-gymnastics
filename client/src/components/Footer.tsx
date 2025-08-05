@@ -86,7 +86,7 @@ export function Footer() {
             </h3>
           </div>
           <p className="text-gray-300 text-sm leading-relaxed max-w-2xl mx-auto mb-6">
-            Where athletics meets adventure! We're building confident champions one flip at a time, turning every lesson into a quest for greatness and every athlete into their own superhero.
+            Where athletics meets adventure! Building confident champions one flip at a time, turning every lesson into a quest for greatness and every athlete into their own superhero.
           </p>
           <div className="flex justify-center space-x-4">
             <a href="#" className="text-gray-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">

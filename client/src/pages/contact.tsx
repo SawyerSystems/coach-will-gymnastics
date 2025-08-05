@@ -72,7 +72,7 @@ export default function Contact() {
       form.reset();
       toast({
         title: "Message Sent!",
-        description: "Thank you for your message. We'll get back to you within 24 hours.",
+        description: "Thank you for your message. I'll get back to you within 24 hours.",
       });
     },
     onError: (error) => {
@@ -97,7 +97,7 @@ export default function Contact() {
             Reach Out to <span className="text-purple-600">Coach Will</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Have more questions or want to chat before booking? We're here to help every step of the way.
+            Have more questions or want to chat before booking? I'm here to help every step of the way.
           </p>
         </div>
       </section>
@@ -211,7 +211,7 @@ export default function Contact() {
                     <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">Message Sent Successfully!</h3>
                     <p className="text-gray-600 mb-6">
-                      Thank you for reaching out! We'll get back to you within 24 hours.
+                      Thank you for reaching out! I'll get back to you within 24 hours.
                     </p>
                     <Button 
                       onClick={() => setIsSubmitted(false)}
@@ -330,7 +330,7 @@ export default function Contact() {
                     </Button>
                   </div>
                   <p className="text-gray-600">
-                    Follow us on social media for daily gymnastics tips, student highlights, 
+                    Follow me on social media for daily gymnastics tips, student highlights, 
                     and behind-the-scenes content!
                   </p>
                 </CardContent>
@@ -388,7 +388,7 @@ export default function Contact() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
             <blockquote className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-              "We believe every child has a superpower. Gymnastics helps bring it out."
+              "I believe every child has a superpower. Gymnastics helps bring it out."
             </blockquote>
             <p className="text-lg text-gray-600">– Coach Will</p>
           </div>
@@ -403,7 +403,7 @@ export default function Contact() {
           </h2>
           <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
             Have more questions or want to chat before booking?
-            We're here to help every step of the way.
+            I'm here to help every step of the way.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 

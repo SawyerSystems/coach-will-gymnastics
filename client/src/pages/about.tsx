@@ -95,29 +95,48 @@ export default function About() {
             </div>
             <div className="relative">
               <img 
-                src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                alt="Coach teaching young gymnast" 
+                src={aboutData.photo || "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"} 
+                alt="Coach Will" 
                 className="rounded-2xl shadow-2xl w-full h-auto object-cover" 
               />
               
               {/* Floating testimonial */}
-              <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="flex space-x-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      ))}
+              {siteContent?.testimonials?.find((t: any) => t.featured) ? (
+                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex space-x-1">
+                        {[...Array(siteContent.testimonials.find((t: any) => t.featured)?.rating || 5)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">Featured Review</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-700">Parent Review</span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    "My daughter absolutely loves her lessons with Coach Will! 
-                    She's gained so much confidence and skill."
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">- Sarah M.</p>
-                </CardContent>
-              </Card>
+                    <p className="text-sm text-gray-600">
+                      "{siteContent.testimonials.find((t: any) => t.featured)?.text}"
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">- {siteContent.testimonials.find((t: any) => t.featured)?.name}</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex space-x-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">Parent Review</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      "My daughter absolutely loves her lessons with Coach Will! 
+                      She's gained so much confidence and skill."
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2">- Sarah M.</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
