@@ -250,14 +250,15 @@ app.use((req, res, next) => {
     }
   });
 
-  app.get('/api/site-content', (req: Request, res: Response) => {
-    try {
-      res.json(siteContentData);
-    } catch (error) {
-      console.error('Error fetching site content:', error);
-      res.status(500).json({ error: 'Failed to fetch site content' });
-    }
-  });
+  // This route is now managed in routes.ts to use the database
+  // app.get('/api/site-content', (req: Request, res: Response) => {
+  //   try {
+  //     res.json(siteContentData);
+  //   } catch (error) {
+  //     console.error('Error fetching site content:', error);
+  //     res.status(500).json({ error: 'Failed to fetch site content' });
+  //   }
+  // });
 
   // DIAGNOSTIC: Session tracing middleware
   app.use((req, _res, next) => {
