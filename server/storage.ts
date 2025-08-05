@@ -3996,10 +3996,20 @@ export class SupabaseStorage implements IStorage {
       `)
       .in('booking_id', bookingIds);
 
+    // Fetch focus areas for bookings
+    const { data: bookingFocusAreas } = await supabaseAdmin
+      .from('booking_focus_areas')
+      .select(`
+        booking_id,
+        focus_areas!inner(id, name)
+      `)
+      .in('booking_id', bookingIds);
+
     // Create lookup maps
     const parentMap = new Map(parents?.map(p => [p.id, p]) || []);
     const lessonTypeMap = new Map(lessonTypes?.map(lt => [lt.id, lt]) || []);
     const athletesByBooking = new Map<number, any[]>();
+    const focusAreasByBooking = new Map<number, string[]>();
     
     bookingAthletes?.forEach((ba: any) => {
       if (!athletesByBooking.has(ba.booking_id)) {
@@ -4020,10 +4030,22 @@ export class SupabaseStorage implements IStorage {
       }
     });
 
+    // Map focus areas to bookings
+    bookingFocusAreas?.forEach((bfa: any) => {
+      if (!focusAreasByBooking.has(bfa.booking_id)) {
+        focusAreasByBooking.set(bfa.booking_id, []);
+      }
+      const focusArea = bfa.focus_areas as any;
+      if (focusArea) {
+        focusAreasByBooking.get(bfa.booking_id)!.push(focusArea.name);
+      }
+    });
+
     return bookings.map((booking: any) => {
       const parent = parentMap.get(booking.parent_id);
       const lessonType = lessonTypeMap.get(booking.lesson_type_id);
       const athletes = athletesByBooking.get(booking.id) || [];
+      const focusAreas = focusAreasByBooking.get(booking.id) || [];
       // Sort athletes by slot order
       athletes.sort((a, b) => a.slotOrder - b.slotOrder);
       return {
@@ -4112,7 +4134,7 @@ export class SupabaseStorage implements IStorage {
         
         // Empty arrays for relations not yet implemented
         apparatus: [],
-        focusAreas: booking.focus_areas || [],
+        focusAreas: focusAreas,
         focusAreaOther: booking.focus_area_other || null,
         sideQuests: [],
         
