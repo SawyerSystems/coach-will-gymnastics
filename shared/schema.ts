@@ -879,3 +879,109 @@ export function mapFocusAreaIdsToNames(focusAreaIds: number[]): string[] {
   console.warn('mapFocusAreaIdsToNames is a placeholder function - implement with actual database lookup');
   return [];
 }
+
+// Site Content Management Tables
+export const siteContent = pgTable("site_content", {
+  id: serial("id").primaryKey(),
+  bannerVideo: text("banner_video").default(""),
+  heroImages: json("hero_images").default([]),
+  about: json("about").default({
+    bio: "Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.",
+    experience: "Nearly 10 years of coaching experience with athletes of all levels",
+    certifications: ["USA Gymnastics Certified", "CPR/First Aid Certified", "Background Checked"]
+  }),
+  contact: json("contact").default({
+    phone: "(585) 755-8122",
+    email: "Admin@coachwilltumbles.com",
+    address: {
+      name: "Oceanside Gymnastics",
+      street: "1935 Ave. del Oro #A",
+      city: "Oceanside",
+      state: "CA",
+      zip: "92056"
+    }
+  }),
+  hours: json("hours").default({
+    monday: { available: true, start: "9:00 AM", end: "4:00 PM" },
+    tuesday: { available: true, start: "9:00 AM", end: "3:30 PM" },
+    wednesday: { available: true, start: "9:00 AM", end: "4:00 PM" },
+    thursday: { available: true, start: "9:00 AM", end: "3:30 PM" },
+    friday: { available: true, start: "9:00 AM", end: "4:00 PM" },
+    saturday: { available: true, start: "10:00 AM", end: "2:00 PM" },
+    sunday: { available: false, start: "", end: "" }
+  }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const testimonials = pgTable("testimonials", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  text: text("text").notNull(),
+  rating: integer("rating").default(5),
+  featured: boolean("featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const siteFaqs = pgTable("site_faqs", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  category: varchar("category", { length: 100 }).default("General"),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Validation schemas for site content
+export const insertSiteContentSchema = createInsertSchema(siteContent);
+export const insertTestimonialSchema = createInsertSchema(testimonials);
+export const insertSiteFaqSchema = createInsertSchema(siteFaqs);
+
+// Types for site content
+export type SiteContent = typeof siteContent.$inferSelect;
+export type InsertSiteContent = z.infer<typeof insertSiteContentSchema>;
+export type Testimonial = typeof testimonials.$inferSelect;
+export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
+export type SiteFaq = typeof siteFaqs.$inferSelect;
+export type InsertSiteFaq = z.infer<typeof insertSiteFaqSchema>;
+
+// Site content API response type
+export type SiteContentResponse = {
+  bannerVideo: string;
+  heroImages: string[];
+  about: {
+    bio: string;
+    experience: string;
+    certifications: string[];
+  };
+  contact: {
+    phone: string;
+    email: string;
+    address: {
+      name: string;
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+    };
+  };
+  hours: {
+    [key: string]: { start: string; end: string; available: boolean };
+  };
+  testimonials: Array<{
+    id: number;
+    name: string;
+    text: string;
+    rating: number;
+    featured: boolean;
+  }>;
+  faqs: Array<{
+    id: number;
+    question: string;
+    answer: string;
+    category: string;
+    displayOrder: number;
+  }>;
+};

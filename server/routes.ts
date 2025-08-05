@@ -5241,64 +5241,155 @@ setTimeout(async () => {
     }
   });
 
-  // Site content endpoint
+  // Site content endpoint - now uses database
   app.get("/api/site-content", async (req, res) => {
     try {
-      // Return default site content that can be dynamically updated later
-      const defaultContent = {
-        contact: {
-          phone: '(585) 755-8122',
-          email: 'Admin@coachwilltumbles.com',
-          address: {
-            name: 'Oceanside Gymnastics',
-            street: '1935 Ave. del Oro #A',
-            city: 'Oceanside',
-            state: 'CA',
-            zip: '92056'
-          }
-        },
-        hours: {
-          monday: { available: true, start: '9:00 AM', end: '4:00 PM' },
-          tuesday: { available: true, start: '9:00 AM', end: '3:30 PM' },
-          wednesday: { available: true, start: '9:00 AM', end: '4:00 PM' },
-          thursday: { available: true, start: '9:00 AM', end: '3:30 PM' },
-          friday: { available: true, start: '9:00 AM', end: '4:00 PM' },
-          saturday: { available: true, start: '10:00 AM', end: '2:00 PM' },
-          sunday: { available: false, start: '', end: '' }
-        },
-        about: {
-          bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
-          experience: 'Nearly 10 years of coaching experience with athletes of all levels',
-          certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked']
-        },
-        faqs: [
-          {
-            question: "What age should my child start gymnastics?",
-            answer: "Most kids are ready by age 4 or 5 — especially if they're constantly moving, flipping off the couch, or can't sit still. We adapt to each child's pace.",
-            category: "General"
-          },
-          {
-            question: "What should they wear?",
-            answer: "Leotards or fitted activewear works best. No skirts, baggy clothes, or zippers. Hair up, no jewelry — just comfort and focus.",
-            category: "Preparation"
-          },
-          {
-            question: "Do I need to bring anything?",
-            answer: "Nope — we provide all the mats, equipment, and safety gear. Just bring a water bottle and good energy.",
-            category: "Equipment"
-          },
-          {
-            question: "Can I stay and watch?",
-            answer: "Absolutely. We have a designated viewing area in the lobby where parents can comfortably watch and cheer from a distance.",
-            category: "General"
-          }
-        ]
-      };
-      
-      res.json(defaultContent);
+      const content = await storage.getSiteContent();
+      res.json(content);
     } catch (error) {
       console.error("Error fetching site content:", error);
-      res.status(500).json({ message: "Failed to fetch site content" });
+      res.status(500).json({ error: "Failed to fetch site content" });
+    }
+  });
+
+  // Admin site content management endpoints
+  app.post("/api/admin/site-content", isAdminAuthenticated, async (req, res) => {
+    try {
+      const content = req.body;
+      
+      // Basic validation
+      if (!content || typeof content !== 'object') {
+        return res.status(400).json({ error: "Invalid content data" });
+      }
+
+      const updatedContent = await storage.updateSiteContent(content);
+      res.json(updatedContent);
+    } catch (error: any) {
+      console.error("Error updating site content:", error);
+      res.status(500).json({ error: `Failed to update site content: ${error.message}` });
+    }
+  });
+
+  // Testimonials management
+  app.get("/api/admin/testimonials", isAdminAuthenticated, async (req, res) => {
+    try {
+      const testimonials = await storage.getAllTestimonials();
+      res.json(testimonials);
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+      res.status(500).json({ error: "Failed to fetch testimonials" });
+    }
+  });
+
+  app.post("/api/admin/testimonials", isAdminAuthenticated, async (req, res) => {
+    try {
+      const testimonial = req.body;
+      
+      if (!testimonial.name || !testimonial.text) {
+        return res.status(400).json({ error: "Name and text are required" });
+      }
+
+      const newTestimonial = await storage.createTestimonial(testimonial);
+      res.json(newTestimonial);
+    } catch (error: any) {
+      console.error("Error creating testimonial:", error);
+      res.status(500).json({ error: `Failed to create testimonial: ${error.message}` });
+    }
+  });
+
+  app.put("/api/admin/testimonials/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const testimonial = req.body;
+      
+      const updatedTestimonial = await storage.updateTestimonial(id, testimonial);
+      res.json(updatedTestimonial);
+    } catch (error: any) {
+      console.error("Error updating testimonial:", error);
+      res.status(500).json({ error: `Failed to update testimonial: ${error.message}` });
+    }
+  });
+
+  app.delete("/api/admin/testimonials/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteTestimonial(id);
+      
+      if (success) {
+        res.json({ message: "Testimonial deleted successfully" });
+      } else {
+        res.status(404).json({ error: "Testimonial not found" });
+      }
+    } catch (error: any) {
+      console.error("Error deleting testimonial:", error);
+      res.status(500).json({ error: `Failed to delete testimonial: ${error.message}` });
+    }
+  });
+
+  app.post("/api/admin/testimonials/:id/feature", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const testimonial = await storage.setFeaturedTestimonial(id);
+      res.json(testimonial);
+    } catch (error: any) {
+      console.error("Error setting featured testimonial:", error);
+      res.status(500).json({ error: `Failed to set featured testimonial: ${error.message}` });
+    }
+  });
+
+  // FAQs management
+  app.get("/api/admin/faqs", isAdminAuthenticated, async (req, res) => {
+    try {
+      const faqs = await storage.getAllSiteFaqs();
+      res.json(faqs);
+    } catch (error) {
+      console.error("Error fetching FAQs:", error);
+      res.status(500).json({ error: "Failed to fetch FAQs" });
+    }
+  });
+
+  app.post("/api/admin/faqs", isAdminAuthenticated, async (req, res) => {
+    try {
+      const faq = req.body;
+      
+      if (!faq.question || !faq.answer) {
+        return res.status(400).json({ error: "Question and answer are required" });
+      }
+
+      const newFaq = await storage.createSiteFaq(faq);
+      res.json(newFaq);
+    } catch (error: any) {
+      console.error("Error creating FAQ:", error);
+      res.status(500).json({ error: `Failed to create FAQ: ${error.message}` });
+    }
+  });
+
+  app.put("/api/admin/faqs/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const faq = req.body;
+      
+      const updatedFaq = await storage.updateSiteFaq(id, faq);
+      res.json(updatedFaq);
+    } catch (error: any) {
+      console.error("Error updating FAQ:", error);
+      res.status(500).json({ error: `Failed to update FAQ: ${error.message}` });
+    }
+  });
+
+  app.delete("/api/admin/faqs/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteSiteFaq(id);
+      
+      if (success) {
+        res.json({ message: "FAQ deleted successfully" });
+      } else {
+        res.status(404).json({ error: "FAQ not found" });
+      }
+    } catch (error: any) {
+      console.error("Error deleting FAQ:", error);
+      res.status(500).json({ error: `Failed to delete FAQ: ${error.message}` });
     }
   });
 

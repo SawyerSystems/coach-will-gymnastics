@@ -199,6 +199,19 @@ export interface IStorage {
   getAllBlogEmailSignups(): Promise<BlogEmailSignup[]>;
   getAllParentsWithBlogOptIn(): Promise<Parent[]>;
   getAllBlogEmailAddresses(): Promise<string[]>;
+
+  // Site Content Management
+  getSiteContent(): Promise<any>;
+  updateSiteContent(content: any): Promise<any>;
+  getAllTestimonials(): Promise<any[]>;
+  createTestimonial(testimonial: any): Promise<any>;
+  updateTestimonial(id: number, testimonial: any): Promise<any>;
+  deleteTestimonial(id: number): Promise<boolean>;
+  setFeaturedTestimonial(id: number): Promise<any>;
+  getAllSiteFaqs(): Promise<any[]>;
+  createSiteFaq(faq: any): Promise<any>;
+  updateSiteFaq(id: number, faq: any): Promise<any>;
+  deleteSiteFaq(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -1392,6 +1405,91 @@ With the right setup and approach, home practice can accelerate your child's gym
   async getAllBlogEmailAddresses(): Promise<string[]> {
     // Not implemented in MemStorage
     return [];
+  }
+
+  // Site Content Management Methods (stubs for MemStorage)
+  async getSiteContent(): Promise<any> {
+    return {
+      bannerVideo: '',
+      heroImages: [],
+      about: {
+        bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
+        experience: 'Nearly 10 years of coaching experience with athletes of all levels',
+        certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked']
+      },
+      contact: {
+        phone: '(585) 755-8122',
+        email: 'Admin@coachwilltumbles.com',
+        address: {
+          name: 'Oceanside Gymnastics',
+          street: '1935 Ave. del Oro #A',
+          city: 'Oceanside',
+          state: 'CA',
+          zip: '92056'
+        }
+      },
+      hours: {
+        monday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+        tuesday: { available: true, start: '9:00 AM', end: '3:30 PM' },
+        wednesday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+        thursday: { available: true, start: '9:00 AM', end: '3:30 PM' },
+        friday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+        saturday: { available: true, start: '10:00 AM', end: '2:00 PM' },
+        sunday: { available: false, start: '', end: '' }
+      },
+      testimonials: [],
+      faqs: []
+    };
+  }
+
+  async updateSiteContent(content: any): Promise<any> {
+    // Not implemented in MemStorage
+    return content;
+  }
+
+  async getAllTestimonials(): Promise<any[]> {
+    // Not implemented in MemStorage
+    return [];
+  }
+
+  async createTestimonial(testimonial: any): Promise<any> {
+    // Not implemented in MemStorage
+    return { id: 1, ...testimonial };
+  }
+
+  async updateTestimonial(id: number, testimonial: any): Promise<any> {
+    // Not implemented in MemStorage
+    return { id, ...testimonial };
+  }
+
+  async deleteTestimonial(id: number): Promise<boolean> {
+    // Not implemented in MemStorage
+    return true;
+  }
+
+  async setFeaturedTestimonial(id: number): Promise<any> {
+    // Not implemented in MemStorage
+    return { id, featured: true };
+  }
+
+  async getAllSiteFaqs(): Promise<any[]> {
+    // Not implemented in MemStorage
+    return [];
+  }
+
+  async createSiteFaq(faq: any): Promise<any> {
+    // Not implemented in MemStorage
+    return { id: 1, ...faq };
+  }
+
+  async updateSiteFaq(id: number, faq: any): Promise<any> {
+    // Not implemented in MemStorage
+    return { id, ...faq };
+  }
+
+  async deleteSiteFaq(id: number): Promise<boolean> {
+    // Not implemented in MemStorage
+    return true;
   }
 }
 
@@ -4855,6 +4953,298 @@ export class SupabaseStorage implements IStorage {
 
     logger.admin(`✅ Synced ${updatedCount} bookings with Stripe`);
     return { updatedCount, totalCount };
+  }
+
+  // Site Content Management Methods
+  async getSiteContent(): Promise<any> {
+    try {
+      // Get site content (there should only be one row)
+      const { data: siteContentData, error: siteError } = await supabaseAdmin
+        .from('site_content')
+        .select('*')
+        .single();
+
+      if (siteError && siteError.code !== 'PGRST116') { // Not found is OK
+        console.error('Error fetching site content:', siteError);
+      }
+
+      // Get all testimonials
+      const { data: testimonialsData, error: testimonialsError } = await supabaseAdmin
+        .from('testimonials')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (testimonialsError) {
+        console.error('Error fetching testimonials:', testimonialsError);
+      }
+
+      // Get all FAQs
+      const { data: faqsData, error: faqsError } = await supabaseAdmin
+        .from('site_faqs')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      if (faqsError) {
+        console.error('Error fetching FAQs:', faqsError);
+      }
+
+      // Return structured content
+      return {
+        bannerVideo: siteContentData?.banner_video || '',
+        heroImages: siteContentData?.hero_images || [],
+        about: siteContentData?.about || {
+          bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
+          experience: 'Nearly 10 years of coaching experience with athletes of all levels',
+          certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked']
+        },
+        contact: siteContentData?.contact || {
+          phone: '(585) 755-8122',
+          email: 'Admin@coachwilltumbles.com',
+          address: {
+            name: 'Oceanside Gymnastics',
+            street: '1935 Ave. del Oro #A',
+            city: 'Oceanside',
+            state: 'CA',
+            zip: '92056'
+          }
+        },
+        hours: siteContentData?.hours || {
+          monday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+          tuesday: { available: true, start: '9:00 AM', end: '3:30 PM' },
+          wednesday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+          thursday: { available: true, start: '9:00 AM', end: '3:30 PM' },
+          friday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+          saturday: { available: true, start: '10:00 AM', end: '2:00 PM' },
+          sunday: { available: false, start: '', end: '' }
+        },
+        testimonials: testimonialsData || [],
+        faqs: faqsData || []
+      };
+    } catch (error) {
+      console.error('Error in getSiteContent:', error);
+      // Return default content if database fails
+      return {
+        bannerVideo: '',
+        heroImages: [],
+        about: {
+          bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
+          experience: 'Nearly 10 years of coaching experience with athletes of all levels',
+          certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked']
+        },
+        contact: {
+          phone: '(585) 755-8122',
+          email: 'Admin@coachwilltumbles.com',
+          address: {
+            name: 'Oceanside Gymnastics',
+            street: '1935 Ave. del Oro #A',
+            city: 'Oceanside',
+            state: 'CA',
+            zip: '92056'
+          }
+        },
+        hours: {
+          monday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+          tuesday: { available: true, start: '9:00 AM', end: '3:30 PM' },
+          wednesday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+          thursday: { available: true, start: '9:00 AM', end: '3:30 PM' },
+          friday: { available: true, start: '9:00 AM', end: '4:00 PM' },
+          saturday: { available: true, start: '10:00 AM', end: '2:00 PM' },
+          sunday: { available: false, start: '', end: '' }
+        },
+        testimonials: [],
+        faqs: []
+      };
+    }
+  }
+
+  async updateSiteContent(content: any): Promise<any> {
+    try {
+      const updateData: any = {};
+      
+      if (content.bannerVideo !== undefined) updateData.banner_video = content.bannerVideo;
+      if (content.heroImages !== undefined) updateData.hero_images = content.heroImages;
+      if (content.about !== undefined) updateData.about = content.about;
+      if (content.contact !== undefined) updateData.contact = content.contact;
+      if (content.hours !== undefined) updateData.hours = content.hours;
+      
+      updateData.updated_at = new Date().toISOString();
+
+      // Upsert the site content (there should only be one row with id=1)
+      const { data, error } = await supabaseAdmin
+        .from('site_content')
+        .upsert({ id: 1, ...updateData }, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating site content:', error);
+        throw new Error(`Failed to update site content: ${error.message}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in updateSiteContent:', error);
+      throw error;
+    }
+  }
+
+  async getAllTestimonials(): Promise<any[]> {
+    const { data, error } = await supabaseAdmin
+      .from('testimonials')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching testimonials:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  async createTestimonial(testimonial: any): Promise<any> {
+    const { data, error } = await supabaseAdmin
+      .from('testimonials')
+      .insert({
+        name: testimonial.name,
+        text: testimonial.text,
+        rating: testimonial.rating || 5,
+        featured: testimonial.featured || false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating testimonial:', error);
+      throw new Error(`Failed to create testimonial: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async updateTestimonial(id: number, testimonial: any): Promise<any> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    if (testimonial.name !== undefined) updateData.name = testimonial.name;
+    if (testimonial.text !== undefined) updateData.text = testimonial.text;
+    if (testimonial.rating !== undefined) updateData.rating = testimonial.rating;
+    if (testimonial.featured !== undefined) updateData.featured = testimonial.featured;
+
+    const { data, error } = await supabaseAdmin
+      .from('testimonials')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating testimonial:', error);
+      throw new Error(`Failed to update testimonial: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async deleteTestimonial(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('testimonials')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting testimonial:', error);
+      return false;
+    }
+
+    return true;
+  }
+
+  async setFeaturedTestimonial(id: number): Promise<any> {
+    // The database trigger will automatically unset other featured testimonials
+    const { data, error } = await supabaseAdmin
+      .from('testimonials')
+      .update({ featured: true, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error setting featured testimonial:', error);
+      throw new Error(`Failed to set featured testimonial: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getAllSiteFaqs(): Promise<any[]> {
+    const { data, error } = await supabaseAdmin
+      .from('site_faqs')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching FAQs:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  async createSiteFaq(faq: any): Promise<any> {
+    const { data, error } = await supabaseAdmin
+      .from('site_faqs')
+      .insert({
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category || 'General',
+        display_order: faq.displayOrder || 0
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating FAQ:', error);
+      throw new Error(`Failed to create FAQ: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async updateSiteFaq(id: number, faq: any): Promise<any> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    
+    if (faq.question !== undefined) updateData.question = faq.question;
+    if (faq.answer !== undefined) updateData.answer = faq.answer;
+    if (faq.category !== undefined) updateData.category = faq.category;
+    if (faq.displayOrder !== undefined) updateData.display_order = faq.displayOrder;
+
+    const { data, error } = await supabaseAdmin
+      .from('site_faqs')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating FAQ:', error);
+      throw new Error(`Failed to update FAQ: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async deleteSiteFaq(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('site_faqs')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting FAQ:', error);
+      return false;
+    }
+
+    return true;
   }
 }
 

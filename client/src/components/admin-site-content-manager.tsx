@@ -38,9 +38,11 @@ interface SiteContent {
   };
   sideQuests: string[];
   testimonials: Array<{
+    id?: number;
     name: string;
     text: string;
     rating: number;
+    featured?: boolean;
   }>;
   faqs: Array<{
     question: string;
@@ -169,6 +171,141 @@ export function AdminSiteContentManager() {
       toast({
         title: 'Save Failed',
         description: 'Failed to save site content. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Individual section save handlers
+  const handleSaveSection = async (sectionData: any, sectionName: string) => {
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/site-content', sectionData);
+
+      if (response.ok) {
+        toast({
+          title: `${sectionName} Saved`,
+          description: `${sectionName} section has been updated successfully.`,
+        });
+      } else {
+        throw new Error(`Failed to save ${sectionName}`);
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: `Failed to save ${sectionName}. Please try again.`,
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Testimonial management handlers
+  const handleSaveTestimonial = async (testimonial: any, index?: number) => {
+    setSaving(true);
+    try {
+      let response;
+      if (typeof index === 'number' && content.testimonials[index]?.id) {
+        // Update existing testimonial
+        response = await apiRequest('PUT', `/api/admin/testimonials/${content.testimonials[index].id}`, testimonial);
+      } else {
+        // Create new testimonial
+        response = await apiRequest('POST', '/api/admin/testimonials', testimonial);
+      }
+
+      if (response.ok) {
+        const updatedTestimonial = await response.json();
+        if (typeof index === 'number') {
+          // Update existing in state
+          setContent(prev => ({
+            ...prev,
+            testimonials: prev.testimonials.map((t, i) => i === index ? updatedTestimonial : t)
+          }));
+        } else {
+          // Add new to state
+          setContent(prev => ({
+            ...prev,
+            testimonials: [...prev.testimonials, updatedTestimonial]
+          }));
+        }
+        toast({
+          title: 'Testimonial Saved',
+          description: 'Testimonial has been saved successfully.',
+        });
+      } else {
+        throw new Error('Failed to save testimonial');
+      }
+    } catch (error) {
+      toast({
+        title: 'Save Failed',
+        description: 'Failed to save testimonial. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteTestimonial = async (index: number) => {
+    if (!content.testimonials[index]?.id) return;
+    
+    setSaving(true);
+    try {
+      const response = await apiRequest('DELETE', `/api/admin/testimonials/${content.testimonials[index].id}`);
+
+      if (response.ok) {
+        setContent(prev => ({
+          ...prev,
+          testimonials: prev.testimonials.filter((_, i) => i !== index)
+        }));
+        toast({
+          title: 'Testimonial Deleted',
+          description: 'Testimonial has been deleted successfully.',
+        });
+      } else {
+        throw new Error('Failed to delete testimonial');
+      }
+    } catch (error) {
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete testimonial. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetFeaturedTestimonial = async (index: number) => {
+    if (!content.testimonials[index]?.id) return;
+    
+    setSaving(true);
+    try {
+      const response = await apiRequest('POST', `/api/admin/testimonials/${content.testimonials[index].id}/feature`);
+
+      if (response.ok) {
+        // Update state to reflect only this testimonial is featured
+        setContent(prev => ({
+          ...prev,
+          testimonials: prev.testimonials.map((t, i) => ({
+            ...t,
+            featured: i === index
+          }))
+        }));
+        toast({
+          title: 'Featured Testimonial Set',
+          description: 'This testimonial is now featured.',
+        });
+      } else {
+        throw new Error('Failed to set featured testimonial');
+      }
+    } catch (error) {
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to set featured testimonial. Please try again.',
         variant: 'destructive',
       });
     } finally {
