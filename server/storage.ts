@@ -4724,7 +4724,10 @@ export class SupabaseStorage implements IStorage {
       .from('bookings')
       .select('*')
       .not('stripe_session_id', 'is', null)
-      .in('payment_status', ['pending', 'reservation-paid']);
+      .in('payment_status', [
+        PaymentStatusEnum.RESERVATION_PENDING,
+        PaymentStatusEnum.RESERVATION_PAID,
+      ]);
 
     if (error) {
       console.error('Error fetching bookings for payment sync:', error);

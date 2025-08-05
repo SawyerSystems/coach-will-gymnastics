@@ -142,6 +142,7 @@ export default function Admin() {
   // Parent management state
   const [isParentEditOpen, setIsParentEditOpen] = useState(false);
   const [editingParent, setEditingParent] = useState<any>(null);
+  const [viewingParent, setViewingParent] = useState<any>(null);
   
   // Athletes search state
   const [athleteSearchTerm, setAthleteSearchTerm] = useState<string>("");
@@ -233,19 +234,19 @@ export default function Admin() {
 
   // Query for detailed parent information when one is selected
   const { data: selectedParentDetails } = useQuery({
-    queryKey: ['/api/parents', selectedParent?.id],
+    queryKey: ['/api/parents', viewingParent?.id],
     queryFn: async () => {
-      if (!selectedParent?.id) return null;
+      if (!viewingParent?.id) return null;
       try {
-        const response = await apiRequest('GET', `/api/parents/${selectedParent.id}`);
+        const response = await apiRequest('GET', `/api/parents/${viewingParent.id}`);
         if (!response.ok) return null; // Handle 404 gracefully
         return await response.json();
       } catch (error) {
-        console.warn(`Parent ${selectedParent.id} not found:`, error);
+        console.warn(`Parent ${viewingParent.id} not found:`, error);
         return null;
       }
     },
-    enabled: !!authStatus?.loggedIn && !!selectedParent?.id,
+    enabled: !!authStatus?.loggedIn && !!viewingParent?.id,
     retry: false, // Don't retry 404s
   });
 
@@ -1313,8 +1314,8 @@ export default function Admin() {
                                 : 'relative bg-gradient-to-br from-white via-slate-50 to-white border border-slate-200 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]'
                             }
                           >
-                            {/* Action buttons in top-right corner */}
-                            <div className="absolute top-4 right-4 flex gap-2">
+                            {/* Action buttons - responsive layout */}
+                            <div className="flex justify-end gap-2 mb-2">
                               <Button 
                                 size="sm" 
                                 variant="outline" 
@@ -1351,7 +1352,7 @@ export default function Admin() {
                               </Button>
                             </div>
                             {/* Card Content */}
-                            <div className="flex items-start space-x-4 pt-2">
+                            <div className="flex items-start space-x-4">
                               {athlete.photo ? (
                                 <img 
                                   src={athlete.photo} 
@@ -1529,7 +1530,7 @@ export default function Admin() {
                                     onClick={() => {
                                       const validParent = filteredParents.find((p: any) => p.id === parent.id);
                                       if (validParent) {
-                                        setSelectedParent(validParent);
+                                        setViewingParent(validParent);
                                       } else {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
                                       }
@@ -1544,9 +1545,9 @@ export default function Admin() {
                                     onClick={() => {
                                       const validParent = filteredParents.find((p: any) => p.id === parent.id);
                                       if (validParent) {
-                                        // Store the parent data in the edit form state without opening the details modal
                                         setEditingParent(validParent);
                                         setIsParentEditOpen(true);
+                                        setViewingParent(null);
                                       } else {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
                                       }
@@ -3181,8 +3182,8 @@ export default function Admin() {
         
         {/* Parent Details Dialog */}
         <Dialog 
-          open={!!editingParent} 
-          onOpenChange={() => setEditingParent(null)}
+          open={!!viewingParent} 
+          onOpenChange={() => setViewingParent(null)}
         >
           <DialogContent 
             className="max-w-4xl max-h-[90vh] overflow-y-auto p-0"
@@ -3196,8 +3197,8 @@ export default function Admin() {
                   <User className="h-6 w-6 text-indigo-700" />
                 </div>
                 Parent Details
-                {editingParent && (
-                  <Badge variant="outline" className="ml-2 bg-white border-indigo-200 text-indigo-700 font-medium">ID: {editingParent.id}</Badge>
+                {viewingParent && (
+                  <Badge variant="outline" className="ml-2 bg-white border-indigo-200 text-indigo-700 font-medium">ID: {viewingParent.id}</Badge>
                 )}
               </DialogTitle>
               <DialogDescription id="parent-details-description" className="text-indigo-700/70 font-medium">
@@ -3205,7 +3206,7 @@ export default function Admin() {
               </DialogDescription>
             </DialogHeader>
             
-            {editingParent && (() => {
+            {viewingParent && selectedParentDetails && (() => {
               return (
               <div className="space-y-6 p-6 bg-gradient-to-br from-white to-slate-50">
                 {/* Basic Info */}
@@ -3221,35 +3222,35 @@ export default function Admin() {
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Full Name</Label>
                         <p className="text-lg font-semibold text-blue-900">
-                          {editingParent.firstName || editingParent.first_name} {editingParent.lastName || editingParent.last_name}
+                          {selectedParentDetails.firstName || selectedParentDetails.first_name} {selectedParentDetails.lastName || selectedParentDetails.last_name}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Parent ID</Label>
-                        <p className="text-lg text-gray-800">{editingParent.id}</p>
+                        <p className="text-lg text-gray-800">{selectedParentDetails.id}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Email</Label>
                         <p className="text-lg text-gray-800 flex items-center gap-2">
                           <Mail className="h-4 w-4 text-blue-600" />
-                          {editingParent.email}
+                          {selectedParentDetails.email}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Phone</Label>
                         <p className="text-lg text-gray-800 flex items-center gap-2">
                           <Phone className="h-4 w-4 text-blue-600" />
-                          {editingParent.phone}
+                          {selectedParentDetails.phone}
                         </p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Emergency Contact</Label>
                         <p className="text-lg text-gray-800">
-                          {editingParent.emergencyContactName || 'Not provided'}
-                          {editingParent.emergencyContactPhone && (
+                          {selectedParentDetails.emergencyContactName || selectedParentDetails.emergency_contact_name || 'Not provided'}
+                          {(selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone) && (
                             <span className="block text-sm text-gray-600 flex items-center gap-2 mt-1">
                               <AlertCircle className="h-4 w-4 text-amber-500" />
-                              {editingParent.emergencyContactPhone}
+                              {selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone}
                             </span>
                           )}
                         </p>
@@ -3258,7 +3259,7 @@ export default function Admin() {
                         <Label className="text-sm font-medium text-gray-600">Member Since</Label>
                         <p className="text-lg text-gray-800 flex items-center gap-2">
                           <CalendarDays className="h-4 w-4 text-blue-600" />
-                          {(editingParent.createdAt || editingParent.created_at) ? new Date(editingParent.createdAt || editingParent.created_at).toLocaleDateString() : 'Unknown'}
+                          {(selectedParentDetails.createdAt || selectedParentDetails.created_at) ? new Date(selectedParentDetails.createdAt || selectedParentDetails.created_at).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                     </div>
@@ -3266,18 +3267,18 @@ export default function Admin() {
                 </Card>
 
                 {/* Athletes */}
-                {editingParent.athletes && editingParent.athletes.length > 0 && (
+                {selectedParentDetails.athletes && selectedParentDetails.athletes.length > 0 && (
                   <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
                     <CardHeader className="pb-2 bg-gradient-to-r from-teal-100 to-green-100 rounded-t-xl">
                       <CardTitle className="text-lg font-semibold text-teal-800 flex items-center gap-2">
                         <Dumbbell className="h-5 w-5 text-teal-700" />
                         Athletes
-                        <Badge variant="secondary" className="bg-teal-100 text-teal-800 border-teal-200">{editingParent.athletes.length}</Badge>
+                        <Badge variant="secondary" className="bg-teal-100 text-teal-800 border-teal-200">{selectedParentDetails.athletes.length}</Badge>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4 bg-gradient-to-br from-white to-teal-50/30">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {editingParent.athletes.map((athlete: any) => (
+                        {selectedParentDetails.athletes.map((athlete: any) => (
                           <Card
                             key={athlete.id}
                             className="p-4 cursor-pointer border border-teal-100 shadow-sm hover:shadow-md hover:bg-gradient-to-br hover:from-teal-50/50 hover:to-blue-50/50 focus:bg-blue-100 transition-all duration-300"
@@ -3367,13 +3368,13 @@ export default function Admin() {
                 )}
 
                 {/* Booking History */}
-                {editingParent.bookings && editingParent.bookings.length > 0 && (
+                {selectedParentDetails.bookings && selectedParentDetails.bookings.length > 0 && (
                   <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
                     <CardHeader className="pb-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-t-xl">
                       <CardTitle className="text-lg font-semibold text-blue-900 flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-blue-700" />
                         Booking History
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">{editingParent.bookings.length}</Badge>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">{selectedParentDetails.bookings.length}</Badge>
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4 bg-gradient-to-br from-white to-blue-50/30">
@@ -3877,7 +3878,7 @@ export default function Admin() {
                         <Label htmlFor="emergency-name" className="text-slate-700 font-medium">Contact Name</Label>
                         <Input 
                           id="emergency-name"
-                          defaultValue={editingParent.emergencyContactName}
+                          defaultValue={editingParent?.emergencyContactName || editingParent?.emergency_contact_name || ''}
                           placeholder="Emergency Contact Name"
                           className="mt-1"
                         />
@@ -3886,7 +3887,7 @@ export default function Admin() {
                         <Label htmlFor="emergency-phone" className="text-slate-700 font-medium">Contact Phone</Label>
                         <Input 
                           id="emergency-phone"
-                          defaultValue={editingParent.emergencyContactPhone}
+                          defaultValue={editingParent?.emergencyContactPhone || editingParent?.emergency_contact_phone || ''}
                           placeholder="Emergency Contact Phone"
                           className="mt-1"
                         />
