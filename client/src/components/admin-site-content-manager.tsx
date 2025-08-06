@@ -153,6 +153,8 @@ export function AdminSiteContentManager() {
         const response = await apiRequest('GET', '/api/site-content');
         if (response.ok) {
           const data = await response.json();
+          console.log('Admin loaded site content:', data);
+          console.log('Admin banner video:', data.bannerVideo);
           setContent(prevContent => ({
             ...prevContent,
             ...data
@@ -1340,7 +1342,7 @@ export function AdminSiteContentManager() {
                           setSaving(true);
                           toast({
                             title: "Uploading Video",
-                            description: `Uploading: ${file.name}...`,
+                            description: `Uploading: ${file.name} (${Math.round(file.size / 1024 / 1024)}MB)...`,
                           });
 
                           const formData = new FormData();
@@ -1355,18 +1357,66 @@ export function AdminSiteContentManager() {
                           if (response.ok) {
                             const result = await response.json();
                             updateContent('bannerVideo', result.url);
+                            
+                            // Auto-save after successful upload
+                            try {
+                              await handleSaveMediaSection();
+                            } catch (saveError) {
+                              console.warn('Auto-save after upload failed:', saveError);
+                            }
+                            
                             toast({
                               title: "Video Uploaded",
                               description: `Successfully uploaded: ${file.name}`,
                             });
                           } else {
-                            throw new Error('Upload failed');
+                            // Read the detailed error message from server
+                            const errorData = await response.text();
+                            console.error('Video upload failed:', {
+                              status: response.status,
+                              statusText: response.statusText,
+                              response: errorData,
+                              fileName: file.name,
+                              fileSize: file.size,
+                              mimeType: file.type
+                            });
+
+                            let errorMessage = 'Upload failed';
+                            try {
+                              const parsedError = JSON.parse(errorData);
+                              errorMessage = parsedError.error || 'Upload failed';
+                              
+                              // Log additional details if provided
+                              if (parsedError.details) {
+                                console.error('Upload error details:', parsedError.details);
+                              }
+                            } catch (parseError) {
+                              // If response isn't JSON, use the raw text
+                              errorMessage = errorData || 'Upload failed';
+                            }
+
+                            throw new Error(errorMessage);
                           }
-                        } catch (error) {
+                        } catch (error: any) {
                           console.error('Error uploading video:', error);
+                          
+                          // Provide user-friendly error messages
+                          let userMessage = error.message;
+                          
+                          // Handle common error scenarios
+                          if (userMessage.includes('size') || userMessage.includes('limit') || file.size > 100 * 1024 * 1024) {
+                            userMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Videos must be under 100MB.`;
+                          } else if (userMessage.includes('type') || userMessage.includes('mime')) {
+                            userMessage = `File type '${file.type}' not supported. Please use MP4, WebM, or MOV files.`;
+                          } else if (userMessage.includes('bucket')) {
+                            userMessage = 'Storage configuration error. Please contact support.';
+                          } else if (userMessage === 'Upload failed' || userMessage === 'Failed to fetch') {
+                            userMessage = 'Upload failed. Please check your connection and try again.';
+                          }
+
                           toast({
                             title: "Upload Failed",
-                            description: "Failed to upload video. Please try again.",
+                            description: userMessage,
                             variant: "destructive",
                           });
                         } finally {
@@ -1389,7 +1439,10 @@ export function AdminSiteContentManager() {
                 </div>
                 <Button 
                   variant="outline"
-                  onClick={() => setPreviewOpen(true)}
+                  onClick={() => {
+                    console.log('Preview button clicked, bannerVideo:', content.bannerVideo);
+                    setPreviewOpen(true);
+                  }}
                   disabled={!content.bannerVideo}
                 >
                   <Video className="w-4 h-4 mr-2" />
@@ -1885,6 +1938,13 @@ export function AdminSiteContentManager() {
                 controls 
                 className="w-full h-full object-cover rounded-lg"
                 preload="metadata"
+                onError={(e) => {
+                  console.error('Preview video error:', e);
+                  console.log('Video src in preview:', content.bannerVideo);
+                }}
+                onLoadStart={() => {
+                  console.log('Preview video load started for:', content.bannerVideo);
+                }}
               >
                 Your browser does not support the video tag.
               </video>

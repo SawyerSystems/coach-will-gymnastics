@@ -37,7 +37,7 @@ const storage = new SupabaseStorage();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
+    fileSize: 100 * 1024 * 1024, // 100MB limit
   },
   fileFilter: (req, file, cb) => {
     // Allow videos and images
@@ -5408,17 +5408,79 @@ setTimeout(async () => {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
       const filePath = `site-media/${fileName}`;
 
-      // Upload to Supabase Storage
-      const { data, error } = await supabaseAdmin.storage
-        .from('site-media')
-        .upload(filePath, file.buffer, {
-          contentType: file.mimetype,
-          upsert: false
-        });
+      // Log upload attempt details
+      console.log("Media upload attempt:", {
+        bucket: 'site-media',
+        fileName,
+        mimeType: file.mimetype,
+        size: file.size,
+        originalName: file.originalname
+      });
 
-      if (error) {
-        console.error("Error uploading to Supabase Storage:", error);
-        return res.status(500).json({ error: "Failed to upload file to storage" });
+      // Upload to Supabase Storage with detailed error handling
+      try {
+        const { data, error } = await supabaseAdmin.storage
+          .from('site-media')
+          .upload(filePath, file.buffer, {
+            contentType: file.mimetype,
+            upsert: false
+          });
+
+        if (error) {
+          console.error("Supabase storage upload error:", {
+            error: error.message,
+            statusCode: error.statusCode,
+            bucket: 'site-media',
+            fileName,
+            mimeType: file.mimetype,
+            size: file.size
+          });
+
+          // Provide specific error messages based on common issues
+          let errorMessage = "Failed to upload file to storage";
+          if (error.message?.includes('bucket')) {
+            errorMessage = "Storage bucket 'site-media' not found. Please contact administrator.";
+          } else if (error.message?.includes('size') || error.message?.includes('limit')) {
+            errorMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 100MB.`;
+          } else if (error.message?.includes('type') || error.message?.includes('mime')) {
+            errorMessage = `File type '${file.mimetype}' not allowed. Please use MP4, WebM, or MOV files.`;
+          } else if (error.statusCode) {
+            errorMessage = `Upload failed: ${error.message} (Code: ${error.statusCode})`;
+          } else {
+            errorMessage = `Upload failed: ${error.message}`;
+          }
+
+          return res.status(500).json({ 
+            error: errorMessage,
+            details: {
+              message: error.message,
+              statusCode: error.statusCode,
+              bucket: 'site-media',
+              fileName: file.originalname,
+              size: file.size,
+              mimeType: file.mimetype
+            }
+          });
+        }
+      } catch (uploadError: any) {
+        console.error("Unexpected error during Supabase upload:", {
+          error: uploadError.message,
+          bucket: 'site-media',
+          fileName,
+          mimeType: file.mimetype,
+          size: file.size
+        });
+        
+        return res.status(500).json({ 
+          error: `Storage upload failed: ${uploadError.message}`,
+          details: {
+            message: uploadError.message,
+            bucket: 'site-media',
+            fileName: file.originalname,
+            size: file.size,
+            mimeType: file.mimetype
+          }
+        });
       }
 
       // Get the public URL
@@ -5427,8 +5489,20 @@ setTimeout(async () => {
         .getPublicUrl(filePath);
 
       if (!publicData?.publicUrl) {
-        return res.status(500).json({ error: "Failed to get public URL" });
+        console.error("Failed to get public URL for uploaded file:", { fileName, filePath });
+        return res.status(500).json({ 
+          error: "Failed to get public URL for uploaded file",
+          details: { fileName: file.originalname, filePath }
+        });
       }
+
+      console.log("Media upload successful:", {
+        fileName,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+        url: publicData.publicUrl
+      });
 
       res.json({ 
         success: true, 
@@ -5439,8 +5513,22 @@ setTimeout(async () => {
         mimeType: file.mimetype
       });
     } catch (error: any) {
-      console.error("Error handling media upload:", error);
-      res.status(500).json({ error: `Failed to upload media: ${error.message}` });
+      console.error("Error handling media upload:", {
+        error: error.message,
+        stack: error.stack,
+        fileName: req.file?.originalname,
+        size: req.file?.size,
+        mimeType: req.file?.mimetype
+      });
+      res.status(500).json({ 
+        error: `Failed to upload media: ${error.message}`,
+        details: {
+          message: error.message,
+          fileName: req.file?.originalname,
+          size: req.file?.size,
+          mimeType: req.file?.mimetype
+        }
+      });
     }
   });
 
