@@ -120,7 +120,10 @@ export default function Home() {
             playsInline
             className="w-full h-full object-cover"
           >
-            <source src="https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/sign/videos/VideoBanner_1751699557948.MOV?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zYzBjMmQ0MS1hZTYxLTQzNDgtOGFhZS05OTAyN2U4OWQyZWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlb3MvVmlkZW9CYW5uZXJfMTc1MTY5OTU1Nzk0OC5NT1YiLCJpYXQiOjE3NTI2ODc1NjksImV4cCI6MTc4NDIyMzU2OX0.XcNi5z-6-06U7FnpOLtcySTcb0vAHSR4QBT8vLOWKA4" type="video/mp4" />
+            <source 
+              src={siteContent?.bannerVideo || "https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/videos/sample_gym_banner.mp4"} 
+              type="video/mp4" 
+            />
           </video>
           
           {/* Enhanced gradient overlays for better text readability and fading */}

@@ -625,7 +625,7 @@ export function AdminSiteContentManager() {
                           const formData = new FormData();
                           formData.append('file', file);
 
-                          const response = await fetch('http://localhost:5001/api/admin/media', {
+                          const response = await fetch('/api/admin/media', {
                             method: 'POST',
                             body: formData,
                             credentials: 'include'
@@ -708,7 +708,7 @@ export function AdminSiteContentManager() {
                           const formData = new FormData();
                           formData.append('file', file);
 
-                          const response = await fetch('http://localhost:5001/api/admin/media', {
+                          const response = await fetch('/api/admin/media', {
                             method: 'POST',
                             body: formData,
                             credentials: 'include'
@@ -799,7 +799,7 @@ export function AdminSiteContentManager() {
                           const formData = new FormData();
                           formData.append('file', file);
 
-                          const response = await fetch('http://localhost:5001/api/admin/media', {
+                          const response = await fetch('/api/admin/media', {
                             method: 'POST',
                             body: formData,
                             credentials: 'include'
@@ -932,9 +932,10 @@ export function AdminSiteContentManager() {
                             const formData = new FormData();
                             formData.append('file', file);
                             
-                            const response = await fetch('/api/admin/uploads/image', {
+                            const response = await fetch('/api/admin/media', {
                               method: 'POST',
                               body: formData,
+                              credentials: 'include'
                             });
                             
                             if (response.ok) {
