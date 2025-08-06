@@ -4144,6 +4144,8 @@ export class SupabaseStorage implements IStorage {
           athleteId: athlete.id,
           slotOrder: ba.slot_order,
           name: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim(),
+          firstName: athlete.first_name || '',
+          lastName: athlete.last_name || '',
           dateOfBirth: athlete.date_of_birth || '',
           allergies: athlete.allergies || '',
           experience: athlete.experience || 'beginner',

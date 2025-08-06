@@ -2287,7 +2287,9 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
               <div key={athlete.id || index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
                 <div className="font-medium flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-green-600" />
-                  {athlete.firstName} {athlete.lastName}
+                  {athlete.firstName && athlete.lastName 
+                    ? `${athlete.firstName} ${athlete.lastName}`
+                    : athlete.name || 'Unnamed Athlete'}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
                   <Calendar className="w-3 h-3 text-gray-500" />
