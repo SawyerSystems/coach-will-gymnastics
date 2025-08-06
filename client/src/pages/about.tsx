@@ -242,21 +242,31 @@ export default function About() {
           </div>
 
           {/* Certifications */}
-          <div className="mt-12 text-center">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">Certifications & Training</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Badge variant="outline" className="p-3 text-center">
-                USA Gymnastics Professional Member
-              </Badge>
-              <Badge variant="outline" className="p-3 text-center">
-                CPR/AED Certified
-              </Badge>
-              <Badge variant="outline" className="p-3 text-center">
-                First Aid Certified
-              </Badge>
-              <Badge variant="outline" className="p-3 text-center">
-                Background Checked
-              </Badge>
+          <div className="mt-16 text-center">
+            <h3 className="text-2xl font-bold text-gray-800 mb-8">Certifications & Training</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {aboutData.certifications.map((cert: any, index: number) => {
+                const colors = ['blue', 'purple', 'teal', 'orange'];
+                const color = colors[index % colors.length];
+                const icons = [Award, CheckCircle, Heart, Star];
+                const Icon = icons[index % icons.length];
+                
+                return (
+                  <Card key={index} className={`text-center p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-${color}-50 to-${color}-100 border-2 border-${color}-200`}>
+                    <CardContent className="pt-4">
+                      <div className={`w-14 h-14 bg-${color}-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                        <Icon className="h-7 w-7 text-white" />
+                      </div>
+                      <h4 className={`font-bold text-${color}-800 mb-2 text-sm uppercase tracking-wide`}>
+                        {cert.title}
+                      </h4>
+                      <p className="text-gray-700 text-xs">
+                        {cert.body}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </div>
