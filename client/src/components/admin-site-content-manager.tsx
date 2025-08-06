@@ -18,7 +18,7 @@ interface SiteContent {
   equipmentImages: string[];
   about: {
     bio: string;
-    certifications: string[];
+    certifications: Array<{ title: string; body: string }>;
     experience: string;
     photo?: string;
   };
@@ -70,7 +70,11 @@ export function AdminSiteContentManager() {
     ],
     about: {
       bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson...',
-      certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked'],
+      certifications: [
+        { title: 'USA Gymnastics Certified', body: 'Official certification from USA Gymnastics' },
+        { title: 'CPR/First Aid Certified', body: 'Current safety and emergency response training' },
+        { title: 'Background Checked', body: 'Comprehensive background verification completed' }
+      ],
       experience: 'Nearly 10 years of coaching experience with athletes of all levels'
     },
     contact: {
@@ -700,34 +704,50 @@ export function AdminSiteContentManager() {
 
           <div>
             <Label>Certifications</Label>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {localData?.certifications?.map((cert, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={cert}
-                    onChange={(e) => {
-                      const newCerts = [...(localData.certifications || [])];
-                      newCerts[index] = e.target.value;
-                      updateLocal('certifications', newCerts);
-                    }}
-                    placeholder="Certification name"
-                  />
+                <div key={index} className="p-4 border rounded-lg space-y-2">
+                  <div>
+                    <Label>Title</Label>
+                    <Input
+                      value={cert.title || ''}
+                      onChange={(e) => {
+                        const newCerts = [...(localData.certifications || [])];
+                        newCerts[index] = { ...newCerts[index], title: e.target.value };
+                        updateLocal('certifications', newCerts);
+                      }}
+                      placeholder="Certification title (e.g., USA Gymnastics Certified)"
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={cert.body || ''}
+                      onChange={(e) => {
+                        const newCerts = [...(localData.certifications || [])];
+                        newCerts[index] = { ...newCerts[index], body: e.target.value };
+                        updateLocal('certifications', newCerts);
+                      }}
+                      placeholder="Brief description of this certification"
+                      rows={2}
+                    />
+                  </div>
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     onClick={() => {
                       const newCerts = localData.certifications?.filter((_, i) => i !== index) || [];
                       updateLocal('certifications', newCerts);
                     }}
                   >
-                    Remove
+                    Remove Certification
                   </Button>
                 </div>
               ))}
               <Button
                 variant="outline"
                 onClick={() => {
-                  const newCerts = [...(localData.certifications || []), ''];
+                  const newCerts = [...(localData.certifications || []), { title: '', body: '' }];
                   updateLocal('certifications', newCerts);
                 }}
               >

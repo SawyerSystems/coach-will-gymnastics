@@ -32,7 +32,11 @@ export default function About() {
   const aboutData = siteContent?.about || {
     bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
     experience: 'Nearly 10 years of coaching experience with athletes of all levels',
-    certifications: ['USA Gymnastics Certified', 'CPR/First Aid Certified', 'Background Checked']
+    certifications: [
+      { title: 'USA Gymnastics Certified', body: 'Official certification from USA Gymnastics' },
+      { title: 'CPR/First Aid Certified', body: 'Current safety and emergency response training' },
+      { title: 'Background Checked', body: 'Comprehensive background verification completed' }
+    ]
   };
 
   return (
@@ -50,42 +54,25 @@ export default function About() {
               </p>
               <div className="grid grid-cols-2 gap-4 mb-8">
                 {aboutData.certifications.map((cert: any, index: number) => {
-                  const certConfig = [
-                    { color: "purple", icon: Award, label: "ACHIEVEMENT UNLOCKED" },
-                    { color: "red", icon: Heart, label: "SAFETY CERTIFIED" }, 
-                    { color: "green", icon: CheckCircle, label: "VERIFIED COACH" },
-                    { color: "orange", icon: Users, label: "EXPERIENCE LEVEL" }
-                  ];
-                  const config = certConfig[index] || certConfig[0];
-                  const Icon = config.icon;
+                  const colors = ['purple', 'red', 'green', 'blue'];
+                  const icons = [Award, Heart, CheckCircle, Star];
+                  const color = colors[index % colors.length];
+                  const Icon = icons[index % icons.length];
                   
                   return (
-                    <div key={index} className={`bg-gradient-to-br from-${config.color}-100 to-${config.color === 'red' ? 'pink' : config.color === 'orange' ? 'yellow' : config.color === 'green' ? 'emerald' : config.color}-200 p-4 rounded-xl shadow-md transform hover:scale-105 transition-all duration-200`}>
+                    <div key={index} className={`bg-gradient-to-br from-${color}-100 to-${color === 'red' ? 'pink' : color === 'green' ? 'emerald' : color}-200 p-4 rounded-xl shadow-md transform hover:scale-105 transition-all duration-200`}>
                       <div className="flex items-center space-x-3">
-                        <div className={`w-12 h-12 bg-${config.color}-600 rounded-full flex items-center justify-center shadow-lg`}>
+                        <div className={`w-12 h-12 bg-${color}-600 rounded-full flex items-center justify-center shadow-lg`}>
                           <Icon className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className={`text-xs font-semibold text-${config.color}-800`}>{config.label}</p>
-                          <p className="text-sm font-bold text-gray-800">{cert}</p>
+                          <p className={`text-xs font-semibold text-${color}-800 uppercase`}>{cert.title}</p>
+                          <p className="text-sm font-bold text-gray-800">{cert.body}</p>
                         </div>
                       </div>
                     </div>
                   );
                 })}
-                
-                {/* Experience Level - Always show */}
-                <div className="bg-gradient-to-br from-orange-100 to-yellow-200 p-4 rounded-xl shadow-md transform hover:scale-105 transition-all duration-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center shadow-lg">
-                      <Users className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-orange-800">EXPERIENCE LEVEL</p>
-                      <p className="text-sm font-bold text-gray-800">{aboutData.experience}</p>
-                    </div>
-                  </div>
-                </div>
               </div>
               <Link href="/booking">
                 <Button className="gym-gradient-purple text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-200 shadow-lg">
@@ -222,9 +209,9 @@ export default function About() {
                 <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Nearing 10 Years Experience</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Experience</h3>
                 <p className="text-gray-600">
-                  Extensive experience coaching athletes of all ages—from first timers to returning gymnasts.
+                  {aboutData.experience}
                 </p>
               </CardContent>
             </Card>

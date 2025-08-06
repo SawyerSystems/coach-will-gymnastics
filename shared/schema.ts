@@ -888,7 +888,11 @@ export const siteContent = pgTable("site_content", {
   about: json("about").default({
     bio: "Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.",
     experience: "Nearly 10 years of coaching experience with athletes of all levels",
-    certifications: ["USA Gymnastics Certified", "CPR/First Aid Certified", "Background Checked"]
+    certifications: [
+      { title: "USA Gymnastics Certified", body: "Official certification from USA Gymnastics" },
+      { title: "CPR/First Aid Certified", body: "Current safety and emergency response training" },
+      { title: "Background Checked", body: "Comprehensive background verification completed" }
+    ]
   }),
   contact: json("contact").default({
     phone: "(585) 755-8122",
@@ -954,7 +958,7 @@ export type SiteContentResponse = {
   about: {
     bio: string;
     experience: string;
-    certifications: string[];
+    certifications: Array<{ title: string; body: string }>;
   };
   contact: {
     phone: string;
