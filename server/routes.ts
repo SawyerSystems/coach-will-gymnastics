@@ -1901,17 +1901,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Send session follow-up email for auto-completed sessions
             try {
-              // Get booking with full relations to access parent and athlete data
-              const fullBooking = await storage.getBooking(bookingId);
-              if (fullBooking) {
-                const parent = fullBooking.parentId ? await storage.getParentById(fullBooking.parentId) : null;
+              // Get booking with full relations to access parent and athlete data using Supabase directly
+              const { data: bookingData } = await supabaseAdmin
+                .from('bookings')
+                .select(`
+                  *,
+                  booking_athletes(*, athletes(*))
+                `)
+                .eq('id', bookingId)
+                .single();
                 
-                // Get athlete name - prioritize from athletes array or fall back to legacy fields
+              if (bookingData) {
+                const parent = bookingData.parent_id ? await storage.getParentById(bookingData.parent_id) : null;
+                
+                // Get athlete name from booking_athletes relation
                 let athleteName = 'Athlete';
-                if (fullBooking.athletes && fullBooking.athletes.length > 0) {
-                  athleteName = fullBooking.athletes[0].name || 'Athlete';
-                } else if (fullBooking.athlete1Name) {
-                  athleteName = fullBooking.athlete1Name;
+                if (bookingData.booking_athletes && bookingData.booking_athletes.length > 0 && 
+                    bookingData.booking_athletes[0].athletes) {
+                  athleteName = bookingData.booking_athletes[0].athletes.name || 'Athlete';
+                } else if (bookingData.athlete1_name) {
+                  athleteName = bookingData.athlete1_name;
                 }
                 
                 // Create booking link for next session
@@ -4737,16 +4746,26 @@ setTimeout(async () => {
         // Send session follow-up email to parent
         try {
           // Get booking with full relations to access parent and athlete data
-          const fullBooking = await storage.getBooking(id);
-          if (fullBooking) {
-            const parent = fullBooking.parentId ? await storage.getParentById(fullBooking.parentId) : null;
+          // We need to query with Supabase directly to get the booking_athletes relationship
+          const { data: bookingData } = await supabaseAdmin
+            .from('bookings')
+            .select(`
+              *,
+              booking_athletes(*, athletes(*))
+            `)
+            .eq('id', id)
+            .single();
             
-            // Get athlete name - prioritize from athletes array or fall back to legacy fields
+          if (bookingData) {
+            const parent = bookingData.parent_id ? await storage.getParentById(bookingData.parent_id) : null;
+            
+            // Get athlete name from booking_athletes relation
             let athleteName = 'Athlete';
-            if (fullBooking.athletes && fullBooking.athletes.length > 0) {
-              athleteName = fullBooking.athletes[0].name || 'Athlete';
-            } else if (fullBooking.athlete1Name) {
-              athleteName = fullBooking.athlete1Name;
+            if (bookingData.booking_athletes && bookingData.booking_athletes.length > 0 && 
+                bookingData.booking_athletes[0].athletes) {
+              athleteName = bookingData.booking_athletes[0].athletes.name || 'Athlete';
+            } else if (bookingData.athlete1_name) {
+              athleteName = bookingData.athlete1_name;
             }
             
             // Create booking link for next session
@@ -4926,27 +4945,14 @@ setTimeout(async () => {
           day: 'numeric'
         }) : 'Unknown Date';
         
-        // Get full booking with athlete relationships
-        const bookingWithAthletes = await storage.getBookingWithRelations(bookingId);
-        
-        // Enhanced athlete name extraction
-        let athleteName = 'Athlete';
-        if (bookingWithAthletes && bookingWithAthletes.athletes && bookingWithAthletes.athletes.length > 0) {
-          athleteName = bookingWithAthletes.athletes[0].name;
-        } else if (booking.athletes && booking.athletes.length > 0) {
-          athleteName = booking.athletes[0].name;
-        } else if (booking.athlete1Name) {
-          athleteName = booking.athlete1Name;
-        }
-        
         await sendSessionConfirmation(
           booking.parentEmail || '',
           parentName,
-          athleteName,
+          booking.athlete1Name || 'Athlete',
           sessionDate,
           booking.preferredTime || 'TBD'
         );
-        console.log(`Manual confirmation email sent for booking ${bookingId} with athlete name: ${athleteName}`);
+        console.log(`Manual confirmation email sent for booking ${bookingId}`);
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError);
       }
