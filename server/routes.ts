@@ -17,6 +17,7 @@ import { SupabaseStorage } from "./storage";
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { timeSlotLocksRouter } from "./time-slot-locks";
 import { LessonUtils, ResponseUtils, ValidationUtils } from "./utils";
+import { determineBookingStatus } from "./utils/booking-status";
 
 // ...existing code...
 
@@ -3559,9 +3560,6 @@ setTimeout(async () => {
       sessionID: req.sessionID
     });
     try {
-      // Import booking status utility
-      const { determineBookingStatus } = require('./utils/booking-status');
-      
       const id = parseInt(req.params.id);
       const { 
         status, // This may be provided but will be overridden unless in dev mode
@@ -3823,9 +3821,6 @@ setTimeout(async () => {
       const { status } = req.body;
       const { isDeveloperMode } = req.body;
       
-      // Import booking status utility
-      const { determineBookingStatus } = require('./utils/booking-status');
-      
       // Get booking details for validation
       const existingBooking = await storage.getBooking(id);
       if (!existingBooking) {
@@ -3964,9 +3959,6 @@ setTimeout(async () => {
         return res.status(404).json({ message: "Booking not found after update" });
       }
 
-      // Import booking status utility
-      const { determineBookingStatus } = require('./utils/booking-status');
-      
       // Automatic attendance status updates based on payment status
       let attendanceStatus = booking.attendanceStatus;
       if (paymentStatus === "reservation-pending" || paymentStatus === "reservation-failed") {
@@ -4694,9 +4686,6 @@ setTimeout(async () => {
       //   }
       // }
 
-      // Import booking status utility
-      const { determineBookingStatus } = require('./utils/booking-status');
-      
       const booking = await storage.updateBookingAttendanceStatus(id, attendanceStatus);
       if (!booking) {
         return res.status(404).json({ message: "Booking not found after update" });
@@ -5429,7 +5418,7 @@ setTimeout(async () => {
         if (error) {
           console.error("Supabase storage upload error:", {
             error: error.message,
-            statusCode: error.statusCode,
+            statusCode: (error as any).statusCode,
             bucket: 'site-media',
             fileName,
             mimeType: file.mimetype,
@@ -5444,8 +5433,8 @@ setTimeout(async () => {
             errorMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 100MB.`;
           } else if (error.message?.includes('type') || error.message?.includes('mime')) {
             errorMessage = `File type '${file.mimetype}' not allowed. Please use MP4, WebM, or MOV files.`;
-          } else if (error.statusCode) {
-            errorMessage = `Upload failed: ${error.message} (Code: ${error.statusCode})`;
+          } else if ((error as any).statusCode) {
+            errorMessage = `Upload failed: ${error.message} (Code: ${(error as any).statusCode})`;
           } else {
             errorMessage = `Upload failed: ${error.message}`;
           }
@@ -5454,7 +5443,7 @@ setTimeout(async () => {
             error: errorMessage,
             details: {
               message: error.message,
-              statusCode: error.statusCode,
+              statusCode: (error as any).statusCode,
               bucket: 'site-media',
               fileName: file.originalname,
               size: file.size,

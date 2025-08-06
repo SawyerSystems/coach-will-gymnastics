@@ -369,9 +369,11 @@ interface AdminBookingManagerProps {
   };
   onClose?: () => void;
   openAthleteModal?: (athleteId: string | number) => void;
+  selectedBooking?: Booking | null;
+  onSelectBooking?: (booking: Booking | null) => void;
 }
 
-export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }: AdminBookingManagerProps = {}) {
+export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, selectedBooking, onSelectBooking }: AdminBookingManagerProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { genderOptions } = useGenders();
@@ -393,7 +395,6 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
     queryKey: ["/api/athletes"],
   });
 
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showManualForm, setShowManualForm] = useState(!!prefilledData);
   const [showUnifiedBooking, setShowUnifiedBooking] = useState(false);
   const [adminBookingContext, setAdminBookingContext] = useState<'new-athlete' | 'existing-athlete' | 'from-athlete'>('new-athlete');
@@ -1163,7 +1164,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal }
                   // Look in both active and archived bookings
                   const booking = allBookingsForCalendar.find((b: any) => b.id === bookingId);
                   if (booking) {
-                    setSelectedBooking(booking);
+                    onSelectBooking?.(booking);
                     setShowDetailModal(true);
                   }
                 }} 
@@ -2302,6 +2303,19 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
                 )}
               </div>
             ))
+          ) : (booking as any).athleteNames && (booking as any).athleteNames.length > 0 ? (
+            // Fallback to athleteNames from upcoming sessions
+            (booking as any).athleteNames.map((athleteName: string, index: number) => (
+              <div key={index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
+                <div className="font-medium flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-green-600" />
+                  {athleteName}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1.5">
+                  Limited athlete information available
+                </div>
+              </div>
+            ))
           ) : (
             // Fallback to legacy fields
             <>
@@ -2347,7 +2361,7 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
               )}
             </>
           )}
-          {(!booking.athletes || booking.athletes.length === 0) && !booking.athlete1Name && (
+          {(!booking.athletes || booking.athletes.length === 0) && !(booking as any).athleteNames && !booking.athlete1Name && (
             <div className="text-center py-4 text-gray-500">
               <Users className="w-8 h-8 mx-auto text-gray-400 mb-2" />
               No athletes assigned

@@ -69,9 +69,11 @@ export interface IStorage {
   getUpcomingSessions(): Promise<{
     id: number;
     sessionDate: string;
+    sessionTime: string;
     lessonType: string;
     parentName: string;
     athleteNames: string[];
+    athletes: { id: number; firstName: string; lastName: string }[];
     focusAreas: string[];
     paymentStatus: string;
     attendanceStatus: string;
@@ -819,9 +821,11 @@ With the right setup and approach, home practice can accelerate your child's gym
   async getUpcomingSessions(): Promise<{
     id: number;
     sessionDate: string;
+    sessionTime: string;
     lessonType: string;
     parentName: string;
     athleteNames: string[];
+    athletes: { id: number; firstName: string; lastName: string }[];
     focusAreas: string[];
     paymentStatus: string;
     attendanceStatus: string;
@@ -1495,6 +1499,11 @@ With the right setup and approach, home practice can accelerate your child's gym
   async deleteSiteFaq(id: number): Promise<boolean> {
     // Not implemented in MemStorage
     return true;
+  }
+
+  async bulkUpsertSiteFaqs(faqs: any[]): Promise<any[]> {
+    // Not implemented in MemStorage
+    return faqs.map(faq => ({ id: Math.random(), ...faq }));
   }
 }
 
@@ -2371,6 +2380,7 @@ export class SupabaseStorage implements IStorage {
     lessonType: string;
     parentName: string;
     athleteNames: string[];
+    athletes: { id: number; firstName: string; lastName: string }[];
     focusAreas: string[];
     paymentStatus: string;
     attendanceStatus: string;
@@ -2466,14 +2476,22 @@ export class SupabaseStorage implements IStorage {
         lessonTypesMap.set(lessonType.id, lessonType);
       });
 
-      const athletesMap = new Map();
+      // Create athletes maps - both names and full objects
+      const athleteNamesMap = new Map();
+      const athletesObjectMap = new Map();
       bookingAthletesData?.forEach(ba => {
-        if (!athletesMap.has(ba.booking_id)) {
-          athletesMap.set(ba.booking_id, []);
+        if (!athleteNamesMap.has(ba.booking_id)) {
+          athleteNamesMap.set(ba.booking_id, []);
+          athletesObjectMap.set(ba.booking_id, []);
         }
         if (ba.athletes && typeof ba.athletes === 'object' && 'first_name' in ba.athletes) {
           const athlete = ba.athletes as any;
-          athletesMap.get(ba.booking_id)!.push(`${athlete.first_name} ${athlete.last_name}`);
+          athleteNamesMap.get(ba.booking_id)!.push(`${athlete.first_name} ${athlete.last_name}`);
+          athletesObjectMap.get(ba.booking_id)!.push({
+            id: athlete.id,
+            firstName: athlete.first_name,
+            lastName: athlete.last_name
+          });
         }
       });
 
@@ -2499,7 +2517,8 @@ export class SupabaseStorage implements IStorage {
           lessonType: lessonTypeObj?.name || 'Unknown',
           totalPrice: lessonTypeObj?.total_price ? lessonTypeObj.total_price.toString() : '0',
           parentName: parentsMap.get(booking.parent_id) || 'Unknown Parent',
-          athleteNames: athletesMap.get(booking.id) || [],
+          athleteNames: athleteNamesMap.get(booking.id) || [],
+          athletes: athletesObjectMap.get(booking.id) || [],
           focusAreas: focusAreasMap.get(booking.id) || [],
           paymentStatus: booking.payment_status || 'unpaid',
           attendanceStatus: booking.attendance_status || 'pending'

@@ -1252,7 +1252,11 @@ export default function Admin() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
-                <AdminBookingManager openAthleteModal={openAthleteModal} />
+                <AdminBookingManager 
+                  openAthleteModal={openAthleteModal}
+                  selectedBooking={selectedBooking}
+                  onSelectBooking={setSelectedBooking}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -1622,10 +1626,20 @@ export default function Admin() {
               </CardHeader>
               <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <UpcomingSessions 
-                  onBookingSelect={(bookingId) => {
-                    // Switch to bookings tab and set the selected booking
+                  onBookingSelect={async (bookingId) => {
+                    // Switch to bookings tab
                     setActiveTab("bookings");
-                    // Note: The bookings tab should handle highlighting/scrolling to the specific booking
+                    
+                    // Fetch full booking details with athlete information
+                    try {
+                      const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
+                      const bookingData = await response.json();
+                      if (bookingData) {
+                        setSelectedBooking(bookingData);
+                      }
+                    } catch (error) {
+                      console.error("Error fetching booking details:", error);
+                    }
                   }}
                 />
               </CardContent>

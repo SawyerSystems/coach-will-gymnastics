@@ -1020,7 +1020,7 @@ export function AdminSiteContentManager() {
     };
 
     const updateLocal = (path: string, value: any) => {
-      setLocalData(prev => {
+      setLocalData((prev: any) => {
         const newData = { ...prev } as any;
         const keys = path.split('.');
         let current = newData;
@@ -1662,7 +1662,7 @@ export function AdminSiteContentManager() {
         {/* Hours Tab */}
         <TabsContent value="hours" className="mt-6 space-y-6 p-6">
           <HoursTabContent
-            initialData={content.hours?.hours || {}}
+            initialData={content.hours || {}}
             onSave={handleSaveHours}
             orderedDays={orderedDays}
           />

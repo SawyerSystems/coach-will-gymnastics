@@ -1,3 +1,5 @@
+import { BookingStatusEnum } from "@shared/schema";
+
 /**
  * Determines a booking's status based on payment and attendance status
  * 
@@ -5,56 +7,52 @@
  * @param attendanceStatus Current attendance status
  * @returns Appropriate booking status
  */
-function determineBookingStatus(paymentStatus, attendanceStatus) {
+export function determineBookingStatus(paymentStatus: string, attendanceStatus: string): BookingStatusEnum {
   // Handle all lowercase and case-sensitive variations
   const payment = paymentStatus.toLowerCase();
   const attendance = attendanceStatus.toLowerCase();
 
   // Handle reservation failures
   if (payment === 'reservation-failed') {
-    return 'failed';
+    return BookingStatusEnum.FAILED;
   }
 
   // Handle cancellations and refunds
   if (payment === 'reservation-refunded' || payment === 'session-refunded' || attendance === 'cancelled') {
-    return 'cancelled';
+    return BookingStatusEnum.CANCELLED;
   }
 
   // Handle completed sessions
   if (attendance === 'completed') {
-    return 'completed';
+    return BookingStatusEnum.COMPLETED;
   }
 
   // Handle no-shows (treated as completed for status simplification)
   if (attendance === 'no-show') {
-    return 'completed'; // Changed from no-show to completed
+    return BookingStatusEnum.COMPLETED; // Changed from no-show to completed
   }
 
   // Handle confirmed sessions
   if (attendance === 'confirmed') {
     if (payment === 'reservation-paid' || payment === 'session-paid') {
-      return 'confirmed';
+      return BookingStatusEnum.CONFIRMED;
     }
-    return 'confirmed';
+    return BookingStatusEnum.CONFIRMED;
   }
 
   // Handle paid but not yet confirmed
   if (payment === 'reservation-paid' || payment === 'session-paid') {
-    return 'paid';
+    return BookingStatusEnum.PAID;
   }
 
   // Handle manual entries (map to pending/confirmed based on payment status)
   if (attendance === 'manual') {
     if (payment === 'reservation-paid' || payment === 'session-paid') {
-      return 'confirmed'; // Changed from manual-paid to confirmed
+      return BookingStatusEnum.CONFIRMED; // Changed from manual-paid to confirmed
     }
-    return 'pending'; // Changed from manual to pending
+    return BookingStatusEnum.PENDING; // Changed from manual to pending
   }
 
   // Default case
-  return 'pending';
+  return BookingStatusEnum.PENDING;
 }
-
-module.exports = {
-  determineBookingStatus
-};

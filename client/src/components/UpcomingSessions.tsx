@@ -32,6 +32,7 @@ interface UpcomingSession {
   lessonType: string;
   parentName: string;
   athleteNames: string[];
+  athletes: { id: number; firstName: string; lastName: string }[];
   focusAreas: string[];
   paymentStatus: string;
   attendanceStatus: string;
@@ -336,7 +337,8 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                   return (
                     <div 
                       key={session.id}
-                      className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-md transition-all duration-300"
+                      className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-md transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white"
+                      onClick={() => handleBookingSelect(session.id)}
                     >
                       <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
                         <div className="space-y-4">
