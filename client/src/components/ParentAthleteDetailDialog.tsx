@@ -36,7 +36,6 @@ export function ParentAthleteDetailDialog({
 }: ParentAthleteDetailDialogProps) {
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [isWaiverModalOpen, setIsWaiverModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,62 +78,7 @@ export function ParentAthleteDetailDialog({
     setIsPhotoEnlarged(true);
   };
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>, athleteId: number) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please select an image smaller than 5MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadingPhoto(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('photo', file);
-
-      const response = await apiRequest('POST', `/api/athletes/${athleteId}/photo`, {
-        body: formData,
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Photo uploaded successfully!",
-          description: "The athlete's photo has been updated.",
-        });
-        // The query will automatically refetch and update the UI
-      } else {
-        throw new Error('Failed to upload photo');
-      }
-    } catch (error) {
-      console.error('Photo upload error:', error);
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading the photo. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingPhoto(false);
-      // Reset the input
-      event.target.value = '';
-    }
-  };
 
   const handleWaiverSigned = async (waiverData: any) => {
     try {
@@ -186,9 +130,9 @@ export function ParentAthleteDetailDialog({
             <h3 id="basic-info-heading" className="font-semibold text-lg mb-4">Basic Information</h3>
             
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Photo Section */}
+              {/* Photo Section - Read Only */}
               <div className="flex flex-col items-center space-y-3">
-                <div className="relative w-24 h-24 group">
+                <div className="w-24 h-24">
                   {athleteData.photo ? (
                     <img
                       src={athleteData.photo}
@@ -213,24 +157,15 @@ export function ParentAthleteDetailDialog({
                       <User className="h-10 w-10 text-gray-400" />
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload(e, athleteData.id)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    disabled={uploadingPhoto}
-                    aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
-                  />
-                  {uploadingPhoto && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
-                      <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-                      <span className="sr-only">Uploading photo...</span>
-                    </div>
-                  )}
                 </div>
-                <p className="text-xs text-gray-500 text-center max-w-24">
-                  Click to enlarge or upload new photo
-                </p>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 mb-1">
+                    {athleteData.photo ? 'Click to enlarge' : 'No photo available'}
+                  </p>
+                  <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded border">
+                    Photo updates available through the admin team
+                  </p>
+                </div>
               </div>
 
               {/* Athlete Details */}
