@@ -8,7 +8,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionFollowUp, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -1898,6 +1898,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (isPastSession) {
             await storage.updateBookingAttendanceStatus(bookingId, AttendanceStatusEnum.COMPLETED);
             console.log(`[STATUS SYNC] Auto-completed past session for booking ${bookingId} (date: ${sessionDateStr} at ${sessionTimeStr})`);
+            
+            // Send session follow-up email for auto-completed sessions
+            try {
+              // Get booking with full relations to access parent and athlete data
+              const fullBooking = await storage.getBooking(bookingId);
+              if (fullBooking) {
+                const parent = fullBooking.parentId ? await storage.getParentById(fullBooking.parentId) : null;
+                
+                // Get athlete name - prioritize from athletes array or fall back to legacy fields
+                let athleteName = 'Athlete';
+                if (fullBooking.athletes && fullBooking.athletes.length > 0) {
+                  athleteName = fullBooking.athletes[0].name || 'Athlete';
+                } else if (fullBooking.athlete1Name) {
+                  athleteName = fullBooking.athlete1Name;
+                }
+                
+                // Create booking link for next session
+                const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                const bookingLink = `${baseUrl}/parent/dashboard`;
+                
+                if (parent?.email) {
+                  await sendSessionFollowUp(
+                    parent.email,
+                    athleteName,
+                    bookingLink
+                  );
+                  console.log(`[SESSION-FOLLOW-UP] Sent follow-up email to ${parent.email} for auto-completed session (booking ${bookingId})`);
+                } else {
+                  console.warn(`[SESSION-FOLLOW-UP] Cannot send follow-up email - no parent email found for booking ${bookingId}`);
+                }
+              }
+            } catch (emailError) {
+              console.error('[SESSION-FOLLOW-UP] Failed to send follow-up email for auto-completed session:', emailError);
+              // Don't fail the status sync if email fails
+            }
           }
         }
 
@@ -4698,6 +4733,41 @@ setTimeout(async () => {
           await storage.updateBookingPaymentStatus(id, PaymentStatusEnum.SESSION_PAID);
           booking.paymentStatus = PaymentStatusEnum.SESSION_PAID;
         }
+        
+        // Send session follow-up email to parent
+        try {
+          // Get booking with full relations to access parent and athlete data
+          const fullBooking = await storage.getBooking(id);
+          if (fullBooking) {
+            const parent = fullBooking.parentId ? await storage.getParentById(fullBooking.parentId) : null;
+            
+            // Get athlete name - prioritize from athletes array or fall back to legacy fields
+            let athleteName = 'Athlete';
+            if (fullBooking.athletes && fullBooking.athletes.length > 0) {
+              athleteName = fullBooking.athletes[0].name || 'Athlete';
+            } else if (fullBooking.athlete1Name) {
+              athleteName = fullBooking.athlete1Name;
+            }
+            
+            // Create booking link for next session
+            const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            const bookingLink = `${baseUrl}/parent/dashboard`;
+            
+            if (parent?.email) {
+              await sendSessionFollowUp(
+                parent.email,
+                athleteName,
+                bookingLink
+              );
+              console.log(`[SESSION-FOLLOW-UP] Sent follow-up email to ${parent.email} for completed session (booking ${id})`);
+            } else {
+              console.warn(`[SESSION-FOLLOW-UP] Cannot send follow-up email - no parent email found for booking ${id}`);
+            }
+          }
+        } catch (emailError) {
+          console.error('[SESSION-FOLLOW-UP] Failed to send follow-up email:', emailError);
+          // Don't fail the attendance update if email fails
+        }
       }
       
       // Derive and update booking status based on payment and attendance status
@@ -5221,6 +5291,14 @@ setTimeout(async () => {
             email,
             "Test Parent",
             `${getBaseUrl()}/booking`
+          );
+          break;
+          
+        case 'session-follow-up':
+          result = await sendSessionFollowUp(
+            email,
+            "Test Athlete",
+            `${getBaseUrl()}/parent/dashboard`
           );
           break;
           
