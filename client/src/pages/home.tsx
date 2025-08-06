@@ -53,10 +53,7 @@ export default function Home() {
     queryKey: ['/api/site-content'],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/site-content");
-      const data = await response.json();
-      console.log('Site content loaded:', data);
-      console.log('Banner video URL:', data.bannerVideo);
-      return data;
+      return response.json();
     },
   });
 
@@ -116,84 +113,15 @@ export default function Home() {
       <section className="relative overflow-hidden min-h-screen flex items-center">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full">
-          {siteContent?.bannerVideo ? (
-            <video
-              key={siteContent.bannerVideo}
-              autoPlay
-              muted={true}
-              loop
-              playsInline
-              crossOrigin="anonymous"
-              className="w-full h-full object-cover"
-              preload="metadata"
-              onError={(e) => {
-                console.error('Video playback error:', e);
-                console.log('Video src:', siteContent?.bannerVideo);
-                const video = e.target as HTMLVideoElement;
-                console.log('Video error code:', video.error?.code);
-                console.log('Video error message:', video.error?.message);
-                console.log('Network state:', video.networkState);
-                console.log('Ready state:', video.readyState);
-                // Hide video on error and show fallback
-                video.style.display = 'none';
-                const fallback = video.parentElement?.querySelector('.video-fallback') as HTMLElement;
-                if (fallback) {
-                  fallback.style.display = 'flex';
-                }
-              }}
-              onLoadStart={() => {
-                console.log('Video load started for:', siteContent?.bannerVideo);
-              }}
-              onCanPlay={() => {
-                console.log('Video can play:', siteContent?.bannerVideo);
-                // Force play attempt
-                const video = document.querySelector('video') as HTMLVideoElement;
-                if (video) {
-                  video.play().catch(err => {
-                    console.error('Manual play failed:', err);
-                  });
-                }
-              }}
-              onLoadedData={() => {
-                console.log('Video data loaded:', siteContent?.bannerVideo);
-              }}
-              onLoadedMetadata={() => {
-                console.log('Video metadata loaded');
-                const video = document.querySelector('video') as HTMLVideoElement;
-                if (video) {
-                  console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
-                  console.log('Video duration:', video.duration);
-                }
-              }}
-              onPause={() => {
-                console.log('Video paused');
-              }}
-              onPlay={() => {
-                console.log('Video playing');
-              }}
-              onSuspend={() => {
-                console.log('Video loading suspended');
-              }}
-              onAbort={() => {
-                console.log('Video loading aborted');
-              }}
-            >
-              <source 
-                src={siteContent.bannerVideo} 
-                type="video/mp4" 
-                crossOrigin="anonymous"
-              />
-              Your browser does not support the video tag.
-            </video>
-          ) : null}
-          
-          {/* Fallback background */}
-          <div className="video-fallback w-full h-full bg-gradient-to-br from-[#D8BD2A]/20 to-[#0F0276]/10 flex items-center justify-center" style={{display: siteContent?.bannerVideo ? 'none' : 'flex'}}>
-            <div className="text-center text-gray-600">
-              <p className="text-xl mb-2">Welcome to Coach Will's Gymnastics</p>
-              <p className="text-sm">Expert gymnastics instruction for all skill levels</p>
-            </div>
-          </div>
+          <video
+            autoPlay
+            muted={isVideoMuted}
+            loop
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/sign/videos/VideoBanner_1751699557948.MOV?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zYzBjMmQ0MS1hZTYxLTQzNDgtOGFhZS05OTAyN2U4OWQyZWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlb3MvVmlkZW9CYW5uZXJfMTc1MTY5OTU1Nzk0OC5NT1YiLCJpYXQiOjE3NTI2ODc1NjksImV4cCI6MTc4NDIyMzU2OX0.XcNi5z-6-06U7FnpOLtcySTcb0vAHSR4QBT8vLOWKA4" type="video/mp4" />
+          </video>
           
           {/* Enhanced gradient overlays for better text readability and fading */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40"></div>
