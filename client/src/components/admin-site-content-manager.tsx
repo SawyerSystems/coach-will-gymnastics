@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Clock, HelpCircle, Image, Mail, MapPin, Phone, Save, Star, Upload, Users, Video } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import TestimonialForm from './TestimonialForm';
 
 interface SiteContent {
@@ -491,6 +491,637 @@ export function AdminSiteContentManager() {
     }
   };
 
+  // Callback functions for child components
+  const handleSaveAbout = useCallback(async (aboutData: SiteContent['about']) => {
+    const response = await apiRequest('POST', '/api/admin/site-content/about', {
+      about: aboutData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save about section');
+    }
+
+    // Update the main content state
+    setContent(prev => ({
+      ...prev,
+      about: aboutData
+    }));
+  }, []);
+
+  const handleSaveContact = useCallback(async (contactData: SiteContent['contact']) => {
+    const response = await apiRequest('POST', '/api/admin/site-content/contact', {
+      contact: contactData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save contact information');
+    }
+
+    // Update the main content state
+    setContent(prev => ({
+      ...prev,
+      contact: contactData
+    }));
+  }, []);
+
+  const handleSaveHours = useCallback(async (hoursData: SiteContent['hours']) => {
+    const response = await apiRequest('POST', '/api/admin/site-content/hours', {
+      hours: hoursData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save hours information');
+    }
+
+    // Update the main content state
+    setContent(prev => ({
+      ...prev,
+      hours: hoursData
+    }));
+  }, []);
+
+  const handleSaveFaqs = useCallback(async (faqsData: SiteContent['faqs']) => {
+    const response = await apiRequest('POST', '/api/admin/faqs/bulk', {
+      faqs: faqsData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save FAQs');
+    }
+
+    // Update the main content state
+    setContent(prev => ({
+      ...prev,
+      faqs: faqsData
+    }));
+  }, []);
+
+  // About Tab Component
+  const AboutTabContent = memo(({ 
+    initialData, 
+    onSave 
+  }: { 
+    initialData: SiteContent['about']; 
+    onSave: (data: SiteContent['about']) => void; 
+  }) => {
+    const [localData, setLocalData] = useState(initialData);
+    const { toast } = useToast();
+
+    const handleSave = async () => {
+      try {
+        setSaving(true);
+        await onSave(localData);
+        toast({
+          title: 'About Section Saved',
+          description: 'About information has been saved successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Save Failed',
+          description: 'Failed to save About section. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    const updateLocal = (path: string, value: any) => {
+      setLocalData(prev => {
+        const newData = { ...prev } as any;
+        const keys = path.split('.');
+        let current = newData;
+        
+        for (let i = 0; i < keys.length - 1; i++) {
+          current = current[keys[i]] = { ...current[keys[i]] };
+        }
+        
+        current[keys[keys.length - 1]] = value;
+        return newData;
+      });
+    };
+
+    return (
+      <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-3">
+            <Users className="h-6 w-6 text-blue-600" />
+            About Coach Will
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="about-bio">Biography</Label>
+            <Textarea
+              id="about-bio"
+              value={localData?.bio || ''}
+              onChange={(e) => updateLocal('bio', e.target.value)}
+              placeholder="Share your story, experience, and passion for gymnastics..."
+              className="min-h-[120px] resize-y"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <Label>Coach Photo</Label>
+            <div className="flex items-center gap-4">
+              {localData?.photo && (
+                <div className="relative">
+                  <img 
+                    src={localData.photo} 
+                    alt="Coach preview" 
+                    className="w-20 h-20 object-cover rounded-lg border"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
+                    onClick={() => updateLocal('photo', '')}
+                  >
+                    ×
+                  </Button>
+                </div>
+              )}
+              
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    try {
+                      toast({
+                        title: "Uploading Photo",
+                        description: `Uploading: ${file.name}...`,
+                      });
+                      
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      const response = await fetch('/api/admin/media', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                      });
+                      
+                      if (response.ok) {
+                        const data = await response.json();
+                        updateLocal('photo', data.url);
+                        toast({
+                          title: "Photo Uploaded",
+                          description: `Successfully uploaded: ${file.name}`,
+                        });
+                      } else {
+                        throw new Error('Upload failed');
+                      }
+                    } catch (error) {
+                      console.error('Error uploading photo:', error);
+                      toast({
+                        title: "Upload Failed",
+                        description: "Failed to upload photo. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
+                className="flex-1"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="about-experience">Years of Experience</Label>
+            <Input
+              id="about-experience"
+              value={localData?.experience || ''}
+              onChange={(e) => updateLocal('experience', e.target.value)}
+              placeholder="e.g., 8+ years"
+            />
+          </div>
+
+          <div>
+            <Label>Certifications</Label>
+            <div className="space-y-2">
+              {localData?.certifications?.map((cert, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={cert}
+                    onChange={(e) => {
+                      const newCerts = [...(localData.certifications || [])];
+                      newCerts[index] = e.target.value;
+                      updateLocal('certifications', newCerts);
+                    }}
+                    placeholder="Certification name"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newCerts = localData.certifications?.filter((_, i) => i !== index) || [];
+                      updateLocal('certifications', newCerts);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const newCerts = [...(localData.certifications || []), ''];
+                  updateLocal('certifications', newCerts);
+                }}
+              >
+                Add Certification
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Saving...' : 'Save About Section'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  });
+
+  // Contact Tab Component
+  const ContactTabContent = memo(({ 
+    initialData, 
+    onSave 
+  }: { 
+    initialData: SiteContent['contact']; 
+    onSave: (data: SiteContent['contact']) => void; 
+  }) => {
+    const [localData, setLocalData] = useState(initialData);
+    const { toast } = useToast();
+
+    const handleSave = async () => {
+      try {
+        setSaving(true);
+        await onSave(localData);
+        toast({
+          title: 'Contact Information Saved',
+          description: 'Contact information has been saved successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Save Failed',
+          description: 'Failed to save contact information. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    const updateLocal = (path: string, value: any) => {
+      setLocalData(prev => {
+        const newData = { ...prev } as any;
+        const keys = path.split('.');
+        let current = newData;
+        
+        for (let i = 0; i < keys.length - 1; i++) {
+          current = current[keys[i]] = { ...current[keys[i]] };
+        }
+        
+        current[keys[keys.length - 1]] = value;
+        return newData;
+      });
+    };
+
+    return (
+      <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
+            <MapPin className="h-6 w-6 text-green-600" />
+            Contact Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="contact-phone">Phone Number</Label>
+              <Input
+                id="contact-phone"
+                value={localData?.phone || ''}
+                onChange={(e) => updateLocal('phone', e.target.value)}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div>
+              <Label htmlFor="contact-email">Email Address</Label>
+              <Input
+                id="contact-email"
+                value={localData?.email || ''}
+                onChange={(e) => updateLocal('email', e.target.value)}
+                placeholder="coach@example.com"
+                type="email"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-semibold text-green-700">Gym Address</h4>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="address-name">Gym Name</Label>
+                <Input
+                  id="address-name"
+                  value={localData?.address?.name || ''}
+                  onChange={(e) => updateLocal('address.name', e.target.value)}
+                  placeholder="Gym Name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="address-street">Street Address</Label>
+                <Input
+                  id="address-street"
+                  value={localData?.address?.street || ''}
+                  onChange={(e) => updateLocal('address.street', e.target.value)}
+                  placeholder="123 Main Street"
+                />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <Label htmlFor="address-city">City</Label>
+                  <Input
+                    id="address-city"
+                    value={localData?.address?.city || ''}
+                    onChange={(e) => updateLocal('address.city', e.target.value)}
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="address-state">State</Label>
+                  <Input
+                    id="address-state"
+                    value={localData?.address?.state || ''}
+                    onChange={(e) => updateLocal('address.state', e.target.value)}
+                    placeholder="CA"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="address-zip">ZIP Code</Label>
+                  <Input
+                    id="address-zip"
+                    value={localData?.address?.zip || ''}
+                    onChange={(e) => updateLocal('address.zip', e.target.value)}
+                    placeholder="12345"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Saving...' : 'Save Contact Info'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  });
+
+  // Hours Tab Component
+  const HoursTabContent = memo(({ 
+    initialData, 
+    onSave,
+    orderedDays 
+  }: { 
+    initialData: SiteContent['hours']; 
+    onSave: (data: SiteContent['hours']) => void;
+    orderedDays: string[];
+  }) => {
+    const [localData, setLocalData] = useState(initialData);
+    const { toast } = useToast();
+
+    const handleSave = async () => {
+      try {
+        setSaving(true);
+        await onSave(localData);
+        toast({
+          title: 'Hours Saved',
+          description: 'Hours of operation have been saved successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Save Failed',
+          description: 'Failed to save hours. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    const updateLocal = (path: string, value: any) => {
+      setLocalData(prev => {
+        const newData = { ...prev } as any;
+        const keys = path.split('.');
+        let current = newData;
+        
+        for (let i = 0; i < keys.length - 1; i++) {
+          current = current[keys[i]] = { ...current[keys[i]] };
+        }
+        
+        current[keys[keys.length - 1]] = value;
+        return newData;
+      });
+    };
+
+    return (
+      <Card className="rounded-xl border-0 bg-gradient-to-br from-indigo-50 via-indigo-25 to-indigo-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-bold text-indigo-800 flex items-center gap-3">
+            <Clock className="h-6 w-6 text-indigo-600" />
+            Hours of Operation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {orderedDays.map((day) => {
+            const hours = localData[day.toLowerCase() as keyof typeof localData];
+            return (
+              <div key={day} className="flex items-center gap-4 p-4 border rounded-lg">
+                <div className="font-medium w-24">{day}</div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={hours.start}
+                    onChange={(e) => updateLocal(`${day.toLowerCase()}.start`, e.target.value)}
+                    className="w-32"
+                  />
+                  <span>to</span>
+                  <Input
+                    type="time"
+                    value={hours.end}
+                    onChange={(e) => updateLocal(`${day.toLowerCase()}.end`, e.target.value)}
+                    className="w-32"
+                  />
+                </div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={hours.available}
+                    onChange={(e) => updateLocal(`${day.toLowerCase()}.available`, e.target.checked)}
+                  />
+                  Available
+                </label>
+              </div>
+            );
+          })}
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-700">
+              Days marked as unavailable will show "Ask us about availability!" on the website.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Saving...' : 'Save Hours'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  });
+
+  // FAQs Tab Component
+  const FAQsTabContent = memo(({ 
+    initialData, 
+    onSave 
+  }: { 
+    initialData: SiteContent['faqs']; 
+    onSave: (data: SiteContent['faqs']) => void; 
+  }) => {
+    const [localData, setLocalData] = useState(initialData || []);
+    const { toast } = useToast();
+
+    // Sync with parent data changes
+    useEffect(() => {
+      setLocalData(initialData || []);
+    }, [initialData]);
+
+    const handleSave = async () => {
+      try {
+        setSaving(true);
+        await onSave(localData);
+        toast({
+          title: 'FAQs Saved',
+          description: 'Frequently Asked Questions have been saved successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Save Failed',
+          description: 'Failed to save FAQs. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    const updateFAQ = (index: number, field: string, value: string) => {
+      setLocalData(prev => {
+        const newData = [...prev];
+        newData[index] = { ...newData[index], [field]: value };
+        return newData;
+      });
+    };
+
+    const removeFAQ = (index: number) => {
+      setLocalData(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const addFAQ = () => {
+      setLocalData(prev => [...prev, { question: '', answer: '', category: 'General' }]);
+    };
+
+    return (
+      <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-bold text-yellow-800 flex items-center gap-3">
+            <HelpCircle className="h-6 w-6 text-yellow-600" />
+            Frequently Asked Questions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {localData.map((faq, index) => (
+            <div key={index} className="p-4 border rounded-lg space-y-3">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Question</Label>
+                  <Input
+                    value={faq.question || ''}
+                    onChange={(e) => updateFAQ(index, 'question', e.target.value)}
+                    placeholder="Enter the question"
+                  />
+                </div>
+                <div>
+                  <Label>Category</Label>
+                  <Input
+                    value={faq.category || ''}
+                    onChange={(e) => updateFAQ(index, 'category', e.target.value)}
+                    placeholder="e.g., General, Equipment, Pricing"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Answer</Label>
+                <Textarea
+                  value={faq.answer || ''}
+                  onChange={(e) => updateFAQ(index, 'answer', e.target.value)}
+                  placeholder="Enter the answer to this question..."
+                  rows={3}
+                />
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => removeFAQ(index)}
+              >
+                Remove FAQ
+              </Button>
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={addFAQ}
+            >
+              Add FAQ
+            </Button>
+          </div>
+          <div className="pt-4 border-t">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              {saving ? 'Saving...' : 'Save FAQs'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  });
+
   if (loading) {
     return (
       <div className="space-y-6 p-6">
@@ -871,315 +1502,27 @@ export function AdminSiteContentManager() {
 
         {/* About Tab */}
         <TabsContent value="about" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
-                <Users className="h-6 w-6 text-green-600" />
-                About Coach Will
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="bio">Biography</Label>
-                <Textarea
-                  id="bio"
-                  value={content.about.bio}
-                  onChange={(e) => updateContent('about.bio', e.target.value)}
-                  rows={6}
-                  placeholder="Tell your story..."
-                />
-              </div>
-              
-              {/* Coach Photo Uploader */}
-              <div>
-                <Label>Coach Photo</Label>
-                <div className="mt-2 flex items-start gap-4">
-                  {content.about.photo ? (
-                    <div className="relative w-40 h-40 rounded-lg overflow-hidden border shadow-md">
-                      <img
-                        src={content.about.photo}
-                        alt="Coach Will"
-                        className="w-full h-full object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => updateContent('about.photo', '')}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="w-40 h-40 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-500">
-                      <Upload className="h-8 w-8 mb-2" />
-                      <p className="text-sm">No photo</p>
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            toast({
-                              title: "Uploading Photo",
-                              description: `Uploading: ${file.name}...`,
-                            });
-                            
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            
-                            const response = await fetch('/api/admin/media', {
-                              method: 'POST',
-                              body: formData,
-                              credentials: 'include'
-                            });
-                            
-                            if (response.ok) {
-                              const data = await response.json();
-                              updateContent('about.photo', data.url);
-                              toast({
-                                title: "Photo Uploaded",
-                                description: `Successfully uploaded: ${file.name}`,
-                              });
-                            } else {
-                              throw new Error('Upload failed');
-                            }
-                          } catch (error) {
-                            console.error('Error uploading photo:', error);
-                            toast({
-                              title: "Upload Failed",
-                              description: "Failed to upload photo. Please try again.",
-                              variant: "destructive",
-                            });
-                          }
-                        }
-                      }}
-                      className="mb-2"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Upload a photo of Coach Will for the About page. Square images (1:1 ratio) work best.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="experience">Experience</Label>
-                <Input
-                  id="experience"
-                  value={content.about.experience}
-                  onChange={(e) => updateContent('about.experience', e.target.value)}
-                  placeholder="Years of experience and background"
-                />
-              </div>
-
-              <div>
-                <Label>Certifications</Label>
-                <div className="space-y-2">
-                  {content.about.certifications.map((cert, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <Input
-                        value={cert}
-                        onChange={(e) => {
-                          const newCerts = [...content.about.certifications];
-                          newCerts[index] = e.target.value;
-                          updateContent('about.certifications', newCerts);
-                        }}
-                        placeholder="Certification name"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeArrayItem('about.certifications', index)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    onClick={() => addArrayItem('about.certifications', '')}
-                  >
-                    Add Certification
-                  </Button>
-                </div>
-              </div>
-              <div className="pt-4 border-t">
-                <Button
-                  onClick={handleSaveAboutSection}
-                  disabled={saving}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {saving ? 'Saving...' : 'Save About Section'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <AboutTabContent
+            initialData={content.about}
+            onSave={handleSaveAbout}
+          />
         </TabsContent>
 
         {/* Contact Tab */}
         <TabsContent value="contact" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-orange-50 via-orange-25 to-orange-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-orange-800 flex items-center gap-3">
-                <Phone className="h-6 w-6 text-orange-600" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={content.contact.phone}
-                    onChange={(e) => updateContent('contact.phone', e.target.value)}
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    value={content.contact.email}
-                    onChange={(e) => updateContent('contact.email', e.target.value)}
-                    placeholder="email@example.com"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Training Location
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="location-name">Facility Name</Label>
-                <Input
-                  id="location-name"
-                  value={content.contact.address.name}
-                  onChange={(e) => updateContent('contact.address.name', e.target.value)}
-                  placeholder="Gymnastics facility name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="street">Street Address</Label>
-                <Input
-                  id="street"
-                  value={content.contact.address.street}
-                  onChange={(e) => updateContent('contact.address.street', e.target.value)}
-                  placeholder="123 Main Street"
-                />
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={content.contact.address.city}
-                    onChange={(e) => updateContent('contact.address.city', e.target.value)}
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    value={content.contact.address.state}
-                    onChange={(e) => updateContent('contact.address.state', e.target.value)}
-                    placeholder="CA"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="zip">ZIP Code</Label>
-                  <Input
-                    id="zip"
-                    value={content.contact.address.zip}
-                    onChange={(e) => updateContent('contact.address.zip', e.target.value)}
-                    placeholder="12345"
-                  />
-                </div>
-              </div>
-              <div className="pt-4 border-t">
-                <Button
-                  onClick={handleSaveContactSection}
-                  disabled={saving}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                >
-                  {saving ? 'Saving...' : 'Save Contact Section'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ContactTabContent
+            initialData={content.contact}
+            onSave={handleSaveContact}
+          />
         </TabsContent>
 
         {/* Hours Tab */}
         <TabsContent value="hours" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-indigo-50 via-indigo-25 to-indigo-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-indigo-800 flex items-center gap-3">
-                <Clock className="h-6 w-6 text-indigo-600" />
-                Hours of Operation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {orderedDays.map((day) => {
-                const hours = content.hours[day.toLowerCase() as keyof typeof content.hours];
-                return (
-                  <div key={day} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="font-medium w-24">{day}</div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="time"
-                        value={hours.start}
-                        onChange={(e) => updateContent(`hours.${day.toLowerCase()}.start`, e.target.value)}
-                        className="w-32"
-                      />
-                      <span>to</span>
-                      <Input
-                        type="time"
-                        value={hours.end}
-                        onChange={(e) => updateContent(`hours.${day.toLowerCase()}.end`, e.target.value)}
-                        className="w-32"
-                      />
-                    </div>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={hours.available}
-                        onChange={(e) => updateContent(`hours.${day.toLowerCase()}.available`, e.target.checked)}
-                      />
-                      Available
-                    </label>
-                  </div>
-                );
-              })}
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  Days marked as unavailable will show "Ask us about availability!" on the website.
-                </p>
-              </div>
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleSaveHoursSection}
-                  disabled={saving}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save Hours'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <HoursTabContent
+            initialData={content.hours}
+            onSave={handleSaveHours}
+            orderedDays={orderedDays}
+          />
         </TabsContent>
 
         {/* Programs Tab */}
@@ -1290,72 +1633,10 @@ export function AdminSiteContentManager() {
 
         {/* FAQs Tab */}
         <TabsContent value="faqs" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-yellow-800 flex items-center gap-3">
-                <HelpCircle className="h-6 w-6 text-yellow-600" />
-                Frequently Asked Questions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {content.faqs.map((faq, index) => (
-                <div key={index} className="p-4 border rounded-lg space-y-3">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Question</Label>
-                      <Input
-                        value={faq.question}
-                        onChange={(e) => {
-                          const newFaqs = [...content.faqs];
-                          newFaqs[index].question = e.target.value;
-                          updateContent('faqs', newFaqs);
-                        }}
-                        placeholder="Enter the question"
-                      />
-                    </div>
-                    <div>
-                      <Label>Category</Label>
-                      <Input
-                        value={faq.category}
-                        onChange={(e) => {
-                          const newFaqs = [...content.faqs];
-                          newFaqs[index].category = e.target.value;
-                          updateContent('faqs', newFaqs);
-                        }}
-                        placeholder="e.g., General, Equipment, Pricing"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Answer</Label>
-                    <Textarea
-                      value={faq.answer}
-                      onChange={(e) => {
-                        const newFaqs = [...content.faqs];
-                        newFaqs[index].answer = e.target.value;
-                        updateContent('faqs', newFaqs);
-                      }}
-                      placeholder="Enter the answer to this question..."
-                      rows={3}
-                    />
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeArrayItem('faqs', index)}
-                  >
-                    Remove FAQ
-                  </Button>
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                onClick={() => addArrayItem('faqs', { question: '', answer: '', category: 'General' })}
-              >
-                Add FAQ
-              </Button>
-            </CardContent>
-          </Card>
+          <FAQsTabContent
+            initialData={content.faqs}
+            onSave={handleSaveFaqs}
+          />
         </TabsContent>
 
         {/* Emails Tab */}

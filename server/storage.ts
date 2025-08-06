@@ -212,6 +212,7 @@ export interface IStorage {
   createSiteFaq(faq: any): Promise<any>;
   updateSiteFaq(id: number, faq: any): Promise<any>;
   deleteSiteFaq(id: number): Promise<boolean>;
+  bulkUpsertSiteFaqs(faqs: any[]): Promise<any[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -5262,6 +5263,44 @@ export class SupabaseStorage implements IStorage {
     }
 
     return true;
+  }
+
+  async bulkUpsertSiteFaqs(faqs: any[]): Promise<any[]> {
+    try {
+      // First, delete all existing FAQs to do a complete replacement
+      const { error: deleteError } = await supabaseAdmin
+        .from('site_faqs')
+        .delete()
+        .neq('id', 0); // Delete all rows
+
+      if (deleteError) {
+        console.error('Error deleting existing FAQs:', deleteError);
+        throw new Error(`Failed to delete existing FAQs: ${deleteError.message}`);
+      }
+
+      // Insert all new FAQs
+      const insertData = faqs.map((faq, index) => ({
+        question: faq.question,
+        answer: faq.answer,
+        category: faq.category || 'General',
+        display_order: index
+      }));
+
+      const { data, error } = await supabaseAdmin
+        .from('site_faqs')
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error('Error bulk inserting FAQs:', error);
+        throw new Error(`Failed to bulk insert FAQs: ${error.message}`);
+      }
+
+      return data || [];
+    } catch (error: any) {
+      console.error('Error in bulkUpsertSiteFaqs:', error);
+      throw error;
+    }
   }
 }
 

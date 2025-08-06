@@ -5602,6 +5602,30 @@ setTimeout(async () => {
     }
   });
 
+  // Bulk update FAQs endpoint
+  app.post("/api/admin/faqs/bulk", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { faqs } = req.body;
+      
+      if (!Array.isArray(faqs)) {
+        return res.status(400).json({ error: "FAQs must be an array" });
+      }
+
+      // Validate each FAQ
+      for (const faq of faqs) {
+        if (!faq.question || !faq.answer) {
+          return res.status(400).json({ error: "All FAQs must have question and answer" });
+        }
+      }
+
+      const updatedFaqs = await storage.bulkUpsertSiteFaqs(faqs);
+      res.json(updatedFaqs);
+    } catch (error: any) {
+      console.error("Error bulk updating FAQs:", error);
+      res.status(500).json({ error: `Failed to bulk update FAQs: ${error.message}` });
+    }
+  });
+
   // Contact form endpoint
   // Availability Routes
   app.get("/api/availability", async (_req, res) => {
