@@ -96,9 +96,10 @@ interface SendEmailOptions<T extends EmailType> {
   type: T;
   to: string;
   data: React.ComponentProps<typeof emailTemplates[T]['component']>;
+  logoUrl?: string; // Optional logo URL to use in email
 }
 
-export async function sendEmail<T extends EmailType>({ type, to, data }: SendEmailOptions<T>) {
+export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }: SendEmailOptions<T>) {
   // Get Resend API key from environment
   const resendApiKey = process.env.RESEND_API_KEY;
   
@@ -110,7 +111,8 @@ export async function sendEmail<T extends EmailType>({ type, to, data }: SendEma
         type,
         to,
         subject: emailTemplates[type].subject,
-        data
+        data,
+        logoUrl
       });
       return;
     }
@@ -124,13 +126,34 @@ export async function sendEmail<T extends EmailType>({ type, to, data }: SendEma
     throw new Error(`Invalid email type: ${type}`);
   }
 
+  // If no logoUrl was provided, try to get it from site content
+  let finalLogoUrl = logoUrl;
+  if (!finalLogoUrl) {
+    try {
+      // Import at function level to avoid circular dependencies
+      const { Storage } = require('../storage');
+      const storage = new Storage();
+      const siteContent = await storage.getSiteContent();
+      // Use the text logo if available, otherwise use default
+      finalLogoUrl = siteContent?.logo?.text || undefined;
+    } catch (error) {
+      console.warn('Could not fetch logo URL from site content:', error);
+    }
+  }
+
+  // Add the logo URL to the component props if the property exists on the component
+  const componentData = {
+    ...data,
+    ...(finalLogoUrl && 'logoUrl' in template.component ? { logoUrl: finalLogoUrl } : {})
+  };
+
   try {
     // Make React available globally for email components
     (global as any).React = React;
     
     // Render the email component to HTML
     const EmailComponent = template.component as React.ComponentType<any>;
-    const html = await render(React.createElement(EmailComponent, data));
+    const html = await render(React.createElement(EmailComponent, componentData));
     
     // Send the email
     const result = await resend.emails.send({

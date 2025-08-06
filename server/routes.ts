@@ -8390,6 +8390,36 @@ setTimeout(async () => {
     }
   });
 
+  // Media upload endpoint for admin
+  app.post('/api/admin/media', isAdminAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const file = req.file;
+      
+      // Upload the file to Supabase storage
+      const url = await storage.uploadMedia(
+        file.buffer,
+        file.originalname,
+        file.mimetype
+      );
+
+      return res.status(200).json({
+        success: true,
+        url,
+        fileName: file.originalname,
+        contentType: file.mimetype
+      });
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      return res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Unknown error uploading media' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

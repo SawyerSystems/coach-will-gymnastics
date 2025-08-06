@@ -5027,6 +5027,7 @@ export class SupabaseStorage implements IStorage {
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
         ],
+        logo: siteContentData?.logo || { circle: "", text: "" },
         about: siteContentData?.about || {
           bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
           experience: 'Nearly 10 years of coaching experience with athletes of all levels',
@@ -5073,6 +5074,7 @@ export class SupabaseStorage implements IStorage {
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
         ],
+        logo: { circle: "", text: "" },
         about: {
           bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
           experience: 'Nearly 10 years of coaching experience with athletes of all levels',
@@ -5115,6 +5117,7 @@ export class SupabaseStorage implements IStorage {
       if (content.bannerVideo !== undefined) updateData.banner_video = content.bannerVideo;
       if (content.heroImages !== undefined) updateData.hero_images = content.heroImages;
       if (content.equipmentImages !== undefined) updateData.equipment_images = content.equipmentImages;
+      if (content.logo !== undefined) updateData.logo = content.logo;
       if (content.about !== undefined) updateData.about = content.about;
       if (content.contact !== undefined) updateData.contact = content.contact;
       if (content.hours !== undefined) updateData.hours = content.hours;
@@ -5136,6 +5139,39 @@ export class SupabaseStorage implements IStorage {
       return data;
     } catch (error) {
       console.error('Error in updateSiteContent:', error);
+      throw error;
+    }
+  }
+
+  async uploadMedia(file: Buffer, fileName: string, contentType: string): Promise<string> {
+    try {
+      // Generate a unique file name to avoid collisions
+      const uniqueFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const bucketName = 'media';
+      const filePath = `uploads/${uniqueFileName}`;
+
+      // Upload file to Supabase Storage
+      const { error } = await supabaseAdmin.storage
+        .from(bucketName)
+        .upload(filePath, file, {
+          contentType,
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Error uploading to Supabase storage:', error);
+        throw new Error(`Failed to upload media: ${error.message}`);
+      }
+
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = supabaseAdmin.storage
+        .from(bucketName)
+        .getPublicUrl(filePath);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Error in uploadMedia:', error);
       throw error;
     }
   }

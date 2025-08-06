@@ -5,10 +5,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Baby, Lock, User, UserCircle, LogOut } from "lucide-react";
 import { useAuthStatus, useParentAuthStatus, usePrefetchQueries } from "@/hooks/optimized-queries";
 import { apiRequest, queryClient, queryKeys } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 
-// Import logo assets
-import logoSpin from "@assets/CWT_Circle_LogoSPIN.png";
-import logoText from "@assets/CoachWillTumblesText.png";
+// Import logo assets for fallback
+import defaultLogoSpin from "@assets/CWT_Circle_LogoSPIN.png";
+import defaultLogoText from "@assets/CoachWillTumblesText.png";
 
 export const Navigation = memo(function Navigation() {
   const [location] = useLocation();
@@ -18,6 +19,18 @@ export const Navigation = memo(function Navigation() {
   const { data: adminAuth } = useAuthStatus();
   const { data: parentAuth } = useParentAuthStatus();
   const { prefetchBlogPosts, prefetchTips, prefetchStripeProducts } = usePrefetchQueries();
+  
+  // Fetch site content for logo
+  const { data: siteContent } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-content");
+      return response.json();
+    },
+  });
+
+  const logoSpin = siteContent?.logo?.circle || defaultLogoSpin;
+  const logoText = siteContent?.logo?.text || defaultLogoText;
   
   const isAdminLoggedIn = (adminAuth as any)?.loggedIn || false;
   const isParentLoggedIn = (parentAuth as any)?.loggedIn || false;

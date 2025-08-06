@@ -11,15 +11,18 @@ import {
     Section,
     Text
 } from '@react-email/components';
+import { EmailLogo } from './components/EmailLogo';
 
 interface EmailVerificationProps {
   firstName: string;
   verificationUrl: string;
+  logoUrl?: string;
 }
 
 export function EmailVerification({
   firstName = 'Gymnastics Parent',
   verificationUrl = 'https://example.com/verify',
+  logoUrl,
 }: EmailVerificationProps) {
   return (
     <Html>
@@ -27,6 +30,7 @@ export function EmailVerification({
       <Preview>Verify your email address for Coach Will Tumbles</Preview>
       <Body style={{ backgroundColor: '#f5f5f5', margin: 0, padding: 0 }}>
         <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '600px', margin: '0 auto' }}>
+          <EmailLogo logoUrl={logoUrl} />
           <Heading style={{ color: '#6366F1' }}>Verify Your Email Address</Heading>
           
           <Text>Hi {firstName},</Text>

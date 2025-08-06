@@ -885,6 +885,7 @@ export const siteContent = pgTable("site_content", {
   id: serial("id").primaryKey(),
   bannerVideo: text("banner_video").default(""),
   heroImages: json("hero_images").default([]),
+  logo: json("logo").default({ circle: "", text: "" }),
   about: json("about").default({
     bio: "Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.",
     experience: "Nearly 10 years of coaching experience with athletes of all levels",

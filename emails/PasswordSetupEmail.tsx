@@ -17,12 +17,14 @@ interface PasswordSetupEmailProps {
   firstName: string;
   resetToken: string;
   resetUrl: string;
+  logoUrl?: string;
 }
 
 export function PasswordSetupEmail({
   firstName = 'Gymnastics Parent',
   resetToken = 'xyz123',
   resetUrl = 'https://coachwilltumbles.com/parent/set-password?token=xyz123',
+  logoUrl = 'https://storage.googleapis.com/coach-will-tumbles/CoachWillTumblesText.png',
 }: PasswordSetupEmailProps) {
   return (
     <Html>
@@ -31,7 +33,7 @@ export function PasswordSetupEmail({
       <Body style={main}>
         <Container style={container}>
           <Img
-            src="https://storage.googleapis.com/coach-will-tumbles/CoachWillTumblesText.png"
+            src={logoUrl}
             width="300"
             height="85"
             alt="Coach Will Tumbles Logo"
