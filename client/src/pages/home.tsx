@@ -180,6 +180,7 @@ export default function Home() {
               <source 
                 src={siteContent.bannerVideo} 
                 type="video/mp4" 
+                crossOrigin="anonymous"
               />
               Your browser does not support the video tag.
             </video>

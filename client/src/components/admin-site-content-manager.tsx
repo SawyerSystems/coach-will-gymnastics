@@ -1938,6 +1938,7 @@ export function AdminSiteContentManager() {
                 controls 
                 className="w-full h-full object-cover rounded-lg"
                 preload="metadata"
+                crossOrigin="anonymous"
                 onError={(e) => {
                   console.error('Preview video error:', e);
                   console.log('Video src in preview:', content.bannerVideo);
