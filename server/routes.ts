@@ -5448,6 +5448,45 @@ setTimeout(async () => {
   app.post("/api/admin/site-content/hours", isAdminAuthenticated, async (req, res) => {
     try {
       const hoursData = req.body;
+      console.log('[HOURS-SAVE] Received hours data:', JSON.stringify(hoursData, null, 2));
+      
+      // Validate hours data structure
+      if (!hoursData || typeof hoursData !== 'object') {
+        console.error('[HOURS-SAVE] Invalid hours data - not an object');
+        return res.status(400).json({ 
+          error: 'Invalid hours data format',
+          details: 'Hours data must be an object'
+        });
+      }
+      
+      // Validate each day's data
+      const validationErrors = [];
+      const expectedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      
+      for (const day of expectedDays) {
+        const dayData = hoursData[day];
+        if (dayData && typeof dayData === 'object') {
+          // Check for required fields and format
+          if (dayData.start && !isValidTimeFormat(dayData.start)) {
+            validationErrors.push(`${day}: Invalid start time format "${dayData.start}"`);
+          }
+          if (dayData.end && !isValidTimeFormat(dayData.end)) {
+            validationErrors.push(`${day}: Invalid end time format "${dayData.end}"`);
+          }
+          if (typeof dayData.available !== 'boolean') {
+            validationErrors.push(`${day}: 'available' must be a boolean`);
+          }
+        }
+      }
+      
+      if (validationErrors.length > 0) {
+        console.error('[HOURS-SAVE] Validation errors:', validationErrors);
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: validationErrors
+        });
+      }
+      
       const currentContent = await storage.getSiteContent();
       
       const updatedContent = await storage.updateSiteContent({
@@ -5455,12 +5494,25 @@ setTimeout(async () => {
         hours: hoursData
       });
       
+      console.log('[HOURS-SAVE] Successfully saved hours:', JSON.stringify(updatedContent.hours, null, 2));
       res.json({ success: true, hours: updatedContent.hours });
     } catch (error: any) {
-      console.error("Error updating hours:", error);
-      res.status(500).json({ error: `Failed to update hours: ${error.message}` });
+      console.error("[HOURS-SAVE] Error updating hours:", error);
+      res.status(500).json({ 
+        error: `Failed to update hours: ${error.message}`,
+        details: error.stack ? error.stack.split('\n').slice(0, 5).join('\n') : 'No stack trace available'
+      });
     }
   });
+  
+  // Helper function to validate time format (HH:MM)
+  function isValidTimeFormat(timeStr: string): boolean {
+    if (!timeStr || typeof timeStr !== 'string') return false;
+    
+    // Check HH:MM format
+    const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timePattern.test(timeStr);
+  }
 
   app.post("/api/admin/site-content", isAdminAuthenticated, async (req, res) => {
     try {

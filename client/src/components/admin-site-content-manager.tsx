@@ -925,13 +925,47 @@ export function AdminSiteContentManager() {
     onSave: (data: SiteContent['hours']) => void;
     orderedDays: string[];
   }) => {
-    const [localData, setLocalData] = useState(initialData);
+    // Initialize with default values if data is missing
+    const [localData, setLocalData] = useState(() => {
+      const defaultHours = orderedDays.reduce((acc, day) => {
+        acc[day.toLowerCase()] = {
+          start: '',
+          end: '',
+          available: false
+        };
+        return acc;
+      }, {} as any);
+      
+      // Merge with existing data
+      return { ...defaultHours, ...initialData };
+    });
     const { toast } = useToast();
 
     const handleSave = async () => {
       try {
         setSaving(true);
-        await onSave(localData);
+        
+        // Normalize time format to HH:MM before saving
+        const normalizedData = { ...localData };
+        
+        // Ensure all day entries have properly formatted times
+        Object.keys(normalizedData).forEach(day => {
+          const dayData = normalizedData[day];
+          if (dayData && typeof dayData === 'object') {
+            // Normalize start and end times to HH:MM format
+            if (dayData.start && typeof dayData.start === 'string') {
+              // Convert various time formats to HH:MM
+              const normalizedStart = normalizeTimeToHHMM(dayData.start);
+              dayData.start = normalizedStart;
+            }
+            if (dayData.end && typeof dayData.end === 'string') {
+              const normalizedEnd = normalizeTimeToHHMM(dayData.end);
+              dayData.end = normalizedEnd;
+            }
+          }
+        });
+
+        await onSave(normalizedData);
         toast({
           title: 'Hours Saved',
           description: 'Hours of operation have been saved successfully.',
@@ -945,6 +979,42 @@ export function AdminSiteContentManager() {
       } finally {
         setSaving(false);
       }
+    };
+
+    // Helper function to normalize time format to HH:MM
+    const normalizeTimeToHHMM = (timeStr: string): string => {
+      if (!timeStr) return '';
+      
+      // If already in HH:MM format, return as is
+      if (/^\d{2}:\d{2}$/.test(timeStr)) {
+        return timeStr;
+      }
+      
+      // Handle 12-hour format (e.g., "9:00 AM", "3:30 PM")
+      const time12HourMatch = timeStr.match(/^(\d{1,2}):?(\d{2})?\s*(AM|PM)$/i);
+      if (time12HourMatch) {
+        let [, hours, minutes, ampm] = time12HourMatch;
+        let hour24 = parseInt(hours, 10);
+        minutes = minutes || '00';
+        
+        if (ampm.toUpperCase() === 'PM' && hour24 !== 12) {
+          hour24 += 12;
+        } else if (ampm.toUpperCase() === 'AM' && hour24 === 12) {
+          hour24 = 0;
+        }
+        
+        return `${hour24.toString().padStart(2, '0')}:${minutes}`;
+      }
+      
+      // Handle time input format (might already be HH:MM)
+      const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+      if (timeMatch) {
+        const [, hours, minutes] = timeMatch;
+        return `${hours.padStart(2, '0')}:${minutes}`;
+      }
+      
+      // Fallback: return original string
+      return timeStr;
     };
 
     const updateLocal = (path: string, value: any) => {
@@ -1539,7 +1609,7 @@ export function AdminSiteContentManager() {
         {/* Hours Tab */}
         <TabsContent value="hours" className="mt-6 space-y-6 p-6">
           <HoursTabContent
-            initialData={content.hours}
+            initialData={content.hours?.hours || {}}
             onSave={handleSaveHours}
             orderedDays={orderedDays}
           />

@@ -289,12 +289,25 @@ export default function Contact() {
                       <div>
                         <p className="font-medium text-gray-800">Hours</p>
                         <div className="text-gray-600">
-                          {siteContent?.hours ? (
+                          {siteContent?.hours?.hours ? (
                             orderedDays.map((day) => {
-                              const hours = siteContent.hours[day.toLowerCase()];
+                              const hours = siteContent.hours.hours[day.toLowerCase()];
+                              
+                              // Format time from 24-hour to 12-hour
+                              const formatTime = (timeStr: string) => {
+                                if (!timeStr) return '';
+                                const [hourStr, minutes] = timeStr.split(':');
+                                const hour = parseInt(hourStr);
+                                const ampm = hour >= 12 ? 'PM' : 'AM';
+                                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                                return `${displayHour}:${minutes} ${ampm}`;
+                              };
+                              
                               return (
                                 <div key={day}>
-                                  {day}: {hours?.available ? `${hours.start} - ${hours.end}` : 'Ask about availability'}
+                                  {day}: {hours?.available && hours.start && hours.end 
+                                    ? `${formatTime(hours.start)} - ${formatTime(hours.end)}` 
+                                    : 'Ask about availability'}
                                 </div>
                               );
                             })

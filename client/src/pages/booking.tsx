@@ -18,6 +18,18 @@ export default function Booking() {
   const [selectedAthletes, setSelectedAthletes] = useState<Athlete[]>([]);
   const [isNewParent, setIsNewParent] = useState(false);
   
+  // Define ordered days for consistent display
+  const orderedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  
+  // Fetch site content for hours of operation
+  const { data: siteContent } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-content");
+      return response.json();
+    },
+  });
+  
   // Check parent authentication status
   const { data: parentAuth } = useQuery({
     queryKey: ['/api/parent-auth/status'],
@@ -357,22 +369,73 @@ export default function Booking() {
               <CardContent className="pt-6">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">Hours of Operation</h3>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800">Monday, Wednesday, Friday</span>
-                    <span className="text-gray-600">9:00 AM – 4:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800">Tuesday, Thursday</span>
-                    <span className="text-gray-600">9:00 AM – 3:30 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800">Saturday</span>
-                    <span className="text-gray-600">10:00 AM – 2:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-gray-800">Sunday</span>
-                    <span className="text-gray-600">Ask us about availability</span>
-                  </div>
+                  {siteContent?.hours?.hours ? (
+                    // Display saved hours from admin dashboard in proper order
+                    orderedDays.map((day) => {
+                      const dayKey = day.toLowerCase();
+                      const times = siteContent.hours.hours[dayKey];
+                      
+                      // Handle available flag and format times
+                      if (typeof times === 'object' && times !== null) {
+                        if (!times.available) {
+                          return (
+                            <div key={day} className="flex justify-between items-center">
+                              <span className="font-medium text-gray-800">{day}</span>
+                              <span className="text-gray-600">Closed</span>
+                            </div>
+                          );
+                        }
+                        
+                        // Format times from 24-hour to 12-hour format
+                        const formatTime = (timeStr: string) => {
+                          if (!timeStr) return '';
+                          const [hours, minutes] = timeStr.split(':');
+                          const hour = parseInt(hours);
+                          const ampm = hour >= 12 ? 'PM' : 'AM';
+                          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                          return `${displayHour}:${minutes} ${ampm}`;
+                        };
+                        
+                        const startTime = formatTime(times.start || '');
+                        const endTime = formatTime(times.end || '');
+                        const timeDisplay = startTime && endTime ? `${startTime} – ${endTime}` : 'Ask us about availability';
+                        
+                        return (
+                          <div key={day} className="flex justify-between items-center">
+                            <span className="font-medium text-gray-800">{day}</span>
+                            <span className="text-gray-600">{timeDisplay}</span>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div key={day} className="flex justify-between items-center">
+                          <span className="font-medium text-gray-800">{day}</span>
+                          <span className="text-gray-600">Ask us about availability</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Fallback hardcoded hours if site content not available
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800">Monday, Wednesday, Friday</span>
+                        <span className="text-gray-600">9:00 AM – 4:00 PM</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800">Tuesday, Thursday</span>
+                        <span className="text-gray-600">9:00 AM – 3:30 PM</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800">Saturday</span>
+                        <span className="text-gray-600">10:00 AM – 2:00 PM</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800">Sunday</span>
+                        <span className="text-gray-600">Ask us about availability</span>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">

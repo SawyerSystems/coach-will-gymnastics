@@ -42,7 +42,7 @@ export function Footer() {
   };
 
   // Fix hours data structure to match admin dashboard format
-  const hours: SiteHours = siteContent?.hours || {
+  const hours: SiteHours = siteContent?.hours?.hours || {
     Monday: { available: true, start: '09:00', end: '16:00' },
     Tuesday: { available: true, start: '09:00', end: '15:30' },
     Wednesday: { available: true, start: '09:00', end: '16:00' },
