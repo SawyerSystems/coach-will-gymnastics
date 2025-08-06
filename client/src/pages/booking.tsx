@@ -349,17 +349,33 @@ export default function Booking() {
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-5 w-5 text-blue-600 mt-1" />
                     <div>
-                      <p className="font-semibold text-gray-800">🏛️ Oceanside Gymnastics</p>
-                      <p className="text-gray-600">1935 Ave. del Oro #A<br/>Oceanside, CA 92056</p>
+                      {siteContent?.contact?.address ? (
+                        <>
+                          <p className="font-semibold text-gray-800">🏛️ {siteContent.contact.address.name}</p>
+                          <p className="text-gray-600">
+                            {siteContent.contact.address.street}<br/>
+                            {siteContent.contact.address.city}, {siteContent.contact.address.state} {siteContent.contact.address.zip}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-semibold text-gray-800">🏛️ Oceanside Gymnastics</p>
+                          <p className="text-gray-600">1935 Ave. del Oro #A<br/>Oceanside, CA 92056</p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Phone className="h-5 w-5 text-blue-600" />
-                    <p className="text-gray-600">📞 (585) 755-8122</p>
+                    <p className="text-gray-600">
+                      📞 {siteContent?.contact?.phone || '(585) 755-8122'}
+                    </p>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-blue-600" />
-                    <p className="text-gray-600">📧 admin@coachwilltumbles.com</p>
+                    <p className="text-gray-600">
+                      📧 {siteContent?.contact?.email || 'admin@coachwilltumbles.com'}
+                    </p>
                   </div>
                 </div>
               </CardContent>
