@@ -1934,7 +1934,6 @@ export function AdminSiteContentManager() {
           <div className="aspect-video">
             {content.bannerVideo ? (
               <video 
-                src={content.bannerVideo} 
                 controls 
                 className="w-full h-full object-cover rounded-lg"
                 preload="metadata"
@@ -1947,6 +1946,11 @@ export function AdminSiteContentManager() {
                   console.log('Preview video load started for:', content.bannerVideo);
                 }}
               >
+                <source 
+                  src={content.bannerVideo} 
+                  type="video/mp4" 
+                  crossOrigin="anonymous"
+                />
                 Your browser does not support the video tag.
               </video>
             ) : (

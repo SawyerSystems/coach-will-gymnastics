@@ -123,6 +123,7 @@ export default function Home() {
               muted={true}
               loop
               playsInline
+              crossOrigin="anonymous"
               className="w-full h-full object-cover"
               preload="metadata"
               onError={(e) => {
