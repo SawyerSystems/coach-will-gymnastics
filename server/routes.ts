@@ -4926,14 +4926,27 @@ setTimeout(async () => {
           day: 'numeric'
         }) : 'Unknown Date';
         
+        // Get full booking with athlete relationships
+        const bookingWithAthletes = await storage.getBookingWithRelations(bookingId);
+        
+        // Enhanced athlete name extraction
+        let athleteName = 'Athlete';
+        if (bookingWithAthletes && bookingWithAthletes.athletes && bookingWithAthletes.athletes.length > 0) {
+          athleteName = bookingWithAthletes.athletes[0].name;
+        } else if (booking.athletes && booking.athletes.length > 0) {
+          athleteName = booking.athletes[0].name;
+        } else if (booking.athlete1Name) {
+          athleteName = booking.athlete1Name;
+        }
+        
         await sendSessionConfirmation(
           booking.parentEmail || '',
           parentName,
-          booking.athlete1Name || 'Athlete',
+          athleteName,
           sessionDate,
           booking.preferredTime || 'TBD'
         );
-        console.log(`Manual confirmation email sent for booking ${bookingId}`);
+        console.log(`Manual confirmation email sent for booking ${bookingId} with athlete name: ${athleteName}`);
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError);
       }
