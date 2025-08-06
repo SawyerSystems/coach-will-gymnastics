@@ -4909,14 +4909,15 @@ export class SupabaseStorage implements IStorage {
         
         switch (session.status) {
           case 'complete':
-            // If session is paid, update booking status
+            // If session is paid, only set to reservation-paid (not session-paid)
+            // session-paid will be set only after attendance is marked as completed
             if (session.payment_status === 'paid') {
-              newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
-              newStatus = BookingStatusEnum.CONFIRMED;
+              newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+              newStatus = BookingStatusEnum.PENDING;
             } else if (session.payment_status === 'no_payment_required') {
               // Handle case where no payment was required
-              newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
-              newStatus = BookingStatusEnum.CONFIRMED;
+              newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+              newStatus = BookingStatusEnum.PENDING;
             }
             break;
           case 'expired':

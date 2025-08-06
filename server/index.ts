@@ -754,16 +754,20 @@ app.use((req, res, next) => {
             // Map Stripe payment status to our system
             switch (stripeSession.payment_status) {
               case 'paid':
-                newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
-                newStatus = BookingStatusEnum.CONFIRMED;
+                // Only set reservation-paid for completed payments
+                // session-paid will be set when attendance is marked complete
+                newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+                newStatus = BookingStatusEnum.PENDING;
                 break;
               case 'unpaid':
                 newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
                 newStatus = BookingStatusEnum.PENDING;
                 break;
               case 'no_payment_required':
-                newPaymentStatus = PaymentStatusEnum.SESSION_PAID;
-                newStatus = BookingStatusEnum.CONFIRMED;
+                // Only set reservation-paid for no-payment-required
+                // session-paid will be set when attendance is marked complete
+                newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
+                newStatus = BookingStatusEnum.PENDING;
                 break;
               default:
                 newPaymentStatus = PaymentStatusEnum.RESERVATION_PAID;
