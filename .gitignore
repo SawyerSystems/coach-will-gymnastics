@@ -49,6 +49,9 @@ Thumbs.db
 *cookies*.txt
 admin*.txt
 
+# Security scanning
+.ggshield_cache/
+
 # Test scripts
 test-*.js
 test-*.ts
