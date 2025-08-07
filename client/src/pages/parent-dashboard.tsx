@@ -508,13 +508,19 @@ function ParentDashboard() {
 
   const upcomingBookings = bookings.filter(b => {
     if (!b.preferredDate) return false;
-    const bookingDate = new Date(b.preferredDate);
+    
+    // Parse the date as a local date to avoid timezone issues
+    const [year, month, day] = b.preferredDate.split('-').map(Number);
+    const bookingDate = new Date(year, month - 1, day); // month is 0-indexed
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Start from beginning of today
     
-    return bookingDate >= today && 
+    const isUpcoming = bookingDate >= today && 
            b.status !== 'cancelled' &&
            b.status !== 'completed';
+    
+    return isUpcoming;
   });
 
   const pastBookings = bookings.filter(b => {
