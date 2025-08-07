@@ -1391,6 +1391,8 @@ function ManualBookingForm({
 }) {
   const { toast } = useToast();
   const { genderOptions } = useGenders();
+  // Dynamic lesson type helpers needed for focus area limits
+  const { byKey, maxFocusAreasFor } = useLessonTypes();
   const [athleteSelectionMode, setAthleteSelectionMode] = useState<'existing' | 'new'>('new');
   const [selectedExistingAthlete, setSelectedExistingAthlete] = useState<any>(null);
   const [formData, setFormData] = useState<ManualBookingFormData>({
