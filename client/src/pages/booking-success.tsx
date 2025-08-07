@@ -255,11 +255,7 @@ export default function BookingSuccess() {
                 <span className="font-semibold">${remainingBalance.toFixed(2)}</span>
               </div>
               
-              {booking?.paidAmount && (
-                <p className="text-xs text-green-700 mt-2">
-                  Payment ID: {booking.stripeSessionId || 'Processing...'}
-                </p>
-              )}
+              {/* Removed Payment ID display per product requirements */}
             </div>
             <p className="text-sm text-green-700 bg-green-100 p-3 rounded">
               The remaining balance of ${remainingBalance} is due at the time of

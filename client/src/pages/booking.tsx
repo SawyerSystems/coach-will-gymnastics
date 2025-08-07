@@ -113,7 +113,8 @@ export default function Booking() {
       if (parentInfo && !parentInfoError) {
         console.log("Using complete parent info from API");
         setParentData(parentInfo); // Use complete parent info directly
-        setSelectedAthletes(parentAthletes || []);
+  // Do not preselect athletes; force explicit user selection
+  setSelectedAthletes([]);
         setIsNewParent(false);
         setShowBookingModal(true);
       } else {
@@ -121,7 +122,8 @@ export default function Booking() {
         // The UnifiedBookingModal will handle this via parentAuthStatus
         console.log("Parent is logged in but full info not available, letting modal handle via auth status");
         setParentData(null); // Let modal handle via auth status
-        setSelectedAthletes(parentAthletes || []);
+  // Do not preselect athletes; force explicit user selection
+  setSelectedAthletes([]);
         setIsNewParent(false);
         setShowBookingModal(true);
       }

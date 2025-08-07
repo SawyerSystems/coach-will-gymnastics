@@ -1769,6 +1769,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Update payment status
             await storage.updateBookingPaymentStatus(booking.id, PaymentStatusEnum.RESERVATION_PAID);
+            // Also confirm attendance if still pending
+            try {
+              const fresh = await storage.getBooking(booking.id);
+              if (fresh?.attendanceStatus === AttendanceStatusEnum.PENDING) {
+                await storage.updateBookingAttendanceStatus(booking.id, AttendanceStatusEnum.CONFIRMED);
+                console.log(`[BOOKING-SESSION] Auto-updated attendance status to CONFIRMED for booking ${booking.id}`);
+              }
+            } catch (attErr) {
+              console.warn(`[BOOKING-SESSION] Failed to auto-update attendance status:`, attErr);
+            }
             
             // Update booking with payment details
             await storage.updateBooking(booking.id, {
@@ -1783,6 +1793,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             booking.paymentStatus = PaymentStatusEnum.RESERVATION_PAID;
             
             console.log(`[BOOKING-SESSION] Successfully updated booking payment status. Amount: ${booking.paidAmount}`);
+
+            // Fallback confirmation email send: if user reached success page before webhook fired
+            try {
+              const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+              const toEmail = booking.parentEmail;
+              if (toEmail) {
+                const rawDate = booking.preferredDate;
+                let sessionDate = 'Unknown Date';
+                if (rawDate) {
+                  try {
+                    sessionDate = new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                  } catch {}
+                }
+                console.log(`[BOOKING-SESSION][EMAIL-FALLBACK] Attempting confirmation email to ${toEmail} for booking ${booking.id}`);
+                await sendSessionConfirmation(
+                  toEmail,
+                  parentName,
+                  booking.athlete1Name || (booking.athletes && booking.athletes[0]?.name) || 'Athlete',
+                  sessionDate,
+                  booking.preferredTime || 'TBD'
+                );
+                console.log(`[BOOKING-SESSION][EMAIL-FALLBACK] ✅ Sent confirmation email for booking ${booking.id}`);
+              } else {
+                console.warn(`[BOOKING-SESSION][EMAIL-FALLBACK] Skipping confirmation email - no parent email on booking ${booking.id}`);
+              }
+            } catch (fallbackEmailErr) {
+              console.error('[BOOKING-SESSION][EMAIL-FALLBACK] Failed to send confirmation email:', fallbackEmailErr);
+            }
           } else {
             console.log(`[BOOKING-SESSION] Stripe payment status is still: ${session.payment_status}`);
           }
@@ -2452,6 +2490,15 @@ setTimeout(async () => {
                     booking.preferredTime || 'Unknown Time'
                   );
                   console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
+                  // Ensure attendance is confirmed once reservation fee paid
+                  try {
+                    if (bookingWithRelations.attendanceStatus === AttendanceStatusEnum.PENDING) {
+                      await storage.updateBookingAttendanceStatus(parseInt(bookingId), AttendanceStatusEnum.CONFIRMED);
+                      console.log(`[STRIPE WEBHOOK] ✅ Auto-updated attendance status to CONFIRMED for booking ${bookingId}`);
+                    }
+                  } catch (attErr) {
+                    console.warn(`[STRIPE WEBHOOK] Failed to auto-update attendance status for booking ${bookingId}:`, attErr);
+                  }
                 } catch (sendError) {
                   console.error(`[STRIPE WEBHOOK] Error sending confirmation email:`, sendError);
                   // Log the error but continue processing - don't return early

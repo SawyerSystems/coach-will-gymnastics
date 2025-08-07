@@ -90,14 +90,16 @@ export default function Home() {
       // If we have complete parent info from the API, use it directly
       if (parentInfo && !parentInfoError) {
         setParentData(parentInfo); // Use complete parent info directly
-        setSelectedAthletes(parentAthletes || []);
+  // Do not preselect athletes; require explicit selection in flow
+  setSelectedAthletes([]);
         setIsNewParent(false);
         setShowBookingModal(true);
       } else {
         // Fallback: Parent is logged in but full info not available
         // The UnifiedBookingModal will handle this via parentAuthStatus
         setParentData(null); // Let modal handle via auth status
-        setSelectedAthletes(parentAthletes || []);
+  // Do not preselect athletes; require explicit selection in flow
+  setSelectedAthletes([]);
         setIsNewParent(false);
         setShowBookingModal(true);
       }

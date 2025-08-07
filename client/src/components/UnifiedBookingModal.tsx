@@ -119,7 +119,10 @@ export function UnifiedBookingModal({
       flowType,
       currentStep: 0,
       lessonType: initialLessonType || '',
-      selectedAthletes: selectedAthletes.map(a => a.id) || (preSelectedAthleteId ? [preSelectedAthleteId] : []),
+      // Do not auto-preselect athletes for parent flows; only honor explicit preSelectedAthleteId (e.g., deep link) or admin context
+      selectedAthletes: isAdminFlow
+        ? selectedAthletes.map(a => a.id)
+        : (preSelectedAthleteId ? [preSelectedAthleteId] : []),
       selectedTimeSlot: null,
       parentInfo: null,
       athleteInfo: [],
