@@ -173,6 +173,34 @@ export function AdminLessonTypeManager() {
   };
 
   const handleSave = () => {
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.duration.trim() || isNaN(parseInt(formData.duration))) {
+      toast({
+        title: "Validation Error",
+        description: "Valid duration is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.price.trim() || isNaN(parseFloat(formData.price))) {
+      toast({
+        title: "Validation Error",
+        description: "Valid price is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: formData });
     } else {
