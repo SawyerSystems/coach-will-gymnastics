@@ -20,7 +20,7 @@ import { useAthleteWaiverStatus } from '@/hooks/use-waiver-status';
 import { useAvailableTimes } from '@/hooks/useAvailableTimes';
 import { formatDate } from '@/lib/dateUtils';
 import { apiRequest } from '@/lib/queryClient';
-import type { Athlete, Booking, Parent } from '@shared/schema';
+import type { Athlete, Booking, Parent, FocusArea } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
@@ -28,7 +28,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
 // Helper function to format focus areas for display
-const formatFocusAreas = (focusAreas: any[]): string => {
+const formatFocusAreas = (focusAreas: (FocusArea | string)[]): string => {
   if (!focusAreas || focusAreas.length === 0) return 'No specific focus areas';
   
   return focusAreas.map(area => {
@@ -1043,7 +1043,7 @@ function ParentDashboard() {
                                         variant="secondary"
                                         className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] xs:text-xs h-auto py-0.5"
                                       >
-                                        {area}
+                                        {typeof area === 'string' ? area : area.name}
                                       </Badge>
                                     ))}
                                   </div>
@@ -1077,13 +1077,13 @@ function ParentDashboard() {
                                 <div className="bg-amber-50 rounded-lg p-2 xs:p-3 border border-amber-200">
                                   <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800">
                                     {(() => {
-                                      if (booking.focusAreas?.some(area => area.includes('Tumbling'))) {
+                                      if (booking.focusAreas?.some(area => typeof area === 'object' && area.name?.includes('Tumbling'))) {
                                         return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
                                       }
-                                      if (booking.focusAreas?.some(area => area.includes('Beam'))) {
+                                      if (booking.focusAreas?.some(area => typeof area === 'object' && area.name?.includes('Beam'))) {
                                         return "Great balance work! Practice walking on lines at home to improve beam skills.";
                                       }
-                                      if (booking.focusAreas?.some(area => area.includes('Flexibility'))) {
+                                      if (booking.focusAreas?.some(area => typeof area === 'object' && area.name?.includes('Flexibility'))) {
                                         return "Keep up the daily stretching routine. Consistency is key for flexibility gains!";
                                       }
                                       return "Excellent progress! Continue practicing basic movements and building strength at home.";
