@@ -67,9 +67,15 @@ export default function Admin() {
       {/* Admin Sidebar */}
       <AdminSidebar 
         isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onLogout={async () => {
+          try {
+            await apiRequest('GET', '/api/auth/logout');
+          } catch {}
+          setLocation('/admin-login');
+        }}
       />
 
       {/* Main Content */}

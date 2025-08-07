@@ -28,15 +28,17 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
 // Helper function to format focus areas for display
-const formatFocusAreas = (focusAreas: (FocusArea | string)[]): string => {
+type FocusAreaDisplay = FocusArea | { name: string; apparatusName?: string } | string;
+const formatFocusAreas = (focusAreas: FocusAreaDisplay[]): string => {
   if (!focusAreas || focusAreas.length === 0) return 'No specific focus areas';
   
   return focusAreas.map(area => {
     if (typeof area === 'string') {
       return area; // Legacy string format
-    } else if (area && typeof area === 'object' && area.name) {
+    } else if (area && typeof area === 'object' && 'name' in area && typeof area.name === 'string') {
       // New object format with apparatus info
-      return area.apparatusName ? `${area.apparatusName}: ${area.name}` : area.name;
+      const withApparatus = area as { name: string; apparatusName?: string };
+      return withApparatus.apparatusName ? `${withApparatus.apparatusName}: ${withApparatus.name}` : withApparatus.name;
     }
     return 'Unknown'; // Fallback
   }).join(', ');
@@ -867,7 +869,7 @@ function ParentDashboard() {
                               <div className="flex items-center gap-1.5 xs:hidden mt-1">
                                 <MapPin className="w-3 h-3 text-gray-500" />
                                 <span className="text-[10px] text-gray-600">
-                                  Focus: {formatFocusAreas(booking.focusAreas)}
+                                  Focus: {formatFocusAreas(booking.focusAreas as unknown as FocusAreaDisplay[])}
                                 </span>
                               </div>
                             )}
@@ -887,7 +889,7 @@ function ParentDashboard() {
                               <div className="hidden xs:flex items-center gap-1.5 mt-1">
                                 <MapPin className="w-3.5 h-3.5 text-gray-500" />
                                 <span className="text-xs text-gray-600">
-                                  Focus: {formatFocusAreas(booking.focusAreas)}
+                                  Focus: {formatFocusAreas(booking.focusAreas as unknown as FocusAreaDisplay[])}
                                 </span>
                               </div>
                             )}
@@ -1043,13 +1045,13 @@ function ParentDashboard() {
                                     Skills Practiced
                                   </h4>
                                   <div className="flex flex-wrap gap-1 xs:gap-2">
-                                    {booking.focusAreas.map((area, index) => (
+                  {booking.focusAreas.map((area: FocusAreaDisplay, index: number) => (
                                       <Badge 
                                         key={index}
                                         variant="secondary"
                                         className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] xs:text-xs h-auto py-0.5"
                                       >
-                                        {typeof area === 'string' ? area : area.name}
+                    {typeof area === 'string' ? area : ('name' in area ? area.name : 'Unknown')}
                                       </Badge>
                                     ))}
                                   </div>
@@ -1083,13 +1085,13 @@ function ParentDashboard() {
                                 <div className="bg-amber-50 rounded-lg p-2 xs:p-3 border border-amber-200">
                                   <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800">
                                     {(() => {
-                                      if (booking.focusAreas?.some(area => typeof area === 'object' && area.name?.includes('Tumbling'))) {
+                                      if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Tumbling'))) {
                                         return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
                                       }
-                                      if (booking.focusAreas?.some(area => typeof area === 'object' && area.name?.includes('Beam'))) {
+                                      if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Beam'))) {
                                         return "Great balance work! Practice walking on lines at home to improve beam skills.";
                                       }
-                                      if (booking.focusAreas?.some(area => typeof area === 'object' && area.name?.includes('Flexibility'))) {
+                                      if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Flexibility'))) {
                                         return "Keep up the daily stretching routine. Consistency is key for flexibility gains!";
                                       }
                                       return "Excellent progress! Continue practicing basic movements and building strength at home.";
@@ -1505,7 +1507,7 @@ function ParentDashboard() {
                   <div className="space-y-3">
                     <div>
                       <Label className="text-sm font-medium">Current Focus Areas</Label>
-                      <p className="text-sm text-gray-600">{formatFocusAreas(booking.focusAreas || [])}</p>
+                      <p className="text-sm text-gray-600">{formatFocusAreas((booking.focusAreas || []) as unknown as FocusAreaDisplay[])}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Lesson Details</Label>

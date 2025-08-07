@@ -4979,7 +4979,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedPosts = posts.map(post => ({
         ...post,
-        publishedAt: formatPublishedAtToPacific(post.published_at || post.publishedAt)
+        publishedAt: formatPublishedAtToPacific((post as any).published_at || post.publishedAt)
       }));
       console.log('✅ [ADMIN] Successfully retrieved blog posts:', formattedPosts.length);
       res.json(formattedPosts);
@@ -5004,7 +5004,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedPost = {
         ...post,
-        publishedAt: formatPublishedAtToPacific(post.published_at || post.publishedAt)
+        publishedAt: formatPublishedAtToPacific((post as any).published_at || post.publishedAt)
       };
       
       console.log(`Successfully returning blog post with ID ${id}`);
@@ -5064,7 +5064,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedTips = tips.map(tip => ({
         ...tip,
-        publishedAt: formatPublishedAtToPacific(tip.published_at || tip.publishedAt)
+        publishedAt: formatPublishedAtToPacific((tip as any).published_at || tip.publishedAt)
       }));
       console.log('✅ [ADMIN] Successfully retrieved tips:', formattedTips.length);
       res.json(formattedTips);
@@ -5089,7 +5089,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedTip = {
         ...tip,
-        publishedAt: formatPublishedAtToPacific(tip.published_at || tip.publishedAt)
+        publishedAt: formatPublishedAtToPacific((tip as any).published_at || tip.publishedAt)
       };
       
       console.log(`Successfully returning tip with ID ${id}`);
@@ -5370,6 +5370,11 @@ setTimeout(async () => {
   app.get("/api/site-content", async (req, res) => {
     try {
       const content = await storage.getSiteContent();
+      console.log("[DEBUG] Site content API response:", {
+        hasAbout: !!content.about,
+        aboutPhoto: content.about?.photo,
+        aboutKeys: content.about ? Object.keys(content.about) : []
+      });
       res.json(content);
     } catch (error) {
       console.error("Error fetching site content:", error);
@@ -5425,11 +5430,44 @@ setTimeout(async () => {
   app.post("/api/admin/site-content/about", isAdminAuthenticated, async (req, res) => {
     try {
       const aboutData = req.body;
-      const currentContent = await storage.getSiteContent();
+      console.log("[DEBUG] About save request body:", {
+        hasAbout: !!aboutData.about,
+        aboutPhoto: aboutData.about?.photo,
+        aboutKeys: aboutData.about ? Object.keys(aboutData.about) : []
+      });
       
+      const currentContent = await storage.getSiteContent();
+      console.log("[DEBUG] Current content before update:", {
+        hasAbout: !!currentContent.about,
+        aboutPhoto: currentContent.about?.photo,
+        aboutKeys: currentContent.about ? Object.keys(currentContent.about) : []
+      });
+      // Merge incoming about data with existing, preserving the current photo if the incoming photo is empty/missing
+      const incomingAbout = (aboutData?.about ?? {}) as any;
+      const mergedAbout: any = { ...(currentContent.about || {}), ...incomingAbout };
+      const incomingPhoto = incomingAbout?.photo;
+      const currentPhoto = currentContent.about?.photo;
+      if (typeof incomingPhoto !== 'string' || incomingPhoto.trim() === '') {
+        mergedAbout.photo = currentPhoto || '';
+      }
+
+      console.log("[DEBUG] About merge:", {
+        incomingPhoto,
+        currentPhoto,
+        mergedPhoto: mergedAbout.photo,
+        incomingKeys: Object.keys(incomingAbout || {}),
+        mergedKeys: Object.keys(mergedAbout || {})
+      });
+
       const updatedContent = await storage.updateSiteContent({
         ...currentContent,
-        about: aboutData.about
+        about: mergedAbout
+      });
+      
+      console.log("[DEBUG] Updated content after save:", {
+        hasAbout: !!updatedContent.about,
+        aboutPhoto: updatedContent.about?.photo,
+        aboutKeys: updatedContent.about ? Object.keys(updatedContent.about) : []
       });
       
       res.json({ success: true, about: updatedContent.about });

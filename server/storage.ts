@@ -5291,6 +5291,7 @@ export class SupabaseStorage implements IStorage {
         about: siteContentData?.about || {
           bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
           experience: 'Nearly 10 years of coaching experience with athletes of all levels',
+          photo: '',
           certifications: [
             { title: 'USA Gymnastics Certified', body: 'Official certification from USA Gymnastics' },
             { title: 'CPR/First Aid Certified', body: 'Current safety and emergency response training' },
@@ -5338,6 +5339,7 @@ export class SupabaseStorage implements IStorage {
         about: {
           bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
           experience: 'Nearly 10 years of coaching experience with athletes of all levels',
+          photo: '',
           certifications: [
             { title: 'USA Gymnastics Certified', body: 'Official certification from USA Gymnastics' },
             { title: 'CPR/First Aid Certified', body: 'Current safety and emergency response training' },
@@ -5378,7 +5380,14 @@ export class SupabaseStorage implements IStorage {
       if (content.heroImages !== undefined) updateData.hero_images = content.heroImages;
       if (content.equipmentImages !== undefined) updateData.equipment_images = content.equipmentImages;
       if (content.logo !== undefined) updateData.logo = content.logo;
-      if (content.about !== undefined) updateData.about = content.about;
+      if (content.about !== undefined) {
+        console.log("[DEBUG-STORAGE] About data being saved:", {
+          hasPhoto: !!content.about.photo,
+          photo: content.about.photo,
+          keys: Object.keys(content.about)
+        });
+        updateData.about = content.about;
+      }
       if (content.contact !== undefined) updateData.contact = content.contact;
       if (content.hours !== undefined) updateData.hours = content.hours;
       
@@ -5395,6 +5404,12 @@ export class SupabaseStorage implements IStorage {
         console.error('Error updating site content:', error);
         throw new Error(`Failed to update site content: ${error.message}`);
       }
+
+      console.log("[DEBUG-STORAGE] Content after database save:", {
+        hasAbout: !!data.about,
+        aboutPhoto: data.about?.photo,
+        aboutKeys: data.about ? Object.keys(data.about) : []
+      });
 
       return data;
     } catch (error) {

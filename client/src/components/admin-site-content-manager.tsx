@@ -499,6 +499,12 @@ export function AdminSiteContentManager() {
 
   // Callback functions for child components
   const handleSaveAbout = useCallback(async (aboutData: SiteContent['about']) => {
+    console.log("[DEBUG-MAIN] handleSaveAbout called with:", {
+      hasPhoto: !!aboutData.photo,
+      photo: aboutData.photo,
+      keys: Object.keys(aboutData)
+    });
+    
     const response = await apiRequest('POST', '/api/admin/site-content/about', {
       about: aboutData
     });
@@ -512,6 +518,28 @@ export function AdminSiteContentManager() {
       ...prev,
       about: aboutData
     }));
+    
+    console.log("[DEBUG-MAIN] Content state updated with new about data");
+
+    // Force a refetch to ensure we have the latest data
+    try {
+      console.log("[DEBUG-MAIN] Refetching site content");
+      const refreshResponse = await apiRequest('GET', '/api/site-content');
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        console.log("[DEBUG-MAIN] Refetch response:", {
+          hasAbout: !!refreshData.about,
+          aboutPhoto: refreshData.about?.photo,
+          aboutKeys: refreshData.about ? Object.keys(refreshData.about) : []
+        });
+        setContent(prevContent => ({
+          ...prevContent,
+          ...refreshData
+        }));
+      }
+    } catch (error) {
+      console.error('Error refreshing site content after save:', error);
+    }
   }, []);
 
   const handleSaveContact = useCallback(async (contactData: SiteContent['contact']) => {
@@ -573,10 +601,21 @@ export function AdminSiteContentManager() {
     const [localData, setLocalData] = useState(initialData);
     const { toast } = useToast();
 
+    // Update localData when initialData changes (e.g., after a refetch)
+    useEffect(() => {
+      setLocalData(initialData);
+    }, [initialData]);
+
     const handleSave = async () => {
       try {
+        console.log("[DEBUG-ADMIN] Saving about data:", {
+          hasPhoto: !!localData.photo,
+          photo: localData.photo,
+          keys: Object.keys(localData)
+        });
         setSaving(true);
         await onSave(localData);
+        console.log("[DEBUG-ADMIN] Save completed successfully");
         toast({
           title: 'About Section Saved',
           description: 'About information has been saved successfully.',
@@ -671,7 +710,22 @@ export function AdminSiteContentManager() {
                       
                       if (response.ok) {
                         const data = await response.json();
-                        updateLocal('photo', data.url);
+                        console.log("[DEBUG-ADMIN] Photo upload response:", data);
+                        // Build a new about object with the uploaded photo URL and persist immediately
+                        const newAbout = { ...localData, photo: data.url };
+                        setLocalData(newAbout);
+                        console.log("[DEBUG-ADMIN] Persisting about after upload:", {
+                          hasPhoto: !!newAbout.photo,
+                          photo: newAbout.photo,
+                          keys: Object.keys(newAbout)
+                        });
+                        try {
+                          setSaving(true);
+                          await onSave(newAbout);
+                          console.log("[DEBUG-ADMIN] Auto-saved about with new photo");
+                        } finally {
+                          setSaving(false);
+                        }
                         toast({
                           title: "Photo Uploaded",
                           description: `Successfully uploaded: ${file.name}`,

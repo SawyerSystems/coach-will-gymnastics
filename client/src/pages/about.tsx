@@ -13,7 +13,13 @@ export default function About() {
     queryKey: ["/api/site-content"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/site-content");
-      return response.json();
+      const data = await response.json();
+      console.log("[DEBUG-CLIENT] Site content response:", { 
+        hasAbout: !!data.about,
+        aboutPhoto: data.about?.photo,
+        aboutKeys: data.about ? Object.keys(data.about) : []
+      });
+      return data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -32,12 +38,20 @@ export default function About() {
   const aboutData = siteContent?.about || {
     bio: 'Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.',
     experience: 'Nearly 10 years of coaching experience with athletes of all levels',
+    photo: '',  // Add empty photo field to default fallback
     certifications: [
       { title: 'USA Gymnastics Certified', body: 'Official certification from USA Gymnastics' },
       { title: 'CPR/First Aid Certified', body: 'Current safety and emergency response training' },
       { title: 'Background Checked', body: 'Comprehensive background verification completed' }
     ]
   };
+  
+  // Debug the about data we're actually using
+  console.log("[DEBUG-CLIENT] About data being rendered:", {
+    hasPhoto: !!aboutData.photo,
+    photo: aboutData.photo,
+    keys: Object.keys(aboutData)
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
