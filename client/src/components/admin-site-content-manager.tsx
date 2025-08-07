@@ -1949,7 +1949,6 @@ export function AdminSiteContentManager() {
                 <source 
                   src={content.bannerVideo} 
                   type="video/mp4" 
-                  crossOrigin="anonymous"
                 />
                 Your browser does not support the video tag.
               </video>
