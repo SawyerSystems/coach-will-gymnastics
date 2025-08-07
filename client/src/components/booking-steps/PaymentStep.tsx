@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useToast } from "@/hooks/use-toast";
 import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
-import { useStripePricing } from "@/hooks/useStripePricing";
 import { useFocusAreas } from "@/hooks/useFocusAreas";
 // import { LESSON_TYPE_IDS } from "@/lib/constants";
 import { formatBookingDate } from "@/lib/dateUtils";
@@ -20,7 +19,7 @@ export function PaymentStep() {
   const [_, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [athleteNames, setAthleteNames] = useState<string[]>([]);
-  const { getReservationFee, isLoading: isPricingLoading } = useStripePricing();
+  // Pricing now sourced from admin-managed lesson_types table
   const { mapFocusAreaNamesToIds, isLoading: areFocusAreasLoading } = useFocusAreas();
   const { data: lessonTypes, byKey } = useLessonTypes();
   
@@ -197,16 +196,9 @@ export function PaymentStep() {
       try {
         setIsProcessing(true);
 
-        // Pass full lesson price to backend - let backend determine actual Stripe charge
-        const fullPrice = lessonInfo?.price || 0;
-
-        // Create Stripe checkout session (backend will determine actual charge amount from Stripe products)
+        // Create Stripe checkout session (backend derives prices from lesson_types)
         const response = await apiRequest('POST', '/api/create-checkout-session', {
-          amount: fullPrice, // Pass full price, backend will use actual Stripe product price
-          bookingId: booking.id,
-          isReservationFee: true,
-          fullLessonPrice: fullPrice,
-          lessonType: state.lessonType,
+          bookingId: booking.id
         });
         const checkoutData = await response.json();
 
@@ -239,8 +231,8 @@ export function PaymentStep() {
 
   const lessonInfo = byKey(state.lessonType);
   const lessonPrice = lessonInfo?.price || 0;
-  const reservationFee = getReservationFee(state.lessonType);
-  const remainingBalance = lessonPrice - reservationFee;
+  const reservationFee = lessonInfo?.reservationFee ?? Math.max(5, lessonPrice * 0.25);
+  const remainingBalance = Math.max(lessonPrice - reservationFee, 0);
 
   const handlePayment = () => {
     // Check if focus areas are still loading

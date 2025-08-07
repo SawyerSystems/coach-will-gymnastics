@@ -26,7 +26,6 @@ import {
 import { useParentAuthStatus } from "@/hooks/optimized-queries";
 import { useCreateBooking } from "@/hooks/use-booking";
 import { useValidParentId } from "@/hooks/use-parent-id";
-import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
 import { useUnifiedAuth } from "@/hooks/use-unified-auth";
 import { useAvailableTimes } from "@/hooks/useAvailableTimes";
@@ -150,7 +149,6 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const [showWaiverModal, setShowWaiverModal] = useState(false);
   
   const createBooking = useCreateBooking();
-  const { getLessonPrice } = useStripePricing();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -422,7 +420,8 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       const booking = await createBooking.mutateAsync(bookingData);
       
       // Use the actual lesson amount from the form data
-      const lessonAmount = data.amount || getLessonPrice(data.lessonType);
+  const ltForAmount = byKey(data.lessonType);
+  const lessonAmount = data.amount || ltForAmount?.price || 0;
       
       // Create payment intent with actual lesson price
       const response = await apiRequest('POST', '/api/create-payment-intent', {
@@ -1070,7 +1069,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       <div className="border-t pt-3">
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold">Total Due Now:</span>
-                          <span className="text-lg font-bold text-blue-600">${getLessonPrice(form.getValues("lessonType")).toFixed(2)}</span>
+                          <span className="text-lg font-bold text-blue-600">${(byKey(form.getValues("lessonType"))?.price || 0).toFixed(2)}</span>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">
                           Pay reservation fee to secure your lesson booking.

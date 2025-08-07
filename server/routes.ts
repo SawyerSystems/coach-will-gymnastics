@@ -2558,52 +2558,50 @@ setTimeout(async () => {
   // New endpoint for creating checkout sessions with better tracking
   app.post("/api/create-checkout-session", async (req, res) => {
     try {
-      const { amount, bookingId, isReservationFee, fullLessonPrice, lessonType } = req.body;
-      
+      const { bookingId } = req.body;
       if (!bookingId) {
         return res.status(400).json({ message: "Booking ID is required" });
       }
-      
-      // For reservation fee system, fetch actual Stripe product price
-      let chargeAmount = amount;
-      if (isReservationFee && lessonType) {
-        // Map lesson types to Stripe product names
-        const lessonTypeToProductName: Record<string, string> = {
-          'quick-journey': '30-Min Private [$40]',
-          'dual-quest': '30-Min Semi-Private [$50]',
-          'deep-dive': '1-Hour Private [$60]',
-          'partner-progression': '1-Hour Semi-Private [$80]'
-        };
-        
-        const productName = lessonTypeToProductName[lessonType];
-        if (productName) {
-          try {
-            // Get all products and find the matching one
-            const products = await stripe.products.list({
-              active: true,
-              limit: 20,
-              expand: ['data.default_price']
-            });
-            
-            const matchingProduct = products.data.find(product => product.name === productName);
-            if (matchingProduct && matchingProduct.default_price) {
-              const price = matchingProduct.default_price as any;
-              chargeAmount = price.unit_amount / 100; // Convert cents to dollars
-              console.log(`Using Stripe price for ${lessonType}: $${chargeAmount}`);
-            } else {
-              console.warn(`No matching Stripe product found for ${lessonType}, using fallback`);
-              chargeAmount = 10; // Fallback to $10
-            }
-          } catch (stripeError) {
-            console.error('Error fetching Stripe product price:', stripeError);
-            chargeAmount = 10; // Fallback to $10
-          }
-        } else {
-          chargeAmount = 10; // Fallback to $10
+
+      const booking = await storage.getBooking(Number(bookingId));
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      // Fetch lesson type pricing from DB (authoritative source) using lessonTypeId
+      let lessonTypeRecord: any | undefined = undefined;
+      let fullLessonPrice = 0;
+      let reservationFee = 0;
+
+      if ((booking as any).lessonTypeId) {
+        try {
+          lessonTypeRecord = await storage.getLessonType((booking as any).lessonTypeId);
+        } catch (ltErr) {
+          console.error('[CHECKOUT][LESSON_TYPE] Failed to load lesson type:', ltErr);
         }
       }
-      
-      // Create checkout session
+
+      if (lessonTypeRecord) {
+        fullLessonPrice = Number(lessonTypeRecord.price || 0);
+        reservationFee = Number(lessonTypeRecord.reservationFee || 0);
+      } else {
+        // Fallback: try legacy booking.amount if present
+        fullLessonPrice = Number((booking as any).amount || 0) || 0;
+        // Heuristic reservation fee fallback (25%) if not explicitly set
+        reservationFee = Number(((booking as any).amount || 0)) * 0.25;
+      }
+
+      // Safety guards
+      if (!Number.isFinite(fullLessonPrice) || fullLessonPrice <= 0) {
+        console.warn('[CHECKOUT] Invalid full lesson price. Defaulting to $10.');
+        fullLessonPrice = 10;
+      }
+      if (!Number.isFinite(reservationFee) || reservationFee <= 0 || reservationFee > fullLessonPrice) {
+        // Default to first quarter but max out at full price - 1 if extreme
+        reservationFee = Math.min(Math.max(fullLessonPrice * 0.25, 5), fullLessonPrice);
+      }
+
+      // Create Stripe Checkout Session using admin-managed reservation fee
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         locale: 'auto',
@@ -2611,10 +2609,10 @@ setTimeout(async () => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'Gymnastics Lesson Reservation Fee',
-              description: `$${chargeAmount.toFixed(2)} reservation fee for gymnastics lesson. Remaining balance of $${(fullLessonPrice || amount) - chargeAmount} due at time of lesson.`
+              name: lessonTypeRecord?.name ? `${lessonTypeRecord.name} Reservation Fee` : 'Lesson Reservation Fee',
+              description: `$${reservationFee.toFixed(2)} reservation fee for lesson. Remaining balance of $${(fullLessonPrice - reservationFee).toFixed(2)} due at lesson.`
             },
-            unit_amount: Math.round(chargeAmount * 100), // Convert to cents
+            unit_amount: Math.round(reservationFee * 100),
           },
           quantity: 1,
         }],
@@ -2623,31 +2621,35 @@ setTimeout(async () => {
         cancel_url: `${getBaseUrl()}/booking`,
         metadata: {
           booking_id: bookingId.toString(),
-          is_reservation_fee: isReservationFee ? 'true' : 'false',
-          full_lesson_price: (fullLessonPrice || amount).toString(),
-          reservation_fee_amount: chargeAmount.toString()
+          is_reservation_fee: 'true',
+            full_lesson_price: fullLessonPrice.toString(),
+            reservation_fee_amount: reservationFee.toString(),
+            lesson_type_id: (booking as any).lessonTypeId ? String((booking as any).lessonTypeId) : '',
+            lesson_type_name: lessonTypeRecord?.name || (booking as any).lessonType || ''
         }
       });
-      
-      // Update booking with session ID and payment status
+
       try {
-        await storage.updateBooking(bookingId, { 
+        await storage.updateBooking(bookingId, {
           stripeSessionId: session.id,
           paymentStatus: PaymentStatusEnum.RESERVATION_PENDING
         });
       } catch (updateError) {
-        console.error('Failed to update booking with session ID:', updateError);
+        console.error('[CHECKOUT] Failed to update booking with session ID:', updateError);
       }
-      
-      res.json({ 
-        sessionId: session.id,
-        url: session.url
+
+      console.log('[CHECKOUT] Session created', {
+        bookingId,
+        lessonTypeId: (booking as any).lessonTypeId,
+        fullLessonPrice,
+        reservationFee,
+        sessionId: session.id
       });
+
+      res.json({ sessionId: session.id, url: session.url });
     } catch (error: any) {
-      console.error("Error creating checkout session:", error);
-      res
-        .status(500)
-        .json({ message: "Error creating checkout session: " + error.message });
+      console.error('[CHECKOUT] Error creating checkout session:', error);
+      res.status(500).json({ message: 'Error creating checkout session: ' + error.message });
     }
   });
   // Temporary booking validation route for debugging
@@ -4018,22 +4020,28 @@ setTimeout(async () => {
       await storage.updateBookingStatus(id, derivedStatus);
       console.log("🔄 Auto-derived booking status from payment change:", derivedStatus);
 
-      // Calculate lesson price based on type
-      const getLessonPrice = (lessonType: string): number => {
-        const priceMap: Record<string, number> = {
-          "quick-journey": 40,
-          "30-min-private": 40,
-          "dual-quest": 50,
-          "30-min-semi-private": 50,
-          "deep-dive": 60,
-          "1-hour-private": 60,
-          "partner-progression": 80,
-          "1-hour-semi-private": 80,
-        };
-        return priceMap[lessonType] || 0;
-      };
-
-      const totalPrice = getLessonPrice(booking.lessonType || '');
+      // Resolve authoritative total lesson price from lesson_types table
+      let totalPrice = 0;
+      try {
+        const ltId = (booking as any).lessonTypeId;
+        if (ltId) {
+          const lt = await storage.getLessonType(Number(ltId));
+          if (lt) {
+            totalPrice = Number(lt.price || 0);
+          }
+        }
+        if (!totalPrice) {
+          const legacyMap: Record<string, number> = {
+            'quick-journey': 40,
+            'dual-quest': 50,
+            'deep-dive': 60,
+            'partner-progression': 80,
+          };
+          totalPrice = legacyMap[booking.lessonType || ''] || 0;
+        }
+      } catch (priceErr) {
+        console.warn('[PAYMENT][PRICE_RESOLVE] Failed to resolve lesson type price, using 0', priceErr);
+      }
 
       // Update paid amount and balance based on payment status  
       if (paymentStatus === "session-paid") {
@@ -4938,7 +4946,7 @@ setTimeout(async () => {
       // Send confirmation email
       try {
         const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
-        const rawDate = booking.preferredDate || booking.preferred_date;
+  const rawDate = booking.preferredDate;
         let sessionDate = 'Unknown Date';
         if (rawDate) {
           try {
@@ -4950,17 +4958,17 @@ setTimeout(async () => {
             sessionDate = rawDate;
           }
         }
-        const toEmail = booking.parentEmail || booking.parent_email || '';
+  const toEmail = booking.parentEmail || '';
         if (!toEmail) {
           console.error(`[EMAIL][SESSION-CONFIRM] Skipping send - no parent email for booking ${bookingId}`);
         } else {
-            console.log(`[EMAIL][SESSION-CONFIRM] Sending manual confirmation -> to:${toEmail} booking:${bookingId} date:${sessionDate} time:${booking.preferredTime || booking.preferred_time || 'TBD'}`);
+            console.log(`[EMAIL][SESSION-CONFIRM] Sending manual confirmation -> to:${toEmail} booking:${bookingId} date:${sessionDate} time:${booking.preferredTime || 'TBD'}`);
             await sendSessionConfirmation(
               toEmail,
               parentName,
               booking.athlete1Name || 'Athlete',
               sessionDate,
-              booking.preferredTime || booking.preferred_time || 'TBD'
+              booking.preferredTime || 'TBD'
             );
             console.log(`[EMAIL][SESSION-CONFIRM] ✅ Sent manual confirmation for booking ${bookingId}`);
         }

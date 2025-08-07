@@ -1,22 +1,4 @@
-// Always get lesson price from booking.lessonType.price (from Supabase). Only fallback to booking.amount if price is missing (legacy/edge case).
-// Always get lesson price from booking.lessonType.total_price (from Supabase). Only fallback to price, then booking.amount if missing (legacy/edge case).
-const getLessonPrice = (booking: any): number => {
-  if (booking.lessonType && typeof booking.lessonType === 'object') {
-    if ('total_price' in booking.lessonType && booking.lessonType.total_price != null) {
-      return typeof booking.lessonType.total_price === 'number'
-        ? booking.lessonType.total_price
-        : parseFloat(booking.lessonType.total_price);
-    }
-    if ('price' in booking.lessonType && booking.lessonType.price != null) {
-      return typeof booking.lessonType.price === 'number'
-        ? booking.lessonType.price
-        : parseFloat(booking.lessonType.price);
-    }
-  }
-  // Fallback for legacy/edge cases only
-  if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
-  return 0;
-};
+// Pricing now resolved via lesson_types hook inside component
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -380,6 +362,12 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   const { genderOptions } = useGenders();
   // Dynamic lesson types (API-backed)
   const { byKey, maxFocusAreasFor } = useLessonTypes();
+  const resolvePrice = (booking: any): number => {
+    const lt = byKey(booking.lessonType || '');
+    if (lt && typeof lt.price === 'number') return lt.price;
+    if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
+    return 0;
+  };
 
   // Helper function to find athlete ID by name
   const findAthleteIdByName = (athleteName: string): string | null => {
@@ -993,7 +981,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                       <TableCell>
                         <div className="text-sm font-medium">
                           ${(() => {
-                            const price = getLessonPrice(booking);
+                            const price = resolvePrice(booking);
                             return price > 0 ? price.toFixed(2) : '0.00';
                           })()}
                         </div>
@@ -1310,7 +1298,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           <TableCell>
                             <div className="text-sm font-medium">
                               ${(() => {
-                                const price = getLessonPrice(booking);
+                                const price = resolvePrice(booking);
                                 return price > 0 ? price.toFixed(2) : '0.00';
                               })()}
                             </div>
@@ -2227,10 +2215,19 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
             <div className="flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg">
               <span className="font-medium text-gray-700">Amount:</span>
               <span className="text-gray-900 font-medium">{(() => {
-                const price = getLessonPrice(booking.lessonType);
-                if (price && price > 0) return `$${price.toFixed(2)}`;
-                const amt = parseFloat(booking.amount || '0');
-                return `$${amt > 0 ? amt.toFixed(2) : '0.00'}`;
+                // Local price resolution (component-level) without depending on parent scope
+                let price = 0;
+                if (booking.lessonType && typeof booking.lessonType === 'object') {
+                  const ltObj: any = booking.lessonType;
+                  if (typeof ltObj.price === 'number') price = ltObj.price;
+                  else if (ltObj.price) price = parseFloat(ltObj.price);
+                  else if (ltObj.total_price) price = parseFloat(ltObj.total_price);
+                }
+                if (!price && booking.amount) {
+                  const amt = parseFloat(booking.amount);
+                  if (!isNaN(amt)) price = amt;
+                }
+                return `$${price.toFixed(2)}`;
               })()}</span>
             </div>
           </div>

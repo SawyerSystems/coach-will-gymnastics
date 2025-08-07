@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
@@ -56,26 +57,19 @@ export const getExtendedPaymentStatusBadgeProps = (status: string): { variant: "
 
 // Always get lesson price from booking.lessonType.price (from Supabase). Only fallback to booking.amount if price is missing (legacy/edge case).
 // Always get lesson price from booking.lessonType.total_price (from Supabase). Only fallback to price, then booking.amount if missing (legacy/edge case).
-const getLessonPrice = (booking: any): number => {
-  if (booking.lessonType && typeof booking.lessonType === 'object') {
-    if ('total_price' in booking.lessonType && booking.lessonType.total_price != null) {
-      return typeof booking.lessonType.total_price === 'number'
-        ? booking.lessonType.total_price
-        : parseFloat(booking.lessonType.total_price);
-    }
-    if ('price' in booking.lessonType && booking.lessonType.price != null) {
-      return typeof booking.lessonType.price === 'number'
-        ? booking.lessonType.price
-        : parseFloat(booking.lessonType.price);
-    }
-  }
-  // Fallback for legacy/edge cases only
-  if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
+// Pricing resolution using lesson_types query
+const makePriceResolver = (byKey: (key: string) => any) => (booking: any): number => {
+  const lt = byKey(booking.lessonType || '');
+  if (lt && typeof lt.price === 'number') return lt.price;
+  if (lt && lt.price) return parseFloat(lt.price);
+  if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount); // legacy fallback
   return 0;
 };
 
 export function PaymentsTab() {
   const { toast } = useToast();
+  const { byKey } = useLessonTypes();
+  const getLessonPrice = makePriceResolver(byKey);
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
