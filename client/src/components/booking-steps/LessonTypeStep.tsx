@@ -2,53 +2,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { cn } from "@/lib/utils";
-import { Clock, Users, User, Target } from "lucide-react";
-
-const LESSON_TYPES = [
-  {
-    id: "quick-journey",
-    name: "Quick Journey",
-    duration: "30 minutes",
-    participants: 1,
-    price: 40,
-    description: "Perfect for skill checks, focused practice, or when time is limited",
-    benefits: ["Skill assessment", "Quick corrections", "Confidence building"],
-    icon: Clock
-  },
-  {
-    id: "dual-quest",
-    name: "Dual Quest", 
-    duration: "30 minutes",
-    participants: 2,
-    price: 50,
-    description: "Semi-private lesson for friends or siblings to learn together",
-    benefits: ["Shared experience", "Peer motivation", "Cost effective"],
-    icon: Users
-  },
-  {
-    id: "deep-dive",
-    name: "Deep Dive",
-    duration: "60 minutes", 
-    participants: 1,
-    price: 60,
-    description: "Comprehensive training session for significant skill development",
-    benefits: ["Detailed instruction", "Multiple skills", "Progress tracking"],
-    icon: User
-  },
-  {
-    id: "partner-progression",
-    name: "Partner Progression",
-    duration: "60 minutes",
-    participants: 2, 
-    price: 80,
-    description: "Extended semi-private lesson for serious skill development",
-    benefits: ["Intensive training", "Partner support", "Advanced techniques"],
-    icon: Target
-  }
-];
+import { Clock, Users, User } from "lucide-react";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 
 export function LessonTypeStep() {
   const { state, updateState } = useBookingFlow();
+  const { data: lessonTypes, isLoading, error, formatDuration } = useLessonTypes();
 
   const handleLessonSelect = (lessonType: string) => {
     updateState({ lessonType });
@@ -64,18 +23,17 @@ export function LessonTypeStep() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {LESSON_TYPES.map((lesson) => {
-          const Icon = lesson.icon;
-          const isSelected = state.lessonType === lesson.id;
-          
+        {(lessonTypes || []).map((lt) => {
+          const isSelected = state.lessonType === lt.name.toLowerCase().replace(/\s+/g, '-');
+          const Icon = lt.maxAthletes > 1 ? Users : (lt.isPrivate ? User : Users);
           return (
             <Card 
-              key={lesson.id}
+              key={lt.id}
               className={cn(
                 "cursor-pointer transition-all hover:shadow-md",
                 isSelected ? "ring-2 ring-orange-500 border-orange-500" : "hover:border-gray-400"
               )}
-              onClick={() => handleLessonSelect(lesson.id)}
+              onClick={() => handleLessonSelect(lt.name.toLowerCase().replace(/\s+/g, '-'))}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -87,29 +45,29 @@ export function LessonTypeStep() {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{lesson.name}</CardTitle>
+                      <CardTitle className="text-lg">{lt.name}</CardTitle>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{lesson.duration}</span>
+                        <span>{formatDuration(lt.duration)}</span>
                         <span>•</span>
-                        <span>{lesson.participants} {lesson.participants === 1 ? 'athlete' : 'athletes'}</span>
+                        <span>{lt.maxAthletes} {lt.maxAthletes === 1 ? 'athlete' : 'athletes'}</span>
                       </div>
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-lg font-bold">
-                    ${lesson.price}
+                    ${lt.price}
                   </Badge>
                 </div>
               </CardHeader>
               
               <CardContent className="space-y-3">
                 <CardDescription className="text-sm">
-                  {lesson.description}
+                  {lt.description}
                 </CardDescription>
                 
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-gray-700">Perfect for:</p>
                   <ul className="text-xs text-gray-600 space-y-1">
-                    {lesson.benefits.map((benefit, index) => (
+                    {(lt.keyPoints || []).map((benefit, index) => (
                       <li key={index} className="flex items-center gap-1">
                         <span className="w-1 h-1 bg-orange-400 rounded-full"></span>
                         {benefit}

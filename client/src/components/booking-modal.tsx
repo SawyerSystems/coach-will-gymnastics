@@ -31,7 +31,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUnifiedAuth } from "@/hooks/use-unified-auth";
 import { useAvailableTimes } from "@/hooks/useAvailableTimes";
 import { useGenders } from "@/hooks/useGenders";
-import { EXPERIENCE_LEVELS, LESSON_TYPES } from "@/lib/constants";
+import { EXPERIENCE_LEVELS } from "@/lib/constants";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
@@ -143,7 +144,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const { genderOptions } = useGenders();
   
 
-  const [selectedLessonType, setSelectedLessonType] = useState<keyof typeof LESSON_TYPES | null>(null);
+  const [selectedLessonType, setSelectedLessonType] = useState<string | null>(null);
   const [waiverSigned, setWaiverSigned] = useState(false);
   const [waiverData, setWaiverData] = useState<any>(null);
   const [showWaiverModal, setShowWaiverModal] = useState(false);
@@ -198,13 +199,14 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   const { data: parentAuthData } = useParentAuthStatus();
   
   const watchedLessonType = form.watch("lessonType");
+  const { data: lessonTypes = [], byKey, maxFocusAreasFor } = useLessonTypes();
   const watchedFocusAreaIds = form.watch("focusAreaIds");
   const watchedDate = form.watch("preferredDate");
 
   // Get lesson duration for availability checking
   const getLessonDuration = (lessonType: string) => {
-    const lesson = LESSON_TYPES[lessonType as keyof typeof LESSON_TYPES];
-    return lesson?.duration === '60 minutes' ? 60 : 30;
+    const lt = byKey(lessonType);
+    return lt?.duration || 30;
   };
 
   // Fetch available time slots when date or lesson type changes
@@ -213,8 +215,18 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
     watchedLessonType || ''
   );
 
-  const lessonTypeData = LESSON_TYPES[watchedLessonType as keyof typeof LESSON_TYPES];
-  const maxFocusAreas = lessonTypeData?.maxFocusAreas || 2;
+  const selectedLt = byKey(watchedLessonType || "");
+  const maxFocusAreas = maxFocusAreasFor(selectedLt);
+
+  const nameToKey = (name: string) => {
+    const map: Record<string, string> = {
+      "Quick Journey": "quick-journey",
+      "Dual Quest": "dual-quest",
+      "Deep Dive": "deep-dive",
+      "Partner Progression": "partner-progression",
+    };
+    return map[name] || name.toLowerCase().replace(/\s+/g, '-');
+  };
 
   // Handle prefilled parent and auto-populate parent information
   useEffect(() => {
@@ -255,10 +267,11 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
     }
   }, [prefilledAthletes, form]);
 
-  const handleLessonTypeChange = (lessonType: keyof typeof LESSON_TYPES) => {
+  const handleLessonTypeChange = (lessonType: string) => {
     setSelectedLessonType(lessonType);
     form.setValue("lessonType", lessonType);
-    form.setValue("amount", LESSON_TYPES[lessonType as keyof typeof LESSON_TYPES]?.price.toString() || "40");
+    const lt = byKey(lessonType);
+    form.setValue("amount", (lt?.price ?? 40).toString());
   };
 
   const handleFocusAreaToggle = (area: string, checked: boolean) => {
@@ -364,10 +377,10 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       const bookingData: any = {
         // Core required fields
         parentId: 0, // Will be handled by backend
-        lessonTypeId: 0, // Will be resolved by backend from lessonType
+        lessonTypeId: selectedLt?.id || 0, // Prefer DB id when available
         
         // Form data
-        lessonType: data.lessonType,
+  lessonType: data.lessonType,
         preferredDate: data.preferredDate,
         preferredTime: data.preferredTime,
         focusAreaIds: data.focusAreaIds,
@@ -525,32 +538,39 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                   </p>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {Object.entries(LESSON_TYPES).map(([key, lesson]) => (
+                  {lessonTypes.map((lt) => {
+                    const key = nameToKey(lt.name);
+                    const athletes = lt.isPrivate ? 1 : (lt.maxAthletes || 2);
+                    const price = lt.price ?? 40;
+                    const maxFa = maxFocusAreasFor(lt);
+                    return (
                     <Card 
                       key={key}
                       className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
                         selectedLessonType === key ? 'ring-2 ring-blue-600' : ''
                       }`}
-                      onClick={() => handleLessonTypeChange(key as keyof typeof LESSON_TYPES)}
+                      onClick={() => handleLessonTypeChange(key)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-bold text-gray-800">{lesson.name}</h4>
-                            <p className="text-sm text-gray-600 mb-2">{lesson.description}</p>
+                            <h4 className="font-bold text-gray-800">{lt.name}</h4>
+                            {lt.description && (
+                              <p className="text-sm text-gray-600 mb-2">{lt.description}</p>
+                            )}
                             <div className="flex items-center space-x-4 text-xs text-gray-600">
                               <span className="flex items-center">
-                                {lesson.athletes === 1 ? <User className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
-                                {lesson.athletes} athlete{lesson.athletes > 1 ? 's' : ''}
+                                {athletes === 1 ? <User className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
+                                {athletes} athlete{athletes > 1 ? 's' : ''}
                               </span>
-                              <span>Up to {lesson.maxFocusAreas} focus areas</span>
+                              <span>Up to {maxFa} focus areas</span>
                             </div>
                           </div>
-                          <div className="text-2xl font-bold text-blue-600">${getLessonPrice(key).toFixed(2)}</div>
+                          <div className="text-2xl font-bold text-blue-600">${price.toFixed(2)}</div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  );})}
                 </div>
               </div>
             )}
@@ -1003,13 +1023,13 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span>Lesson Type:</span>
-                        <span className="font-medium">{lessonTypeData.name}</span>
+                        <span className="font-medium">{selectedLt?.name}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Athletes:</span>
                         <span className="font-medium">
                           {form.watch("athletes")?.[0]?.name}
-                          {lessonTypeData.athletes === 2 && form.watch("athletes")?.[1]?.name && 
+                          {!selectedLt?.isPrivate && form.watch("athletes")?.[1]?.name && 
                             `, ${form.watch("athletes")?.[1]?.name}`
                           }
                         </span>
@@ -1029,7 +1049,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                       <hr className="my-4" />
                       <div className="flex justify-between text-lg font-bold">
                         <span>Total:</span>
-                        <span className="text-blue-600">${LESSON_TYPES[form.getValues("lessonType") as keyof typeof LESSON_TYPES]?.price}</span>
+                        <span className="text-blue-600">${(selectedLt?.price ?? 0).toString()}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -1045,7 +1065,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                     <div className="bg-white p-4 rounded-lg border">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-gray-700">Lesson Fee:</span>
-                        <span className="font-bold text-green-600">${LESSON_TYPES[form.getValues("lessonType") as keyof typeof LESSON_TYPES]?.price}</span>
+                        <span className="font-bold text-green-600">${(selectedLt?.price ?? 0).toString()}</span>
                       </div>
                       <div className="border-t pt-3">
                         <div className="flex items-center justify-between">

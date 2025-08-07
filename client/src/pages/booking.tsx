@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { useStripePricing } from "@/hooks/use-stripe-products";
-import { LESSON_TYPES } from "@/lib/constants";
+// import { LESSON_TYPES } from "@/lib/constants";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
@@ -73,6 +74,7 @@ export default function Booking() {
     console.log("Booking state updated:", { showBookingModal, parentData, selectedAthletes, isNewParent });
   }, [showBookingModal, parentData, selectedAthletes, isNewParent]);
   const { getLessonPrice } = useStripePricing();
+  const { data: lessonTypes } = useLessonTypes();
 
   const handleParentConfirmed = (data: {
     parent: Parent;
@@ -169,7 +171,8 @@ export default function Booking() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {Object.entries(LESSON_TYPES).map(([key, lesson]) => {
+            {(lessonTypes || []).map((lt, idx) => {
+              const key = lt.name.toLowerCase().replace(/\s+/g, '-');
               const colorClasses = {
                 blue: "from-blue-50 to-blue-100 border-blue-200 text-blue-600",
                 purple: "from-purple-50 to-purple-100 border-purple-200 text-purple-600",
@@ -191,37 +194,40 @@ export default function Booking() {
                 orange: "bg-orange-600 hover:bg-orange-700"
               };
 
+              const palette = ["blue", "purple", "teal", "orange"] as const;
+              const color = palette[idx % palette.length];
+
               return (
                 <Card 
                   key={key}
-                  className={`bg-gradient-to-br ${colorClasses[lesson.color as keyof typeof colorClasses]} border shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300`}
+                  className={`bg-gradient-to-br ${colorClasses[color]} border shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300`}
                 >
                   <CardContent className="p-6 text-center">
-                    <div className={`w-16 h-16 ${iconClasses[lesson.color as keyof typeof iconClasses]} rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle`}>
-                      {lesson.athletes === 1 ? (
+                    <div className={`w-16 h-16 ${iconClasses[color]} rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle`}>
+                      {lt.maxAthletes === 1 ? (
                         <User className="h-8 w-8 text-white" />
                       ) : (
                         <Users className="h-8 w-8 text-white" />
                       )}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{lesson.name}</h3>
-                    <div className={`text-3xl font-bold mb-4 ${lesson.color === 'blue' ? 'text-blue-600' : lesson.color === 'purple' ? 'text-purple-600' : lesson.color === 'teal' ? 'text-teal-600' : 'text-orange-600'}`}>
-                      ${lesson.price}
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">{lt.name}</h3>
+                    <div className={`text-3xl font-bold mb-4 ${color === 'blue' ? 'text-blue-600' : color === 'purple' ? 'text-purple-600' : color === 'teal' ? 'text-teal-600' : 'text-orange-600'}`}>
+                      ${lt.price}
                     </div>
-                    <p className="text-gray-600 mb-6">{lesson.description}</p>
+                    <p className="text-gray-600 mb-6">{lt.description}</p>
                     
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center justify-center text-sm text-gray-700">
                         <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
-                        <span>{lesson.athletes} Athlete{lesson.athletes > 1 ? 's' : ''}</span>
+                        <span>{lt.maxAthletes} Athlete{lt.maxAthletes > 1 ? 's' : ''}</span>
                       </div>
                       <div className="flex items-center justify-center text-sm text-gray-700">
                         <Clock className="h-4 w-4 text-teal-600 mr-2" />
-                        <span>{key.includes('1-hour') ? '60' : '30'} Minutes</span>
+                        <span>{lt.duration} Minutes</span>
                       </div>
                       <div className="flex items-center justify-center text-sm text-gray-700">
                         <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
-                        <span>Up to {lesson.maxFocusAreas} Focus Areas</span>
+                        <span>Up to {lt.duration >= 60 ? 4 : 2} Focus Areas</span>
                       </div>
                       <div className="flex items-center justify-center text-sm text-gray-700">
                         <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
@@ -230,7 +236,7 @@ export default function Booking() {
                     </div>
                     
                     <Button 
-                      className={`w-full ${buttonClasses[lesson.color as keyof typeof buttonClasses]} text-white py-3 rounded-full font-medium transform transition-all duration-200`}
+                      className={`w-full ${buttonClasses[color]} text-white py-3 rounded-full font-medium transform transition-all duration-200`}
                       onClick={() => handleBookNow(key)}
                     >
                       Start This Path

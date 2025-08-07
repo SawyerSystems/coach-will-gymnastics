@@ -5,6 +5,7 @@ import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { UpcomingSessions } from "@/components/UpcomingSessions";
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { AdminBookingManager } from "@/components/admin-booking-manager";
+import { AdminLessonTypeManager } from "@/components/admin-lesson-type-manager";
 import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -1071,6 +1072,7 @@ export default function Admin() {
                 {activeTab === 'parentcomm' && 'Parent Communications'}
                 {activeTab === 'waivers' && 'Waiver Management'}
                 {activeTab === 'payments' && 'Payment Management'}
+                {activeTab === 'lesson-types' && 'Lesson Type Management'}
               </h1>
               
               {/* Contextual Actions */}
@@ -1212,6 +1214,12 @@ export default function Admin() {
               ⏰ Schedule
             </TabsTrigger>
             <TabsTrigger 
+              value="lesson-types" 
+              className="hidden"
+            >
+              🎓 Lesson Types
+            </TabsTrigger>
+            <TabsTrigger 
               value="parentcomm" 
               className="hidden"
             >
@@ -1257,6 +1265,21 @@ export default function Admin() {
                   selectedBooking={selectedBooking}
                   onSelectBooking={setSelectedBooking}
                 />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                  {/* Graduation cap icon inline to avoid additional import churn since lucide already imported many */}
+                  <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🎓</span>
+                  Lesson Type Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                <AdminLessonTypeManager />
               </CardContent>
             </Card>
           </TabsContent>

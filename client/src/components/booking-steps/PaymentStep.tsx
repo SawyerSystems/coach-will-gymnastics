@@ -5,13 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
 import { useStripePricing } from "@/hooks/useStripePricing";
 import { useFocusAreas } from "@/hooks/useFocusAreas";
-import { LESSON_TYPES, LESSON_TYPE_IDS } from "@/lib/constants";
+// import { LESSON_TYPE_IDS } from "@/lib/constants";
 import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, CreditCard, Info, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 
 export function PaymentStep() {
   const { state, updateState } = useBookingFlow();
@@ -21,6 +22,7 @@ export function PaymentStep() {
   const [athleteNames, setAthleteNames] = useState<string[]>([]);
   const { getReservationFee, isLoading: isPricingLoading } = useStripePricing();
   const { mapFocusAreaNamesToIds, isLoading: areFocusAreasLoading } = useFocusAreas();
+  const { data: lessonTypes, byKey } = useLessonTypes();
   
   // Check if athlete is selected and redirect if needed
   useEffect(() => {
@@ -82,21 +84,12 @@ export function PaymentStep() {
 
   const createBooking = useMutation({
     mutationFn: async () => {
-      const lessonEntry = Object.entries(LESSON_TYPES).find(
-        ([key]) => key === state.lessonType
-      );
-
-      if (!lessonEntry) {
+      const selectedLt = byKey(state.lessonType);
+      if (!selectedLt) {
         throw new Error('Invalid lesson type');
       }
-
-      const [lessonKey, lessonData] = lessonEntry;
       
-      // Validate lessonTypeId exists for the selected lesson type
-      if (!LESSON_TYPE_IDS[state.lessonType]) {
-        console.error(`No lesson type ID mapping found for "${state.lessonType}"`);
-        throw new Error(`Unknown lesson type: ${state.lessonType}`);
-      }
+  // Use the selected lesson type's database ID directly
       
       // Check if we have an "Other" focus area and handle separately
       const focusAreasList = state.focusAreas.length > 0 ? state.focusAreas : ['General Skills'];
@@ -109,7 +102,7 @@ export function PaymentStep() {
       // Prepare booking data based on flow type - aligned with insertBookingSchema
       let bookingData: any = {
         parentId: state.parentId, // Add parentId as required by schema
-        lessonTypeId: LESSON_TYPE_IDS[state.lessonType], // Use shared constant mapping
+  lessonTypeId: selectedLt.id,
         lessonType: state.lessonType, // Keep for backward compatibility
         preferredDate: state.selectedTimeSlot?.date,
         preferredTime: state.selectedTimeSlot?.time,
@@ -188,7 +181,7 @@ export function PaymentStep() {
       console.log("Lesson type mapping:", {
         original: state.lessonType,
         mappedId: bookingData.lessonTypeId,
-        mappingUsed: 'LESSON_TYPE_IDS constant'
+        mappingUsed: 'dynamic API (lessonTypes)'
       });
       
       // Determine API endpoint based on flow
@@ -244,7 +237,7 @@ export function PaymentStep() {
     }
   });
 
-  const lessonInfo = LESSON_TYPES[state.lessonType as keyof typeof LESSON_TYPES];
+  const lessonInfo = byKey(state.lessonType);
   const lessonPrice = lessonInfo?.price || 0;
   const reservationFee = getReservationFee(state.lessonType);
   const remainingBalance = lessonPrice - reservationFee;

@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useStripePricing } from "@/hooks/use-stripe-products";
 import { useToast } from "@/hooks/use-toast";
-import { LESSON_TYPES } from "@/lib/constants";
+// import { LESSON_TYPES } from "@/lib/constants";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
@@ -21,8 +22,9 @@ export function AdminPaymentStep() {
   const [, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const { getLessonPrice } = useStripePricing();
+  const { byKey } = useLessonTypes();
 
-  const lessonData = LESSON_TYPES[state.lessonType as keyof typeof LESSON_TYPES];
+  const lessonData = byKey(state.lessonType);
   const lessonPrice = getLessonPrice(state.lessonType);
 
   const createAdminBooking = useMutation({

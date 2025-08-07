@@ -33,7 +33,8 @@ import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { useToast } from "@/hooks/use-toast";
 import { useAvailableTimes } from "@/hooks/useAvailableTimes";
 import { useGenders } from "@/hooks/useGenders";
-import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
+import { GYMNASTICS_EVENTS } from "@/lib/constants";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Booking } from "@shared/schema";
@@ -377,6 +378,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { genderOptions } = useGenders();
+  // Dynamic lesson types (API-backed)
+  const { byKey, maxFocusAreasFor } = useLessonTypes();
 
   // Helper function to find athlete ID by name
   const findAthleteIdByName = (athleteName: string): string | null => {
@@ -1473,8 +1476,8 @@ function ManualBookingForm({
   );
 
   const toggleFocusArea = (area: string) => {
-    const lessonConfig = LESSON_TYPES[formData.lessonType as keyof typeof LESSON_TYPES] || { maxFocusAreas: 2 };
-    const maxFocusAreas = lessonConfig.maxFocusAreas;
+  const lt = byKey(formData.lessonType);
+  const maxFocusAreas = maxFocusAreasFor(lt);
 
     if (formData.focusAreas.includes(area)) {
       // Remove area
@@ -1485,10 +1488,9 @@ function ManualBookingForm({
     } else {
       // Add area with dynamic limit check
       if (formData.focusAreas.length >= maxFocusAreas) {
-        const lessonDuration = lessonConfig.duration || '30 minutes';
-        const limitMessage = lessonDuration.includes('30') 
-          ? "Limit reached: You can only choose up to 2 focus areas for 30-minute lessons."
-          : "Limit reached: You can only select up to 4 focus areas for a 1-hour session.";
+        const limitMessage = (lt && lt.duration >= 60)
+          ? "Limit reached: You can only select up to 4 focus areas for a 1-hour session."
+          : "Limit reached: You can only choose up to 2 focus areas for 30-minute lessons.";
 
         toast({
           title: "Focus Area Limit Reached",
@@ -1499,7 +1501,7 @@ function ManualBookingForm({
         return; // Don't add the area
       }
 
-      setFormData(prev => ({
+  setFormData(prev => ({
         ...prev,
         focusAreas: [...prev.focusAreas, area]
       }));
@@ -2070,8 +2072,9 @@ function ManualBookingForm({
                           checked={formData.focusAreas.includes(skillId)}
                           onCheckedChange={() => toggleFocusArea(skillId)}
                           disabled={(() => {
-                            const lessonConfig = LESSON_TYPES[formData.lessonType as keyof typeof LESSON_TYPES] || { maxFocusAreas: 2 };
-                            return !formData.focusAreas.includes(skillId) && formData.focusAreas.length >= lessonConfig.maxFocusAreas;
+                            const lt = byKey(formData.lessonType);
+                            const maxFocusAreas = maxFocusAreasFor(lt);
+                            return !formData.focusAreas.includes(skillId) && formData.focusAreas.length >= maxFocusAreas;
                           })()}
                         />
                         <Label 
@@ -2090,8 +2093,8 @@ function ManualBookingForm({
             <div className="mt-4">
               <p className="text-sm text-gray-500">
                 Selected: {formData.focusAreas.length}/{(() => {
-                  const lessonConfig = LESSON_TYPES[formData.lessonType as keyof typeof LESSON_TYPES] || { maxFocusAreas: 2 };
-                  return lessonConfig.maxFocusAreas;
+                  const lt = byKey(formData.lessonType);
+                  return maxFocusAreasFor(lt);
                 })()}
               </p>
               {formData.focusAreas.length > 0 && (

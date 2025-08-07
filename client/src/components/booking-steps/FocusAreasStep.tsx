@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useToast } from "@/hooks/use-toast";
 import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
-import { GYMNASTICS_EVENTS, LESSON_TYPES } from "@/lib/constants";
+import { GYMNASTICS_EVENTS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { AlertCircle, ChevronLeft, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 
 export function FocusAreasStep() {
   const { state, updateState } = useBookingFlow();
@@ -24,15 +25,10 @@ export function FocusAreasStep() {
   const selectedAreas = state.focusAreas || [];
   const lessonType = state.lessonType;
   
-  // Get focus area limit from lesson type
-  const getLessonTypeConfig = () => {
-    if (!lessonType) return { maxFocusAreas: 2, duration: '30 minutes' };
-    return LESSON_TYPES[lessonType as keyof typeof LESSON_TYPES] || { maxFocusAreas: 2, duration: '30 minutes' };
-  };
-  
-  const lessonConfig = getLessonTypeConfig();
-  const maxFocusAreas = lessonConfig.maxFocusAreas;
-  const lessonDuration = lessonConfig.duration;
+  const { data: lessonTypes, byKey, formatDuration, maxFocusAreasFor } = useLessonTypes();
+  const selectedLt = byKey(lessonType);
+  const maxFocusAreas = maxFocusAreasFor(selectedLt);
+  const lessonDuration = formatDuration(selectedLt?.duration) || '30 minutes';
 
   // Available apparatus options including Side Quests
   const apparatusOptions = [
@@ -50,7 +46,7 @@ export function FocusAreasStep() {
   useEffect(() => {
     // Auto-trim focus areas if lesson type changed and current selection exceeds limit
     if (selectedAreas.length > maxFocusAreas) {
-      const trimmedAreas = selectedAreas.slice(0, maxFocusAreas);
+  const trimmedAreas = selectedAreas.slice(0, maxFocusAreas);
       updateState({ focusAreas: trimmedAreas });
       setWarningMessage(`Focus areas automatically reduced to ${maxFocusAreas} due to lesson type change.`);
       setTimeout(() => setWarningMessage(''), 5000);
@@ -385,9 +381,12 @@ export function FocusAreasStep() {
 
 // Export validation function for use by parent components
 export const validateFocusAreas = (focusAreas: string[], lessonType: string) => {
-  const lessonConfig = LESSON_TYPES[lessonType as keyof typeof LESSON_TYPES] || { maxFocusAreas: 2, duration: '30 minutes' };
-  const maxFocusAreas = lessonConfig.maxFocusAreas;
-  const lessonDuration = lessonConfig.duration;
+  // Fallback logic without importing static LESSON_TYPES:
+  // 60-minute sessions allow up to 4 focus areas, 30-minute allow 2.
+  const hourKeys = new Set(["deep-dive", "partner-progression"]);
+  const isHour = hourKeys.has(lessonType) || /60/.test(lessonType);
+  const maxFocusAreas = isHour ? 4 : 2;
+  const lessonDuration = isHour ? '60 minutes' : '30 minutes';
 
   if (focusAreas.length === 0) {
     return { isValid: false, message: 'Please select at least one focus area before continuing.' };
