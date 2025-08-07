@@ -1940,8 +1940,6 @@ export class SupabaseStorage implements IStorage {
     if (lessonType.maxAthletes !== undefined) updateData.max_athletes = lessonType.maxAthletes;
     if (lessonType.isActive !== undefined) updateData.is_active = lessonType.isActive;
 
-    updateData.updated_at = new Date().toISOString();
-
     const { data, error } = await supabaseAdmin
       .from('lesson_types')
       .update(updateData)

@@ -168,8 +168,7 @@ export function AdminLessonTypeManager() {
       duration: (lessonType.duration || 30).toString(),
       isPrivate: lessonType.isPrivate ?? false,
       maxAthletes: (lessonType.maxAthletes || 1).toString(),
-      isActive: lessonType.isActive ?? true,
-      sortOrder: (lessonType.sortOrder || 0).toString()
+      isActive: lessonType.isActive ?? true
     });
   };
 
@@ -328,15 +327,6 @@ export function AdminLessonTypeManager() {
                   type="number"
                   value={formData.maxAthletes}
                   onChange={(e) => setFormData(prev => ({ ...prev, maxAthletes: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="sortOrder">Sort Order</Label>
-                <Input
-                  id="sortOrder"
-                  type="number"
-                  value={formData.sortOrder}
-                  onChange={(e) => setFormData(prev => ({ ...prev, sortOrder: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
