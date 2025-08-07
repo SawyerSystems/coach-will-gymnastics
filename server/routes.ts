@@ -4979,7 +4979,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedPosts = posts.map(post => ({
         ...post,
-        publishedAt: formatPublishedAtToPacific(post.publishedAt)
+        publishedAt: formatPublishedAtToPacific(post.published_at || post.publishedAt)
       }));
       console.log('✅ [ADMIN] Successfully retrieved blog posts:', formattedPosts.length);
       res.json(formattedPosts);
@@ -5004,7 +5004,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedPost = {
         ...post,
-        publishedAt: formatPublishedAtToPacific(post.publishedAt)
+        publishedAt: formatPublishedAtToPacific(post.published_at || post.publishedAt)
       };
       
       console.log(`Successfully returning blog post with ID ${id}`);
@@ -5064,7 +5064,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedTips = tips.map(tip => ({
         ...tip,
-        publishedAt: formatPublishedAtToPacific(tip.publishedAt)
+        publishedAt: formatPublishedAtToPacific(tip.published_at || tip.publishedAt)
       }));
       console.log('✅ [ADMIN] Successfully retrieved tips:', formattedTips.length);
       res.json(formattedTips);
@@ -5089,7 +5089,7 @@ setTimeout(async () => {
       // Format published_at timestamp to Pacific timezone
       const formattedTip = {
         ...tip,
-        publishedAt: formatPublishedAtToPacific(tip.publishedAt)
+        publishedAt: formatPublishedAtToPacific(tip.published_at || tip.publishedAt)
       };
       
       console.log(`Successfully returning tip with ID ${id}`);

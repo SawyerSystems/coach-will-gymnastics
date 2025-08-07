@@ -89,6 +89,18 @@ export function formatPublishedAtToPacific(publishedAt: string | Date): string {
   
   try {
     const date = typeof publishedAt === 'string' ? new Date(publishedAt) : publishedAt;
+    console.log('formatPublishedAtToPacific debug:', {
+      input: publishedAt,
+      inputType: typeof publishedAt,
+      parsedDate: date,
+      isValid: !isNaN(date.getTime())
+    });
+    
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date detected in formatPublishedAtToPacific:', publishedAt);
+      return 'Invalid Date';
+    }
+    
     return formatToPacificTime(date, {
       dateStyle: 'medium',
       timeStyle: 'short'
