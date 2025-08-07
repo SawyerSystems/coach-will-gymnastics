@@ -8005,84 +8005,51 @@ setTimeout(async () => {
   });
 
   // Lesson Types endpoints
+  // This route is commented out because there's another identical route below
+  // that uses the storage layer. Having two identical routes causes conflicts.
+  // The route at line ~8309 is the one that should be used.
+  /* 
   app.get("/api/lesson-types", async (req, res) => {
     try {
       console.log('🔍 [ADMIN] Getting lesson types data...');
       
-      // Fetch lesson types from the database
-      const { data: lessonTypes, error } = await supabaseAdmin
-        .from('lesson_types')
-        .select('*')
-        .order('id', { ascending: true });
+      // Use the storage layer instead of direct DB access to ensure consistent mapping
+      const lessonTypes = await storage.getAllLessonTypes();
       
-      if (error) {
-        console.error('❌ [ADMIN] Error fetching lesson types:', error);
-        return res.status(500).json({ error: 'Failed to fetch lesson types' });
-      }
-      
-      // Transform data to match the client's expected format
-      const transformedLessonTypes = lessonTypes.map(lt => ({
-        id: lt.id,
-        name: lt.name,
-        description: lt.description,
-        price: parseFloat(lt.total_price || lt.price || '0'),
-        duration: lt.duration_minutes,
-        isPrivate: lt.is_private,
-        maxAthletes: lt.max_athletes || 1,
-        isActive: lt.is_active,
-        sortOrder: lt.sort_order
-      }));
-      
-      console.log('✅ [ADMIN] Successfully retrieved lesson types:', transformedLessonTypes.length);
-      res.json(transformedLessonTypes);
+      console.log('✅ [ADMIN] Successfully retrieved lesson types:', lessonTypes.length);
+      res.json(lessonTypes);
     } catch (error: any) {
       console.error('❌ [ADMIN] Error fetching lesson types:', error);
       res.status(500).json({ error: 'Failed to fetch lesson types' });
     }
   });
+  */
 
   // Get a specific lesson type by ID
+  // This route is commented out because there's another identical route below
+  // that uses the storage layer. Having two identical routes causes conflicts.
+  // The route at line ~8320 is the one that should be used.
+  /*
   app.get("/api/lesson-types/:id", async (req, res) => {
     try {
       const { id } = req.params;
       console.log(`🔍 [ADMIN] Getting lesson type data for ID: ${id}...`);
       
-      // Fetch lesson type from the database
-      const { data: lessonType, error } = await supabaseAdmin
-        .from('lesson_types')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (error) {
-        console.error(`❌ [ADMIN] Error fetching lesson type with ID ${id}:`, error);
-        return res.status(500).json({ error: 'Failed to fetch lesson type' });
-      }
+      // Use the storage layer instead of direct DB access to ensure consistent mapping
+      const lessonType = await storage.getLessonType(parseInt(id));
       
       if (!lessonType) {
         return res.status(404).json({ error: 'Lesson type not found' });
       }
       
-      // Transform data to match the client's expected format
-      const transformedLessonType = {
-        id: lessonType.id,
-        name: lessonType.name,
-        description: lessonType.description,
-        price: parseFloat(lessonType.total_price || lessonType.price || '0'),
-        duration: lessonType.duration_minutes,
-        isPrivate: lessonType.is_private,
-        maxAthletes: lessonType.max_athletes || 1,
-        isActive: lessonType.is_active,
-        sortOrder: lessonType.sort_order
-      };
-      
-      console.log(`✅ [ADMIN] Successfully retrieved lesson type: ${transformedLessonType.name}`);
-      res.json(transformedLessonType);
+      console.log(`✅ [ADMIN] Successfully retrieved lesson type: ${lessonType.name}`);
+      res.json(lessonType);
     } catch (error: any) {
       console.error('❌ [ADMIN] Error fetching lesson type:', error);
       res.status(500).json({ error: 'Failed to fetch lesson type' });
     }
   });
+  */
   
   // Focus Areas endpoints
   app.get("/api/focus-areas", async (req, res) => {
@@ -8313,6 +8280,107 @@ setTimeout(async () => {
     } catch (error) {
       logger.error('Error fetching lesson types:', error);
       return res.status(500).json({ message: 'Failed to fetch lesson types' });
+    }
+  });
+
+  // Get single lesson type
+  app.get('/api/lesson-types/:id', async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid lesson type ID' });
+      }
+
+      const lessonType = await storage.getLessonType(id);
+      if (!lessonType) {
+        return res.status(404).json({ message: 'Lesson type not found' });
+      }
+
+      return res.status(200).json(lessonType);
+    } catch (error) {
+      logger.error('Error fetching lesson type:', error);
+      return res.status(500).json({ message: 'Failed to fetch lesson type' });
+    }
+  });
+
+  // Create lesson type (admin only)
+  app.post('/api/admin/lesson-types', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { name, description, price, reservationFee, keyPoints, duration, isPrivate, maxAthletes, isActive } = req.body;
+
+      if (!name || !duration || price === undefined) {
+        return res.status(400).json({ message: 'Name, duration, and price are required' });
+      }
+
+      const lessonType = await storage.createLessonType({
+        name,
+        description,
+        price: parseFloat(price),
+        reservationFee: parseFloat(reservationFee || '0'),
+        keyPoints: keyPoints || [],
+        duration: parseInt(duration),
+        isPrivate: Boolean(isPrivate),
+        maxAthletes: parseInt(maxAthletes || '1'),
+        isActive: isActive !== false
+      });
+
+      return res.status(201).json(lessonType);
+    } catch (error) {
+      logger.error('Error creating lesson type:', error);
+      return res.status(500).json({ message: 'Failed to create lesson type' });
+    }
+  });
+
+  // Update lesson type (admin only)
+  app.put('/api/admin/lesson-types/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid lesson type ID' });
+      }
+
+      const { name, description, price, reservationFee, keyPoints, duration, isPrivate, maxAthletes, isActive } = req.body;
+
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (price !== undefined) updateData.price = parseFloat(price);
+      if (reservationFee !== undefined) updateData.reservationFee = parseFloat(reservationFee);
+      if (keyPoints !== undefined) updateData.keyPoints = keyPoints;
+      if (duration !== undefined) updateData.duration = parseInt(duration);
+      if (isPrivate !== undefined) updateData.isPrivate = Boolean(isPrivate);
+      if (maxAthletes !== undefined) updateData.maxAthletes = parseInt(maxAthletes);
+      if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+
+      const lessonType = await storage.updateLessonType(id, updateData);
+      if (!lessonType) {
+        return res.status(404).json({ message: 'Lesson type not found' });
+      }
+
+      return res.status(200).json(lessonType);
+    } catch (error) {
+      logger.error('Error updating lesson type:', error);
+      return res.status(500).json({ message: 'Failed to update lesson type' });
+    }
+  });
+
+  // Delete lesson type (admin only)
+  app.delete('/api/admin/lesson-types/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid lesson type ID' });
+      }
+
+      const success = await storage.deleteLessonType(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Lesson type not found' });
+      }
+
+      return res.status(200).json({ message: 'Lesson type deleted successfully' });
+    } catch (error) {
+      logger.error('Error deleting lesson type:', error);
+      return res.status(500).json({ message: 'Failed to delete lesson type' });
     }
   });
 

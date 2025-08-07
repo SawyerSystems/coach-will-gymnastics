@@ -45,6 +45,10 @@ export interface IStorage {
 
   // Lesson Types
   getAllLessonTypes(): Promise<any[]>;
+  getLessonType(id: number): Promise<any | undefined>;
+  createLessonType(lessonType: any): Promise<any>;
+  updateLessonType(id: number, lessonType: any): Promise<any | undefined>;
+  deleteLessonType(id: number): Promise<boolean>;
   
   // Athletes
   getAllAthletes(): Promise<Athlete[]>;
@@ -254,6 +258,8 @@ export class MemStorage implements IStorage {
         name: "Quick Journey",
         description: "30-minute private session",
         price: 40,
+        reservationFee: 10,
+        keyPoints: ["Skill assessment", "Quick corrections", "Confidence building"],
         duration: 30,
         isPrivate: true,
         maxAthletes: 1,
@@ -263,13 +269,38 @@ export class MemStorage implements IStorage {
         id: 2,
         name: "Dual Quest",
         description: "30-minute semi-private session",
-        price: 50, 
+        price: 50,
+        reservationFee: 15,
+        keyPoints: ["Partner training", "Social skills", "Shared experience"],
         duration: 30,
         isPrivate: false,
         maxAthletes: 2,
         isActive: true
       }
     ];
+  }
+
+  async getLessonType(id: number): Promise<any | undefined> {
+    const lessonTypes = await this.getAllLessonTypes();
+    return lessonTypes.find(lt => lt.id === id);
+  }
+
+  async createLessonType(lessonType: any): Promise<any> {
+    // Mock implementation for MemStorage
+    const newId = Math.max(...(await this.getAllLessonTypes()).map(lt => lt.id)) + 1;
+    return { ...lessonType, id: newId };
+  }
+
+  async updateLessonType(id: number, lessonType: any): Promise<any | undefined> {
+    // Mock implementation for MemStorage
+    const existing = await this.getLessonType(id);
+    if (!existing) return undefined;
+    return { ...existing, ...lessonType };
+  }
+
+  async deleteLessonType(id: number): Promise<boolean> {
+    // Mock implementation for MemStorage
+    return true;
   }
   
   async getAllWaivers(): Promise<Waiver[]> {
@@ -1814,16 +1845,141 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
 
-    return data.map(lt => ({
-      id: lt.id,
-      name: lt.name,
-      description: lt.description,
-      price: parseFloat(lt.total_price || '0'),
-      duration: lt.duration_minutes,
-      isPrivate: lt.is_private,
-      maxAthletes: lt.max_athletes || (lt.is_private ? 1 : 2),
-      isActive: lt.is_active !== false // Default to true if not set
-    }));
+    console.log('[DEBUG] Raw lesson types data from DB:', JSON.stringify(data, null, 2));
+
+    return data.map(lt => {
+      const mapped = {
+        id: lt.id,
+        name: lt.name,
+        description: lt.description,
+        price: parseFloat(lt.total_price || '0'),
+        reservationFee: parseFloat(lt.reservation_fee || '0'),
+        keyPoints: lt.key_points || [],
+        duration: lt.duration_minutes,
+        isPrivate: lt.is_private,
+        maxAthletes: lt.max_athletes || (lt.is_private ? 1 : 2),
+        isActive: lt.is_active !== false // Default to true if not set
+      };
+      console.log('[DEBUG] Mapped lesson type:', JSON.stringify(mapped, null, 2));
+      return mapped;
+    });
+  }
+
+  async getLessonType(id: number): Promise<any | undefined> {
+    const { data, error } = await supabaseAdmin
+      .from('lesson_types')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching lesson type:', error);
+      return undefined;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.total_price || '0'),
+      reservationFee: parseFloat(data.reservation_fee || '0'),
+      keyPoints: data.key_points || [],
+      duration: data.duration_minutes,
+      isPrivate: data.is_private,
+      maxAthletes: data.max_athletes || (data.is_private ? 1 : 2),
+      isActive: data.is_active !== false
+    };
+  }
+
+  async createLessonType(lessonType: any): Promise<any> {
+    const { data, error } = await supabaseAdmin
+      .from('lesson_types')
+      .insert({
+        name: lessonType.name,
+        description: lessonType.description,
+        total_price: lessonType.price,
+        reservation_fee: lessonType.reservationFee || 0,
+        key_points: lessonType.keyPoints || [],
+        duration_minutes: lessonType.duration,
+        is_private: lessonType.isPrivate,
+        max_athletes: lessonType.maxAthletes,
+        is_active: lessonType.isActive !== false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating lesson type:', error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.total_price || '0'),
+      reservationFee: parseFloat(data.reservation_fee || '0'),
+      keyPoints: data.key_points || [],
+      duration: data.duration_minutes,
+      isPrivate: data.is_private,
+      maxAthletes: data.max_athletes,
+      isActive: data.is_active
+    };
+  }
+
+  async updateLessonType(id: number, lessonType: any): Promise<any | undefined> {
+    const updateData: any = {};
+    
+    if (lessonType.name !== undefined) updateData.name = lessonType.name;
+    if (lessonType.description !== undefined) updateData.description = lessonType.description;
+    if (lessonType.price !== undefined) updateData.total_price = lessonType.price;
+    if (lessonType.reservationFee !== undefined) updateData.reservation_fee = lessonType.reservationFee;
+    if (lessonType.keyPoints !== undefined) updateData.key_points = lessonType.keyPoints;
+    if (lessonType.duration !== undefined) updateData.duration_minutes = lessonType.duration;
+    if (lessonType.isPrivate !== undefined) updateData.is_private = lessonType.isPrivate;
+    if (lessonType.maxAthletes !== undefined) updateData.max_athletes = lessonType.maxAthletes;
+    if (lessonType.isActive !== undefined) updateData.is_active = lessonType.isActive;
+
+    updateData.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+      .from('lesson_types')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating lesson type:', error);
+      return undefined;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.total_price || '0'),
+      reservationFee: parseFloat(data.reservation_fee || '0'),
+      keyPoints: data.key_points || [],
+      duration: data.duration_minutes,
+      isPrivate: data.is_private,
+      maxAthletes: data.max_athletes,
+      isActive: data.is_active
+    };
+  }
+
+  async deleteLessonType(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('lesson_types')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting lesson type:', error);
+      return false;
+    }
+
+    return true;
   }
 
   // Athletes
