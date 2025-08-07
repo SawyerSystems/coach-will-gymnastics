@@ -52,23 +52,36 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
     },
   });
 
-  // Helper to format date and time
-  const formatSessionDateTime = (sessionDate: string): 'TBD' | { date: string; time: string } => {
+  // Helper to format date and time (combine separate date & time fields without timezone shifts)
+  const formatSessionDateTime = (sessionDate: string, sessionTime: string): 'TBD' | { date: string; time: string } => {
     if (!sessionDate) return 'TBD';
-    
+
     try {
-      const date = new Date(sessionDate);
-      return {
-        date: date.toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
-        }),
-        time: date.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
+      // Parse date components manually to avoid implicit UTC/local conversions on bare YYYY-MM-DD
+      const [year, month, day] = sessionDate.split('-').map(Number);
+      const dateOnly = new Date(year, (month || 1) - 1, day || 1);
+
+      // If time is provided (HH:MM or HH:MM:SS), construct a Date including time for locale formatting
+      let timeString = 'Time TBD';
+      if (sessionTime && sessionTime !== 'TBD') {
+        const [hhRaw, mmRaw] = sessionTime.split(':');
+        const hours = Number(hhRaw);
+        const minutes = Number(mmRaw);
+        const dateWithTime = new Date(year, (month || 1) - 1, day || 1, hours, minutes);
+        timeString = dateWithTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
           minute: '2-digit',
-          hour12: true 
-        })
+          hour12: true
+        });
+      }
+
+      return {
+        date: dateOnly.toLocaleDateString('en-US', {
+          month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }),
+        time: timeString
       };
     } catch {
       return { date: 'Invalid Date', time: 'Invalid Time' };
@@ -230,7 +243,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                 <div className="space-y-4">
                   {sessions.map((session) => {
                     // Format the session date and time
-                    const formattedDateTime = formatSessionDateTime(session.sessionDate);
+                    const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
                     
                     return (
                       <div 
@@ -332,7 +345,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
               <div className="space-y-4">
                 {sessions.map((session) => {
                   // Format the session date and time
-                  const formattedDateTime = formatSessionDateTime(session.sessionDate);
+                  const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
                   
                   return (
                     <div 
