@@ -4972,6 +4972,10 @@ setTimeout(async () => {
     try {
       console.log('🔍 [ADMIN] Getting all blog posts...');
       const posts = await storage.getAllBlogPosts();
+      
+      // Log the IDs for diagnostic purposes
+      console.log('📊 Blog post IDs available:', posts.map(p => p.id).join(', '));
+      
       // Format published_at timestamp to Pacific timezone
       const formattedPosts = posts.map(post => ({
         ...post,
@@ -4988,18 +4992,25 @@ setTimeout(async () => {
   app.get("/api/blog-posts/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Handling request for blog post ID: ${id}`);
+      
       const post = await storage.getBlogPost(id);
       if (!post) {
+        console.log(`Blog post with ID ${id} not found`);
         res.status(404).json({ message: "Blog post not found" });
         return;
       }
+      
       // Format published_at timestamp to Pacific timezone
       const formattedPost = {
         ...post,
         publishedAt: formatPublishedAtToPacific(post.publishedAt)
       };
+      
+      console.log(`Successfully returning blog post with ID ${id}`);
       res.json(formattedPost);
     } catch (error) {
+      console.error(`Error in /api/blog-posts/${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to fetch blog post" });
     }
   });
@@ -5046,6 +5057,10 @@ setTimeout(async () => {
     try {
       console.log('🔍 [ADMIN] Getting all tips...');
       const tips = await storage.getAllTips();
+      
+      // Log the IDs for diagnostic purposes
+      console.log('📊 Tip IDs available:', tips.map(t => t.id).join(', '));
+      
       // Format published_at timestamp to Pacific timezone
       const formattedTips = tips.map(tip => ({
         ...tip,
@@ -5062,18 +5077,25 @@ setTimeout(async () => {
   app.get("/api/tips/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Handling request for tip ID: ${id}`);
+      
       const tip = await storage.getTip(id);
       if (!tip) {
+        console.log(`Tip with ID ${id} not found`);
         res.status(404).json({ message: "Tip not found" });
         return;
       }
+      
       // Format published_at timestamp to Pacific timezone
       const formattedTip = {
         ...tip,
         publishedAt: formatPublishedAtToPacific(tip.publishedAt)
       };
+      
+      console.log(`Successfully returning tip with ID ${id}`);
       res.json(formattedTip);
     } catch (error) {
+      console.error(`Error in /api/tips/${req.params.id}:`, error);
       res.status(500).json({ message: "Failed to fetch tip" });
     }
   });

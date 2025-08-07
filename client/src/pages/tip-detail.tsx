@@ -15,13 +15,23 @@ export default function TipDetail() {
   const { data: tip, isLoading, error } = useQuery<Tip>({
     queryKey: ['/api/tips', id],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/tips/${id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch tip');
+      console.log(`Fetching tip with ID: ${id}`);
+      try {
+        const response = await apiRequest('GET', `/api/tips/${id}`);
+        if (!response.ok) {
+          console.error(`Error fetching tip: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch tip: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Tip data received:', data);
+        return data;
+      } catch (error) {
+        console.error('Tip fetch error:', error);
+        throw error;
       }
-      return response.json();
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: 1
   });
 
   if (isLoading) {

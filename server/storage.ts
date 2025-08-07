@@ -2919,18 +2919,71 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getBlogPost(id: number): Promise<BlogPost | undefined> {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      console.log(`🔍 Fetching blog post with ID: ${id}`);
+      
+      // Try with direct SQL query to debug the issue
+      const { data: rawData, error: sqlError } = await supabase
+        .rpc('get_blog_post_by_id', { post_id: id });
+        
+      if (sqlError) {
+        console.error(`❌ SQL error fetching blog post with ID ${id}:`, sqlError);
+        
+        // Fallback to standard query
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-    if (error) {
-      console.error('Error fetching blog post:', error);
+        if (error) {
+          console.error(`❌ Error fetching blog post with ID ${id}:`, error);
+          
+          // Try the fallback approach when direct query fails
+          console.log(`🔄 Trying fallback with getAllBlogPosts for ID ${id}`);
+          const allPosts = await this.getAllBlogPosts();
+          const foundPost = allPosts.find(p => p.id === id);
+          
+          if (!foundPost) {
+            console.log(`⚠️ No blog post found with ID ${id} in all posts`);
+            return undefined;
+          }
+          
+          console.log(`✅ Successfully found blog post with ID ${id} in all posts`);
+          return foundPost;
+        }
+
+        if (!data) {
+          console.log(`⚠️ No blog post found with ID ${id}`);
+          return undefined;
+        }
+        
+        console.log(`✅ Successfully fetched blog post with ID ${id} (standard query)`);
+        return data;
+      }
+      
+      if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        console.log(`⚠️ No blog post found with ID ${id} (SQL query)`);
+        
+        // Try alternative approach by getting all posts and finding the one we want
+        const allPosts = await this.getAllBlogPosts();
+        const foundPost = allPosts.find(p => p.id === id);
+        
+        if (!foundPost) {
+          console.log(`⚠️ No blog post found with ID ${id} in all posts`);
+          return undefined;
+        }
+        
+        console.log(`✅ Successfully found blog post with ID ${id} in all posts`);
+        return foundPost;
+      }
+      
+      console.log(`✅ Successfully fetched blog post with ID ${id} (SQL query)`);
+      return rawData[0];
+    } catch (error) {
+      console.error(`❌ Unexpected error fetching blog post with ID ${id}:`, error);
       return undefined;
     }
-
-    return data || undefined;
   }
 
   async createBlogPost(insertPost: InsertBlogPost): Promise<BlogPost> {
@@ -3008,18 +3061,71 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getTip(id: number): Promise<Tip | undefined> {
-    const { data, error } = await supabase
-      .from('tips')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      console.log(`🔍 Fetching tip with ID: ${id}`);
+      
+      // Try with direct SQL query to debug the issue
+      const { data: rawData, error: sqlError } = await supabase
+        .rpc('get_tip_by_id', { tip_id: id });
+        
+      if (sqlError) {
+        console.error(`❌ SQL error fetching tip with ID ${id}:`, sqlError);
+        
+        // Fallback to standard query
+        const { data, error } = await supabase
+          .from('tips')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-    if (error) {
-      console.error('Error fetching tip:', error);
+        if (error) {
+          console.error(`❌ Error fetching tip with ID ${id}:`, error);
+          
+          // Try the fallback approach when direct query fails
+          console.log(`🔄 Trying fallback with getAllTips for ID ${id}`);
+          const allTips = await this.getAllTips();
+          const foundTip = allTips.find(t => t.id === id);
+          
+          if (!foundTip) {
+            console.log(`⚠️ No tip found with ID ${id} in all tips`);
+            return undefined;
+          }
+          
+          console.log(`✅ Successfully found tip with ID ${id} in all tips`);
+          return foundTip;
+        }
+
+        if (!data) {
+          console.log(`⚠️ No tip found with ID ${id}`);
+          return undefined;
+        }
+        
+        console.log(`✅ Successfully fetched tip with ID ${id} (standard query)`);
+        return data;
+      }
+      
+      if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+        console.log(`⚠️ No tip found with ID ${id} (SQL query)`);
+        
+        // Try alternative approach by getting all tips and finding the one we want
+        const allTips = await this.getAllTips();
+        const foundTip = allTips.find(t => t.id === id);
+        
+        if (!foundTip) {
+          console.log(`⚠️ No tip found with ID ${id} in all tips`);
+          return undefined;
+        }
+        
+        console.log(`✅ Successfully found tip with ID ${id} in all tips`);
+        return foundTip;
+      }
+      
+      console.log(`✅ Successfully fetched tip with ID ${id} (SQL query)`);
+      return rawData[0];
+    } catch (error) {
+      console.error(`❌ Unexpected error fetching tip with ID ${id}:`, error);
       return undefined;
     }
-
-    return data || undefined;
   }
 
   async createTip(insertTip: InsertTip): Promise<Tip> {

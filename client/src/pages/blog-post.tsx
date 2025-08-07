@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,14 +8,31 @@ import { ArrowLeft, Calendar, User, Clock } from "lucide-react";
 import { Link } from "wouter";
 import type { BlogPost } from "@shared/schema";
 import { getDateField } from "@/lib/date-utils";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function BlogPostPage() {
-  const [match, params] = useRoute("/blog/:id");
-  const id = params?.id;
+  const { id } = useParams();
 
   const { data: post, isLoading, error } = useQuery<BlogPost>({
-    queryKey: [`/api/blog-posts/${id}`],
-    enabled: !!id
+    queryKey: ['/api/blog-posts', id],
+    queryFn: async () => {
+      console.log(`Fetching blog post with ID: ${id}`);
+      try {
+        const response = await apiRequest('GET', `/api/blog-posts/${id}`);
+        if (!response.ok) {
+          console.error(`Error fetching blog post: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch blog post: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Blog post data received:', data);
+        return data;
+      } catch (error) {
+        console.error('Blog post fetch error:', error);
+        throw error;
+      }
+    },
+    enabled: !!id,
+    retry: 1
   });
 
   if (isLoading) {
