@@ -50,6 +50,8 @@ const initialFormData: LessonTypeFormData = {
 };
 
 export function AdminLessonTypeManager() {
+  console.log('AdminLessonTypeManager component mounting...');
+  
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<LessonTypeFormData>(initialFormData);
@@ -60,10 +62,15 @@ export function AdminLessonTypeManager() {
   const { data: lessonTypes = [], isLoading, error } = useQuery<LessonType[]>({
     queryKey: ['/api/lesson-types'],
     queryFn: async () => {
+      console.log('Fetching lesson types...');
       const response = await apiRequest('GET', '/api/lesson-types');
-      return response.json();
+      const data = await response.json();
+      console.log('Lesson types data:', data);
+      return data;
     }
   });
+
+  console.log('AdminLessonTypeManager render - isLoading:', isLoading, 'error:', error, 'lessonTypes:', lessonTypes);
 
   const createMutation = useMutation({
     mutationFn: async (data: LessonTypeFormData) => {

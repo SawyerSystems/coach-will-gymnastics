@@ -9,6 +9,7 @@ import {
   Clock,
   DollarSign,
   FileText,
+  GraduationCap,
   LogOut,
   MessageSquare,
   Settings,
@@ -90,6 +91,11 @@ export function AdminSidebar({
       id: 'content',
       label: 'Content',
       icon: <BookOpen className="h-5 w-5" />
+    },
+    {
+      id: 'lesson-types',
+      label: 'Lesson Types',
+      icon: <GraduationCap className="h-5 w-5" />
     },
     {
       id: 'schedule',
