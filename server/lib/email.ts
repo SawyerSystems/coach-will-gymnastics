@@ -102,6 +102,10 @@ interface SendEmailOptions<T extends EmailType> {
 export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }: SendEmailOptions<T>) {
   // Get Resend API key from environment
   const resendApiKey = process.env.RESEND_API_KEY;
+  if (!to) {
+    console.error(`[EMAIL][${type}] Aborting send: empty 'to' address`, { dataPreview: Object.keys(data || {}) });
+    return;
+  }
   
   if (!resendApiKey) {
     console.error('RESEND_API_KEY not found in environment variables');
@@ -116,6 +120,8 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
       });
       return;
     }
+  // In non-development environments, emit structured log for alerting
+  console.error(`[EMAIL][${type}] Cannot send email in non-development environment - missing RESEND_API_KEY`);
     throw new Error('RESEND_API_KEY is required for sending emails');
   }
 

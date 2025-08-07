@@ -4937,24 +4937,35 @@ setTimeout(async () => {
       
       // Send confirmation email
       try {
-        const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
-        const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }) : 'Unknown Date';
-        
-        await sendSessionConfirmation(
-          booking.parentEmail || '',
-          parentName,
-          booking.athlete1Name || 'Athlete',
-          sessionDate,
-          booking.preferredTime || 'TBD'
-        );
-        console.log(`Manual confirmation email sent for booking ${bookingId}`);
+        const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+        const rawDate = booking.preferredDate || booking.preferred_date;
+        let sessionDate = 'Unknown Date';
+        if (rawDate) {
+          try {
+            sessionDate = new Date(rawDate).toLocaleDateString('en-US', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+          } catch (e) {
+            console.warn(`[EMAIL][SESSION-CONFIRM] Failed to format date '${rawDate}' for booking ${bookingId}:`, e);
+            sessionDate = rawDate;
+          }
+        }
+        const toEmail = booking.parentEmail || booking.parent_email || '';
+        if (!toEmail) {
+          console.error(`[EMAIL][SESSION-CONFIRM] Skipping send - no parent email for booking ${bookingId}`);
+        } else {
+            console.log(`[EMAIL][SESSION-CONFIRM] Sending manual confirmation -> to:${toEmail} booking:${bookingId} date:${sessionDate} time:${booking.preferredTime || booking.preferred_time || 'TBD'}`);
+            await sendSessionConfirmation(
+              toEmail,
+              parentName,
+              booking.athlete1Name || 'Athlete',
+              sessionDate,
+              booking.preferredTime || booking.preferred_time || 'TBD'
+            );
+            console.log(`[EMAIL][SESSION-CONFIRM] ✅ Sent manual confirmation for booking ${bookingId}`);
+        }
       } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError);
+        console.error(`[EMAIL][SESSION-CONFIRM] Failed sending manual confirmation for booking ${bookingId}:`, emailError);
       }
 
       res.json({ 

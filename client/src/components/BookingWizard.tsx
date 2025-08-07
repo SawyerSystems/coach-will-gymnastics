@@ -14,7 +14,8 @@ import { PaymentStep } from "./booking-steps/PaymentStep";
 import { SafetyStep } from "./booking-steps/SafetyStep";
 import { ScheduleStep } from "./booking-steps/ScheduleStep";
 import { WaiverStep } from "./booking-steps/WaiverStep";
-import { BookingFlowDebugger } from "./BookingFlowDebugger";
+// Debug overlay (temporarily disabled in production)
+// import { BookingFlowDebugger } from "./BookingFlowDebugger";
 
 interface BookingWizardProps {
   onClose: () => void;
@@ -269,7 +270,11 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <BookingFlowDebugger />
+      {/* Booking flow debug overlay hidden */}
+      {process.env.NODE_ENV === 'development' && false && (
+        // <BookingFlowDebugger />
+        <></>
+      )}
       <div className="p-6 pb-4 relative">
         <Button
           variant="ghost"
