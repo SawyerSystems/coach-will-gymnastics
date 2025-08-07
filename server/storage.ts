@@ -2903,7 +2903,7 @@ export class SupabaseStorage implements IStorage {
       const { data, error } = await supabaseAdmin
         .from('blog_posts')
         .select('*')
-        .order('published_at', { ascending: true });
+        .order('published_at', { ascending: false });
 
       if (error) {
         console.error('❌ Supabase error fetching blog posts:', error);
@@ -3045,7 +3045,7 @@ export class SupabaseStorage implements IStorage {
       const { data, error } = await supabaseAdmin
         .from('tips')
         .select('*')
-        .order('published_at', { ascending: true });
+        .order('published_at', { ascending: false });
 
       if (error) {
         console.error('❌ Supabase error fetching tips:', error);
