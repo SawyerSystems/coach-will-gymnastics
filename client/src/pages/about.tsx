@@ -434,8 +434,7 @@ export default function About() {
             <Link href="/contact">
               <Button 
                 size="lg"
-                variant="outline"
-                className="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-purple-600 transform transition-all duration-200 shadow-lg"
+                className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transform transition-all duration-200 shadow-lg"
               >
                 Ask Questions
               </Button>
