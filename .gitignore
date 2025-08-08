@@ -164,3 +164,6 @@ run-sql-*
 *database-credentials*
 *-secrets.*
 test-connection-*
+.venv/
+env/
+Tests/*cookies*.txt
