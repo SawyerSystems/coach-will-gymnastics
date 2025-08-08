@@ -9,6 +9,7 @@ export interface CreateAthletePayload {
   gender?: string;
   allergies?: string;
   experience: 'beginner' | 'intermediate' | 'advanced';
+  isGymMember?: boolean;
 }
 
 export function useCreateAthlete() {

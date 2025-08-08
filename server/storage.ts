@@ -1819,7 +1819,7 @@ export class SupabaseStorage implements IStorage {
   async getParentAthletes(parentId: number): Promise<Athlete[]> {
     const { data, error } = await supabaseAdmin
       .from('athletes')
-      .select('*')
+  .select('*')
       .eq('parent_id', parentId)
       .order('first_name', { ascending: true });
 
@@ -1842,6 +1842,7 @@ export class SupabaseStorage implements IStorage {
       allergies: athlete.allergies,
       experience: athlete.experience,
       photo: athlete.photo,
+  isGymMember: athlete.is_gym_member ?? false,
       createdAt: new Date(athlete.created_at),
       updatedAt: new Date(athlete.updated_at),
       latestWaiverId: athlete.latest_waiver_id || null,
@@ -2023,6 +2024,7 @@ export class SupabaseStorage implements IStorage {
       allergies: athlete.allergies,
       experience: athlete.experience,
       photo: athlete.photo,
+  isGymMember: athlete.is_gym_member ?? false,
       createdAt: new Date(athlete.created_at),
       updatedAt: new Date(athlete.updated_at),
       latestWaiverId: athlete.latest_waiver_id || null,
@@ -2057,6 +2059,7 @@ export class SupabaseStorage implements IStorage {
       allergies: athlete.allergies,
       experience: athlete.experience,
       photo: athlete.photo,
+  isGymMember: athlete.is_gym_member ?? false,
       createdAt: new Date(athlete.created_at),
       updatedAt: new Date(athlete.updated_at),
       latestWaiverId: athlete.latest_waiver_id,
@@ -2098,6 +2101,7 @@ export class SupabaseStorage implements IStorage {
       allergies: data.allergies,
       experience: data.experience,
       photo: data.photo,
+  isGymMember: data.is_gym_member ?? false,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
       latestWaiverId: data.latest_waiver_id,
@@ -2123,7 +2127,8 @@ export class SupabaseStorage implements IStorage {
       // gender: insertAthlete.gender || null, // Temporarily disabled until column is added
       allergies: insertAthlete.allergies,
       experience: insertAthlete.experience,
-      photo: insertAthlete.photo || null
+  photo: insertAthlete.photo || null,
+  is_gym_member: (insertAthlete as any).isGymMember ?? false,
     };
 
     // Use supabaseAdmin to bypass RLS when creating athletes from admin interface
@@ -2167,6 +2172,7 @@ export class SupabaseStorage implements IStorage {
       allergies: data.allergies,
       experience: data.experience,
       photo: data.photo,
+  isGymMember: data.is_gym_member ?? false,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
       latestWaiverId: data.latest_waiver_id || null,
@@ -2189,6 +2195,7 @@ export class SupabaseStorage implements IStorage {
     if (updateData.allergies !== undefined) dbUpdate.allergies = updateData.allergies;
     if (updateData.experience !== undefined) dbUpdate.experience = updateData.experience;
     if (updateData.photo !== undefined) dbUpdate.photo = updateData.photo;
+  if ((updateData as any).isGymMember !== undefined) dbUpdate.is_gym_member = (updateData as any).isGymMember;
     if (updateData.latestWaiverId !== undefined) dbUpdate.latest_waiver_id = updateData.latestWaiverId;
     if (updateData.waiverStatus !== undefined) dbUpdate.waiver_status = updateData.waiverStatus;
     if (updateData.waiverSigned !== undefined) dbUpdate.waiver_signed = updateData.waiverSigned;
@@ -2229,6 +2236,7 @@ export class SupabaseStorage implements IStorage {
       allergies: data.allergies,
       experience: data.experience,
       photo: data.photo,
+  isGymMember: data.is_gym_member ?? false,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
       latestWaiverId: data.latest_waiver_id || null,
@@ -2839,6 +2847,67 @@ export class SupabaseStorage implements IStorage {
     }
 
     console.log(`[STORAGE] Successfully updated booking attendance status to "${attendanceStatus}" for ID ${id}`);
+
+    // When completed, compute gym payout owed per athlete exactly-once
+    if (attendanceStatus === AttendanceStatusEnum.COMPLETED) {
+      try {
+        // Fetch booking_athletes rows for this booking
+        const { data: baRows, error: baErr } = await supabaseAdmin
+          .from('booking_athletes')
+          .select('id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_owed_cents, gym_payout_override_cents, gym_payout_computed_at')
+          .eq('booking_id', id);
+        if (baErr) {
+          console.error('[PAYOUT] Error loading booking_athletes for payout:', baErr);
+        } else if (baRows && baRows.length > 0) {
+          const nowIso = new Date().toISOString();
+          for (const row of baRows) {
+            // Idempotency: skip if already computed or override present
+            if (row.gym_payout_computed_at || row.gym_payout_owed_cents != null) {
+              continue;
+            }
+            const isMember = !!row.gym_member_at_booking;
+            const duration = row.duration_minutes ?? null;
+            let rateCents: number | null = null;
+            if (row.gym_rate_applied_cents != null) {
+              rateCents = row.gym_rate_applied_cents;
+            } else if (duration != null) {
+              // Resolve effective-dated rate for now()
+              const { data: rate } = await supabaseAdmin
+                .from('gym_payout_rates')
+                .select('rate_cents')
+                .eq('duration_minutes', duration)
+                .eq('is_member', isMember)
+                .lte('effective_from', nowIso)
+                .or('effective_to.is.null,effective_to.gte.' + nowIso)
+                .order('effective_from', { ascending: false })
+                .limit(1)
+                .single();
+              rateCents = rate?.rate_cents ?? null;
+            }
+
+            const owed = row.gym_payout_override_cents ?? rateCents ?? null;
+            if (owed != null) {
+              const { error: updErr } = await supabaseAdmin
+                .from('booking_athletes')
+                .update({
+                  gym_rate_applied_cents: rateCents ?? row.gym_rate_applied_cents ?? null,
+                  gym_payout_owed_cents: owed,
+                  gym_payout_computed_at: nowIso,
+                })
+                .eq('id', row.id);
+              if (updErr) {
+                console.error('[PAYOUT] Failed to set owed for booking_athletes id', row.id, updErr);
+              }
+            } else {
+              console.warn('[PAYOUT] No rate found for booking_athletes id', row.id, { isMember, duration });
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[PAYOUT] Exception computing payouts:', e);
+      }
+    }
+
     return booking ? this.mapBookingFromDb(booking) : undefined;
   }
 
@@ -4692,6 +4761,7 @@ export class SupabaseStorage implements IStorage {
           createdAt: athlete.created_at || null,
           updatedAt: athlete.updated_at || null,
           gender: athlete.gender || null,
+          isGymMember: athlete.is_gym_member ?? false,
           latestWaiverId: athlete.latest_waiver_id || null,
           waiverSigned: athlete.waiver_signed || false,
           waiverStatus: athlete.waiver_status || 'pending',
@@ -5138,12 +5208,46 @@ export class SupabaseStorage implements IStorage {
       }
 
       console.log(`[STORAGE] Trying insert operation now...`);
+      // Determine snapshot values
+      let durationMinutes: number | null = null;
+      try {
+        const { data: bookingRow } = await supabaseAdmin
+          .from('bookings')
+          .select('lesson_type_id')
+          .eq('id', bookingId)
+          .single();
+        if (bookingRow?.lesson_type_id) {
+          const { data: lt } = await supabaseAdmin
+            .from('lesson_types')
+            .select('duration_minutes')
+            .eq('id', bookingRow.lesson_type_id)
+            .single();
+          durationMinutes = lt?.duration_minutes ?? null;
+        }
+      } catch (e) {
+        console.warn('[STORAGE] Could not fetch lesson duration for snapshot', e);
+      }
+
+      let gymMemberAtBooking = false;
+      try {
+        const { data: athleteRow } = await supabaseAdmin
+          .from('athletes')
+          .select('is_gym_member')
+          .eq('id', athleteId)
+          .single();
+        gymMemberAtBooking = !!athleteRow?.is_gym_member;
+      } catch (e) {
+        console.warn('[STORAGE] Could not fetch athlete membership for snapshot', e);
+      }
+
       const { error } = await supabaseAdmin
         .from('booking_athletes')
         .insert({
           booking_id: bookingId,
           athlete_id: athleteId,
-          slot_order: slotOrder
+          slot_order: slotOrder,
+          gym_member_at_booking: gymMemberAtBooking,
+          duration_minutes: durationMinutes,
         });
 
       if (error) {

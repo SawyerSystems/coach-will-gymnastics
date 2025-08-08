@@ -841,8 +841,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Athlete not found or access denied' });
       }
 
-      // Only allow parents to update certain fields
-      const allowedFields = ['firstName', 'lastName', 'name', 'dateOfBirth', 'gender', 'allergies', 'experience'];
+  // Only allow parents to update certain fields
+  const allowedFields = ['firstName', 'lastName', 'name', 'dateOfBirth', 'gender', 'allergies', 'experience', 'isGymMember'];
       const updateData: any = {};
       
       for (const field of allowedFields) {
@@ -1657,6 +1657,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error updating athlete photo:", error);
       res.status(500).json(ResponseUtils.error("Failed to update athlete photo"));
+    }
+  });
+
+  // --- Admin Payout Reporting Endpoints ---
+  app.get('/api/admin/payouts/summary', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { start, end, membership, athleteId } = req.query as any;
+      // Build filters
+      let query = supabase
+        .from('booking_athletes')
+        .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, created_at, bookings!inner(preferred_date, attendance_status)')
+        .not('gym_payout_owed_cents', 'is', null);
+
+      if (start) {
+        query = query.gte('bookings.preferred_date', String(start));
+      }
+      if (end) {
+        query = query.lte('bookings.preferred_date', String(end));
+      }
+      if (membership === 'member') {
+        query = query.eq('gym_member_at_booking', true);
+      } else if (membership === 'non-member') {
+        query = query.eq('gym_member_at_booking', false);
+      }
+      if (athleteId) {
+        query = query.eq('athlete_id', Number(athleteId));
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('[PAYOUTS][SUMMARY] Error:', error);
+        return res.status(500).json({ error: 'Failed to load payout summary' });
+      }
+      const totalSessions = data?.length || 0;
+      const totalOwedCents = (data || []).reduce((sum: number, row: any) => sum + (row.gym_payout_owed_cents || 0), 0);
+      const uniqueAthletes = new Set((data || []).map((r: any) => r.athlete_id)).size;
+      res.json({ totalSessions, totalOwedCents, uniqueAthletes });
+    } catch (e) {
+      console.error('[PAYOUTS][SUMMARY] Exception:', e);
+      res.status(500).json({ error: 'Failed to load payout summary' });
+    }
+  });
+
+  app.get('/api/admin/payouts/list', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { start, end, membership, athleteId } = req.query as any;
+      let query = supabase
+        .from('booking_athletes')
+        .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, created_at, bookings!inner(preferred_date), athletes!inner(first_name, last_name, name)')
+        .not('gym_payout_owed_cents', 'is', null);
+
+      if (start) query = query.gte('bookings.preferred_date', String(start));
+      if (end) query = query.lte('bookings.preferred_date', String(end));
+      if (membership === 'member') query = query.eq('gym_member_at_booking', true);
+      else if (membership === 'non-member') query = query.eq('gym_member_at_booking', false);
+      if (athleteId) query = query.eq('athlete_id', Number(athleteId));
+
+      const { data, error } = await query.order('bookings.preferred_date', { ascending: true });
+      if (error) {
+        console.error('[PAYOUTS][LIST] Error:', error);
+        return res.status(500).json({ error: 'Failed to load payout list' });
+      }
+      res.json(data || []);
+    } catch (e) {
+      console.error('[PAYOUTS][LIST] Exception:', e);
+      res.status(500).json({ error: 'Failed to load payout list' });
+    }
+  });
+
+  app.get('/api/admin/payouts/export.csv', isAdminAuthenticated, async (req, res) => {
+    try {
+      const params = new URLSearchParams(req.query as any).toString();
+      const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,created_at,bookings(preferred_date),athletes(first_name,last_name,name)&${params}`, {
+        headers: {
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '',
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || ''}`,
+          Accept: 'text/csv'
+        }
+      });
+      const csv = await resp.text();
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="payouts-${Date.now()}.csv"`);
+      res.send(csv);
+    } catch (e) {
+      console.error('[PAYOUTS][EXPORT CSV] Exception:', e);
+      res.status(500).send('Failed to export CSV');
     }
   });
 
@@ -7510,7 +7596,7 @@ setTimeout(async () => {
       }
 
       // Validate required fields
-      const { firstName, lastName, dateOfBirth, gender, allergies, experience } = req.body;
+  const { firstName, lastName, dateOfBirth, gender, allergies, experience, isGymMember } = req.body;
       
       if (!firstName || !lastName || !dateOfBirth || !experience) {
         return res.status(400).json({ 
@@ -7527,7 +7613,8 @@ setTimeout(async () => {
         gender: gender || null,
         allergies: allergies || null,
         experience,
-        parentId
+        parentId,
+        isGymMember: typeof isGymMember === 'boolean' ? isGymMember : undefined
       };
       
       const athlete = await storage.createAthlete(athleteData);

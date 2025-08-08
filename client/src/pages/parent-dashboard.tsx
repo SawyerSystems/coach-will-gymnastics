@@ -24,6 +24,7 @@ import type { Athlete, Booking, Parent, FocusArea } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
@@ -436,6 +437,7 @@ function ParentDashboard() {
   const [editingAthleteId, setEditingAthleteId] = useState<number | null>(null);
   const [editingAthleteInfo, setEditingAthleteInfo] = useState<any>(null);
   const [editingAthleteGender, setEditingAthleteGender] = useState<string>('');
+  const [editingAthleteIsGymMember, setEditingAthleteIsGymMember] = useState<boolean>(false);
   const [showAddAthleteModal, setShowAddAthleteModal] = useState<boolean>(false);
   const [selectedAthleteForBooking, setSelectedAthleteForBooking] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -449,6 +451,13 @@ function ParentDashboard() {
   const { data: waiverStatus, isLoading: waiverLoading, error: waiverError } = useAthleteWaiverStatus(
     editingAthleteId ?? ''
   );
+
+  // Initialize the edit-toggle state when an athlete is selected for editing
+  useEffect(() => {
+    if (editingAthleteInfo && typeof editingAthleteInfo.isGymMember === 'boolean') {
+      setEditingAthleteIsGymMember(!!editingAthleteInfo.isGymMember);
+    }
+  }, [editingAthleteInfo]);
 
   // Check if parent is authenticated
   const { data: authStatus } = useQuery<{ loggedIn: boolean; parentId?: number; email?: string }>({
@@ -1451,6 +1460,7 @@ function ParentDashboard() {
             allergies: selectedAthleteForBooking.allergies || '',
             experience: selectedAthleteForBooking.experience,
             photo: selectedAthleteForBooking.photo,
+            isGymMember: selectedAthleteForBooking.isGymMember ?? false,
             createdAt: new Date(),
             updatedAt: new Date(),
             latestWaiverId: selectedAthleteForBooking.latestWaiverId,
@@ -1458,6 +1468,7 @@ function ParentDashboard() {
             waiverSigned: selectedAthleteForBooking.waiverSigned || false
           }] : Array.isArray(athletes) ? athletes.map(athlete => ({
             ...athlete,
+            isGymMember: athlete.isGymMember ?? false,
             waiverSigned: athlete.waiverSigned || false
           })) : []}
           isNewParent={false}
@@ -1551,6 +1562,7 @@ function ParentDashboard() {
         <Dialog open={editingAthleteInfo !== null} onOpenChange={() => {
           setEditingAthleteInfo(null);
           setEditingAthleteGender('');
+          setEditingAthleteIsGymMember(false);
         }}>
           <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-md md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
             <DialogHeader className="px-0 pt-0">
@@ -1560,7 +1572,7 @@ function ParentDashboard() {
               </DialogDescription>
             </DialogHeader>
 
-            {editingAthleteInfo && (
+  {editingAthleteInfo && (
               <div className="space-y-4 px-0 pb-0">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -1577,6 +1589,21 @@ function ParentDashboard() {
                       id="athlete-lastName"
                       defaultValue={editingAthleteInfo.lastName || editingAthleteInfo.name.split(' ').slice(1).join(' ')}
                       className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="athlete-gymmember">Already in Gym Classes?</Label>
+                  <div className="flex items-center justify-between rounded-md border p-3">
+                    <div>
+                      <p className="font-medium">Gym Member</p>
+                      <p className="text-sm text-muted-foreground">Toggle on if this athlete is already enrolled in gym classes.</p>
+                    </div>
+                    <Switch
+                      id="athlete-gymmember"
+                      checked={editingAthleteIsGymMember}
+                      onCheckedChange={setEditingAthleteIsGymMember}
                     />
                   </div>
                 </div>
@@ -1648,7 +1675,8 @@ function ParentDashboard() {
                         dateOfBirth,
                         gender,
                         allergies: allergies || null,
-                        experience
+                        experience,
+                        isGymMember: editingAthleteIsGymMember
                       };
 
                       await apiRequest('PUT', `/api/parent/athletes/${editingAthleteInfo.id}`, updateData);

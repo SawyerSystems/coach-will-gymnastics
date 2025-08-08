@@ -324,6 +324,11 @@ export function AthleteDetailDialog({
                     <span className="font-medium text-slate-700">Gender:</span>
                     <span className="ml-1 capitalize">{athleteData.gender || 'Not specified'}</span>
                   </p>
+                  <p className="flex items-center mb-2">
+                    <User className="h-4 w-4 mr-2 text-indigo-500" />
+                    <span className="font-medium text-slate-700">Gym Membership:</span>
+                    <span className="ml-1">{athleteData.isGymMember ? 'Member' : 'Not a member'}</span>
+                  </p>
                   {athleteData.allergies && (
                     <p className="flex items-start text-red-600 mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
                       <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />

@@ -337,6 +337,7 @@ export class ModernSupabaseStorage {
       updatedAt: row.updated_at ? new Date(row.updated_at) : null,
       dateOfBirth: row.date_of_birth,
       gender: row.gender,
+  isGymMember: row.is_gym_member ?? false,
       latestWaiverId: row.latest_waiver_id,
       waiverStatus: row.waiver_status || 'pending',
       waiverSigned: row.waiver_signed || false,

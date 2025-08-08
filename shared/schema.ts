@@ -131,6 +131,8 @@ export const athletes = pgTable('athletes', {
   updatedAt: timestamp('updated_at').defaultNow(),
   dateOfBirth: date('date_of_birth'),
   gender: text('gender'), // References genders table, but can be any text
+  // Gym payout membership flag
+  isGymMember: boolean('is_gym_member').notNull().default(false),
   latestWaiverId: integer('latest_waiver_id').references((): any => waivers.id),
   waiverStatus: varchar('waiver_status').default('pending'), // varchar in actual DB
   waiverSigned: boolean('waiver_signed').default(false).notNull(), // Simple boolean for waiver status
@@ -195,6 +197,14 @@ export const bookingAthletes = pgTable("booking_athletes", {
   bookingId: integer("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
   athleteId: integer("athlete_id").notNull().references(() => athletes.id, { onDelete: "cascade" }),
   slotOrder: integer("slot_order").notNull(), // 1 = first slot, 2 = second, etc.
+  // Snapshot + payout computation fields
+  gymMemberAtBooking: boolean('gym_member_at_booking').notNull().default(false),
+  durationMinutes: integer('duration_minutes'),
+  gymRateAppliedCents: integer('gym_rate_applied_cents'),
+  gymPayoutOwedCents: integer('gym_payout_owed_cents'),
+  gymPayoutComputedAt: timestamp('gym_payout_computed_at'),
+  gymPayoutOverrideCents: integer('gym_payout_override_cents'),
+  gymPayoutOverrideReason: text('gym_payout_override_reason'),
 });
 
 export const bookingLogs = pgTable("booking_logs", {
@@ -374,6 +384,31 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   gender: z.string().optional(), // Will be validated against genders table
+  isGymMember: z.boolean().optional(),
+});
+
+// Gym payout rates (effective-dated)
+export const gymPayoutRates = pgTable('gym_payout_rates', {
+  id: serial('id').primaryKey(),
+  durationMinutes: integer('duration_minutes').notNull(), // e.g., 30 or 60
+  isMember: boolean('is_member').notNull(),
+  rateCents: integer('rate_cents').notNull(),
+  effectiveFrom: timestamp('effective_from').notNull(),
+  effectiveTo: timestamp('effective_to'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Gym payout runs (monthly/period summaries)
+export const gymPayoutRuns = pgTable('gym_payout_runs', {
+  id: serial('id').primaryKey(),
+  periodStart: date('period_start').notNull(),
+  periodEnd: date('period_end').notNull(),
+  status: text('status').notNull().default('open'), // open | locked | archived
+  totalSessions: integer('total_sessions').notNull().default(0),
+  totalOwedCents: integer('total_owed_cents').notNull().default(0),
+  generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
@@ -604,6 +639,10 @@ export const insertCustomerSchema = insertParentSchema;
 export const customers = parents; // Table alias for backward compatibility
 export type Athlete = typeof athletes.$inferSelect;
 export type InsertAthlete = z.infer<typeof insertAthleteSchema>;
+export type GymPayoutRate = typeof gymPayoutRates.$inferSelect;
+export type InsertGymPayoutRate = typeof gymPayoutRates.$inferInsert;
+export type GymPayoutRun = typeof gymPayoutRuns.$inferSelect;
+export type InsertGymPayoutRun = typeof gymPayoutRuns.$inferInsert;
 export type Booking = typeof bookings.$inferSelect & {
   // Legacy athlete properties for backward compatibility (still used by storage)
   athlete1Name?: string;

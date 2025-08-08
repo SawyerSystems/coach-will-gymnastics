@@ -23,6 +23,7 @@ import {
     DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -130,6 +131,7 @@ export default function Admin() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isAthleteViewOpen, setIsAthleteViewOpen] = useState(false);
   const [isAthleteEditOpen, setIsAthleteEditOpen] = useState(false);
+  const [editIsGymMember, setEditIsGymMember] = useState<boolean>(false);
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -173,6 +175,13 @@ export default function Admin() {
   
   // Fix dialog accessibility issues
   useFixDialogAccessibility();
+
+  // Keep membership toggle in sync with selected athlete when edit opens/changes
+  useEffect(() => {
+    if (isAthleteEditOpen && selectedAthlete) {
+      setEditIsGymMember(!!selectedAthlete.isGymMember);
+    }
+  }, [isAthleteEditOpen, selectedAthlete]);
   
   // ALL QUERIES
   const { data: authStatus, isLoading: authLoading } = useQuery<{ loggedIn: boolean; adminId?: number }>({
@@ -1072,6 +1081,7 @@ export default function Admin() {
                 {activeTab === 'parentcomm' && 'Parent Communications'}
                 {activeTab === 'waivers' && 'Waiver Management'}
                 {activeTab === 'payments' && 'Payment Management'}
+                {activeTab === 'payouts' && 'Payouts'}
                 {activeTab === 'lesson-types' && 'Lesson Type Management'}
               </h1>
               
@@ -1230,6 +1240,12 @@ export default function Admin() {
               className="hidden"
             >
               💳 Payments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payouts" 
+              className="hidden"
+            >
+              🧾 Payouts
             </TabsTrigger>
             <TabsTrigger 
               value="analytics" 
@@ -1423,6 +1439,20 @@ export default function Admin() {
                       })}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                  <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
+                  Payouts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+                <div className="text-slate-600">Payout reporting UI will appear here.</div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -3539,7 +3569,7 @@ export default function Admin() {
                 {selectedAthlete ? `Update information for ${selectedAthlete.name}` : "Edit athlete information"}
               </DialogDescription>
             </DialogHeader>
-            {selectedAthlete && (
+      {selectedAthlete && (
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
@@ -3554,7 +3584,8 @@ export default function Admin() {
                     dateOfBirth: formData.get('dateOfBirth') as string,
                     gender: (formData.get('gender') as "Male" | "Female" | "Other" | "Prefer not to say") || undefined,
                     experience: formData.get('experience') as any,
-                    allergies: formData.get('allergies') as string || null,
+        allergies: formData.get('allergies') as string || null,
+        isGymMember: editIsGymMember,
                   }
                 });
               }}>
@@ -3632,6 +3663,20 @@ export default function Admin() {
                             aria-describedby="edit-lastName-error"
                             autoComplete="family-name"
                             className="mt-1"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between rounded-md border p-3">
+                          <div>
+                            <Label className="text-slate-700 font-medium">Gym Membership</Label>
+                            <p className="text-sm text-muted-foreground">Toggle on if athlete is already in gym classes.</p>
+                          </div>
+                          <Switch
+                            checked={editIsGymMember}
+                            onCheckedChange={setEditIsGymMember}
+                            aria-label="Toggle gym membership"
                           />
                         </div>
                       </div>

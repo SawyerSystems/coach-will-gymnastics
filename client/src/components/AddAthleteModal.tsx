@@ -11,6 +11,7 @@ import { useCreateAthlete } from "@/hooks/use-athlete";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { Switch } from "@/components/ui/switch";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface AddAthleteModalProps {
@@ -33,7 +34,8 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
     dateOfBirth: "",
     gender: "",
     allergies: "",
-    experience: "beginner" as "beginner" | "intermediate" | "advanced"
+  experience: "beginner" as "beginner" | "intermediate" | "advanced",
+  isGymMember: false,
   });
   
   // Function to calculate age and validate minimum age requirement
@@ -103,6 +105,7 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
         gender: formData.gender || undefined,
         allergies: formData.allergies,
         experience: formData.experience,
+        isGymMember: formData.isGymMember,
       });
       
       // Reset form
@@ -112,7 +115,8 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
         dateOfBirth: "",
         gender: "",
         allergies: "",
-        experience: "beginner"
+  experience: "beginner",
+  isGymMember: false,
       });
       
       // Refresh athletes list
@@ -201,6 +205,22 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
             <p className="text-sm text-muted-foreground">
               Athletes must be at least 6 years old to participate in lessons.
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="isGymMember">Already in Gym Classes?</Label>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div>
+                <p className="font-medium">Gym Member</p>
+                <p className="text-sm text-muted-foreground">Toggle on if this athlete is already enrolled in gym classes.</p>
+              </div>
+              <Switch
+                id="isGymMember"
+                checked={formData.isGymMember}
+                onCheckedChange={(checked) => setFormData({ ...formData, isGymMember: checked })}
+                aria-label="Already in Gym Classes?"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

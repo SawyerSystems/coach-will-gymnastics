@@ -204,6 +204,13 @@ export function ParentAthleteDetailDialog({
                       {athleteData.gender || 'Not specified'}
                     </span>
                   </div>
+
+                  <div>
+                    <span className="font-medium text-gray-600">Gym Membership:</span>
+                    <span className="ml-2 text-gray-900">
+                      {athleteData.isGymMember ? 'Member' : 'Not a member'}
+                    </span>
+                  </div>
                 </div>
 
                 {athleteData.allergies && (

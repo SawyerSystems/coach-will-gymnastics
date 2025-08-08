@@ -118,6 +118,11 @@ export function AdminSidebar({
       icon: <DollarSign className="h-5 w-5" />
     },
     {
+      id: 'payouts',
+      label: 'Payouts',
+      icon: <DollarSign className="h-5 w-5" />
+    },
+    {
       id: 'analytics',
       label: 'Analytics',
       icon: <BarChart className="h-5 w-5" />
