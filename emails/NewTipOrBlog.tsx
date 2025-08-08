@@ -1,14 +1,21 @@
 import React from 'react';
-import { Html, Text, Heading, Container, Button } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { CTAButton } from './components/CTAButton';
+import { theme } from './components/theme';
 
-export function NewTipOrBlog({ blogTitle, blogLink }: { blogTitle: string; blogLink: string }) {
+export function NewTipOrBlog({ blogTitle, blogLink, logoUrl }: { blogTitle: string; blogLink: string; logoUrl?: string }) {
   return (
-    <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#8B5CF6' }}>✨ New Tip Unlocked!</Heading>
-        <Text>{blogTitle} is now live on the Tumbleverse journal. Time to level up your training knowledge.</Text>
-        <Button href={blogLink} style={{ backgroundColor: '#8B5CF6', color: '#fff', padding: '10px 20px', borderRadius: '5px' }}>View the Tip</Button>
-      </Container>
-    </Html>
+    <EmailLayout logoUrl={logoUrl} title="✨ New Tip Unlocked!">
+      <Text style={{ color: theme.colors.text }}>
+        {blogTitle} is now live on the Tumbleverse journal. Time to level up your training knowledge.
+      </Text>
+      <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
+        <CTAButton href={blogLink} color="primary">View the Tip</CTAButton>
+      </div>
+      <Text style={{ color: theme.colors.muted }}>
+        Want more like this? Reply and tell us what you're training!
+      </Text>
+    </EmailLayout>
   );
 }

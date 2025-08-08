@@ -1,14 +1,24 @@
 import React from 'react';
-import { Html, Text, Heading, Container, Button } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { CTAButton } from './components/CTAButton';
+import { theme } from './components/theme';
 
 export function SessionFollowUp({ athleteName, bookingLink }: { athleteName: string; bookingLink: string }) {
   return (
-    <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#0EA5E9' }}>🏆 Training with Coach Will!</Heading>
-        <Text>{athleteName} crushed it today! Time to rest, recharge, and prepare for the next challenge.</Text>
-        <Button href={bookingLink} style={{ backgroundColor: '#0EA5E9', color: '#fff', padding: '10px 20px', borderRadius: '5px' }}>Book Your Next Session</Button>
-      </Container>
-    </Html>
+    <EmailLayout title="🏆 Great work today!">
+      <Text style={{ color: theme.colors.text }}>
+        {athleteName} crushed it today — we’re proud of their effort and progress.
+      </Text>
+      <Text style={{ color: theme.colors.text }}>
+        Keep the momentum going with another session:
+      </Text>
+      <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
+        <CTAButton href={bookingLink} color="info">Book Your Next Session</CTAButton>
+      </div>
+      <Text style={{ color: theme.colors.muted }}>
+        Questions or goals to share? Reply to this email — we love partnering with parents.
+      </Text>
+    </EmailLayout>
   );
 }

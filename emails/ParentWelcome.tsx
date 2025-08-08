@@ -1,47 +1,28 @@
-import { Container, Heading, Html, Text } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { CTAButton } from './components/CTAButton';
+import { theme } from './components/theme';
 
-export function ParentWelcome({ parentName, loginLink }: { parentName: string; loginLink: string; }) {
+export function ParentWelcome({ parentName, loginLink }: { parentName: string; loginLink: string }) {
   return (
-    <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#6366F1' }}>Welcome to Coach Will Tumbles! 🤸‍♀️</Heading>
-        
-        <Text>Hi {parentName},</Text>
-        
-        <Text>Thank you for joining the Coach Will Tumbles family! We're excited to have you and your young athlete(s) on board.</Text>
-        
-        <div style={{ margin: '20px 0' }}>
-          <Heading as="h2" style={{ fontSize: '18px', color: '#4F46E5' }}>What happens next?</Heading>
-          <Text>1. Complete your athlete's profile information</Text>
-          <Text>2. Book your first gymnastics lesson</Text>
-          <Text>3. Fill out the required waivers</Text>
-          <Text>4. Prepare for an amazing gymnastics experience!</Text>
-        </div>
-        
-        <div style={{ margin: '20px 0' }}>
-          <a 
-            href={loginLink}
-            style={{
-              display: 'inline-block',
-              backgroundColor: '#6366F1',
-              color: 'white',
-              padding: '10px 20px',
-              borderRadius: '4px',
-              textDecoration: 'none',
-              fontWeight: 'bold'
-            }}
-          >
-            Access Your Parent Portal
-          </a>
-        </div>
-        
-        <Text style={{ marginTop: '30px' }}>If you have any questions, feel free to contact us at will@coachwilltumbles.com.</Text>
-        
-        <Text>Looking forward to seeing your athlete flourish!</Text>
-        
-        <Text style={{ marginTop: '20px' }}>Best flips,</Text>
-        <Text>Coach Will 🏆</Text>
-      </Container>
-    </Html>
+    <EmailLayout title="Welcome to Coach Will Tumbles! 🤸‍♀️">
+      <Text style={{ color: theme.colors.text }}>Hi {parentName},</Text>
+      <Text style={{ color: theme.colors.text }}>
+        We’re thrilled to welcome you to the Coach Will Tumbles family! Here’s how to get set up in just a few minutes:
+      </Text>
+      <ul style={{ color: theme.colors.text, paddingLeft: '18px', marginTop: 0 }}>
+        <li>Complete your athlete’s profile</li>
+        <li>Book your first session</li>
+        <li>Sign the digital waiver</li>
+      </ul>
+      <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
+        <CTAButton href={loginLink}>Access Your Parent Portal</CTAButton>
+      </div>
+      <Text style={{ color: theme.colors.muted }}>
+        Questions? Just reply here — we’re happy to help. We can’t wait to see your athlete grow in strength and confidence!
+      </Text>
+      <Text style={{ marginTop: theme.spacing.md, color: theme.colors.text }}>Best flips,</Text>
+      <Text style={{ color: theme.colors.text }}>Coach Will 🏆</Text>
+    </EmailLayout>
   );
 }

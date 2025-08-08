@@ -133,26 +133,14 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
     throw new Error(`Invalid email type: ${type}`);
   }
 
-  // If no logoUrl was provided, try to get it from site content
-  let finalLogoUrl = logoUrl;
-  if (!finalLogoUrl) {
-    try {
-      // Import at function level to avoid circular dependencies
-      const { Storage } = require('../storage');
-      const storage = new Storage();
-      const siteContent = await storage.getSiteContent();
-      // Use the text logo if available, otherwise use default
-      finalLogoUrl = siteContent?.logo?.text || undefined;
-    } catch (error) {
-      console.warn('Could not fetch logo URL from site content:', error);
-    }
-  }
+  // Prefer provided logoUrl; templates default to a PNG via EmailLayout/EmailLogo when undefined
+  const finalLogoUrl = logoUrl;
 
   // Add the logo URL to the component props if the property exists on the component
   const componentData = {
     ...data,
-    ...(finalLogoUrl && 'logoUrl' in template.component ? { logoUrl: finalLogoUrl } : {})
-  };
+    ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {}),
+  } as any;
 
   try {
     // Make React available globally for email components

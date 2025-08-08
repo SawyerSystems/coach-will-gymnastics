@@ -1,15 +1,22 @@
 import React from 'react';
-import { Html, Text, Heading, Container, Button } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { CTAButton } from './components/CTAButton';
+import { theme } from './components/theme';
 
 export function SessionCancellation({ parentName, rescheduleLink }: { parentName: string; rescheduleLink: string }) {
   return (
-    <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#DC2626' }}>❌ Session Cancelled</Heading>
-        <Text>Hi {parentName},</Text>
-        <Text>Your session has been cancelled. But don't worry — the journey continues!</Text>
-        <Button href={rescheduleLink} style={{ backgroundColor: '#DC2626', color: '#fff', padding: '10px 20px', borderRadius: '5px' }}>Reschedule Now</Button>
-      </Container>
-    </Html>
+    <EmailLayout title="❌ Session Cancelled">
+      <Text style={{ color: theme.colors.text }}>Hi {parentName},</Text>
+      <Text style={{ color: theme.colors.text }}>
+        This session has been cancelled — but no worries, we’ve got plenty of times open next week and beyond.
+      </Text>
+      <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
+        <CTAButton href={rescheduleLink} color="danger">Reschedule Now</CTAButton>
+      </div>
+      <Text style={{ color: theme.colors.muted }}>
+        Need help finding a time? Just reply and we’ll help you pick a great slot.
+      </Text>
+    </EmailLayout>
   );
 }

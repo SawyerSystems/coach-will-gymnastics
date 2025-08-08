@@ -1,14 +1,28 @@
 import React from 'react';
-import { Html, Text, Heading, Container } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { CTAButton } from './components/CTAButton';
+import { theme } from './components/theme';
 
-export function SessionReminder({ athleteName, sessionDate, sessionTime }: { athleteName: string; sessionDate: string; sessionTime: string }) {
+export function SessionReminder({ athleteName, sessionDate, sessionTime, manageLink }: { athleteName: string; sessionDate: string; sessionTime: string; manageLink?: string }) {
   return (
-    <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#6366F1' }}>⏰ Adventure Incoming!</Heading>
-        <Text>{athleteName} has a session on {sessionDate} at {sessionTime}.</Text>
-        <Text>🧘‍♀️ Don't forget to stretch, hydrate, and bring that warrior mindset!</Text>
-      </Container>
-    </Html>
+    <EmailLayout title="⏰ Session Reminder">
+      <Text style={{ color: theme.colors.text }}>
+        Quick heads‑up — {athleteName} has a session on <strong>{sessionDate}</strong> at <strong>{sessionTime}</strong>.
+      </Text>
+      <ul style={{ color: theme.colors.text, paddingLeft: '18px', marginTop: 0 }}>
+        <li>Pack water and athletic wear</li>
+        <li>Arrive a few minutes early</li>
+        <li>A fast stretch = great start</li>
+      </ul>
+      {manageLink ? (
+        <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
+          <CTAButton href={manageLink} color="primary">View Your Booking</CTAButton>
+        </div>
+      ) : null}
+      <Text style={{ color: theme.colors.muted }}>
+        We’re excited for a great session — see you soon!
+      </Text>
+    </EmailLayout>
   );
 }

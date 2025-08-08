@@ -1,16 +1,20 @@
 import React from 'react';
-import { Html, Text, Heading, Container, Button } from '@react-email/components';
+import { Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { CTAButton } from './components/CTAButton';
+import { theme } from './components/theme';
 
-export function ManualBookingConfirmation({ parentName, confirmLink }: { parentName: string; confirmLink: string }) {
+export function ManualBookingConfirmation({ parentName, confirmLink, logoUrl }: { parentName: string; confirmLink: string; logoUrl?: string }) {
   return (
-    <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#F59E0B' }}>⚠️ Action Required: Confirm Your Session</Heading>
-        <Text>Hey {parentName},</Text>
-        <Text>Coach Will has scheduled a session just for you. Hit the button below to confirm and complete your booking quest:</Text>
-        <Button href={confirmLink} style={{ backgroundColor: '#F59E0B', color: '#fff', padding: '10px 20px', borderRadius: '5px', textDecoration: 'none' }}>Confirm My Session</Button>
-        <Text>If you didn't request this, no worries — you can ignore it.</Text>
-      </Container>
-    </Html>
+    <EmailLayout logoUrl={logoUrl} title="⚠️ Action Required: Confirm Your Session">
+      <Text style={{ color: theme.colors.text }}>Hey {parentName},</Text>
+      <Text style={{ color: theme.colors.text }}>
+        Coach Will has scheduled a session just for you. Hit the button below to confirm and complete your booking quest:
+      </Text>
+      <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
+        <CTAButton href={confirmLink} color="accent">Confirm My Session</CTAButton>
+      </div>
+      <Text style={{ color: theme.colors.muted }}>If you didn't request this, no worries — you can ignore it.</Text>
+    </EmailLayout>
   );
 }

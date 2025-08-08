@@ -1,13 +1,15 @@
-import { Container, Heading, Html, Text } from '@react-email/components';
+import { Html, Text } from '@react-email/components';
+import { EmailLayout } from './components/EmailLayout';
+import { theme } from './components/theme';
 
-export function MinimalEmailVerification({ firstName, verificationUrl }: { firstName: string; verificationUrl: string }) {
+export function MinimalEmailVerification({ firstName, verificationUrl, logoUrl }: { firstName: string; verificationUrl: string; logoUrl?: string }) {
   return (
     <Html>
-      <Container style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-        <Heading style={{ color: '#6366F1' }}>Verify Your Email Address</Heading>
-        <Text>Hi {firstName},</Text>
-        <Text>Please verify your email by clicking this link: {verificationUrl}</Text>
-      </Container>
+      <EmailLayout logoUrl={logoUrl} title="Verify Your Email Address">
+        <Text style={{ color: theme.colors.text }}>Hi {firstName},</Text>
+        <Text style={{ color: theme.colors.text }}>Please verify your email by clicking this link:</Text>
+        <Text style={{ color: theme.colors.primary }}>{verificationUrl}</Text>
+      </EmailLayout>
     </Html>
   );
 }
