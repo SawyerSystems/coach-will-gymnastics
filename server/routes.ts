@@ -1667,7 +1667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Build filters
       let query = supabase
         .from('booking_athletes')
-        .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, created_at, bookings!inner(preferred_date, attendance_status)')
+        .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status)')
         .not('gym_payout_owed_cents', 'is', null);
 
       if (start) {
@@ -1703,9 +1703,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/payouts/list', isAdminAuthenticated, async (req, res) => {
     try {
       const { start, end, membership, athleteId } = req.query as any;
-      let query = supabase
+  let query = supabase
         .from('booking_athletes')
-        .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, created_at, bookings!inner(preferred_date), athletes!inner(first_name, last_name, name)')
+  .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date), athletes!inner(first_name, last_name, name)')
         .not('gym_payout_owed_cents', 'is', null);
 
       if (start) query = query.gte('bookings.preferred_date', String(start));
@@ -1714,7 +1714,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (membership === 'non-member') query = query.eq('gym_member_at_booking', false);
       if (athleteId) query = query.eq('athlete_id', Number(athleteId));
 
-      const { data, error } = await query.order('bookings.preferred_date', { ascending: true });
+  // Order by bookings.preferred_date via foreignTable option
+  const { data, error } = await query.order('preferred_date', { ascending: true, foreignTable: 'bookings' });
       if (error) {
         console.error('[PAYOUTS][LIST] Error:', error);
         return res.status(500).json({ error: 'Failed to load payout list' });
@@ -1729,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/payouts/export.csv', isAdminAuthenticated, async (req, res) => {
     try {
       const params = new URLSearchParams(req.query as any).toString();
-      const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,created_at,bookings(preferred_date),athletes(first_name,last_name,name)&${params}`, {
+  const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,bookings(preferred_date),athletes(first_name,last_name,name)&${params}`, {
         headers: {
           apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '',
           Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || ''}`,
@@ -1743,6 +1744,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) {
       console.error('[PAYOUTS][EXPORT CSV] Exception:', e);
       res.status(500).send('Failed to export CSV');
+    }
+  });
+
+  // Generate or refresh a payout run for given period
+  app.post('/api/admin/payouts/run', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { periodStart, periodEnd } = req.body || {};
+      if (!periodStart || !periodEnd) return res.status(400).json({ error: 'periodStart and periodEnd are required' });
+      const run = await storage.upsertGymPayoutRun(String(periodStart), String(periodEnd));
+      res.json(run);
+    } catch (e) {
+      console.error('[PAYOUTS][RUN] Exception:', e);
+      res.status(500).json({ error: 'Failed to generate payout run' });
+    }
+  });
+
+  // List recent payout runs
+  app.get('/api/admin/payouts/runs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const limit = Number((req.query.limit as any) || 12);
+      const runs = await storage.listGymPayoutRuns(limit);
+      res.json(runs);
+    } catch (e) {
+      console.error('[PAYOUTS][RUNS] Exception:', e);
+      res.status(500).json({ error: 'Failed to list payout runs' });
+    }
+  });
+
+  // Backfill payouts for a period (compute owed where null for completed sessions)
+  app.post('/api/admin/payouts/backfill', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { periodStart, periodEnd } = req.body || {};
+      if (!periodStart || !periodEnd) return res.status(400).json({ error: 'periodStart and periodEnd are required' });
+      const result = await storage.backfillGymPayouts(String(periodStart), String(periodEnd));
+      res.json(result);
+    } catch (e) {
+      console.error('[PAYOUTS][BACKFILL] Exception:', e);
+      res.status(500).json({ error: 'Failed to backfill payouts' });
     }
   });
 

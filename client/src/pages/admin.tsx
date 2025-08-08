@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import AdminPayoutsTab from "@/components/admin/AdminPayoutsTab";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1444,17 +1445,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
-                  <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
-                  Payouts
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-                <div className="text-slate-600">Payout reporting UI will appear here.</div>
-              </CardContent>
-            </Card>
+            <AdminPayoutsTab />
           </TabsContent>
 
           <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2">

@@ -2787,6 +2787,135 @@ export class SupabaseStorage implements IStorage {
     return booking ? this.mapBookingFromDb(booking) : undefined;
   }
 
+  // ===============================
+  // Gym payout runs helpers
+  // ===============================
+  async upsertGymPayoutRun(periodStart: string, periodEnd: string) {
+    // Compute totals from booking_athletes joined to bookings by preferred_date
+    const { data, error } = await supabaseAdmin
+      .from('booking_athletes')
+      .select('id, gym_payout_owed_cents, bookings!inner(preferred_date)')
+      .not('gym_payout_owed_cents', 'is', null)
+      .gte('bookings.preferred_date', periodStart)
+      .lte('bookings.preferred_date', periodEnd);
+
+    if (error) {
+      console.error('[PAYOUT RUN] Failed to load booking_athletes for period', periodStart, periodEnd, error);
+      throw error;
+    }
+    const totalSessions = data?.length || 0;
+    const totalOwedCents = (data || []).reduce((sum: number, r: any) => sum + (r.gym_payout_owed_cents || 0), 0);
+
+    // Check existing run
+    const { data: existing } = await supabaseAdmin
+      .from('gym_payout_runs')
+      .select('*')
+      .eq('period_start', periodStart)
+      .eq('period_end', periodEnd)
+      .maybeSingle();
+
+    const nowIso = new Date().toISOString();
+
+    if (existing) {
+      const { data: updated, error: updErr } = await supabaseAdmin
+        .from('gym_payout_runs')
+        .update({ total_sessions: totalSessions, total_owed_cents: totalOwedCents, updated_at: nowIso })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (updErr) throw updErr;
+      return updated;
+    } else {
+      const { data: inserted, error: insErr } = await supabaseAdmin
+        .from('gym_payout_runs')
+        .insert({ period_start: periodStart, period_end: periodEnd, status: 'open', total_sessions: totalSessions, total_owed_cents: totalOwedCents, generated_at: nowIso, updated_at: nowIso })
+        .select()
+        .single();
+      if (insErr) throw insErr;
+      return inserted;
+    }
+  }
+
+  async listGymPayoutRuns(limit = 12) {
+    const { data, error } = await supabaseAdmin
+      .from('gym_payout_runs')
+      .select('*')
+      .order('period_start', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  }
+
+  // Backfill payouts for completed sessions in a period where owed is still null
+  async backfillGymPayouts(periodStart: string, periodEnd: string) {
+    const results = { total: 0, updated: 0, skipped: 0 };
+    try {
+      // Load booking_athletes rows needing computation joined with bookings for date and status
+      const { data: rows, error } = await supabaseAdmin
+        .from('booking_athletes')
+        .select('id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, attendance_status)')
+        .is('gym_payout_owed_cents', null)
+        .gte('bookings.preferred_date', periodStart)
+        .lte('bookings.preferred_date', periodEnd)
+        .eq('bookings.attendance_status', 'completed');
+      if (error) throw error;
+      const list = rows || [];
+      results.total = list.length;
+      for (const row of list as any[]) {
+        // Skip if somehow already computed
+        if (row.gym_payout_computed_at || row.gym_payout_owed_cents != null) {
+          results.skipped++;
+          continue;
+        }
+        const isMember = !!row.gym_member_at_booking;
+        const duration = row.duration_minutes ?? null;
+        const effectiveIso = row.bookings?.preferred_date || new Date().toISOString();
+        let rateCents: number | null = null;
+        if (row.gym_rate_applied_cents != null) {
+          rateCents = row.gym_rate_applied_cents;
+        } else if (duration != null) {
+          const { data: rate } = await supabaseAdmin
+            .from('gym_payout_rates')
+            .select('rate_cents')
+            .eq('duration_minutes', duration)
+            .eq('is_member', isMember)
+            .lte('effective_from', effectiveIso)
+            .or('effective_to.is.null,effective_to.gte.' + effectiveIso)
+            .order('effective_from', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          rateCents = rate?.rate_cents ?? null;
+        }
+
+        const owed = row.gym_payout_override_cents ?? rateCents ?? null;
+        if (owed != null) {
+          const nowIso = new Date().toISOString();
+          const { error: updErr } = await supabaseAdmin
+            .from('booking_athletes')
+            .update({
+              gym_rate_applied_cents: rateCents ?? row.gym_rate_applied_cents ?? null,
+              gym_payout_owed_cents: owed,
+              gym_payout_computed_at: nowIso,
+            })
+            .eq('id', row.id);
+          if (updErr) {
+            console.error('[PAYOUT BACKFILL] Failed to update booking_athletes', row.id, updErr);
+            results.skipped++;
+          } else {
+            results.updated++;
+          }
+        } else {
+          console.warn('[PAYOUT BACKFILL] No rate resolved for row', row.id, { isMember, duration, effectiveIso });
+          results.skipped++;
+        }
+      }
+    } catch (e) {
+      console.error('[PAYOUT BACKFILL] Exception:', e);
+      throw e;
+    }
+    return results;
+  }
+
   async updateBookingPaymentStatus(id: number, paymentStatus: PaymentStatusEnum): Promise<Booking | undefined> {
     console.log('[STORAGE] Updating booking payment status:', { id, paymentStatus });
     
