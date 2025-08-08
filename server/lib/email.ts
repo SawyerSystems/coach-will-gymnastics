@@ -17,6 +17,7 @@ import { SessionFollowUp } from '../../emails/SessionFollowUp';
 import { SessionReminder } from '../../emails/SessionReminder';
 import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
 import { WaiverReminder } from '../../emails/WaiverReminder';
+import { PaymentStatusEnum } from '@shared/schema';
 
 // Email type mapping
 export const emailTemplates = {
@@ -236,6 +237,78 @@ export async function sendSessionConfirmation(
     to,
     data: { parentName, athleteName, sessionDate, sessionTime }
   });
+}
+
+// Idempotent wrapper: ensures session confirmation email is sent exactly once per booking
+// Relies on new boolean/timestamp columns: session_confirmation_email_sent / session_confirmation_email_sent_at
+type EmailStorage = {
+  getBookingWithRelations: (id: number) => Promise<any | undefined>;
+  updateBooking: (id: number, data: any) => Promise<any | undefined>;
+  getBooking: (id: number) => Promise<any | undefined>;
+};
+
+export async function sendSessionConfirmationIfNeeded(bookingId: number, storage: EmailStorage & { markSessionConfirmationEmailSent: (bookingId: number, sentAt: string) => Promise<boolean> }) {
+  try {
+    const booking = await storage.getBookingWithRelations(bookingId);
+    if (!booking) {
+      console.warn(`[SESSION-CONFIRMATION][IDEMPOTENT] Booking ${bookingId} not found`);
+      return false;
+    }
+    // Only send if payment indicates success AND not already sent
+    if (booking.sessionConfirmationEmailSent) {
+      console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Already sent for booking ${bookingId}, skipping.`);
+      return false;
+    }
+    const paid = booking.paymentStatus === PaymentStatusEnum.RESERVATION_PAID || booking.paymentStatus === PaymentStatusEnum.SESSION_PAID;
+    if (!paid) {
+      console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Booking ${bookingId} paymentStatus=${booking.paymentStatus} not paid yet, skipping.`);
+      return false;
+    }
+    // Attempt atomic flag set (only if not already true)
+    const sentAt = new Date().toISOString();
+    const marked = await storage.markSessionConfirmationEmailSent(bookingId, sentAt);
+    if (!marked) {
+      console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Another process already sent booking ${bookingId}.`);
+      return false;
+    }
+    const parentEmail = booking.parent?.email || booking.parentEmail;
+    const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
+    const athleteName = booking.athletes?.[0]?.name || booking.athlete1Name || 'Athlete';
+    let sessionDate = 'Unknown Date';
+    if (booking.preferredDate) {
+      try { sessionDate = new Date(booking.preferredDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); } catch {}
+    }
+    const sessionTime = booking.preferredTime || 'TBD';
+    if (!parentEmail) {
+      console.warn(`[SESSION-CONFIRMATION][IDEMPOTENT] No parent email for booking ${bookingId}; reverting sent flag.`);
+      // Revert flag so we can retry later
+      await storage.updateBooking(bookingId, {
+        // @ts-ignore
+        sessionConfirmationEmailSent: false,
+        // @ts-ignore
+        sessionConfirmationEmailSentAt: null,
+      });
+      return false;
+    }
+    console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Sending confirmation email for booking ${bookingId} to ${parentEmail}`);
+    try {
+      await sendSessionConfirmation(parentEmail, parentName, athleteName, sessionDate, sessionTime);
+      console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] ✅ Sent confirmation email for booking ${bookingId}`);
+      return true;
+    } catch (sendErr) {
+      console.error(`[SESSION-CONFIRMATION][IDEMPOTENT] Failed to send email for booking ${bookingId}, reverting flag`, sendErr);
+      // Revert flag for retry on next trigger
+      await storage.updateBooking(bookingId, {
+        // best-effort revert
+        sessionConfirmationEmailSent: false as any,
+        sessionConfirmationEmailSentAt: null as any,
+      });
+      return false;
+    }
+  } catch (err) {
+    console.error(`[SESSION-CONFIRMATION][IDEMPOTENT] Unexpected error booking ${bookingId}`, err);
+    return false;
+  }
 }
 
 // Helper function to send manual booking confirmation

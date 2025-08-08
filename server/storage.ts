@@ -69,6 +69,8 @@ export interface IStorage {
   updateBookingStatus(id: number, status: BookingStatusEnum): Promise<Booking | undefined>;
   updateBookingPaymentStatus(id: number, paymentStatus: PaymentStatusEnum): Promise<Booking | undefined>;
   updateBookingAttendanceStatus(id: number, attendanceStatus: AttendanceStatusEnum): Promise<Booking | undefined>;
+  // Idempotent email flagging
+  markSessionConfirmationEmailSent(bookingId: number, sentAt: string): Promise<boolean>;
   deleteBooking(id: number): Promise<boolean>;
   getUpcomingSessions(): Promise<{
     id: number;
@@ -776,7 +778,7 @@ With the right setup and approach, home practice can accelerate your child's gym
       "";
     const parentPhone = insertBooking.parentPhone || "";
     
-    const booking: Booking = { 
+  const booking: Booking = { 
       ...insertBooking,
       id,
       athleteId: insertBooking.athleteId || null, // Ensure athleteId is included
@@ -815,10 +817,13 @@ With the right setup and approach, home practice can accelerate your child's gym
       altPickupPersonRelationship: insertBooking.altPickupPersonRelationship ?? null,
       altPickupPersonPhone: insertBooking.altPickupPersonPhone ?? null,
       safetyVerificationSigned: insertBooking.safetyVerificationSigned ?? false,
-      safetyVerificationSignedAt: insertBooking.safetyVerificationSignedAt ?? null,
+  safetyVerificationSignedAt: insertBooking.safetyVerificationSignedAt ?? null,
       progressNote: insertBooking.progressNote ?? null,
       coachName: insertBooking.coachName ?? "Coach Will",
-      stripeSessionId: insertBooking.stripeSessionId ?? null
+  stripeSessionId: insertBooking.stripeSessionId ?? null,
+  // Idempotent email defaults
+  sessionConfirmationEmailSent: false,
+  sessionConfirmationEmailSentAt: null
     };
     this.bookings.set(id, booking);
     return booking;
@@ -903,6 +908,19 @@ With the right setup and approach, home practice can accelerate your child's gym
       return booking;
     }
     return undefined;
+  }
+
+  // Atomically mark the session confirmation email as sent, only if not already sent
+  async markSessionConfirmationEmailSent(bookingId: number, sentAt: string): Promise<boolean> {
+    // In-memory implementation
+    const booking = this.bookings.get(bookingId);
+    if (!booking) return false;
+    if (booking.sessionConfirmationEmailSent) return false;
+    booking.sessionConfirmationEmailSent = true as any;
+    booking.sessionConfirmationEmailSentAt = new Date(sentAt) as any;
+    booking.updatedAt = new Date();
+    this.bookings.set(bookingId, booking);
+    return true;
   }
 
   async deleteBooking(id: number): Promise<boolean> {
@@ -2487,6 +2505,9 @@ export class SupabaseStorage implements IStorage {
       progressNote: data.progress_note || null,
       coachName: data.coach_name || "Coach Will",
       stripeSessionId: data.stripe_session_id,
+  // Idempotent session confirmation email tracking
+  sessionConfirmationEmailSent: data.session_confirmation_email_sent ?? false,
+  sessionConfirmationEmailSentAt: data.session_confirmation_email_sent_at ?? null,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };
@@ -2703,6 +2724,9 @@ export class SupabaseStorage implements IStorage {
     if (data.preferredDate !== undefined) dbUpdate.preferred_date = data.preferredDate;
     if (data.preferredTime !== undefined) dbUpdate.preferred_time = data.preferredTime;
     if (data.focusAreas !== undefined) dbUpdate.focus_areas = data.focusAreas;
+  // Idempotent email tracking fields
+  if (data.sessionConfirmationEmailSent !== undefined) dbUpdate.session_confirmation_email_sent = data.sessionConfirmationEmailSent;
+  if (data.sessionConfirmationEmailSentAt !== undefined) dbUpdate.session_confirmation_email_sent_at = data.sessionConfirmationEmailSentAt;
     
     // Safety information fields
     if (data.dropoffPersonName !== undefined) dbUpdate.dropoff_person_name = data.dropoffPersonName;
@@ -2817,6 +2841,29 @@ export class SupabaseStorage implements IStorage {
 
     console.log(`[STORAGE] Successfully updated booking attendance status to "${attendanceStatus}" for ID ${id}`);
     return booking ? this.mapBookingFromDb(booking) : undefined;
+  }
+
+  // Atomically mark the session confirmation email as sent, only if not already sent (Supabase implementation)
+  async markSessionConfirmationEmailSent(bookingId: number, sentAt: string): Promise<boolean> {
+    this.logQuery('UPDATE', 'bookings', { id: bookingId, session_confirmation_email_sent: true });
+    const { data, error } = await supabaseAdmin
+      .from('bookings')
+      .update({
+        session_confirmation_email_sent: true,
+        session_confirmation_email_sent_at: sentAt,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId)
+      .eq('session_confirmation_email_sent', false)
+      .select('id');
+
+    if (error) {
+      console.error('[STORAGE] Error marking email as sent (Supabase):', error);
+      return false;
+    }
+
+    const updated = Array.isArray(data) ? data.length > 0 : !!data;
+    return updated;
   }
 
   async deleteBooking(id: number): Promise<boolean> {
@@ -4465,9 +4512,12 @@ export class SupabaseStorage implements IStorage {
         safetyVerificationSigned: booking.safety_verification_signed,
         safetyVerificationSignedAt: booking.safety_verification_signed_at,
         
-        stripeSessionId: booking.stripe_session_id,
-        createdAt: booking.created_at,
-        updatedAt: booking.updated_at,
+  stripeSessionId: booking.stripe_session_id,
+  createdAt: booking.created_at ? new Date(booking.created_at) : new Date(),
+  updatedAt: booking.updated_at ? new Date(booking.updated_at) : new Date(),
+  // Idempotent email tracking
+  sessionConfirmationEmailSent: Boolean(booking.session_confirmation_email_sent),
+  sessionConfirmationEmailSentAt: booking.session_confirmation_email_sent_at ? new Date(booking.session_confirmation_email_sent_at) : null,
         
         // Related entities
         parent: parent ? {
@@ -4526,7 +4576,7 @@ export class SupabaseStorage implements IStorage {
         waiverSigned: false,
         waiverSignedAt: null,
         waiverSignatureName: undefined,
-      } as BookingWithRelations;
+  } as unknown as BookingWithRelations;
     });
   }
 
@@ -4624,6 +4674,9 @@ export class SupabaseStorage implements IStorage {
     // Prepare the complete booking data with all relations
     const bookingWithRelations = {
       ...booking,
+  // Ensure idempotent email tracking fields are present on the combined shape
+  sessionConfirmationEmailSent: (booking as any).sessionConfirmationEmailSent ?? false,
+  sessionConfirmationEmailSentAt: (booking as any).sessionConfirmationEmailSentAt ?? null,
       parent,
       lessonType,
       waiver,

@@ -172,6 +172,9 @@ export const bookings = pgTable("bookings", {
   reservationFeePaid: boolean("reservation_fee_paid").notNull().default(false),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).notNull().default("0.00"),
   stripeSessionId: text("stripe_session_id"),
+  // Idempotent session confirmation email tracking
+  sessionConfirmationEmailSent: boolean("session_confirmation_email_sent").notNull().default(false),
+  sessionConfirmationEmailSentAt: timestamp("session_confirmation_email_sent_at"),
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
   focusAreas: text("focus_areas").array(), // Array of focus areas/skills worked on during the session

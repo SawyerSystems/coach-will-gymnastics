@@ -8,7 +8,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionFollowUp, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -1806,15 +1806,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     sessionDate = new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                   } catch {}
                 }
-                console.log(`[BOOKING-SESSION][EMAIL-FALLBACK] Attempting confirmation email to ${toEmail} for booking ${booking.id}`);
-                await sendSessionConfirmation(
-                  toEmail,
-                  parentName,
-                  booking.athlete1Name || (booking.athletes && booking.athletes[0]?.name) || 'Athlete',
-                  sessionDate,
-                  booking.preferredTime || 'TBD'
-                );
-                console.log(`[BOOKING-SESSION][EMAIL-FALLBACK] ✅ Sent confirmation email for booking ${booking.id}`);
+                console.log(`[BOOKING-SESSION][EMAIL-FALLBACK] Idempotent confirmation email trigger for booking ${booking.id}`);
+                await sendSessionConfirmationIfNeeded(booking.id, storage);
               } else {
                 console.warn(`[BOOKING-SESSION][EMAIL-FALLBACK] Skipping confirmation email - no parent email on booking ${booking.id}`);
               }
@@ -2479,29 +2472,16 @@ setTimeout(async () => {
               
               // Always attempt to send the confirmation email, with appropriate logging
               if (emailToUse) {
-                console.log(`[STRIPE WEBHOOK] Sending confirmation email to ${emailToUse} for ${athleteName}`);
-                
+                console.log(`[STRIPE WEBHOOK] Idempotent confirmation email trigger for booking ${bookingId}`);
+                await sendSessionConfirmationIfNeeded(parseInt(bookingId), storage);
+                // Ensure attendance is confirmed once reservation fee paid
                 try {
-                  await sendSessionConfirmation(
-                    emailToUse,
-                    parentName,
-                    athleteName,
-                    sessionDate,
-                    booking.preferredTime || 'Unknown Time'
-                  );
-                  console.log(`[STRIPE WEBHOOK] ✅ AUTO-SENT confirmation email for booking ${bookingId}`);
-                  // Ensure attendance is confirmed once reservation fee paid
-                  try {
-                    if (bookingWithRelations.attendanceStatus === AttendanceStatusEnum.PENDING) {
-                      await storage.updateBookingAttendanceStatus(parseInt(bookingId), AttendanceStatusEnum.CONFIRMED);
-                      console.log(`[STRIPE WEBHOOK] ✅ Auto-updated attendance status to CONFIRMED for booking ${bookingId}`);
-                    }
-                  } catch (attErr) {
-                    console.warn(`[STRIPE WEBHOOK] Failed to auto-update attendance status for booking ${bookingId}:`, attErr);
+                  if (bookingWithRelations.attendanceStatus === AttendanceStatusEnum.PENDING) {
+                    await storage.updateBookingAttendanceStatus(parseInt(bookingId), AttendanceStatusEnum.CONFIRMED);
+                    console.log(`[STRIPE WEBHOOK] ✅ Auto-updated attendance status to CONFIRMED for booking ${bookingId}`);
                   }
-                } catch (sendError) {
-                  console.error(`[STRIPE WEBHOOK] Error sending confirmation email:`, sendError);
-                  // Log the error but continue processing - don't return early
+                } catch (attErr) {
+                  console.warn(`[STRIPE WEBHOOK] Failed to auto-update attendance status for booking ${bookingId}:`, attErr);
                 }
               } else {
                 console.error(`[STRIPE WEBHOOK] Cannot send confirmation email - no parent email found despite fallbacks`);

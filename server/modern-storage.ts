@@ -280,6 +280,9 @@ export class ModernSupabaseStorage {
       preferredTime: data.preferred_time,
       focusAreas: data.focus_areas || [],
       focusAreaOther: data.focus_area_other || null,
+  // Idempotent session confirmation email tracking
+  sessionConfirmationEmailSent: Boolean(data.session_confirmation_email_sent),
+  sessionConfirmationEmailSentAt: data.session_confirmation_email_sent_at ? new Date(data.session_confirmation_email_sent_at) : null,
       parentFirstName: data.parent_first_name,
       parentLastName: data.parent_last_name,
       parentEmail: data.parent_email,
