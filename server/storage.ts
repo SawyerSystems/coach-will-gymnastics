@@ -379,7 +379,7 @@ export class MemStorage implements IStorage {
 
   private initializeSampleData() {
     // Sample blog posts
-    const samplePosts: Omit<BlogPost, 'id'>[] = [
+  const samplePosts: Omit<BlogPost, 'id'>[] = [
       {
         title: "5 Essential Stretches for Young Gymnasts",
         content: `Flexibility is crucial for gymnastics success and injury prevention. Here are five essential stretches that every young gymnast should practice daily to improve their performance and maintain healthy muscles and joints.
@@ -410,7 +410,8 @@ Remember, flexibility takes time to develop. Be patient with yourself and celebr
         excerpt: "Learn these five essential stretches that every young gymnast should practice daily to improve their performance and prevent injuries.",
         category: "Tips",
         imageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300",
-        publishedAt: new Date('2024-12-10')
+  publishedAt: new Date('2024-12-10'),
+  sections: []
       },
       {
         title: "Emma's First Back Handspring Journey",
@@ -445,7 +446,8 @@ Emma's journey reminds us that with patience, proper progression, and lots of en
         excerpt: "Follow Emma's inspiring 6-month journey from being afraid of going backwards to confidently performing her first back handspring.",
         category: "Story",
         imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300",
-        publishedAt: new Date('2024-12-08')
+  publishedAt: new Date('2024-12-08'),
+  sections: []
       },
       {
         title: "Setting Up a Safe Home Practice Space",
@@ -546,7 +548,8 @@ With the right setup and approach, home practice can accelerate your child's gym
         excerpt: "Want to support your child's gymnastics practice at home? Here's how to create a safe and effective practice space without breaking the bank.",
         category: "Guide",
         imageUrl: "https://images.unsplash.com/photo-1540479859555-17af45c78602?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300",
-        publishedAt: new Date('2024-12-05')
+  publishedAt: new Date('2024-12-05'),
+  sections: []
       }
     ];
 
@@ -781,7 +784,6 @@ With the right setup and approach, home practice can accelerate your child's gym
   const booking: Booking = { 
       ...insertBooking,
       id,
-      athleteId: insertBooking.athleteId || null, // Ensure athleteId is included
       waiverId: insertBooking.waiverId ?? null,  // Ensure waiverId is properly set
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -950,7 +952,8 @@ With the right setup and approach, home practice can accelerate your child's gym
       ...insertPost, 
       id,
       publishedAt: new Date(),
-      imageUrl: insertPost.imageUrl ?? null
+  imageUrl: insertPost.imageUrl ?? null,
+  sections: (insertPost as any).sections ?? []
     };
     this.blogPosts.set(id, post);
     return post;
@@ -965,7 +968,8 @@ With the right setup and approach, home practice can accelerate your child's gym
       ...existingPost,
       ...insertPost,
       id,
-      imageUrl: insertPost.imageUrl ?? null
+  imageUrl: insertPost.imageUrl ?? null,
+  sections: (insertPost as any).sections ?? existingPost.sections ?? []
     };
     this.blogPosts.set(id, updatedPost);
     return updatedPost;
@@ -1622,7 +1626,7 @@ export class SupabaseStorage implements IStorage {
     this.logQuery('SELECT', 'parents');
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1641,7 +1645,6 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: parent.emergency_contact_phone,
       passwordHash: parent.password_hash || null,
       isVerified: parent.is_verified || false,
-      blogEmails: parent.blog_emails || false,
       createdAt: parent.created_at,
       updatedAt: parent.updated_at,
     }));
@@ -1652,7 +1655,7 @@ export class SupabaseStorage implements IStorage {
     const emailLower = email.toLowerCase();
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
       .or(`email.ilike.${emailLower},phone.eq.${phone}`)
       .single();
 
@@ -1672,7 +1675,6 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
-      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1699,8 +1701,8 @@ export class SupabaseStorage implements IStorage {
       first_name: insertParent.firstName,
       last_name: insertParent.lastName,
       email: insertParent.email.toLowerCase(),
-      password_hash: insertParent.passwordHash || '', // new field
-      is_verified: insertParent.isVerified || false, // new field
+  password_hash: insertParent.passwordHash || '', // new field
+  is_verified: insertParent.isVerified || false, // new field
       phone: insertParent.phone,
       emergency_contact_name: insertParent.emergencyContactName || 'Not Provided',
       emergency_contact_phone: insertParent.emergencyContactPhone || 'Not Provided',
@@ -1729,7 +1731,6 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
-      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -1758,7 +1759,6 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
-      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -1792,7 +1792,6 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
-      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -2460,7 +2459,7 @@ export class SupabaseStorage implements IStorage {
     return {
       id: data.id,
       parentId: data.parent_id,
-      athleteId: data.athlete_id,
+  // athleteId removed in new schema; use booking_athletes relation instead
       lessonTypeId: data.lesson_type_id,
       waiverId: data.waiver_id,
       // Legacy fields for backward compatibility - these will be empty/undefined for normalized bookings
@@ -3516,7 +3515,8 @@ export class SupabaseStorage implements IStorage {
       id: data.id,
       email: data.email,
       passwordHash: data.password_hash,
-      createdAt: new Date(data.created_at)
+  createdAt: new Date(data.created_at),
+  updatedAt: new Date(data.updated_at)
     };
   }
 
@@ -3835,7 +3835,7 @@ export class SupabaseStorage implements IStorage {
   async getParentById(id: number): Promise<Parent | undefined> {
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
       .eq('id', id)
       .single();
 
@@ -3855,7 +3855,6 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
-      blogEmails: data.blog_emails || false,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -4479,10 +4478,9 @@ export class SupabaseStorage implements IStorage {
       const focusAreas = focusAreasByBooking.get(booking.id) || [];
       // Sort athletes by slot order
       athletes.sort((a, b) => a.slotOrder - b.slotOrder);
-      return {
+  return {
         id: booking.id,
         parentId: booking.parent_id,
-        athleteId: booking.athlete_id,
         lessonTypeId: booking.lesson_type_id,
         waiverId: booking.waiver_id,
         preferredDate: booking.preferred_date,
@@ -4515,7 +4513,7 @@ export class SupabaseStorage implements IStorage {
   stripeSessionId: booking.stripe_session_id,
   createdAt: booking.created_at ? new Date(booking.created_at) : new Date(),
   updatedAt: booking.updated_at ? new Date(booking.updated_at) : new Date(),
-  // Idempotent email tracking
+  // Idempotent email tracking (required by Booking type)
   sessionConfirmationEmailSent: Boolean(booking.session_confirmation_email_sent),
   sessionConfirmationEmailSentAt: booking.session_confirmation_email_sent_at ? new Date(booking.session_confirmation_email_sent_at) : null,
         
@@ -4535,11 +4533,11 @@ export class SupabaseStorage implements IStorage {
         lessonType: lessonType ? {
           id: lessonType.id,
           name: lessonType.name,
-          duration: lessonType.duration,
-          price: lessonType.price,
-          total_price: lessonType.total_price,
-          reservation_fee: lessonType.reservation_fee,
           description: lessonType.description,
+          durationMinutes: lessonType.duration_minutes ?? lessonType.duration,
+          isPrivate: Boolean(lessonType.is_private),
+          totalPrice: (lessonType.total_price ?? lessonType.price)?.toString?.() ?? String(lessonType.total_price ?? lessonType.price ?? '0'),
+          reservationFee: (lessonType.reservation_fee ?? 0)?.toString?.() ?? '0',
         } : undefined,
         
         // Legacy athlete fields for compatibility
@@ -4989,32 +4987,33 @@ export class SupabaseStorage implements IStorage {
 
   // Blog Email Subscriptions
   async updateParentBlogEmailOptIn(parentId: number, optIn: boolean): Promise<Parent | undefined> {
-    const { data, error } = await supabaseAdmin
-      .from('parents')
-      .update({ blog_emails: optIn, updated_at: new Date().toISOString() })
-      .eq('id', parentId)
-      .select()
-      .single();
+    // Fetch parent to get email
+    const parent = await this.getParentById(parentId);
+    if (!parent) return undefined;
 
-    if (error) {
-      console.error('Error updating parent blog email opt-in:', error);
+    try {
+      const email = parent.email.toLowerCase();
+      if (optIn) {
+        // Upsert into blog_email_signups
+        const { error } = await supabaseAdmin
+          .from('blog_email_signups')
+          .upsert({ email })
+          .select();
+        if (error) throw error;
+      } else {
+        // Remove from blog_email_signups
+        const { error } = await supabaseAdmin
+          .from('blog_email_signups')
+          .delete()
+          .eq('email', email);
+        if (error) throw error;
+      }
+      // Return the parent (no blogEmails on Parent type)
+      return parent;
+    } catch (error) {
+      console.error('Error updating parent blog email opt-in via signups table:', error);
       throw error;
     }
-
-    return data ? {
-      id: data.id,
-      firstName: data.first_name,
-      lastName: data.last_name,
-      email: data.email,
-      passwordHash: data.password_hash,
-      phone: data.phone,
-      emergencyContactName: data.emergency_contact_name,
-      emergencyContactPhone: data.emergency_contact_phone,
-      isVerified: data.is_verified,
-      blogEmails: data.blog_emails,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    } : undefined;
   }
 
   async createBlogEmailSignup(email: string): Promise<BlogEmailSignup> {
@@ -5055,18 +5054,29 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllParentsWithBlogOptIn(): Promise<Parent[]> {
-    const { data, error } = await supabaseAdmin
-      .from('parents')
-      .select('*')
-      .eq('blog_emails', true)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching parents with blog opt-in:', error);
-      throw error;
+    // Get emails from blog_email_signups
+    const { data: signups, error: signupError } = await supabaseAdmin
+      .from('blog_email_signups')
+      .select('email');
+    if (signupError) {
+      console.error('Error fetching blog email signups:', signupError);
+      throw signupError;
     }
 
-    return data.map(item => ({
+    const emails = (signups || []).map(s => s.email);
+    if (emails.length === 0) return [];
+
+    const { data: parentsData, error: parentsError } = await supabaseAdmin
+      .from('parents')
+      .select('*')
+      .in('email', emails)
+      .order('created_at', { ascending: false });
+    if (parentsError) {
+      console.error('Error fetching parents by email list:', parentsError);
+      throw parentsError;
+    }
+
+    return (parentsData || []).map(item => ({
       id: item.id,
       firstName: item.first_name,
       lastName: item.last_name,
@@ -5076,40 +5086,21 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: item.emergency_contact_name,
       emergencyContactPhone: item.emergency_contact_phone,
       isVerified: item.is_verified,
-      blogEmails: item.blog_emails,
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at),
     }));
   }
 
   async getAllBlogEmailAddresses(): Promise<string[]> {
-    // Get parent emails with blog opt-in
-    const { data: parentData, error: parentError } = await supabaseAdmin
-      .from('parents')
-      .select('email')
-      .eq('blog_emails', true);
-
-    if (parentError) {
-      console.error('Error fetching parent emails:', parentError);
-      throw parentError;
-    }
-
-    // Get guest signup emails
-    const { data: signupData, error: signupError } = await supabaseAdmin
+    // Return all emails subscribed in blog_email_signups
+    const { data, error } = await supabaseAdmin
       .from('blog_email_signups')
       .select('email');
-
-    if (signupError) {
-      console.error('Error fetching signup emails:', signupError);
-      throw signupError;
+    if (error) {
+      console.error('Error fetching blog email addresses:', error);
+      throw error;
     }
-
-    // Combine and deduplicate emails
-    const parentEmails = parentData.map(p => p.email);
-    const signupEmails = signupData.map(s => s.email);
-    const allEmails = [...parentEmails, ...signupEmails];
-    
-    return Array.from(new Set(allEmails)); // Remove duplicates
+    return (data || []).map(r => r.email);
   }
 
   // Add an athlete to a booking with a specific slot order

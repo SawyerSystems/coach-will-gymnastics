@@ -577,20 +577,20 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     if (!newLessonType || !currentLessonType) return;
     
     // Handle private to semi-private transition (add athlete slot)
-    if (currentLessonType.maxAthletes === 1 && newLessonType.maxAthletes > 1) {
+  if ((currentLessonType.isPrivate ? 1 : 2) === 1 && (newLessonType.isPrivate ? 1 : 2) > 1) {
       // Keep the existing athlete and allow adding more
     }
     
     // Handle semi-private to private transition (remove extra athletes)
-    if (currentLessonType.maxAthletes > 1 && newLessonType.maxAthletes === 1) {
+  if ((currentLessonType.isPrivate ? 1 : 2) > 1 && (newLessonType.isPrivate ? 1 : 2) === 1) {
       if (bookingAthletes.length > 1) {
         setBookingAthletes([bookingAthletes[0]]);
       }
     }
     
     // Handle duration change and focus areas
-    if (currentLessonType.duration !== newLessonType.duration) {
-      if (newLessonType.duration > currentLessonType.duration) {
+    if (currentLessonType.durationMinutes !== newLessonType.durationMinutes) {
+      if (newLessonType.durationMinutes > currentLessonType.durationMinutes) {
         // Going from short to long session - allow more focus areas
       } else {
         // Going from long to short session - limit focus areas
@@ -609,7 +609,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     const newLessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
     if (!newLessonType) return;
     
-    const maxFocusAreas = newLessonType.duration >= 60 ? 4 : 2;
+  const maxFocusAreas = newLessonType.durationMinutes >= 60 ? 4 : 2;
     
     if (focusAreas.length < maxFocusAreas) {
       setFocusAreas([...focusAreas, tempFocusArea.trim()]);
@@ -678,12 +678,13 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       
       const currentAthletes = Array.isArray(bookingAthletes) ? bookingAthletes : [];
       
-      if (currentAthletes.length < newLessonType.maxAthletes) {
+    const maxAthletes = newLessonType.isPrivate ? 1 : 2;
+    if (currentAthletes.length < maxAthletes) {
         setBookingAthletes([...currentAthletes, { athleteId: null }]);
       } else {
         toast({
           title: "Maximum Athletes",
-          description: `This lesson type can only have ${newLessonType.maxAthletes} athletes.`,
+      description: `This lesson type can only have ${maxAthletes} athletes.`,
           variant: "destructive"
         });
       }
@@ -898,17 +899,17 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   // Calculate total price
   const calculatePrice = () => {
     const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-    return lessonType ? lessonType.price : 0;
+  return lessonType ? Number(lessonType.totalPrice) : 0;
   };
 
   const getMaxAthletes = () => {
     const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-    return lessonType ? lessonType.maxAthletes : 1;
+  return lessonType ? (lessonType.isPrivate ? 1 : 2) : 1;
   };
 
   const getMaxFocusAreas = () => {
     const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-    return lessonType ? (lessonType.duration >= 60 ? 4 : 2) : 2;
+  return lessonType ? (lessonType.durationMinutes >= 60 ? 4 : 2) : 2;
   };
   
   // Filter focus areas based on athlete experience levels
@@ -931,7 +932,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
 
   const getLessonTypeDuration = () => {
     const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-    return lessonType ? `${lessonType.duration} minutes` : '';
+  return lessonType ? `${lessonType.durationMinutes} minutes` : '';
   };
 
   const isPrivateLessonType = () => {
@@ -1130,7 +1131,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     <SelectContent>
                       {lessonTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name} - {type.duration} min ({type.isPrivate ? 'Private' : `Semi-private (${type.maxAthletes})`}) - ${type.price}
+                          {type.name} - {type.durationMinutes} min ({type.isPrivate ? 'Private' : `Semi-private (2)`}) - ${Number(type.totalPrice)}
                         </SelectItem>
                       ))}
                     </SelectContent>

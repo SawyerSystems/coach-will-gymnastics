@@ -72,7 +72,6 @@ export function ParentSelectionStep() {
     emergencyContactName: "",
     emergencyContactPhone: "",
     isVerified: false,
-    blogEmails: false,
     createdAt: apiParent.created_at ? new Date(apiParent.created_at) : null,
     updatedAt: apiParent.updated_at ? new Date(apiParent.updated_at) : null,
   }));
@@ -106,7 +105,6 @@ export function ParentSelectionStep() {
         emergencyContactPhone: (newParentForm.emergencyContactPhone || 'Not Provided').trim(),
         passwordHash: '', // Will be set by backend if needed
         isVerified: false,
-        blogEmails: false,
       };
 
       const response = await apiRequest('POST', '/api/parents', {
@@ -128,7 +126,6 @@ export function ParentSelectionStep() {
           emergencyContactName: createdParent.emergencyContactName || newParentForm.emergencyContactName,
           emergencyContactPhone: createdParent.emergencyContactPhone || newParentForm.emergencyContactPhone,
           isVerified: false,
-          blogEmails: false,
           createdAt: new Date(createdParent.createdAt || Date.now()),
           updatedAt: new Date(createdParent.updatedAt || Date.now()),
         };

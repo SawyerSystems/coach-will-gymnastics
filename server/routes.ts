@@ -5242,7 +5242,7 @@ setTimeout(async () => {
 
       res.json({ 
         success: true, 
-        blogEmails: updatedParent.blogEmails,
+        blogEmails: !!optIn,
         message: optIn ? "You've been subscribed to blog notifications!" : "You've been unsubscribed from blog notifications."
       });
     } catch (error) {

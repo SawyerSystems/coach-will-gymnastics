@@ -197,7 +197,7 @@ export function AdminBookingDetail({ booking, onRefresh }: AdminBookingDetailPro
                   <p className="text-sm text-gray-500">Duration</p>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4 text-gray-500" />
-                    <p className="font-medium">{lessonType?.duration || '-'} minutes</p>
+                    <p className="font-medium">{lessonType?.durationMinutes || '-'} minutes</p>
                   </div>
                 </div>
                               <div>

@@ -91,7 +91,6 @@ export const parents = pgTable("parents", {
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
-  blogEmails: boolean("blog_emails").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -142,14 +141,10 @@ export const lessonTypes = pgTable("lesson_types", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  duration: integer("duration").notNull(), // in minutes
+  durationMinutes: integer("duration_minutes").notNull(),
   isPrivate: boolean("is_private").default(false).notNull(),
-  maxAthletes: integer("max_athletes").default(1).notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  sortOrder: integer("sort_order").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  reservationFee: decimal("reservation_fee", { precision: 10, scale: 2 }).notNull(),
 });
 
 // Booking method enum for the new dropdown requirements
@@ -160,7 +155,6 @@ export const bookingMethodEnum = pgEnum("booking_method", [
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   parentId: integer("parent_id").references(() => parents.id),
-  athleteId: integer("athlete_id").references(() => athletes.id),
   lessonTypeId: integer("lesson_type_id").references(() => lessonTypes.id),
   waiverId: integer("waiver_id"),
   preferredDate: date("preferred_date"),
@@ -177,7 +171,7 @@ export const bookings = pgTable("bookings", {
   sessionConfirmationEmailSentAt: timestamp("session_confirmation_email_sent_at"),
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
-  focusAreas: text("focus_areas").array(), // Array of focus areas/skills worked on during the session
+  focusAreas: json("focus_areas").$type<string[]>(), // JSON array of focus area names/skills
   focusAreaOther: text("focus_area_other"), // Custom focus area text when "Other" is selected
   progressNote: text("progress_note"), // For Adventure Log progress tracking
   coachName: text("coach_name").default("Coach Will"), // For Adventure Log coach tracking
@@ -253,6 +247,7 @@ export const blogPosts = pgTable("blog_posts", {
   category: text("category").notNull(),
   imageUrl: text("image_url"),
   publishedAt: timestamp("published_at").defaultNow().notNull(),
+  sections: json("sections"),
 });
 
 export const tips = pgTable("tips", {
@@ -349,6 +344,7 @@ export const admins = pgTable("admins", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 

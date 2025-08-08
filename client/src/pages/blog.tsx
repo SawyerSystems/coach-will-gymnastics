@@ -281,7 +281,7 @@ export default function Blog() {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="blog-emails"
-                          checked={parentInfo?.blogEmails || false}
+                          checked={false}
                           onCheckedChange={handleParentOptInChange}
                           disabled={parentOptInMutation.isPending}
                         />

@@ -272,7 +272,6 @@ export class ModernSupabaseStorage {
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
       parentId: data.parent_id || null,
-      athleteId: data.athlete_id || null,
       lessonTypeId: data.lesson_type_id || null,
       waiverId: data.waiver_id || null,
       lessonType: data.lesson_type,
@@ -355,7 +354,6 @@ export class ModernSupabaseStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
-      blogEmails: data.blog_emails || false,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

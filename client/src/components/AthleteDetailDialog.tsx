@@ -79,9 +79,8 @@ export function AthleteDetailDialog({
                          (athleteData.firstName && athleteData.lastName ? 
                           `${athleteData.firstName} ${athleteData.lastName}` : '');
       
-      return booking.athlete1Name === athleteName || 
-             booking.athlete2Name === athleteName ||
-             booking.athleteId === athleteId;
+  return booking.athlete1Name === athleteName || 
+     booking.athlete2Name === athleteName;
     }) : 
     bookings.filter(booking => {
       // For admin mode, use the provided bookings prop
@@ -96,9 +95,8 @@ export function AthleteDetailDialog({
                          (athleteData.firstName && athleteData.lastName ? 
                           `${athleteData.firstName} ${athleteData.lastName}` : '');
       
-      return booking.athlete1Name === athleteName || 
-             booking.athlete2Name === athleteName ||
-             booking.athleteId === athleteId;
+  return booking.athlete1Name === athleteName || 
+     booking.athlete2Name === athleteName;
     });
 
   console.log('🔍 Filtered athlete bookings:', {
