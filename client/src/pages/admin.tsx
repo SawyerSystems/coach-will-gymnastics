@@ -1104,6 +1104,75 @@ export default function Admin() {
   // Filtered parents for local search when not using server-side search
   const filteredParents = parentsData?.parents || [];
 
+  // Debug: Avg Booking Value breakdown when `?debugAvg` is present
+  try {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('debugAvg')) {
+        const toNumber = (v: any) => {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        };
+        const details = (allBookings || []).map((b: any) => {
+          const bookingAmount = b?.amount;
+          const amountNum = toNumber(bookingAmount);
+          const ltObj = b?.lessonType;
+          const ltId = b?.lessonTypeId;
+          let ltFromId: any = undefined;
+          let ltFromName: any = undefined;
+          let resolved = 0;
+          let source = '';
+          if (amountNum > 0) {
+            resolved = amountNum;
+            source = 'booking.amount';
+          } else if (ltId && lessonTypesById.has(ltId)) {
+            ltFromId = lessonTypesById.get(ltId);
+            resolved = toNumber(ltFromId?.price);
+            source = 'lessonTypesById.price';
+          } else if (ltObj && typeof ltObj === 'object' && 'price' in ltObj) {
+            resolved = toNumber((ltObj as any)?.price);
+            source = 'booking.lessonType.price';
+          } else if (typeof ltObj === 'string' && lessonTypesByName.has(ltObj)) {
+            ltFromName = lessonTypesByName.get(ltObj);
+            resolved = toNumber(ltFromName?.price);
+            source = 'lessonTypesByName.price';
+          } else {
+            source = 'unresolved(0)';
+          }
+          return {
+            id: b?.id,
+            lessonTypeId: ltId,
+            lessonTypeName: typeof ltObj === 'string' ? ltObj : (ltObj?.name || undefined),
+            bookingAmount,
+            ltFromIdPrice: ltFromId?.price,
+            ltFromNamePrice: ltFromName?.price,
+            resolvedPrice: resolved,
+            source,
+          };
+        });
+        const sum = details.reduce((acc, d) => acc + toNumber(d.resolvedPrice), 0);
+        const count = (allBookings || []).length;
+        const known = details.filter(d => toNumber(d.resolvedPrice) > 0);
+        const sumKnown = known.reduce((acc, d) => acc + toNumber(d.resolvedPrice), 0);
+        const avgAll = count ? (sum / count) : 0;
+        const avgKnown = known.length ? (sumKnown / known.length) : 0;
+        // eslint-disable-next-line no-console
+        console.groupCollapsed('%c[AVG DEBUG] Avg Booking Value breakdown', 'color:#0F0276;font-weight:bold;');
+        // eslint-disable-next-line no-console
+        console.table(details);
+        // eslint-disable-next-line no-console
+        console.log('[AVG DEBUG] sum(all)/count(all)=', sum, '/', count, '=', avgAll.toFixed(2));
+        // eslint-disable-next-line no-console
+        console.log('[AVG DEBUG] sum(known)/count(known)=', sumKnown, '/', known.length, '=', avgKnown.toFixed(2));
+        // eslint-disable-next-line no-console
+        console.groupEnd();
+      }
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('Avg debug logging failed:', e);
+  }
+
   // RENDER
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -1163,7 +1232,7 @@ export default function Admin() {
               </div>
             </div>
 
-        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10 mx-auto w-full">
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10 mx-auto w-full">
           {!bookings || !athletes ? (
             [...Array(4)].map((_, index) => (
               <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white transform transition-transform hover:scale-[1.02] duration-300">
@@ -2747,7 +2816,7 @@ export default function Admin() {
               <CardContent className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
                 <div className="space-y-4 sm:space-y-6">
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                     <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-blue-800">Total Bookings</CardTitle>
@@ -2799,21 +2868,30 @@ export default function Admin() {
                           $
                           {(() => {
                             if (!allBookings.length) return '0.00';
+                            const toNumber = (v: any) => {
+                              const n = Number(v);
+                              return Number.isFinite(n) ? n : 0;
+                            };
                             const sum = allBookings.reduce((acc, b) => {
-                              // Prefer full lesson type price
+                              // Only use the base lesson price from the booking snapshot if present; never include reservation fees
+                              const bookingAmount = (b as any).amount; // legacy snapshot of full lesson price
+                              const amountNum = toNumber(bookingAmount);
+                              if (amountNum > 0) return acc + amountNum;
+
+                              // Otherwise, derive by lesson type (full lesson price only)
                               const lt: any = (b as any).lessonType;
+                              if ((b as any).lessonTypeId && lessonTypesById.has((b as any).lessonTypeId)) {
+                                const match: any = lessonTypesById.get((b as any).lessonTypeId);
+                                return acc + toNumber(match?.price);
+                              }
                               if (lt && typeof lt === 'object' && 'price' in lt) {
-                                return acc + parseFloat(String(lt.price || 0));
+                                return acc + toNumber(lt.price);
                               }
-                              if (b.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) {
-                                const match = lessonTypesById.get(b.lessonTypeId);
-                                return acc + parseFloat(String(match.price ?? match.totalPrice ?? 0));
-                              }
-                              // fallback by name if available
+                              // Fallback by name if available
                               const name = typeof lt === 'string' ? lt : undefined;
                               if (name && lessonTypesByName.has(name)) {
-                                const match = lessonTypesByName.get(name);
-                                return acc + parseFloat(String(match.price ?? match.totalPrice ?? 0));
+                                const match: any = lessonTypesByName.get(name);
+                                return acc + toNumber(match?.price);
                               }
                               return acc;
                             }, 0);
