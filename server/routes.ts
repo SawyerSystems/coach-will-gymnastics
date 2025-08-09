@@ -1,4 +1,7 @@
 import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import fs from 'fs/promises';
+import path from 'path';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import type { Express } from "express";
@@ -1663,11 +1666,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // --- Admin Payout Reporting Endpoints ---
   app.get('/api/admin/payouts/summary', isAdminAuthenticated, async (req, res) => {
     try {
-      const { start, end, membership, athleteId } = req.query as any;
+      const { start, end, membership, athleteId, state, duration } = req.query as any;
       // Build filters
-      let query = supabase
+  let query = supabaseAdmin
         .from('booking_athletes')
-        .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status)')
+        .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status)')
         .not('gym_payout_owed_cents', 'is', null);
 
       if (start) {
@@ -1683,6 +1686,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (athleteId) {
         query = query.eq('athlete_id', Number(athleteId));
+      }
+      if (state) {
+        query = query.eq('bookings.attendance_status', String(state));
+      }
+      if (duration) {
+        query = query.eq('duration_minutes', Number(duration));
       }
 
       const { data, error } = await query;
@@ -1702,17 +1711,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/payouts/list', isAdminAuthenticated, async (req, res) => {
     try {
-      const { start, end, membership, athleteId } = req.query as any;
-  let query = supabase
+      const { start, end, membership, athleteId, state, duration } = req.query as any;
+  let query = supabaseAdmin
         .from('booking_athletes')
-  .select('id, booking_id, athlete_id, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date), athletes!inner(first_name, last_name, name)')
+  .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status), athletes!inner(first_name, last_name, name)')
         .not('gym_payout_owed_cents', 'is', null);
 
       if (start) query = query.gte('bookings.preferred_date', String(start));
       if (end) query = query.lte('bookings.preferred_date', String(end));
       if (membership === 'member') query = query.eq('gym_member_at_booking', true);
       else if (membership === 'non-member') query = query.eq('gym_member_at_booking', false);
-      if (athleteId) query = query.eq('athlete_id', Number(athleteId));
+  if (athleteId) query = query.eq('athlete_id', Number(athleteId));
+  if (state) query = query.eq('bookings.attendance_status', String(state));
+  if (duration) query = query.eq('duration_minutes', Number(duration));
 
   // Order by bookings.preferred_date via foreignTable option
   const { data, error } = await query.order('preferred_date', { ascending: true, foreignTable: 'bookings' });
@@ -1730,7 +1741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/payouts/export.csv', isAdminAuthenticated, async (req, res) => {
     try {
       const params = new URLSearchParams(req.query as any).toString();
-  const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,bookings(preferred_date),athletes(first_name,last_name,name)&${params}`, {
+  const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,duration_minutes,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,bookings(preferred_date,attendance_status),athletes(first_name,last_name,name)&${params}`, {
         headers: {
           apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '',
           Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || ''}`,
@@ -1744,6 +1755,598 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) {
       console.error('[PAYOUTS][EXPORT CSV] Exception:', e);
       res.status(500).send('Failed to export CSV');
+    }
+  });
+
+  // Export payout statement as PDF for a given filtered period
+  app.get('/api/admin/payouts/export.pdf', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { start, end, membership, athleteId, state, duration } = req.query as any;
+      // Load rows similar to list endpoint
+      let query = supabaseAdmin
+        .from('booking_athletes')
+        .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status), athletes!inner(first_name, last_name, name)')
+        .not('gym_payout_owed_cents', 'is', null);
+
+      if (start) query = query.gte('bookings.preferred_date', String(start));
+      if (end) query = query.lte('bookings.preferred_date', String(end));
+      if (membership === 'member') query = query.eq('gym_member_at_booking', true);
+      else if (membership === 'non-member') query = query.eq('gym_member_at_booking', false);
+  if (athleteId) query = query.eq('athlete_id', Number(athleteId));
+  if (state) query = query.eq('bookings.attendance_status', String(state));
+  if (duration) query = query.eq('duration_minutes', Number(duration));
+
+      const { data, error } = await query.order('preferred_date', { ascending: true, foreignTable: 'bookings' });
+      if (error) {
+        console.error('[PAYOUTS][PDF] Query error:', error);
+        return res.status(500).json({ error: 'Failed to load payout data' });
+      }
+
+      // Build PDF document with polished invoice-style layout
+      const doc = await PDFDocument.create();
+      const font = await doc.embedFont(StandardFonts.Helvetica);
+      const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+      let page = doc.addPage([612, 792]); // US Letter
+      const margin = 40;
+      let { width, height } = page.getSize();
+      let y = height - margin;
+
+      const textGray = rgb(0.2, 0.2, 0.2);
+      const lineGray = rgb(0.85, 0.85, 0.85);
+      const zebra = rgb(0.96, 0.97, 0.99);
+
+      const drawText = (text: string, x: number, yVal: number, size = 11, f = font, color = textGray) => {
+        page.drawText(text, { x, y: yVal, size, font: f, color });
+      };
+
+      // Header (business style) with logo + title left, metadata block right
+      let logoDrawnWidth = 0;
+      let logoDrawnHeight = 0;
+      try {
+        const logoPath = path.join(process.cwd(), 'client', 'public', 'CWT_Circle_LogoSPIN.png');
+        const logoBytes = await fs.readFile(logoPath);
+        const logoImg = await doc.embedPng(logoBytes);
+        // Use a fixed small width to avoid oversized logos from large source images
+        const targetW = 64; // px
+        const scale = targetW / logoImg.width;
+        const targetH = logoImg.height * scale;
+        page.drawImage(logoImg, { x: margin, y: y - targetH + 6, width: targetW, height: targetH, opacity: 0.9 });
+        logoDrawnWidth = targetW;
+        logoDrawnHeight = targetH;
+      } catch {}
+
+      const headerLeftX = margin + (logoDrawnWidth ? logoDrawnWidth + 12 : 0);
+      const titleY = y;
+      drawText('Payout Statement', headerLeftX, titleY, 20, bold);
+      const subtitleY = titleY - 18;
+      const periodStart = (start as string) || '—';
+      const periodEnd = (end as string) || '—';
+      const periodLabel = `${periodStart} to ${periodEnd}`;
+      drawText(periodLabel, headerLeftX, subtitleY, 12, font, textGray);
+
+      // Metadata block (right aligned)
+      const metaLines: string[] = [];
+      if (membership && membership !== 'all') metaLines.push(`Membership: ${membership}`);
+      if (state) metaLines.push(`Attendance: ${state}`);
+      if (duration) metaLines.push(`Duration: ${duration} min`);
+      if (athleteId) metaLines.push(`Athlete ID: ${athleteId}`);
+      const generatedAt = new Date();
+      metaLines.push(`Generated: ${generatedAt.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}`);
+      // Measure widest meta line
+      const metaXRight = width - margin;
+      let metaY = y;
+      metaLines.forEach((line, idx) => {
+        drawText(line, metaXRight - font.widthOfTextAtSize(line, 9), metaY - idx * 11, 9);
+      });
+
+      y = subtitleY - 28; // space below header
+      page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+      y -= 10;
+
+      // Column layout
+      const col = {
+        date: margin,
+        time: margin + 85,
+        athlete: margin + 150,
+        member: margin + 355,
+        dur: margin + 405,
+        rate: width - margin - 125,
+        owed: width - margin - 55,
+      } as const;
+
+      // Table header
+  drawText('Date', col.date, y, 11, bold);
+  drawText('Time', col.time, y, 11, bold);
+  drawText('Athlete', col.athlete, y, 11, bold);
+  drawText('Member', col.member, y, 11, bold);
+  drawText('Dur', col.dur, y, 11, bold);
+  drawText('Rate', col.rate, y, 11, bold);
+  drawText('Owed', col.owed, y, 11, bold);
+      y -= 12;
+      page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+      y -= 6;
+
+      let totalCents = 0;
+      let rowIndex = 0;
+
+      const ensureSpace = () => {
+        if (y < margin + 70) {
+          page = doc.addPage([612, 792]);
+          ({ width, height } = page.getSize());
+          y = height - margin;
+
+          // Repeat header on new page
+          drawText('Date', col.date, y, 11, bold);
+          drawText('Time', col.time, y, 11, bold);
+          drawText('Athlete', col.athlete, y, 11, bold);
+          drawText('Member', col.member, y, 11, bold);
+          drawText('Dur', col.dur, y, 11, bold);
+          drawText('Rate', col.rate, y, 11, bold);
+          drawText('Owed', col.owed, y, 11, bold);
+          y -= 12;
+          page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+          y -= 6;
+          rowIndex = 0;
+        }
+      };
+
+      for (const rowRaw of (data || [])) {
+        const row: any = rowRaw as any;
+        // Relations can come back as objects or single-element arrays depending on join; normalize
+        const bookingRel: any = Array.isArray(row.bookings) ? row.bookings[0] : row.bookings;
+        const athleteRel: any = Array.isArray(row.athletes) ? row.athletes[0] : row.athletes;
+        const isoDateTime = bookingRel?.preferred_date || '';
+        const datePart = isoDateTime ? isoDateTime.slice(0, 10) : '';
+        let timePart = '';
+        if (isoDateTime) {
+          const d = new Date(isoDateTime);
+          if (!isNaN(d.getTime())) {
+            timePart = d.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit' });
+          }
+        }
+        const athleteName = athleteRel?.name || [athleteRel?.first_name, athleteRel?.last_name].filter(Boolean).join(' ') || `#${row.athlete_id}`;
+        const member = row.gym_member_at_booking ? 'Yes' : 'No';
+        const dur = row.duration_minutes || '';
+        const rateUsd = (row.gym_rate_applied_cents || 0) / 100;
+        const owedUsd = (row.gym_payout_owed_cents || 0) / 100;
+        totalCents += (row.gym_payout_owed_cents || 0);
+
+        ensureSpace();
+        if (rowIndex % 2 === 0) {
+          // zebra row
+          page.drawRectangle({ x: margin - 2, y: y - 12, width: width - margin * 2 + 4, height: 16, color: zebra, opacity: 0.6 });
+        }
+  drawText(String(datePart), col.date, y);
+  drawText(timePart, col.time, y);
+  drawText(athleteName, col.athlete, y);
+        drawText(member, col.member, y);
+        drawText(String(dur), col.dur, y);
+        drawText(rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-', col.rate, y);
+        drawText(owedUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }), col.owed, y);
+        y -= 16;
+        rowIndex++;
+      }
+
+      // Totals box
+      y -= 4;
+      page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+      y -= 12;
+      const boxW = 220;
+      const boxH = 28;
+      const boxX = width - margin - boxW;
+      const boxY = y - boxH + 18;
+      page.drawRectangle({ x: boxX, y: boxY, width: boxW, height: boxH, borderColor: rgb(0,0,0), borderWidth: 0.8 });
+      drawText('Total Owed', boxX + 12, boxY + 10, 11, bold);
+      drawText((totalCents / 100).toLocaleString(undefined, { style: 'currency', currency: 'USD' }), boxX + boxW - 110, boxY + 10, 12, bold);
+      y = boxY - 16;
+      drawText('Generated by CoachWillTumbles Admin', margin, y, 9, font, textGray);
+
+      // Footer with page numbers and centered period
+      const pages = doc.getPages();
+      pages.forEach((pg, idx) => {
+        const pw = pg.getSize().width;
+        const footerY = 20;
+        const left = 'CoachWillTumbles.com';
+        const center = periodStart || periodEnd ? `${periodStart} to ${periodEnd}` : '';
+        const pageLabel = `Page ${idx + 1} of ${pages.length}`;
+        pg.drawText(left, { x: margin, y: footerY, size: 9, font, color: textGray });
+        if (center) {
+          const centerX = pw / 2 - font.widthOfTextAtSize(center, 9) / 2;
+          pg.drawText(center, { x: centerX, y: footerY, size: 9, font, color: textGray });
+        }
+        pg.drawText(pageLabel, { x: pw - margin - font.widthOfTextAtSize(pageLabel, 9), y: footerY, size: 9, font, color: textGray });
+      });
+
+      const pdfBytes = await doc.save();
+      res.setHeader('Content-Type', 'application/pdf');
+      // Sanitize filename similar to manual invoice for consistency
+      const baseTitle = 'payout-statement';
+      const periodSlug = `${periodStart || ''}-to-${periodEnd || ''}`
+        .normalize('NFKD')
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .slice(0, 60);
+      const fileName = `${baseTitle}-${periodSlug || 'period'}.pdf`;
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(Buffer.from(pdfBytes));
+    } catch (e) {
+      console.error('[PAYOUTS][EXPORT PDF] Exception:', e);
+      res.status(500).send('Failed to export PDF');
+    }
+  });
+
+  // --- Gym Payout Rate Management (no schema changes) ---
+  // List payout rates (active by default, include=all for history)
+  app.get('/api/admin/payout-rates', isAdminAuthenticated, async (req, res) => {
+    try {
+      const include = String((req.query.include || 'active')).toLowerCase();
+      const nowIso = new Date().toISOString();
+      let query = supabaseAdmin
+        .from('gym_payout_rates')
+        .select('id, duration_minutes, is_member, rate_cents, effective_from, effective_to, created_at, updated_at');
+      if (include !== 'all' && include !== 'historical') {
+        // active only
+        query = query.or(`effective_to.is.null,effective_to.gt.${nowIso}`);
+      }
+      const { data, error } = await query.order('duration_minutes', { ascending: true }).order('is_member', { ascending: true }).order('effective_from', { ascending: false });
+      if (error) return res.status(500).json({ error: 'Failed to load payout rates' });
+      res.json(data || []);
+    } catch (e) {
+      console.error('[PAYOUT-RATES][LIST] Exception', e);
+      res.status(500).json({ error: 'Failed to load payout rates' });
+    }
+  });
+
+  // Create a new payout rate (auto-retire previous active overlapping rate for same duration/is_member)
+  app.post('/api/admin/payout-rates', isAdminAuthenticated, async (req, res) => {
+    try {
+      const bodySchema = z.object({
+        durationMinutes: z.number().int().positive(),
+        isMember: z.boolean(),
+        rateCents: z.number().int().positive(),
+        effectiveFrom: z.string().datetime().optional(), // ISO timestamp
+      });
+      const parsed = bodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+      }
+      const { durationMinutes, isMember, rateCents } = parsed.data;
+      const effectiveFromIso = parsed.data.effectiveFrom || new Date().toISOString();
+
+      // Load current active (overlap) rate
+      const { data: currentActive, error: activeErr } = await supabaseAdmin
+        .from('gym_payout_rates')
+        .select('id, effective_from, effective_to')
+        .eq('duration_minutes', durationMinutes)
+        .eq('is_member', isMember)
+        .or(`effective_to.is.null,effective_to.gt.${effectiveFromIso}`)
+        .lte('effective_from', effectiveFromIso)
+        .order('effective_from', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (activeErr) {
+        console.error('[PAYOUT-RATES][CREATE] Failed fetching current active', activeErr);
+        return res.status(500).json({ error: 'Failed to check existing rates' });
+      }
+      if (currentActive && currentActive.effective_from >= effectiveFromIso) {
+        return res.status(400).json({ error: 'effectiveFrom must be greater than current active rate effective_from' });
+      }
+
+      // Close previous active by setting effective_to to just before new effectiveFrom (1 second earlier) if still open
+      if (currentActive && !currentActive.effective_to) {
+        const endDate = new Date(new Date(effectiveFromIso).getTime() - 1000).toISOString();
+        const { error: updErr } = await supabaseAdmin
+          .from('gym_payout_rates')
+          .update({ effective_to: endDate })
+          .eq('id', currentActive.id);
+        if (updErr) {
+          console.error('[PAYOUT-RATES][CREATE] Failed retiring previous active', updErr);
+          return res.status(500).json({ error: 'Failed to retire previous active rate' });
+        }
+      }
+
+      // Insert new rate
+      const { data: inserted, error: insErr } = await supabaseAdmin
+        .from('gym_payout_rates')
+        .insert({
+          duration_minutes: durationMinutes,
+          is_member: isMember,
+          rate_cents: rateCents,
+          effective_from: effectiveFromIso,
+        })
+        .select()
+        .single();
+      if (insErr) {
+        console.error('[PAYOUT-RATES][CREATE] Insert error', insErr);
+        return res.status(500).json({ error: 'Failed to create rate' });
+      }
+      res.status(201).json(inserted);
+    } catch (e) {
+      console.error('[PAYOUT-RATES][CREATE] Exception', e);
+      res.status(500).json({ error: 'Failed to create rate' });
+    }
+  });
+
+  // Retire (set effective_to) a payout rate
+  app.patch('/api/admin/payout-rates/:id/retire', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+      const schema = z.object({ effectiveTo: z.string().datetime().optional() });
+      const parsed = schema.safeParse(req.body || {});
+      if (!parsed.success) return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+      const effectiveToIso = parsed.data.effectiveTo || new Date().toISOString();
+      // Load target
+      const { data: existing, error: loadErr } = await supabaseAdmin
+        .from('gym_payout_rates')
+        .select('id, effective_from, effective_to')
+        .eq('id', id)
+        .maybeSingle();
+      if (loadErr) return res.status(500).json({ error: 'Failed to load rate' });
+      if (!existing) return res.status(404).json({ error: 'Rate not found' });
+      if (existing.effective_to) return res.status(400).json({ error: 'Rate already retired' });
+      if (effectiveToIso <= existing.effective_from) return res.status(400).json({ error: 'effectiveTo must be > effective_from' });
+      const { data: updated, error: updErr } = await supabaseAdmin
+        .from('gym_payout_rates')
+        .update({ effective_to: effectiveToIso })
+        .eq('id', id)
+        .select()
+        .single();
+      if (updErr) return res.status(500).json({ error: 'Failed to retire rate' });
+      res.json(updated);
+    } catch (e) {
+      console.error('[PAYOUT-RATES][RETIRE] Exception', e);
+      res.status(500).json({ error: 'Failed to retire rate' });
+    }
+  });
+
+  // Manual invoice generation (PDF) from ad-hoc selection of athletes and dates
+  // POST body schema:
+  // {
+  //   invoiceTitle?: string,
+  //   periodStart?: string, periodEnd?: string,
+  //   timezone?: string, // default America/Los_Angeles
+  //   notes?: string,
+  //   lineItems: Array<{
+  //     athleteId?: number,
+  //     athleteName?: string,
+  //     date: string, // YYYY-MM-DD
+  //     durationMinutes?: number,
+  //     member?: boolean,
+  //     rateCents?: number,
+  //     amountCents?: number, // overrides rateCents if provided
+  //     description?: string
+  //   }>
+  // }
+  app.post('/api/admin/invoices/manual/export.pdf', isAdminAuthenticated, async (req, res) => {
+    try {
+      const lineItemSchema = z.object({
+        athleteId: z.number().optional(),
+        athleteName: z.string().optional(),
+        date: z.string(),
+        durationMinutes: z.number().optional(),
+        member: z.boolean().optional(),
+        rateCents: z.number().optional(),
+        amountCents: z.number().optional(),
+        description: z.string().optional()
+      });
+      const bodySchema = z.object({
+        invoiceTitle: z.string().optional(),
+        periodStart: z.string().optional(),
+        periodEnd: z.string().optional(),
+        timezone: z.string().optional(),
+        notes: z.string().optional(),
+        lineItems: z.array(lineItemSchema).min(1)
+      });
+
+      const parsed = bodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
+      }
+
+      const { invoiceTitle, periodStart, periodEnd, timezone, notes } = parsed.data;
+      const tz = timezone || 'America/Los_Angeles';
+      const rawItems = parsed.data.lineItems;
+
+      // Resolve athlete names for provided IDs in one batch
+      const ids = rawItems.map(i => i.athleteId).filter((v): v is number => typeof v === 'number');
+      let idToName = new Map<number, string>();
+      if (ids.length > 0) {
+        const { data: athletes, error } = await supabaseAdmin
+          .from('athletes')
+          .select('id, first_name, last_name, name')
+          .in('id', ids);
+        if (error) {
+          console.warn('[INVOICE][MANUAL] Failed to resolve athlete names:', error);
+        } else if (athletes) {
+          athletes.forEach((a: any) => {
+            const name = a.name || [a.first_name, a.last_name].filter(Boolean).join(' ') || `Athlete #${a.id}`;
+            idToName.set(a.id, name);
+          });
+        }
+      }
+
+      // Normalize items and compute amounts
+      const items = rawItems.map(i => {
+        const athleteName = i.athleteName || (i.athleteId ? idToName.get(i.athleteId) : undefined) || 'Athlete';
+        const amountCents = typeof i.amountCents === 'number' ? i.amountCents : (typeof i.rateCents === 'number' ? i.rateCents : 0);
+        return { ...i, athleteName, amountCents };
+      });
+
+      const totalCents = items.reduce((sum, i) => sum + (i.amountCents || 0), 0);
+
+      // Build PDF
+      const doc = await PDFDocument.create();
+      const font = await doc.embedFont(StandardFonts.Helvetica);
+      const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+      let page = doc.addPage([612, 792]); // US Letter portrait
+      const { width, height } = page.getSize();
+      const margin = 48;
+      let y = height - margin;
+      const lineGray = rgb(0.85, 0.85, 0.85);
+      const lightGray = rgb(0.95, 0.95, 0.95);
+      const textGray = rgb(0.35, 0.35, 0.35);
+      const drawText = (text: string, x: number, yVal: number, size = 11, f = font, color = rgb(0,0,0)) => {
+        page.drawText(text, { x, y: yVal, size, font: f, color });
+      };
+
+      // Header & logo (smaller, tidy)
+      const invoiceNo = `INV-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 12)}`;
+      try {
+        const logoPath = path.join(process.cwd(), 'client', 'public', 'CWT_Circle_LogoSPIN.png');
+        const logoBytes = await fs.readFile(logoPath);
+        const logoImg = await doc.embedPng(logoBytes);
+        const targetW = 64;
+        const scale = targetW / logoImg.width;
+        const targetH = logoImg.height * scale;
+        page.drawImage(logoImg, { x: margin, y: y - targetH + 6, width: targetW, height: targetH, opacity: 0.9 });
+      } catch {}
+      drawText('CoachWillTumbles', margin + 80, y, 12, bold, textGray);
+      y -= 6;
+      drawText(invoiceTitle || 'Manual Invoice', margin + 80, y, 18, bold);
+      y -= 20;
+      drawText(`Invoice #: ${invoiceNo}`, margin + 80, y, 10, font, textGray);
+      y -= 12;
+      if (periodStart || periodEnd) {
+        drawText(`Period: ${periodStart || '—'} to ${periodEnd || '—'}`, margin + 80, y, 10, font, textGray);
+        y -= 12;
+      }
+      drawText(`Generated: ${new Date().toLocaleString('en-US', { timeZone: tz })} (${tz})`, margin + 80, y, 10, font, textGray);
+      y -= 18;
+      if (notes) { drawText(`Notes: ${notes}`, margin, y, 10, font, textGray); y -= 14; }
+      // Divider
+      page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+      y -= 14;
+
+      // Table columns
+      const col = {
+        date: margin,
+        athlete: margin + 90,
+        desc: margin + 230,
+        dur: margin + 390,
+        rate: width - margin - 120,
+        amount: width - margin - 50,
+      } as const;
+      drawText('Date', col.date, y, 11, bold);
+      drawText('Athlete', col.athlete, y, 11, bold);
+      drawText('Description', col.desc, y, 11, bold);
+      drawText('Dur', col.dur, y, 11, bold);
+      drawText('Rate', col.rate, y, 11, bold);
+      drawText('Amount', col.amount, y, 11, bold);
+      y -= 12;
+      page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+      y -= 8;
+
+      const ensureSpace = () => {
+        if (y < margin + 100) {
+          page = doc.addPage([612, 792]);
+          const pw = page.getSize().width;
+          y = page.getSize().height - margin;
+          // Header of new page (table header only)
+          drawText('Date', col.date, y, 11, bold);
+          drawText('Athlete', col.athlete, y, 11, bold);
+          drawText('Description', col.desc, y, 11, bold);
+          drawText('Dur', col.dur, y, 11, bold);
+          drawText('Rate', pw - margin - 120, y, 11, bold);
+          drawText('Amount', pw - margin - 50, y, 11, bold);
+          y -= 12;
+          page.drawLine({ start: { x: margin, y }, end: { x: pw - margin, y }, thickness: 1, color: lineGray });
+          y -= 8;
+        }
+      };
+
+      items.forEach((row, idx) => {
+        ensureSpace();
+        const rateUsd = (row.rateCents || 0) / 100;
+        const amountUsd = (row.amountCents || 0) / 100;
+        // Zebra row background
+        if (idx % 2 === 1) {
+          page.drawRectangle({ x: margin - 2, y: y - 2, width: width - margin * 2 + 4, height: 16, color: lightGray });
+        }
+        drawText(String(row.date), col.date, y);
+        drawText(String(row.athleteName || 'Athlete'), col.athlete, y);
+        const desc = row.description || (row.member != null ? (row.member ? 'Member session' : 'Non-member session') : 'Session');
+        drawText(desc, col.desc, y);
+        drawText(row.durationMinutes ? `${row.durationMinutes}` : '', col.dur, y);
+        drawText(rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-', col.rate, y);
+        drawText(amountUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }), col.amount, y);
+        y -= 16;
+      });
+
+      // Totals box (right aligned)
+      y -= 4;
+      page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
+      y -= 12;
+      const boxW = 220;
+      const boxH = 28;
+      const boxX = width - margin - boxW;
+      const boxY = y - boxH + 18;
+      page.drawRectangle({ x: boxX, y: boxY, width: boxW, height: boxH, borderColor: rgb(0,0,0), borderWidth: 0.8 });
+      drawText('Total', boxX + 12, boxY + 10, 11, bold);
+      drawText((totalCents / 100).toLocaleString(undefined, { style: 'currency', currency: 'USD' }), boxX + boxW - 110, boxY + 10, 12, bold);
+      y = boxY - 16;
+      drawText('Generated by CoachWillTumbles Admin', margin, y, 9, font, textGray);
+
+      // Footer page numbers
+      const pages = doc.getPages();
+      pages.forEach((pg, idx) => {
+        const pw = pg.getSize().width;
+        const footerY = 20;
+        const left = 'CoachWillTumbles.com';
+        const center = periodStart || periodEnd ? `${periodStart || '—'} to ${periodEnd || '—'}` : '';
+        const pageLabel = `Page ${idx + 1} of ${pages.length}`;
+        pg.drawText(left, { x: margin, y: footerY, size: 9, font, color: textGray });
+        if (center) {
+          const centerX = pw / 2 - font.widthOfTextAtSize(center, 9) / 2;
+          pg.drawText(center, { x: centerX, y: footerY, size: 9, font, color: textGray });
+        }
+        pg.drawText(pageLabel, { x: pw - margin - font.widthOfTextAtSize(pageLabel, 9), y: footerY, size: 9, font, color: textGray });
+      });
+
+  const pdfBytes = await doc.save();
+      res.setHeader('Content-Type', 'application/pdf');
+      // Provide a sanitized filename to avoid header encoding issues
+      const safeTitle = String(invoiceTitle || 'manual-invoice')
+        .normalize('NFKD')
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .slice(0, 60);
+      const fileName = `${safeTitle || 'manual-invoice'}-${invoiceNo}.pdf`;
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(Buffer.from(pdfBytes));
+    } catch (e) {
+      console.error('[INVOICE][MANUAL][EXPORT PDF] Exception:', e);
+      res.status(500).send('Failed to generate invoice PDF');
+    }
+  });
+
+  // Lock a payout run
+  app.post('/api/admin/payouts/runs/:id/lock', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!id) return res.status(400).json({ error: 'Invalid run id' });
+      const run = await storage.lockGymPayoutRun(id);
+      res.json(run);
+    } catch (e) {
+      console.error('[PAYOUTS][RUN LOCK] Exception:', e);
+      res.status(500).json({ error: 'Failed to lock payout run' });
+    }
+  });
+
+  // Delete a payout run
+  app.delete('/api/admin/payouts/runs/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!id) return res.status(400).json({ error: 'Invalid run id' });
+      const ok = await storage.deleteGymPayoutRun(id);
+      res.json({ success: ok });
+    } catch (e) {
+      console.error('[PAYOUTS][RUN DELETE] Exception:', e);
+      res.status(500).json({ error: 'Failed to delete payout run' });
     }
   });
 

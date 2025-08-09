@@ -43,3 +43,23 @@ export function useBackfillPayouts() {
 	});
 }
 
+export function useLockPayoutRun() {
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const res = await apiRequest('POST', `/api/admin/payouts/runs/${id}/lock`);
+			if (!res.ok) throw new Error('Failed to lock payout run');
+			return res.json();
+		},
+	});
+}
+
+export function useDeletePayoutRun() {
+	return useMutation({
+		mutationFn: async (id: number) => {
+			const res = await apiRequest('DELETE', `/api/admin/payouts/runs/${id}`);
+			if (!res.ok) throw new Error('Failed to delete payout run');
+			return res.json() as Promise<{ success: boolean }>; 
+		},
+	});
+}
+

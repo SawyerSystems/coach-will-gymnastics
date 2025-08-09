@@ -2846,6 +2846,27 @@ export class SupabaseStorage implements IStorage {
     return data || [];
   }
 
+  async lockGymPayoutRun(id: number) {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('gym_payout_runs')
+      .update({ status: 'locked', updated_at: nowIso })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteGymPayoutRun(id: number) {
+    const { error } = await supabaseAdmin
+      .from('gym_payout_runs')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  }
+
   // Backfill payouts for completed sessions in a period where owed is still null
   async backfillGymPayouts(periodStart: string, periodEnd: string) {
     const results = { total: 0, updated: 0, skipped: 0 };
@@ -2853,22 +2874,34 @@ export class SupabaseStorage implements IStorage {
       // Load booking_athletes rows needing computation joined with bookings for date and status
       const { data: rows, error } = await supabaseAdmin
         .from('booking_athletes')
-        .select('id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, attendance_status)')
+        .select('id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, lesson_type_id)')
         .is('gym_payout_owed_cents', null)
         .gte('bookings.preferred_date', periodStart)
-        .lte('bookings.preferred_date', periodEnd)
-        .eq('bookings.attendance_status', 'completed');
+        .lte('bookings.preferred_date', periodEnd);
       if (error) throw error;
       const list = rows || [];
       results.total = list.length;
       for (const row of list as any[]) {
-        // Skip if somehow already computed
-        if (row.gym_payout_computed_at || row.gym_payout_owed_cents != null) {
+        // Skip only if owed already exists
+        if (row.gym_payout_owed_cents != null) {
           results.skipped++;
           continue;
         }
         const isMember = !!row.gym_member_at_booking;
-        const duration = row.duration_minutes ?? null;
+        let duration: number | null = row.duration_minutes ?? null;
+        // Fallback: look up lesson type duration if missing
+        if (duration == null && row.bookings?.lesson_type_id) {
+          try {
+            const { data: lt } = await supabaseAdmin
+              .from('lesson_types')
+              .select('duration_minutes')
+              .eq('id', row.bookings.lesson_type_id)
+              .maybeSingle();
+            duration = lt?.duration_minutes ?? null;
+          } catch (e) {
+            console.warn('[PAYOUT BACKFILL] Could not resolve lesson type duration for row', row.id, e);
+          }
+        }
         const effectiveIso = row.bookings?.preferred_date || new Date().toISOString();
         let rateCents: number | null = null;
         if (row.gym_rate_applied_cents != null) {
