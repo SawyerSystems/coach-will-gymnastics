@@ -10,6 +10,7 @@ import { AdminSiteContentManager } from "@/components/admin-site-content-manager
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
 import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import AthleteProgressPage from "@/components/admin/AthleteProgressPage";
 import { ContentSection, SectionBasedContentEditor } from "@/components/section-based-content-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1221,6 +1222,7 @@ export default function Admin() {
                 {activeTab === 'parents' && 'Parent Management'}
                 {activeTab === 'content' && 'Content Management'}
                 {activeTab === 'analytics' && 'Analytics Dashboard'}
+                {activeTab === 'progress' && 'Athlete Progress'}
                 {activeTab === 'settings' && 'Admin Settings'}
                 {activeTab === 'schedule' && 'Schedule Management'}
                 {activeTab === 'parentcomm' && 'Parent Communications'}
@@ -1500,6 +1502,15 @@ export default function Admin() {
                 </Suspense>
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="progress" role="tabpanel" id="progress-panel" aria-labelledby="progress-tab" className="w-full max-w-full px-0 sm:px-2">
+            <div className="p-2 sm:p-4">
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">Athlete Progress</h2>
+                <p className="text-slate-600">Track progress with filters and summary bars.</p>
+              </div>
+              <AthleteProgressPage />
+            </div>
           </TabsContent>
 
           <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2">

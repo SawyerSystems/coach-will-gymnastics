@@ -103,6 +103,11 @@ export function AdminSidebar({
       icon: <GraduationCap className="h-5 w-5" />
     },
     {
+      id: 'progress',
+      label: 'Progress',
+      icon: <BarChart className="h-5 w-5" />
+    },
+    {
       id: 'schedule',
       label: 'Schedule',
       icon: <Calendar className="h-5 w-5" />

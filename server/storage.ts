@@ -2100,6 +2100,57 @@ export class SupabaseStorage implements IStorage {
     };
   }
 
+  async listProgressShareLinks(athleteId: number): Promise<ProgressShareLink[]> {
+    const { data, error } = await supabaseAdmin
+      .from('progress_share_links')
+      .select('*')
+      .eq('athlete_id', athleteId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('[STORAGE][PROGRESS-SHARE] list error:', error);
+      return [];
+    }
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      athleteId: row.athlete_id,
+      token: row.token,
+      expiresAt: row.expires_at,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async deleteProgressShareLink(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('progress_share_links')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('[STORAGE][PROGRESS-SHARE] delete error:', error);
+      return false;
+    }
+    return true;
+  }
+
+  async revokeProgressShareLink(id: number, when: Date = new Date()): Promise<ProgressShareLink | null> {
+    const { data, error } = await supabaseAdmin
+      .from('progress_share_links')
+      .update({ expires_at: when.toISOString() })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[STORAGE][PROGRESS-SHARE] revoke error:', error);
+      return null;
+    }
+    return {
+      id: data.id,
+      athleteId: data.athlete_id,
+      token: data.token,
+      expiresAt: data.expires_at,
+      createdAt: data.created_at,
+    };
+  }
+
   async getProgressByToken(token: string): Promise<{ athlete: Athlete | null; skills: { athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[]; }[]; link: ProgressShareLink | null; } | null> {
     const { data: link, error: linkErr } = await supabaseAdmin
       .from('progress_share_links')

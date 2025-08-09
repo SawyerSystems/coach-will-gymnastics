@@ -25,6 +25,7 @@ const Tips = lazy(() => import("@/pages/tips"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Admin = lazy(() => import("@/pages/admin"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
+const ProgressShare = lazy(() => import("@/pages/progress-share"));
 const ParentLogin = lazy(() => import("@/pages/parent/login"));
 const ParentRegister = lazy(() => import("@/pages/parent-register"));
 const ParentSetupSuccess = lazy(() => import("@/pages/parent-setup-success"));
@@ -71,6 +72,7 @@ function Router() {
           <Route path="/contact" component={Contact} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/login" component={AdminLogin} />
+          <Route path="/progress/:token" component={ProgressShare} />
           <Route path="/parent/login" component={ParentLogin} />
           <Route path="/parent/confirm-booking" component={lazy(() => import("@/pages/parent/confirm-booking"))} />
           <Route path="/parent/set-password" component={lazy(() => import("@/pages/parent/set-password"))} />

@@ -1,4 +1,5 @@
 import { BookingHistoryDisplay } from "@/components/BookingHistoryDisplay";
+import { AthleteProgressPanel } from "@/components/admin/AthleteProgressPanel";
 import { ParentInfoDisplay } from "@/components/ParentInfoDisplay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,8 @@ import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Plus, Star, User } from "lucide-react";
+import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Link as LinkIcon, Plus, Star, Trash2, ShieldMinus, User } from "lucide-react";
+import { useCreateProgressShareLink, useDeleteProgressShareLink, useProgressShareLinks, useRevokeProgressShareLink } from "@/hooks/useAthleteProgress";
 import React, { useState } from "react";
 
 interface AthleteDetailDialogProps {
@@ -117,6 +119,10 @@ export function AthleteDetailDialog({
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { mutateAsync: createShareLink, isPending: creatingShare } = useCreateProgressShareLink();
+  const { data: shareLinks = [] } = useProgressShareLinks(athleteData?.id);
+  const deleteShareLink = useDeleteProgressShareLink();
+  const revokeShareLink = useRevokeProgressShareLink();
   
   // Determine a target booking for sending a waiver email
   const selectTargetBookingId = (): number | null => {
@@ -397,6 +403,87 @@ export function AthleteDetailDialog({
           {/* Bookings History */}
           <BookingHistoryDisplay athleteId={athleteData.id} />
 
+          {/* Skill Progress */}
+          <div className="mt-6">
+            <Card className="rounded-xl border shadow-sm mb-6">
+              <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-t-xl">
+                <CardTitle className="text-lg font-semibold text-amber-800 flex items-center gap-2">
+                  Skill Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <AthleteProgressPanel athleteId={athleteData.id} />
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl border shadow-sm">
+              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-t-xl">
+                <CardTitle className="text-lg font-semibold text-indigo-800 flex items-center gap-2">
+                  <LinkIcon className="h-5 w-5" /> Share Progress Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={creatingShare}
+                    onClick={async () => {
+                      try {
+                        const created = await createShareLink({ athleteId: athleteData.id });
+                        const url = `${window.location.origin}/progress/${created.token}`;
+                        await navigator.clipboard.writeText(url);
+                        toast({ title: 'Share Link Copied', description: 'Progress link copied to clipboard.' });
+                      } catch (e: any) {
+                        toast({ title: 'Failed to create link', description: e?.message || 'Please try again.', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    <LinkIcon className="h-4 w-4 mr-2" /> Create & Copy Link
+                  </Button>
+                </div>
+                {shareLinks.length === 0 ? (
+                  <div className="text-sm text-slate-600">No links yet.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {shareLinks.map((l) => {
+                      const expired = l.expiresAt ? new Date(l.expiresAt as any).getTime() < Date.now() : false;
+                      const linkUrl = `${window.location.origin}/progress/${l.token}`;
+                      return (
+                        <div key={l.id} className="flex items-center justify-between rounded border px-2 py-1">
+                          <div className="min-w-0 mr-2">
+                            <div className="truncate text-sm"><a className="text-indigo-600 hover:underline" href={linkUrl} target="_blank" rel="noopener noreferrer">{linkUrl}</a></div>
+                            <div className="text-xs text-slate-500">Created {new Date(l.createdAt as any).toLocaleString()} {l.expiresAt && `(expires ${new Date(l.expiresAt as any).toLocaleString()})`} {expired && '· expired'}</div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button size="sm" variant="secondary" onClick={async ()=>{ await navigator.clipboard.writeText(linkUrl); toast({ title: 'Copied', description: 'Link copied to clipboard.' }); }}>Copy</Button>
+                            {!expired && (
+                              <Button size="sm" variant="outline" onClick={async ()=>{
+                                try {
+                                  await revokeShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
+                                  toast({ title: 'Revoked', description: 'Link expired.' });
+                                } catch (e:any) {
+                                  toast({ title: 'Error', description: e?.message || 'Failed to revoke link', variant: 'destructive' });
+                                }
+                              }}><ShieldMinus className="h-4 w-4 mr-1"/>Revoke</Button>
+                            )}
+                            <Button size="sm" variant="destructive" onClick={async ()=>{
+                              try {
+                                await deleteShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
+                                toast({ title: 'Deleted', description: 'Link removed.' });
+                              } catch (e:any) {
+                                toast({ title: 'Error', description: e?.message || 'Failed to delete link', variant: 'destructive' });
+                              }
+                            }}><Trash2 className="h-4 w-4"/></Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Action Buttons */}
           {showActionButtons && (
             <div className="flex justify-between pt-6 mt-2 border-t border-dashed border-slate-200" role="group" aria-label="Athlete actions">
@@ -407,10 +494,31 @@ export function AthleteDetailDialog({
                 </Button>
               )}
               {onEditAthlete && (
-                <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Athlete
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                    disabled={creatingShare}
+                    onClick={async () => {
+                      try {
+                        const link = await createShareLink({ athleteId: athleteData.id });
+                        const url = `${window.location.origin}/progress/${link.token}`;
+                        await navigator.clipboard.writeText(url);
+                        toast({ title: 'Share Link Copied', description: 'Progress link copied to clipboard.' });
+                      } catch (e: any) {
+                        toast({ title: 'Failed to create link', description: e?.message || 'Please try again.', variant: 'destructive' });
+                      }
+                    }}
+                  >
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    Share Progress
+                  </Button>
+                  <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Athlete
+                  </Button>
+                </div>
               )}
             </div>
           )}

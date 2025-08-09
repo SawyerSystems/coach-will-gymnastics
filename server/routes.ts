@@ -538,6 +538,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // List links for an athlete (admin only)
+  app.get('/api/admin/progress-share-links', isAdminAuthenticated, async (req, res) => {
+    try {
+      const athleteId = Number(req.query.athleteId);
+      if (!athleteId) return res.status(400).json({ error: 'athleteId required' });
+      const rows = await storage.listProgressShareLinks(athleteId);
+      res.json(rows);
+    } catch (err) {
+      console.error('[ROUTES][PROGRESS-SHARE] list error:', err);
+      res.status(500).json({ error: 'Failed to list share links' });
+    }
+  });
+
+  // Delete a link (admin only)
+  app.delete('/api/admin/progress-share-links/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const ok = await storage.deleteProgressShareLink(id);
+      res.json({ success: ok });
+    } catch (err) {
+      console.error('[ROUTES][PROGRESS-SHARE] delete error:', err);
+      res.status(500).json({ error: 'Failed to delete share link' });
+    }
+  });
+
+  // Revoke (expire now) a link (admin only)
+  app.post('/api/admin/progress-share-links/:id/revoke', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updated = await storage.revokeProgressShareLink(id, new Date());
+      res.json(updated);
+    } catch (err) {
+      console.error('[ROUTES][PROGRESS-SHARE] revoke error:', err);
+      res.status(500).json({ error: 'Failed to revoke share link' });
+    }
+  });
+
   app.get('/api/progress/:token', async (req, res) => {
     try {
       const token = req.params.token;
