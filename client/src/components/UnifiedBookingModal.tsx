@@ -180,8 +180,8 @@ export function UnifiedBookingModal({
         lastName: athlete.lastName || '',
         dateOfBirth: athlete.dateOfBirth || '',
         allergies: athlete.allergies || '',
-        experience: (athlete.experience === 'beginner' || athlete.experience === 'intermediate' || athlete.experience === 'advanced') 
-          ? athlete.experience as 'beginner' | 'intermediate' | 'advanced'
+        experience: (athlete.experience === 'beginner' || athlete.experience === 'intermediate' || athlete.experience === 'advanced' || athlete.experience === 'elite') 
+          ? athlete.experience as 'beginner' | 'intermediate' | 'advanced' | 'elite'
           : 'beginner'
       }));
     }

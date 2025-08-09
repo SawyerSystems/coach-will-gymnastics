@@ -8,7 +8,7 @@ export interface CreateAthletePayload {
   dateOfBirth: string;
   gender?: string;
   allergies?: string;
-  experience: 'beginner' | 'intermediate' | 'advanced';
+  experience: 'beginner' | 'intermediate' | 'advanced' | 'elite';
   isGymMember?: boolean;
 }
 

@@ -319,6 +319,50 @@ export const sideQuests = pgTable("side_quests", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Skills master list and athlete progress tracking (must match Supabase schema)
+export const skills = pgTable("skills", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  category: text("category"),
+  level: varchar("level", { length: 255 }),
+  description: text("description"),
+  displayOrder: integer("display_order"),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+  apparatusId: integer("apparatus_id").references(() => apparatus.id),
+});
+
+export const athleteSkills = pgTable("athlete_skills", {
+  id: serial("id").primaryKey(),
+  athleteId: integer("athlete_id").references(() => athletes.id),
+  skillId: integer("skill_id").references(() => skills.id),
+  status: varchar("status", { length: 255 }),
+  notes: text("notes"),
+  unlockDate: date("unlock_date"),
+  firstTestedAt: timestamp("first_tested_at", { withTimezone: true }),
+  lastTestedAt: timestamp("last_tested_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export const athleteSkillVideos = pgTable("athlete_skill_videos", {
+  id: serial("id").primaryKey(),
+  athleteSkillId: integer("athlete_skill_id").references(() => athleteSkills.id),
+  url: text("url"),
+  title: text("title"),
+  recordedAt: timestamp("recorded_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export const progressShareLinks = pgTable("progress_share_links", {
+  id: serial("id").primaryKey(),
+  athleteId: integer("athlete_id").references(() => athletes.id),
+  token: text("token"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }),
+});
+
 export const genders = pgTable("genders", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -380,7 +424,7 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  experience: z.enum(["beginner", "intermediate", "advanced"]),
+  experience: z.enum(["beginner", "intermediate", "advanced", "elite"]),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   gender: z.string().optional(), // Will be validated against genders table
@@ -556,6 +600,12 @@ export const insertGenderSchema = createInsertSchema(genders).omit({
   updatedAt: true,
 });
 
+// Insert schemas for skills-related tables
+export const insertSkillSchema = createInsertSchema(skills).omit({ id: true });
+export const insertAthleteSkillSchema = createInsertSchema(athleteSkills).omit({ id: true });
+export const insertAthleteSkillVideoSchema = createInsertSchema(athleteSkillVideos).omit({ id: true });
+export const insertProgressShareLinkSchema = createInsertSchema(progressShareLinks).omit({ id: true });
+
 // Insert schemas for join tables
 export const insertBookingApparatusSchema = createInsertSchema(bookingApparatus).omit({
   id: true,
@@ -714,6 +764,16 @@ export type InsertParentPasswordResetToken = typeof parentPasswordResetTokens.$i
 // Lesson types
 export type LessonType = typeof lessonTypes.$inferSelect;
 export type InsertLessonType = typeof lessonTypes.$inferInsert;
+
+// Skills-related types
+export type Skill = typeof skills.$inferSelect;
+export type InsertSkill = z.infer<typeof insertSkillSchema>;
+export type AthleteSkill = typeof athleteSkills.$inferSelect;
+export type InsertAthleteSkill = z.infer<typeof insertAthleteSkillSchema>;
+export type AthleteSkillVideo = typeof athleteSkillVideos.$inferSelect;
+export type InsertAthleteSkillVideo = z.infer<typeof insertAthleteSkillVideoSchema>;
+export type ProgressShareLink = typeof progressShareLinks.$inferSelect;
+export type InsertProgressShareLink = z.infer<typeof insertProgressShareLinkSchema>;
 
 // NOTE: parent_auth_codes table is not implemented - the application uses 
 // magic code authentication via Resend API instead of database storage

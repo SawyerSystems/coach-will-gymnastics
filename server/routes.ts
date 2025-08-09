@@ -359,6 +359,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Time slot locking routes
   app.use('/api/time-slot-locks', timeSlotLocksRouter);
+
+  // ===============================
+  // Skills - Admin
+  // ===============================
+  app.get('/api/admin/skills', isAdminAuthenticated, async (req, res) => {
+    try {
+      const apparatusId = req.query.apparatusId ? Number(req.query.apparatusId) : undefined;
+      const level = typeof req.query.level === 'string' ? req.query.level : undefined;
+      const skills = await storage.listSkills({ apparatusId, level });
+      res.json(skills);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][SKILLS] list error:', err);
+      res.status(500).json({ error: 'Failed to list skills' });
+    }
+  });
+
+  app.post('/api/admin/skills', isAdminAuthenticated, async (req, res) => {
+    try {
+      const created = await storage.createSkill(req.body);
+      res.status(201).json(created);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][SKILLS] create error:', err);
+      res.status(500).json({ error: 'Failed to create skill' });
+    }
+  });
+
+  app.patch('/api/admin/skills/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updated = await storage.updateSkill(id, req.body);
+      if (!updated) return res.status(404).json({ error: 'Skill not found' });
+      res.json(updated);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][SKILLS] update error:', err);
+      res.status(500).json({ error: 'Failed to update skill' });
+    }
+  });
+
+  app.delete('/api/admin/skills/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const ok = await storage.deleteSkill(id);
+      res.json({ success: ok });
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][SKILLS] delete error:', err);
+      res.status(500).json({ error: 'Failed to delete skill' });
+    }
+  });
+
+  // ===============================
+  // Athlete Progress - Admin
+  // ===============================
+  app.get('/api/admin/athletes/:athleteId/skills', isAdminAuthenticated, async (req, res) => {
+    try {
+      const athleteId = Number(req.params.athleteId);
+      const rows = await storage.getAthleteSkills(athleteId);
+      res.json(rows);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILLS] list error:', err);
+      res.status(500).json({ error: 'Failed to list athlete skills' });
+    }
+  });
+
+  app.post('/api/admin/athlete-skills', isAdminAuthenticated, async (req, res) => {
+    try {
+      const created = await storage.upsertAthleteSkill(req.body);
+      res.status(201).json(created);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILLS] upsert error:', err);
+      res.status(500).json({ error: 'Failed to upsert athlete skill' });
+    }
+  });
+
+  app.post('/api/admin/athlete-skill-videos', isAdminAuthenticated, async (req, res) => {
+    try {
+      const created = await storage.addAthleteSkillVideo(req.body);
+      res.status(201).json(created);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILL-VIDEOS] add error:', err);
+      res.status(500).json({ error: 'Failed to add video' });
+    }
+  });
+
+  app.get('/api/admin/athlete-skill-videos', isAdminAuthenticated, async (req, res) => {
+    try {
+      const athleteSkillId = Number(req.query.athleteSkillId);
+      if (!athleteSkillId) return res.status(400).json({ error: 'athleteSkillId required' });
+      const rows = await storage.listAthleteSkillVideos(athleteSkillId);
+      res.json(rows);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILL-VIDEOS] list error:', err);
+      res.status(500).json({ error: 'Failed to list videos' });
+    }
+  });
+
+  app.delete('/api/admin/athlete-skill-videos/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const ok = await storage.deleteAthleteSkillVideo(id);
+      res.json({ success: ok });
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILL-VIDEOS] delete error:', err);
+      res.status(500).json({ error: 'Failed to delete video' });
+    }
+  });
+
+  // ===============================
+  // Progress share - token-based
+  // ===============================
+  app.post('/api/parent/progress-share-links', isAdminAuthenticated, async (req, res) => {
+    try {
+      const created = await storage.createProgressShareLink(req.body);
+      res.status(201).json(created);
+    } catch (err) {
+      console.error('[ROUTES][PROGRESS-SHARE] create error:', err);
+      res.status(500).json({ error: 'Failed to create share link' });
+    }
+  });
+
+  app.get('/api/progress/:token', async (req, res) => {
+    try {
+      const token = req.params.token;
+      const data = await storage.getProgressByToken(token);
+      if (!data) return res.status(404).json({ error: 'Not found' });
+      res.json(data);
+    } catch (err) {
+      console.error('[ROUTES][PROGRESS] get by token error:', err);
+      res.status(500).json({ error: 'Failed to load progress' });
+    }
+  });
   
   // Parent dashboard routes
   app.get('/api/parent/bookings', isParentAuthenticated, async (req, res) => {
@@ -5063,8 +5193,8 @@ setTimeout(async () => {
               const [firstName, ...lastNameParts] = booking.athlete1Name.split(' ');
               const lastName = lastNameParts.join(' ') || '';
               
-              const validExperience = ['beginner', 'intermediate', 'advanced'].includes(booking.athlete1Experience || '') 
-                ? (booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced')
+              const validExperience = ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete1Experience || '') 
+                ? (booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced' | 'elite')
                 : 'beginner';
                 
               const newAthlete = await storage.createAthlete({
@@ -5098,8 +5228,8 @@ setTimeout(async () => {
               const [firstName, ...lastNameParts] = booking.athlete2Name.split(' ');
               const lastName = lastNameParts.join(' ') || '';
               
-              const validExperience = booking.athlete2Experience && ['beginner', 'intermediate', 'advanced'].includes(booking.athlete2Experience) 
-                ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced'
+              const validExperience = booking.athlete2Experience && ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete2Experience) 
+                ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced' | 'elite'
                 : 'beginner';
                 
               const newAthlete = await storage.createAthlete({
@@ -5193,8 +5323,8 @@ setTimeout(async () => {
             
             if (!athleteExists) {
               // Create athlete
-              const validExperience = ['beginner', 'intermediate', 'advanced'].includes(booking.athlete1Experience || '') 
-                ? booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced'
+              const validExperience = ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete1Experience || '') 
+                ? booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced' | 'elite'
                 : 'beginner';
               
               const newAthlete = await storage.createAthlete({
@@ -5237,8 +5367,8 @@ setTimeout(async () => {
             
             if (!athleteExists) {
               // Create athlete
-              const validExperience = ['beginner', 'intermediate', 'advanced'].includes(booking.athlete2Experience || '') 
-                ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced'
+              const validExperience = ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete2Experience || '') 
+                ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced' | 'elite'
                 : 'beginner';
               
               const newAthlete = await storage.createAthlete({
@@ -5333,8 +5463,8 @@ setTimeout(async () => {
             );
             
             if (!existingAthlete1) {
-              const validExperience = ['beginner', 'intermediate', 'advanced'].includes(booking.athlete1Experience || '') 
-                ? booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced'
+              const validExperience = ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete1Experience || '') 
+                ? booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced' | 'elite'
                 : 'beginner';
                 
               await storage.createAthlete({
@@ -5365,8 +5495,8 @@ setTimeout(async () => {
             );
             
             if (!existingAthlete2) {
-              const validExperience = booking.athlete2Experience && ['beginner', 'intermediate', 'advanced'].includes(booking.athlete2Experience) 
-                ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced'
+              const validExperience = booking.athlete2Experience && ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete2Experience) 
+                ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced' | 'elite'
                 : 'beginner';
                 
               await storage.createAthlete({

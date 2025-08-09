@@ -7,7 +7,7 @@ interface AthleteInfo {
   lastName: string;
   dateOfBirth: string;
   allergies: string;
-  experience: 'beginner' | 'intermediate' | 'advanced';
+  experience: 'beginner' | 'intermediate' | 'advanced' | 'elite';
   gender?: string;
 }
 
@@ -43,7 +43,7 @@ export interface BookingFlowState {
     lastName: string;
     dateOfBirth: string;
     allergies: string;
-    experience: 'beginner' | 'intermediate' | 'advanced';
+  experience: 'beginner' | 'intermediate' | 'advanced' | 'elite';
   }[];
   safetyContact: {
     willDropOff?: boolean;

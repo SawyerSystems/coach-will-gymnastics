@@ -71,9 +71,12 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { useLocation } from "wouter";
+
+// Lazy load heavy admin sub-pages to keep initial bundle light
+const AdminSkillsManager = lazy(() => import("@/components/admin/AdminSkillsManager"));
 
 export default function Admin() {
   const [, setLocation] = useLocation();
@@ -1397,6 +1400,12 @@ export default function Admin() {
               🎓 Lesson Types
             </TabsTrigger>
             <TabsTrigger 
+              value="skills" 
+              className="hidden"
+            >
+              🥇 Skills
+            </TabsTrigger>
+            <TabsTrigger 
               value="parentcomm" 
               className="hidden"
             >
@@ -1469,6 +1478,26 @@ export default function Admin() {
               </CardHeader>
               <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <AdminLessonTypeManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="skills" role="tabpanel" id="skills-panel" aria-labelledby="skills-tab" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                  <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🥇</span>
+                  Skills Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                <Suspense fallback={<div className="space-y-3">
+                  <Skeleton className="h-10 w-48" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-64 w-full" />
+                </div>}>
+                  <AdminSkillsManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -2122,6 +2151,7 @@ export default function Admin() {
                                   <SelectItem value="beginner">Beginner</SelectItem>
                                   <SelectItem value="intermediate">Intermediate</SelectItem>
                                   <SelectItem value="advanced">Advanced</SelectItem>
+                                  <SelectItem value="elite">Elite</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -2212,6 +2242,7 @@ export default function Admin() {
                                     <SelectItem value="beginner">Beginner</SelectItem>
                                     <SelectItem value="intermediate">Intermediate</SelectItem>
                                     <SelectItem value="advanced">Advanced</SelectItem>
+                                    <SelectItem value="elite">Elite</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -3985,6 +4016,7 @@ export default function Admin() {
                             <SelectItem value="beginner" aria-label="Beginner level">Beginner</SelectItem>
                             <SelectItem value="intermediate" aria-label="Intermediate level">Intermediate</SelectItem>
                             <SelectItem value="advanced" aria-label="Advanced level">Advanced</SelectItem>
+                            <SelectItem value="elite" aria-label="Elite level">Elite</SelectItem>
                           </SelectContent>
                         </Select>
                         <p id="edit-experience-help" className="text-xs text-blue-600 mt-2 flex items-center">

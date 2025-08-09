@@ -51,7 +51,7 @@ async function migrateBookingDataToProfiles() {
               const [firstName, ...lastNameParts] = booking.athlete1Name.split(' ');
               const lastName = lastNameParts.join(' ') || '';
               
-              const validExperience = ['beginner', 'intermediate', 'advanced'].includes(booking.athlete1Experience) 
+              const validExperience = ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete1Experience) 
                 ? booking.athlete1Experience as 'beginner' | 'intermediate' | 'advanced'
                 : 'beginner';
                 
@@ -86,7 +86,7 @@ async function migrateBookingDataToProfiles() {
               const [firstName, ...lastNameParts] = booking.athlete2Name.split(' ');
               const lastName = lastNameParts.join(' ') || '';
               
-              const validExperience = booking.athlete2Experience && ['beginner', 'intermediate', 'advanced'].includes(booking.athlete2Experience) 
+              const validExperience = booking.athlete2Experience && ['beginner', 'intermediate', 'advanced', 'elite'].includes(booking.athlete2Experience) 
                 ? booking.athlete2Experience as 'beginner' | 'intermediate' | 'advanced'
                 : 'beginner';
                 

@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertSiteInquiry, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type SiteInquiry, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
@@ -159,6 +159,30 @@ export interface IStorage {
   updateWaiver(id: number, waiver: Partial<InsertWaiver>): Promise<Waiver | undefined>;
   updateWaiverPdfPath(id: number, pdfPath: string): Promise<Waiver | undefined>;
   updateWaiverEmailSent(id: number): Promise<Waiver | undefined>;
+
+  // Skills master + athlete progress
+  listSkills(filters?: { apparatusId?: number; level?: string }): Promise<Skill[]>;
+  createSkill(input: InsertSkill): Promise<Skill>;
+  updateSkill(id: number, input: Partial<InsertSkill>): Promise<Skill | undefined>;
+  deleteSkill(id: number): Promise<boolean>;
+
+  getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>>;
+  upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill>;
+
+  addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo>;
+  listAthleteSkillVideos(athleteSkillId: number): Promise<AthleteSkillVideo[]>;
+  deleteAthleteSkillVideo(id: number): Promise<boolean>;
+
+  createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink>;
+  getProgressByToken(token: string): Promise<{
+    athlete: Athlete | null;
+    skills: Array<{
+      athleteSkill: AthleteSkill;
+      skill?: Skill | null;
+      videos: AthleteSkillVideo[];
+    }>;
+    link: ProgressShareLink | null;
+  } | null>;
 
   // Archived Waivers
   getAllArchivedWaivers(): Promise<ArchivedWaiver[]>;
@@ -1572,6 +1596,19 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
   async updateSiteInquiryStatus(id: number, status: SiteInquiry['status']): Promise<SiteInquiry | undefined> { return undefined; }
   async deleteSiteInquiry(id: number): Promise<boolean> { return false; }
+
+  // Skills (MemStorage stubs)
+  async listSkills(): Promise<Skill[]> { return []; }
+  async createSkill(input: InsertSkill): Promise<Skill> { return { id: Date.now(), ...input } as any; }
+  async updateSkill(id: number, input: Partial<InsertSkill>): Promise<Skill | undefined> { return undefined; }
+  async deleteSkill(id: number): Promise<boolean> { return false; }
+  async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> { return []; }
+  async upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill> { return { id: Date.now(), ...input } as any; }
+  async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> { return { id: Date.now(), ...input } as any; }
+  async listAthleteSkillVideos(athleteSkillId: number): Promise<AthleteSkillVideo[]> { return []; }
+  async deleteAthleteSkillVideo(id: number): Promise<boolean> { return false; }
+  async createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink> { return { id: Date.now(), ...input } as any; }
+  async getProgressByToken(token: string): Promise<{ athlete: Athlete | null; skills: { athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[]; }[]; link: ProgressShareLink | null; } | null> { return null; }
 }
 
 // Supabase Storage Implementation
@@ -1725,6 +1762,283 @@ export class SupabaseStorage implements IStorage {
       return false;
     }
     return true;
+  }
+
+  // ===============================
+  // Skills master & athlete progress
+  // ===============================
+  async listSkills(filters?: { apparatusId?: number; level?: string }): Promise<Skill[]> {
+    let query = supabaseAdmin.from('skills').select('*').order('display_order', { ascending: true });
+    if (filters?.apparatusId) query = query.eq('apparatus_id', filters.apparatusId);
+    if (filters?.level) query = query.eq('level', filters.level);
+    const { data, error } = await query;
+    if (error) {
+      console.error('[STORAGE][SKILLS] list error:', error);
+      return [];
+    }
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      level: row.level,
+      description: row.description,
+      displayOrder: row.display_order,
+      apparatusId: row.apparatus_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async createSkill(input: InsertSkill): Promise<Skill> {
+    const insert: any = {
+      name: input.name ?? null,
+      category: input.category ?? null,
+      level: input.level ?? null,
+      description: input.description ?? null,
+      display_order: (input as any).displayOrder ?? null,
+      apparatus_id: input.apparatusId ?? null,
+    };
+    const { data, error } = await supabaseAdmin.from('skills').insert(insert).select('*').single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      name: data.name,
+      category: data.category,
+      level: data.level,
+      description: data.description,
+      displayOrder: data.display_order,
+      apparatusId: data.apparatus_id,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async updateSkill(id: number, input: Partial<InsertSkill>): Promise<Skill | undefined> {
+    const patch: any = {};
+    if ('name' in input) patch.name = (input as any).name;
+    if ('category' in input) patch.category = (input as any).category;
+    if ('level' in input) patch.level = (input as any).level;
+    if ('description' in input) patch.description = (input as any).description;
+    if ('displayOrder' in (input as any)) patch.display_order = (input as any).displayOrder;
+    if ('apparatusId' in (input as any)) patch.apparatus_id = (input as any).apparatusId;
+    if (Object.keys(patch).length === 0) return this.listSkills().then(r => r.find(s => s.id === id));
+    const { data, error } = await supabaseAdmin.from('skills').update(patch).eq('id', id).select('*').single();
+    if (error) {
+      console.error('[STORAGE][SKILLS] update error:', error);
+      return undefined;
+    }
+    return {
+      id: data.id,
+      name: data.name,
+      category: data.category,
+      level: data.level,
+      description: data.description,
+      displayOrder: data.display_order,
+      apparatusId: data.apparatus_id,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async deleteSkill(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin.from('skills').delete().eq('id', id);
+    if (error) {
+      console.error('[STORAGE][SKILLS] delete error:', error);
+      return false;
+    }
+    return true;
+  }
+
+  async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> {
+    const { data, error } = await supabaseAdmin
+      .from('athlete_skills')
+      .select('*, skills:skill_id ( id, name, category, level, description, display_order, apparatus_id, created_at, updated_at )')
+      .eq('athlete_id', athleteId)
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('[STORAGE][ATHLETE-SKILLS] list error:', error);
+      return [];
+    }
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      athleteId: row.athlete_id,
+      skillId: row.skill_id,
+      status: row.status,
+      notes: row.notes,
+      unlockDate: row.unlock_date,
+      firstTestedAt: row.first_tested_at,
+      lastTestedAt: row.last_tested_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      skill: row.skills ? {
+        id: row.skills.id,
+        name: row.skills.name,
+        category: row.skills.category,
+        level: row.skills.level,
+        description: row.skills.description,
+        displayOrder: row.skills.display_order,
+        apparatusId: row.skills.apparatus_id,
+        createdAt: row.skills.created_at,
+        updatedAt: row.skills.updated_at,
+      } : null,
+    }));
+  }
+
+  async upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill> {
+    // If an athlete_id + skill_id exists, update; else insert
+    const existing = await supabaseAdmin
+      .from('athlete_skills')
+      .select('id')
+      .eq('athlete_id', (input as any).athleteId)
+      .eq('skill_id', (input as any).skillId)
+      .maybeSingle();
+    const payload: any = {
+      athlete_id: (input as any).athleteId,
+      skill_id: (input as any).skillId,
+      status: (input as any).status ?? null,
+      notes: (input as any).notes ?? null,
+      unlock_date: (input as any).unlockDate ?? null,
+      first_tested_at: (input as any).firstTestedAt ?? null,
+      last_tested_at: (input as any).lastTestedAt ?? null,
+    };
+    let data: any;
+    const existingId: number | undefined = (existing.data as any)?.id;
+    if (existingId) {
+      const targetId = existingId;
+      const upd = await supabaseAdmin.from('athlete_skills').update(payload).eq('id', targetId).select('*').single();
+      if (upd.error) throw upd.error;
+      data = upd.data;
+    } else {
+      const ins = await supabaseAdmin.from('athlete_skills').insert(payload).select('*').single();
+      if (ins.error) throw ins.error;
+      data = ins.data;
+    }
+    return {
+      id: data.id,
+      athleteId: data.athlete_id,
+      skillId: data.skill_id,
+      status: data.status,
+      notes: data.notes,
+      unlockDate: data.unlock_date,
+      firstTestedAt: data.first_tested_at,
+      lastTestedAt: data.last_tested_at,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> {
+    const payload: any = {
+      athlete_skill_id: (input as any).athleteSkillId,
+      url: (input as any).url,
+      title: (input as any).title ?? null,
+      recorded_at: (input as any).recordedAt ?? null,
+    };
+    const { data, error } = await supabaseAdmin.from('athlete_skill_videos').insert(payload).select('*').single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      athleteSkillId: data.athlete_skill_id,
+      url: data.url,
+      title: data.title,
+      recordedAt: data.recorded_at,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async listAthleteSkillVideos(athleteSkillId: number): Promise<AthleteSkillVideo[]> {
+    const { data, error } = await supabaseAdmin
+      .from('athlete_skill_videos')
+      .select('*')
+      .eq('athlete_skill_id', athleteSkillId)
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('[STORAGE][ATHLETE-SKILL-VIDEOS] list error:', error);
+      return [];
+    }
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      athleteSkillId: row.athlete_skill_id,
+      url: row.url,
+      title: row.title,
+      recordedAt: row.recorded_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async deleteAthleteSkillVideo(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin.from('athlete_skill_videos').delete().eq('id', id);
+    if (error) {
+      console.error('[STORAGE][ATHLETE-SKILL-VIDEOS] delete error:', error);
+      return false;
+    }
+    return true;
+  }
+
+  async createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink> {
+    const payload: any = {
+      athlete_id: (input as any).athleteId,
+      token: (input as any).token,
+      expires_at: (input as any).expiresAt ?? null,
+    };
+    const { data, error } = await supabaseAdmin.from('progress_share_links').insert(payload).select('*').single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      athleteId: data.athlete_id,
+      token: data.token,
+      expiresAt: data.expires_at,
+      createdAt: data.created_at,
+    };
+  }
+
+  async getProgressByToken(token: string): Promise<{ athlete: Athlete | null; skills: { athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[]; }[]; link: ProgressShareLink | null; } | null> {
+    const { data: link, error: linkErr } = await supabaseAdmin
+      .from('progress_share_links')
+      .select('*')
+      .eq('token', token)
+      .maybeSingle();
+    if (linkErr || !link) return null;
+    if (link.expires_at && new Date(link.expires_at).getTime() < Date.now()) return null;
+    const athleteId = link.athlete_id;
+    const { data: athleteRow } = await supabaseAdmin.from('athletes').select('*').eq('id', athleteId).maybeSingle();
+    const athlete: Athlete | null = athleteRow ? {
+      id: athleteRow.id,
+      parentId: athleteRow.parent_id,
+      name: athleteRow.name,
+      firstName: athleteRow.first_name,
+      lastName: athleteRow.last_name,
+      allergies: athleteRow.allergies,
+      experience: athleteRow.experience,
+      photo: athleteRow.photo,
+      createdAt: athleteRow.created_at,
+      updatedAt: athleteRow.updated_at,
+      dateOfBirth: athleteRow.date_of_birth,
+      gender: athleteRow.gender,
+      isGymMember: athleteRow.is_gym_member ?? false,
+      latestWaiverId: athleteRow.latest_waiver_id,
+      waiverStatus: athleteRow.waiver_status || 'pending',
+      waiverSigned: athleteRow.waiver_signed || false,
+    } : null;
+    const rows = await this.getAthleteSkills(athleteId);
+    const withVideos: any[] = [];
+    for (const row of rows) {
+      const videos = await this.listAthleteSkillVideos(row.id);
+      withVideos.push({ athleteSkill: row, skill: row.skill ?? null, videos });
+    }
+    return {
+      athlete,
+      skills: withVideos,
+      link: {
+        id: link.id,
+        athleteId: link.athlete_id,
+        token: link.token,
+        expiresAt: link.expires_at,
+        createdAt: link.created_at,
+      }
+    };
   }
   // Helper function to log queries
   private logQuery(operation: string, table: string, filters?: any) {

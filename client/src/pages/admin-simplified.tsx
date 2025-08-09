@@ -12,6 +12,7 @@ const AdminLessonTypeManager = lazy(() => import("@/components/admin-lesson-type
 const AdminSiteContentManager = lazy(() => import("@/components/admin-site-content-manager").then(mod => ({ default: mod.AdminSiteContentManager })));
 const AdminWaiverManagement = lazy(() => import("@/components/admin-waiver-management").then(mod => ({ default: mod.AdminWaiverManagement })));
 const PaymentsTab = lazy(() => import("@/components/PaymentsTab").then(mod => ({ default: mod.PaymentsTab })));
+const AdminSkillsManager = lazy(() => import("@/components/admin/AdminSkillsManager"));
 
 // Loading component
 const TabLoading = () => (
@@ -87,6 +88,7 @@ export default function Admin() {
               <TabsList>
                 <TabsTrigger value="bookings">Bookings</TabsTrigger>
                 <TabsTrigger value="lesson-types">Lesson Types</TabsTrigger>
+                <TabsTrigger value="skills">Skills</TabsTrigger>
                 <TabsTrigger value="content">Content</TabsTrigger>
                 <TabsTrigger value="waivers">Waivers</TabsTrigger>
                 <TabsTrigger value="payments">Payments</TabsTrigger>
@@ -103,6 +105,12 @@ export default function Admin() {
           <TabsContent value="lesson-types" className="p-4">
             <Suspense fallback={<TabLoading />}>
               <AdminLessonTypeManager />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="skills" className="p-4">
+            <Suspense fallback={<TabLoading />}>
+              <AdminSkillsManager />
             </Suspense>
           </TabsContent>
 
