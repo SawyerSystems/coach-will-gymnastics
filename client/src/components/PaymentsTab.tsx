@@ -10,6 +10,7 @@ function getNameOrDescription(obj: unknown): string {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,7 +24,7 @@ import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 // Extended payment status types
 export type ExtendedPaymentStatus = 
@@ -55,47 +56,80 @@ export const getExtendedPaymentStatusBadgeProps = (status: string): { variant: "
 };
 
 
-// Always get lesson price from booking.lessonType.price (from Supabase). Only fallback to booking.amount if price is missing (legacy/edge case).
-// Always get lesson price from booking.lessonType.total_price (from Supabase). Only fallback to price, then booking.amount if missing (legacy/edge case).
-// Pricing resolution using lesson_types query
-const makePriceResolver = (byKey: (key: string) => any) => (booking: any): number => {
-  const lt = byKey(booking.lessonType || '');
-  if (lt && typeof lt.price === 'number') return lt.price;
-  if (lt && lt.price) return parseFloat(lt.price);
-  if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount); // legacy fallback
+// Price resolution order:
+// 1) booking.lessonTypeId -> lookup in lesson types
+// 2) booking.lessonType object with price field
+// 3) booking.lessonType string -> map by key/name
+// 4) legacy booking.amount string (fallback)
+const makePriceResolver = (opts: { byKey: (key: string) => any; lessonTypes: Array<{ id: number; price: number; name: string }> }) => (booking: any): number => {
+  try {
+    // 1) ID lookup
+    if (booking.lessonTypeId) {
+      const lt = opts.lessonTypes.find((t) => Number(t.id) === Number(booking.lessonTypeId));
+      if (lt && typeof lt.price === 'number') return lt.price;
+      if (lt && (lt as any).price) return parseFloat((lt as any).price);
+    }
+    // 2) Object with price
+    if (booking.lessonType && typeof booking.lessonType === 'object') {
+      const obj = booking.lessonType as any;
+      if (typeof obj.price === 'number') return obj.price;
+      if (obj.price) return parseFloat(obj.price);
+      if (typeof obj.total_price === 'number') return obj.total_price;
+      if (obj.total_price) return parseFloat(obj.total_price);
+    }
+    // 3) String key/name
+    if (typeof booking.lessonType === 'string' && booking.lessonType) {
+      const lt = opts.byKey(booking.lessonType);
+      if (lt && typeof lt.price === 'number') return lt.price;
+      if (lt && lt.price) return parseFloat(lt.price);
+    }
+    // 4) Legacy amount fallback
+    if (booking.amount && !isNaN(parseFloat(booking.amount))) return parseFloat(booking.amount);
+  } catch {}
   return 0;
 };
 
 export function PaymentsTab() {
   const { toast } = useToast();
-  const { byKey } = useLessonTypes();
-  const getLessonPrice = makePriceResolver(byKey);
+  const { byKey, data: lessonTypes = [] } = useLessonTypes();
+  const getLessonPrice = makePriceResolver({ byKey, lessonTypes });
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("overview");
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsBooking, setDetailsBooking] = useState<any | null>(null);
 
   // Fetch all bookings
   const { data: bookings = [], isLoading, refetch } = useQuery<Booking[]>({
     queryKey: ["/api/bookings"],
   });
 
+  // Fetch archived bookings (completed, no-show, cancelled)
+  const { data: archivedBookings = [] } = useQuery<Booking[]>({
+    queryKey: ["/api/archived-bookings"],
+  });
+
+  const completedArchived = useMemo(
+    () => (archivedBookings || []).filter(b => b.attendanceStatus === "completed"),
+    [archivedBookings]
+  );
+
   // Enhanced payment analytics
-  // Dynamic metrics based on payment status
+  // Definitions per request:
+  // - Total revenue: total accumulated revenue of all completed bookings
+  // - Pending reservations: total of all bookings with a pending attendance status
   const totals = {
-    // Pending Reservations: reservation-pending only
-    pendingReservations: bookings.filter(b => b.paymentStatus === "reservation-pending").reduce((sum, b) => sum + getLessonPrice(b), 0),
-    // Total Revenue: reservation-paid and session-paid only
-    totalRevenue: bookings.filter(b => b.paymentStatus === "reservation-paid" || b.paymentStatus === "session-paid").reduce((sum, b) => {
-      // If session-paid, use full lesson price; if reservation-paid, use reservation amount
-      if (b.paymentStatus === "session-paid") {
-        return sum + getLessonPrice(b);
-      } else {
-        return sum + parseFloat(b.paidAmount || "0");
-      }
-    }, 0),
-    refunded: bookings.filter(b => b.paymentStatus === "reservation-refunded" || b.paymentStatus === "session-refunded").reduce((sum, b) => sum + parseFloat(b.paidAmount || "0"), 0),
+    pendingReservations: bookings
+      .filter(b => b.attendanceStatus === "pending")
+      .reduce((sum, b) => sum + getLessonPrice(b), 0),
+    totalRevenue: archivedBookings
+      .filter(b => b.attendanceStatus === "completed")
+      .reduce((sum, b) => sum + getLessonPrice(b), 0),
+    refunded: bookings
+      .filter(b => b.paymentStatus === "reservation-refunded" || b.paymentStatus === "session-refunded")
+      .reduce((sum, b) => sum + parseFloat(b.paidAmount || "0"), 0),
     avgBookingValue: bookings.length > 0 ? (bookings.reduce((sum, b) => sum + getLessonPrice(b), 0) / bookings.length) : 0,
   };
 
@@ -139,6 +173,7 @@ export function PaymentsTab() {
       (booking.parentLastName && booking.parentLastName.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesDate = !dateFilter || booking.preferredDate === dateFilter;
+    // Booking Status filter uses booking.status; ensure only valid booking_status values are offered
     const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
     const matchesPaymentStatus = paymentStatusFilter === "all" || booking.paymentStatus === paymentStatusFilter;
     
@@ -204,7 +239,7 @@ export function PaymentsTab() {
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-blue-900">
               ${totals.totalRevenue.toFixed(2)}
             </div>
-            <p className="text-[10px] sm:text-xs text-blue-600 mt-1 font-medium">Reservation Paid + Session Paid</p>
+            <p className="text-[10px] sm:text-xs text-blue-600 mt-1 font-medium">All completed bookings</p>
           </CardContent>
         </Card>
 
@@ -219,7 +254,7 @@ export function PaymentsTab() {
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-yellow-900">
               ${totals.pendingReservations.toFixed(2)}
             </div>
-            <p className="text-[10px] sm:text-xs text-yellow-600 mt-1 font-medium">{bookings.filter(b => b.paymentStatus === "reservation-pending").length} bookings</p>
+            <p className="text-[10px] sm:text-xs text-yellow-600 mt-1 font-medium">{bookings.filter(b => b.attendanceStatus === "pending").length} bookings</p>
           </CardContent>
         </Card>
 
@@ -307,19 +342,20 @@ export function PaymentsTab() {
                 className="mt-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
               />
             </div>
-            <div>
+    <div>
               <Label htmlFor="status" className="text-sm font-semibold text-slate-700">Booking Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="status" className="mt-1 border-slate-200 focus:border-blue-400 focus:ring-blue-400">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                  <SelectItem value="no-show">No-Show</SelectItem>
+      <SelectItem value="all">All Status</SelectItem>
+      <SelectItem value="pending">Pending</SelectItem>
+      <SelectItem value="paid">Paid</SelectItem>
+      <SelectItem value="confirmed">Confirmed</SelectItem>
+      <SelectItem value="completed">Completed</SelectItem>
+      <SelectItem value="failed">Failed</SelectItem>
+      <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -398,7 +434,7 @@ export function PaymentsTab() {
                       } else if (booking.paymentStatus === "reservation-paid") {
                         // Use paidAmount if present and > 0, otherwise default to $0.50
                         displayPaidAmount = parseFloat(booking.paidAmount || "0");
-                        if (displayPaidAmount <= 0) displayPaidAmount = 0.50;
+                        if (displayPaidAmount <= 0) displayPaidAmount = 10.00; // align with server default reservation fee
                         balanceDue = totalPrice - displayPaidAmount;
                       } else if (booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed" || booking.paymentStatus === "unpaid") {
                         displayPaidAmount = 0;
@@ -632,9 +668,8 @@ export function PaymentsTab() {
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {filteredBookings
-                    .filter(b => b.attendanceStatus === "completed")
+                    <TableBody>
+                  {completedArchived
                     .map((booking) => (
                       <TableRow key={booking.id}>
                         <TableCell>
@@ -642,7 +677,11 @@ export function PaymentsTab() {
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            <p className="font-medium">{booking.lessonType}</p>
+                            <p className="font-medium">
+                              {typeof booking.lessonType === 'object' && booking.lessonType !== null
+                                ? getNameOrDescription(booking.lessonType)
+                                : booking.lessonType}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               {booking.athlete1Name}
                               {booking.athlete2Name && ` & ${booking.athlete2Name}`}
@@ -655,9 +694,9 @@ export function PaymentsTab() {
                             <p className="text-xs text-muted-foreground">{booking.parentEmail}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">
-                          ${parseFloat(booking.amount || "0").toFixed(2)}
-                        </TableCell>
+                            <TableCell className="font-medium">
+                              ${getLessonPrice(booking).toFixed(2)}
+                            </TableCell>
                         <TableCell>
                           <Badge variant="outline">
                             {typeof booking.bookingMethod === 'object' && booking.bookingMethod !== null
@@ -669,7 +708,7 @@ export function PaymentsTab() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}`, '_blank')}
+                            onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
                           >
                             View Details
                           </Button>
@@ -683,6 +722,83 @@ export function PaymentsTab() {
           </CardContent>
         </Card>
       </div>
+      {/* Booking Details Modal */}
+      <Dialog open={detailsOpen} onOpenChange={(o) => { if (!o) { setDetailsOpen(false); setDetailsBooking(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Booking Details{detailsBooking?.id ? ` #${detailsBooking.id}` : ''}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="text-slate-500">Lesson</div>
+              <div className="font-medium">
+                {detailsBooking && (typeof detailsBooking.lessonType === 'object' && detailsBooking.lessonType !== null
+                  ? getNameOrDescription(detailsBooking.lessonType)
+                  : detailsBooking?.lessonType || '—')}
+              </div>
+              <div className="text-slate-500">Athlete(s)</div>
+              <div className="font-medium">{detailsBooking?.athlete1Name}{detailsBooking?.athlete2Name ? ` & ${detailsBooking.athlete2Name}` : ''}</div>
+              <div className="text-slate-500">Parent</div>
+              <div className="font-medium">{detailsBooking?.parentFirstName} {detailsBooking?.parentLastName}</div>
+              <div className="text-slate-500">Email</div>
+              <div className="font-medium">{detailsBooking?.parentEmail}</div>
+              <div className="text-slate-500">Date</div>
+              <div className="font-medium">{detailsBooking?.preferredDate} {detailsBooking?.preferredTime ? `• ${detailsBooking.preferredTime}` : ''}</div>
+              <div className="text-slate-500">Status</div>
+              <div className="font-medium">{detailsBooking?.status}</div>
+              <div className="text-slate-500">Attendance</div>
+              <div className="font-medium">{detailsBooking?.attendanceStatus}</div>
+              <div className="text-slate-500">Payment</div>
+              <div className="font-medium">{detailsBooking?.paymentStatus}</div>
+              <div className="text-slate-500">Total Price</div>
+              <div className="font-medium">${detailsBooking ? getLessonPrice(detailsBooking).toFixed(2) : '0.00'}</div>
+              <div className="text-slate-500">Paid Amount</div>
+              <div className="font-medium">{
+                (() => {
+                  if (!detailsBooking) return '$0.00';
+                  const total = getLessonPrice(detailsBooking);
+                  const status = detailsBooking.paymentStatus as string | undefined;
+                  let paid = 0;
+                  if (status === 'session-paid') {
+                    paid = total; // full lesson price paid
+                  } else if (status === 'reservation-paid') {
+                    paid = parseFloat(detailsBooking.paidAmount || '0');
+                    if (!Number.isFinite(paid) || paid <= 0) paid = 10.0; // fallback to default reservation fee
+                  } else {
+                    paid = parseFloat(detailsBooking.paidAmount || '0');
+                    if (!Number.isFinite(paid)) paid = 0;
+                  }
+                  return `$${paid.toFixed(2)}`;
+                })()
+              }</div>
+              <div className="text-slate-500">Booking Method</div>
+              <div className="font-medium">
+                {detailsBooking && (typeof detailsBooking.bookingMethod === 'object' && detailsBooking.bookingMethod !== null
+                  ? getNameOrDescription(detailsBooking.bookingMethod)
+                  : detailsBooking?.bookingMethod || '—')}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex items-center justify-between gap-2">
+            <Button variant="outline" onClick={() => setDetailsOpen(false)}>Close</Button>
+            {detailsBooking?.parentEmail && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const s = (detailsBooking as any)?.stripeSessionId;
+                  if (s) {
+                    window.open(`https://dashboard.stripe.com/checkout/sessions/${s}`, '_blank');
+                  } else {
+                    window.open(`https://dashboard.stripe.com/payments?query=${detailsBooking.parentEmail}` , '_blank');
+                  }
+                }}
+              >
+                Open in Stripe
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
