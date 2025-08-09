@@ -6903,14 +6903,41 @@ setTimeout(async () => {
 
   app.post("/api/contact", async (req, res) => {
     try {
-      const { name, phone, email, childInfo, message } = req.body;
-      
-      // In a real implementation, this would send an email
-      console.log("Contact form submission:", { name, phone, email, childInfo, message });
-      
-      res.json({ message: "Message sent successfully" });
+      const { name, phone, email, athleteInfo, childInfo, message } = req.body || {};
+
+      // Normalize athleteInfo (client may send athleteInfo or childInfo)
+      const athlete = (athleteInfo ?? childInfo ?? '').toString();
+      const safe = (v: any) => (typeof v === 'string' ? v : v ? String(v) : '');
+      const payload = {
+        name: safe(name).trim(),
+        phone: safe(phone).trim(),
+        email: safe(email).trim(),
+        athleteInfo: athlete.trim(),
+        message: safe(message).trim(),
+      };
+
+      // Basic validation
+      if (!payload.name || !payload.email || !payload.message) {
+        return res.status(400).json({ message: "Missing required fields: name, email, and message are required." });
+      }
+
+      // Send email to Will using existing email helper
+      try {
+        const { sendEmail } = await import('./lib/email');
+        await sendEmail({
+          type: 'contact-message',
+          to: 'will@coachwilltumbles.com',
+          data: payload as any,
+        });
+      } catch (err) {
+        console.error('[CONTACT] Failed to send email', err);
+        return res.status(502).json({ message: 'Failed to deliver message. Please try again shortly.' });
+      }
+
+      res.json({ message: 'Message sent successfully' });
     } catch (error) {
-      res.status(500).json({ message: "Failed to send message" });
+      console.error('[CONTACT] Unexpected error', error);
+      res.status(500).json({ message: 'Failed to send message' });
     }
   });
 

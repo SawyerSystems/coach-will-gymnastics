@@ -18,6 +18,7 @@ import { SessionReminder } from '../../emails/SessionReminder';
 import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
 import { WaiverReminder } from '../../emails/WaiverReminder';
 import { PaymentStatusEnum } from '@shared/schema';
+import { ContactMessage } from '../../emails/ContactMessage';
 
 // Email type mapping
 export const emailTemplates = {
@@ -88,6 +89,10 @@ export const emailTemplates = {
   'safety-information': { 
     subject: '🛡️ Important Safety Information', 
     component: SafetyInformationLink 
+  },
+  'contact-message': {
+    subject: '📬 New Contact Form Message',
+    component: ContactMessage,
   }
 };
 
