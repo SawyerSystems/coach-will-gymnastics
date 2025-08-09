@@ -197,6 +197,13 @@ export default function Admin() {
     enabled: !!authStatus?.loggedIn,
   });
 
+  // Include archived bookings (completed, no-show, cancelled) so totals/analytics are ALL bookings
+  const { data: archivedBookings = [] } = useQuery<Booking[]>({
+    queryKey: ['/api/archived-bookings'],
+    queryFn: () => apiRequest('GET', '/api/archived-bookings').then(res => res.json()),
+    enabled: !!authStatus?.loggedIn,
+  });
+
   const { data: blogPosts = [] } = useQuery<BlogPost[]>({
     queryKey: ['/api/blog-posts'],
     queryFn: () => apiRequest('GET', '/api/blog-posts').then(res => res.json()),
@@ -987,7 +994,12 @@ export default function Admin() {
 
 
   // DASHBOARD STATS
-  const totalBookings = bookings.length;
+  // Merge active + archived for "ALL" views
+  const allBookings = useMemo(() => {
+    return [...(bookings || []), ...(archivedBookings || [])];
+  }, [bookings, archivedBookings]);
+
+  const totalBookingsAll = allBookings.length;
   const totalParents = parents.length;
 
   // Upcoming = future date/time AND not cancelled/completed
@@ -1004,12 +1016,12 @@ export default function Admin() {
       return false;
     }
   };
-  const upcomingBookingsCount = bookings.filter(isUpcoming).length;
-  const pendingBookings = bookings.filter(b => b.attendanceStatus === "pending").length;
-  const confirmedBookings = bookings.filter(b => b.attendanceStatus === "confirmed").length;
+  const upcomingBookingsCount = allBookings.filter(isUpcoming).length;
+  const pendingBookings = allBookings.filter(b => b.attendanceStatus === "pending").length;
+  const confirmedBookings = allBookings.filter(b => b.attendanceStatus === "confirmed").length;
 
   // ANALYTICS COMPUTED DATA
-  const filteredBookingsForAnalytics = bookings.filter(booking => {
+  const filteredBookingsForAnalytics = allBookings.filter(booking => {
     // Filter by date range
     if (analyticsDateRange.start && booking.preferredDate && booking.preferredDate < analyticsDateRange.start) return false;
     if (analyticsDateRange.end && booking.preferredDate && booking.preferredDate > analyticsDateRange.end) return false;
@@ -1029,7 +1041,7 @@ export default function Admin() {
     return true;
   });
 
-  // Calculate focus area statistics
+  // Calculate focus area statistics from ALL bookings in current filters
   const focusAreaStats = (() => {
     const areaCount = new Map<string, number>();
     filteredBookingsForAnalytics.forEach(booking => {
@@ -1044,25 +1056,45 @@ export default function Admin() {
       .sort((a, b) => b.count - a.count);
   })();
 
-  // Calculate booking trends by month
+  // Calculate booking trends by month (ALL bookings, last 6 months), respects lesson type but ignores custom date range
   const bookingTrendData = (() => {
     const monthCount = new Map<string, number>();
-    filteredBookingsForAnalytics.forEach(booking => {
+    const today = new Date();
+    const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+
+    const dataset = allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const d = new Date(b.preferredDate);
+      if (d < sixMonthsAgo) return false;
+      // Respect lesson type selection
+      if (analyticsLessonType !== 'all') {
+        const name = (() => {
+          const lt: any = (b as any).lessonType;
+          if (lt && typeof lt === 'object' && 'name' in lt) return lt.name as string;
+          if (typeof lt === 'string') return lt;
+          if (b.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) return lessonTypesById.get(b.lessonTypeId)?.name as string;
+          return undefined;
+        })();
+        if (name !== analyticsLessonType) return false;
+      }
+      return true;
+    });
+
+    dataset.forEach(booking => {
       if (!booking.preferredDate) return;
       const date = new Date(booking.preferredDate);
       const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
       monthCount.set(monthKey, (monthCount.get(monthKey) || 0) + 1);
     });
-    
-    // Get last 6 months
+
+    // Build the last 6 month labels
     const months: string[] = [];
-    const today = new Date();
     for (let i = 5; i >= 0; i--) {
       const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
       months.push(monthKey);
     }
-    
+
     return months.map(month => ({
       month,
       count: monthCount.get(month) || 0
@@ -1155,7 +1187,7 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent>
                       <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{upcomingBookingsCount}</div>
-                      <p className="text-xs text-[#0F0276] font-medium mt-1">of {totalBookings} total</p>
+                      <p className="text-xs text-[#0F0276] font-medium mt-1">of {totalBookingsAll} total</p>
                 </CardContent>
               </Card>
 
@@ -1167,7 +1199,7 @@ export default function Admin() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{totalBookings}</div>
+                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{totalBookingsAll}</div>
                     </CardContent>
                   </Card>
 
@@ -1183,7 +1215,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-green-100 to-white border-l-4 sm:border-l-8 border-green-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+        <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-green-100 to-white border-l-4 sm:border-l-8 border-green-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-green-600">Confirmed</CardTitle>
                   <div className="bg-green-100 p-1.5 sm:p-2 rounded-full">
@@ -1191,7 +1223,7 @@ export default function Admin() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl sm:text-3xl font-black text-green-600">{confirmedBookings}</div>
+          <div className="text-2xl sm:text-3xl font-black text-green-600">{confirmedBookings}</div>
                 </CardContent>
               </Card>
 
@@ -2721,7 +2753,7 @@ export default function Admin() {
                         <CardTitle className="text-sm font-bold text-blue-800">Total Bookings</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-3xl font-black text-blue-900">{bookings.length}</div>
+                        <div className="text-3xl font-black text-blue-900">{allBookings.length}</div>
                         <p className="text-xs text-blue-600 font-medium mt-1">All time</p>
                       </CardContent>
                     </Card>
@@ -2732,7 +2764,7 @@ export default function Admin() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-black text-green-900">
-                          {bookings.filter(b => {
+                          {allBookings.filter(b => {
                             if (!b.preferredDate) return false;
                             const bookingDate = new Date(b.preferredDate);
                             const thisMonth = new Date();
@@ -2750,8 +2782,8 @@ export default function Admin() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-black text-purple-900">
-                          {bookings.length > 0 
-                            ? Math.round((bookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length / bookings.length) * 100)
+                          {allBookings.length > 0 
+                            ? Math.round((allBookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length / allBookings.length) * 100)
                             : 0}%
                         </div>
                         <p className="text-xs text-purple-600 font-medium mt-1">Form to payment</p>
@@ -2766,8 +2798,8 @@ export default function Admin() {
                         <div className="text-3xl font-black text-orange-900">
                           $
                           {(() => {
-                            if (!bookings.length) return '0.00';
-                            const sum = bookings.reduce((acc, b) => {
+                            if (!allBookings.length) return '0.00';
+                            const sum = allBookings.reduce((acc, b) => {
                               // Prefer full lesson type price
                               const lt: any = (b as any).lessonType;
                               if (lt && typeof lt === 'object' && 'price' in lt) {
@@ -2785,7 +2817,7 @@ export default function Admin() {
                               }
                               return acc;
                             }, 0);
-                            return (sum / bookings.length).toFixed(2);
+                            return (sum / allBookings.length).toFixed(2);
                           })()}
                         </div>
                         <p className="text-xs text-orange-600 font-medium mt-1">Per booking</p>
@@ -2798,8 +2830,8 @@ export default function Admin() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-black text-cyan-900">
-                          {bookings.length > 0
-                            ? Math.round((bookings.filter(b => (b as any).bookingMethod === 'Website').length / bookings.length) * 100)
+                          {allBookings.length > 0
+                            ? Math.round((allBookings.filter(b => (b as any).bookingMethod === 'Website').length / allBookings.length) * 100)
                             : 0}%
                         </div>
                         <p className="text-xs text-cyan-600 font-medium mt-1">Booked on website</p>
@@ -2812,8 +2844,8 @@ export default function Admin() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-3xl font-black text-rose-900">
-                          {bookings.length > 0
-                            ? Math.round((bookings.filter(b => (b as any).bookingMethod === 'Admin').length / bookings.length) * 100)
+                          {allBookings.length > 0
+                            ? Math.round((allBookings.filter(b => (b as any).bookingMethod === 'Admin').length / allBookings.length) * 100)
                             : 0}%
                         </div>
                         <p className="text-xs text-rose-600 font-medium mt-1">Created by admin</p>
@@ -2883,7 +2915,7 @@ export default function Admin() {
                     <CardHeader className="pb-4">
                       <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-2">
                         <BarChart className="h-6 w-6 text-[#D8BD2A]" />
-                        Popular Focus Areas
+                        Popular Focus Areas (All bookings in selected filters)
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -2919,7 +2951,7 @@ export default function Admin() {
                   {/* Booking Trends Chart */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Booking Trends (Last 6 Months)</CardTitle>
+                      <CardTitle className="text-lg">Booking Trends (All bookings, last 6 months)</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -2948,12 +2980,13 @@ export default function Admin() {
                     <CardHeader className="pb-4">
                       <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-2">
                         <DollarSign className="h-6 w-6 text-[#D8BD2A]" />
-                        Lesson Type Distribution
+                        Lesson Type Distribution (All bookings in selected filters)
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {(() => {
+                          // Use ALL bookings (active + archived) within filters
                           const total = filteredBookingsForAnalytics.length || 0;
                           const colorPool = ['blue','green','purple','orange','indigo','emerald','rose','amber'];
                           const items = (lessonTypes || []).map((lt: any, idx: number) => {
