@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertSideQuest, type InsertSiteInquiry, type InsertTip, type InsertWaiver, type Parent, type SideQuest, type SiteInquiry, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
@@ -221,6 +221,12 @@ export interface IStorage {
   updateSiteFaq(id: number, faq: any): Promise<any>;
   deleteSiteFaq(id: number): Promise<boolean>;
   bulkUpsertSiteFaqs(faqs: any[]): Promise<any[]>;
+
+  // Site Inquiries
+  listSiteInquiries(): Promise<SiteInquiry[]>;
+  createSiteInquiry(input: InsertSiteInquiry): Promise<SiteInquiry>;
+  updateSiteInquiryStatus(id: number, status: SiteInquiry['status']): Promise<SiteInquiry | undefined>;
+  deleteSiteInquiry(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -1558,6 +1564,14 @@ With the right setup and approach, home practice can accelerate your child's gym
     // Not implemented in MemStorage
     return faqs.map(faq => ({ id: Math.random(), ...faq }));
   }
+
+  // Site Inquiries (MemStorage stubs)
+  async listSiteInquiries(): Promise<SiteInquiry[]> { return []; }
+  async createSiteInquiry(input: InsertSiteInquiry): Promise<SiteInquiry> {
+    return { id: Date.now(), ...input, createdAt: new Date(), updatedAt: new Date() } as any;
+  }
+  async updateSiteInquiryStatus(id: number, status: SiteInquiry['status']): Promise<SiteInquiry | undefined> { return undefined; }
+  async deleteSiteInquiry(id: number): Promise<boolean> { return false; }
 }
 
 // Supabase Storage Implementation
@@ -1615,6 +1629,102 @@ export class SupabaseStorage implements IStorage {
       return [];
     }
     return data || [];
+  }
+
+  // ===============================
+  // Site Inquiries
+  // ===============================
+  async listSiteInquiries(): Promise<SiteInquiry[]> {
+    const { data, error } = await supabaseAdmin
+      .from('site_inquiries')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('[STORAGE][SITE-INQUIRIES] list error:', error);
+      return [];
+    }
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      athleteInfo: row.athlete_info,
+      message: row.message,
+      status: row.status,
+      source: row.source,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async createSiteInquiry(input: InsertSiteInquiry): Promise<SiteInquiry> {
+    const insert = {
+      name: input.name,
+      email: input.email,
+      phone: input.phone ?? null,
+      athlete_info: input.athleteInfo ?? null,
+      message: input.message,
+      status: input.status ?? 'new',
+      source: input.source ?? 'contact',
+    } as any;
+    const { data, error } = await supabaseAdmin
+      .from('site_inquiries')
+      .insert(insert)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[STORAGE][SITE-INQUIRIES] create error:', error);
+      throw error;
+    }
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      athleteInfo: data.athlete_info,
+      message: data.message,
+      status: data.status,
+      source: data.source,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } as SiteInquiry;
+  }
+
+  async updateSiteInquiryStatus(id: number, status: SiteInquiry['status']): Promise<SiteInquiry | undefined> {
+    const { data, error } = await supabaseAdmin
+      .from('site_inquiries')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[STORAGE][SITE-INQUIRIES] update error:', error);
+      return undefined;
+    }
+    return data ? {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      athleteInfo: data.athlete_info,
+      message: data.message,
+      status: data.status,
+      source: data.source,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } as SiteInquiry : undefined;
+  }
+
+  async deleteSiteInquiry(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('site_inquiries')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('[STORAGE][SITE-INQUIRIES] delete error:', error);
+      return false;
+    }
+    return true;
   }
   // Helper function to log queries
   private logQuery(operation: string, table: string, filters?: any) {

@@ -6901,25 +6901,11 @@ setTimeout(async () => {
     }
   });
 
-  // Simple in-memory store for site inquiries (temporary until DB schema is approved)
-  const siteInquiriesMem: Array<{
-    id: number;
-    name: string;
-    email: string;
-    phone?: string;
-    athleteInfo?: string;
-    message: string;
-    status: 'new' | 'open' | 'closed' | 'archived';
-    source?: string;
-    createdAt: string;
-  }> = [];
-
   // Admin: list site inquiries
   app.get('/api/admin/site-inquiries', isAdminAuthenticated, async (_req, res) => {
     try {
-      // Latest first
-      const data = [...siteInquiriesMem].sort((a, b) => b.id - a.id);
-      res.json(data);
+  const data = await storage.listSiteInquiries();
+  res.json(data);
     } catch (err) {
       console.error('[ADMIN][SITE-INQUIRIES] Failed to list', err);
       res.status(500).json({ message: 'Failed to fetch inquiries' });
@@ -6931,10 +6917,10 @@ setTimeout(async () => {
     try {
       const id = Number(req.params.id);
       const { status } = req.body || {};
-      const idx = siteInquiriesMem.findIndex(i => i.id === id);
-      if (idx === -1) return res.status(404).json({ message: 'Inquiry not found' });
-      if (status) siteInquiriesMem[idx].status = status;
-      res.json(siteInquiriesMem[idx]);
+  if (!status) return res.status(400).json({ message: 'Missing status' });
+  const updated = await storage.updateSiteInquiryStatus(id, status);
+  if (!updated) return res.status(404).json({ message: 'Inquiry not found' });
+  res.json(updated);
     } catch (err) {
       console.error('[ADMIN][SITE-INQUIRIES] Failed to update', err);
       res.status(500).json({ message: 'Failed to update inquiry' });
@@ -6945,10 +6931,9 @@ setTimeout(async () => {
   app.delete('/api/admin/site-inquiries/:id', isAdminAuthenticated, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const idx = siteInquiriesMem.findIndex(i => i.id === id);
-      if (idx === -1) return res.status(404).json({ message: 'Inquiry not found' });
-      siteInquiriesMem.splice(idx, 1);
-      res.status(204).send();
+  const ok = await storage.deleteSiteInquiry(id);
+  if (!ok) return res.status(404).json({ message: 'Inquiry not found' });
+  res.status(204).send();
     } catch (err) {
       console.error('[ADMIN][SITE-INQUIRIES] Failed to delete', err);
       res.status(500).json({ message: 'Failed to delete inquiry' });
@@ -6988,18 +6973,21 @@ setTimeout(async () => {
         return res.status(502).json({ message: 'Failed to deliver message. Please try again shortly.' });
       }
 
-      // Also route to Site Inquiries in-memory list for admin tab visibility
-      siteInquiriesMem.push({
-        id: Date.now(),
-        name: payload.name,
-        email: payload.email,
-        phone: payload.phone,
-        athleteInfo: payload.athleteInfo,
-        message: payload.message,
-        status: 'new',
-        source: 'contact',
-        createdAt: new Date().toISOString(),
-      });
+      // Persist to Site Inquiries table for Admin Messages
+      try {
+        await storage.createSiteInquiry({
+          name: payload.name,
+          email: payload.email,
+          phone: payload.phone || null,
+          athleteInfo: payload.athleteInfo || null,
+          message: payload.message,
+          status: 'new',
+          source: 'contact',
+        } as any);
+      } catch (dbErr) {
+        console.error('[CONTACT] Failed to persist site inquiry', dbErr);
+        // Do not fail the request since email already sent; admin UI may not reflect until retry
+      }
 
       res.json({ message: 'Message sent successfully' });
     } catch (error) {

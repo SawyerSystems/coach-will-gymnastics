@@ -978,6 +978,20 @@ export const siteFaqs = pgTable("site_faqs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Site Inquiries (Contact submissions routed to Admin > Messages > Site Inquiries)
+export const siteInquiries = pgTable("site_inquiries", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  athleteInfo: text("athlete_info"),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default('new'), // new | open | closed | archived
+  source: varchar("source", { length: 50 }).default('contact'),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Validation schemas for site content
 export const insertSiteContentSchema = createInsertSchema(siteContent);
 export const insertTestimonialSchema = createInsertSchema(testimonials);
@@ -990,6 +1004,15 @@ export type Testimonial = typeof testimonials.$inferSelect;
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 export type SiteFaq = typeof siteFaqs.$inferSelect;
 export type InsertSiteFaq = z.infer<typeof insertSiteFaqSchema>;
+
+// Insert schema and types for Site Inquiries
+export const insertSiteInquirySchema = createInsertSchema(siteInquiries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type SiteInquiry = typeof siteInquiries.$inferSelect;
+export type InsertSiteInquiry = z.infer<typeof insertSiteInquirySchema>;
 
 // Site content API response type
 export type SiteContentResponse = {
