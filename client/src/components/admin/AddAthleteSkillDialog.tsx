@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ export default function AddAthleteSkillDialog({ open, onOpenChange, athleteId, o
   const [level, setLevel] = useState<string | 'all'>('all');
   const [search, setSearch] = useState('');
   const { data: skills = [] } = useSkills({ apparatusId: apparatusId === 'all' ? undefined : apparatusId, level: level === 'all' ? undefined : level });
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -28,6 +29,12 @@ export default function AddAthleteSkillDialog({ open, onOpenChange, athleteId, o
       return (s.name || '').toLowerCase().includes(q) || (s.category || '').toLowerCase().includes(q) || (s.description || '').toLowerCase().includes(q);
     }).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0) || (a.name || '').localeCompare(b.name || ''));
   }, [skills, search]);
+
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => searchRef.current?.focus());
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,6 +48,8 @@ export default function AddAthleteSkillDialog({ open, onOpenChange, athleteId, o
             <Input
               placeholder="Search by name/category/description"
               value={search}
+              ref={searchRef}
+              autoFocus
               onKeyDown={(e) => e.stopPropagation()}
               onChange={(e) => {
                 e.stopPropagation();
@@ -50,7 +59,16 @@ export default function AddAthleteSkillDialog({ open, onOpenChange, athleteId, o
           </div>
           <div>
             <Label>Apparatus</Label>
-            <Select value={apparatusId === 'all' ? 'all' : String(apparatusId)} onValueChange={(v) => setApparatusId(v === 'all' ? 'all' : Number(v))}>
+            <Select
+              value={apparatusId === 'all' ? 'all' : String(apparatusId)}
+              onValueChange={(v) => {
+                setApparatusId(v === 'all' ? 'all' : Number(v));
+                // Blur select trigger and focus search to capture typing
+                const el = document.activeElement as HTMLElement | null;
+                if (el && typeof el.blur === 'function') el.blur();
+                requestAnimationFrame(() => searchRef.current?.focus());
+              }}
+            >
               <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
@@ -60,7 +78,15 @@ export default function AddAthleteSkillDialog({ open, onOpenChange, athleteId, o
           </div>
           <div className="sm:col-span-3">
             <Label>Level</Label>
-            <Select value={level === 'all' ? 'all' : level} onValueChange={(v) => setLevel(v)}>
+            <Select
+              value={level === 'all' ? 'all' : level}
+              onValueChange={(v) => {
+                setLevel(v);
+                const el = document.activeElement as HTMLElement | null;
+                if (el && typeof el.blur === 'function') el.blur();
+                requestAnimationFrame(() => searchRef.current?.focus());
+              }}
+            >
               <SelectTrigger><SelectValue placeholder="All levels" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
