@@ -39,6 +39,8 @@ export default function AdminSkillsManager() {
   const [editDraft, setEditDraft] = useState<Partial<Skill>>({});
   const { data: relations } = useSkillRelations(selectedSkillId);
   const saveRelations = useSaveSkillRelations();
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
 
   const filteredSkills = useMemo(() => skills, [skills]);
 
@@ -269,8 +271,19 @@ export default function AdminSkillsManager() {
               <div className="space-y-6">
                 {groups.map(group => (
                   <div key={group.apparatusId}>
-                    <div className="text-sm font-semibold text-muted-foreground mb-2">{group.apparatusName}</div>
-                    <div className="space-y-2">
+                    <button
+                      type="button"
+                      className="text-left text-sm font-semibold text-muted-foreground mb-2 hover:text-foreground"
+                      onClick={() => setCollapsedGroups(prev => {
+                        const next = new Set(prev);
+                        if (next.has(group.apparatusId)) next.delete(group.apparatusId); else next.add(group.apparatusId);
+                        return next;
+                      })}
+                    >
+                      {group.apparatusName}
+                    </button>
+                    {!collapsedGroups.has(group.apparatusId) && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       {group.items.map((s, idx) => (
                         <Card
                           key={s.id}
@@ -306,35 +319,65 @@ export default function AdminSkillsManager() {
                             // Invalidate to reflect new order
                             qc.invalidateQueries({ queryKey: ["/api/admin/skills"], exact: false });
                           }}
-                          className={dragOver && dragOver.groupId === group.apparatusId && dragOver.index === idx ? 'ring-2 ring-primary' : ''}
+                           className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.index === idx ? 'ring-2 ring-primary' : ''} ${expandedIds.has(s.id) ? 'col-span-2' : ''} overflow-hidden`}
                         >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <CardTitle className="text-base">{s.name || `Skill #${s.id}`}</CardTitle>
-                                <div className="text-xs text-muted-foreground">{apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}</div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {editingId === s.id ? (
-                            <>
-                              <Button size="sm" onClick={() => {
-                                if (!editingId) return;
-                                updateSkill.mutate({ id: editingId, patch: editDraft });
-                                setEditingId(undefined);
-                                setEditDraft({});
-                              }}>Save</Button>
-                              <Button size="sm" variant="outline" onClick={() => { setEditingId(undefined); setEditDraft({}); }}>Cancel</Button>
-                            </>
-                          ) : (
-                            <Button size="sm" variant="outline" onClick={() => { setEditingId(s.id); setEditDraft({ name: s.name || '', category: s.category || '', level: s.level || 'beginner', displayOrder: s.displayOrder ?? undefined, apparatusId: s.apparatusId ?? undefined, description: s.description || '' }); }}>Edit</Button>
-                          )}
-                          <Button size="sm" variant={selectedSkillId === s.id ? 'secondary' : 'outline'} onClick={() => setSelectedSkillId(prev => prev === s.id ? undefined : s.id)}>Relations</Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteSkill.mutate(s.id)}>Delete</Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {editingId === s.id ? (
+                          <CardContent className="p-2 overflow-hidden">
+                            {(!expandedIds.has(s.id)) ? (
+                              <button
+                                type="button"
+                                className="w-full aspect-square rounded-md flex flex-col items-start justify-center p-2 text-left hover:bg-accent overflow-hidden"
+                                onClick={() => setExpandedIds(prev => { const next = new Set(prev); next.has(s.id) ? next.delete(s.id) : next.add(s.id); return next; })}
+                              >
+                                <div
+                                  className="text-sm font-semibold w-full break-words"
+                                  style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                                >
+                                  {s.name || `Skill #${s.id}`}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-0.5 truncate w-full">{apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}</div>
+                                <div className="text-[11px] mt-1 truncate w-full">{s.category || '—'}</div>
+                              </button>
+                            ) : (
+                              <div
+                                className="space-y-3"
+                                onClick={(e) => {
+                                  const el = e.target as HTMLElement | null;
+                                  if (!el) return;
+                                  // Ignore clicks on interactive elements
+                                  if (el.closest('button, a, input, textarea, select, [role="button"]')) return;
+                                  // Collapse this card
+                                  setExpandedIds(prev => {
+                                    const next = new Set(prev);
+                                    next.delete(s.id);
+                                    return next;
+                                  });
+                                }}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <CardTitle className="text-base">{s.name || `Skill #${s.id}`}</CardTitle>
+                                    <div className="text-xs text-muted-foreground">{apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}</div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {editingId === s.id ? (
+                                      <>
+                                        <Button size="sm" onClick={() => {
+                                          if (!editingId) return;
+                                          updateSkill.mutate({ id: editingId, patch: editDraft });
+                                          setEditingId(undefined);
+                                          setEditDraft({});
+                                        }}>Save</Button>
+                                        <Button size="sm" variant="outline" onClick={() => { setEditingId(undefined); setEditDraft({}); }}>Cancel</Button>
+                                      </>
+                                    ) : (
+                                      <Button size="sm" variant="outline" onClick={() => { setEditingId(s.id); setEditDraft({ name: s.name || '', category: s.category || '', level: s.level || 'beginner', displayOrder: s.displayOrder ?? undefined, apparatusId: s.apparatusId ?? undefined, description: s.description || '' }); }}>Edit</Button>
+                                    )}
+                                    <Button size="sm" variant={selectedSkillId === s.id ? 'secondary' : 'outline'} onClick={(e) => { e.stopPropagation?.(); setSelectedSkillId(prev => prev === s.id ? undefined : s.id); }}>Relations</Button>
+                                    <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation?.(); deleteSkill.mutate(s.id); }}>Delete</Button>
+                                  </div>
+                                </div>
+
+                                {editingId === s.id ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           <div className="space-y-1">
                             <Label>Name</Label>
@@ -375,22 +418,22 @@ export default function AdminSkillsManager() {
                             <Input value={(editDraft.description as string) || ''} onChange={(e) => setEditDraft(d => ({ ...d, description: e.target.value }))} />
                           </div>
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                          <div>
-                            <div className="text-xs text-muted-foreground">Category</div>
-                            <div>{s.category || '—'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">Display Order</div>
-                            <div>{s.displayOrder ?? '—'}</div>
-                          </div>
-                          <div className="sm:col-span-2 lg:col-span-3">
-                            <div className="text-xs text-muted-foreground">Description</div>
-                            <div className="break-words">{s.description || '—'}</div>
-                          </div>
-                        </div>
-                      )}
+                                ) : (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                                    <div>
+                                      <div className="text-xs text-muted-foreground">Category</div>
+                                      <div>{s.category || '—'}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-muted-foreground">Display Order</div>
+                                      <div>{s.displayOrder ?? '—'}</div>
+                                    </div>
+                                    <div className="sm:col-span-2 lg:col-span-3">
+                                      <div className="text-xs text-muted-foreground">Description</div>
+                                      <div className="break-words">{s.description || '—'}</div>
+                                    </div>
+                                  </div>
+                                )}
 
                       {selectedSkillId === s.id && (
                         <div className="mt-4 border rounded p-3 space-y-3">
@@ -467,10 +510,13 @@ export default function AdminSkillsManager() {
                           </div>
                         </div>
                       )}
-                    </CardContent>
+                              </div>
+                            )}
+                          </CardContent>
                         </Card>
                       ))}
                     </div>
+                    )}
                   </div>
                 ))}
                 {filteredSkills.length === 0 && (
