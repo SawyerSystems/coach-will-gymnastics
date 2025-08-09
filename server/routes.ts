@@ -6901,6 +6901,46 @@ setTimeout(async () => {
     }
   });
 
+  // Simple in-memory store for site inquiries (temporary until DB schema is approved)
+  const siteInquiriesMem: Array<{
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+    athleteInfo?: string;
+    message: string;
+    status: 'new' | 'open' | 'closed' | 'archived';
+    source?: string;
+    createdAt: string;
+  }> = [];
+
+  // Admin: list site inquiries
+  app.get('/api/admin/site-inquiries', isAdminAuthenticated, async (_req, res) => {
+    try {
+      // Latest first
+      const data = [...siteInquiriesMem].sort((a, b) => b.id - a.id);
+      res.json(data);
+    } catch (err) {
+      console.error('[ADMIN][SITE-INQUIRIES] Failed to list', err);
+      res.status(500).json({ message: 'Failed to fetch inquiries' });
+    }
+  });
+
+  // Admin: update inquiry status
+  app.patch('/api/admin/site-inquiries/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const { status } = req.body || {};
+      const idx = siteInquiriesMem.findIndex(i => i.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Inquiry not found' });
+      if (status) siteInquiriesMem[idx].status = status;
+      res.json(siteInquiriesMem[idx]);
+    } catch (err) {
+      console.error('[ADMIN][SITE-INQUIRIES] Failed to update', err);
+      res.status(500).json({ message: 'Failed to update inquiry' });
+    }
+  });
+
   app.post("/api/contact", async (req, res) => {
     try {
       const { name, phone, email, athleteInfo, childInfo, message } = req.body || {};
@@ -6933,6 +6973,19 @@ setTimeout(async () => {
         console.error('[CONTACT] Failed to send email', err);
         return res.status(502).json({ message: 'Failed to deliver message. Please try again shortly.' });
       }
+
+      // Also route to Site Inquiries in-memory list for admin tab visibility
+      siteInquiriesMem.push({
+        id: Date.now(),
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        athleteInfo: payload.athleteInfo,
+        message: payload.message,
+        status: 'new',
+        source: 'contact',
+        createdAt: new Date().toISOString(),
+      });
 
       res.json({ message: 'Message sent successfully' });
     } catch (error) {

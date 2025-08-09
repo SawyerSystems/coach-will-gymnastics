@@ -103,7 +103,7 @@ export function AdminSidebar({
       icon: <Calendar className="h-5 w-5" />
     },
     {
-      id: 'parentcomm',
+      id: 'messages',
       label: 'Messages',
       icon: <MessageSquare className="h-5 w-5" />
     },

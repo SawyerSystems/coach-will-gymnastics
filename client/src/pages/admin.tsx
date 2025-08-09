@@ -8,6 +8,7 @@ import { AdminBookingManager } from "@/components/admin-booking-manager";
 import { AdminLessonTypeManager } from "@/components/admin-lesson-type-manager";
 import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
+import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { ContentSection, SectionBasedContentEditor } from "@/components/section-based-content-editor";
 import { Badge } from "@/components/ui/badge";
@@ -1406,6 +1407,12 @@ export default function Admin() {
               className="hidden"
             >
               💳 Payments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="messages" 
+              className="hidden"
+            >
+              💬 Messages
             </TabsTrigger>
             <TabsTrigger 
               value="payouts" 
@@ -3133,6 +3140,20 @@ export default function Admin() {
               </CardHeader>
               <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
                 <AdminWaiverManagement />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="messages" className="w-full max-w-full px-0 sm:px-2">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                  <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
+                  Messages
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                <AdminMessagesTab />
               </CardContent>
             </Card>
           </TabsContent>
