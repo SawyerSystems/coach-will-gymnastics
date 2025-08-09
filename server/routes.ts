@@ -6941,6 +6941,20 @@ setTimeout(async () => {
     }
   });
 
+  // Admin: delete inquiry
+  app.delete('/api/admin/site-inquiries/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const idx = siteInquiriesMem.findIndex(i => i.id === id);
+      if (idx === -1) return res.status(404).json({ message: 'Inquiry not found' });
+      siteInquiriesMem.splice(idx, 1);
+      res.status(204).send();
+    } catch (err) {
+      console.error('[ADMIN][SITE-INQUIRIES] Failed to delete', err);
+      res.status(500).json({ message: 'Failed to delete inquiry' });
+    }
+  });
+
   app.post("/api/contact", async (req, res) => {
     try {
       const { name, phone, email, athleteInfo, childInfo, message } = req.body || {};

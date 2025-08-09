@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Mail, MessageCircle, Inbox } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Inbox, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export type SiteInquiry = {
@@ -37,6 +37,15 @@ export default function AdminMessagesTab() {
       const res = await apiRequest("PATCH", `/api/admin/site-inquiries/${id}`, { status });
       if (!res.ok) throw new Error("Failed to update status");
       return res.json();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/admin/site-inquiries"] }),
+  });
+
+  const deleteInquiry = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/site-inquiries/${id}`);
+      if (!res.ok) throw new Error("Failed to delete inquiry");
+      return true;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/admin/site-inquiries"] }),
   });
@@ -90,6 +99,9 @@ export default function AdminMessagesTab() {
                           <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'}>{inq.status}</Badge>
                           <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}>
                             Mark {inq.status === 'new' ? 'Open' : inq.status === 'open' ? 'Closed' : 'Archived'}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)}>
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete
                           </Button>
                         </div>
                       </div>
