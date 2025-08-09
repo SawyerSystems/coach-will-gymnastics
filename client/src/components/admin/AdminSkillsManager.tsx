@@ -21,6 +21,7 @@ export default function AdminSkillsManager() {
     queryFn: getQueryFn({ on401: "returnNull" }),
     staleTime: 30_000,
   });
+
   const [filters, setFilters] = useState<Filters>({});
   const { data: apparatus = [], isLoading: isAppLoading } = useApparatusList();
   const { data: skills = [], isLoading, error } = useSkills(filters);
@@ -41,6 +42,144 @@ export default function AdminSkillsManager() {
   const saveRelations = useSaveSkillRelations();
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  const onCreate = async () => {
+    if (!draft.name) return;
+    await createSkill.mutateAsync(draft);
+    setDraft({ level: draft.level || "beginner", prerequisiteIds: [], componentIds: [], isConnectedCombo: false });
+  };
+
+  function CreateForm() {
+    return (
+      <div className="rounded-xl border border-[#0F0276]/10 p-3 bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>Name</Label>
+            <Input value={draft.name || ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
+          </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Input value={draft.category || ""} onChange={e => setDraft(d => ({ ...d, category: e.target.value }))} />
+          </div>
+          <div className="space-y-2">
+            <Label>Level</Label>
+            <Select value={draft.level || "beginner"} onValueChange={v => setDraft(d => ({ ...d, level: v }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LEVELS.map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Apparatus</Label>
+            <Select value={draft.apparatusId ? String(draft.apparatusId) : ""} onValueChange={v => setDraft(d => ({ ...d, apparatusId: v ? Number(v) : undefined }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select apparatus" />
+              </SelectTrigger>
+              <SelectContent>
+                {apparatus.map(a => (<SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="md:col-span-2 space-y-2">
+            <Label>Description</Label>
+            <Input value={draft.description || ""} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} />
+          </div>
+          <div className="space-y-2">
+            <Label>Display Order</Label>
+            <Input type="number" value={draft.displayOrder ?? ""} onChange={e => setDraft(d => ({ ...d, displayOrder: e.target.value === "" ? undefined : Number(e.target.value) }))} />
+          </div>
+          <div className="space-y-2">
+            <Label>Connected Combo</Label>
+            <div className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!!draft.isConnectedCombo} onChange={e => setDraft(d => ({ ...d, isConnectedCombo: e.target.checked }))} />
+              <span>Mark this as a connected combo</span>
+            </div>
+          </div>
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Prerequisites (optional)</Label>
+              <div className="border rounded p-2 max-h-40 overflow-auto space-y-1">
+                {skills.map(s => (
+                  <label key={s.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={(draft.prerequisiteIds || []).includes(s.id)}
+                      onChange={(e) => setDraft(d => {
+                        const set = new Set(d.prerequisiteIds || []);
+                        if (e.target.checked) set.add(s.id); else set.delete(s.id);
+                        return { ...d, prerequisiteIds: Array.from(set) };
+                      })}
+                    />
+                    <span>{s.name || `Skill #${s.id}`}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Connected Components (optional)</Label>
+              <div className="space-y-2">
+                {(draft.componentIds || []).map((id, idx) => (
+                  <div key={`${id}-${idx}`} className="flex items-center gap-2">
+                    <span className="text-xs w-6 text-gray-500">{idx + 1}.</span>
+                    <span className="flex-1 text-sm">{skills.find(sk => sk.id === id)?.name || `Skill #${id}`}</span>
+                    <Button size="sm" variant="outline" onClick={() => setDraft(d => {
+                      const arr = [...(d.componentIds || [])];
+                      if (idx > 0) [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                      return { ...d, componentIds: arr };
+                    })}>Up</Button>
+                    <Button size="sm" variant="outline" onClick={() => setDraft(d => {
+                      const arr = [...(d.componentIds || [])];
+                      if (idx < arr.length - 1) [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+                      return { ...d, componentIds: arr };
+                    })}>Down</Button>
+                    <Button size="sm" variant="destructive" onClick={() => setDraft(d => ({ ...d, componentIds: (d.componentIds || []).filter((_, i) => i !== idx) }))}>Remove</Button>
+                  </div>
+                ))}
+                <Select onValueChange={(v) => setDraft(d => ({ ...d, componentIds: [...(d.componentIds || []), Number(v)] }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Add component skill" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {skills.map(sk => (
+                      <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <Button 
+            onClick={onCreate} 
+            disabled={createSkill.isPending || !draft.name}
+            className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+          >
+            Add Skill
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setDraft({ level: "beginner" })}
+            className="border-[#0F0276] text-[#0F0276] hover:bg-[#0F0276]/10"
+          >
+            Clear
+          </Button>
+          <Button 
+            variant="ghost" 
+            onClick={() => setIsCreateOpen(false)}
+            className="text-[#0F0276]"
+          >
+            Cancel
+          </Button>
+        </div>
+        <Separator className="my-2" />
+      </div>
+    );
+  }
 
   const filteredSkills = useMemo(() => skills, [skills]);
 
@@ -74,12 +213,6 @@ export default function AdminSkillsManager() {
     return result;
   }, [filteredSkills, apparatus, sortWithin]);
 
-  const onCreate = async () => {
-    if (!draft.name) return;
-    await createSkill.mutateAsync(draft);
-    setDraft({ level: draft.level || "beginner", prerequisiteIds: [], componentIds: [], isConnectedCombo: false });
-  };
-
   if (!auth?.loggedIn) {
     return (
       <Card>
@@ -96,11 +229,11 @@ export default function AdminSkillsManager() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-50 to-white overflow-hidden">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle className="text-lg font-black tracking-tight text-[#0F0276]">Filters</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label>Apparatus</Label>
             <Select
@@ -152,117 +285,21 @@ export default function AdminSkillsManager() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-50 to-white overflow-hidden">
         <CardHeader>
-          <CardTitle>Skills</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-lg font-black tracking-tight text-[#0F0276]">Skills</CardTitle>
+            <Button
+              onClick={() => setIsCreateOpen(v => !v)}
+              className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+            >
+              {isCreateOpen ? 'Close' : 'New Skill'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={draft.name || ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Input value={draft.category || ""} onChange={e => setDraft(d => ({ ...d, category: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Level</Label>
-                <Select value={draft.level || "beginner"} onValueChange={v => setDraft(d => ({ ...d, level: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEVELS.map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Apparatus</Label>
-                <Select value={draft.apparatusId ? String(draft.apparatusId) : ""} onValueChange={v => setDraft(d => ({ ...d, apparatusId: v ? Number(v) : undefined }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select apparatus" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {apparatus.map(a => (<SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <Label>Description</Label>
-                <Input value={draft.description || ""} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Display Order</Label>
-                <Input type="number" value={draft.displayOrder ?? ""} onChange={e => setDraft(d => ({ ...d, displayOrder: e.target.value === "" ? undefined : Number(e.target.value) }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Connected Combo</Label>
-                <div className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={!!draft.isConnectedCombo} onChange={e => setDraft(d => ({ ...d, isConnectedCombo: e.target.checked }))} />
-                  <span>Mark this as a connected combo</span>
-                </div>
-              </div>
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Prerequisites (optional)</Label>
-                  <div className="border rounded p-2 max-h-40 overflow-auto space-y-1">
-                    {skills.map(s => (
-                      <label key={s.id} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={(draft.prerequisiteIds || []).includes(s.id)}
-                          onChange={(e) => setDraft(d => {
-                            const set = new Set(d.prerequisiteIds || []);
-                            if (e.target.checked) set.add(s.id); else set.delete(s.id);
-                            return { ...d, prerequisiteIds: Array.from(set) };
-                          })}
-                        />
-                        <span>{s.name || `Skill #${s.id}`}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Connected Components (optional)</Label>
-                  <div className="space-y-2">
-                    {(draft.componentIds || []).map((id, idx) => (
-                      <div key={`${id}-${idx}`} className="flex items-center gap-2">
-                        <span className="text-xs w-6 text-gray-500">{idx + 1}.</span>
-                        <span className="flex-1 text-sm">{skills.find(sk => sk.id === id)?.name || `Skill #${id}`}</span>
-                        <Button size="sm" variant="outline" onClick={() => setDraft(d => {
-                          const arr = [...(d.componentIds || [])];
-                          if (idx > 0) [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
-                          return { ...d, componentIds: arr };
-                        })}>Up</Button>
-                        <Button size="sm" variant="outline" onClick={() => setDraft(d => {
-                          const arr = [...(d.componentIds || [])];
-                          if (idx < arr.length - 1) [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
-                          return { ...d, componentIds: arr };
-                        })}>Down</Button>
-                        <Button size="sm" variant="destructive" onClick={() => setDraft(d => ({ ...d, componentIds: (d.componentIds || []).filter((_, i) => i !== idx) }))}>Remove</Button>
-                      </div>
-                    ))}
-                    <Select onValueChange={(v) => setDraft(d => ({ ...d, componentIds: [...(d.componentIds || []), Number(v)] }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Add component skill" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {skills.map(sk => (
-                          <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={onCreate} disabled={createSkill.isPending || !draft.name}>Add Skill</Button>
-              <Button variant="outline" onClick={() => setDraft({ level: "beginner" })}>Clear</Button>
-            </div>
-            <Separator className="my-2" />
+            {isCreateOpen ? <CreateForm /> : null}
             {isLoading ? (
               <div>Loading…</div>
             ) : error ? (
@@ -272,14 +309,20 @@ export default function AdminSkillsManager() {
                 {groups.map(group => (
                   <div key={group.apparatusId}>
                     <button
-                      type="button"
-                      className="text-left text-sm font-semibold text-muted-foreground mb-2 hover:text-foreground"
+                      type="button" 
+                      className="text-left text-sm font-bold text-[#0F0276] mb-3 hover:text-[#0F0276]/80 flex items-center gap-2"
                       onClick={() => setCollapsedGroups(prev => {
                         const next = new Set(prev);
                         if (next.has(group.apparatusId)) next.delete(group.apparatusId); else next.add(group.apparatusId);
                         return next;
                       })}
                     >
+                      <div className="bg-[#0F0276]/10 p-1 rounded-full">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0F0276]">
+                          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d={collapsedGroups.has(group.apparatusId) ? "M12 8v8M8 12h8" : "M8 12h8"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
                       {group.apparatusName}
                     </button>
                     {!collapsedGroups.has(group.apparatusId) && (
@@ -325,17 +368,17 @@ export default function AdminSkillsManager() {
                             {(!expandedIds.has(s.id)) ? (
                               <button
                                 type="button"
-                                className="w-full aspect-square rounded-md flex flex-col items-start justify-center p-2 text-left hover:bg-accent overflow-hidden"
+                                className="w-full aspect-square rounded-md flex flex-col items-start justify-center p-3 text-left hover:bg-[#0F0276]/5 overflow-hidden transition-all duration-150"
                                 onClick={() => setExpandedIds(prev => { const next = new Set(prev); next.has(s.id) ? next.delete(s.id) : next.add(s.id); return next; })}
                               >
                                 <div
-                                  className="text-sm font-semibold w-full break-words"
+                                  className="text-sm font-bold text-[#0F0276] w-full break-words"
                                   style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                                 >
                                   {s.name || `Skill #${s.id}`}
                                 </div>
-                                <div className="text-[11px] text-muted-foreground mt-0.5 truncate w-full">{apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}</div>
-                                <div className="text-[11px] mt-1 truncate w-full">{s.category || '—'}</div>
+                                <div className="text-[11px] text-muted-foreground mt-1 truncate w-full">{apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}</div>
+                                <div className="text-[11px] mt-1.5 truncate w-full bg-[#0F0276]/10 px-1.5 py-0.5 rounded-full inline-block">{s.category || '—'}</div>
                               </button>
                             ) : (
                               <div
@@ -355,25 +398,67 @@ export default function AdminSkillsManager() {
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <CardTitle className="text-base">{s.name || `Skill #${s.id}`}</CardTitle>
-                                    <div className="text-xs text-muted-foreground">{apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}</div>
+                                    <CardTitle className="text-base font-bold text-[#0F0276]">{s.name || `Skill #${s.id}`}</CardTitle>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <span className="bg-[#0F0276]/10 p-0.5 rounded-full">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0F0276]">
+                                          <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                      </span>
+                                      {apparatus.find(a => a.id === s.apparatusId)?.name || '—'} • {s.level || 'beginner'}
+                                    </div>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     {editingId === s.id ? (
                                       <>
-                                        <Button size="sm" onClick={() => {
+                                        <Button 
+                                          size="sm" 
+                                          onClick={() => {
                                           if (!editingId) return;
                                           updateSkill.mutate({ id: editingId, patch: editDraft });
                                           setEditingId(undefined);
                                           setEditDraft({});
-                                        }}>Save</Button>
-                                        <Button size="sm" variant="outline" onClick={() => { setEditingId(undefined); setEditDraft({}); }}>Cancel</Button>
+                                        }}
+                                        className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+                                        >
+                                          Save
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          onClick={() => { setEditingId(undefined); setEditDraft({}); }}
+                                          className="border-[#0F0276] text-[#0F0276] hover:bg-[#0F0276]/10"
+                                        >
+                                          Cancel
+                                        </Button>
                                       </>
                                     ) : (
-                                      <Button size="sm" variant="outline" onClick={() => { setEditingId(s.id); setEditDraft({ name: s.name || '', category: s.category || '', level: s.level || 'beginner', displayOrder: s.displayOrder ?? undefined, apparatusId: s.apparatusId ?? undefined, description: s.description || '' }); }}>Edit</Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        onClick={() => { setEditingId(s.id); setEditDraft({ name: s.name || '', category: s.category || '', level: s.level || 'beginner', displayOrder: s.displayOrder ?? undefined, apparatusId: s.apparatusId ?? undefined, description: s.description || '' }); }}
+                                        className="border-[#0F0276] text-[#0F0276] hover:bg-[#0F0276]/10"
+                                      >
+                                        Edit
+                                      </Button>
                                     )}
-                                    <Button size="sm" variant={selectedSkillId === s.id ? 'secondary' : 'outline'} onClick={(e) => { e.stopPropagation?.(); setSelectedSkillId(prev => prev === s.id ? undefined : s.id); }}>Relations</Button>
-                                    <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation?.(); deleteSkill.mutate(s.id); }}>Delete</Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant={selectedSkillId === s.id ? 'secondary' : 'outline'} 
+                                      onClick={(e) => { e.stopPropagation?.(); setSelectedSkillId(prev => prev === s.id ? undefined : s.id); }}
+                                      className={selectedSkillId === s.id ? 
+                                        "bg-[#0F0276]/20 text-[#0F0276] hover:bg-[#0F0276]/30" : 
+                                        "border-[#0F0276] text-[#0F0276] hover:bg-[#0F0276]/10"}
+                                    >
+                                      Relations
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="destructive" 
+                                      onClick={(e) => { e.stopPropagation?.(); deleteSkill.mutate(s.id); }}
+                                    >
+                                      Delete
+                                    </Button>
                                   </div>
                                 </div>
 
@@ -436,8 +521,13 @@ export default function AdminSkillsManager() {
                                 )}
 
                       {selectedSkillId === s.id && (
-                        <div className="mt-4 border rounded p-3 space-y-3">
-                          <div className="font-medium">Edit Relations</div>
+                        <div className="mt-4 border-t border-[#0F0276]/10 rounded-b p-3 space-y-3 bg-[#0F0276]/[.03]">
+                          <div className="font-bold text-[#0F0276] flex items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0F0276]">
+                              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Edit Relations
+                          </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <div className="text-sm font-medium mb-2">Prerequisites</div>
