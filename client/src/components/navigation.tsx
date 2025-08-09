@@ -104,7 +104,7 @@ export const Navigation = memo(function Navigation() {
   }, [isAdminLoggedIn, isParentLoggedIn]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b-4 border-[#D8BD2A] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-lg">
+  <header className="sticky top-0 z-50 w-full border-b-4 border-[#D8BD2A] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-lg dark:bg-slate-900/80">
       <div className="container mx-auto flex h-20 md:h-20 items-center justify-between px-4 py-4 md:px-6 md:py-0">
         <Link href="/">
           <div className="flex items-center space-x-2 cursor-pointer relative">
@@ -128,7 +128,7 @@ export const Navigation = memo(function Navigation() {
         </Link>
 
         {/* Desktop Navigation - Hide on smaller screens to prevent tablet horizontal scrolling */}
-        <nav className="hidden lg:flex items-center space-x-6">
+  <nav className="hidden lg:flex items-center space-x-6">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <span
@@ -146,6 +146,26 @@ export const Navigation = memo(function Navigation() {
             </Link>
           ))}
           <div className="flex items-center space-x-3">
+            {/* Theme toggle - integrated in nav so it never overlaps buttons */}
+            <button
+              onClick={() => {
+                const current = document.documentElement.classList.contains('dark');
+                if (current) {
+                  document.documentElement.classList.remove('dark');
+                  window.localStorage.setItem('theme', 'light');
+                } else {
+                  document.documentElement.classList.add('dark');
+                  window.localStorage.setItem('theme', 'dark');
+                }
+              }}
+              aria-label="Toggle theme"
+              className="glass-button rounded-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 hidden md:inline-flex items-center gap-2"
+            >
+              <span className="hidden xl:inline">Theme</span>
+              <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center">
+                <span className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-[#D8BD2A] transition-transform duration-200 will-change-transform" style={{ transform: document?.documentElement?.classList?.contains('dark') ? 'translateX(14px)' : 'translateX(0px)' }} />
+              </span>
+            </button>
             <Link href="/booking">
               <Button className="btn-athletic-red text-white px-6 py-3 rounded-lg font-bold hover:scale-105 transform transition-all duration-300 shadow-lg animate-glow">
                 BOOK NOW
@@ -207,6 +227,23 @@ export const Navigation = memo(function Navigation() {
 
         {/* Tablet Navigation - Simplified for medium screens */}
         <nav className="hidden md:flex lg:hidden items-center space-x-4">
+          {/* Theme toggle for tablet */}
+          <button
+            onClick={() => {
+              const current = document.documentElement.classList.contains('dark');
+              if (current) {
+                document.documentElement.classList.remove('dark');
+                window.localStorage.setItem('theme', 'light');
+              } else {
+                document.documentElement.classList.add('dark');
+                window.localStorage.setItem('theme', 'dark');
+              }
+            }}
+            aria-label="Toggle theme"
+            className="glass-button rounded-full px-2 py-2 text-sm text-slate-900 dark:text-slate-100"
+          >
+            Theme
+          </button>
           <Link href="/booking">
             <Button className="coach-will-gradient text-white px-4 py-2 rounded-full font-medium hover:scale-105 transform transition-all duration-200 shadow-lg">
               Book Now
@@ -265,19 +302,36 @@ export const Navigation = memo(function Navigation() {
         {/* Mobile Navigation */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button variant="ghost" size="icon" className="lg:hidden glass-button text-slate-900 dark:text-white">
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px]">
             <nav className="flex flex-col space-y-4 mt-8">
+              {/* Theme toggle inside drawer */}
+              <button
+                onClick={() => {
+                  const current = document.documentElement.classList.contains('dark');
+                  if (current) {
+                    document.documentElement.classList.remove('dark');
+                    window.localStorage.setItem('theme', 'light');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                    window.localStorage.setItem('theme', 'dark');
+                  }
+                }}
+                aria-label="Toggle theme"
+                className="glass-button rounded-lg px-4 py-2 text-sm text-slate-900 dark:text-slate-100"
+              >
+                Toggle Theme
+              </button>
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href}>
                   <span
                     className={`block px-4 py-3 text-lg rounded-lg transition-colors duration-200 cursor-pointer min-h-[48px] flex items-center w-full ${
-                      isActive(item.href) 
-                        ? "text-blue-600 font-semibold bg-blue-50" 
-                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                      isActive(item.href)
+                        ? "text-blue-600 font-semibold bg-blue-50 dark:text-[#D8BD2A] dark:bg-slate-800/60"
+                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-white dark:hover:text-[#D8BD2A] dark:hover:bg-slate-800/40"
                     }`}
                     onClick={() => setIsOpen(false)}
                   >

@@ -1,3 +1,5 @@
+import * as React from "react";
+import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { Button } from "@/components/ui/button";
@@ -21,7 +23,7 @@ import {
     Trophy,
     Zap
 } from "lucide-react";
-import { useState } from "react";
+// hooks imported via combined React import above
 import { Link } from "wouter";
 
 export default function Home() {
@@ -32,6 +34,26 @@ export default function Home() {
   const [isNewParent, setIsNewParent] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const { getLessonPrice } = useStripePricing();
+
+  // Light/Dark mode toggle for testing glassmorphism
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = window.localStorage.getItem('theme');
+    if (saved === 'dark') return true;
+    if (saved === 'light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  // apply theme class on root element
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      window.localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      window.localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
 
   // Check if parent is already logged in
   const { data: parentAuth } = useQuery<{ loggedIn: boolean; parentId?: number; email?: string }>({
@@ -110,10 +132,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+
       {/* Hero Section with Video Banner */}
       <section className="relative overflow-hidden min-h-screen flex items-center">
-        {/* Video Background */}
+  {/* Video Background */}
         <div className="absolute inset-0 w-full h-full">
           <video
             autoPlay
@@ -124,22 +147,6 @@ export default function Home() {
           >
             <source src="https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/sign/videos/VideoBanner_1751699557948.MOV?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zYzBjMmQ0MS1hZTYxLTQzNDgtOGFhZS05OTAyN2U4OWQyZWUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlb3MvVmlkZW9CYW5uZXJfMTc1MTY5OTU1Nzk0OC5NT1YiLCJpYXQiOjE3NTI2ODc1NjksImV4cCI6MTc4NDIyMzU2OX0.XcNi5z-6-06U7FnpOLtcySTcb0vAHSR4QBT8vLOWKA4" type="video/mp4" />
           </video>
-          
-          {/* Enhanced gradient overlays for better text readability and fading */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60"></div>
-          
-          {/* Enhanced edge fading */}
-          <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black/50 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-blue-50/95 via-blue-50/60 to-transparent"></div>
-          <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-black/40 to-transparent"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-black/40 to-transparent"></div>
-          
-          {/* Corner fading for extra depth */}
-          <div className="absolute top-0 left-0 w-60 h-60 bg-gradient-to-br from-black/50 to-transparent"></div>
-          <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-bl from-black/50 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-60 h-60 bg-gradient-to-tr from-black/50 to-transparent"></div>
-          <div className="absolute bottom-0 right-0 w-60 h-60 bg-gradient-to-tl from-black/50 to-transparent"></div>
         </div>
 
         {/* Animated floating elements */}
@@ -151,7 +158,7 @@ export default function Home() {
         
         {/* Content overlay */}
         <div className="relative z-10 container mx-auto px-4 py-16 lg:py-24 text-center">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-5xl mx-auto theme-smooth p-6 md:p-10">
             <h1 className="athletic-title text-4xl md:text-6xl lg:text-8xl font-bold text-white mb-6 drop-shadow-2xl animate-bounce-in">
               UNLEASH YOUR INNER CHAMPION!{' '}
               <span className="inline-block">
@@ -167,7 +174,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button 
                 size="lg"
-                className="btn-athletic-red text-white px-8 py-4 font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-2xl animate-glow border-2 border-[#E10B0B]"
+                className="btn-athletic-red text-white px-8 py-4 font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-2xl animate-glow border-2 border-[#E10B0B] glass-button"
                 onClick={handleStartBooking}
                 disabled={parentAuth?.loggedIn && parentInfoLoading}
               >
@@ -178,7 +185,7 @@ export default function Home() {
                 <Button 
                   variant="outline"
                   size="lg"
-                  className="btn-athletic-gold text-black px-8 py-4 font-bold text-lg border-2 border-[#D8BD2A] bg-[#D8BD2A]/10 hover:bg-[#D8BD2A] hover:text-black backdrop-blur-sm transform transition-all duration-300 shadow-2xl"
+                  className="btn-athletic-gold text-black px-8 py-4 font-bold text-lg border-2 border-[#D8BD2A] bg-[#D8BD2A]/10 hover:bg-[#D8BD2A] hover:text-black backdrop-blur-sm transform transition-all duration-300 shadow-2xl glass-button"
                 >
                   <Trophy className="h-5 w-5 mr-2" />
                   TRAINING VIDEOS
@@ -189,10 +196,10 @@ export default function Home() {
         </div>
 
         {/* Video Controls */}
-        <div className="absolute top-6 left-6 z-20">
+    <div className="absolute top-6 left-6 z-20">
           <button
             onClick={() => setIsVideoMuted(!isVideoMuted)}
-            className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full p-3 shadow-2xl transition-all duration-200 hover:scale-110"
+      className="glass-button hover:bg-white/30 text-white rounded-full p-3 shadow-2xl transition-all duration-200 hover:scale-110"
             aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
           >
               {isVideoMuted ? (
@@ -210,7 +217,7 @@ export default function Home() {
 
         
         
-        <div className="absolute bottom-6 left-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-full px-4 py-2 shadow-2xl animate-pulse z-20">
+  <div className="absolute bottom-6 left-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-full px-4 py-2 shadow-2xl animate-pulse z-20 glass-button">
           <div className="flex items-center space-x-2">
             <Trophy className="h-4 w-4" />
             <span className="text-sm font-bold">Certified Coach</span>
@@ -225,20 +232,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Skills & Apparatus Section */}
-      <section className="athletic-section bg-gradient-to-br from-[#D8BD2A]/10 to-[#0F0276]/10">
+    {/* Skills & Apparatus Section */}
+  <section className="athletic-section bg-gradient-to-br from-[#D8BD2A]/10 to-[#0F0276]/10 dark:from-[#0F0276]/40 dark:to-black/20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="athletic-title text-3xl md:text-5xl font-bold text-[#0F0276] mb-4 animate-bounce-in">
+      <h2 className="athletic-title text-3xl md:text-5xl font-bold text-[#0F0276] dark:text-[#D8BD2A] mb-4 animate-bounce-in">
               MASTER EVERY <span className="text-[#E10B0B]">SKILL & APPARATUS</span>
             </h2>
-            <p className="coach-chant text-xl text-[#0F0276]/80 max-w-3xl mx-auto">
+      <p className="coach-chant text-xl text-[#0F0276]/80 dark:text-white max-w-3xl mx-auto">
               FROM BASIC ROLLS TO ADVANCED AERIAL SKILLS - COMPREHENSIVE TRAINING ACROSS ALL GYMNASTICS DISCIPLINES
             </p>
           </div>
 
           {/* Apparatus Training - Full Width */}
-          <Card className="athletic-card p-8 bg-gradient-to-r from-[#0F0276] to-[#E10B0B] text-white shadow-2xl hover:shadow-2xl transition-all duration-300 mb-12 animate-scale-up">
+      <Card className="athletic-card p-8 bg-gradient-to-r from-[#0F0276] to-[#E10B0B] text-white shadow-2xl hover:shadow-2xl transition-all duration-300 mb-12 animate-scale-up">
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-[#D8BD2A] rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse-gold">
                 <Dumbbell className="h-10 w-10 text-black" />
@@ -248,7 +255,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {["Floor Exercise", "Balance Beam", "Uneven Bars", "Vault", "Trampoline", "Tumble Track"].map((apparatus) => (
-                <div key={apparatus} className="flex items-center justify-center p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                <div key={apparatus} className="flex items-center justify-center p-4 rounded-lg bg-white/10 border border-white/30">
                   <span className="font-semibold text-white text-center">{apparatus}</span>
                 </div>
               ))}
@@ -258,18 +265,18 @@ export default function Home() {
           {/* Skills Grid */}
           <div className="grid md:grid-cols-3 gap-8">
             {/* Foundational Skills */}
-            <Card className="p-8 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 glass-surface glass-card glass-gradient">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <CheckCircle className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Foundational Skills</h3>
-                <p className="text-gray-600">Build strength and confidence with essential moves</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Foundational Skills</h3>
+                <p className="text-slate-700 dark:text-slate-300">Build strength and confidence with essential moves</p>
               </div>
               <div className="space-y-3">
                 {["Shaping", "Forward Rolls", "Backward Rolls", "Handstands", "Bridges & Backbends", "Limbers", "Cartwheels"].map((skill) => (
-                  <div key={skill} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <span className="font-medium text-gray-800">{skill}</span>
+                  <div key={skill} className="flex items-center justify-between p-3 rounded-lg glass-surface">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{skill}</span>
                     <div className="w-2 h-2 bg-green-600 rounded-full"></div>
                   </div>
                 ))}
@@ -277,18 +284,18 @@ export default function Home() {
             </Card>
 
             {/* Intermediate Skills */}
-            <Card className="p-8 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 glass-surface glass-card glass-gradient">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Trophy className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Intermediate Skills</h3>
-                <p className="text-gray-600">Progress to more dynamic and challenging moves</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Intermediate Skills</h3>
+                <p className="text-slate-700 dark:text-slate-300">Progress to more dynamic and challenging moves</p>
               </div>
               <div className="space-y-3">
                 {["Dive Rolls", "Round-offs", "Front Walkovers", "Back Walkovers", "Front Handsprings", "Back Handsprings", "Aerials"].map((skill) => (
-                  <div key={skill} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                    <span className="font-medium text-gray-800">{skill}</span>
+                  <div key={skill} className="flex items-center justify-between p-3 rounded-lg glass-surface">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{skill}</span>
                     <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
                   </div>
                 ))}
@@ -296,18 +303,18 @@ export default function Home() {
             </Card>
 
             {/* Advanced Skills */}
-            <Card className="p-8 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 glass-surface glass-card glass-gradient">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Star className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Advanced Skills</h3>
-                <p className="text-gray-600">Master complex aerial and tumbling skills</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Advanced Skills</h3>
+                <p className="text-slate-700 dark:text-slate-300">Master complex aerial and tumbling skills</p>
               </div>
               <div className="space-y-3">
                 {["Front Tuck", "Back Tuck", "Front Layout", "Back Layout", "Fulls", "Double Fulls", "Double Backs"].map((skill) => (
-                  <div key={skill} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                    <span className="font-medium text-gray-800">{skill}</span>
+                  <div key={skill} className="flex items-center justify-between p-3 rounded-lg glass-surface">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{skill}</span>
                     <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                   </div>
                 ))}
@@ -316,7 +323,7 @@ export default function Home() {
           </div>
 
           {/* Skill Progression Banner */}
-          <div className="mt-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-center text-white">
+          <div className="mt-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-center text-white shadow-xl">
             <h3 className="text-2xl font-bold mb-4">Progressive Skill Development</h3>
             <p className="text-lg mb-6 max-w-2xl mx-auto">
               Every athlete follows a structured path—gaining new skills, leveling up with confidence, and mastering what's next.
@@ -342,16 +349,16 @@ export default function Home() {
       </section>
 
       {/* Lesson Types Section */}
-      <section className="py-12 bg-gray-50">
+    <section className="py-12 bg-gray-50 dark:bg-slate-900/30">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">Choose Your Lesson Path</h2>
+      <h2 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-6 text-center">Choose Your Lesson Path</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* 30-Min Private */}
-            <div className="bg-white shadow-md rounded-lg p-6 border-t-4 border-blue-400">
+            <div className="shadow-md rounded-lg p-6 border-t-4 border-blue-400 glass-surface glass-card glass-gradient">
               <h3 className="text-xl font-semibold text-blue-600">Quick Journey – 30-Min Private</h3>
-              <p className="text-gray-700 mt-2">One-on-one attention to develop 1–2 skills with focused precision. Perfect for sharpening basics or overcoming obstacles.</p>
-              <ul className="text-sm mt-4 list-disc list-inside text-gray-600">
+              <p className="text-slate-700 dark:text-slate-300 mt-2">One-on-one attention to develop 1–2 skills with focused precision. Perfect for sharpening basics or overcoming obstacles.</p>
+              <ul className="text-sm mt-4 list-disc list-inside text-slate-600 dark:text-slate-300/90">
                 <li>1-on-1 with Coach Will</li>
                 <li>Efficient, focused growth</li>
                 <li>Ideal for beginners or refreshers</li>
@@ -365,10 +372,10 @@ export default function Home() {
             </div>
 
             {/* 30-Min Semi-Private */}
-            <div className="bg-white shadow-md rounded-lg p-6 border-t-4 border-purple-400">
+            <div className="shadow-md rounded-lg p-6 border-t-4 border-purple-400 glass-surface glass-card glass-gradient">
               <h3 className="text-xl font-semibold text-purple-600">Dual Quest – 30-Min Semi-Private</h3>
-              <p className="text-gray-700 mt-2">Train alongside a friend or sibling. Each athlete gets their own progression path while sharing the learning space.</p>
-              <ul className="text-sm mt-4 list-disc list-inside text-gray-600">
+              <p className="text-slate-700 dark:text-slate-300 mt-2">Train alongside a friend or sibling. Each athlete gets their own progression path while sharing the learning space.</p>
+              <ul className="text-sm mt-4 list-disc list-inside text-slate-600 dark:text-slate-300/90">
                 <li>Great for partners</li>
                 <li>Motivating and interactive</li>
                 <li>Targets 1–2 goals per athlete</li>
@@ -382,10 +389,10 @@ export default function Home() {
             </div>
 
             {/* 1-Hour Private */}
-            <div className="bg-white shadow-md rounded-lg p-6 border-t-4 border-green-400">
+            <div className="shadow-md rounded-lg p-6 border-t-4 border-green-400 glass-surface glass-card glass-gradient">
               <h3 className="text-xl font-semibold text-green-600">Deep Dive – 1-Hour Private</h3>
-              <p className="text-gray-700 mt-2">Ideal for athletes leveling up with complex skills. Ample time for drills, review, corrections, and breakthroughs.</p>
-              <ul className="text-sm mt-4 list-disc list-inside text-gray-600">
+              <p className="text-slate-700 dark:text-slate-300 mt-2">Ideal for athletes leveling up with complex skills. Ample time for drills, review, corrections, and breakthroughs.</p>
+              <ul className="text-sm mt-4 list-disc list-inside text-slate-600 dark:text-slate-300/90">
                 <li>Personalized skill plans</li>
                 <li>Time for detailed progress</li>
                 <li>Perfect for competitive athletes</li>
@@ -399,10 +406,10 @@ export default function Home() {
             </div>
 
             {/* 1-Hour Semi-Private */}
-            <div className="bg-white shadow-md rounded-lg p-6 border-t-4 border-orange-400">
+            <div className="shadow-md rounded-lg p-6 border-t-4 border-orange-400 glass-surface glass-card glass-gradient">
               <h3 className="text-xl font-semibold text-orange-600">Partner Progression – 1-Hour Semi-Private</h3>
-              <p className="text-gray-700 mt-2">Two athletes. One mission. Develop multiple skills with collaborative pacing and coaching support throughout.</p>
-              <ul className="text-sm mt-4 list-disc list-inside text-gray-600">
+              <p className="text-slate-700 dark:text-slate-300 mt-2">Two athletes. One mission. Develop multiple skills with collaborative pacing and coaching support throughout.</p>
+              <ul className="text-sm mt-4 list-disc list-inside text-slate-600 dark:text-slate-300/90">
                 <li>Full hour of guided learning</li>
                 <li>Split focus between both athletes</li>
                 <li>Ideal for competitive or returning athletes</li>
@@ -420,73 +427,73 @@ export default function Home() {
       </section>
 
       {/* Side Quests Section */}
-      <section className="py-16 lg:py-20 bg-gradient-to-br from-purple-100 to-blue-100">
+    <section className="py-16 lg:py-20 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-slate-800/40 dark:to-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+      <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               Side <span className="text-purple-600">Quests!</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+      <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
               Additional training opportunities to enhance your flippin' journey
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-pink-200">
+      <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-pink-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-4">
                 <div className="w-14 h-14 bg-pink-500 rounded-full flex items-center justify-center mb-4">
                   <Activity className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Flexibility Training</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Flexibility Training</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Improve your range of motion and prevent injuries with targeted stretches and mobility work.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-red-200">
+      <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-red-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-4">
                 <div className="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center mb-4">
                   <Dumbbell className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Strength Training</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Strength Training</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Build the power and muscle control needed to master skills — from core holds to handstand presses and explosive tumbling.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-yellow-200">
+      <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-yellow-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-4">
                 <div className="w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center mb-4">
                   <Zap className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Agility Training</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Agility Training</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Sharpen quickness, balance, and reaction time with fun drills that boost coordination and body awareness on every event.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-green-200">
+      <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-green-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-4">
                 <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mb-4">
                   <Brain className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Meditation and Breathing Techniques</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Meditation and Breathing Techniques</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Learn calming routines to manage nerves, improve focus, and reset your mindset before big skills or performances.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-indigo-200">
+      <Card className="p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-indigo-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-4">
                 <div className="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center mb-4">
                   <Target className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Mental Blocks</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Mental Blocks</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Work through fear-based challenges with step-by-step strategies, confidence-building, and safe skill progressions.
                 </p>
               </CardContent>
@@ -496,85 +503,85 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 lg:py-24 bg-gray-50">
+  <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               Why Choose <span className="text-[#D8BD2A]">COACH</span> <span className="text-[#0F0276]">WILL</span> <span className="text-[#E10B0B]">TUMBLES</span>?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+    <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
               I build more than athletes. I help build courage, consistency, and character—one skill at a time.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-lg transition-shadow duration-300 border-blue-200">
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-blue-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Shield className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Safety Gear</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Safety Gear</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Every session starts with safety—spotting, equipment, and coaching that put your athlete first.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-lg transition-shadow duration-300 border-purple-200">
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-purple-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Dumbbell className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Professional Equipment</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Professional Equipment</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Age-appropriate, pro-level equipment for every size, skill level, and apparatus.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 bg-gradient-to-br from-teal-50 to-teal-100 hover:shadow-lg transition-shadow duration-300 border-teal-200">
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-teal-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <TrendingUp className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Progress Tracking</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Progress Tracking</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Parents get regular insights and updates as their athlete progresses through each level.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-lg transition-shadow duration-300 border-orange-200">
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-orange-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Clock className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Flexible Scheduling</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Flexible Scheduling</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Fit your schedule, not the other way around—flexible 30 or 60-minute options available.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 bg-gradient-to-br from-pink-50 to-pink-100 hover:shadow-lg transition-shadow duration-300 border-pink-200">
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-pink-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Star className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Personalized Instruction</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Personalized Instruction</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Whether it's tumbling, strength, or flexibility—we tailor each session to fuel total athlete growth.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-lg transition-shadow duration-300 border-green-200">
+      <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 border-green-200 glass-surface glass-card glass-gradient">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                   <Trophy className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Fun Environment</h3>
-                <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Fun Environment</h3>
+        <p className="text-slate-700 dark:text-slate-300">
                   Building mental strength and resilience through positive coaching, encouragement, and small wins.
                 </p>
               </CardContent>
@@ -583,7 +590,7 @@ export default function Home() {
 
           {/* Equipment Gallery */}
           <div className="mt-16">
-            <h3 className="text-2xl font-bold text-gray-800 text-center mb-8">Our Training Equipment</h3>
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-[#E10B0B] text-center mb-8">Our Training Equipment</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {(siteContent?.equipmentImages || [
                 "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
@@ -593,7 +600,7 @@ export default function Home() {
                 "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
                 "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400"
               ]).map((src: string, index: number) => (
-                <div key={index} className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div key={index} className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 glass-surface glass-card">
                   <img 
                     src={src}
                     alt={`Gymnastics equipment ${index + 1}`}
@@ -607,9 +614,9 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600">
+    <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600">
         <div className="container mx-auto px-4 py-3 md:px-6 md:py-4 text-center">
-          <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
               Your Athlete's Adventure Starts Here!
             </h2>
