@@ -1850,12 +1850,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: margin,
         time: margin + 80,
         athlete: margin + 150,
-        member: margin + 360,
-        dur: margin + 420,
         // Right-anchored numeric columns (use these as right boundaries)
         rateRight: width - margin - 80,
         owedRight: width - margin,
       } as const;
+
+      // Evenly distribute Member and Duration between Athlete and Rate columns
+      const leftBlockStart = col.athlete;
+      const leftBlockEnd = col.rateRight - 8; // keep a small gutter before Rate
+      const leftBlockSpan = Math.max(60, leftBlockEnd - leftBlockStart);
+      const memberX = Math.round(leftBlockStart + leftBlockSpan / 3);
+      const durX = Math.round(leftBlockStart + (2 * leftBlockSpan) / 3);
 
       // Helper to truncate text to fit within a max width with ellipsis
       const fitText = (text: string, maxWidth: number, size = 11) => {
@@ -1880,8 +1885,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   drawText('Date', col.date, y, 11, bold);
   drawText('Time', col.time, y, 11, bold);
   drawText('Athlete', col.athlete, y, 11, bold);
-  drawText('Member', col.member, y, 11, bold);
-  drawText('Dur', col.dur, y, 11, bold);
+  drawText('Member', memberX, y, 11, bold);
+  drawText('Dur', durX, y, 11, bold);
   // Right-align headers for numeric columns to their right boundaries
   const rateHdr = 'Rate';
   const owedHdr = 'Owed';
@@ -1904,8 +1909,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           drawText('Date', col.date, y, 11, bold);
           drawText('Time', col.time, y, 11, bold);
           drawText('Athlete', col.athlete, y, 11, bold);
-          drawText('Member', col.member, y, 11, bold);
-          drawText('Dur', col.dur, y, 11, bold);
+          drawText('Member', memberX, y, 11, bold);
+          drawText('Dur', durX, y, 11, bold);
           drawText(rateHdr, col.rateRight - bold.widthOfTextAtSize(rateHdr, 11), y, 11, bold);
           drawText(owedHdr, col.owedRight - bold.widthOfTextAtSize(owedHdr, 11), y, 11, bold);
           y -= 12;
@@ -1942,13 +1947,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           page.drawRectangle({ x: margin - 2, y: y - 12, width: width - margin * 2 + 4, height: 16, color: zebra, opacity: 0.6 });
         }
   // Truncate athlete to fit between athlete and member columns
-  const athleteMaxWidth = (col.member - col.athlete) - 8;
+  const athleteMaxWidth = (memberX - col.athlete) - 8;
   const athleteFitted = fitText(String(athleteName), Math.max(athleteMaxWidth, 40));
   drawText(String(datePart), col.date, y);
   drawText(timePart, col.time, y);
   drawText(athleteFitted, col.athlete, y);
-        drawText(member, col.member, y);
-  drawText(String(dur), col.dur, y);
+  drawText(member, memberX, y);
+  drawText(String(dur), durX, y);
   // Right-align currency values to their boundaries
   const rateStr = rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-';
   const owedStr = owedUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
