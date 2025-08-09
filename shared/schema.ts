@@ -133,7 +133,7 @@ export const athletes = pgTable('athletes', {
   gender: text('gender'), // References genders table, but can be any text
   // Gym payout membership flag
   isGymMember: boolean('is_gym_member').notNull().default(false),
-  latestWaiverId: integer('latest_waiver_id').references((): any => waivers.id),
+  latestWaiverId: integer('latest_waiver_id').references((): any => waivers.id, { onDelete: 'set null' }),
   waiverStatus: varchar('waiver_status').default('pending'), // varchar in actual DB
   waiverSigned: boolean('waiver_signed').default(false).notNull(), // Simple boolean for waiver status
 });
@@ -229,7 +229,7 @@ export const paymentLogs = pgTable("payment_logs", {
 
 export const waivers = pgTable("waivers", {
   id: serial("id").primaryKey(),
-  bookingId: integer("booking_id"), // nullable in actual DB
+  bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }), // nullable, FK SET NULL on delete
   athleteId: integer("athlete_id").references(() => athletes.id).notNull(),
   parentId: integer("parent_id").references(() => parents.id).notNull(),
   relationshipToAthlete: text("relationship_to_athlete").default("Parent/Guardian"), // nullable in actual DB

@@ -5610,37 +5610,47 @@ setTimeout(async () => {
   app.post("/api/bookings/:id/send-waiver-email", isAdminAuthenticated, async (req, res) => {
     try {
       const bookingId = parseInt(req.params.id);
-      const booking = await storage.getBooking(bookingId);
-      
+      const booking = await storage.getBookingWithRelations(bookingId);
+
       if (!booking) {
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      // Get athletes associated with this booking and check waiver status
-      const athletes = await storage.getAllAthletesWithWaiverStatus();
-      const bookingAthletes = athletes.filter(athlete => {
-        const athleteName = athlete.firstName && athlete.lastName 
-          ? `${athlete.firstName} ${athlete.lastName}`
-          : athlete.name;
-        return booking.athlete1Name === athleteName || 
-               booking.athlete2Name === athleteName ||
-               booking.athlete1Name === athlete.name;
-      });
+      // Resolve parent email and name
+      const parentEmail = booking.parent?.email || booking.parentEmail || '';
+      const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
 
-      // Check if any athletes need waivers
-      const needsWaivers = bookingAthletes.some(athlete => 
-        athlete.waiverStatus !== 'signed'
-      );
+      if (!parentEmail) {
+        return res.status(400).json({ error: "Parent email is missing for this booking" });
+      }
+
+      // Determine if any athletes tied to this booking still need a waiver
+      const athleteIds: number[] = (booking.athletes || [])
+        .map((a: any) => (typeof a?.athleteId === 'number' ? a.athleteId : (typeof a?.id === 'number' ? a.id : null)))
+        .filter((id): id is number => typeof id === 'number');
+
+      let needsWaivers = true; // default to true if no athletes are linked
+      if (athleteIds.length > 0) {
+        const statuses = await Promise.all(
+          athleteIds.map(async (id) => {
+            const a = await storage.getAthleteWithWaiverStatus(id);
+            // Prefer computedWaiverStatus if available, fall back to waiverStatus
+            const status = (a?.computedWaiverStatus || a?.waiverStatus || 'pending') as string;
+            return status;
+          })
+        );
+        needsWaivers = statuses.some(s => s !== 'signed');
+      }
 
       if (!needsWaivers) {
         return res.status(400).json({ error: "All athletes have signed waivers for this booking" });
       }
 
-      const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
-      const waiverLink = `${process.env.REPLIT_URL || 'https://your-domain.replit.app'}/waiver/${bookingId}`;
-      
+      // Build a valid link that exists in the frontend: send parent to login, then redirect to dashboard for waiver
+      const waiverLink = `${getBaseUrl()}/parent/login?redirect=dashboard&booking_id=${bookingId}`;
+
       // Send waiver reminder email
-      await sendWaiverReminder(booking.parentEmail || '', parentName, waiverLink);
+      await sendWaiverReminder(parentEmail, parentName, waiverLink);
 
       res.json({ message: "Waiver email sent successfully" });
     } catch (error) {
@@ -7717,24 +7727,39 @@ setTimeout(async () => {
   app.get("/api/waivers/:id/pdf", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid waiver ID" });
+      }
+
       const waiver = await storage.getWaiver(id);
-      
       if (!waiver) {
+        console.warn('[PDF][DOWNLOAD] Waiver not found for id:', id);
         return res.status(404).json({ error: "Waiver not found" });
       }
-      
+
       if (!waiver.pdfPath) {
+        console.warn('[PDF][DOWNLOAD] No pdfPath on waiver', { id, waiverPdfPath: waiver.pdfPath });
         return res.status(404).json({ error: "PDF not available" });
       }
-      
+
       const fs = await import('fs/promises');
+      const path = waiver.pdfPath;
       try {
-        const pdfBuffer = await fs.readFile(waiver.pdfPath);
+        // Check existence explicitly to improve diagnostics
+        await fs.access(path);
+      } catch (accessErr) {
+        console.warn('[PDF][DOWNLOAD] File does not exist at path:', path, accessErr);
+        return res.status(404).json({ error: "PDF file not found" });
+      }
+
+      try {
+        const pdfBuffer = await fs.readFile(path);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${waiver.athleteName}_waiver.pdf"`);
         res.send(pdfBuffer);
       } catch (fileError) {
-        return res.status(404).json({ error: "PDF file not found" });
+        console.error('[PDF][DOWNLOAD] Failed to read file at path:', path, fileError);
+        return res.status(500).json({ error: "Failed to read PDF file" });
       }
       
     } catch (error: any) {
@@ -7771,16 +7796,26 @@ setTimeout(async () => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
+        console.warn('[PDF][API] Invalid waiver ID param:', req.params.id);
         return res.status(400).json({ error: "Invalid waiver ID" });
       }
 
       const waiver = await storage.getWaiver(id);
       if (!waiver) {
+        console.warn('[PDF][API] Waiver not found for id:', id);
         return res.status(404).json({ error: "Waiver not found" });
       }
 
+      // Quick validations & debug logs
+      if (!waiver.athleteName) console.warn('[PDF][API] Missing athleteName for waiver', id);
+      if (!waiver.signerName) console.warn('[PDF][API] Missing signerName for waiver', id);
+      if (!waiver.signedAt) console.warn('[PDF][API] Missing signedAt for waiver', id);
+      if (waiver.signature && !String(waiver.signature).startsWith('data:image/')) {
+        console.warn('[PDF][API] Signature present but not a data URL; meta prefix:', String(waiver.signature).slice(0, 30));
+      }
+
       // Save PDF to filesystem and update waiver record
-      const pdfPath = await saveWaiverPDF({
+      const payload = {
         athleteName: waiver.athleteName || 'Unknown Athlete',
         signerName: waiver.signerName || 'Unknown Signer',
         relationshipToAthlete: waiver.relationshipToAthlete || 'Parent/Guardian',
@@ -7792,9 +7827,36 @@ setTimeout(async () => {
         authorizesEmergencyCare: waiver.authorizesEmergencyCare ?? false,
         allowsPhotoVideo: waiver.allowsPhotoVideo ?? false,
         confirmsAuthority: waiver.confirmsAuthority ?? false,
-      }, id);
+      };
+
+      console.log('[PDF][API] Generating PDF with payload summary:', {
+        id,
+        athleteName: payload.athleteName,
+        signerName: payload.signerName,
+        relationshipToAthlete: payload.relationshipToAthlete,
+        signedAt: payload.signedAt instanceof Date ? payload.signedAt.toISOString() : String(payload.signedAt),
+        signaturePrefix: typeof payload.signature === 'string' ? payload.signature.slice(0, 30) : null,
+        signatureLength: typeof payload.signature === 'string' ? payload.signature.length : 0,
+      });
+
+      let pdfPath: string;
+      try {
+        pdfPath = await saveWaiverPDF(payload as any, id);
+      } catch (pdfErr: any) {
+        console.error('[PDF][API] saveWaiverPDF failed:', {
+          id,
+          message: pdfErr?.message,
+          name: pdfErr?.name,
+        });
+        return res.status(500).json({ error: "Failed to generate waiver PDF", details: pdfErr?.message });
+      }
       
-      await storage.updateWaiverPdfPath(id, pdfPath);
+      try {
+        await storage.updateWaiverPdfPath(id, pdfPath);
+      } catch (updateErr: any) {
+        console.error('[PDF][API] Failed to update waiver pdf_path:', { id, pdfPath, error: updateErr });
+        return res.status(500).json({ error: "PDF generated but failed to persist path" });
+      }
 
       res.json({ success: true, message: "PDF generated successfully", pdfPath });
     } catch (error: any) {

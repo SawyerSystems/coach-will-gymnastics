@@ -82,6 +82,35 @@ By signing below, you certify that:
 `;
 
 export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer> {
+  // Input normalization and diagnostics
+  const coerceDate = (value: any): Date => {
+    if (value instanceof Date) return value;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) {
+      console.warn('[PDF] Invalid signedAt; defaulting to now. Got:', value);
+      return new Date();
+    }
+    return d;
+  };
+
+  console.log('[PDF] generateWaiverPDF payload snapshot:', {
+    athleteName: waiverData?.athleteName,
+    signerName: waiverData?.signerName,
+    relationshipToAthlete: waiverData?.relationshipToAthlete,
+    emergencyContactNumber: waiverData?.emergencyContactNumber,
+    signedAtType: waiverData?.signedAt instanceof Date ? 'Date' : typeof (waiverData as any)?.signedAt,
+    signedAtRaw: (waiverData as any)?.signedAt,
+    signaturePrefix: typeof waiverData?.signature === 'string' ? waiverData.signature.slice(0, 30) : null,
+    signatureLength: typeof waiverData?.signature === 'string' ? waiverData.signature.length : 0,
+    flags: {
+      understandsRisks: waiverData?.understandsRisks,
+      agreesToPolicies: waiverData?.agreesToPolicies,
+      authorizesEmergencyCare: waiverData?.authorizesEmergencyCare,
+      allowsPhotoVideo: waiverData?.allowsPhotoVideo,
+      confirmsAuthority: waiverData?.confirmsAuthority,
+    }
+  });
+
   const pdfDoc = await PDFDocument.create();
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -157,8 +186,49 @@ export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer>
   yPosition = addText('Waiver & Adventure Agreement', margin, yPosition - 5, helveticaBold, 16, rgb(0.8, 0.2, 0.2));
   yPosition -= 20;
   
+  // Brand logo (top-right)
+  try {
+    const logoPathCandidates = [
+      path.join(process.cwd(), 'attached_assets', 'CWT_Circle_LogoSPIN.png'),
+      path.join(process.cwd(), 'attached_assets', 'CoachWillTumblesText.png'),
+    ];
+    let logoBytes: Buffer | null = null;
+    for (const p of logoPathCandidates) {
+      try {
+        logoBytes = await fs.readFile(p);
+        break;
+      } catch { /* try next */ }
+    }
+    if (logoBytes) {
+      // Try PNG first; if it fails, try JPG
+      let logoImage: any = null;
+      try {
+        logoImage = await pdfDoc.embedPng(logoBytes);
+      } catch {
+        try {
+          logoImage = await pdfDoc.embedJpg(logoBytes);
+        } catch { /* ignore */ }
+      }
+      if (logoImage) {
+        const targetWidth = 80; // px
+        const scale = targetWidth / logoImage.width;
+        const drawWidth = targetWidth;
+        const drawHeight = logoImage.height * scale;
+        const x = width - margin - drawWidth;
+        const y = height - margin - drawHeight + 10;
+        page.drawImage(logoImage, { x, y, width: drawWidth, height: drawHeight });
+      } else {
+        console.warn('[PDF] Logo image could not be embedded (unsupported format)');
+      }
+    } else {
+      console.warn('[PDF] Logo file not found in attached_assets');
+    }
+  } catch (logoErr) {
+    console.warn('[PDF] Failed to embed logo:', logoErr);
+  }
+  
   // Date - format to local date string for better readability
-  const signedDate = waiverData.signedAt;
+  const signedDate = coerceDate(waiverData.signedAt);
   const dateStr = signedDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -230,40 +300,52 @@ export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer>
   yPosition -= 20;
   
   // Signature fields
-  yPosition = addText(`Athlete Name: ${waiverData.athleteName}`, margin, yPosition, helveticaFont, 12);
+  yPosition = addText(`Athlete Name: ${waiverData.athleteName || 'Unknown Athlete'}`, margin, yPosition, helveticaFont, 12);
   yPosition -= 20;
   
-  yPosition = addText(`Name of Signer: ${waiverData.signerName}`, margin, yPosition, helveticaFont, 12);
+  yPosition = addText(`Name of Signer: ${waiverData.signerName || 'Unknown Signer'}`, margin, yPosition, helveticaFont, 12);
   yPosition -= 20;
   
-  yPosition = addText(`Relationship to Athlete: ${waiverData.relationshipToAthlete}`, margin, yPosition, helveticaFont, 12);
+  yPosition = addText(`Relationship to Athlete: ${waiverData.relationshipToAthlete || 'Parent/Guardian'}`, margin, yPosition, helveticaFont, 12);
   yPosition -= 20;
   
-  yPosition = addText(`Emergency Contact #: ${waiverData.emergencyContactNumber}`, margin, yPosition, helveticaFont, 12);
+  yPosition = addText(`Emergency Contact #: ${waiverData.emergencyContactNumber || ''}`, margin, yPosition, helveticaFont, 12);
   yPosition -= 30;
   
   // Add signature image if provided
   if (waiverData.signature && waiverData.signature.startsWith('data:image/')) {
     try {
-      const signatureBase64 = waiverData.signature.split(',')[1];
-      const signatureImage = await pdfDoc.embedPng(Buffer.from(signatureBase64, 'base64'));
-      
-      const signatureDims = signatureImage.scale(0.5);
-      
-      page.drawImage(signatureImage, {
-        x: margin,
-        y: yPosition - signatureDims.height,
-        width: signatureDims.width,
-        height: signatureDims.height,
-      });
-      
-      yPosition -= signatureDims.height + 10;
+      const [meta, base64] = waiverData.signature.split(',');
+      const isPng = /data:image\/png/i.test(meta);
+      const isJpeg = /data:image\/(jpeg|jpg)/i.test(meta);
+      const buf = Buffer.from(base64, 'base64');
+      const signatureImage = isPng ? await pdfDoc.embedPng(buf) : isJpeg ? await pdfDoc.embedJpg(buf) : null;
+
+      if (!signatureImage) {
+        console.warn('[PDF] Unsupported signature MIME type:', meta);
+        yPosition = addText('Signature: [Electronic Signature Applied]', margin, yPosition, helveticaFont, 12);
+        yPosition -= 20;
+      } else {
+        const signatureDims = signatureImage.scale(0.5);
+        
+        page.drawImage(signatureImage, {
+          x: margin,
+          y: yPosition - signatureDims.height,
+          width: signatureDims.width,
+          height: signatureDims.height,
+        });
+        
+        yPosition -= signatureDims.height + 10;
+      }
     } catch (error) {
       console.error('Error embedding signature:', error);
       yPosition = addText('Signature: [Electronic Signature Applied]', margin, yPosition, helveticaFont, 12);
       yPosition -= 20;
     }
   } else {
+    if (waiverData.signature && !waiverData.signature.startsWith('data:image/')) {
+      console.warn('[PDF] Signature provided but not a data URL; expected data:image/...');
+    }
     yPosition = addText('Signature: [Electronic Signature Applied]', margin, yPosition, helveticaFont, 12);
     yPosition -= 20;
   }
@@ -284,21 +366,37 @@ export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer>
 }
 
 export async function saveWaiverPDF(waiverData: WaiverData, waiverRecordId: number): Promise<string> {
-  const pdfBuffer = await generateWaiverPDF(waiverData);
+  let pdfBuffer: Buffer;
+  try {
+    pdfBuffer = await generateWaiverPDF(waiverData);
+  } catch (err) {
+    console.error('[PDF] Failed to generate PDF buffer:', err);
+    throw err;
+  }
   
   // Ensure waivers directory exists
   const waiverDir = path.join(process.cwd(), 'data', 'waivers');
   try {
     await fs.access(waiverDir);
   } catch {
-    await fs.mkdir(waiverDir, { recursive: true });
+    try {
+      await fs.mkdir(waiverDir, { recursive: true });
+    } catch (mkdirErr) {
+      console.error('[PDF] Failed to create waivers directory', { waiverDir, error: mkdirErr });
+      throw mkdirErr;
+    }
   }
   
   // Save PDF file
   const filename = `waiver_${waiverRecordId}_${Date.now()}.pdf`;
   const filepath = path.join(waiverDir, filename);
   
-  await fs.writeFile(filepath, pdfBuffer);
+  try {
+    await fs.writeFile(filepath, pdfBuffer);
+  } catch (writeErr) {
+    console.error('[PDF] Failed to write PDF file', { filepath, error: writeErr });
+    throw writeErr;
+  }
   
   return filepath;
 }

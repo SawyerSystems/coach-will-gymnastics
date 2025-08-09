@@ -1016,7 +1016,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                             variant="outline"
                             size="sm"
                             onClick={() => sendWaiverEmailMutation.mutate(booking.id)}
-                            disabled={sendWaiverEmailMutation.isPending}
+                            disabled={!booking.parentEmail || sendWaiverEmailMutation.isPending}
+                            title={!booking.parentEmail ? 'No parent email on file for this booking' : undefined}
                           >
                             Send Waiver
                           </Button>

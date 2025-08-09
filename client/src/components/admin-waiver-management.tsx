@@ -60,6 +60,8 @@ export function AdminWaiverManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWaiver, setSelectedWaiver] = useState<Waiver | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'signed' | 'missing' | 'archived'>('all');
+  const [sendingWaiverId, setSendingWaiverId] = useState<number | string | null>(null);
+  const [generatingWaiverId, setGeneratingWaiverId] = useState<number | string | null>(null);
 
   // Fetch all waivers with dynamic categorization
   const { data: allWaivers = [], isLoading: waiversLoading } = useQuery<Waiver[]>({
@@ -128,6 +130,7 @@ export function AdminWaiverManagement() {
   // Resend email mutation
   const resendEmailMutation = useMutation({
     mutationFn: async (waiverId: number | string) => {
+      setSendingWaiverId(waiverId);
       const response = await apiRequest("POST", `/api/waivers/${waiverId}/resend-email`);
       return response.json();
     },
@@ -145,11 +148,15 @@ export function AdminWaiverManagement() {
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      setSendingWaiverId(null);
+    }
   });
 
   // Generate PDF mutation
   const generatePDFMutation = useMutation({
     mutationFn: async (waiverId: number | string) => {
+      setGeneratingWaiverId(waiverId);
       const response = await apiRequest("POST", `/api/waivers/${waiverId}/generate-pdf`);
       return response.json();
     },
@@ -167,6 +174,9 @@ export function AdminWaiverManagement() {
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      setGeneratingWaiverId(null);
+    }
   });
 
   // Download PDF function
@@ -364,10 +374,10 @@ export function AdminWaiverManagement() {
                   <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                     <TableRow className="border-b border-slate-200">
                       <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider hidden sm:table-cell">Signer</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider hidden md:table-cell">Relationship</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Signer</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Relationship</TableHead>
                       <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Signed Date</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider hidden lg:table-cell">Email Status</TableHead>
+                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Email Status</TableHead>
                       <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -472,7 +482,7 @@ export function AdminWaiverManagement() {
                             </DialogContent>
                           </Dialog>
                           
-                          {waiver.pdfPath && typeof waiver.id === 'number' ? (
+              {waiver.pdfPath && typeof waiver.id === 'number' ? (
                             <Button
                               variant="outline"
                               size="sm"
@@ -486,12 +496,12 @@ export function AdminWaiverManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => generatePDFMutation.mutate(waiver.id)}
-                              disabled={generatePDFMutation.isPending}
+                onClick={() => generatePDFMutation.mutate(waiver.id)}
+                disabled={generatingWaiverId === waiver.id}
                               className="border-purple-200 text-purple-700 hover:bg-purple-50 font-medium disabled:opacity-50"
                             >
                               <FileText className="h-4 w-4 mr-1" />
-                              {generatePDFMutation.isPending ? "Generating..." : "Generate PDF"}
+                {generatingWaiverId === waiver.id ? "Generating..." : "Generate PDF"}
                             </Button>
                           ) : (
                             <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-600">
@@ -499,16 +509,17 @@ export function AdminWaiverManagement() {
                             </Badge>
                           )}
                           
-                          {typeof waiver.id === 'number' ? (
+              {typeof waiver.id === 'number' ? (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => resendEmailMutation.mutate(waiver.id)}
-                              disabled={resendEmailMutation.isPending}
-                              className="border-blue-200 text-blue-700 hover:bg-blue-50 font-medium disabled:opacity-50"
+                onClick={() => resendEmailMutation.mutate(waiver.id)}
+                disabled={sendingWaiverId === waiver.id || waiver.status === 'signed' || !!waiver.signedAt}
+                title={waiver.status === 'signed' || !!waiver.signedAt ? 'Waiver is already signed' : undefined}
+                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-medium disabled:opacity-50"
                             >
                               <Mail className="h-4 w-4 mr-1" />
-                              {resendEmailMutation.isPending ? "Sending..." : "Email"}
+                {sendingWaiverId === waiver.id ? "Sending..." : "Email"}
                             </Button>
                           ) : (
                             <Button

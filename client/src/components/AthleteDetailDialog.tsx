@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Plus, Star, User } from "lucide-react";
 import React, { useState } from "react";
 
@@ -117,6 +117,37 @@ export function AthleteDetailDialog({
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Determine a target booking for sending a waiver email
+  const selectTargetBookingId = (): number | null => {
+    const now = new Date();
+    const enriched = athleteBookings.map((b) => ({
+      b,
+      date: b.preferredDate ? new Date(`${b.preferredDate}T${(b.preferredTime || '00:00')}:00`) : null,
+    }));
+    const upcoming = enriched.filter(e => e.date && e.date >= now).sort((a, b) => (a.date!.getTime() - b.date!.getTime()));
+    if (upcoming.length > 0) return upcoming[0].b.id;
+    const past = enriched.filter(e => e.date).sort((a, b) => (b.date!.getTime() - a.date!.getTime()));
+    if (past.length > 0) return past[0].b.id;
+    return athleteBookings[0]?.id ?? null;
+  };
+
+  const sendWaiverEmail = useMutation({
+    mutationFn: async (bookingId: number) => {
+      const resp = await apiRequest('POST', `/api/bookings/${bookingId}/send-waiver-email`);
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to send waiver email');
+      }
+      return resp.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Waiver Email Sent', description: 'Parent has been emailed the waiver link.' });
+    },
+    onError: (e: any) => {
+      toast({ title: 'Error', description: e?.message || 'Failed to send waiver email.', variant: 'destructive' });
+    },
+  });
 
   const handlePhotoClick = (photoUrl: string) => {
     setEnlargedPhoto(photoUrl);
@@ -354,11 +385,12 @@ export function AthleteDetailDialog({
             athleteId={athleteData.id}
             athleteName={athleteData.name || 'Unknown Athlete'}
             onResendWaiver={() => {
-              // TODO: Implement waiver resend functionality
-              toast({
-                title: "Feature Coming Soon",
-                description: "Waiver resend functionality will be implemented soon.",
-              });
+              const bookingId = selectTargetBookingId();
+              if (!bookingId) {
+                toast({ title: 'No Booking Found', description: 'No related booking to send a waiver for.', variant: 'destructive' });
+                return;
+              }
+              sendWaiverEmail.mutate(bookingId);
             }}
           />
 

@@ -3915,31 +3915,52 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getWaiver(id: number): Promise<Waiver | undefined> {
-    const { data, error } = await supabase
-      .from('waivers')
-      .select(`
-        *,
-        athletes!fk_waivers_athlete (
-          first_name,
-          last_name
-        ),
-        parents!fk_waivers_parent (
-          first_name,
-          last_name
-        )
-      `)
-      .eq('id', id)
-      .single();
+    // First try: relationship-based select (may fail if FK alias names differ)
+    let data: any | null = null;
+    let error: any | null = null;
+    try {
+      const resp = await supabaseAdmin
+        .from('waivers')
+        .select(`
+          *,
+          athletes!fk_waivers_athlete (
+            first_name,
+            last_name
+          ),
+          parents!fk_waivers_parent (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('id', id)
+        .single();
+      data = resp.data;
+      error = resp.error;
+    } catch (e) {
+      error = e;
+    }
 
     if (error) {
-      console.error('Error fetching waiver:', error);
-      return undefined;
+      console.warn('getWaiver: relationship select failed (possible RLS or alias issue). Retrying with plain select. Error:', error);
+      // Fallback: plain select without relationships
+      const fallback = await supabaseAdmin
+        .from('waivers')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (fallback.error) {
+        console.error('getWaiver: plain select also failed:', fallback.error);
+        return undefined;
+      }
+      data = fallback.data;
+      if (!data) return undefined;
+      return this.mapWaiverFromDb(data);
     }
 
     if (!data) return undefined;
 
-    const athlete = data.athletes;
-    const parent = data.parents;
+    const athlete = (data as any).athletes;
+    const parent = (data as any).parents;
 
     return this.mapWaiverFromDb({
       ...data,
@@ -4015,7 +4036,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateWaiver(id: number, waiver: Partial<InsertWaiver>): Promise<Waiver | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('waivers')
       .update(waiver)
       .eq('id', id)
@@ -4024,14 +4045,15 @@ export class SupabaseStorage implements IStorage {
 
     if (error) {
       console.error('Error updating waiver:', error);
-      return undefined;
+      throw error;
     }
 
-    return data;
+    // Return mapped waiver for consistency
+    return this.getWaiver(id);
   }
 
   async updateWaiverPdfPath(id: number, pdfPath: string): Promise<Waiver | undefined> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('waivers')
       .update({ pdf_path: pdfPath })
       .eq('id', id)
@@ -4040,10 +4062,11 @@ export class SupabaseStorage implements IStorage {
 
     if (error) {
       console.error('Error updating waiver PDF path:', error);
-      return undefined;
+      throw error;
     }
 
-    return data;
+    // Return mapped waiver with updated path
+    return this.getWaiver(id);
   }
 
   async updateWaiverEmailSent(id: number): Promise<Waiver | undefined> {
