@@ -986,7 +986,7 @@ export const siteInquiries = pgTable("site_inquiries", {
   phone: text("phone"),
   athleteInfo: text("athlete_info"),
   message: text("message").notNull(),
-  status: varchar("status", { length: 20 }).notNull().default('new'), // new | open | closed | archived
+  status: varchar("status", { length: 20 }).notNull().default('new'), // new | open | in_progress | closed | archived
   source: varchar("source", { length: 50 }).default('contact'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

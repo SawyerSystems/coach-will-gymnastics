@@ -6921,10 +6921,9 @@ setTimeout(async () => {
 
   // Normalize and validate status before hitting storage
   const rawStatus = String(status).trim().toLowerCase();
-  // Backward-compat mapping: UI might send "in_progress"; map to our canonical "open"
-  const normalizedStatus = rawStatus === 'in_progress' ? 'open' : rawStatus;
+  const normalizedStatus = rawStatus;
 
-  const validStatuses = ['new', 'open', 'closed', 'archived'] as const;
+  const validStatuses = ['new', 'open', 'in_progress', 'closed', 'archived'] as const;
   if (!validStatuses.includes(normalizedStatus as any)) {
     return res.status(400).json({
       message: 'Invalid status',
