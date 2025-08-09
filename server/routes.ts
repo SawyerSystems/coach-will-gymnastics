@@ -8604,11 +8604,11 @@ setTimeout(async () => {
 
       // Get comprehensive booking history with all related data
       // Use explicit foreign key relationship to avoid ambiguity
-      const { data: allBookings, error: bookingsError } = await supabaseAdmin
+    const { data: allBookings, error: bookingsError } = await supabaseAdmin
         .from('bookings')
         .select(`
           *,
-          lesson_types(name),
+      lesson_types(name, total_price, reservation_fee),
           parents!bookings_parent_id_fkey(first_name, last_name)
         `)
         .order('preferred_date', { ascending: false });
@@ -8639,7 +8639,7 @@ setTimeout(async () => {
       const uniqueBookings = relevantBookings;
 
       // Process and enhance booking data
-      const enhancedBookings = uniqueBookings?.map(booking => {
+  const enhancedBookings = uniqueBookings?.map(booking => {
         // Count total athletes in this booking (from junction table or default to 1)
         const athleteCount = booking.booking_athletes?.length || 1;
         
@@ -8649,15 +8649,30 @@ setTimeout(async () => {
         // Determine waiver status (simplified for now)
         const waiverStatus = booking.waiver_id ? 'signed' : 'pending';
 
+        // Determine display price based on payment status
+        let displayPaidAmount: string | null = null;
+        const status = (booking.payment_status || '').toLowerCase();
+        const totalPrice = booking.lesson_types?.total_price;
+        const reservationFee = booking.lesson_types?.reservation_fee;
+        if (status.includes('reservation') && status.includes('paid')) {
+          displayPaidAmount = reservationFee ?? booking.paid_amount ?? null;
+        } else if (status.includes('session') && status.includes('paid')) {
+          displayPaidAmount = totalPrice ?? booking.paid_amount ?? null;
+        } else {
+          displayPaidAmount = booking.paid_amount ?? null;
+        }
+
         return {
           id: booking.id,
           lessonTypeName: booking.lesson_types?.name || 'Gymnastics Session',
+          lessonTypeTotalPrice: booking.lesson_types?.total_price ?? null,
+          lessonTypeReservationFee: booking.lesson_types?.reservation_fee ?? null,
           preferredDate: booking.preferred_date,
           preferredTime: booking.preferred_time,
           status: booking.status,
           paymentStatus: booking.payment_status,
           attendanceStatus: booking.attendance_status,
-          paidAmount: booking.paid_amount,
+          paidAmount: displayPaidAmount,
           focusAreas: booking.focus_areas || [],
           progressNote: booking.progress_note,
           coachName: booking.coach_name || 'Coach Will',

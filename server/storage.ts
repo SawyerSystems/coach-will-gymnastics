@@ -940,6 +940,13 @@ With the right setup and approach, home practice can accelerate your child's gym
     const booking = this.bookings.get(id);
     if (booking) {
       booking.attendanceStatus = attendanceStatus;
+      // Auto-upgrade payment status to session-paid when attendance is completed
+      if (attendanceStatus === AttendanceStatusEnum.COMPLETED) {
+        const isRefunded = (booking.paymentStatus as any)?.toString().includes('refunded');
+        if (!isRefunded && booking.paymentStatus !== PaymentStatusEnum.SESSION_PAID) {
+          booking.paymentStatus = PaymentStatusEnum.SESSION_PAID;
+        }
+      }
       this.bookings.set(id, booking);
       return booking;
     }
@@ -3636,7 +3643,7 @@ export class SupabaseStorage implements IStorage {
     console.log(`[STORAGE-DEBUG] UPDATING attendance_status to ${attendanceStatus} for booking ID ${id}`);
     
     // Use service role key for privileged operations to bypass RLS
-    const { data: booking, error } = await supabaseAdmin
+  const { data: booking, error } = await supabaseAdmin
       .from('bookings')
       .update({ attendance_status: attendanceStatus })
       .eq('id', id)
@@ -3656,7 +3663,24 @@ export class SupabaseStorage implements IStorage {
 
     console.log(`[STORAGE] Successfully updated booking attendance status to "${attendanceStatus}" for ID ${id}`);
 
-    // When completed, compute gym payout owed per athlete exactly-once
+    // If lesson completed, auto-set payment_status to session-paid (unless refunded)
+    if (attendanceStatus === AttendanceStatusEnum.COMPLETED) {
+      try {
+        const isRefunded = (booking as any)?.payment_status?.includes('refunded');
+        const alreadySessionPaid = (booking as any)?.payment_status === PaymentStatusEnum.SESSION_PAID;
+        if (!isRefunded && !alreadySessionPaid) {
+          console.log('[STORAGE] Auto-updating payment_status to session-paid due to attendance completion', { id });
+          // Use existing helper to ensure reservation_fee_paid flagging consistency
+          await this.updateBookingPaymentStatus(id, PaymentStatusEnum.SESSION_PAID);
+          // Reflect in local object for return mapping
+          (booking as any).payment_status = PaymentStatusEnum.SESSION_PAID;
+        }
+      } catch (e) {
+        console.error('[STORAGE] Failed to auto-update payment_status to session-paid:', e);
+      }
+    }
+
+  // When completed, compute gym payout owed per athlete exactly-once
     if (attendanceStatus === AttendanceStatusEnum.COMPLETED) {
       try {
         // Fetch booking_athletes rows for this booking

@@ -255,9 +255,20 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                       {/* Payment status */}
                       <div className="flex items-center space-x-1">
                         {getPaymentStatusIcon(booking.paymentStatus)}
-                        {booking.paidAmount && booking.paidAmount !== '0.00' && (
-                          <span className="text-xs text-gray-600">${booking.paidAmount}</span>
-                        )}
+                        {(() => {
+                          const status = (booking.paymentStatus || '').toLowerCase();
+                          let amount = booking.paidAmount;
+                          // If server didn’t compute it, fallback logic
+                          if (!amount || amount === '0.00') {
+                            const anyPrice = (booking as any).lessonTypeTotalPrice || (booking as any).lesson_types?.total_price;
+                            const anyFee = (booking as any).lessonTypeReservationFee || (booking as any).lesson_types?.reservation_fee;
+                            if (status.includes('reservation') && status.includes('paid') && anyFee) amount = String(anyFee);
+                            if (status.includes('session') && status.includes('paid') && anyPrice) amount = String(anyPrice);
+                          }
+                          return amount ? (
+                            <span className="text-xs text-gray-600">${amount}</span>
+                          ) : null;
+                        })()}
                       </div>
                       
                       {/* Booking status */}
@@ -303,9 +314,19 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                             <DollarSign className="w-4 h-4 text-gray-500 mr-2" />
                             <span className="text-sm">
                               <span className="font-medium capitalize">{booking.paymentStatus}</span>
-                              {booking.paidAmount && booking.paidAmount !== '0.00' && (
-                                <span className="text-gray-600"> - ${booking.paidAmount}</span>
-                              )}
+                              {(() => {
+                                const status = (booking.paymentStatus || '').toLowerCase();
+                                let amount = booking.paidAmount;
+                                if (!amount || amount === '0.00') {
+                                  const anyPrice = (booking as any).lessonTypeTotalPrice || (booking as any).lesson_types?.total_price;
+                                  const anyFee = (booking as any).lessonTypeReservationFee || (booking as any).lesson_types?.reservation_fee;
+                                  if (status.includes('reservation') && status.includes('paid') && anyFee) amount = String(anyFee);
+                                  if (status.includes('session') && status.includes('paid') && anyPrice) amount = String(anyPrice);
+                                }
+                                return amount ? (
+                                  <span className="text-gray-600"> - ${amount}</span>
+                                ) : null;
+                              })()}
                             </span>
                           </div>
 
