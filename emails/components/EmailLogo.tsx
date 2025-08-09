@@ -7,7 +7,7 @@ interface EmailLogoProps {
 }
 
 export function EmailLogo({
-  logoUrl = 'https://storage.googleapis.com/coach-will-tumbles/CoachWillTumblesText.png',
+  logoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-logos/CWT_Circle_Logo.png',
   width = 300,
   height = 85,
 }: EmailLogoProps) {
