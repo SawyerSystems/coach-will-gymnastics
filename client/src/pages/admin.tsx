@@ -71,6 +71,7 @@ import {
     X
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { useLocation } from "wouter";
 
 export default function Admin() {
@@ -242,6 +243,25 @@ export default function Admin() {
     queryFn: () => apiRequest('GET', '/api/athletes').then(res => res.json()),
     enabled: !!authStatus?.loggedIn,
   });
+
+  // Lesson types for pricing + dynamic analytics
+  const { data: lessonTypes = [] } = useLessonTypes();
+
+  const lessonTypesById = useMemo(() => {
+    const map = new Map<number, any>();
+    (lessonTypes || []).forEach((lt: any) => {
+      if (typeof lt?.id === 'number') map.set(lt.id, lt);
+    });
+    return map;
+  }, [lessonTypes]);
+
+  const lessonTypesByName = useMemo(() => {
+    const map = new Map<string, any>();
+    (lessonTypes || []).forEach((lt: any) => {
+      if (lt?.name) map.set(lt.name, lt);
+    });
+    return map;
+  }, [lessonTypes]);
 
   // Query for detailed parent information when one is selected
   const { data: selectedParentDetails } = useQuery({
@@ -968,6 +988,23 @@ export default function Admin() {
 
   // DASHBOARD STATS
   const totalBookings = bookings.length;
+  const totalParents = parents.length;
+
+  // Upcoming = future date/time AND not cancelled/completed
+  const isUpcoming = (b: Booking) => {
+    if (!b?.preferredDate) return false;
+    try {
+      const time = (b.preferredTime && typeof b.preferredTime === 'string') ? b.preferredTime : '00:00:00';
+      const dt = new Date(`${b.preferredDate}T${time}`);
+      const now = new Date();
+      const status = (b.attendanceStatus || '').toLowerCase();
+      const notDone = status === 'pending' || status === 'confirmed';
+      return notDone && dt >= now;
+    } catch {
+      return false;
+    }
+  };
+  const upcomingBookingsCount = bookings.filter(isUpcoming).length;
   const pendingBookings = bookings.filter(b => b.attendanceStatus === "pending").length;
   const confirmedBookings = bookings.filter(b => b.attendanceStatus === "confirmed").length;
 
@@ -979,11 +1016,13 @@ export default function Admin() {
     
     // Filter by lesson type
     const lessonTypeName = (() => {
-      const lt = booking.lessonType;
-      if (typeof lt === 'object' && lt && 'name' in lt) {
-        return (lt as any).name;
+      const lt = booking.lessonType as any;
+      if (lt && typeof lt === 'object' && 'name' in lt) return lt.name;
+      if (typeof lt === 'string') return lt;
+      if (booking.lessonTypeId && lessonTypesById.has(booking.lessonTypeId)) {
+        return lessonTypesById.get(booking.lessonTypeId)?.name;
       }
-      return lt;
+      return undefined;
     })();
     if (analyticsLessonType !== 'all' && lessonTypeName !== analyticsLessonType) return false;
     
@@ -1109,15 +1148,28 @@ export default function Admin() {
             <>
               <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276]">Total Bookings</CardTitle>
+                        <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276]">Upcoming Missions</CardTitle>
                   <div className="bg-[#0F0276]/10 p-1.5 sm:p-2 rounded-full">
                     <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276]" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{totalBookings}</div>
+                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{upcomingBookingsCount}</div>
+                      <p className="text-xs text-[#0F0276] font-medium mt-1">of {totalBookings} total</p>
                 </CardContent>
               </Card>
+
+                  <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                    <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                      <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276]">Total Missions</CardTitle>
+                      <div className="bg-[#0F0276]/10 p-1.5 sm:p-2 rounded-full">
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276]" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{totalBookings}</div>
+                    </CardContent>
+                  </Card>
 
               <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#D8BD2A]/[.08] to-white border-l-4 sm:border-l-8 border-[#D8BD2A] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
@@ -1152,6 +1204,18 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl sm:text-3xl font-black text-blue-700">{athletes.length}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-indigo-100 to-white border-l-4 sm:border-l-8 border-indigo-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
+                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-indigo-700">Total Parents</CardTitle>
+                  <div className="bg-indigo-100 p-1.5 sm:p-2 rounded-full">
+                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-700" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl sm:text-3xl font-black text-indigo-700">{totalParents}</div>
                 </CardContent>
               </Card>
 
@@ -2701,17 +2765,58 @@ export default function Admin() {
                       <CardContent>
                         <div className="text-3xl font-black text-orange-900">
                           $
-                          {bookings.length > 0
-                            ? (bookings.reduce((sum, b) => {
-                                const lt = b.lessonType;
-                                const price = (typeof lt === 'object' && lt && 'price' in lt) 
-                                  ? (lt as any).price 
-                                  : b.paidAmount || '0';
-                                return sum + parseFloat(price);
-                              }, 0) / bookings.length).toFixed(2)
-                            : '0.00'}
+                          {(() => {
+                            if (!bookings.length) return '0.00';
+                            const sum = bookings.reduce((acc, b) => {
+                              // Prefer full lesson type price
+                              const lt: any = (b as any).lessonType;
+                              if (lt && typeof lt === 'object' && 'price' in lt) {
+                                return acc + parseFloat(String(lt.price || 0));
+                              }
+                              if (b.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) {
+                                const match = lessonTypesById.get(b.lessonTypeId);
+                                return acc + parseFloat(String(match.price ?? match.totalPrice ?? 0));
+                              }
+                              // fallback by name if available
+                              const name = typeof lt === 'string' ? lt : undefined;
+                              if (name && lessonTypesByName.has(name)) {
+                                const match = lessonTypesByName.get(name);
+                                return acc + parseFloat(String(match.price ?? match.totalPrice ?? 0));
+                              }
+                              return acc;
+                            }, 0);
+                            return (sum / bookings.length).toFixed(2);
+                          })()}
                         </div>
                         <p className="text-xs text-orange-600 font-medium mt-1">Per booking</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-cyan-50 via-cyan-25 to-cyan-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-bold text-cyan-800">Online Bookings</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-black text-cyan-900">
+                          {bookings.length > 0
+                            ? Math.round((bookings.filter(b => (b as any).bookingMethod === 'Website').length / bookings.length) * 100)
+                            : 0}%
+                        </div>
+                        <p className="text-xs text-cyan-600 font-medium mt-1">Booked on website</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-xl border-0 bg-gradient-to-br from-rose-50 via-rose-25 to-rose-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-bold text-rose-800">Admin Booked</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-black text-rose-900">
+                          {bookings.length > 0
+                            ? Math.round((bookings.filter(b => (b as any).bookingMethod === 'Admin').length / bookings.length) * 100)
+                            : 0}%
+                        </div>
+                        <p className="text-xs text-rose-600 font-medium mt-1">Created by admin</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -2752,10 +2857,9 @@ export default function Admin() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">All lessons</SelectItem>
-                              <SelectItem value="30-min-private">30-min Private</SelectItem>
-                              <SelectItem value="1-hour-private">1-hour Private</SelectItem>
-                              <SelectItem value="30-min-semi-private">30-min Semi-Private</SelectItem>
-                              <SelectItem value="1-hour-semi-private">1-hour Semi-Private</SelectItem>
+                              {(lessonTypes || []).map((lt: any) => (
+                                <SelectItem key={lt.id} value={lt.name}>{lt.name}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -2850,45 +2954,55 @@ export default function Admin() {
                     <CardContent>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {(() => {
-                          const lessonTypes = [
-                            { key: 'quick-journey', label: 'Quick Journey', color: 'blue' },
-                            { key: 'deep-dive', label: 'Deep Dive', color: 'green' },
-                            { key: 'dual-quest', label: 'Dual Quest', color: 'purple' },
-                            { key: 'partner-progression', label: 'Partner Progression', color: 'orange' }
-                          ];
-                          
-                          return lessonTypes.map(type => {
+                          const total = filteredBookingsForAnalytics.length || 0;
+                          const colorPool = ['blue','green','purple','orange','indigo','emerald','rose','amber'];
+                          const items = (lessonTypes || []).map((lt: any, idx: number) => {
                             const count = filteredBookingsForAnalytics.filter(b => {
-                              const lt = b.lessonType;
-                              const lessonTypeName = (typeof lt === 'object' && lt && 'name' in lt) 
-                                ? (lt as any).name 
-                                : lt;
-                              return lessonTypeName === type.key;
+                              const name = (() => {
+                                const lto: any = b.lessonType;
+                                if (lto && typeof lto === 'object' && 'name' in lto) return lto.name;
+                                if (typeof lto === 'string') return lto;
+                                if (b.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) return lessonTypesById.get(b.lessonTypeId)?.name;
+                                return undefined;
+                              })();
+                              return name === lt.name;
                             }).length;
-                            const percentage = filteredBookingsForAnalytics.length > 0 
-                              ? Math.round((count / filteredBookingsForAnalytics.length) * 100) 
-                              : 0;
-                            
-                            return (
-                              <Card key={type.key} className={`text-center rounded-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${
-                                type.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-blue-100/50' :
-                                type.color === 'green' ? 'bg-gradient-to-br from-green-50 to-green-100/50' :
-                                type.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-purple-100/50' :
-                                'bg-gradient-to-br from-orange-50 to-orange-100/50'
-                              }`}>
-                                <CardContent className="p-6">
-                                  <div className={`text-4xl font-black mb-2 ${
-                                    type.color === 'blue' ? 'text-blue-700' :
-                                    type.color === 'green' ? 'text-green-700' :
-                                    type.color === 'purple' ? 'text-purple-700' :
-                                    'text-orange-700'
-                                  }`}>{percentage}%</div>
-                                  <p className="text-sm font-bold text-slate-700 mb-1">{type.label}</p>
-                                  <p className="text-xs text-slate-500 font-medium">{count} bookings</p>
-                                </CardContent>
-                              </Card>
-                            );
+                            const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                            const color = colorPool[idx % colorPool.length];
+                            return { key: lt.id, label: lt.name, count, percentage, color };
                           });
+
+                          if (!items.length) {
+                            return <p className="text-gray-500">No lesson types found.</p>;
+                          }
+
+                          return items.map((type) => (
+                            <Card key={type.key} className={`text-center rounded-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${
+                              type.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-blue-100/50' :
+                              type.color === 'green' ? 'bg-gradient-to-br from-green-50 to-green-100/50' :
+                              type.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-purple-100/50' :
+                              type.color === 'orange' ? 'bg-gradient-to-br from-orange-50 to-orange-100/50' :
+                              type.color === 'indigo' ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50' :
+                              type.color === 'emerald' ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50' :
+                              type.color === 'rose' ? 'bg-gradient-to-br from-rose-50 to-rose-100/50' :
+                              'bg-gradient-to-br from-amber-50 to-amber-100/50'
+                            }`}>
+                              <CardContent className="p-6">
+                                <div className={`text-4xl font-black mb-2 ${
+                                  type.color === 'blue' ? 'text-blue-700' :
+                                  type.color === 'green' ? 'text-green-700' :
+                                  type.color === 'purple' ? 'text-purple-700' :
+                                  type.color === 'orange' ? 'text-orange-700' :
+                                  type.color === 'indigo' ? 'text-indigo-700' :
+                                  type.color === 'emerald' ? 'text-emerald-700' :
+                                  type.color === 'rose' ? 'text-rose-700' :
+                                  'text-amber-700'
+                                }`}>{type.percentage}%</div>
+                                <p className="text-sm font-bold text-slate-700 mb-1">{type.label}</p>
+                                <p className="text-xs text-slate-500 font-medium">{type.count} bookings</p>
+                              </CardContent>
+                            </Card>
+                          ));
                         })()}
                       </div>
                     </CardContent>
