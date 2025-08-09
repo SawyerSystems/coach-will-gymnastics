@@ -1,0 +1,21 @@
+{
+  "apparatus": [
+    { "name": "Floor" },
+    { "name": "Beam" },
+    { "name": "Bars" },
+    { "name": "Vault" }
+  ],
+  "skills": [
+    {
+      "name": "Cartwheel",
+      "category": "Floor Skills",
+      "level": "beginner",
+      "description": "Fundamental lateral rotation skill",
+      "displayOrder": 1,
+      "apparatusName": "Floor",
+      "isConnectedCombo": false,
+      "prerequisiteNames": [],
+      "componentNames": []
+    }
+  ]
+}

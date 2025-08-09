@@ -166,6 +166,10 @@ export interface IStorage {
   updateSkill(id: number, input: Partial<InsertSkill>): Promise<Skill | undefined>;
   deleteSkill(id: number): Promise<boolean>;
 
+  // Skill relations (prerequisites and connected components)
+  getSkillRelations(skillId: number): Promise<{ prerequisiteIds: number[]; componentIds: number[] }>;
+  setSkillRelations(skillId: number, prereqIds: number[], componentIds: number[]): Promise<{ prerequisiteIds: number[]; componentIds: number[] }>;
+
   getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>>;
   upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill>;
 
@@ -1602,6 +1606,11 @@ With the right setup and approach, home practice can accelerate your child's gym
   async createSkill(input: InsertSkill): Promise<Skill> { return { id: Date.now(), ...input } as any; }
   async updateSkill(id: number, input: Partial<InsertSkill>): Promise<Skill | undefined> { return undefined; }
   async deleteSkill(id: number): Promise<boolean> { return false; }
+  async getSkillRelations(_skillId: number): Promise<{ prerequisiteIds: number[]; componentIds: number[] }> { return { prerequisiteIds: [], componentIds: [] }; }
+  async setSkillRelations(skillId: number, prereqIds: number[], componentIds: number[]): Promise<{ prerequisiteIds: number[]; componentIds: number[] }> {
+    const uniq = (arr: number[]) => Array.from(new Set(arr.filter((n) => Number.isFinite(n) && n !== skillId)));
+    return { prerequisiteIds: uniq(prereqIds), componentIds: uniq(componentIds) };
+  }
   async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> { return []; }
   async upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill> { return { id: Date.now(), ...input } as any; }
   async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> { return { id: Date.now(), ...input } as any; }
@@ -1776,7 +1785,7 @@ export class SupabaseStorage implements IStorage {
       console.error('[STORAGE][SKILLS] list error:', error);
       return [];
     }
-    return (data || []).map((row: any) => ({
+  return (data || []).map((row: any) => ({
       id: row.id,
       name: row.name,
       category: row.category,
@@ -1790,7 +1799,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createSkill(input: InsertSkill): Promise<Skill> {
-    const insert: any = {
+  const insert: any = {
       name: input.name ?? null,
       category: input.category ?? null,
       level: input.level ?? null,
@@ -1819,13 +1828,25 @@ export class SupabaseStorage implements IStorage {
     if ('category' in input) patch.category = (input as any).category;
     if ('level' in input) patch.level = (input as any).level;
     if ('description' in input) patch.description = (input as any).description;
-    if ('displayOrder' in (input as any)) patch.display_order = (input as any).displayOrder;
+  if ('displayOrder' in (input as any)) patch.display_order = (input as any).displayOrder;
     if ('apparatusId' in (input as any)) patch.apparatus_id = (input as any).apparatusId;
+  if ('isConnectedCombo' in (input as any)) patch.is_connected_combo = (input as any).isConnectedCombo;
     if (Object.keys(patch).length === 0) return this.listSkills().then(r => r.find(s => s.id === id));
-    const { data, error } = await supabaseAdmin.from('skills').update(patch).eq('id', id).select('*').single();
+    let { data, error } = await supabaseAdmin.from('skills').update(patch).eq('id', id).select('*').single();
     if (error) {
-      console.error('[STORAGE][SKILLS] update error:', error);
-      return undefined;
+      // If is_connected_combo column doesn't exist, retry without it
+      if ((error as any)?.code === '42703' && 'is_connected_combo' in patch) {
+        const { is_connected_combo, ...rest } = patch;
+        const retry = await supabaseAdmin.from('skills').update(rest).eq('id', id).select('*').single();
+        if (retry.error) {
+          console.error('[STORAGE][SKILLS] update retry error:', retry.error);
+          return undefined;
+        }
+        data = retry.data as any;
+      } else {
+        console.error('[STORAGE][SKILLS] update error:', error);
+        return undefined;
+      }
     }
     return {
       id: data.id,
@@ -1847,6 +1868,91 @@ export class SupabaseStorage implements IStorage {
       return false;
     }
     return true;
+  }
+
+  
+
+  async getSkillRelations(skillId: number): Promise<{ prerequisiteIds: number[]; componentIds: number[] }> {
+    // Fetch prerequisite skill IDs
+    const preq = await supabaseAdmin
+      .from('skills_prerequisites')
+      .select('prerequisite_skill_id')
+      .eq('skill_id', skillId);
+    if (preq.error) {
+      console.error('[STORAGE][SKILLS] getSkillRelations prerequisites error:', preq.error);
+    }
+
+    // Fetch component skill IDs ordered by position
+    const comps = await supabaseAdmin
+      .from('skill_components')
+      .select('component_skill_id, position')
+      .eq('parent_skill_id', skillId)
+      .order('position', { ascending: true });
+    if (comps.error) {
+      console.error('[STORAGE][SKILLS] getSkillRelations components error:', comps.error);
+    }
+
+    const prerequisiteIds = (preq.data || []).map((r: any) => r.prerequisite_skill_id);
+    const componentIds = (comps.data || [])
+      .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+      .map((r: any) => r.component_skill_id);
+
+    return { prerequisiteIds, componentIds };
+  }
+
+  async setSkillRelations(skillId: number, prereqIds: number[], componentIds: number[]): Promise<{ prerequisiteIds: number[]; componentIds: number[] }> {
+    // Normalize inputs: remove duplicates and self-references
+    const uniq = (arr: number[]) => Array.from(new Set(arr.filter((n) => Number.isFinite(n) && n !== skillId)));
+    const pre = uniq(prereqIds);
+    const comps = uniq(componentIds);
+
+    // Replace prerequisites: delete then insert
+    const delPre = await supabaseAdmin
+      .from('skills_prerequisites')
+      .delete()
+      .eq('skill_id', skillId);
+    if (delPre.error) {
+      if ((delPre.error as any)?.code === '42P01') {
+        // undefined_table
+        throw new Error('Skills relations tables are missing. Please run scripts/db/add_skills_relations.sql in Supabase and try again.');
+      }
+      console.error('[STORAGE][SKILLS] setSkillRelations delete prerequisites error:', delPre.error);
+      throw delPre.error;
+    }
+    if (pre.length > 0) {
+      const insertPre = await supabaseAdmin
+        .from('skills_prerequisites')
+        .insert(pre.map((pid, idx) => ({ skill_id: skillId, prerequisite_skill_id: pid })));
+      if (insertPre.error) {
+        console.error('[STORAGE][SKILLS] setSkillRelations insert prerequisites error:', insertPre.error);
+        throw insertPre.error;
+      }
+    }
+
+    // Replace components: delete then insert with position
+    const delComps = await supabaseAdmin
+      .from('skill_components')
+      .delete()
+      .eq('parent_skill_id', skillId);
+    if (delComps.error) {
+      if ((delComps.error as any)?.code === '42P01') {
+        // undefined_table
+        throw new Error('Skills relations tables are missing. Please run scripts/db/add_skills_relations.sql in Supabase and try again.');
+      }
+      console.error('[STORAGE][SKILLS] setSkillRelations delete components error:', delComps.error);
+      throw delComps.error;
+    }
+    if (comps.length > 0) {
+      const insertComps = await supabaseAdmin
+        .from('skill_components')
+        .insert(comps.map((cid, idx) => ({ parent_skill_id: skillId, component_skill_id: cid, position: idx })));
+      if (insertComps.error) {
+        console.error('[STORAGE][SKILLS] setSkillRelations insert components error:', insertComps.error);
+        throw insertComps.error;
+      }
+    }
+
+    return { prerequisiteIds: pre, componentIds: comps };
   }
 
   async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> {

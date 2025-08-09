@@ -12,6 +12,8 @@ export type Skill = {
   apparatusId?: number | null;
 };
 
+export type SkillRelations = { prerequisiteIds: number[]; componentIds: number[] };
+
 export function useApparatusList() {
   return useQuery<Apparatus[]>({
     queryKey: ["/api/apparatus"],
@@ -71,6 +73,30 @@ export function useDeleteSkill() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/skills"], exact: false });
+    },
+  });
+}
+
+export function useSkillRelations(skillId?: number) {
+  const key = skillId ? `/api/admin/skills/${skillId}/relations` : undefined;
+  return useQuery<SkillRelations>({
+    queryKey: [key || ''],
+    queryFn: async () => {
+      const res = await apiRequest('GET', key!);
+      return res.json();
+    },
+    enabled: !!skillId,
+  });
+}
+
+export function useSaveSkillRelations() {
+  return useMutation({
+    mutationFn: async ({ skillId, relations }: { skillId: number; relations: SkillRelations }) => {
+      const res = await apiRequest('POST', `/api/admin/skills/${skillId}/relations`, relations);
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/skills/${variables.skillId}/relations`] });
     },
   });
 }

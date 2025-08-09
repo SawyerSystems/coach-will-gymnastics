@@ -25,7 +25,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
   "db:check-origin": "tsx scripts/check-db-origin.ts",
-  "db:apply-lesson-types": "bash ./apply-lesson-types-schema-update.sh"
+  "db:apply-lesson-types": "bash ./apply-lesson-types-schema-update.sh",
+  "import:skills": "tsx scripts/import-skills.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -377,7 +377,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/skills', isAdminAuthenticated, async (req, res) => {
     try {
-      const created = await storage.createSkill(req.body);
+      // Extract optional relations and isConnectedCombo from request body
+      const prereqIds: number[] = Array.isArray(req.body?.prerequisiteIds)
+        ? (req.body.prerequisiteIds as any[]).map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n))
+        : [];
+      const componentIds: number[] = Array.isArray(req.body?.componentIds)
+        ? (req.body.componentIds as any[]).map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n))
+        : [];
+      const isConnectedCombo: boolean | undefined = typeof req.body?.isConnectedCombo === 'boolean' ? req.body.isConnectedCombo : undefined;
+
+      // Only send core skill fields to storage.createSkill
+      const {
+        prerequisiteIds: _ignorePre,
+        componentIds: _ignoreComps,
+        isConnectedCombo: _ignoreCombo,
+        ...core
+      } = req.body || {};
+
+      const created = await storage.createSkill(core);
+
+      // If requested, set combo flag (column must exist in DB)
+      if (typeof isConnectedCombo === 'boolean') {
+        try { await storage.updateSkill(created.id, { isConnectedCombo } as any); } catch {}
+      }
+
+      // If relations provided, set them now
+      if (prereqIds.length || componentIds.length) {
+        try { await storage.setSkillRelations(created.id, prereqIds, componentIds); } catch (e: any) {
+          // If relations tables are missing, return a helpful message
+          return res.status(400).json({ error: e?.message || 'Failed to save relations. Ensure skills relations schema is applied.' });
+        }
+      }
+
       res.status(201).json(created);
     } catch (err) {
       console.error('[ROUTES][ADMIN][SKILLS] create error:', err);
@@ -405,6 +436,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error('[ROUTES][ADMIN][SKILLS] delete error:', err);
       res.status(500).json({ error: 'Failed to delete skill' });
+    }
+  });
+
+  // Skill relations (prerequisites and connected components)
+  app.get('/api/admin/skills/:id/relations', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const relations = await storage.getSkillRelations(id);
+      res.json(relations);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][SKILLS] get relations error:', err);
+      res.status(500).json({ error: 'Failed to load skill relations' });
+    }
+  });
+
+  app.post('/api/admin/skills/:id/relations', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const prereqIds: number[] = Array.isArray(req.body?.prerequisiteIds)
+        ? (req.body.prerequisiteIds as any[]).map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n))
+        : [];
+      const componentIds: number[] = Array.isArray(req.body?.componentIds)
+        ? (req.body.componentIds as any[]).map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n))
+        : [];
+      const relations = await storage.setSkillRelations(id, prereqIds, componentIds);
+      res.json(relations);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][SKILLS] set relations error:', err);
+      res.status(500).json({ error: 'Failed to save skill relations' });
     }
   });
 
