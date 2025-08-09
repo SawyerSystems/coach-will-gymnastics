@@ -63,3 +63,16 @@ export function useDeletePayoutRun() {
 	});
 }
 
+export function useClearPayouts() {
+	return useMutation({
+		mutationFn: async (payload: { periodStart: string; periodEnd: string }) => {
+			const res = await apiRequest('POST', '/api/admin/payouts/clear', payload);
+			if (!res.ok) {
+				const msg = await res.text();
+				throw new Error(msg || 'Failed to clear payouts');
+			}
+			return res.json() as Promise<{ total: number; updated: number; locked?: boolean }>;
+		},
+	});
+}
+

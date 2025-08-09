@@ -2410,6 +2410,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear payouts for a period (reset owed/rate/computed_at for booking_athletes in range)
+  app.post('/api/admin/payouts/clear', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { periodStart, periodEnd } = req.body || {};
+      if (!periodStart || !periodEnd) return res.status(400).json({ error: 'periodStart and periodEnd are required' });
+      const result = await storage.clearGymPayouts(String(periodStart), String(periodEnd));
+      if (result.locked) return res.status(409).json({ error: 'Payout run is locked for this period' });
+      res.json(result);
+    } catch (e) {
+      console.error('[PAYOUTS][CLEAR] Exception:', e);
+      res.status(500).json({ error: 'Failed to clear payouts' });
+    }
+  });
+
   // Update athlete name - splits full name into first/last
   app.patch("/api/athlete/update-name", isAdminAuthenticated, async (req, res) => {
     try {

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useBackfillPayouts, useDeletePayoutRun, useGeneratePayoutRun, useLockPayoutRun, usePayoutRuns } from '@/hooks/useAdminPayouts';
+import { useBackfillPayouts, useDeletePayoutRun, useGeneratePayoutRun, useLockPayoutRun, usePayoutRuns, useClearPayouts } from '@/hooks/useAdminPayouts';
 import { usePayoutRates, useCreatePayoutRate, useRetirePayoutRate } from '@/hooks/usePayoutRates';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -324,6 +324,7 @@ export default function AdminPayoutsTab() {
 			const { data: runs = [], refetch } = usePayoutRuns(6);
 			const gen = useGeneratePayoutRun();
 			const backfill = useBackfillPayouts();
+			const clearPayouts = useClearPayouts();
 			const { toast } = useToast();
 
 			const onGenerate = async () => {
@@ -356,6 +357,19 @@ export default function AdminPayoutsTab() {
 								}
 							}} disabled={backfill.isPending}>
 								{backfill.isPending ? 'Backfilling…' : 'Backfill current period'}
+							</Button>
+							<Button variant="destructive" onClick={async () => {
+								if (!confirm(`Clear payout calculations for ${start} → ${end}? This will reset owed and applied rate values for this period. You can backfill again later.`)) return;
+								try {
+									const result = await clearPayouts.mutateAsync({ periodStart: start, periodEnd: end });
+									await refetch();
+									await onDataChanged?.();
+									toast({ title: 'Payouts cleared', description: `Reset ${result.updated} rows` });
+								} catch (e: any) {
+									toast({ title: 'Clear failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+								}
+							}} disabled={clearPayouts.isPending}>
+								{clearPayouts.isPending ? 'Clearing…' : 'Clear current period'}
 							</Button>
 						</div>
 					</div>

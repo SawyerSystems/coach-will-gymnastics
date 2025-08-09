@@ -2949,6 +2949,71 @@ export class SupabaseStorage implements IStorage {
     return results;
   }
 
+  // Clear (reset) computed payouts for a period. Preserves any manual overrides.
+  // Guard: if an existing payout run for this exact period is locked, refuse to clear.
+  async clearGymPayouts(periodStart: string, periodEnd: string): Promise<{ total: number; updated: number; locked?: boolean }> {
+    try {
+      // Check run lock state for this exact period
+      const { data: run } = await supabaseAdmin
+        .from('gym_payout_runs')
+        .select('id, status')
+        .eq('period_start', periodStart)
+        .eq('period_end', periodEnd)
+        .maybeSingle();
+      if (run && run.status === 'locked') {
+        console.warn('[PAYOUT CLEAR] Attempted to clear a locked payout run', { periodStart, periodEnd, runId: run.id });
+        return { total: 0, updated: 0, locked: true };
+      }
+
+      // Collect booking_athletes IDs within period (joined on bookings.preferred_date)
+      const { data: rows, error } = await supabaseAdmin
+        .from('booking_athletes')
+        .select('id, bookings!inner(preferred_date)')
+        .gte('bookings.preferred_date', periodStart)
+        .lte('bookings.preferred_date', periodEnd);
+      if (error) throw error;
+      const ids: number[] = (rows || []).map((r: any) => r.id);
+      if (ids.length === 0) {
+        // Also refresh or upsert the payout run to reflect zero totals
+        try { await this.upsertGymPayoutRun(periodStart, periodEnd); } catch {}
+        return { total: 0, updated: 0 };
+      }
+
+      // Chunk update to avoid IN() size limits
+      const chunkSize = 500;
+      let updated = 0;
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const { data: upd, error: updErr } = await supabaseAdmin
+          .from('booking_athletes')
+          .update({
+            gym_rate_applied_cents: null,
+            gym_payout_owed_cents: null,
+            gym_payout_computed_at: null,
+          })
+          .in('id', chunk)
+          .select('id');
+        if (updErr) {
+          console.error('[PAYOUT CLEAR] Failed updating chunk', updErr);
+          throw updErr;
+        }
+        updated += (upd || []).length;
+      }
+
+      // Refresh payout run totals for this period (will drop to 0 if all cleared)
+      try {
+        await this.upsertGymPayoutRun(periodStart, periodEnd);
+      } catch (e) {
+        console.warn('[PAYOUT CLEAR] upsertGymPayoutRun post-clear failed', e);
+      }
+
+      return { total: ids.length, updated };
+    } catch (e) {
+      console.error('[PAYOUT CLEAR] Exception:', e);
+      throw e;
+    }
+  }
+
   async updateBookingPaymentStatus(id: number, paymentStatus: PaymentStatusEnum): Promise<Booking | undefined> {
     console.log('[STORAGE] Updating booking payment status:', { id, paymentStatus });
     
