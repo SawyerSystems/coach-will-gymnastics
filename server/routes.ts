@@ -1786,7 +1786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doc = await PDFDocument.create();
       const font = await doc.embedFont(StandardFonts.Helvetica);
       const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-      let page = doc.addPage([612, 792]); // US Letter
+  let page = doc.addPage([612, 792]); // US Letter
       const margin = 40;
       let { width, height } = page.getSize();
       let y = height - margin;
@@ -1810,7 +1810,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const targetW = 64; // px
         const scale = targetW / logoImg.width;
         const targetH = logoImg.height * scale;
-        page.drawImage(logoImg, { x: margin, y: y - targetH + 6, width: targetW, height: targetH, opacity: 0.9 });
+        // Raise the logo a bit so it doesn't crowd the header/table
+        page.drawImage(logoImg, { x: margin, y: y - targetH + 16, width: targetW, height: targetH, opacity: 0.9 });
         logoDrawnWidth = targetW;
         logoDrawnHeight = targetH;
       } catch {}
@@ -1839,29 +1840,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         drawText(line, metaXRight - font.widthOfTextAtSize(line, 9), metaY - idx * 11, 9);
       });
 
-      y = subtitleY - 28; // space below header
+      y = subtitleY - 28; // space below header (logo raised above)
       page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
       y -= 10;
 
-      // Column layout
+      // Column layout (tuned to avoid overlap on US Letter width)
+      // Left-anchored columns
       const col = {
         date: margin,
-        time: margin + 85,
+        time: margin + 80,
         athlete: margin + 150,
-        member: margin + 355,
-        dur: margin + 405,
-        rate: width - margin - 125,
-        owed: width - margin - 55,
+        member: margin + 360,
+        dur: margin + 420,
+        // Right-anchored numeric columns (use these as right boundaries)
+        rateRight: width - margin - 80,
+        owedRight: width - margin,
       } as const;
 
-      // Table header
+      // Helper to truncate text to fit within a max width with ellipsis
+      const fitText = (text: string, maxWidth: number, size = 11) => {
+        if (!text) return '';
+        let t = text;
+        if (font.widthOfTextAtSize(t, size) <= maxWidth) return t;
+        const ell = '…';
+        const ellW = font.widthOfTextAtSize(ell, size);
+        // Binary-like reduction
+        let lo = 0, hi = t.length;
+        while (lo < hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          const slice = t.slice(0, mid);
+          const w = font.widthOfTextAtSize(slice, size) + ellW;
+          if (w <= maxWidth) lo = mid + 1; else hi = mid;
+        }
+        const keep = Math.max(0, lo - 1);
+        return t.slice(0, keep) + ell;
+      };
+
+  // Table header
   drawText('Date', col.date, y, 11, bold);
   drawText('Time', col.time, y, 11, bold);
   drawText('Athlete', col.athlete, y, 11, bold);
   drawText('Member', col.member, y, 11, bold);
   drawText('Dur', col.dur, y, 11, bold);
-  drawText('Rate', col.rate, y, 11, bold);
-  drawText('Owed', col.owed, y, 11, bold);
+  // Right-align headers for numeric columns to their right boundaries
+  const rateHdr = 'Rate';
+  const owedHdr = 'Owed';
+  drawText(rateHdr, col.rateRight - bold.widthOfTextAtSize(rateHdr, 11), y, 11, bold);
+  drawText(owedHdr, col.owedRight - bold.widthOfTextAtSize(owedHdr, 11), y, 11, bold);
       y -= 12;
       page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
       y -= 6;
@@ -1881,8 +1906,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           drawText('Athlete', col.athlete, y, 11, bold);
           drawText('Member', col.member, y, 11, bold);
           drawText('Dur', col.dur, y, 11, bold);
-          drawText('Rate', col.rate, y, 11, bold);
-          drawText('Owed', col.owed, y, 11, bold);
+          drawText(rateHdr, col.rateRight - bold.widthOfTextAtSize(rateHdr, 11), y, 11, bold);
+          drawText(owedHdr, col.owedRight - bold.widthOfTextAtSize(owedHdr, 11), y, 11, bold);
           y -= 12;
           page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
           y -= 6;
@@ -1904,7 +1929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timePart = d.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit' });
           }
         }
-        const athleteName = athleteRel?.name || [athleteRel?.first_name, athleteRel?.last_name].filter(Boolean).join(' ') || `#${row.athlete_id}`;
+  const athleteName = athleteRel?.name || [athleteRel?.first_name, athleteRel?.last_name].filter(Boolean).join(' ') || `#${row.athlete_id}`;
         const member = row.gym_member_at_booking ? 'Yes' : 'No';
         const dur = row.duration_minutes || '';
         const rateUsd = (row.gym_rate_applied_cents || 0) / 100;
@@ -1916,13 +1941,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // zebra row
           page.drawRectangle({ x: margin - 2, y: y - 12, width: width - margin * 2 + 4, height: 16, color: zebra, opacity: 0.6 });
         }
+  // Truncate athlete to fit between athlete and member columns
+  const athleteMaxWidth = (col.member - col.athlete) - 8;
+  const athleteFitted = fitText(String(athleteName), Math.max(athleteMaxWidth, 40));
   drawText(String(datePart), col.date, y);
   drawText(timePart, col.time, y);
-  drawText(athleteName, col.athlete, y);
+  drawText(athleteFitted, col.athlete, y);
         drawText(member, col.member, y);
-        drawText(String(dur), col.dur, y);
-        drawText(rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-', col.rate, y);
-        drawText(owedUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }), col.owed, y);
+  drawText(String(dur), col.dur, y);
+  // Right-align currency values to their boundaries
+  const rateStr = rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-';
+  const owedStr = owedUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+  drawText(rateStr, col.rateRight - font.widthOfTextAtSize(rateStr, 11), y);
+  drawText(owedStr, col.owedRight - font.widthOfTextAtSize(owedStr, 11), y);
         y -= 16;
         rowIndex++;
       }
