@@ -61,9 +61,9 @@ export default function About() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
-                Meet <span className="text-purple-600">Coach Will</span>
+                Meet <span className="text-purple-600 dark:text-[#D8BD2A]">Coach Will</span>
               </h1>
-              <p className="text-lg text-slate-700 dark:text-slate-300 mb-6 leading-relaxed">
+              <p className="text-lg text-slate-700 dark:text-white mb-6 leading-relaxed">
                 {aboutData.bio}
               </p>
               <div className="grid grid-cols-2 gap-4 mb-8">
@@ -81,7 +81,7 @@ export default function About() {
                         </div>
                         <div>
                           <p className={`text-xs font-semibold text-${color}-800 dark:text-${color}-200 uppercase`}>{cert.title}</p>
-                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{cert.body}</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-[#0F0276]">{cert.body}</p>
                         </div>
                       </div>
                     </div>
@@ -103,7 +103,7 @@ export default function About() {
               
               {/* Floating testimonial */}
               {siteContent?.testimonials?.find((t: any) => t.featured) ? (
-                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl glass-surface glass-card glass-gradient">
+                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="flex space-x-1">
@@ -120,7 +120,7 @@ export default function About() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl glass-surface glass-card glass-gradient">
+                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="flex space-x-1">
@@ -148,7 +148,7 @@ export default function About() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-              My Coaching <span className="text-blue-600">Philosophy</span>
+              My Coaching <span className="text-blue-600 dark:text-[#FB2832]">Philosophy</span>
             </h2>
             <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
               Every child is unique, and my approach reflects that. I believe in creating a positive, 
@@ -157,36 +157,36 @@ export default function About() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Heart className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Fun First</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-blue-300 mb-3">Fun First</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   Gymnastics should be exciting. I create a positive environment where kids are excited to learn new skills every week.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Individual Focus</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-purple-300 mb-3">Individual Focus</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   Every athlete gets personalized attention and drills tailored to their age, skill level, and learning style.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Award className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Progressive Development</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-teal-300 mb-3">Progressive Development</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   Skills build on skills. We focus on mastering each movement so your child gains confidence with every step.
                 </p>
@@ -201,53 +201,53 @@ export default function About() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-              Experience & <span className="text-teal-600">Qualifications</span>
+              Experience & <span className="text-teal-600 dark:text-[#D8BD2A]">Qualifications</span>
             </h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Award className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Certified Gymnastics Coach</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-blue-300 mb-3">Certified Gymnastics Coach</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   USA Gymnastics certified with training in developmental progressions and safety.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Experience</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-purple-300 mb-3">Experience</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   {aboutData.experience}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Star className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Competition Background</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-teal-300 mb-2">Competition Background</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   Has worked with athletes preparing for shows and competitions in multiple states and formats.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient">
+            <Card className="text-center p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
                 <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Heart className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">Youth Development Focus</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-orange-300 mb-3">Youth Development Focus</h3>
                 <p className="text-slate-700 dark:text-slate-300">
                   Specialized in building confidence and consistency in young athletes.
                 </p>
@@ -266,15 +266,15 @@ export default function About() {
                 const Icon = icons[index % icons.length];
                 
                 return (
-                  <Card key={index} className={`text-center p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-${color}-50 to-${color}-100 border-2 border-${color}-200 dark:bg-slate-800/50 dark:border-slate-700 glass-card`}>
+          <Card key={index} className={`text-center p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-${color}-50 to-${color}-100 border-2 border-${color}-200 dark:from-slate-800/80 dark:to-slate-800/50 dark:border-${color}-900/30 glass-card`}>
                     <CardContent className="pt-4">
                       <div className={`w-14 h-14 bg-${color}-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg`}>
                         <Icon className="h-7 w-7 text-white" />
                       </div>
-                      <h4 className={`font-bold text-${color}-800 dark:text-${color}-200 mb-2 text-sm uppercase tracking-wide`}>
+                      <h4 className={`font-bold text-${color}-800 dark:text-${color}-300 mb-2 text-sm uppercase tracking-wide`}>
                         {cert.title}
                       </h4>
-                      <p className="text-slate-700 dark:text-slate-300 text-xs">
+            <p className="text-slate-700 dark:text-white text-xs">
                         {cert.body}
                       </p>
                     </CardContent>
@@ -298,14 +298,14 @@ export default function About() {
           {/* Featured Testimonial */}
           {siteContent?.testimonials?.find((t: any) => t.featured) && (
             <div className="mb-16">
-              <Card className="p-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 dark:bg-slate-800/50 dark:border-slate-700 glass-card">
+        <Card className="p-8 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 dark:bg-[#D8BD2A]/15 dark:border-[#D8BD2A]/40 dark:ring-1 dark:ring-[#D8BD2A]/30 glass-card">
                 <CardContent className="pt-6 text-center">
                   <div className="flex items-center justify-center space-x-1 mb-6">
                     {[...Array(siteContent.testimonials.find((t: any) => t.featured)?.rating || 5)].map((_, i) => (
                       <Star key={i} className="h-6 w-6 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-lg text-slate-700 dark:text-slate-300 mb-6 italic">
+                  <p className="text-lg text-blue-700 dark:text-[#0F0276] mb-6 italic">
                     "{siteContent.testimonials.find((t: any) => t.featured)?.text}"
                   </p>
                   <div className="flex items-center justify-center space-x-3">
@@ -313,10 +313,10 @@ export default function About() {
                       {siteContent.testimonials.find((t: any) => t.featured)?.name?.charAt(0) || 'P'}
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100 text-lg">
+            <p className="font-semibold text-slate-900 dark:text-slate-900 text-lg">
                         {siteContent.testimonials.find((t: any) => t.featured)?.name}
                       </p>
-                      <p className="text-orange-600 font-medium">Featured Parent Review</p>
+            <p className="text-orange-600 dark:text-[#D8BD2A] font-medium">Featured Parent Review</p>
                     </div>
                   </div>
                 </CardContent>
@@ -328,7 +328,7 @@ export default function About() {
           <div className="grid md:grid-cols-3 gap-8">
             {siteContent?.testimonials?.filter((t: any) => !t.featured).length > 0 ? (
               siteContent.testimonials.filter((t: any) => !t.featured).slice(0, 3).map((testimonial: any, index: number) => (
-                <Card key={index} className="p-6 glass-surface glass-card glass-gradient">
+                <Card key={index} className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                   <CardContent className="pt-6">
                     <div className="flex items-center space-x-1 mb-4">
                       {[...Array(testimonial.rating || 5)].map((_, i) => (
@@ -353,7 +353,7 @@ export default function About() {
             ) : (
               // Fallback testimonials if no dynamic content available
               <>
-                <Card className="p-6 glass-surface glass-card glass-gradient">
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                   <CardContent className="pt-6">
                     <div className="flex items-center space-x-1 mb-4">
                       {[...Array(5)].map((_, i) => (
@@ -376,7 +376,7 @@ export default function About() {
                   </CardContent>
                 </Card>
 
-                <Card className="p-6 glass-surface glass-card glass-gradient">
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                   <CardContent className="pt-6">
                     <div className="flex items-center space-x-1 mb-4">
                       {[...Array(5)].map((_, i) => (
@@ -399,7 +399,7 @@ export default function About() {
                   </CardContent>
                 </Card>
 
-                <Card className="p-6 glass-surface glass-card glass-gradient">
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                   <CardContent className="pt-6">
                     <div className="flex items-center space-x-1 mb-4">
                       {[...Array(5)].map((_, i) => (
