@@ -34,8 +34,11 @@ export default function ProgressSharePage() {
                 <div className="text-sm font-medium">Videos</div>
                 <ul className="space-y-1">
                   {s.videos.map((v) => (
-                    <li key={v.id}>
+                    <li key={v.id} className="flex items-center gap-2">
                       <a className="text-blue-600 underline break-all" href={v.url || undefined} target="_blank" rel="noreferrer">{v.title || v.url}</a>
+                      {v.recordedAt && (
+                        <span className="text-xs text-slate-500">{new Date(v.recordedAt as any).toLocaleDateString()}</span>
+                      )}
                     </li>
                   ))}
                 </ul>

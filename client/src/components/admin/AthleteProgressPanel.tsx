@@ -2,8 +2,10 @@ import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAthleteSkills } from "@/hooks/useAthleteProgress";
-import type { Skill } from "@shared/schema";
+import type { Skill as SharedSkill } from "@shared/schema";
+import type { Skill as HookSkill } from "@/hooks/useSkills";
 import { TestSkillDialog } from "./TestSkillDialog";
+import AddAthleteSkillDialog from "./AddAthleteSkillDialog";
 
 interface Props {
   athleteId: number;
@@ -11,7 +13,7 @@ interface Props {
 
 export function AthleteProgressPanel({ athleteId }: Props) {
   const { data: rows = [], isLoading, error } = useAthleteSkills(athleteId);
-  const [testingSkill, setTestingSkill] = useState<{ skill: Skill; athleteSkillId?: number; status?: string | null; notes?: string | null } | null>(null);
+  const [testingSkill, setTestingSkill] = useState<{ skill: SharedSkill; athleteSkillId?: number; status?: string | null; notes?: string | null } | null>(null);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof rows>();
@@ -31,6 +33,15 @@ export function AthleteProgressPanel({ athleteId }: Props) {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <AddSkillButton
+          athleteId={athleteId}
+          onPickSkill={(s) => {
+            // Slightly delay mounting TestSkillDialog until after picker unmounts
+            setTimeout(() => setTestingSkill({ skill: (s as unknown as SharedSkill) }), 0);
+          }}
+        />
+      </div>
       {grouped.map((g) => (
         <Card key={`${g.apparatusId}-${g.category}`}>
           <CardHeader>
@@ -65,5 +76,25 @@ export function AthleteProgressPanel({ athleteId }: Props) {
         />
       )}
     </div>
+  );
+}
+
+function AddSkillButton({ athleteId, onPickSkill }: { athleteId: number; onPickSkill: (s: HookSkill) => void }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>Add / Test Skill</Button>
+      {open && (
+        <AddAthleteSkillDialog
+          open={open}
+          onOpenChange={(o) => {
+            // Only allow closing when explicitly false or when user dismisses backdrop/close
+            if (!o) setOpen(false);
+          }}
+          athleteId={athleteId}
+          onPickSkill={(s) => onPickSkill(s)}
+        />
+      )}
+    </>
   );
 }

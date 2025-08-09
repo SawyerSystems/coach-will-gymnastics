@@ -64,13 +64,39 @@ export function useAddAthleteSkillVideo() {
 
 export function useDeleteAthleteSkillVideo() {
   return useMutation({
-    mutationFn: async (input: { id: number; athleteSkillId: number }) => {
+    mutationFn: async (input: { id: number; athleteSkillId?: number | null }) => {
       const res = await apiRequest("DELETE", `/api/admin/athlete-skill-videos/${input.id}`);
       await res.json().catch(() => ({}));
       return input;
     },
     onSuccess: (input) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/admin/athlete-skill-videos?athleteSkillId=${input.athleteSkillId}`] });
+      if (input.athleteSkillId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/admin/athlete-skill-videos?athleteSkillId=${input.athleteSkillId}`] });
+      } else {
+        // Fallback: invalidate all video lists
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/athlete-skill-videos"], exact: false });
+      }
+    },
+  });
+}
+
+// Upload a media file (video) and return a public URL
+export function useUploadMedia() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/admin/media', {
+        method: 'POST',
+        body: form,
+        // credentials handled globally; this endpoint is admin-protected
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || res.statusText);
+      }
+      const data = await res.json();
+      return data?.url as string;
     },
   });
 }

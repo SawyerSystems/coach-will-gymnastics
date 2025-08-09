@@ -103,16 +103,43 @@ export default function AthleteProgressPage() {
     const rows = Array.from(groups.entries()).map(([apId, g]: any) => {
       const mastered = g.counts["mastered"] || 0;
       const consistent = g.counts["consistent"] || 0;
+      const masteredPct = g.total ? Math.round((mastered / g.total) * 100) : 0;
+      const consistentPct = g.total ? Math.round(((mastered + consistent) / g.total) * 100) : 0;
       return {
         apparatusId: apId,
         total: g.total,
         counts: g.counts,
-        masteredPct: g.total ? Math.round((mastered / g.total) * 100) : 0,
-        consistentPct: g.total ? Math.round(((mastered + consistent) / g.total) * 100) : 0,
+        masteredPct,
+        consistentPct,
       };
     });
     // stable sort by apparatus name
     return rows.sort((a, b) => (apparatusById.get(a.apparatusId)?.name || "").localeCompare(apparatusById.get(b.apparatusId)?.name || ""));
+  }, [visibleSkills, apparatusById]);
+
+  const perApparatusLevel = useMemo(() => {
+    const map = new Map<number, Map<string, { total: number; mastered: number; consistent: number }>>();
+    visibleSkills.forEach(as => {
+      const ap = as.skill?.apparatusId; if (!ap) return;
+      const lvl = (as.skill?.level || 'Unknown').toString();
+      if (!map.has(ap)) map.set(ap, new Map());
+      const inner = map.get(ap)!;
+      if (!inner.has(lvl)) inner.set(lvl, { total: 0, mastered: 0, consistent: 0 });
+      const s = inner.get(lvl)!;
+      s.total += 1;
+      const st = (as.status || '').toString().toLowerCase();
+      if (st === 'mastered') s.mastered += 1;
+      if (st === 'consistent' || st === 'mastered') s.consistent += 1;
+    });
+    return Array.from(map.entries()).map(([ap, inner]) => ({
+      apparatusId: ap,
+      levels: Array.from(inner.entries()).map(([lvl, s]) => ({
+        level: lvl,
+        total: s.total,
+        masteredPct: s.total ? Math.round((s.mastered / s.total) * 100) : 0,
+        consistentPct: s.total ? Math.round((s.consistent / s.total) * 100) : 0,
+      })).sort((a, b) => a.level.localeCompare(b.level))
+    })).sort((a, b) => (apparatusById.get(a.apparatusId)?.name || '').localeCompare(apparatusById.get(b.apparatusId)?.name || ''));
   }, [visibleSkills, apparatusById]);
 
   return (
@@ -235,6 +262,34 @@ export default function AthleteProgressPage() {
               </Card>
             )}
           </div>
+          {perApparatusLevel.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Progress by Level</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {perApparatusLevel.map(group => (
+                    <div key={group.apparatusId}>
+                      <div className="font-medium mb-2">{apparatusById.get(group.apparatusId)?.name || `Apparatus #${group.apparatusId}`}</div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {group.levels.map(l => (
+                          <div key={l.level} className="p-2 rounded border">
+                            <div className="text-sm mb-1">Level {l.level}</div>
+                            <div className="flex items-center justify-between text-xs mb-1"><span>Mastered</span><span>{l.masteredPct}%</span></div>
+                            <Progress value={l.masteredPct} />
+                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Consistent or Mastered</span><span>{l.consistentPct}%</span></div>
+                            <Progress value={l.consistentPct} />
+                            <div className="text-[11px] text-slate-600 mt-1">Total: {l.total} {l.masteredPct === 100 ? '· Completed' : ''}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       )}
     </div>
