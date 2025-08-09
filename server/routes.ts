@@ -2220,21 +2220,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
       y -= 14;
 
-      // Table columns
+      // Table columns (space numeric columns anchored from right to prevent overlap)
+      const right = width - margin;
       const col = {
         date: margin,
         athlete: margin + 90,
         desc: margin + 230,
-        dur: margin + 390,
-        rate: width - margin - 120,
-        amount: width - margin - 50,
+        dur: right - 150,   // 150pt from right edge, before rate/amount
+        rate: right - 90,   // 60pt before amount
+        amount: right - 30, // last numeric column near right edge
       } as const;
-      drawText('Date', col.date, y, 11, bold);
-      drawText('Athlete', col.athlete, y, 11, bold);
-      drawText('Description', col.desc, y, 11, bold);
-      drawText('Dur', col.dur, y, 11, bold);
-      drawText('Rate', col.rate, y, 11, bold);
-      drawText('Amount', col.amount, y, 11, bold);
+
+      const clipText = (text: string, maxWidth: number, size = 11, f = font) => {
+        if (f.widthOfTextAtSize(text, size) <= maxWidth) return text;
+        const ell = '…';
+        let lo = 0, hi = text.length;
+        while (lo < hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          const candidate = text.slice(0, mid) + ell;
+          const w = f.widthOfTextAtSize(candidate, size);
+          if (w <= maxWidth) lo = mid + 1; else hi = mid;
+        }
+        const trimmed = text.slice(0, Math.max(0, lo - 1)) + ell;
+        return trimmed;
+      };
+  drawText('Date', col.date, y, 11, bold);
+  drawText('Athlete', col.athlete, y, 11, bold);
+  drawText('Description', col.desc, y, 11, bold);
+  drawText('Dur', col.dur, y, 11, bold);
+  // Right-align headers for numeric columns for consistency
+  page.drawText('Rate', { x: col.rate - bold.widthOfTextAtSize('Rate', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
+  page.drawText('Amount', { x: col.amount - bold.widthOfTextAtSize('Amount', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
       y -= 12;
       page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
       y -= 8;
@@ -2249,8 +2265,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           drawText('Athlete', col.athlete, y, 11, bold);
           drawText('Description', col.desc, y, 11, bold);
           drawText('Dur', col.dur, y, 11, bold);
-          drawText('Rate', pw - margin - 120, y, 11, bold);
-          drawText('Amount', pw - margin - 50, y, 11, bold);
+          page.drawText('Rate', { x: col.rate - bold.widthOfTextAtSize('Rate', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
+          page.drawText('Amount', { x: col.amount - bold.widthOfTextAtSize('Amount', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
           y -= 12;
           page.drawLine({ start: { x: margin, y }, end: { x: pw - margin, y }, thickness: 1, color: lineGray });
           y -= 8;
@@ -2265,13 +2281,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (idx % 2 === 1) {
           page.drawRectangle({ x: margin - 2, y: y - 2, width: width - margin * 2 + 4, height: 16, color: lightGray });
         }
-        drawText(String(row.date), col.date, y);
-        drawText(String(row.athleteName || 'Athlete'), col.athlete, y);
-        const desc = row.description || (row.member != null ? (row.member ? 'Member session' : 'Non-member session') : 'Session');
-        drawText(desc, col.desc, y);
-        drawText(row.durationMinutes ? `${row.durationMinutes}` : '', col.dur, y);
-        drawText(rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-', col.rate, y);
-        drawText(amountUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }), col.amount, y);
+  // Clip text to prevent column overlap
+  const athleteMaxW = col.desc - col.athlete - 8;
+  const descMaxW = col.dur - col.desc - 8;
+  drawText(String(row.date), col.date, y);
+  drawText(clipText(String(row.athleteName || 'Athlete'), athleteMaxW), col.athlete, y);
+  const desc = row.description || (row.member != null ? (row.member ? 'Member session' : 'Non-member session') : 'Session');
+  drawText(clipText(desc, descMaxW), col.desc, y);
+  drawText(row.durationMinutes ? `${row.durationMinutes}` : '', col.dur, y);
+  // Right-align numeric cells
+  const rateStr = rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-';
+  const amountStr = amountUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+  page.drawText(rateStr, { x: col.rate - font.widthOfTextAtSize(rateStr, 11), y, size: 11, font, color: rgb(0,0,0) });
+  page.drawText(amountStr, { x: col.amount - font.widthOfTextAtSize(amountStr, 11), y, size: 11, font, color: rgb(0,0,0) });
         y -= 16;
       });
 

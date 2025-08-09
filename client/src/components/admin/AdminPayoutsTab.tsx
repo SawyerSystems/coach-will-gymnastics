@@ -442,6 +442,8 @@ type InvoiceLine = {
 	rateDollars?: string; // UI only; convert to cents
 	amountDollars?: string; // UI only; convert to cents
 	description?: string;
+	// internal flags
+	_userEditedRate?: boolean;
 };
 
 function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: string; defaultEnd: string }) {
@@ -473,6 +475,23 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 	const addLine = () => setLines((ls) => [...ls, { date: todayISO }]);
 	const removeLine = (idx: number) => setLines((ls) => ls.filter((_, i) => i !== idx));
 	const updateLine = (idx: number, patch: Partial<InvoiceLine>) => setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+
+	// Fetch active payout rates to auto-fill rate when duration+member are chosen
+	const { data: activeRates = [] } = usePayoutRates('active');
+	const rateLookup = useMemo(() => {
+		const m = new Map<string, number>();
+		for (const r of activeRates) {
+			const key = `${r.duration_minutes}:${r.is_member ? '1' : '0'}`;
+			m.set(key, r.rate_cents);
+		}
+		return m;
+	}, [activeRates]);
+	const getRateDollars = (duration?: number, member?: boolean): string | undefined => {
+		if (!duration || typeof member !== 'boolean') return undefined;
+		const cents = rateLookup.get(`${duration}:${member ? '1' : '0'}`);
+		if (typeof cents === 'number') return (cents / 100).toFixed(2);
+		return undefined;
+	};
 
 	function getApiBaseUrl() {
 		if (import.meta.env.MODE === 'development') return 'http://localhost:5001';
@@ -631,7 +650,17 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 											<Input type="date" value={l.date} onChange={(e) => updateLine(idx, { date: e.target.value })} />
 										</td>
 															<td className="px-3 py-2 w-28">
-																<Select value={l.durationMinutes ? String(l.durationMinutes) : 'none'} onValueChange={(v) => updateLine(idx, { durationMinutes: v === 'none' ? undefined : Number(v) })}>
+																<Select
+																					value={l.durationMinutes ? String(l.durationMinutes) : 'none'}
+																					onValueChange={(v) => {
+																						const dur = v === 'none' ? undefined : Number(v);
+																						const autoRate = (!l._userEditedRate) ? getRateDollars(dur, l.member) : undefined;
+																						updateLine(idx, {
+																							durationMinutes: dur,
+																							...(autoRate ? { rateDollars: autoRate } : {}),
+																						});
+																					}}
+																				>
 												<SelectTrigger>
 													<SelectValue placeholder="—" />
 												</SelectTrigger>
@@ -643,10 +672,29 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 											</Select>
 										</td>
 										<td className="px-3 py-2 text-center">
-											<Switch checked={!!l.member} onCheckedChange={(v) => updateLine(idx, { member: v })} />
+											<Switch
+																checked={!!l.member}
+																onCheckedChange={(v) => {
+																	const autoRate = (!l._userEditedRate) ? getRateDollars(l.durationMinutes, v) : undefined;
+																	updateLine(idx, {
+																		member: v,
+																		...(autoRate ? { rateDollars: autoRate } : {}),
+																	});
+																}}
+															/>
 										</td>
 										<td className="px-3 py-2">
-											<Input inputMode="decimal" placeholder="0.00" value={l.rateDollars || ''} onChange={(e) => updateLine(idx, { rateDollars: e.target.value })} className="text-right" />
+											<Input
+																inputMode="decimal"
+																placeholder="0.00"
+																value={l.rateDollars || ''}
+																onChange={(e) => {
+																	const val = e.target.value;
+																	// mark as user-edited when non-empty; if cleared, allow auto-fill on next dur/member change
+																	updateLine(idx, { rateDollars: val, _userEditedRate: val.trim() !== '' });
+																}}
+																className="text-right"
+															/>
 										</td>
 										<td className="px-3 py-2">
 											<Input inputMode="decimal" placeholder="0.00" value={l.amountDollars || ''} onChange={(e) => updateLine(idx, { amountDollars: e.target.value })} className="text-right" />
