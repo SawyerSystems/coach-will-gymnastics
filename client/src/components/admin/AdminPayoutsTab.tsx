@@ -575,14 +575,14 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 						<Plus className="h-4 w-4 mr-2" /> Manual Invoice
 					</Button>
 				</DialogTrigger>
-				<DialogContent className="max-w-4xl p-0 overflow-hidden">
-					<div className="border-b px-6 py-4 bg-gradient-to-r from-white to-slate-50/60">
+				<DialogContent className="w-[96vw] max-w-6xl p-0 overflow-hidden rounded-2xl border shadow-2xl">
+		    <div className="border-b px-6 py-4 bg-gradient-to-r from-white to-slate-50/60">
 						<DialogHeader className="space-y-1">
-							<DialogTitle className="text-lg font-semibold tracking-tight">Create Manual Invoice</DialogTitle>
-							<p className="text-xs text-muted-foreground">Generate a branded PDF invoice with custom line items and notes.</p>
+			    <DialogTitle className="text-xl font-bold tracking-tight text-slate-800">Create Manual Invoice</DialogTitle>
+			    <p className="text-xs text-muted-foreground">Generate a branded PDF invoice with custom line items and notes.</p>
 						</DialogHeader>
 					</div>
-					<div className="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
+		    <div className="px-6 py-5 space-y-6 max-h-[72vh] overflow-y-auto bg-gradient-to-b from-white to-slate-50/30">
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<div className="space-y-1">
 								<Label>Title</Label>
@@ -609,30 +609,30 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 
 						<div className="space-y-3">
 							<div className="flex items-center justify-between">
-								<div className="font-semibold tracking-tight">Line Items</div>
+								<div className="font-semibold tracking-tight text-slate-800">Line Items</div>
 								<Button size="sm" variant="secondary" onClick={addLine}><Plus className="h-4 w-4 mr-1" /> Add line</Button>
 							</div>
-							<div className="overflow-x-auto rounded-md border bg-white shadow-sm">
-								<table className="w-full text-sm border-collapse">
+							<div className="overflow-x-auto rounded-lg border bg-white/90 shadow-md">
+								<table className="w-full text-sm border-collapse table-fixed">
 									<thead className="bg-slate-50 sticky top-0 z-10 shadow-xs">
 										<tr className="text-[11px] uppercase tracking-wide text-slate-600">
-											<th className="text-left px-3 py-2 font-medium">Athlete</th>
-											<th className="text-left px-3 py-2 font-medium">Custom name</th>
-											<th className="text-left px-3 py-2 font-medium">Date</th>
-											<th className="text-left px-3 py-2 font-medium">Dur</th>
-											<th className="text-left px-3 py-2 font-medium">Member</th>
-											<th className="text-right px-3 py-2 font-medium">Rate $</th>
-											<th className="text-right px-3 py-2 font-medium">Amount $</th>
-											<th className="text-left px-3 py-2 font-medium">Description</th>
-											<th className="px-2 py-2" />
+											<th className="text-left px-3 py-2 font-medium w-[220px]">Athlete</th>
+											<th className="text-left px-3 py-2 font-medium w-[240px]">Custom name</th>
+											<th className="text-left px-3 py-2 font-medium w-[160px]">Date</th>
+											<th className="text-left px-3 py-2 font-medium w-[100px]">Dur</th>
+											<th className="text-left px-3 py-2 font-medium w-[100px]">Member</th>
+											<th className="text-right px-3 py-2 font-medium w-[140px]">Rate $</th>
+											<th className="text-right px-3 py-2 font-medium w-[140px]">Amount $</th>
+											<th className="text-left px-3 py-2 font-medium w-[320px]">Description</th>
+											<th className="px-2 py-2 w-[48px]" />
 										</tr>
 									</thead>
 									<tbody className="divide-y divide-slate-100">
 								{lines.map((l, idx) => (
-									<tr key={idx} className="border-t align-top">
-															<td className="px-3 py-2 min-w-[180px]">
+									<tr key={idx} className="border-t align-top odd:bg-slate-50/40 hover:bg-slate-50/70 transition-colors">
+															<td className="px-3 py-2 min-w-[220px]">
 																<Select value={l.athleteId ? String(l.athleteId) : 'none'} onValueChange={(v) => updateLine(idx, { athleteId: v === 'none' ? undefined : Number(v) })}>
-												<SelectTrigger>
+																	<SelectTrigger className="w-full">
 													<SelectValue placeholder="Select athlete (optional)" />
 												</SelectTrigger>
 												<SelectContent>
@@ -643,13 +643,13 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 												</SelectContent>
 											</Select>
 										</td>
-										<td className="px-3 py-2">
-											<Input value={l.athleteName || ''} onChange={(e) => updateLine(idx, { athleteName: e.target.value })} placeholder="Or type a custom name" />
+										<td className="px-3 py-2 min-w-[240px]">
+											<Input className="w-full" value={l.athleteName || ''} onChange={(e) => updateLine(idx, { athleteName: e.target.value })} placeholder="Or type a custom name" />
 										</td>
-										<td className="px-3 py-2">
-											<Input type="date" value={l.date} onChange={(e) => updateLine(idx, { date: e.target.value })} />
+										<td className="px-3 py-2 min-w-[160px]">
+											<Input className="w-full" type="date" value={l.date} onChange={(e) => updateLine(idx, { date: e.target.value })} />
 										</td>
-															<td className="px-3 py-2 w-28">
+															<td className="px-3 py-2 min-w-[100px]">
 																<Select
 																					value={l.durationMinutes ? String(l.durationMinutes) : 'none'}
 																					onValueChange={(v) => {
@@ -671,7 +671,7 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 												</SelectContent>
 											</Select>
 										</td>
-										<td className="px-3 py-2 text-center">
+										<td className="px-3 py-2 text-center min-w-[100px]">
 											<Switch
 																checked={!!l.member}
 																onCheckedChange={(v) => {
@@ -683,7 +683,7 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 																}}
 															/>
 										</td>
-										<td className="px-3 py-2">
+										<td className="px-3 py-2 min-w-[140px]">
 											<Input
 																inputMode="decimal"
 																placeholder="0.00"
@@ -693,16 +693,16 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 																	// mark as user-edited when non-empty; if cleared, allow auto-fill on next dur/member change
 																	updateLine(idx, { rateDollars: val, _userEditedRate: val.trim() !== '' });
 																}}
-																className="text-right"
+						  className="text-right w-full"
 															/>
 										</td>
-										<td className="px-3 py-2">
-											<Input inputMode="decimal" placeholder="0.00" value={l.amountDollars || ''} onChange={(e) => updateLine(idx, { amountDollars: e.target.value })} className="text-right" />
+										<td className="px-3 py-2 min-w-[140px]">
+											<Input inputMode="decimal" placeholder="0.00" value={l.amountDollars || ''} onChange={(e) => updateLine(idx, { amountDollars: e.target.value })} className="text-right w-full" />
 										</td>
-										<td className="px-3 py-2">
-											<Input placeholder="Description" value={l.description || ''} onChange={(e) => updateLine(idx, { description: e.target.value })} />
+										<td className="px-3 py-2 min-w-[320px]">
+											<Input className="w-full" placeholder="Description" value={l.description || ''} onChange={(e) => updateLine(idx, { description: e.target.value })} />
 										</td>
-										<td className="px-3 py-2">
+					<td className="px-3 py-2">
 											<Button size="icon" variant="ghost" onClick={() => removeLine(idx)} aria-label="Remove line">
 												<Trash2 className="h-4 w-4" />
 											</Button>
@@ -717,11 +717,11 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 				</div>
 						</div>
 					</div>
-					<div className="px-6 py-4 border-t bg-slate-50 flex items-center justify-between">
+		    <div className="px-6 py-4 border-t bg-slate-50/80 backdrop-blur flex items-center justify-between">
 						<p className="text-[11px] text-muted-foreground">All currency values should be entered in dollars (will be converted to cents).</p>
 						<div className="space-x-2">
 							<Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-							<Button onClick={onSubmit}>Generate PDF</Button>
+			    <Button onClick={onSubmit}>Generate PDF</Button>
 						</div>
 					</div>
 				</DialogContent>
