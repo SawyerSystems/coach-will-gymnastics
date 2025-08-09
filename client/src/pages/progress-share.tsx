@@ -67,17 +67,16 @@ export default function ProgressSharePage() {
                 <div>
                   <div className="text-sm font-medium mb-1 text-slate-700">Total Skills: {data.skills.length}</div>
                   <div className="grid grid-cols-2 gap-3">
-                    {['Mastered', 'In Progress', 'Consistent', 'Developing'].map(status => {
-                      const count = data.skills.filter(s => s.athleteSkill.status?.toLowerCase() === status.toLowerCase()).length;
-                      const colors = {
-                        'Mastered': 'bg-green-100 text-green-800 border-green-200',
-                        'In Progress': 'bg-blue-100 text-blue-800 border-blue-200',
-                        'Consistent': 'bg-purple-100 text-purple-800 border-purple-200',
-                        'Developing': 'bg-amber-100 text-amber-800 border-amber-200',
-                      };
+                    {[
+                      { key: 'mastered', label: 'Mastered', classes: 'bg-green-100 text-green-800 border-green-200' },
+                      { key: 'consistent', label: 'Consistent', classes: 'bg-purple-100 text-purple-800 border-purple-200' },
+                      { key: 'working', label: 'Working', classes: 'bg-blue-100 text-blue-800 border-blue-200' },
+                      { key: 'learning', label: 'Learning', classes: 'bg-amber-100 text-amber-800 border-amber-200' },
+                    ].map(({ key, label, classes }) => {
+                      const count = data.skills.filter(s => (s.athleteSkill.status || '').toLowerCase() === key).length;
                       return (
-                        <div key={status} className={`rounded-lg border p-3 ${colors[status] || 'bg-slate-100 text-slate-800 border-slate-200'}`}>
-                          <div className="text-xs font-semibold">{status}</div>
+                        <div key={key} className={`rounded-lg border p-3 ${classes}`}>
+                          <div className="text-xs font-semibold">{label}</div>
                           <div className="text-xl font-bold">{count}</div>
                         </div>
                       );
@@ -99,7 +98,7 @@ export default function ProgressSharePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {data.skills.filter(s => s.athleteSkill.status?.toLowerCase() === 'mastered').slice(0, 3).map((s) => (
+              {data.skills.filter(s => (s.athleteSkill.status || '').toLowerCase() === 'mastered').slice(0, 3).map((s) => (
                 <div key={s.athleteSkill.id} className="flex items-center gap-3 py-2">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -110,7 +109,7 @@ export default function ProgressSharePage() {
                   </div>
                 </div>
               ))}
-              {data.skills.filter(s => s.athleteSkill.status?.toLowerCase() === 'mastered').length === 0 && (
+              {data.skills.filter(s => (s.athleteSkill.status || '').toLowerCase() === 'mastered').length === 0 && (
                 <div className="text-center py-6 text-slate-500">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                   <p className="text-sm">No mastered skills yet</p>
@@ -136,7 +135,7 @@ export default function ProgressSharePage() {
                 <Badge className={
                   s.athleteSkill.status.toLowerCase() === 'mastered' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 
                   s.athleteSkill.status.toLowerCase() === 'consistent' ? 'bg-purple-100 text-purple-800 hover:bg-purple-100' :
-                  s.athleteSkill.status.toLowerCase() === 'in progress' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
+                  s.athleteSkill.status.toLowerCase() === 'working' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
                   'bg-amber-100 text-amber-800 hover:bg-amber-100'
                 }>
                   {s.athleteSkill.status}
@@ -146,7 +145,10 @@ export default function ProgressSharePage() {
             <div className="flex items-center mt-1 text-xs text-slate-500">
               <span className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                {new Date(s.athleteSkill.updatedAt || s.athleteSkill.createdAt).toLocaleDateString()}
+                {(() => {
+                  const d = (s.athleteSkill.updatedAt ?? s.athleteSkill.createdAt) as any;
+                  return d ? new Date(d).toLocaleDateString() : '—';
+                })()}
               </span>
               {s.skill?.level && (
                 <>
@@ -154,10 +156,10 @@ export default function ProgressSharePage() {
                   <span>Level: {s.skill.level}</span>
                 </>
               )}
-              {s.skill?.apparatus?.name && (
+              {s.skill?.category && (
                 <>
                   <span className="mx-2">•</span>
-                  <span>{s.skill.apparatus.name}</span>
+                  <span>Category: {s.skill.category}</span>
                 </>
               )}
             </div>
