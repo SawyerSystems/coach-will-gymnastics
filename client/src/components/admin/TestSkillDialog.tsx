@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAddAthleteSkillVideo, useAthleteSkillVideos, useUpsertAthleteSkill, useUploadMedia, useDeleteAthleteSkillVideo } from "@/hooks/useAthleteProgress";
 import type { InsertAthleteSkill, Skill } from "@shared/schema";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
   open: boolean;
@@ -65,6 +65,13 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
     onOpenChange(false);
   };
 
+  useEffect(() => {
+    if (open) {
+      // Focus notes when dialog opens
+      requestAnimationFrame(() => notesRef.current?.focus());
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
@@ -85,6 +92,11 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
                   key={opt.key}
                   type="button"
                   variant={status === opt.key ? "default" : "outline"}
+                  onMouseDown={(e) => {
+                    // Avoid moving focus to the button on click and immediately focus notes
+                    e.preventDefault();
+                    notesRef.current?.focus();
+                  }}
                   onClick={() => {
                     setStatus(opt.key);
                     // After selecting status, focus notes so the next keystroke goes into the textarea
@@ -111,6 +123,7 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
             <Textarea
               id="notes"
               ref={notesRef}
+              autoFocus
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Observations, next steps, drills..."
