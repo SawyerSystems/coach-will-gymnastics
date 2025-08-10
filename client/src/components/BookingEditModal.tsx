@@ -402,37 +402,36 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     setTab('general');
   };
   
-  // Update mutation with comprehensive error handling and data validation
+  // Update mutation: validate only when fields are supplied; allow partial updates
   const updateBookingMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log("Sending booking update data:", data);
-      
+
       try {
-        // Validate athletes before sending
-        if (!Array.isArray(data.athletes) || data.athletes.length === 0) {
-          throw new Error("At least one athlete is required");
+        // If athletes are provided, validate them; otherwise allow partial update
+        if (data.athletes !== undefined) {
+          if (!Array.isArray(data.athletes) || data.athletes.length === 0) {
+            throw new Error("At least one athlete is required");
+          }
+          const validAthletes = data.athletes.filter((a: { athleteId?: number | null }) => a && a.athleteId);
+          if (validAthletes.length === 0) {
+            throw new Error("Please select valid athletes");
+          }
         }
-        
-        // Ensure all athlete IDs are valid
-        const validAthletes = data.athletes.filter((a: {athleteId?: number | null}) => a && a.athleteId);
-        if (validAthletes.length === 0) {
-          throw new Error("Please select valid athletes");
-        }
-        
-        // Validate parent ID
-        if (!data.parentId) {
+
+        // If parentId is provided, validate it
+        if (data.parentId !== undefined && !data.parentId) {
           throw new Error("Parent selection is required");
         }
-        
-        // Send update request
+
         const response = await apiRequest('PATCH', `/api/bookings/${booking.id}`, data);
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Booking update failed:", errorData);
           throw new Error(errorData.message || 'Failed to update booking');
         }
-        
+
         const result = await response.json();
         console.log("Booking update successful:", result);
         return result;
@@ -820,72 +819,188 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     e.preventDefault();
     
     try {
-      // Run form validation
-      if (!validateForm()) {
-        return;
-      }
-      
-      // Convert paid amount to decimal
-      const numericPaidAmount = parseFloat(paidAmount);
-      if (isNaN(numericPaidAmount)) {
-        toast({
-          title: "Invalid Amount",
-          description: "Please enter a valid number for paid amount.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Clean up athlete data before sending
-      const cleanedAthletes = Array.isArray(bookingAthletes) 
-        ? bookingAthletes
-            .filter((a: { athleteId: number | null }) => a && (a.athleteId !== null && a.athleteId !== undefined)) 
-            .map((a: { athleteId: number | null }) => ({ athleteId: a.athleteId }))
-        : [];
-      
-      // Add validation for at least one athlete
-      if (cleanedAthletes.length === 0) {
-        setIsValidationError(true);
-        setValidationMessage("Please select at least one athlete.");
-        setTab('athletes'); // Switch to athletes tab
-        return;
-      }
-      
-      // Prepare complete booking data for update
-      const bookingData = {
-        status: derivedStatus, // Use the derived status based on payment and attendance
-        paymentStatus,
-        attendanceStatus,
-        developerMode: isDevMode, // Pass this flag to the API
-        paidAmount: numericPaidAmount,
-        adminNotes,
-        specialRequests,
-        lessonTypeId: selectedLessonTypeId,
-        focusAreas,
-        focusAreaOther,
-        athletes: cleanedAthletes,
-        parentId: selectedParentId,
-        
-        // Safety information
-        dropoffPersonName,
-        dropoffPersonRelationship,
-        dropoffPersonPhone,
-        pickupPersonName,
-        pickupPersonRelationship,
-        pickupPersonPhone,
-        altPickupPersonName,
-        altPickupPersonRelationship,
-        altPickupPersonPhone,
-        
-        // Add timestamp for the update
-        updatedAt: new Date().toISOString(),
+      // Use bookingDetails when available for accurate comparisons, else fallback to initial booking
+      const original = bookingDetails || booking;
+
+      // Helpers
+      const normalizeAthleteIds = (arr: any[] | undefined): number[] => {
+        if (!Array.isArray(arr)) return [];
+        return arr
+          .map((a: any) => (a?.athleteId ?? a?.id ?? null))
+          .filter((id: any) => typeof id === 'number');
       };
-      
-      console.log("Submitting booking update:", bookingData);
-      
-      // Submit data to the mutation
-      updateBookingMutation.mutate(bookingData);
-      
+      const arraysEqualUnordered = (a: any[] = [], b: any[] = []) => {
+        if (a.length !== b.length) return false;
+        const sa = [...a].sort();
+        const sb = [...b].sort();
+        return sa.every((v, i) => v === sb[i]);
+      };
+
+      // Determine changes
+      const origPayment = original.paymentStatus || 'unpaid';
+      const origAttendance = original.attendanceStatus || 'pending';
+      const origPaidAmount = Number(original.paidAmount ?? 0);
+      const origAdminNotes = original.adminNotes || '';
+      const origSpecialRequests = original.specialRequests || '';
+      const origLessonTypeId = original.lessonType?.id ?? original.lessonTypeId ?? 0;
+      const origFocusAreas: string[] = Array.isArray(original.focusAreas) ? original.focusAreas : [];
+      const origFocusOther = original.focusAreaOther || '';
+      const origParentId = original.parent?.id ?? original.parentId ?? null;
+      const origAthleteIds = normalizeAthleteIds(original.athletes);
+
+      const newAthleteIds = normalizeAthleteIds(
+        (Array.isArray(bookingAthletes) ? bookingAthletes : [])
+          .filter((a: any) => a && a.athleteId != null)
+      );
+
+      const changed: Record<string, boolean> = {
+        paymentStatus: paymentStatus !== origPayment,
+        attendanceStatus: attendanceStatus !== origAttendance,
+        paidAmount: (() => {
+          const n = parseFloat(paidAmount);
+          return !isNaN(n) && n !== origPaidAmount;
+        })(),
+        adminNotes: adminNotes !== origAdminNotes,
+        specialRequests: specialRequests !== origSpecialRequests,
+        lessonTypeId: selectedLessonTypeId !== origLessonTypeId,
+        focusAreas: !arraysEqualUnordered(focusAreas, origFocusAreas),
+        focusAreaOther: focusAreaOther !== origFocusOther,
+        parentId: selectedParentId !== origParentId,
+        athletes: !arraysEqualUnordered(newAthleteIds, origAthleteIds),
+        dropoff: (
+          dropoffPersonName !== (original.dropoffPersonName || '') ||
+          dropoffPersonRelationship !== (original.dropoffPersonRelationship || '') ||
+          dropoffPersonPhone !== (original.dropoffPersonPhone || '')
+        ),
+        pickup: (
+          pickupPersonName !== (original.pickupPersonName || '') ||
+          pickupPersonRelationship !== (original.pickupPersonRelationship || '') ||
+          pickupPersonPhone !== (original.pickupPersonPhone || '')
+        ),
+        altPickup: (
+          altPickupPersonName !== (original.altPickupPersonName || '') ||
+          altPickupPersonRelationship !== (original.altPickupPersonRelationship || '') ||
+          altPickupPersonPhone !== (original.altPickupPersonPhone || '')
+        ),
+      };
+
+      const anythingChanged = Object.values(changed).some(Boolean);
+      if (!anythingChanged) {
+        toast({ title: 'No changes', description: 'There are no changes to save.' });
+        return;
+      }
+
+      // Conditional validation only for changed sections
+      // If any safety field changed, ensure required fields are present and phone formats are valid
+      const phoneRegex = /^[\d\+\-\(\)\s\.]+$/;
+      if (changed.dropoff || changed.pickup) {
+        if (!dropoffPersonName || !dropoffPersonRelationship || !dropoffPersonPhone) {
+          setIsValidationError(true);
+          setValidationMessage("Please fill in all required drop-off information.");
+          setTab('safety');
+          return;
+        }
+        if (!pickupPersonName || !pickupPersonRelationship || !pickupPersonPhone) {
+          setIsValidationError(true);
+          setValidationMessage("Please fill in all required pickup information.");
+          setTab('safety');
+          return;
+        }
+        if (dropoffPersonPhone && !phoneRegex.test(dropoffPersonPhone)) {
+          setIsValidationError(true);
+          setValidationMessage("Drop-off person phone number contains invalid characters.");
+          setTab('safety');
+          return;
+        }
+        if (pickupPersonPhone && !phoneRegex.test(pickupPersonPhone)) {
+          setIsValidationError(true);
+          setValidationMessage("Pickup person phone number contains invalid characters.");
+          setTab('safety');
+          return;
+        }
+        if (altPickupPersonPhone && !phoneRegex.test(altPickupPersonPhone)) {
+          setIsValidationError(true);
+          setValidationMessage("Alternative pickup person phone number contains invalid characters.");
+          setTab('safety');
+          return;
+        }
+      }
+
+      if (changed.parentId && !selectedParentId) {
+        setIsValidationError(true);
+        setValidationMessage("Please select a parent for this booking.");
+        setTab('athletes');
+        return;
+      }
+
+      if (changed.athletes) {
+        if (newAthleteIds.length === 0) {
+          setIsValidationError(true);
+          setValidationMessage("Please select at least one athlete.");
+          setTab('athletes');
+          return;
+        }
+      }
+
+      if (changed.focusAreas) {
+        if (!Array.isArray(focusAreas) || focusAreas.length === 0) {
+          setIsValidationError(true);
+          setValidationMessage("Please add at least one focus area.");
+          setTab('general');
+          return;
+        }
+      }
+
+      // Build payload only with changed fields
+      const payload: any = { updatedAt: new Date().toISOString() };
+
+      // Status handling: include payment/attendance, and include derived status; only send if changed
+      if (changed.paymentStatus) payload.paymentStatus = paymentStatus;
+      if (changed.attendanceStatus) payload.attendanceStatus = attendanceStatus;
+      if (changed.paymentStatus || changed.attendanceStatus || isDevMode) {
+        payload.status = derivedStatus;
+        if (isDevMode) payload.developerMode = true;
+      }
+
+      if (changed.paidAmount) {
+        const n = parseFloat(paidAmount);
+        if (isNaN(n)) {
+          toast({ title: 'Invalid Amount', description: 'Please enter a valid number for paid amount.', variant: 'destructive' });
+          return;
+        }
+        payload.paidAmount = n;
+      }
+
+      if (changed.adminNotes) payload.adminNotes = adminNotes;
+      if (changed.specialRequests) payload.specialRequests = specialRequests;
+      if (changed.lessonTypeId) payload.lessonTypeId = selectedLessonTypeId;
+      if (changed.focusAreas) payload.focusAreas = focusAreas;
+      if (changed.focusAreaOther) payload.focusAreaOther = focusAreaOther;
+      if (changed.parentId) payload.parentId = selectedParentId;
+
+      if (changed.athletes) {
+        payload.athletes = newAthleteIds.map((id) => ({ athleteId: id }));
+      }
+
+      if (changed.dropoff) {
+        payload.dropoffPersonName = dropoffPersonName;
+        payload.dropoffPersonRelationship = dropoffPersonRelationship;
+        payload.dropoffPersonPhone = dropoffPersonPhone;
+      }
+      if (changed.pickup) {
+        payload.pickupPersonName = pickupPersonName;
+        payload.pickupPersonRelationship = pickupPersonRelationship;
+        payload.pickupPersonPhone = pickupPersonPhone;
+      }
+      if (changed.altPickup) {
+        payload.altPickupPersonName = altPickupPersonName;
+        payload.altPickupPersonRelationship = altPickupPersonRelationship;
+        payload.altPickupPersonPhone = altPickupPersonPhone;
+      }
+
+      console.log("Submitting booking update:", payload);
+      updateBookingMutation.mutate(payload);
+
     } catch (error: any) {
       console.error("Error in form submission:", error);
       toast({
