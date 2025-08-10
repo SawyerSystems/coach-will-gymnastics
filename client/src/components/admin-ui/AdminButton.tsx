@@ -2,15 +2,18 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export type AdminButtonVariant =
-  | "primary" // athletes tab style
+  | "primary" // gradient primary (athletes CTA)
   | "secondary" // glass outline
-  | "destructive" // red gradient
-  | "ghost"; // minimal
+  | "destructive" // red gradient CTA
+  | "ghost" // minimal
+  | "iconBlue" // athletes small icon (view)
+  | "iconGreen" // athletes small icon (edit)
+  | "iconRed"; // athletes small icon (delete)
 
 export interface AdminButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: AdminButtonVariant;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "icon";
 }
 
 const base =
@@ -20,6 +23,7 @@ const sizes: Record<NonNullable<AdminButtonProps["size"]>, string> = {
   sm: "h-9 px-3 rounded-lg text-sm",
   md: "h-10 px-4 rounded-xl",
   lg: "h-12 px-6 rounded-2xl text-lg",
+  icon: "h-9 w-9 p-0 rounded-xl text-sm",
 };
 
 const variants: Record<AdminButtonVariant, string> = {
@@ -31,6 +35,12 @@ const variants: Record<AdminButtonVariant, string> = {
     "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md hover:shadow-lg",
   ghost:
     "bg-transparent hover:bg-white/50 dark:hover:bg-white/10",
+  iconBlue:
+    "bg-white hover:bg-blue-50 text-blue-600 border-0 shadow-md hover:shadow-lg",
+  iconGreen:
+    "bg-white hover:bg-green-50 text-green-600 border-0 shadow-md hover:shadow-lg",
+  iconRed:
+    "bg-white hover:bg-red-50 text-red-600 border-0 shadow-md hover:shadow-lg",
 };
 
 export const AdminButton = React.forwardRef<HTMLButtonElement, AdminButtonProps>(

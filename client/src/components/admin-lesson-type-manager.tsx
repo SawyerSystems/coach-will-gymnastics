@@ -461,20 +461,20 @@ export function AdminLessonTypeManager() {
                 </div>
                 <div className="flex gap-2">
                   <AdminButton
-                    variant="secondary"
-                    size={"sm" as any}
+                    variant="iconGreen"
+                    size="icon"
                     onClick={() => handleEdit(lessonType)}
                     disabled={showForm}
-                    className="rounded-lg px-3 py-2"
+                    title="Edit Lesson Type"
                   >
                     <Edit className="h-4 w-4" />
                   </AdminButton>
                   <AdminButton
-                    variant="destructive"
-                    size={"sm" as any}
+                    variant="iconRed"
+                    size="icon"
                     onClick={() => handleDelete(lessonType.id)}
                     disabled={showForm || deleteMutation.isPending}
-                    className="rounded-lg px-3 py-2"
+                    title="Delete Lesson Type"
                   >
                     <Trash2 className="h-4 w-4" />
                   </AdminButton>
