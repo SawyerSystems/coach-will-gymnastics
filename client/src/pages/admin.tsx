@@ -1452,14 +1452,14 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 dark:bg-[#0F0276] dark:from-[#0F0276] dark:via-[#0F0276] dark:to-[#0F0276] backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Booking Management
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0 dark:text-white">
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0 text-[#0F0276] dark:text-white">
                 <AdminBookingManager 
                   openAthleteModal={openAthleteModal}
                   selectedBooking={selectedBooking}
