@@ -781,7 +781,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             },
           ]}
           // Tab list should sit above, have its own height, and not block below
-          listClassName="relative z-10 mb-4 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:gap-2 pointer-events-auto shadow-sm"
+          listClassName="relative z-10 mb-8 sm:mb-4 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:gap-2 pointer-events-auto shadow-sm"
           triggerClassName="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto min-w-0 border-2 data-[state=inactive]:border-[#D8BD2A] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
         >
           <TabsContent value="active">
