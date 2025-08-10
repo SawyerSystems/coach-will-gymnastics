@@ -754,36 +754,41 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
 
   return (
     <>
-      {/* Modern Tabs for Active/Archived */}
-      <AdminContentTabs
-        value={tab}
-        onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')}
-        items={[
-          {
-            value: "active",
-            label: "Active Bookings",
-            icon: <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
-            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
-          },
-          {
-            value: "calendar",
-            label: "Calendar View",
-            icon: <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
-            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
-          },
-          {
-            value: "archived",
-            label: "Archived Bookings",
-            icon: <FileCheck className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
-            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
-          },
-        ]}
-  listClassName="mb-8 sm:mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-2 gap-2 sm:flex sm:gap-2 overflow-visible"
-  triggerClassName="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto min-w-0 border-2 data-[state=inactive]:border-[#D8BD2A] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
-      >
-        <TabsContent value="active">
+      {/* Isolation container so the tab list doesn’t overlay content */}
+      <div className="relative isolate mb-8 pt-8 pb-8 border-b border-slate-200/60 dark:border-white/20">
+        {/* Modern Tabs for Active/Archived */}
+        <AdminContentTabs
+          value={tab}
+          onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')}
+          items={[
+            {
+              value: "active",
+              label: "Active Bookings",
+              icon: <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
+              activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+            },
+            {
+              value: "calendar",
+              label: "Calendar View",
+              icon: <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
+              activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+            },
+            {
+              value: "archived",
+              label: "Archived Bookings",
+              icon: <FileCheck className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
+              activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+            },
+          ]}
+          // Tab list should sit above, have its own height, and not block below
+          listClassName="relative z-10 mb-4 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:gap-2 pointer-events-auto shadow-sm"
+          triggerClassName="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto min-w-0 border-2 data-[state=inactive]:border-[#D8BD2A] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
+        >
+          <TabsContent value="active">
+            {/* CONTENT: push it down and ensure it’s clickable */}
+            <div className="relative z-0 mt-6 pointer-events-auto">
           {/* Modern Header Section */}
-          <div className="rounded-xl p-6 mb-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 text-[#0F0276] dark:bg-[#2A4A9B] dark:text-white dark:border-white/20">
+          <div className="mt-6 rounded-xl p-6 mb-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 text-[#0F0276] dark:bg-[#2A4A9B] dark:text-white dark:border-white/20">
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3 mb-2 text-[#0F0276] dark:text-white">
@@ -1197,101 +1202,107 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             adminContext={adminBookingContext}
             preSelectedAthleteId={preSelectedAthleteId}
           />
+          </div>
         </TabsContent>
         <TabsContent value="calendar">
-      {/* Calendar Header */}
-  <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 dark:bg-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-        <h2 className="text-2xl font-bold text-[#0F0276] dark:text-white">Calendar View</h2>
-        <p className="text-slate-600 dark:text-white">Manage bookings in a visual calendar format</p>
-              </div>
-              <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-white text-[#0F0276] border border-slate-200 dark:border-[#D8BD2A] dark:border-2 rounded-md px-3 py-1.5">
-                  <Checkbox 
-                    id="show-archived" 
-                    checked={showArchivedInCalendar}
-                    onCheckedChange={(checked) => {
-                      setShowArchivedInCalendar(!!checked);
-                      // If we're showing archived bookings now, make sure they're loaded
-                      if (checked && !archivedBookings.length) {
+          {/* CONTENT: push it down and ensure it’s clickable */}
+          <div className="relative z-0 mt-6 pointer-events-auto">
+            {/* Calendar Header */}
+            <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 dark:bg-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#0F0276] dark:text-white">Calendar View</h2>
+                  <p className="text-slate-600 dark:text-white">Manage bookings in a visual calendar format</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-white text-[#0F0276] border border-slate-200 dark:border-[#D8BD2A] dark:border-2 rounded-md px-3 py-1.5">
+                    <Checkbox 
+                      id="show-archived" 
+                      checked={showArchivedInCalendar}
+                      onCheckedChange={(checked) => {
+                        setShowArchivedInCalendar(!!checked);
+                        // If we're showing archived bookings now, make sure they're loaded
+                        if (checked && !archivedBookings.length) {
+                          queryClient.invalidateQueries({ queryKey: ['/api/archived-bookings'] });
+                        }
+                      }}
+                    />
+                    <Label htmlFor="show-archived" className="text-sm cursor-pointer text-[#0F0276] dark:text-[#0F0276]">
+                      Show completed/cancelled
+                    </Label>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2 bg-white text-[#0F0276] border-slate-200 dark:text-white dark:bg-transparent dark:border-2 dark:border-[#D8BD2A]"
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+                      if (showArchivedInCalendar) {
                         queryClient.invalidateQueries({ queryKey: ['/api/archived-bookings'] });
                       }
                     }}
-                  />
-                  <Label htmlFor="show-archived" className="text-sm cursor-pointer text-[#0F0276] dark:text-[#0F0276]">
-                    Show completed/cancelled
-                  </Label>
+                  >
+                    <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    className="bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-white dark:hover:bg-white/90 dark:text-[#0F0276] flex items-center gap-2 border border-transparent dark:border-2 dark:border-[#D8BD2A]"
+                    onClick={() => {
+                      setAdminBookingContext("new-athlete");
+                      setShowUnifiedBooking(true);
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Booking
+                  </Button>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2 bg-white text-[#0F0276] border-slate-200 dark:text-white dark:bg-transparent dark:border-2 dark:border-[#D8BD2A]"
-                  onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
-                    if (showArchivedInCalendar) {
-                      queryClient.invalidateQueries({ queryKey: ['/api/archived-bookings'] });
-                    }
-                  }}
-                >
-                  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Refresh
-                </Button>
-                <Button 
-                  variant="default" 
-                  className="bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-white dark:hover:bg-white/90 dark:text-[#0F0276] flex items-center gap-2 border border-transparent dark:border-2 dark:border-[#D8BD2A]"
-                  onClick={() => {
-                    setAdminBookingContext("new-athlete");
-                    setShowUnifiedBooking(true);
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  New Booking
-                </Button>
               </div>
             </div>
-          </div>
 
-          {/* Calendar Component */}
-          <div className="h-[700px] border rounded-xl bg-white dark:bg-[#0F0276] dark:border-white/20 shadow-sm p-2">
-            {allBookingsForCalendar?.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center text-center p-8">
-                <Calendar className="h-16 w-16 text-gray-300 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700">No Bookings Available</h3>
-                <p className="text-gray-500 max-w-md mt-2">
-                  {showArchivedInCalendar 
-                    ? "There are no bookings (active or archived) to display on the calendar."
-                    : "There are no active bookings to display on the calendar. Create a new booking to see it here or toggle 'Show completed/cancelled' to see past bookings."}
-                </p>
-                <Button 
-                  variant="default" 
-                  className="mt-6 bg-[#0F0276] hover:bg-[#0F0276]/90"
-                  onClick={() => {
-                    setAdminBookingContext("new-athlete");
-                    setShowUnifiedBooking(true);
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Booking
-                </Button>
-              </div>
-            ) : (
-              <BookingCalendar 
-                bookings={allBookingsForCalendar} 
-                onBookingSelect={(bookingId) => {
-                  // Look in both active and archived bookings
-                  const booking = allBookingsForCalendar.find((b: any) => b.id === bookingId);
-                  if (booking) {
-                    onSelectBooking?.(booking);
-                    setShowDetailModal(true);
-                  }
-                }} 
-              />
-            )}
+            {/* Calendar Component */}
+            <div className="h-[700px] border rounded-xl bg-white dark:bg-[#0F0276] dark:border-white/20 shadow-sm p-2">
+              {allBookingsForCalendar?.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center text-center p-8">
+                  <Calendar className="h-16 w-16 text-gray-300 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700">No Bookings Available</h3>
+                  <p className="text-gray-500 max-w-md mt-2">
+                    {showArchivedInCalendar 
+                      ? "There are no bookings (active or archived) to display on the calendar."
+                      : "There are no active bookings to display on the calendar. Create a new booking to see it here or toggle 'Show completed/cancelled' to see past bookings."}
+                  </p>
+                  <Button 
+                    variant="default" 
+                    className="mt-6 bg-[#0F0276] hover:bg-[#0F0276]/90"
+                    onClick={() => {
+                      setAdminBookingContext("new-athlete");
+                      setShowUnifiedBooking(true);
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Booking
+                  </Button>
+                </div>
+              ) : (
+                <BookingCalendar 
+                  bookings={allBookingsForCalendar} 
+                  onBookingSelect={(bookingId) => {
+                    // Look in both active and archived bookings
+                    const booking = allBookingsForCalendar.find((b: any) => b.id === bookingId);
+                    if (booking) {
+                      onSelectBooking?.(booking);
+                      setShowDetailModal(true);
+                    }
+                  }} 
+                />
+              )}
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="archived">
+          {/* CONTENT: push it down and ensure it’s clickable */}
+          <div className="relative z-0 mt-6 pointer-events-auto">
           {/* Modern Archived Header */}
           <div className="bg-gradient-to-r from-slate-100/50 to-slate-200/30 dark:bg-[#0F0276] dark:from-[#0F0276] dark:to-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-700 dark:text-white tracking-tight flex items-center gap-3">
@@ -1523,8 +1534,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             </Card>
             </>
           )}
+          </div>
         </TabsContent>
-      </AdminContentTabs>
+        </AdminContentTabs>
+      </div>
 
       {/* Booking Detail Modal */}
       {selectedBooking && (

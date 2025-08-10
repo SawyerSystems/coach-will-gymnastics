@@ -37,6 +37,7 @@ export function AdminContentTabs({
   children,
 }: AdminContentTabsProps) {
   const baseListClass = cn(
+    "relative z-10 pointer-events-auto",
     "bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50",
     "p-0.5 sm:p-1 rounded-lg sm:rounded-xl shadow-sm",
     // Match Settings tab behavior: take full width, no horizontal scroll, allow wrap
@@ -61,7 +62,7 @@ export function AdminContentTabs({
       value={value} 
       defaultValue={defaultValue} 
       onValueChange={onValueChange} 
-      className={cn("space-y-4 sm:space-y-6 w-full", className)}
+      className={cn("relative isolate space-y-4 sm:space-y-6 w-full", className)}
     >
   <div className="flex items-center justify-center sm:justify-start w-full">
         <TabsList className={baseListClass}>
@@ -89,7 +90,7 @@ export function AdminContentTabs({
           ))}
         </TabsList>
       </div>
-      {children}
+  {children}
     </Tabs>
   );
 }

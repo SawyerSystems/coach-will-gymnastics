@@ -192,30 +192,32 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
           </Badge>
         </div>
 
-        <AdminContentTabs
-          value={viewMode}
-          onValueChange={(v) => setViewMode(v as "list" | "calendar")}
-          items={[
-            {
-              value: "list",
-              label: "List View",
-              icon: <List className="h-4 w-4 mr-2" />,
-              activeGradient:
-                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
-            },
-            {
-              value: "calendar",
-              label: "Calendar View",
-              icon: <Calendar className="h-4 w-4 mr-2" />,
-              activeGradient:
-                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
-            },
-          ]}
-          listClassName="bg-slate-100 dark:bg-slate-900/40 p-1 rounded-lg w-fit mb-4 sm:mb-6"
-          triggerClassName="rounded-md border border-transparent data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
-        >
+        {/* Isolation container with proper spacing for tabs */}
+        <div className="mb-8 pt-8 pb-8 border-b border-slate-200/60 dark:border-white/20">
+          <AdminContentTabs
+            value={viewMode}
+            onValueChange={(v) => setViewMode(v as "list" | "calendar")}
+            items={[
+              {
+                value: "list",
+                label: "List View",
+                icon: <List className="h-4 w-4 mr-2" />,
+                activeGradient:
+                  "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
+              },
+              {
+                value: "calendar",
+                label: "Calendar View",
+                icon: <Calendar className="h-4 w-4 mr-2" />,
+                activeGradient:
+                  "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
+              },
+            ]}
+            listClassName="bg-slate-100 dark:bg-slate-900/40 p-1 rounded-lg w-fit"
+            triggerClassName="rounded-md border border-transparent data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
+          >
           <TabsContent value="list">
-            <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
+            <Card className="mt-8 rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
               <CardContent className="p-6">
                 {sessions.length === 0 ? (
                   <div className="text-center py-12">
@@ -292,7 +294,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
             </Card>
           </TabsContent>
           <TabsContent value="calendar">
-            <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
+            <Card className="mt-8 rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
               <CardContent className="p-6">
                 <div className="h-[600px]">
                   <BookingCalendar bookings={calendarBookings} onBookingSelect={handleBookingSelect} />
@@ -301,6 +303,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
             </Card>
           </TabsContent>
         </AdminContentTabs>
+        </div> {/* Close isolation container */}
       </div>
     </div>
   );
