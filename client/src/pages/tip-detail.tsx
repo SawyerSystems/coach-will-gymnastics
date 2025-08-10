@@ -36,7 +36,7 @@ export default function TipDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-20">
+      <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="animate-pulse">
@@ -56,11 +56,11 @@ export default function TipDetail() {
 
   if (error || !tip) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-20">
+      <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl font-bold mb-4">Tip Not Found</h1>
-            <p className="text-gray-600 mb-8">Sorry, we couldn't find the tip you're looking for.</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">Tip Not Found</h1>
+            <p className="text-slate-700 dark:text-slate-300 mb-8">Sorry, we couldn't find the tip you're looking for.</p>
             <Link href="/tips">
               <Button>
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -74,7 +74,7 @@ export default function TipDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 py-20">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black py-20">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Back Button */}
@@ -85,7 +85,7 @@ export default function TipDetail() {
             </Button>
           </Link>
 
-          <Card>
+          <Card className="glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
             <CardHeader>
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="secondary">{tip.category}</Badge>
@@ -97,9 +97,9 @@ export default function TipDetail() {
                 </Badge>
               </div>
               
-              <CardTitle className="text-3xl mb-4">{tip.title}</CardTitle>
+              <CardTitle className="text-3xl mb-4 text-slate-900 dark:text-slate-100">{tip.title}</CardTitle>
               
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>{format(getDateField(tip, ['published_at', 'publishedAt']), 'MMMM d, yyyy')}</span>
@@ -110,7 +110,7 @@ export default function TipDetail() {
             <CardContent>
               <div className="prose prose-lg max-w-none">
                 {/* Main content intro */}
-                <p className="mb-8 leading-relaxed text-gray-700 text-lg">
+                <p className="mb-8 leading-relaxed text-slate-800 dark:text-slate-200 text-lg">
                   {tip.content}
                 </p>
                 
@@ -119,7 +119,7 @@ export default function TipDetail() {
                   <div className="space-y-8">
                     {tip.sections.map((section, index) => (
                       <div key={index} className="border-l-4 border-purple-400 pl-6">
-                        <h3 className="text-xl font-semibold mb-4 text-purple-700">
+                        <h3 className="text-xl font-semibold mb-4 text-purple-700 dark:text-purple-300">
                           {section.title}
                         </h3>
                         
@@ -139,14 +139,14 @@ export default function TipDetail() {
                             
                             if (paragraph.startsWith('- ')) {
                               return (
-                                <li key={pIndex} className="ml-4 mb-1 text-gray-700">
+                                <li key={pIndex} className="ml-4 mb-1 text-slate-800 dark:text-slate-200">
                                   {paragraph.slice(2)}
                                 </li>
                               );
                             }
                             
                             return (
-                              <p key={pIndex} className="mb-3 leading-relaxed text-gray-700">
+                              <p key={pIndex} className="mb-3 leading-relaxed text-slate-800 dark:text-slate-200">
                                 {paragraph}
                               </p>
                             );
@@ -157,11 +157,11 @@ export default function TipDetail() {
                   </div>
                 ) : (
                   // Fallback to original content display if no sections
-                  <div>
+          <div>
                     {tip.content ? tip.content.split('\n').map((paragraph, index) => {
                       if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
                         return (
-                          <h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-purple-800">
+              <h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-purple-800 dark:text-purple-300">
                             {paragraph.slice(2, -2)}
                           </h3>
                         );
@@ -175,13 +175,13 @@ export default function TipDetail() {
                         return <br key={index} />;
                       } else {
                         return (
-                          <p key={index} className="mb-4 leading-relaxed">
+              <p key={index} className="mb-4 leading-relaxed">
                             {paragraph}
                           </p>
                         );
                       }
                     }) : (
-                      <p className="text-gray-500 italic">Content not available.</p>
+            <p className="text-slate-500 dark:text-slate-400 italic">Content not available.</p>
                     )}
                   </div>
                 )}

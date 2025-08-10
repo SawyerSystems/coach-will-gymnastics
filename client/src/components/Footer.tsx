@@ -95,7 +95,7 @@ export function Footer() {
             <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">
               <Facebook className="w-6 h-6" />
             </a>
-            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#E4405F] transition-colors" aria-label="Instagram">
+            <a href="https://www.instagram.com/coachwilltumbles/" target="_blank" rel="noopener noreferrer" className="text-slate-600 dark:text-slate-400 hover:text-[#E4405F] transition-colors" aria-label="Instagram">
               <Instagram className="w-6 h-6" />
             </a>
             <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0000] transition-colors" aria-label="YouTube">

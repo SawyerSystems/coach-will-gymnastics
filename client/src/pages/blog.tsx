@@ -136,24 +136,24 @@ export default function Blog() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Unable to Load Blog Posts</h2>
-          <p className="text-gray-600">Please try again later.</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Unable to Load Blog Posts</h2>
+          <p className="text-slate-700 dark:text-slate-300">Please try again later.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
+      <section className="py-16 lg:py-24 bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
             Adventure <span className="text-orange-600">Stories</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
             Stories, insights, and guides for every step of your athlete's flippin' adventure. 
             Explore training tips, celebrate victories, and discover new ways to grow.
           </p>
@@ -161,17 +161,17 @@ export default function Blog() {
       </section>
 
       {/* Main Content */}
-      <section className="py-16 lg:py-24 bg-white">
+      <section className="py-16 lg:py-24 bg-white dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="lg:flex gap-8">
             {/* Sidebar */}
             <div className="w-full lg:w-80 flex-shrink-0 mb-8 lg:mb-0">
               <div className="space-y-8 sticky top-8">
                 {/* Search */}
-                <Card className="p-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4">Search</h3>
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">Search</h3>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                     <Input
                       placeholder="Search articles"
                       className="pl-10"
@@ -182,13 +182,13 @@ export default function Blog() {
                 </Card>
 
                 {/* Sort Filter */}
-                <Card className="p-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
                     <ArrowUpDown className="h-4 w-4 mr-2 text-orange-600" />
                     Sort Posts
                   </h3>
                   <Select value={sortOrder} onValueChange={(value: "newest" | "oldest") => setSortOrder(value)}>
-                    <SelectTrigger className="w-full hover:bg-gray-50 transition-colors duration-200">
+                    <SelectTrigger className="w-full hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-200">
                       <SelectValue placeholder="Sort by date" />
                     </SelectTrigger>
                     <SelectContent>
@@ -209,8 +209,8 @@ export default function Blog() {
                 </Card>
 
                 {/* Categories */}
-                <Card className="p-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
                     <Filter className="h-4 w-4 mr-2 text-purple-600" />
                     Categories
                   </h3>
@@ -219,7 +219,7 @@ export default function Blog() {
                       className={`flex items-center justify-between cursor-pointer transition-colors duration-200 p-2 rounded-md ${
                         selectedCategory === "all" 
                           ? "text-purple-600 bg-purple-50" 
-                          : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                          : "text-slate-600 hover:text-slate-800 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800/50"
                       }`}
                       onClick={() => setSelectedCategory("all")}
                     >
@@ -239,7 +239,7 @@ export default function Blog() {
                           className={`flex items-center justify-between cursor-pointer transition-colors duration-200 p-2 rounded-md ${
                             selectedCategory === category 
                               ? "text-purple-600 bg-purple-50" 
-                              : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                              : "text-slate-600 hover:text-slate-800 hover:bg-gray-50 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800/50"
                           }`}
                           onClick={() => setSelectedCategory(category)}
                         >
@@ -257,20 +257,20 @@ export default function Blog() {
                 </Card>
 
                 {/* Newsletter */}
-                <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <Card className="p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-slate-800/40 dark:to-slate-900/50">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
                     <Mail className="h-5 w-5 mr-2" />
                     Stay Updated
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">
                     Get the latest gymnastics tips and stories delivered to your inbox!
                   </p>
                   
                   {subscriptionMessage && (
-                    <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200">
+                    <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-emerald-900/30 border border-green-200 dark:border-emerald-800">
                       <div className="flex items-center">
                         <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
-                        <p className="text-sm text-green-800">{subscriptionMessage}</p>
+                        <p className="text-sm text-green-800 dark:text-emerald-200">{subscriptionMessage}</p>
                       </div>
                     </div>
                   )}
@@ -292,7 +292,7 @@ export default function Blog() {
                           Subscribe to blog notifications
                         </label>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Notifications will be sent to {parentInfo?.email}
                       </p>
                       {parentOptInMutation.isPending && (
@@ -301,13 +301,13 @@ export default function Blog() {
                     </div>
                   ) : (
                     // Unauthenticated user - show email input
-                    <form onSubmit={handleGuestSignup} className="space-y-3">
+          <form onSubmit={handleGuestSignup} className="space-y-3">
                       <Input 
                         type="email" 
                         placeholder="Enter your email"
                         value={guestEmail}
                         onChange={(e) => setGuestEmail(e.target.value)}
-                        className="bg-white"
+            className="bg-white dark:bg-slate-900/50"
                         disabled={guestSignupMutation.isPending}
                         required
                       />
@@ -327,9 +327,9 @@ export default function Blog() {
             {/* Main Content */}
             <div className="flex-1">
               {/* Results Header */}
-              <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600">
+          <p className="text-slate-700 dark:text-slate-300">
                     Showing {filteredAndSortedPosts.length} of {posts?.length || 0} articles
                   </p>
                   {(searchTerm || selectedCategory !== "all") && (
@@ -351,7 +351,7 @@ export default function Blog() {
                           setSearchTerm("");
                           setSelectedCategory("all");
                         }}
-                        className="text-xs text-gray-500 hover:text-gray-700"
+            className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                       >
                         Clear filters
                       </Button>
@@ -382,11 +382,11 @@ export default function Blog() {
                   ))}
                 </div>
               ) : filteredAndSortedPosts.length > 0 ? (
-                <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
                   {filteredAndSortedPosts.map((post, index) => (
                     <Card 
                       key={post.id} 
-                      className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-in fade-in slide-in-from-bottom-4"
+          className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-in fade-in slide-in-from-bottom-4 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       {post.imageUrl && (
@@ -399,7 +399,7 @@ export default function Blog() {
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-500 flex items-center">
+            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
                               {new Date(post.publishedAt).toLocaleDateString('en-US', { 
                                 month: 'long', 
@@ -407,7 +407,7 @@ export default function Blog() {
                                 year: 'numeric'
                               })}
                             </span>
-                            <span className="text-sm text-gray-500 flex items-center">
+            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center">
                               <User className="h-3 w-3 mr-1" />
                               Coach Will
                             </span>
@@ -425,16 +425,16 @@ export default function Blog() {
                           </Badge>
                         </div>
                         
-                        <h3 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 line-clamp-2">
                           {post.title}
                         </h3>
                         
-                        <p className="text-gray-600 mb-4 line-clamp-3">
+        <p className="text-slate-700 dark:text-slate-300 mb-4 line-clamp-3">
                           {post.excerpt}
                         </p>
                         
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">5 min read</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">5 min read</span>
                           <Link href={`/blog/${post.id}`}>
                             <Button 
                               size="sm"
@@ -449,15 +449,15 @@ export default function Blog() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16">
+        <div className="text-center py-16">
                   {posts && posts.length > 0 ? (
                     // No results from filters
                     <div className="max-w-md mx-auto">
-                      <div className="bg-orange-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+          <div className="bg-orange-100 dark:bg-orange-900/30 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                         <Search className="h-8 w-8 text-orange-600" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-800 mb-4">No Results Found</h3>
-                      <p className="text-gray-600 mb-6">
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">No Results Found</h3>
+          <p className="text-slate-700 dark:text-slate-300 mb-6">
                         No blog posts match your current filters. Try adjusting your search or category selection.
                       </p>
                       <Button 
@@ -473,11 +473,11 @@ export default function Blog() {
                   ) : (
                     // No posts at all
                     <div className="max-w-md mx-auto">
-                      <div className="bg-purple-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+          <div className="bg-purple-100 dark:bg-purple-900/30 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                         <Calendar className="h-8 w-8 text-purple-600" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-800 mb-4">No Blog Posts Yet</h3>
-                      <p className="text-gray-600">Check back soon for gymnastics tips, stories, and updates!</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">No Blog Posts Yet</h3>
+          <p className="text-slate-700 dark:text-slate-300">Check back soon for gymnastics tips, stories, and updates!</p>
                     </div>
                   )}
                 </div>
@@ -503,7 +503,7 @@ export default function Blog() {
         ]}
       />
 
-      <Footer />
+  <Footer />
     </div>
   );
 }
