@@ -46,7 +46,7 @@ export function AdminTabButtons({
   const baseTrigger = cn(
     "rounded-xl border transition-all duration-200 inline-flex items-center gap-2",
     "supports-[backdrop-filter]:bg-white/40 backdrop-blur-md",
-    "relative z-0", // Ensure tabs don't have high z-index that overlays content
+    "relative", // Removed z-index to prevent overlay issues
     // default state (unselected)
     "bg-white/70 border-slate-200/60 text-[#0F0276]",
     "dark:bg-[#0F0276]/60 dark:text-white dark:border-[#2A4A9B]/40",
@@ -80,7 +80,7 @@ export function AdminTabButtons({
       <TabsList
         className={cn(
           "flex flex-wrap gap-2 bg-transparent p-1",
-          "relative z-0", // Ensure tabs don't overlay content with high z-index
+          "relative", // Removed z-index to prevent overlay issues
           "w-full overflow-x-auto", // Allow horizontal scrolling on small screens
           "scrollbar-hide", // Hide scrollbar for cleaner look
           "justify-start items-center",
