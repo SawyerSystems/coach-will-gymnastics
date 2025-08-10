@@ -1,3 +1,4 @@
+import { AdminTabButtonsRow } from '@/components/admin-ui/AdminTabButtons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1306,64 +1307,20 @@ export function AdminSiteContentManager() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
-          <TabsTrigger 
-            value="media"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <Video className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Media</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="about"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <Users className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">About</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="contact"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <MapPin className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Contact</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="hours"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <Clock className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Hours</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="programs"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <Upload className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Programs</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="testimonials"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <Star className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Reviews</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="faqs"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <HelpCircle className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">FAQs</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="emails"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 text-xs sm:text-sm"
-          >
-            <Mail className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Emails</span>
-          </TabsTrigger>
-        </TabsList>
+        <AdminTabButtonsRow
+          items={[
+            { value: 'media', label: <><Video className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Media</span></> },
+            { value: 'about', label: <><Users className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">About</span></> },
+            { value: 'contact', label: <><MapPin className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Contact</span></> },
+            { value: 'hours', label: <><Clock className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Hours</span></> },
+            { value: 'programs', label: <><Upload className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Programs</span></> },
+            { value: 'testimonials', label: <><Star className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Reviews</span></> },
+            { value: 'faqs', label: <><HelpCircle className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">FAQs</span></> },
+            { value: 'emails', label: <><Mail className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Emails</span></> },
+          ]}
+          listClassName="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl"
+          triggerClassName="font-semibold text-xs sm:text-sm"
+        />
 
         {/* Media Tab */}
         <TabsContent value="media" className="mt-6 space-y-6 p-6">
