@@ -1422,6 +1422,24 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                             })()}
                           </Badge>
                         </div>
+                        {/* Details action */}
+                        <div className="mt-3 flex justify-end">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
+                                <Eye className="h-4 w-4 mr-2" />
+                                Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader className="flex flex-row items-center justify-between pr-6">
+                                <DialogTitle>Booking Details</DialogTitle>
+                                <AdminBookingDetailActions booking={booking} />
+                              </DialogHeader>
+                              <BookingDetailsView booking={booking} />
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </CardContent>
                     </Card>
                   ))
