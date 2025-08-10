@@ -1005,6 +1005,58 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Action buttons (mobile) */}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-center text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
+                            <Eye className="h-4 w-4 mr-2" />
+                            Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader className="flex flex-row items-center justify-between pr-6">
+                            <DialogTitle>Booking Details</DialogTitle>
+                            <AdminBookingDetailActions booking={booking} />
+                          </DialogHeader>
+                          <BookingDetailsView booking={booking} />
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setRescheduleBooking(booking);
+                          setShowRescheduleModal(true);
+                        }}
+                        className="w-full justify-center text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
+                      >
+                        Reschedule
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendWaiverEmailMutation.mutate(booking.id)}
+                        disabled={!booking.parentEmail || sendWaiverEmailMutation.isPending}
+                        title={!booking.parentEmail ? 'No parent email on file for this booking' : undefined}
+                        className="w-full justify-center text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 col-span-1"
+                      >
+                        Send Waiver
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this booking?')) {
+                            deleteBookingMutation.mutate(booking.id);
+                          }
+                        }}
+                        className="w-full justify-center"
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))
