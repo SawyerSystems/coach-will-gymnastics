@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
+import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -24,7 +25,7 @@ import type { Booking } from "@shared/schema";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X } from "lucide-react";
+import { Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X, Eye } from "lucide-react";
 import { useMemo, useState } from "react";
 
 // Extended payment status types
@@ -406,7 +407,140 @@ export function PaymentsTab() {
               ]}
             >
             <TabsContent value="overview">
-              <div className="overflow-x-auto rounded-lg border border-slate-100">
+              {/* Mobile card list */}
+              <div className="sm:hidden space-y-3">
+                {filteredBookings.map((booking) => {
+                  const totalPrice = getLessonPrice(booking);
+                  let displayPaidAmount = 0;
+                  let balanceDue = totalPrice;
+
+                  if (booking.paymentStatus === "session-paid") {
+                    displayPaidAmount = totalPrice;
+                    balanceDue = 0;
+                  } else if (booking.paymentStatus === "reservation-paid") {
+                    displayPaidAmount = parseFloat(booking.paidAmount || "0");
+                    if (displayPaidAmount <= 0) displayPaidAmount = 10.0;
+                    balanceDue = totalPrice - displayPaidAmount;
+                  } else if (
+                    booking.paymentStatus === "reservation-pending" ||
+                    booking.paymentStatus === "reservation-failed" ||
+                    booking.paymentStatus === "unpaid"
+                  ) {
+                    displayPaidAmount = 0;
+                    balanceDue = totalPrice;
+                  } else if (
+                    booking.paymentStatus === "reservation-refunded" ||
+                    booking.paymentStatus === "session-refunded"
+                  ) {
+                    displayPaidAmount = 0;
+                    balanceDue = 0;
+                  }
+                  if (balanceDue < 0) balanceDue = 0;
+
+                  return (
+                    <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                      <CardContent className="p-4">
+                        <div className="relative min-h-40 pb-28">
+                          {/* Actions stack */}
+                          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
+                            <AdminButton
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}`, '_blank')}
+                            >
+                              Stripe
+                            </AdminButton>
+                            <AdminButton
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
+                            >
+                              <Eye className="h-3.5 w-3.5 mr-1" /> Details
+                            </AdminButton>
+                          </div>
+
+                          {/* Content */}
+                          <div className="pr-36">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="font-semibold text-slate-900">{formatDate(booking.preferredDate || '')}</div>
+                                <div className="text-xs text-slate-600">{booking.preferredTime}</div>
+                              </div>
+                              <div className="text-right space-y-1">
+                                <Badge variant="outline" className="text-slate-800 border-slate-300">
+                                  {typeof booking.status === 'object' && booking.status !== null ? JSON.stringify(booking.status) : booking.status}
+                                </Badge>
+                                <div>
+                                  <Badge variant="outline" className="text-slate-800 border-slate-300">
+                                    {booking.paymentStatus || 'unpaid'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 text-sm text-slate-800">
+                              <div className="font-medium">
+                                {typeof booking.lessonType === 'object' && booking.lessonType !== null
+                                  ? getNameOrDescription(booking.lessonType)
+                                  : booking.lessonType}
+                              </div>
+                              <div className="text-slate-600">
+                                {booking.athlete1Name}{booking.athlete2Name ? ` & ${booking.athlete2Name}` : ''}
+                              </div>
+                              <div className="text-slate-600">
+                                {booking.parentFirstName} {booking.parentLastName} · {booking.parentEmail}
+                              </div>
+                            </div>
+
+                            {/* Amounts and controls */}
+                            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                                <div className="text-slate-500">Total</div>
+                                <div className="font-semibold text-slate-900">${totalPrice.toFixed(2)}</div>
+                              </div>
+                              <div className="p-2 rounded-lg bg-green-50 border border-green-200">
+                                <div className="text-green-700">Paid</div>
+                                <div className="font-semibold text-green-700">${displayPaidAmount.toFixed(2)}</div>
+                              </div>
+                              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 col-span-2">
+                                <div className="text-amber-700">Balance Due</div>
+                                <div className="font-bold text-amber-700">${balanceDue.toFixed(2)}</div>
+                              </div>
+                            </div>
+
+                            {/* Payment status control */}
+                            <div className="mt-3">
+                              <Label className="text-xs text-slate-600">Payment Status</Label>
+                              <Select
+                                value={booking.paymentStatus || "unpaid"}
+                                onValueChange={(value) => updatePaymentStatusMutation.mutate({ id: booking.id, paymentStatus: value })}
+                              >
+                                <SelectTrigger className="h-9 w-full rounded-lg border-slate-300 focus:border-blue-400">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="unpaid">Unpaid</SelectItem>
+                                  <SelectItem value="reservation-pending">Reservation: Pending</SelectItem>
+                                  <SelectItem value="reservation-failed">Reservation: Failed</SelectItem>
+                                  <SelectItem value="reservation-paid">Reservation: Paid</SelectItem>
+                                  <SelectItem value="session-paid">Session Paid</SelectItem>
+                                  <SelectItem value="reservation-refunded">Reservation: Refunded</SelectItem>
+                                  <SelectItem value="session-refunded">Session: Refunded</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-x-auto rounded-lg border border-slate-100">
                 <Table>
                   <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                     <TableRow className="border-b border-slate-200">
@@ -549,7 +683,87 @@ export function PaymentsTab() {
                   </div>
                 </div>
                 
-                <div className="overflow-x-auto rounded-lg border border-orange-100">
+                {/* Mobile card list */}
+                <div className="sm:hidden space-y-3">
+                  {pendingPayments.map((payment) => (
+                    <Card key={payment.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                      <CardContent className="p-4">
+                        <div className="relative min-h-40 pb-28">
+                          {/* Actions stack */}
+                          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
+                            <AdminButton
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              onClick={() => {
+                                const currentStatus = payment.paymentStatus;
+                                let newStatus = PaymentStatusEnum.SESSION_PAID;
+                                if (currentStatus === "reservation-failed" || currentStatus === "reservation-pending") {
+                                  newStatus = PaymentStatusEnum.RESERVATION_PAID;
+                                } else if (currentStatus === "reservation-paid") {
+                                  newStatus = PaymentStatusEnum.SESSION_PAID;
+                                }
+                                updatePaymentStatusMutation.mutate({ id: payment.id, paymentStatus: newStatus });
+                              }}
+                              disabled={updatePaymentStatusMutation.isPending}
+                            >
+                              Mark Paid
+                            </AdminButton>
+                            <AdminButton
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${payment.parentEmail}`, '_blank')}
+                            >
+                              Stripe
+                            </AdminButton>
+                          </div>
+
+                          <div className="pr-36">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="font-semibold text-slate-900">{formatDate(payment.preferredDate || '')}</div>
+                                <div className="text-xs text-slate-600">{payment.preferredTime}</div>
+                              </div>
+                              <Badge variant="outline" className="text-slate-800 border-slate-300">
+                                {typeof payment.lessonType === 'object' && payment.lessonType !== null
+                                  ? getNameOrDescription(payment.lessonType)
+                                  : payment.lessonType}
+                              </Badge>
+                            </div>
+
+                            <div className="mt-2 text-sm text-slate-800">
+                              <div className="text-slate-600">
+                                {payment.athlete1Name}{payment.athlete2Name ? ` & ${payment.athlete2Name}` : ''}
+                              </div>
+                              <div className="text-slate-600">
+                                {payment.parentFirstName} {payment.parentLastName} · {payment.parentPhone}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                                <div className="text-slate-500">Total</div>
+                                <div className="font-semibold text-slate-900">${payment.totalPrice.toFixed(2)}</div>
+                              </div>
+                              <div className="p-2 rounded-lg bg-green-50 border border-green-200">
+                                <div className="text-green-700">Reservation Paid</div>
+                                <div className="font-semibold text-green-700">${payment.paidAmount.toFixed(2)}</div>
+                              </div>
+                              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 col-span-2">
+                                <div className="text-amber-700">Balance Due</div>
+                                <div className="font-bold text-amber-700">${payment.remainingBalance.toFixed(2)}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden sm:block overflow-x-auto rounded-lg border border-orange-100">
                   <Table>
                     <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                       <TableRow className="border-b border-slate-200">
@@ -656,7 +870,71 @@ export function PaymentsTab() {
 
             {/* Completed Tab */}
             <TabsContent value="completed">
-              <Table>
+              {/* Mobile card list */}
+              <div className="sm:hidden space-y-3">
+                {completedArchived.map((booking) => (
+                  <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                    <CardContent className="p-4">
+                      <div className="relative min-h-40 pb-28">
+                        {/* Actions stack */}
+                        <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
+                          <AdminButton
+                            variant="secondary"
+                            size="sm"
+                            className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                            onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1" /> Details
+                          </AdminButton>
+                          {booking.parentEmail && (
+                            <AdminButton
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}`, '_blank')}
+                            >
+                              Stripe
+                            </AdminButton>
+                          )}
+                        </div>
+                        <div className="pr-36">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="font-semibold text-slate-900">{booking.updatedAt ? formatDate(booking.updatedAt.toString().split('T')[0]) : 'N/A'}</div>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className="text-slate-800 border-slate-300">
+                                {typeof booking.bookingMethod === 'object' && booking.bookingMethod !== null
+                                  ? getNameOrDescription(booking.bookingMethod)
+                                  : booking.bookingMethod}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-sm text-slate-800">
+                            <div className="font-medium">
+                              {typeof booking.lessonType === 'object' && booking.lessonType !== null
+                                ? getNameOrDescription(booking.lessonType)
+                                : booking.lessonType}
+                            </div>
+                            <div className="text-slate-600">
+                              {booking.athlete1Name}{booking.athlete2Name ? ` & ${booking.athlete2Name}` : ''}
+                            </div>
+                            <div className="text-slate-600">
+                              {booking.parentFirstName} {booking.parentLastName} · {booking.parentEmail}
+                            </div>
+                          </div>
+                          <div className="mt-3 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm">
+                            <div className="text-slate-500">Amount</div>
+                            <div className="font-semibold text-slate-900">${getLessonPrice(booking).toFixed(2)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {/* Desktop table */}
+              <Table className="hidden sm:table">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Completion Date</TableHead>
@@ -723,7 +1001,7 @@ export function PaymentsTab() {
       </div>
       {/* Booking Details Modal */}
       <Dialog open={detailsOpen} onOpenChange={(o) => { if (!o) { setDetailsOpen(false); setDetailsBooking(null); } }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Booking Details{detailsBooking?.id ? ` #${detailsBooking.id}` : ''}</DialogTitle>
           </DialogHeader>
