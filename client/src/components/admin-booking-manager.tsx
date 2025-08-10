@@ -972,16 +972,16 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           {/* Desktop table (active) */}
           <Card className="hidden sm:block rounded-xl border-0 shadow-lg bg-transparent">
             <CardContent className="p-0">
-              <Table>
+              <Table className="w-full border-separate border-spacing-y-2">
                 <TableHeader>
-                  <TableRow className="border-transparent">
-                    <TableHead className="font-semibold text-slate-700">Date & Time</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Athletes</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Lesson Type</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Payment Status</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Attendance</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Amount</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Actions</TableHead>
+                  <TableRow className="border-transparent bg-transparent">
+                    <TableHead className="font-semibold text-white">Date & Time</TableHead>
+                    <TableHead className="font-semibold text-white">Athletes</TableHead>
+                    <TableHead className="font-semibold text-white">Lesson Type</TableHead>
+                    <TableHead className="font-semibold text-white">Payment Status</TableHead>
+                    <TableHead className="font-semibold text-white">Attendance</TableHead>
+                    <TableHead className="font-semibold text-white">Amount</TableHead>
+                    <TableHead className="font-semibold text-white">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1004,8 +1004,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                     </TableRow>
                   ) : (
                     filteredAndSortedBookings.map((booking: Booking) => (
-                    <TableRow key={booking.id} className="bg-[#2A4A9B] text-white hover:bg-[#2A4A9B]/90 transition-colors border-transparent">
-                      <TableCell className="py-4">
+                    <TableRow key={booking.id} className="text-white transition-colors border-transparent">
+                      <TableCell className="py-4 bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-white/15 rounded-lg">
                             <Calendar className="h-4 w-4 text-white" />
@@ -1016,7 +1016,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-4 bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <div className="space-y-1">
                           {booking.athletes?.map((athlete: any, index: number) => (
                             <div key={index} className={index === 0 ? "font-semibold text-white" : "text-sm text-white/90"}>
@@ -1033,7 +1033,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-4 bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <Badge variant="outline" className="border-white/40 text-white bg-white/10 font-medium">
                           {(() => {
                             const lessonType = booking.lessonType;
@@ -1044,7 +1044,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           })()}
                         </Badge>
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-4 bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <Select
                           value={booking.paymentStatus || "unpaid"}
                           onValueChange={(value) => 
@@ -1069,7 +1069,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <Select
                           value={booking.attendanceStatus || "pending"}
                           onValueChange={(value) => 
@@ -1092,7 +1092,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <div className="text-sm font-medium text-white">
                           ${(() => {
                             const price = resolvePrice(booking);
@@ -1100,7 +1100,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           })()}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="bg-[#2A4A9B] first:rounded-l-xl last:rounded-r-xl">
                         <div className="flex items-center gap-1">
                           <Dialog>
                             <DialogTrigger asChild>
