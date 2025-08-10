@@ -438,7 +438,7 @@ export function PaymentsTab() {
                   if (balanceDue < 0) balanceDue = 0;
 
                   return (
-                    <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white shadow-sm sm:shadow-md">
+                    <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-sm sm:shadow-md">
                       <CardContent className="p-3 sm:p-5">
                         <div className="relative min-h-40 pb-20">
                           {/* Actions stack */}
@@ -684,7 +684,7 @@ export function PaymentsTab() {
                 {/* Mobile card list */}
                 <div className="sm:hidden space-y-3 max-w-screen-sm mx-auto px-4">
                   {pendingPayments.map((payment) => (
-                    <Card key={payment.id} className="rounded-xl border border-slate-200 bg-white shadow-sm sm:shadow-md">
+                    <Card key={payment.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-sm sm:shadow-md">
                       <CardContent className="p-3 sm:p-5">
                         <div className="relative min-h-40 pb-20">
                           {/* Actions stack */}
@@ -871,7 +871,7 @@ export function PaymentsTab() {
               {/* Mobile card list */}
               <div className="sm:hidden space-y-3 max-w-screen-sm mx-auto px-4">
                 {completedArchived.map((booking) => (
-                  <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white shadow-sm sm:shadow-md">
+                  <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-sm sm:shadow-md">
                     <CardContent className="p-3 sm:p-5">
                       <div className="relative min-h-40 pb-20">
                         {/* Actions stack */}

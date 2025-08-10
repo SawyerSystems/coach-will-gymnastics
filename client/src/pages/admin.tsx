@@ -2461,7 +2461,7 @@ export default function Admin() {
               <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 <div className="space-y-6">
                   {/* Booking Cutoff System Overview */}
-                  <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-green-50/50 to-blue-50/30 shadow-lg">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg dark:from-blue-900/20 dark:via-green-900/10 dark:to-blue-900/20">
                     <CardContent className="p-6">
                       <h3 className="text-xl font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                         🚀 Booking Cutoff System
@@ -2714,7 +2714,7 @@ export default function Admin() {
                       {availabilityExceptions
                         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                         .map((exception) => (
-                          <Card key={exception.id} className="rounded-xl border-0 bg-gradient-to-br from-red-50 via-orange-50/50 to-red-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                          <Card key={exception.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-red-900/20 dark:via-orange-900/10 dark:to-red-900/20">
                             <CardContent className="p-4">
                               <div className="flex justify-between items-center">
                                 <div className="space-y-1">
@@ -3134,7 +3134,7 @@ export default function Admin() {
                   </div>
                   
                   <TabsContent value="developer" className="space-y-6">{/* Clean separation with container above */}
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-orange-50/50 to-yellow-50/30 shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg dark:from-yellow-900/20 dark:via-orange-900/10 dark:to-yellow-900/20">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
                           <AlertCircle className="h-6 w-6 text-yellow-600" />
@@ -3148,7 +3148,7 @@ export default function Admin() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Data Management */}
-                      <Card className="rounded-xl border-0 bg-gradient-to-br from-red-50 via-red-25 to-red-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-red-900/20 dark:via-red-900/10 dark:to-red-900/20">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg font-bold text-red-800 flex items-center gap-3">
                             <Trash2 className="h-6 w-6 text-red-600" />
@@ -3206,7 +3206,7 @@ export default function Admin() {
                       </Card>
 
                       {/* Test Data Generation */}
-                      <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-blue-900/20 dark:via-blue-900/10 dark:to-blue-900/20">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg font-bold text-blue-800 dark:text-blue-200 flex items-center gap-3">
                             <Plus className="h-6 w-6 text-blue-600 dark:text-blue-300" />
@@ -3278,7 +3278,7 @@ export default function Admin() {
                       </Card>
 
                       {/* Payment Testing */}
-                      <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-green-900/20 dark:via-green-900/10 dark:to-green-900/20">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
                             <DollarSign className="h-6 w-6 text-green-600" />
@@ -3329,7 +3329,7 @@ export default function Admin() {
                       </Card>
 
                       {/* System Status */}
-                      <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-purple-900/20 dark:via-purple-900/10 dark:to-purple-900/20">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg font-bold text-purple-800 flex items-center gap-3">
                             <BarChart className="h-6 w-6 text-purple-600" />
