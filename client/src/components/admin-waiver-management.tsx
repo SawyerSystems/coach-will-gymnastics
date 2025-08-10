@@ -381,7 +381,7 @@ export function AdminWaiverManagement() {
                   filteredSignedWaivers.map((waiver) => (
                     <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                       <CardContent className="p-4">
-                        <div className="relative">
+                        <div className="relative min-h-36">
                           {/* top-right vertical actions */}
           <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
                             <Dialog>
@@ -683,7 +683,7 @@ export function AdminWaiverManagement() {
                     {filteredMissingWaivers.map((waiver) => (
                       <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                         <CardContent className="p-4">
-                          <div className="relative">
+                          <div className="relative min-h-36">
               <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
                               <Badge variant="outline" className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200 font-semibold">Waiver Required</Badge>
                               <AdminButton
@@ -826,7 +826,7 @@ export function AdminWaiverManagement() {
                     {archivedWaivers.map((waiver) => (
                       <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                         <CardContent className="p-4">
-                          <div className="relative">
+                          <div className="relative min-h-36">
             <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
                               <Dialog>
                                 <DialogTrigger asChild>
