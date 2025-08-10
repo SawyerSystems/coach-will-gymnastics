@@ -1633,8 +1633,9 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
+                                <DialogHeader className="flex flex-row items-center justify-between pr-6">
                                   <DialogTitle>Booking Details</DialogTitle>
+                                  <AdminBookingDetailActions booking={booking} />
                                 </DialogHeader>
                                 <BookingDetailsView booking={booking} />
                               </DialogContent>
