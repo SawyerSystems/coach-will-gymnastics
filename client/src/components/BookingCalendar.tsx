@@ -231,7 +231,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col dark:text-white">
       {/* Add CSS for React Big Calendar scrolling */}
       <style>{`
         .rbc-time-content {
@@ -244,6 +244,19 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         .rbc-time-view .rbc-time-content {
           flex: 1;
         }
+        /* Dark mode tweaks for react-big-calendar */
+        :root.dark .rbc-month-view, :root.dark .rbc-time-view, :root.dark .rbc-agenda-view {
+          background-color: rgba(15, 2, 118, 0.85);
+          color: white;
+        }
+        :root.dark .rbc-header, :root.dark .rbc-time-header, :root.dark .rbc-time-content, :root.dark .rbc-day-bg, :root.dark .rbc-timeslot-group {
+          border-color: rgba(255,255,255,0.2);
+        }
+        :root.dark .rbc-off-range-bg { background-color: rgba(255,255,255,0.05); }
+        :root.dark .rbc-today { background-color: rgba(216,189,42,0.15); }
+        :root.dark .rbc-event { background-color: rgba(59,130,246,0.2); color: #fff; }
+        :root.dark .rbc-event-label { color: #fff; }
+        :root.dark .rbc-toolbar button { color: #fff; border-color: rgba(255,255,255,0.4); }
       `}</style>
       <div className="flex-1 relative">
         <div className="h-full overflow-y-auto">
@@ -266,7 +279,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
           />
         </div>
         {selectedDate && dateEvents.length > 0 && (
-          <div className="absolute bottom-4 right-4 w-72 shadow-xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 backdrop-blur-md glass-surface glass-card z-10">
+          <div className="absolute bottom-4 right-4 w-72 shadow-xl rounded-xl border border-slate-200 dark:border-white/20 bg-white dark:bg-[#0F0276]/80 backdrop-blur-md glass-surface glass-card z-10 text-slate-900 dark:text-white">
             <Card>
               <div className="flex items-center justify-between p-3 border-b">
                 <h3 className="font-medium">

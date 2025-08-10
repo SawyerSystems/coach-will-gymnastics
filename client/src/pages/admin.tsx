@@ -1266,15 +1266,15 @@ export default function Admin() {
                 </CardContent>
               </Card>
 
-                  <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.06] to-white dark:from-[#0F0276]/30 dark:to-slate-900/40 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                  <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.06] to-white dark:bg-[#0F0276] dark:border-white/20 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                     <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-yellow-200">Total Missions</CardTitle>
-                      <div className="bg-[#0F0276]/10 p-1.5 sm:p-2 rounded-full">
-                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276]" />
+                      <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-white">Total Missions</CardTitle>
+                      <div className="bg-[#0F0276]/10 dark:bg-transparent p-1.5 sm:p-2 rounded-full ring-1 ring-transparent dark:ring-white/40">
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276] dark:text-white" />
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-yellow-200">{totalBookingsAll}</div>
+                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white">{totalBookingsAll}</div>
                     </CardContent>
                   </Card>
 

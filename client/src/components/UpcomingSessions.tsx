@@ -130,16 +130,16 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
     return (
       <div className="space-y-6">
         {/* Modern Loading State */}
-        <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:border-slate-700">
+        <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:bg-[#0F0276] dark:border-white/20">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
               <Clock className="h-6 w-6 text-[#D8BD2A]" />
             </div>
-            <h3 className="text-2xl font-black text-[#0F0276] tracking-tight">Upcoming Sessions</h3>
+            <h3 className="text-2xl font-black text-[#0F0276] tracking-tight dark:text-white">Upcoming Sessions</h3>
           </div>
-          <p className="text-slate-600">Loading session information...</p>
+          <p className="text-slate-600 dark:text-white">Loading session information...</p>
         </div>
-  <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
+        <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
           <CardContent className="p-8">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F0276]"></div>
@@ -153,8 +153,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
   if (error) {
     return (
       <div className="space-y-6">
-        {/* Modern Error State */}
-        <div className="bg-gradient-to-r from-red-100 to-red-50 rounded-xl border border-red-200 p-6 glass-surface glass-card">
+        <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-xl border border-red-200 p-6">
           <h3 className="text-2xl font-black text-red-800 tracking-tight flex items-center gap-3">
             <div className="p-2 bg-red-100 rounded-lg">
               <Clock className="h-6 w-6 text-red-600" />
@@ -163,7 +162,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
           </h3>
           <p className="text-red-600">Error loading session information</p>
         </div>
-  <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
+        <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
           <CardContent className="p-8">
             <div className="text-red-500 text-center">
               Error loading upcoming sessions. Please try again.
@@ -194,20 +193,20 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
   return (
     <div className="space-y-6">
       {/* Modern Header Section */}
-  <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:border-slate-700">
+  <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:bg-[#0F0276] dark:border-white/20">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div>
-            <h3 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3 mb-2">
-              <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
-                <Clock className="h-6 w-6 text-[#D8BD2A]" />
+            <h3 className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3 mb-2">
+              <div className="p-2 bg-[#D8BD2A]/10 dark:bg-white/10 rounded-lg">
+                <Clock className="h-6 w-6 text-[#D8BD2A] dark:text-white" />
               </div>
               Upcoming Sessions
             </h3>
-            <p className="text-slate-600">View and manage scheduled sessions</p>
+            <p className="text-slate-600 dark:text-white">View and manage scheduled sessions</p>
           </div>
           <Badge 
             variant="secondary" 
-            className="bg-[#D8BD2A]/10 text-[#0F0276] border-[#D8BD2A]/20 font-bold text-lg px-4 py-2 w-fit"
+            className="bg-[#D8BD2A]/10 text-[#0F0276] dark:text-white dark:bg-white/10 border-[#D8BD2A]/20 font-bold text-lg px-4 py-2 w-fit"
           >
             {sessions.length} sessions
           </Badge>
