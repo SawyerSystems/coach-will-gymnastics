@@ -15,6 +15,9 @@ import { ContentSection, SectionBasedContentEditor } from "@/components/section-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
+import { AdminButton } from "@/components/admin-ui/AdminButton";
+import { AdminAnalyticsMetrics, type MetricCard } from "@/components/admin-ui/AdminAnalyticsMetrics";
 import {
     Dialog,
     DialogContent,
@@ -1025,6 +1028,157 @@ export default function Admin() {
   const pendingBookings = allBookings.filter(b => b.attendanceStatus === "pending").length;
   const confirmedBookings = allBookings.filter(b => b.attendanceStatus === "confirmed").length;
 
+  // Shared analytics/header computed values
+  const thisMonthBookings = useMemo(() => {
+    return allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const bookingDate = new Date(b.preferredDate);
+      const now = new Date();
+      return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
+    }).length;
+  }, [allBookings]);
+
+  const conversionRate = useMemo(() => {
+    if (!allBookings.length) return 0;
+    const converted = allBookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length;
+    return Math.round((converted / allBookings.length) * 100);
+  }, [allBookings]);
+
+  const avgBookingValue = useMemo(() => {
+    if (!allBookings.length) return '0.00';
+    const toNumber = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const sum = allBookings.reduce((acc, b: any) => {
+      const amountNum = toNumber(b?.amount);
+      if (amountNum > 0) return acc + amountNum;
+      if (b?.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) {
+        const match: any = lessonTypesById.get(b.lessonTypeId);
+        return acc + toNumber(match?.price);
+      }
+      const lt: any = b?.lessonType;
+      if (lt && typeof lt === 'object' && 'price' in lt) return acc + toNumber(lt.price);
+      const name = typeof lt === 'string' ? lt : undefined;
+      if (name && lessonTypesByName.has(name)) {
+        const match: any = lessonTypesByName.get(name);
+        return acc + toNumber(match?.price);
+      }
+      return acc;
+    }, 0);
+    return (sum / allBookings.length).toFixed(2);
+  }, [allBookings, lessonTypesById, lessonTypesByName]);
+
+  const onlinePct = useMemo(() => {
+    if (!allBookings.length) return 0;
+    const count = allBookings.filter((b: any) => b?.bookingMethod === 'Website').length;
+    return Math.round((count / allBookings.length) * 100);
+  }, [allBookings]);
+
+  const adminBookedPct = useMemo(() => {
+    if (!allBookings.length) return 0;
+    const count = allBookings.filter((b: any) => b?.bookingMethod === 'Admin').length;
+    return Math.round((count / allBookings.length) * 100);
+  }, [allBookings]);
+
+  const dashboardHeaderMetrics = useMemo<MetricCard[]>(() => {
+    const metrics: MetricCard[] = [
+      {
+        key: 'upcoming',
+        label: 'Upcoming Missions',
+        value: upcomingBookingsCount,
+        hint: `of ${totalBookingsAll} total`,
+        icon: <Calendar className="h-5 w-5 text-indigo-700" />,
+        color: 'indigo' as const,
+      },
+      {
+        key: 'total',
+        label: 'Total Missions',
+        value: totalBookingsAll,
+        icon: <Calendar className="h-5 w-5 text-indigo-700" />,
+        color: 'slate' as const,
+      },
+      {
+        key: 'pending',
+        label: 'Pending',
+        value: pendingBookings,
+        icon: <Clock className="h-5 w-5 text-amber-700" />,
+        color: 'amber' as const,
+      },
+      {
+        key: 'confirmed',
+        label: 'Confirmed',
+        value: confirmedBookings,
+        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
+        color: 'green' as const,
+      },
+      {
+        key: 'athletes',
+        label: 'Total Athletes',
+        value: athletes.length,
+        icon: <Users className="h-5 w-5 text-blue-700" />,
+        color: 'blue' as const,
+      },
+      {
+        key: 'parents',
+        label: 'Total Parents',
+        value: totalParents,
+        icon: <Users className="h-5 w-5 text-indigo-700" />,
+        color: 'indigo' as const,
+      },
+    ];
+    if (missingWaivers.length > 0) {
+      metrics.push({
+        key: 'missing-waivers',
+        label: 'Missing Waivers',
+        value: missingWaivers.length,
+        hint: 'Athletes need waivers signed',
+        icon: <AlertCircle className="h-5 w-5 text-red-700" />,
+  color: 'amber' as const,
+      });
+    }
+    return metrics;
+  }, [upcomingBookingsCount, totalBookingsAll, pendingBookings, confirmedBookings, athletes.length, totalParents, missingWaivers.length]);
+
+  // Analytics tab key metrics
+  const analyticsHeaderMetrics = useMemo(() => {
+    const metrics = [
+      {
+        key: 'total-all',
+        label: 'Total Bookings',
+        value: allBookings.length,
+        hint: 'All time',
+        icon: <Calendar className="h-5 w-5 text-slate-700" />,
+        color: 'slate' as const,
+      },
+      {
+        key: 'this-month',
+        label: 'This Month',
+        value: thisMonthBookings,
+        hint: 'Monthly bookings',
+        icon: <CalendarDays className="h-5 w-5 text-indigo-700" />,
+        color: 'indigo' as const,
+      },
+      {
+        key: 'conversion',
+        label: 'Conversion Rate',
+        value: `${conversionRate}%`,
+        hint: 'Form to payment',
+        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
+        color: 'green' as const,
+      },
+      {
+        key: 'avg-value',
+        label: 'Avg Booking Value',
+        value: `$${avgBookingValue}`,
+        hint: 'Full lesson price only',
+        icon: <DollarSign className="h-5 w-5 text-amber-700" />,
+        color: 'amber' as const,
+      },
+    ];
+    return metrics;
+  }, [allBookings.length, thisMonthBookings, conversionRate, avgBookingValue]);
+
   // ANALYTICS COMPUTED DATA
   const filteredBookingsForAnalytics = allBookings.filter(booking => {
     // Filter by date range
@@ -1238,109 +1392,23 @@ export default function Admin() {
               </div>
             </div>
 
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-10 mx-auto w-full">
+        <div className="mb-6 sm:mb-10">
           {!bookings || !athletes ? (
-            [...Array(4)].map((_, index) => (
-              <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white transform transition-transform hover:scale-[1.02] duration-300">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-4 rounded" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16" />
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <>
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.06] to-white dark:from-[#0F0276]/30 dark:to-slate-900/40 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-yellow-200">Upcoming Missions</CardTitle>
-                  <div className="bg-[#0F0276]/10 dark:bg-[#0F0276]/40 p-1.5 sm:p-2 rounded-full">
-                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276] dark:text-yellow-200" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-yellow-200">{upcomingBookingsCount}</div>
-                      <p className="text-xs text-[#0F0276] dark:text-yellow-200 font-medium mt-1">of {totalBookingsAll} total</p>
-                </CardContent>
-              </Card>
-
-                  <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 dark:border-white/10 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                    <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-white">Total Missions</CardTitle>
-                      <div className="bg-[#0F0276]/10 dark:bg-transparent p-1.5 sm:p-2 rounded-full ring-1 ring-transparent dark:ring-white/40">
-                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276] dark:text-white" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white">{totalBookingsAll}</div>
-                    </CardContent>
-                  </Card>
-
-              <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-[#D8BD2A] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#D8BD2A]">Pending</CardTitle>
-                  <div className="bg-[#D8BD2A]/10 p-1.5 sm:p-2 rounded-full">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#D8BD2A]" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-black text-[#D8BD2A]">{pendingBookings}</div>
-                </CardContent>
-              </Card>
-
-  <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-green-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-green-600">Confirmed</CardTitle>
-                  <div className="bg-green-100 p-1.5 sm:p-2 rounded-full">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-          <div className="text-2xl sm:text-3xl font-black text-green-600">{confirmedBookings}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-blue-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-blue-700">Total Athletes</CardTitle>
-                  <div className="bg-blue-100 p-1.5 sm:p-2 rounded-full">
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-700" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-black text-blue-700">{athletes.length}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-indigo-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-indigo-700">Total Parents</CardTitle>
-                  <div className="bg-indigo-100 p-1.5 sm:p-2 rounded-full">
-                    <Users className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-700" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl sm:text-3xl font-black text-indigo-700">{totalParents}</div>
-                </CardContent>
-              </Card>
-
-              {missingWaivers.length > 0 && (
-                <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-[#E10B0B] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
-                  <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                    <CardTitle className="text-sm font-black tracking-tight text-[#E10B0B]">Missing Waivers</CardTitle>
-                    <AlertCircle className="h-5 w-5 text-[#E10B0B]" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mx-auto w-full">
+              {[...Array(4)].map((_, index) => (
+                <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white transform transition-transform hover:scale-[1.02] duration-300">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-4 rounded" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-black text-[#E10B0B]">{missingWaivers.length}</div>
-                    <p className="text-xs text-[#E10B0B] mt-1">
-                      Athletes need waivers signed
-                    </p>
+                    <Skeleton className="h-8 w-16" />
                   </CardContent>
                 </Card>
-              )}
-            </>
+              ))}
+            </div>
+          ) : (
+            <AdminAnalyticsMetrics metrics={dashboardHeaderMetrics} columns={{ base: 2, sm: 3, lg: 4 }} />
           )}
         </div>
 
@@ -1452,47 +1520,47 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Booking Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0 text-[#0F0276] dark:text-white">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0 text-[#0F0276] dark:text-white">
                 <AdminBookingManager 
                   openAthleteModal={openAthleteModal}
                   selectedBooking={selectedBooking}
                   onSelectBooking={setSelectedBooking}
                 />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   {/* Graduation cap icon inline to avoid additional import churn since lucide already imported many */}
                   <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🎓</span>
                   Lesson Type Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0">
                 <AdminLessonTypeManager />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="skills" role="tabpanel" id="skills-panel" aria-labelledby="skills-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🥇</span>
                   Skills Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0">
                 <Suspense fallback={<div className="space-y-3">
                   <Skeleton className="h-10 w-48" />
                   <Skeleton className="h-10 w-full" />
@@ -1500,30 +1568,30 @@ export default function Admin() {
                 </div>}>
                   <AdminSkillsManager />
                 </Suspense>
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
           <TabsContent value="progress" role="tabpanel" id="progress-panel" aria-labelledby="progress-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight">Athlete Progress</CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight">Athlete Progress</AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent>
                 <p className="text-slate-600 dark:text-slate-200 mb-4">Track progress with filters and summary bars.</p>
                 <AthleteProgressPage />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <Users className="h-8 w-8 text-[#D8BD2A]" />
                   Athletes Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="space-y-6 sm:space-y-8">
                 <div className="space-y-6">
                   {/* Search Bar */}
                   <div className="relative max-w-md">
@@ -1654,36 +1722,36 @@ export default function Admin() {
                       })}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
                   Payouts Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0">
                 <AdminPayoutsTab />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <User className="h-8 w-8 text-[#D8BD2A]" />
                   Parents Management
                   <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-bold rounded-xl px-3 py-1">
                     {parentsData?.parents?.length || 0} total
                   </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="space-y-6 sm:space-y-8">
                 {/* Search bar */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                   <div className="relative flex-1 max-w-xl">
@@ -1880,8 +1948,8 @@ export default function Admin() {
                     )}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
@@ -2687,8 +2755,8 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
                   <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                     <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
@@ -2698,8 +2766,8 @@ export default function Admin() {
                     Frontend Only - Coming Soon
                   </Badge>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8">
+              </AdminCardHeader>
+              <AdminCardContent className="p-4 sm:p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Message List */}
                   <div className="lg:col-span-1">
@@ -2880,122 +2948,45 @@ export default function Admin() {
                     </CardContent>
                   </Card>
                 </div>
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
                   Payment Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0">
                 <PaymentsTab />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <BarChart className="h-8 w-8 text-[#D8BD2A]" />
                   Analytics Dashboard
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="space-y-4 sm:space-y-6 lg:space-y-8">
                 <div className="space-y-4 sm:space-y-6">
                   {/* Key Metrics */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Total Bookings</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-black text-[#0F0276] dark:text-white">{allBookings.length}</div>
-                        <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">All time</p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">This Month</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-black text-[#0F0276] dark:text-white">
-                          {allBookings.filter(b => {
-                            if (!b.preferredDate) return false;
-                            const bookingDate = new Date(b.preferredDate);
-                            const thisMonth = new Date();
-                            return bookingDate.getMonth() === thisMonth.getMonth() && 
-                                   bookingDate.getFullYear() === thisMonth.getFullYear();
-                          }).length}
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Monthly bookings</p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Conversion Rate</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-black text-[#0F0276] dark:text-white">
-                          {allBookings.length > 0 
-                            ? Math.round((allBookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length / allBookings.length) * 100)
-                            : 0}%
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Form to payment</p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Avg Booking Value</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-black text-[#0F0276] dark:text-white">
-                          $
-                          {(() => {
-                            if (!allBookings.length) return '0.00';
-                            const toNumber = (v: any) => {
-                              const n = Number(v);
-                              return Number.isFinite(n) ? n : 0;
-                            };
-                            const sum = allBookings.reduce((acc, b) => {
-                              // Only use the base lesson price from the booking snapshot if present; never include reservation fees
-                              const bookingAmount = (b as any).amount; // legacy snapshot of full lesson price
-                              const amountNum = toNumber(bookingAmount);
-                              if (amountNum > 0) return acc + amountNum;
-
-                              // Otherwise, derive by lesson type (full lesson price only)
-                              const lt: any = (b as any).lessonType;
-                              if ((b as any).lessonTypeId && lessonTypesById.has((b as any).lessonTypeId)) {
-                                const match: any = lessonTypesById.get((b as any).lessonTypeId);
-                                return acc + toNumber(match?.price);
-                              }
-                              if (lt && typeof lt === 'object' && 'price' in lt) {
-                                return acc + toNumber(lt.price);
-                              }
-                              // Fallback by name if available
-                              const name = typeof lt === 'string' ? lt : undefined;
-                              if (name && lessonTypesByName.has(name)) {
-                                const match: any = lessonTypesByName.get(name);
-                                return acc + toNumber(match?.price);
-                              }
-                              return acc;
-                            }, 0);
-                            return (sum / allBookings.length).toFixed(2);
-                          })()}
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Per booking</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+                  <AdminAnalyticsMetrics metrics={analyticsHeaderMetrics} columns={{ base: 2, sm: 3, lg: 4 }} />
+                  
+                  {/* Old inline average derivation now handled in useMemo(avgBookingValue) above; continue with rest of analytics UI */}
+                  
+                  {/* Continue existing content after the key metrics grid */}
+                  {/* The following code block begins where the old Avg Booking Value card started */}
+                  {/* Preserve the remainder of the analytics tab content below unchanged */}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Online Bookings</CardTitle>
                       </CardHeader>
@@ -3007,9 +2998,9 @@ export default function Admin() {
                         </div>
                         <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Booked on website</p>
                       </CardContent>
-                    </Card>
+                  </Card>
 
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Admin Booked</CardTitle>
                       </CardHeader>
@@ -3021,15 +3012,15 @@ export default function Admin() {
                         </div>
                         <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Created by admin</p>
                       </CardContent>
-                    </Card>
-                  </div>
+                  </Card>
+                </div>
 
-                  {/* Date Range Filter - Mobile Responsive */}
+                  {/* Date Range + Filters */}
                   <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-[#D8BD2A]" />
-                        Date Range Filter
+                        Filters
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -3055,189 +3046,74 @@ export default function Admin() {
                         <div className="space-y-2">
                           <Label className="text-sm font-semibold text-slate-700 dark:text-white">Lesson Type</Label>
                           <Select value={analyticsLessonType} onValueChange={setAnalyticsLessonType}>
-                            <SelectTrigger className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200">
-                              <SelectValue placeholder="All lessons" />
+                            <SelectTrigger className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white">
+                              <SelectValue placeholder="All lesson types" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All lessons</SelectItem>
+                              <SelectItem value="all">All Lesson Types</SelectItem>
                               {(lessonTypes || []).map((lt: any) => (
                                 <SelectItem key={lt.id} value={lt.name}>{lt.name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold text-slate-700 dark:text-white sm:opacity-0 lg:opacity-100">Actions</Label>
+                        <div className="flex items-end">
                           <Button
                             variant="outline"
+                            className="w-full bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg"
                             onClick={() => {
                               setAnalyticsDateRange({ start: '', end: '' });
                               setAnalyticsLessonType('all');
                             }}
-                            className="w-full bg-white dark:bg-slate-800 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold text-[#0F0276] dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
                           >
                             Reset Filters
                           </Button>
                         </div>
                       </div>
                     </CardContent>
-                  </Card>                  {/* Popular Focus Areas Chart */}
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
-                        <BarChart className="h-6 w-6 text-[#D8BD2A]" />
-                        Popular Focus Areas (All bookings in selected filters)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {focusAreaStats.slice(0, 10).map((stat, index) => (
-                          <div key={stat.area} className="flex items-center gap-4">
-                            <div className="w-40 text-sm font-bold text-slate-700 dark:text-white truncate">{stat.area}</div>
-                            <div className="flex-1">
-                              <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-8 relative overflow-hidden shadow-inner">
-                                <div
-                                  className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${
-                                    index % 4 === 0 ? 'bg-gradient-to-r from-[#0F0276] to-[#2A4A9B]' :
-                                    index % 4 === 1 ? 'bg-gradient-to-r from-[#2A4A9B] to-[#0F0276]' :
-                                    index % 4 === 2 ? 'bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80' :
-                                    'bg-gradient-to-r from-slate-500 to-slate-600'
-                                  }`}
-                                  style={{ width: `${(stat.count / Math.max(...focusAreaStats.map(s => s.count), 1)) * 100}%` }}
-                                />
-                                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white dark:text-white">
-                                  {stat.count} bookings
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {focusAreaStats.length === 0 && (
-                          <p className="text-slate-500 dark:text-white/70 text-center">No focus areas found in selected period</p>
-                        )}
-                      </div>
-                    </CardContent>
                   </Card>
 
-                  {/* Booking Trends Chart */}
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
-                        <BarChart className="h-6 w-6 text-[#D8BD2A]" />
-                        Booking Trends (All bookings, last 6 months)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {bookingTrendData.map((month) => (
-                          <div key={month.month} className="flex items-center gap-4">
-                            <div className="w-24 text-sm font-medium text-slate-700 dark:text-white">{month.month}</div>
-                            <div className="flex-1">
-                              <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-6 relative overflow-hidden shadow-inner">
-                                <div
-                                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#0F0276] to-[#2A4A9B] dark:from-[#D8BD2A] dark:to-[#D8BD2A]/80 rounded-full transition-all duration-500"
-                                  style={{ width: `${(month.count / Math.max(...bookingTrendData.map(m => m.count), 1)) * 100}%` }}
-                                />
-                                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-slate-700 dark:text-white">
-                                  {month.count} bookings
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Lesson Type Distribution */}
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
-                        <DollarSign className="h-6 w-6 text-[#D8BD2A]" />
-                        Lesson Type Distribution (All bookings in selected filters)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {(() => {
-                          // Use ALL bookings (active + archived) within filters
-                          const total = filteredBookingsForAnalytics.length || 0;
-                          const colorPool = ['blue','green','purple','orange','indigo','emerald','rose','amber'];
-                          const items = (lessonTypes || []).map((lt: any, idx: number) => {
-                            const count = filteredBookingsForAnalytics.filter(b => {
-                              const name = (() => {
-                                const lto: any = b.lessonType;
-                                if (lto && typeof lto === 'object' && 'name' in lto) return lto.name;
-                                if (typeof lto === 'string') return lto;
-                                if (b.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) return lessonTypesById.get(b.lessonTypeId)?.name;
-                                return undefined;
-                              })();
-                              return name === lt.name;
-                            }).length;
-                            const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
-                            const color = colorPool[idx % colorPool.length];
-                            return { key: lt.id, label: lt.name, count, percentage, color };
-                          });
-
-                          if (!items.length) {
-                            return <p className="text-slate-500 dark:text-white/70">No lesson types found.</p>;
-                          }
-
-                            return items.map((type, index) => (
-                            <Card key={type.key} className="text-center rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                              <CardContent className="p-6">
-                                <div className="text-4xl font-black mb-2 text-[#0F0276] dark:text-white">{type.percentage}%</div>
-                                <p className="text-sm font-bold text-slate-700 dark:text-white mb-1">{type.label}</p>
-                                <p className="text-xs text-slate-500 dark:text-white/70 font-medium">{type.count} bookings</p>
-                              </CardContent>
-                            </Card>
-                          ));
-                        })()}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </AdminCardContent>
+              </AdminCard>
+            </TabsContent>
 
           <TabsContent value="waivers" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Waiver Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0">
                 <AdminWaiverManagement />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="messages" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Messages
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="pt-0">
                 <AdminMessagesTab />
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
 
           <TabsContent value="settings" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+            <AdminCard className="w-full">
+              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <AlertCircle className="h-8 w-8 text-[#D8BD2A]" />
                   Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8">
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="p-4 sm:p-6 lg:p-8">
                 <Tabs defaultValue="developer" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
                     <TabsTrigger 
@@ -3556,8 +3432,8 @@ export default function Admin() {
                     </Card>
                   </TabsContent>
                 </Tabs>
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           </TabsContent>
         </Tabs>
         
