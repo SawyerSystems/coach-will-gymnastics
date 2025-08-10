@@ -1090,14 +1090,14 @@ export default function Admin() {
         label: 'Upcoming Missions',
         value: upcomingBookingsCount,
         hint: `of ${totalBookingsAll} total`,
-        icon: <Calendar className="h-5 w-5 text-indigo-700" />,
+        icon: <Calendar className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
         color: 'indigo' as const,
       },
       {
         key: 'total',
         label: 'Total Missions',
         value: totalBookingsAll,
-        icon: <Calendar className="h-5 w-5 text-indigo-700" />,
+        icon: <Calendar className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
         color: 'slate' as const,
       },
       {
@@ -1118,14 +1118,14 @@ export default function Admin() {
         key: 'athletes',
         label: 'Total Athletes',
         value: athletes.length,
-        icon: <Users className="h-5 w-5 text-blue-700" />,
+        icon: <Users className="h-5 w-5 text-blue-700 dark:text-blue-300" />,
         color: 'blue' as const,
       },
       {
         key: 'parents',
         label: 'Total Parents',
         value: totalParents,
-        icon: <Users className="h-5 w-5 text-indigo-700" />,
+        icon: <Users className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
         color: 'indigo' as const,
       },
     ];
@@ -1158,7 +1158,7 @@ export default function Admin() {
         label: 'This Month',
         value: thisMonthBookings,
         hint: 'Monthly bookings',
-        icon: <CalendarDays className="h-5 w-5 text-indigo-700" />,
+        icon: <CalendarDays className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
         color: 'indigo' as const,
       },
       {
@@ -1647,7 +1647,7 @@ export default function Admin() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' : 'bg-white hover:bg-blue-50 text-blue-600'}`} 
+                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 dark:text-amber-200' : 'bg-white hover:bg-blue-50 text-blue-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-blue-300'}`} 
                                 onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} 
                                 title="View Details"
                               >
@@ -1665,7 +1665,7 @@ export default function Admin() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-9 w-9 p-0 rounded-xl border-0 bg-white hover:bg-red-50 text-red-600 shadow-md transition-all duration-200" 
+                                className="h-9 w-9 p-0 rounded-xl border-0 bg-white hover:bg-red-50 text-red-600 dark:bg-slate-700 dark:hover:bg-red-800 dark:text-red-400 shadow-md transition-all duration-200" 
                                 onClick={() => { 
                                   const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); 
                                   if (activeBookings.length > 0) { 
@@ -1771,7 +1771,7 @@ export default function Admin() {
                     variant="outline"
                     size="sm"
                     disabled={parentsLoading}
-                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-3 font-semibold"
+                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-3 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                   >
                     <RefreshCw className={`h-5 w-5 ${parentsLoading ? 'animate-spin' : ''}`} />
                   </Button>
@@ -1807,7 +1807,7 @@ export default function Admin() {
                         return (
                           <Card 
                             key={parent.id} 
-                            className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white dark:bg-white/10 hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                            className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 hover:from-slate-50 hover:via-white hover:to-slate-50 dark:hover:bg-[#0F0276]/95 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                           >
                             <CardContent className="p-6">
                               <div className="flex justify-between items-start gap-4">
@@ -1840,8 +1840,8 @@ export default function Admin() {
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg">
-                                      <Calendar className="h-4 w-4 text-blue-600" />
-                                      <span className="font-semibold text-blue-700 dark:text-white">
+                                      <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                                      <span className="font-semibold text-blue-700 dark:text-blue-300">
                                         {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
                                       </span>
                                     </div>
@@ -1877,7 +1877,7 @@ export default function Admin() {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
                                       }
                                     }}
-                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -1894,7 +1894,7 @@ export default function Admin() {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
                                       }
                                     }}
-                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
@@ -1926,7 +1926,7 @@ export default function Admin() {
                           size="sm"
                           disabled={currentParentPage <= 1}
                           onClick={() => setCurrentParentPage(Math.max(1, currentParentPage - 1))}
-                          className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold disabled:opacity-50"
+                          className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                         >
                           <ChevronLeft className="h-4 w-4 mr-1" />
                           Previous
@@ -1941,7 +1941,7 @@ export default function Admin() {
                           size="sm"
                           disabled={currentParentPage >= parentsData.pagination.totalPages}
                           onClick={() => setCurrentParentPage(Math.min(parentsData.pagination.totalPages, currentParentPage + 1))}
-                          className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold disabled:opacity-50"
+                          className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                         >
                           Next
                           <ChevronRight className="h-4 w-4 ml-1" />
@@ -1955,7 +1955,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardContent className="p-2 sm:p-4 lg:p-6">
                 <UpcomingSessions 
                   onBookingSelect={async (bookingId) => {
@@ -1979,7 +1979,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
@@ -2145,7 +2145,7 @@ export default function Admin() {
                       {blogPosts.map((post) => (
                         <Card 
                           key={post.id} 
-                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
                           <CardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
@@ -2176,7 +2176,7 @@ export default function Admin() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => setEditingPost(post)}
-                                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -2393,7 +2393,7 @@ export default function Admin() {
                       {tips.map((tip) => (
                         <Card 
                           key={tip.id} 
-                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
                           <CardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
@@ -2410,7 +2410,7 @@ export default function Admin() {
                                   </Badge>
                                   <Badge 
                                     variant="outline" 
-                                    className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-blue-200 text-blue-700 font-medium rounded-lg px-3 py-1"
+                                    className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-blue-200 text-blue-700 dark:from-blue-800 dark:to-blue-900 dark:border-blue-600 dark:text-blue-200 font-medium rounded-lg px-3 py-1"
                                   >
                                     {tip.difficulty}
                                   </Badge>
@@ -2426,7 +2426,7 @@ export default function Admin() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => setEditingTip(tip)}
-                                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -2451,7 +2451,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="schedule" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
@@ -2463,7 +2463,7 @@ export default function Admin() {
                   {/* Booking Cutoff System Overview */}
                   <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-green-50/50 to-blue-50/30 shadow-lg">
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-bold mb-3 text-blue-800 flex items-center gap-2">
+                      <h3 className="text-xl font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
                         🚀 Booking Cutoff System
                       </h3>
                       <p className="text-sm text-slate-700 mb-4 leading-relaxed">
@@ -2549,7 +2549,7 @@ export default function Admin() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                       <span>⏰ 60-min lessons:</span>
-                                      <span className="font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      <span className="font-mono bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200 px-2 py-1 rounded">
                                         Latest start: {(() => {
                                           const endMinutes = parseInt(dayAvailability.endTime.split(':')[0]) * 60 + parseInt(dayAvailability.endTime.split(':')[1]);
                                           const latestStart60 = endMinutes - 60;
@@ -2766,7 +2766,7 @@ export default function Admin() {
                     <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
                     Parent Communication
                   </CardTitle>
-                  <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-blue-200/50 text-blue-700 font-bold rounded-xl px-4 py-2 w-fit">
+                  <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-blue-200/50 text-blue-700 dark:from-blue-800 dark:to-blue-900 dark:text-blue-200 font-bold rounded-xl px-4 py-2 w-fit">
                     Frontend Only - Coming Soon
                   </Badge>
                 </div>
@@ -3208,8 +3208,8 @@ export default function Admin() {
                       {/* Test Data Generation */}
                       <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-3">
-                            <Plus className="h-6 w-6 text-blue-600" />
+                          <CardTitle className="text-lg font-bold text-blue-800 dark:text-blue-200 flex items-center gap-3">
+                            <Plus className="h-6 w-6 text-blue-600 dark:text-blue-300" />
                             Test Data Generation
                           </CardTitle>
                         </CardHeader>
@@ -3440,7 +3440,7 @@ export default function Admin() {
             aria-describedby="parent-details-description"
           >
             <DialogHeader className="bg-gradient-to-r from-purple-100 to-indigo-100 px-6 py-4 rounded-t-lg mb-0">
-              <DialogTitle id="parent-details-title" className="text-2xl font-bold text-indigo-900 flex items-center gap-3">
+              <DialogTitle id="parent-details-title" className="text-2xl font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-3">
                 <div className="p-2 bg-indigo-200 rounded-lg shadow-sm">
                   <User className="h-6 w-6 text-indigo-700" />
                 </div>
