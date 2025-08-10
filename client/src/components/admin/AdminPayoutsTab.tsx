@@ -146,7 +146,7 @@ export default function AdminPayoutsTab() {
 	return (
 		<div className="space-y-6 sm:space-y-8">
 			{/* Top toolbar */}
-			<div className="flex items-center justify-end gap-2">
+			<div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full max-w-screen-sm mx-auto px-4 sm:max-w-none sm:px-0">
 				<Button className="w-full sm:w-auto" variant="secondary" onClick={onRefresh}>
 					<RefreshCw className="h-4 w-4 mr-2" /> Refresh
 				</Button>
@@ -258,8 +258,8 @@ export default function AdminPayoutsTab() {
 				</CardContent>
 			</Card>
 
-			{/* KPIs */}
-			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+			{/* KPIs: horizontal on mobile */}
+			<div className="grid grid-cols-3 gap-3 sm:gap-4">
 				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
 					<CardContent className="p-4">
 						<div className="text-sm text-slate-600 dark:text-white/80">Total Sessions</div>
@@ -364,16 +364,16 @@ export default function AdminPayoutsTab() {
 			return (
 				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
 					<CardHeader className="pb-4">
-						<div className="flex items-center justify-between">
+						<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 							<CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
 								<CalendarIcon className="h-5 w-5 text-[#D8BD2A]" />
 								Recent payout runs
 							</CardTitle>
-							<div className="flex gap-2">
-								<Button onClick={onGenerate} disabled={gen.isPending} size="sm">
+							<div className="flex flex-wrap gap-2 w-full sm:w-auto sm:flex-nowrap sm:justify-end">
+								<Button className="w-full sm:w-auto" onClick={onGenerate} disabled={gen.isPending} size="sm">
 									{gen.isPending ? 'Updating…' : 'Generate/Refresh current period'}
 								</Button>
-								<Button variant="secondary" size="sm" onClick={async () => {
+								<Button className="w-full sm:w-auto" variant="secondary" size="sm" onClick={async () => {
 									try {
 										const result = await backfill.mutateAsync({ periodStart: start, periodEnd: end });
 										await refetch();
@@ -385,7 +385,7 @@ export default function AdminPayoutsTab() {
 								}} disabled={backfill.isPending}>
 									{backfill.isPending ? 'Backfilling…' : 'Backfill current period'}
 								</Button>
-								<Button variant="destructive" size="sm" onClick={async () => {
+								<Button className="w-full sm:w-auto" variant="destructive" size="sm" onClick={async () => {
 									if (!confirm(`Clear payout calculations for ${start} → ${end}? This will reset owed and applied rate values for this period. You can backfill again later.`)) return;
 									try {
 										const result = await clearPayouts.mutateAsync({ periodStart: start, periodEnd: end });
