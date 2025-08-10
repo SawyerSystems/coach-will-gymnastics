@@ -1214,8 +1214,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   <h2 className="text-2xl font-bold text-[#0F0276] dark:text-white">Calendar View</h2>
                   <p className="text-slate-600 dark:text-white">Manage bookings in a visual calendar format</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 bg-white text-[#0F0276] border border-slate-200 dark:border-[#D8BD2A] dark:border-2 rounded-md px-3 py-1.5">
+                <div className="w-full md:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="w-full sm:w-auto flex items-center gap-2 bg-white text-[#0F0276] border border-slate-200 dark:border-[#D8BD2A] dark:border-2 rounded-md px-3 py-1.5">
                     <Checkbox 
                       id="show-archived" 
                       checked={showArchivedInCalendar}
@@ -1233,7 +1233,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   </div>
                   <Button 
                     variant="outline" 
-                    className="flex items-center gap-2 bg-white text-[#0F0276] border-slate-200 dark:text-white dark:bg-transparent dark:border-2 dark:border-[#D8BD2A]"
+                    className="w-full sm:w-auto justify-center flex items-center gap-2 bg-white text-[#0F0276] border-slate-200 dark:text-white dark:bg-transparent dark:border-2 dark:border-[#D8BD2A]"
                     onClick={() => {
                       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
                       if (showArchivedInCalendar) {
@@ -1248,7 +1248,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   </Button>
                   <Button 
                     variant="default" 
-                    className="bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-white dark:hover:bg-white/90 dark:text-[#0F0276] flex items-center gap-2 border border-transparent dark:border-2 dark:border-[#D8BD2A]"
+                    className="w-full sm:w-auto justify-center bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-white dark:hover:bg-white/90 dark:text-[#0F0276] flex items-center gap-2 border border-transparent dark:border-2 dark:border-[#D8BD2A]"
                     onClick={() => {
                       setAdminBookingContext("new-athlete");
                       setShowUnifiedBooking(true);
