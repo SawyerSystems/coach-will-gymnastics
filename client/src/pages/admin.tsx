@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { AdminAnalyticsMetrics, type MetricCard } from "@/components/admin-ui/AdminAnalyticsMetrics";
+import { AdminTabButtonsRow } from "@/components/admin-ui/AdminTabButtons";
 import {
     Dialog,
     DialogContent,
@@ -3115,34 +3116,18 @@ export default function Admin() {
               </AdminCardHeader>
               <AdminCardContent className="p-4 sm:p-6 lg:p-8">
                 <Tabs defaultValue="developer" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
-                    <TabsTrigger 
-                      value="developer"
-                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
-                    >
-                      Developer
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="general"
-                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
-                    >
-                      General
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="site-content"
-                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
-                    >
-                      Site Content
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="backup"
-                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
-                    >
-                      Backup
-                    </TabsTrigger>
-                  </TabsList>
+                  <AdminTabButtonsRow
+                    items={[
+                      { value: 'developer', label: 'Developer' },
+                      { value: 'general', label: 'General' },
+                      { value: 'site-content', label: 'Site Content' },
+                      { value: 'backup', label: 'Backup' },
+                    ]}
+                    listClassName="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl w-full min-h-[60px] mb-8"
+                    triggerClassName="font-semibold text-sm text-center h-12 flex items-center justify-center"
+                  />
                   
-                  <TabsContent value="developer" className="space-y-6 mt-6">
+                  <TabsContent value="developer" className="space-y-6 pt-4">{/* Added pt-4 to ensure separation from tabs */}
                     <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-orange-50/50 to-yellow-50/30 shadow-lg">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
@@ -3390,7 +3375,7 @@ export default function Admin() {
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="general">
+                  <TabsContent value="general" className="pt-4">
                     <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
@@ -3404,7 +3389,7 @@ export default function Admin() {
                     </Card>
                   </TabsContent>
                   
-                  <TabsContent value="site-content">
+                  <TabsContent value="site-content" className="pt-4">
                     <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
@@ -3418,7 +3403,7 @@ export default function Admin() {
                     </Card>
                   </TabsContent>
                   
-                  <TabsContent value="backup">
+                  <TabsContent value="backup" className="pt-4">
                     <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">

@@ -140,7 +140,7 @@ export function AdminTabButtonsRow({
   const baseTrigger = cn(
     "rounded-xl border transition-all duration-200 inline-flex items-center gap-2",
     "supports-[backdrop-filter]:bg-white/40 backdrop-blur-md",
-    "relative z-0", // Ensure tabs don't have high z-index that overlays content
+    "relative", // Remove explicit z-index that might interfere
     "bg-white/70 border-slate-200/60 text-[#0F0276]",
     "dark:bg-[#0F0276]/60 dark:text-white dark:border-[#2A4A9B]/40",
     "hover:shadow-lg",
@@ -169,7 +169,7 @@ export function AdminTabButtonsRow({
   return (
     <TabsList className={cn(
       "grid gap-2 bg-transparent p-1",
-      "relative z-0", // Ensure tabs don't overlay content with high z-index
+      "relative", // Remove explicit z-index
       "w-full", // Full width for grid
       listClassName
     )}>
