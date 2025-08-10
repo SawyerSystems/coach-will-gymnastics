@@ -63,9 +63,9 @@ export function Footer() {
   };
 
   return (
-    <footer className="text-white relative overflow-hidden bg-slate-800 dark:bg-slate-950">
+    <footer className="relative overflow-hidden theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
       {/* Background Logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+      <div className="absolute inset-0 flex items-center justify-center opacity-5">
         <img 
           src={cwtLogo} 
           alt="Coach Will Tumbles Background" 
@@ -73,7 +73,7 @@ export function Footer() {
         />
       </div>
       
-      <div className="container mx-auto px-4 py-12 relative z-10">
+  <div className="container mx-auto px-4 py-12 relative z-10">
         {/* Header Section with Logo and Description */}
         <div className="mb-12 text-center">
           <div className="flex items-center justify-center space-x-3 mb-6">
@@ -88,20 +88,20 @@ export function Footer() {
               <span className="text-[#E10B0B]">TUMBLES</span>
             </h3>
           </div>
-          <p className="text-gray-300 text-sm leading-relaxed max-w-2xl mx-auto mb-6">
+          <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed max-w-2xl mx-auto mb-6">
             Where athletics meets adventure! Building confident champions one flip at a time, turning every lesson into a quest for greatness and every athlete into their own superhero.
           </p>
           <div className="flex justify-center space-x-4">
-            <a href="#" className="text-gray-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">
+            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">
               <Facebook className="w-6 h-6" />
             </a>
-            <a href="https://www.instagram.com/coachwilltumbles/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#E4405F] transition-colors" aria-label="Instagram">
+            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#E4405F] transition-colors" aria-label="Instagram">
               <Instagram className="w-6 h-6" />
             </a>
-            <a href="#" className="text-gray-400 hover:text-[#FF0000] transition-colors" aria-label="YouTube">
+            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0000] transition-colors" aria-label="YouTube">
               <Youtube className="w-6 h-6" />
             </a>
-            <a href="#" className="text-gray-400 hover:text-[#FF0050] transition-colors" aria-label="TikTok">
+            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0050] transition-colors" aria-label="TikTok">
               <MessageCircle className="w-6 h-6" />
             </a>
           </div>
@@ -113,24 +113,24 @@ export function Footer() {
           <div className="flex flex-col md:flex-row md:space-x-12 lg:space-x-16 space-y-8 md:space-y-0">
             {/* Quick Links */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Quick Links</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Quick Links</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/booking" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">Private Lessons</Link></li>
-                <li><Link href="/about" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">About Us</Link></li>
-                <li><Link href="/blog" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">Blog</Link></li>
-                <li><Link href="/tips" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">Tips & Drills</Link></li>
-                <li><Link href="/contact" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">Contact</Link></li>
+                <li><Link href="/booking" className="text-slate-700 dark:text-slate-300 hover:text-[#D8BD2A] transition-colors">Private Lessons</Link></li>
+                <li><Link href="/about" className="text-slate-700 dark:text-slate-300 hover:text-[#D8BD2A] transition-colors">About Us</Link></li>
+                <li><Link href="/blog" className="text-slate-700 dark:text-slate-300 hover:text-[#D8BD2A] transition-colors">Blog</Link></li>
+                <li><Link href="/tips" className="text-slate-700 dark:text-slate-300 hover:text-[#D8BD2A] transition-colors">Tips & Drills</Link></li>
+                <li><Link href="/contact" className="text-slate-700 dark:text-slate-300 hover:text-[#D8BD2A] transition-colors">Contact</Link></li>
               </ul>
             </div>
 
             {/* Lesson Types */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#E10B0B]">Lesson Types</h3>
+              <h3 className="text-lg font-semibold text-[#E10B0B] dark:text-[#FB2832]">Lesson Types</h3>
               <ul className="space-y-2 text-sm">
-                <li><span className="text-gray-300">Quick Journey (30 min)</span></li>
-                <li><span className="text-gray-300">Dual Quest | Semi-Private (30 min)</span></li>
-                <li><span className="text-gray-300">Deep Dive (60 min)</span></li>
-                <li><span className="text-gray-300">Partner Progression | Semi-Private (60 min)</span></li>
+                <li><span className="text-slate-700 dark:text-slate-300">Quick Journey (30 min)</span></li>
+                <li><span className="text-slate-700 dark:text-slate-300">Dual Quest | Semi-Private (30 min)</span></li>
+                <li><span className="text-slate-700 dark:text-slate-300">Deep Dive (60 min)</span></li>
+                <li><span className="text-slate-700 dark:text-slate-300">Partner Progression | Semi-Private (60 min)</span></li>
               </ul>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function Footer() {
           {/* Right Side - Contact Us */}
           <div className="space-y-4 lg:text-right lg:flex-shrink-0">
             <h3 className="text-lg font-semibold text-[#D8BD2A]">Contact Us</h3>
-            <div className="space-y-2 text-sm text-gray-300">
+            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
               <div className="flex items-center space-x-2 lg:justify-end">
                 <Phone className="w-4 h-4" />
                 <span>{contact.phone}</span>
@@ -159,7 +159,7 @@ export function Footer() {
                 <Clock className="w-4 h-4" />
                 <div className="lg:text-right">
                   {orderedDays.map((day) => {
-                    const schedule = hours[day as keyof SiteHours] || (hours as any)[day];
+                    const schedule = hours[day];
                     const shortDay = day.slice(0, 3);
                     
                     if (!schedule?.available) {
@@ -183,8 +183,8 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-700 dark:border-slate-800 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+        <div className="border-t border-slate-200 dark:border-slate-700 mt-8 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-slate-600 dark:text-slate-400">
             <p>&copy; 2025 Coach Will Tumbles. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link href="/privacy" className="hover:text-[#D8BD2A] transition-colors">Privacy Policy</Link>

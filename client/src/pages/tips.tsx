@@ -35,33 +35,33 @@ export default function Tips() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Unable to Load Tips</h2>
-          <p className="text-slate-700 dark:text-slate-300">Please try again later.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Unable to Load Tips</h2>
+          <p className="text-gray-600">Please try again later.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
+      <section className="py-16 lg:py-24 bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-6">
             Training <span className="text-teal-600">Adventures</span>
           </h1>
-          <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Discover new skills and level up your flippin' adventure with our collection of tips, drills, and techniques. 
             Every skill is a new quest waiting to be conquered.
           </p>
           
           {/* Search and Filters */}
-          <div className="max-w-4xl mx-auto rounded-2xl shadow-lg p-6 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search tips and drills..."
                   value={searchTerm}
@@ -99,12 +99,12 @@ export default function Tips() {
       </section>
 
       {/* Tips Grid */}
-      <section className="py-16 lg:py-24 bg-white dark:bg-slate-900/30">
+      <section className="py-16 lg:py-24 bg-white">
         <div className="container mx-auto px-4">
           {isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, index) => (
-                <Card key={index} className="overflow-hidden glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+                <Card key={index} className="overflow-hidden">
                   <CardContent className="p-6">
                     <Skeleton className="h-4 w-20 mb-2" />
                     <Skeleton className="h-6 w-full mb-3" />
@@ -118,13 +118,13 @@ export default function Tips() {
           ) : filteredTips && filteredTips.length > 0 ? (
             <>
               <div className="text-center mb-8">
-                <p className="text-slate-700 dark:text-slate-300">
+                <p className="text-gray-600">
                   Showing {filteredTips.length} of {tips?.length || 0} tips
                 </p>
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredTips.map((tip) => (
-                  <Card key={tip.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+                  <Card key={tip.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-3">
                         <Badge 
@@ -142,16 +142,16 @@ export default function Tips() {
                         </Badge>
                       </div>
                       
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 line-clamp-2">
+                      <h3 className="text-xl font-bold text-gray-800 mb-3 line-clamp-2">
                         {tip.title}
                       </h3>
                       
-                      <p className="text-slate-700 dark:text-slate-300 mb-4 line-clamp-3">
+                      <p className="text-gray-600 mb-4 line-clamp-3">
                         {tip.content ? `${tip.content.substring(0, 150)}...` : 'No content available'}
                       </p>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                        <span className="text-sm text-gray-500">
                           {new Date(tip.publishedAt).toLocaleDateString()}
                         </span>
                         <Link href={`/tips/${tip.id}`}>
@@ -168,14 +168,14 @@ export default function Tips() {
             </>
           ) : (
             <div className="text-center py-16">
-              <Filter className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+              <Filter className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
                 {searchTerm || categoryFilter !== "all" || difficultyFilter !== "all" 
                   ? "No tips match your search" 
                   : "No tips available yet"
                 }
               </h3>
-              <p className="text-slate-700 dark:text-slate-300">
+              <p className="text-gray-600">
                 {searchTerm || categoryFilter !== "all" || difficultyFilter !== "all"
                   ? "Try adjusting your search or filters to find what you're looking for."
                   : "Check back soon for gymnastics tips and drills!"
@@ -187,13 +187,13 @@ export default function Tips() {
       </section>
 
       {/* Skill Categories */}
-      <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-900/30">
+      <section className="py-16 lg:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
               Skill <span className="text-purple-600">Categories</span>
             </h2>
-            <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Explore tips organized by gymnastics apparatus and skill types.
             </p>
           </div>
@@ -227,13 +227,13 @@ export default function Tips() {
             ].map((category, index) => (
               <Card 
                 key={index} 
-                className={`p-6 text-center hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700 cursor-pointer`}
+                className={`p-6 text-center hover:shadow-lg transition-shadow duration-300 bg-gradient-to-br ${category.color} cursor-pointer`}
                 onClick={() => setCategoryFilter(category.name)}
               >
                 <CardContent className="pt-6">
                   <div className="text-4xl mb-4">{category.icon}</div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">{category.name}</h3>
-                  <p className="text-slate-700 dark:text-slate-300 text-sm">{category.description}</p>
+                  <h3 className="text-xl font-bold text-gray-800 mb-3">{category.name}</h3>
+                  <p className="text-gray-600 text-sm">{category.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -258,7 +258,7 @@ export default function Tips() {
         variant="secondary"
       />
 
-  <Footer />
+      <Footer />
     </div>
   );
 }
