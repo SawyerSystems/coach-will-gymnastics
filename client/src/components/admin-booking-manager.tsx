@@ -1529,35 +1529,37 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                       </TableRow>
                     ) : (
                       filteredArchivedBookings.map((booking: Booking) => (
-                        <TableRow key={booking.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-gray-500" />
+                        <TableRow key={booking.id} className="transition-colors border-transparent">
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-[#0F0276]/10 dark:bg-white/15">
+                                <Calendar className="h-4 w-4 text-[#0F0276] dark:text-white" />
+                              </div>
                               <div>
-                                <div className="font-medium">{booking.preferredDate}</div>
-                                <div className="text-sm text-gray-500">{booking.preferredTime}</div>
+                                <div className="font-semibold text-[#0F0276] dark:text-white">{booking.preferredDate}</div>
+                                <div className="text-sm text-[#0F0276]/90 dark:text-white/90">{booking.preferredTime}</div>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                             <div className="space-y-1">
                               {booking.athletes?.map((athlete: any, index: number) => (
-                                <div key={index} className={index === 0 ? "font-medium" : "text-sm text-muted-foreground"}>
+                                <div key={index} className={index === 0 ? "font-semibold text-[#0F0276] dark:text-white" : "text-sm text-[#0F0276]/90 dark:text-white/90"}>
                                   {athlete.name}
                                 </div>
                               )) || (
                                 <div className="space-y-1">
-                                  {booking.athlete1Name && <div className="font-medium">{booking.athlete1Name}</div>}
-                                  {booking.athlete2Name && <div className="text-sm text-muted-foreground">{booking.athlete2Name}</div>}
+                                  {booking.athlete1Name && <div className="font-semibold text-[#0F0276] dark:text-white">{booking.athlete1Name}</div>}
+                                  {booking.athlete2Name && <div className="text-sm text-[#0F0276]/90 dark:text-white/90">{booking.athlete2Name}</div>}
                                   {!booking.athlete1Name && !booking.athlete2Name && (
-                                    <div className="text-muted-foreground">No athletes</div>
+                                    <div className="italic text-[#0F0276]/80 dark:text-white/80">No athletes</div>
                                   )}
                                 </div>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                            <Badge variant="outline" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10 font-medium">
                               {(() => {
                                 const lessonType = booking.lessonType;
                                 if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
@@ -1567,7 +1569,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               })()}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                             <Select
                               value={booking.paymentStatus || "unpaid"}
                               onValueChange={(value) => 
@@ -1578,7 +1580,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               }
                               disabled={updatePaymentStatusMutation.isPending}
                             >
-                              <SelectTrigger className="h-8 w-[140px]">
+                              <SelectTrigger className="h-9 w-[150px] rounded-lg bg-transparent text-[#0F0276] border-[#0F0276]/30 focus:border-[#0F0276] focus:ring-[#0F0276] dark:text-white dark:border-white/40 dark:focus:border-white dark:focus:ring-white">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1592,7 +1594,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                             <Select
                               value={booking.attendanceStatus || "pending"}
                               onValueChange={(value) => 
@@ -1603,7 +1605,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               }
                               disabled={updateAttendanceStatusMutation.isPending}
                             >
-                              <SelectTrigger className="h-8 w-[120px]">
+                              <SelectTrigger className="h-9 w-[120px] rounded-lg bg-transparent text-[#0F0276] border-[#0F0276]/30 focus:border-[#0F0276] focus:ring-[#0F0276] dark:text-white dark:border-white/40 dark:focus:border-white dark:focus:ring-white">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1615,18 +1617,18 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell>
-                            <div className="text-sm font-medium">
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                            <div className="text-sm font-medium text-[#0F0276] dark:text-white">
                               ${(() => {
                                 const price = resolvePrice(booking);
                                 return price > 0 ? price.toFixed(2) : '0.00';
                               })()}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </DialogTrigger>
