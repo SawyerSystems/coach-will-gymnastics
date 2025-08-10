@@ -2,6 +2,7 @@
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -826,29 +827,29 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
               
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button
+                <AdminButton
                   onClick={() => {
                     setAdminBookingContext('new-athlete');
                     setPreSelectedAthleteId(undefined);
                     setShowUnifiedBooking(true);
                   }}
-                  className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold shadow-lg hover:shadow-xl transition-all duration-200 border-0 rounded-xl"
+                  variant="primary"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   New Athlete Booking
-                </Button>
-                <Button
-                  variant="outline"
+                </AdminButton>
+                <AdminButton
+                  variant="secondary"
                   onClick={() => {
                     setAdminBookingContext('existing-athlete');
                     setPreSelectedAthleteId(undefined);
                     setShowUnifiedBooking(true);
                   }}
-                  className="border-[#0F0276]/20 text-[#0F0276] hover:bg-[#0F0276]/5 rounded-xl font-semibold dark:bg-white dark:text-[#0F0276] dark:hover:bg-white/90 dark:border-[#D8BD2A]"
+                  className="font-semibold"
                 >
                   <User className="h-4 w-4 mr-2" />
                   Existing Athlete
-                </Button>
+                </AdminButton>
               </div>
             </div>
             
@@ -902,15 +903,15 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           {/* Mobile list (active) to avoid horizontal scroll */}
           <div className="sm:hidden space-y-3">
             {filteredAndSortedBookings.length === 0 ? (
-              <Card className="rounded-xl border-0 shadow-lg dark:bg-[#0F0276]">
+              <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center gap-3 text-center">
                     <Calendar className="h-8 w-8 text-gray-400" />
-                    <div className="font-medium text-lg dark:text-white">No active bookings found</div>
-                    <div className="text-sm text-gray-500 dark:text-white/80">
+                    <div className="font-medium text-lg">No active bookings found</div>
+                    <div className="text-sm text-gray-600 dark:text-white/90">
                       Active bookings will appear here when athletes have pending, confirmed, or paid sessions.
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-white/80">
+                    <div className="text-sm text-gray-600 dark:text-white/90">
                       Completed, cancelled, and no-show bookings can be found in the "Archived" tab.
                     </div>
                   </div>
@@ -1010,10 +1011,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-full justify-center text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
+                          <AdminButton variant="secondary" size="sm" className="w-full justify-center">
                             <Eye className="h-4 w-4 mr-2" />
                             Details
-                          </Button>
+                          </AdminButton>
                         </DialogTrigger>
                         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                           <DialogHeader className="flex flex-row items-center justify-between pr-6">
@@ -1023,28 +1024,28 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           <BookingDetailsView booking={booking} />
                         </DialogContent>
                       </Dialog>
-                      <Button
-                        variant="outline"
+                      <AdminButton
+                        variant="secondary"
                         size="sm"
                         onClick={() => {
                           setRescheduleBooking(booking);
                           setShowRescheduleModal(true);
                         }}
-                        className="w-full justify-center text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
+                        className="w-full justify-center"
                       >
                         Reschedule
-                      </Button>
-                      <Button
-                        variant="outline"
+                      </AdminButton>
+                      <AdminButton
+                        variant="secondary"
                         size="sm"
                         onClick={() => sendWaiverEmailMutation.mutate(booking.id)}
                         disabled={!booking.parentEmail || sendWaiverEmailMutation.isPending}
                         title={!booking.parentEmail ? 'No parent email on file for this booking' : undefined}
-                        className="w-full justify-center text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 col-span-1"
+                        className="w-full justify-center"
                       >
                         Send Waiver
-                      </Button>
-                      <Button
+                      </AdminButton>
+                      <AdminButton
                         variant="destructive"
                         size="sm"
                         onClick={() => {
@@ -1055,7 +1056,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                         className="w-full justify-center"
                       >
                         Delete
-                      </Button>
+                      </AdminButton>
                     </div>
                   </CardContent>
                 </Card>
@@ -1417,12 +1418,12 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
               {/* Mobile list (archived) */}
               <div className="sm:hidden space-y-3">
                 {filteredArchivedBookings.length === 0 ? (
-                  <Card className="rounded-xl border-0 shadow-lg">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center gap-3 text-center">
                         <FileCheck className="h-8 w-8 text-gray-400" />
                         <div className="font-medium text-lg">No archived bookings found</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-600 dark:text-white/90">
                           {archivedSearch ? 'Try a different search.' : 'Completed, cancelled, and no-show bookings will appear here.'}
                         </div>
                       </div>
@@ -1430,33 +1431,33 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   </Card>
                 ) : (
                   filteredArchivedBookings.map((booking: Booking) => (
-                    <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur">
+                    <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded-lg">
-                              <Calendar className="h-4 w-4 text-gray-600" />
+                            <div className="p-2 rounded-lg bg-[#0F0276]/10 dark:bg-white/15">
+                              <Calendar className="h-4 w-4 text-[#0F0276] dark:text-white" />
                             </div>
                             <div>
-                              <div className="font-semibold">{booking.preferredDate}</div>
-                              <div className="text-sm text-slate-600">{booking.preferredTime}</div>
+                              <div className="font-semibold text-[#0F0276] dark:text-white">{booking.preferredDate}</div>
+                              <div className="text-sm text-[#0F0276]/90 dark:text-white/90">{booking.preferredTime}</div>
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50">
+                            <Badge variant="outline" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10">
                               {(booking.paymentStatus || 'unpaid').replace('-', ' ')}
                             </Badge>
-                            <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50">
+                            <Badge variant="outline" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10">
                               {(booking.attendanceStatus || 'pending').replace('-', ' ')}
                             </Badge>
                           </div>
                         </div>
                         {/* Athletes */}
-                        <div className="mt-3 text-slate-900 text-sm">
+                        <div className="mt-3 text-sm text-[#0F0276] dark:text-white">
                           {(() => {
                             const names = booking.athletes?.map((a: any) => a.name).filter(Boolean) || [booking.athlete1Name, booking.athlete2Name].filter(Boolean as any);
                             const validNames = (names as string[]).filter(Boolean);
-                            if (validNames.length === 0) return <span className="italic text-slate-500">No athletes</span>;
+                            if (validNames.length === 0) return <span className="italic text-[#0F0276]/80 dark:text-white/80">No athletes</span>;
                             const first = validNames[0];
                             const rest = validNames.length - 1;
                             return <span>{first}{rest > 0 ? ` +${rest} more` : ''}</span>;
@@ -1464,7 +1465,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                         </div>
                         {/* Lesson type */}
                         <div className="mt-2">
-                          <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50 font-medium">
+                          <Badge variant="outline" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10 font-medium">
                             {(() => {
                               const lessonType = booking.lessonType;
                               if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
