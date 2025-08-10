@@ -284,48 +284,48 @@ export default function AdminPayoutsTab() {
 			<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
 				<CardContent className="p-0">
 					<div className="overflow-x-auto">
-						<table className="w-full text-sm">
-							<thead className="bg-slate-100/50 dark:bg-slate-800/50">
-								<tr>
-									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Date</th>
-									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Athlete</th>
-									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Membership</th>
-									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Duration</th>
-									<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Owed</th>
-									<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Rate</th>
+						<table className="w-full text-sm border-separate border-spacing-y-2">
+							<thead>
+								<tr className="border-transparent">
+									<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Date</th>
+									<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Athlete</th>
+									<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Membership</th>
+									<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Duration</th>
+									<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Owed</th>
+									<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Rate</th>
 								</tr>
 							</thead>
 							<tbody>
 								{loadingList ? (
 									<tr>
-										<td className="px-4 py-4 text-slate-600 dark:text-white/80" colSpan={6}>Loading…</td>
+										<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent" colSpan={6}>Loading…</td>
 									</tr>
 								) : list.length === 0 ? (
 									<tr>
-										<td className="px-4 py-6 text-slate-500 dark:text-white/70" colSpan={6}>No payout rows for the selected filters.</td>
+										<td className="py-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276]/80 border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white/80 dark:border-transparent" colSpan={6}>No payout rows for the selected filters.</td>
 									</tr>
 								) : (
 									list.map((row) => {
 										const athleteName = row.athletes?.name || [row.athletes?.first_name, row.athletes?.last_name].filter(Boolean).join(' ');
 										const date = row.bookings?.preferred_date || '';
 										return (
-											<tr key={row.id} className="border-t border-slate-200/60 dark:border-slate-600/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-												<td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-white">{date}</td>
-												<td className="px-4 py-3 text-slate-700 dark:text-white">{athleteName || `Athlete #${row.athlete_id}`}</td>
-												<td className="px-4 py-3 text-slate-700 dark:text-white">{row.gym_member_at_booking ? 'Member' : 'Non-member'}</td>
-												<td className="px-4 py-3 text-slate-700 dark:text-white">{row.duration_minutes ? `${row.duration_minutes} min` : '—'}</td>
-												<td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-white">{formatCents(row.gym_payout_owed_cents)}</td>
-												<td className="px-4 py-3 text-right text-slate-500 dark:text-white/70">{formatCents(row.gym_rate_applied_cents)}</td>
+											<tr key={row.id} className="transition-colors border-transparent">
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent whitespace-nowrap">{date}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{athleteName || `Athlete #${row.athlete_id}`}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{row.gym_member_at_booking ? 'Member' : 'Non-member'}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{row.duration_minutes ? `${row.duration_minutes} min` : '—'}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right font-semibold">{formatCents(row.gym_payout_owed_cents)}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right text-[#0F0276]/80 dark:text-white/80">{formatCents(row.gym_rate_applied_cents)}</td>
 											</tr>
 										);
 									})
 								)}
 							</tbody>
-							<tfoot className="bg-slate-100/50 dark:bg-slate-800/50 border-t border-slate-200/60 dark:border-slate-600/60">
+							<tfoot className="bg-[#0F0276]/10 dark:bg-slate-800/50 border-t border-slate-200/60 dark:border-slate-600/60">
 								<tr>
-									<td className="px-4 py-3 font-semibold text-slate-700 dark:text-white" colSpan={4}>Totals (visible)</td>
-									<td className="px-4 py-3 text-right font-bold text-slate-700 dark:text-white">{formatCents(totals.all)}</td>
-									<td className="px-4 py-3 text-right text-slate-500 dark:text-white/70">
+									<td className="px-4 py-3 font-semibold text-[#0F0276] dark:text-white" colSpan={4}>Totals (visible)</td>
+									<td className="px-4 py-3 text-right font-bold text-[#0F0276] dark:text-white">{formatCents(totals.all)}</td>
+									<td className="px-4 py-3 text-right text-[#0F0276]/80 dark:text-white/80">
 										<span className="mr-2">Members: {formatCents(totals.members)}</span>
 										<span>Non-members: {formatCents(totals.nonMembers)}</span>
 									</td>

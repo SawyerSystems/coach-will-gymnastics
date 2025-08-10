@@ -470,42 +470,40 @@ export function AdminWaiverManagement() {
 
               {/* Desktop table */}
               <div className="hidden sm:block overflow-x-auto">
-                <Table className="w-full">
-                  <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
-                    <TableRow className="border-b border-slate-200">
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Signer</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Relationship</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Signed Date</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Email Status</TableHead>
-                      <TableHead className="px-2 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                <Table className="w-full border-separate border-spacing-y-2">
+                  <TableHeader>
+                    <TableRow className="border-transparent">
+                      <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Athlete</TableHead>
+                      <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Signer</TableHead>
+                      <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Relationship</TableHead>
+                      <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Signed Date</TableHead>
+                      <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Email Status</TableHead>
+                      <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody className="divide-y divide-slate-100">
+                  <TableBody>
                     {filteredSignedWaivers.map((waiver, index) => (
                       <TableRow 
                         key={waiver.id} 
-                        className={`hover:bg-gradient-to-r hover:from-green-50/30 hover:to-emerald-50/30 transition-all duration-200 ${
-                          index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-                        }`}
+                        className="transition-colors border-transparent"
                       >
-                        <TableCell className="px-6 py-4 font-semibold text-slate-900">{waiver.athleteName}</TableCell>
-                        <TableCell className="px-6 py-4 text-slate-700">{waiver.signerName}</TableCell>
-                        <TableCell className="px-6 py-4 text-slate-600">{waiver.relationshipToAthlete}</TableCell>
-                        <TableCell className="px-6 py-4 text-slate-600 font-medium">{formatDate(waiver.signedAt.split('T')[0])}</TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-semibold">{waiver.athleteName}</TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{waiver.signerName}</TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{waiver.relationshipToAthlete}</TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-medium">{formatDate(waiver.signedAt.split('T')[0])}</TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           {waiver.emailSentAt ? (
-                            <Badge variant="default" className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 font-semibold">
+                            <Badge variant="default" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10 font-medium">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Sent
                             </Badge>
                           ) : (
-                            <Badge variant="secondary" className="bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 border border-slate-300 font-medium">
+                            <Badge variant="secondary" className="border-[#0F0276]/30 text-[#0F0276]/80 bg-[#0F0276]/5 dark:border-white/40 dark:text-white/80 dark:bg-white/10 font-medium">
                               Not Sent
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <div className="flex items-center gap-2">
                             <Dialog>
                               <DialogTrigger asChild>
@@ -513,7 +511,7 @@ export function AdminWaiverManagement() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setSelectedWaiver(waiver)}
-                                  className="border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+                                  className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
                                 >
                                   <Eye className="h-4 w-4 mr-1" />
                                   View
@@ -587,7 +585,7 @@ export function AdminWaiverManagement() {
                               variant="outline"
                               size="sm"
                               onClick={() => downloadPDF(waiver.id, waiver.athleteName)}
-                              className="border-green-200 text-green-700 hover:bg-green-50 font-medium"
+                              className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
                             >
                               <Download className="h-4 w-4 mr-1" />
                               PDF
@@ -598,13 +596,13 @@ export function AdminWaiverManagement() {
                               size="sm"
                 onClick={() => generatePDFMutation.mutate(waiver.id)}
                 disabled={generatingWaiverId === waiver.id}
-                              className="border-purple-200 text-purple-700 hover:bg-purple-50 font-medium disabled:opacity-50"
+                              className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
                             >
                               <FileText className="h-4 w-4 mr-1" />
                 {generatingWaiverId === waiver.id ? "Generating..." : "Generate PDF"}
                             </Button>
                           ) : (
-                            <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-600">
+                            <Badge variant="secondary" className="text-xs border-[#0F0276]/30 text-[#0F0276]/80 bg-[#0F0276]/5 dark:border-white/40 dark:text-white/80 dark:bg-white/10">
                               Missing waiver
                             </Badge>
                           )}
@@ -616,7 +614,7 @@ export function AdminWaiverManagement() {
                 onClick={() => resendEmailMutation.mutate(waiver.id)}
                 disabled={sendingWaiverId === waiver.id || waiver.status === 'signed' || !!waiver.signedAt}
                 title={waiver.status === 'signed' || !!waiver.signedAt ? 'Waiver is already signed' : undefined}
-                className="border-blue-200 text-blue-700 hover:bg-blue-50 font-medium disabled:opacity-50"
+                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
                             >
                               <Mail className="h-4 w-4 mr-1" />
                 {sendingWaiverId === waiver.id ? "Sending..." : "Email"}
