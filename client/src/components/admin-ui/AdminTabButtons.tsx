@@ -46,6 +46,7 @@ export function AdminTabButtons({
   const baseTrigger = cn(
     "rounded-xl border transition-all duration-200 inline-flex items-center gap-2",
     "supports-[backdrop-filter]:bg-white/40 backdrop-blur-md",
+    "relative z-0", // Ensure tabs don't have high z-index that overlays content
     // default state (unselected)
     "bg-white/70 border-slate-200/60 text-[#0F0276]",
     "dark:bg-[#0F0276]/60 dark:text-white dark:border-[#2A4A9B]/40",
@@ -79,6 +80,9 @@ export function AdminTabButtons({
       <TabsList
         className={cn(
           "flex flex-wrap gap-2 bg-transparent p-1",
+          "relative z-0", // Ensure tabs don't overlay content with high z-index
+          "w-full overflow-x-auto", // Allow horizontal scrolling on small screens
+          "scrollbar-hide", // Hide scrollbar for cleaner look
           "justify-start items-center",
           listClassName
         )}
@@ -90,7 +94,12 @@ export function AdminTabButtons({
             disabled={item.disabled}
             aria-label={item.ariaLabel || (typeof item.label === "string" ? item.label : undefined)}
             title={item.tooltip}
-            className={cn(baseTrigger, sizeClasses[size])}
+            className={cn(
+              baseTrigger, 
+              sizeClasses[size],
+              "flex-shrink-0", // Prevent tabs from shrinking too much
+              "min-w-max" // Ensure tabs maintain readable width
+            )}
           >
             {item.icon}
             <span className="font-semibold truncate max-w-[14ch] sm:max-w-none">{item.label}</span>
@@ -131,6 +140,7 @@ export function AdminTabButtonsRow({
   const baseTrigger = cn(
     "rounded-xl border transition-all duration-200 inline-flex items-center gap-2",
     "supports-[backdrop-filter]:bg-white/40 backdrop-blur-md",
+    "relative z-0", // Ensure tabs don't have high z-index that overlays content
     "bg-white/70 border-slate-200/60 text-[#0F0276]",
     "dark:bg-[#0F0276]/60 dark:text-white dark:border-[#2A4A9B]/40",
     "hover:shadow-lg",
@@ -157,7 +167,12 @@ export function AdminTabButtonsRow({
   );
 
   return (
-    <TabsList className={cn("flex flex-wrap gap-2 bg-transparent p-1", listClassName)}>
+    <TabsList className={cn(
+      "grid gap-2 bg-transparent p-1",
+      "relative z-0", // Ensure tabs don't overlay content with high z-index
+      "w-full", // Full width for grid
+      listClassName
+    )}>
       {items.map((item) => (
         <TabsTrigger
           key={item.value}
@@ -165,10 +180,15 @@ export function AdminTabButtonsRow({
           disabled={item.disabled}
           aria-label={item.ariaLabel || (typeof item.label === "string" ? item.label : undefined)}
           title={item.tooltip}
-          className={cn(baseTrigger, sizeClasses[size])}
+          className={cn(
+            baseTrigger, 
+            sizeClasses[size],
+            "text-center justify-center", // Center content in grid cells
+            "min-h-[48px] flex items-center" // Ensure minimum touch target size and proper centering
+          )}
         >
           {item.icon}
-          <span className="font-semibold truncate max-w-[14ch] sm:max-w-none">{item.label}</span>
+          <span className="font-semibold truncate">{item.label}</span>
           {item.badge != null && item.badge !== "" && (
             <span className={badgeBase}>{item.badge}</span>
           )}

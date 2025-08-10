@@ -1318,8 +1318,8 @@ export function AdminSiteContentManager() {
             { value: 'faqs', label: <><HelpCircle className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">FAQs</span></> },
             { value: 'emails', label: <><Mail className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Emails</span></> },
           ]}
-          listClassName="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl"
-          triggerClassName="font-semibold text-xs sm:text-sm"
+          listClassName="grid grid-cols-4 grid-rows-2 gap-3 p-3 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl w-full min-h-[120px]"
+          triggerClassName="font-semibold text-xs sm:text-sm text-center h-12 flex items-center justify-center"
         />
 
         {/* Media Tab */}
