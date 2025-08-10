@@ -1872,8 +1872,8 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <div className="dark:bg-[#0F0276] dark:p-4 dark:rounded-xl">
+          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden dark:bg-[#0F0276] dark:text-white">
+            <div className="dark:bg-[#0F0276] dark:p-4 rounded-xl sm:rounded-2xl lg:rounded-3xl">
               <UpcomingSessions 
                 onBookingSelect={async (bookingId) => {
                   // Switch to bookings tab

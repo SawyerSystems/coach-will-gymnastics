@@ -191,7 +191,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
   });
 
   return (
-    <div className="space-y-6 rounded-xl dark:bg-[#0F0276] dark:p-6 dark:rounded-xl">
+    <div className="space-y-6 rounded-xl sm:rounded-2xl lg:rounded-3xl dark:bg-[#0F0276] dark:p-6">
       {/* Modern Header Section */}
   <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:bg-[#2A4A9B] dark:border-white/20">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
@@ -247,66 +247,55 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
               ) : (
                 <div className="space-y-4">
                   {sessions.map((session) => {
-                    // Format the session date and time
                     const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
-                    
                     return (
-                      <div 
+                      <div
                         key={session.id}
-                        className="rounded-xl border border-slate-200 dark:border-slate-300 bg-gradient-to-r from-slate-50 to-white dark:from-white dark:to-slate-50 hover:shadow-md transition-all duration-300"
+                        className="rounded-xl border border-[#2A4A9B] bg-[#2A4A9B] text-white hover:shadow-md transition-all duration-300"
                       >
                         <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
                           <div className="space-y-4">
-                            {/* Date and time */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 dark:bg-indigo-100 rounded-lg">
-                                  <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-700" />
+                                <div className="p-2 bg-white/15 rounded-lg">
+                                  <Clock className="h-4 w-4 text-white" />
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-indigo-900 dark:text-indigo-800">
+                                  <p className="font-semibold text-white">
                                     {formattedDateTime !== 'TBD' ? formattedDateTime.date : 'Date TBD'}
                                   </p>
-                                  <p className="text-sm text-slate-600 dark:text-slate-700">
+                                  <p className="text-sm text-white/90">
                                     {formattedDateTime !== 'TBD' ? formattedDateTime.time : 'Time TBD'}
                                   </p>
                                 </div>
                               </div>
-                              <Badge 
-                                variant="outline" 
-                                className="border-slate-300 dark:border-slate-400 text-slate-700 dark:text-slate-800 bg-slate-50 dark:bg-slate-100 font-semibold"
+                              <Badge
+                                variant="outline"
+                                className="border-white/40 text-white bg-white/10 font-semibold"
                               >
                                 {session.lessonType.replace('-', ' ').replace('min', 'minute')}
                               </Badge>
                             </div>
-                            
-                            {/* Athletes */}
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-50 dark:bg-blue-100 rounded-lg">
-                                <User className="h-4 w-4 text-blue-600 dark:text-blue-700" />
+                              <div className="p-2 bg-white/15 rounded-lg">
+                                <User className="h-4 w-4 text-white" />
                               </div>
-                              <span className="font-semibold text-slate-800 dark:text-slate-900">
+                              <span className="font-semibold text-white">
                                 {session.athleteNames.join(', ') || 'No athletes listed'}
                               </span>
                             </div>
-                            
-                            {/* Focus Areas */}
                             {session.focusAreas && session.focusAreas.length > 0 && (
-                              <div className="text-slate-600 dark:text-slate-700 ml-11">
+                              <div className="text-white/90 ml-11">
                                 <span className="font-medium">Focus Areas:</span> {session.focusAreas.join(', ')}
                               </div>
                             )}
-                            
-                            {/* Parent */}
-                            <div className="text-slate-600 dark:text-slate-700 ml-11">
+                            <div className="text-white/90 ml-11">
                               <span className="font-medium">Parent:</span> {session.parentName}
                             </div>
                           </div>
-                          
-                          {/* Status badges */}
                           <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
                             <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
-                              {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                             </Badge>
                             <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
                               {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
@@ -336,7 +325,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
       </Tabs>
       
       {viewMode === 'list' && (
-        <Card className="rounded-xl border border-[#D8BD2A] shadow-lg glass-surface glass-card glass-gradient bg-[#D8BD2A] text-[#0F0276] dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:border-[#D8BD2A]">
+        <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-[#D8BD2A] shadow-lg glass-surface glass-card glass-gradient bg-[#D8BD2A] text-[#0F0276] dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:border-[#D8BD2A]">
           <CardContent className="p-6">
             {sessions.length === 0 ? (
               <div className="text-center py-12">
@@ -355,7 +344,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                   return (
                     <div 
                       key={session.id}
-                      className="rounded-xl border border-blue-200 dark:border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-100 dark:to-blue-200 hover:shadow-md transition-all duration-300 cursor-pointer hover:border-blue-300"
+                      className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-[#2A4A9B] bg-[#2A4A9B] text-white hover:shadow-md transition-all duration-300 cursor-pointer hover:border-white/60"
                       onClick={() => handleBookingSelect(session.id)}
                     >
                       <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
@@ -363,21 +352,21 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                           {/* Date and time */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-indigo-50 dark:bg-indigo-100 rounded-lg">
-                                <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-700" />
+                              <div className="p-2 bg-white/15 rounded-lg">
+                                <Clock className="h-4 w-4 text-white" />
                               </div>
                               <div>
-                                <p className="font-semibold text-indigo-900 dark:text-indigo-800">
+                                <p className="font-semibold text-white">
                                   {formattedDateTime !== 'TBD' ? formattedDateTime.date : 'Date TBD'}
                                 </p>
-                                <p className="text-sm text-slate-600 dark:text-slate-700">
+                                <p className="text-sm text-white/90">
                                   {formattedDateTime !== 'TBD' ? formattedDateTime.time : 'Time TBD'}
                                 </p>
                               </div>
                             </div>
                             <Badge 
                               variant="outline" 
-                              className="border-slate-300 dark:border-slate-400 text-slate-700 dark:text-slate-800 bg-slate-50 dark:bg-slate-100 font-semibold"
+                              className="border-white/40 text-white bg-white/10 font-semibold"
                             >
                               {session.lessonType.replace('-', ' ').replace('min', 'minute')}
                             </Badge>
@@ -385,16 +374,16 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                           
                           {/* Athletes */}
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-50 dark:bg-blue-100 rounded-lg">
-                              <User className="h-4 w-4 text-blue-600 dark:text-blue-700" />
+                            <div className="p-2 bg-white/15 rounded-lg">
+                              <User className="h-4 w-4 text-white" />
                             </div>
-                            <span className="font-semibold text-slate-800 dark:text-slate-900">
+                            <span className="font-semibold text-white">
                               {session.athleteNames.join(', ') || 'No athletes listed'}
                             </span>
                           </div>
                           
                           {/* Parent */}
-                          <div className="text-slate-600 dark:text-slate-700 ml-11">
+                          <div className="text-white/90 ml-11">
                             <span className="font-medium">Parent:</span> {session.parentName}
                           </div>
                         </div>
