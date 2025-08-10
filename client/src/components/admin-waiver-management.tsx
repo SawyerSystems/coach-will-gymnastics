@@ -372,7 +372,7 @@ export function AdminWaiverManagement() {
             </CardHeader>
             <CardContent className="p-0">
               {/* Mobile cards */}
-              <div className="sm:hidden p-3 space-y-3">
+      <div className="sm:hidden p-3 space-y-3">
                 {filteredSignedWaivers.length === 0 ? (
                   <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                     <CardContent className="p-6 text-center text-slate-600">No signed waivers found.</CardContent>
@@ -383,10 +383,10 @@ export function AdminWaiverManagement() {
                       <CardContent className="p-4">
                         <div className="relative">
                           {/* top-right vertical actions */}
-                          <div className="absolute right-0 top-0 flex flex-col gap-2">
+          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
                             <Dialog>
                               <DialogTrigger asChild>
-                                <AdminButton variant="secondary" size="sm" className="justify-center">
+            <AdminButton variant="secondary" size="sm" className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                                   <Eye className="h-4 w-4 mr-2" />
                                   View
                                 </AdminButton>
@@ -412,7 +412,7 @@ export function AdminWaiverManagement() {
                                 variant="secondary"
                                 size="sm"
                                 onClick={() => downloadPDF(waiver.id as number, waiver.athleteName)}
-                                className="justify-center"
+                                className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               >
                                 <Download className="h-4 w-4 mr-2" />
                                 PDF
@@ -423,10 +423,10 @@ export function AdminWaiverManagement() {
                                 size="sm"
                                 onClick={() => generatePDFMutation.mutate(waiver.id)}
                                 disabled={generatingWaiverId === waiver.id}
-                                className="justify-center"
+                                className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               >
                                 <FileText className="h-4 w-4 mr-2" />
-                                {generatingWaiverId === waiver.id ? 'Generating…' : 'Generate PDF'}
+                                {generatingWaiverId === waiver.id ? 'Gen…' : 'Gen PDF'}
                               </AdminButton>
                             ) : (
                               <Badge variant="secondary" className="self-end bg-slate-100 text-slate-600">Missing</Badge>
@@ -437,14 +437,14 @@ export function AdminWaiverManagement() {
                                 size="sm"
                                 onClick={() => resendEmailMutation.mutate(waiver.id)}
                                 disabled={sendingWaiverId === waiver.id || !!waiver.signedAt}
-                                className="justify-center"
+                                className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                                 title={!!waiver.signedAt ? 'Waiver already signed' : undefined}
                               >
                                 <Mail className="h-4 w-4 mr-2" />
                                 {sendingWaiverId === waiver.id ? 'Sending…' : 'Email'}
                               </AdminButton>
                             ) : (
-                              <AdminButton variant="secondary" size="sm" disabled className="justify-center opacity-60">
+                              <AdminButton variant="secondary" size="sm" disabled className="justify-center opacity-60 h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                                 <Mail className="h-4 w-4 mr-2" />
                                 N/A
                               </AdminButton>
@@ -452,7 +452,7 @@ export function AdminWaiverManagement() {
                           </div>
 
                           {/* content with right padding so it doesn't overlap actions */}
-                          <div className="pr-32">
+                          <div className="pr-36">
                             <div className="font-semibold text-slate-900">{waiver.athleteName}</div>
                             <div className="text-sm text-slate-700">Signer: {waiver.signerName}</div>
                             <div className="mt-2">
@@ -679,28 +679,28 @@ export function AdminWaiverManagement() {
                     </div>
                   </div>
                   {/* Mobile cards */}
-                  <div className="sm:hidden space-y-3">
+          <div className="sm:hidden space-y-3">
                     {filteredMissingWaivers.map((waiver) => (
                       <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                         <CardContent className="p-4">
                           <div className="relative">
-                            <div className="absolute right-0 top-0 flex flex-col gap-2">
+              <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
                               <Badge variant="outline" className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200 font-semibold">Waiver Required</Badge>
                               <AdminButton
                                 variant="secondary"
-                                size="sm"
+                size="sm"
                                 onClick={() => {
                                   toast({
                                     title: "Manual Waiver Process",
                                     description: "Contact the parent to complete the waiver through the booking system or parent portal.",
                                   });
                                 }}
-                                className="justify-center"
+                className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               >
-                                <Mail className="h-4 w-4 mr-2" /> Contact Parent
+                <Mail className="h-4 w-4 mr-2" /> Contact
                               </AdminButton>
                             </div>
-                            <div className="pr-40">
+              <div className="pr-36">
                               <div className="font-semibold text-slate-900">{waiver.athleteName}</div>
                               <div className="text-sm text-slate-700">DOB: {waiver.dateOfBirth ? formatDate(waiver.dateOfBirth) : 'N/A'}</div>
                               <div className="text-xs text-slate-500 mt-1">Status updates in real-time</div>
@@ -822,15 +822,15 @@ export function AdminWaiverManagement() {
                     </div>
                   </div>
                   {/* Mobile cards */}
-                  <div className="sm:hidden space-y-3">
+      <div className="sm:hidden space-y-3">
                     {archivedWaivers.map((waiver) => (
                       <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                         <CardContent className="p-4">
                           <div className="relative">
-                            <div className="absolute right-0 top-0 flex flex-col gap-2">
+            <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
                               <Dialog>
                                 <DialogTrigger asChild>
-                                  <AdminButton variant="secondary" size="sm" className="justify-center">
+              <AdminButton variant="secondary" size="sm" className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                                     <Eye className="h-4 w-4 mr-2" /> View
                                   </AdminButton>
                                 </DialogTrigger>
@@ -856,12 +856,12 @@ export function AdminWaiverManagement() {
                                 size="sm"
                                 onClick={() => typeof waiver.id === 'number' && downloadPDF(waiver.id as number, waiver.athleteName)}
                                 disabled={typeof waiver.id !== 'number'}
-                                className="justify-center"
+                                className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               >
                                 <Download className="h-4 w-4 mr-2" /> PDF
                               </AdminButton>
                             </div>
-                            <div className="pr-40">
+                            <div className="pr-36">
                               <div className="font-semibold text-slate-900">{waiver.athleteName}</div>
                               <div className="text-sm text-slate-700">Signer: {waiver.signerName}</div>
                               <div className="mt-2 flex flex-wrap gap-2">
