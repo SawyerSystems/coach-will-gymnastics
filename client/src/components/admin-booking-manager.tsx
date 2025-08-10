@@ -409,6 +409,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   const [dateFilter, setDateFilter] = useState<string>("");
   const [tab, setTab] = useState<'active' | 'archived' | 'calendar'>("active");
   const [showArchivedInCalendar, setShowArchivedInCalendar] = useState<boolean>(false);
+  // Search term for archived bookings
+  const [archivedSearch, setArchivedSearch] = useState<string>("");
 
   // Auth status check to ensure queries are enabled only when admin is logged in
   const { data: authStatus } = useQuery<{ loggedIn: boolean; adminId?: number }>({
@@ -429,6 +431,30 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
     queryFn: () => apiRequest('GET', '/api/archived-bookings').then(res => res.json()),
     enabled: !!authStatus?.loggedIn && (tab === 'archived' || showArchivedInCalendar),
   });
+
+  // Filter archived bookings by search term (athlete names, date/time, lesson type, statuses, parent email)
+  const filteredArchivedBookings = useMemo(() => {
+    const list = (archivedBookings as any[]) || [];
+    const q = archivedSearch.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter((booking: any) => {
+      const names = (booking.athletes?.map((a: any) => a?.name).filter(Boolean))
+        || [booking.athlete1Name, booking.athlete2Name].filter(Boolean);
+      const lessonType = typeof booking.lessonType === 'object' && booking.lessonType && 'name' in booking.lessonType
+        ? (booking.lessonType as any).name
+        : (booking.lessonType || booking.lessonTypeName || "");
+      const haystack = [
+        booking.preferredDate,
+        booking.preferredTime,
+        lessonType,
+        booking.paymentStatus,
+        booking.attendanceStatus,
+        booking.parentEmail,
+        ...(names || [])
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [archivedBookings, archivedSearch]);
 
   // Combined bookings for calendar view
   const allBookingsForCalendar = useMemo(() => {
@@ -1305,11 +1331,29 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           <div className="relative z-0 mt-12 sm:mt-6 pointer-events-auto">
           {/* Modern Archived Header */}
           <div className="bg-gradient-to-r from-slate-100/50 to-slate-200/30 dark:bg-[#0F0276] dark:from-[#0F0276] dark:to-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-700 dark:text-white tracking-tight flex items-center gap-3">
-              <FileCheck className="h-8 w-8 text-slate-500 dark:text-[#D8BD2A]" />
-              Archived Bookings
-            </h2>
-            <p className="text-slate-600 dark:text-white mt-1">Completed, cancelled, and no-show sessions</p>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-700 dark:text-white tracking-tight flex items-center gap-3">
+                  <FileCheck className="h-8 w-8 text-slate-500 dark:text-[#D8BD2A]" />
+                  Archived Bookings
+                </h2>
+                <p className="text-slate-600 dark:text-white mt-1">Completed, cancelled, and no-show sessions</p>
+              </div>
+              <div className="w-full lg:w-[380px]">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11 4a7 7 0 015.292 11.708l3 3a1 1 0 01-1.414 1.414l-3-3A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z" fill="currentColor" />
+                  </svg>
+                  <Input
+                    type="text"
+                    value={archivedSearch}
+                    onChange={(e) => setArchivedSearch(e.target.value)}
+                    placeholder="Search archived bookings..."
+                    className="w-full pl-10 rounded-xl border-slate-300/60 text-slate-700 bg-white focus:border-[#0F0276] focus:ring-[#0F0276] dark:border-white/40 dark:text-white dark:bg-[#0F0276]"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           
           {loadingArchived ? (
@@ -1320,20 +1364,20 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             <>
               {/* Mobile list (archived) */}
               <div className="sm:hidden space-y-3">
-                {archivedBookings.length === 0 ? (
+                {filteredArchivedBookings.length === 0 ? (
                   <Card className="rounded-xl border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center gap-3 text-center">
                         <FileCheck className="h-8 w-8 text-gray-400" />
                         <div className="font-medium text-lg">No archived bookings found</div>
                         <div className="text-sm text-gray-500">
-                          Completed, cancelled, and no-show bookings will appear here.
+                          {archivedSearch ? 'Try a different search.' : 'Completed, cancelled, and no-show bookings will appear here.'}
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ) : (
-                  archivedBookings.map((booking: Booking) => (
+                  filteredArchivedBookings.map((booking: Booking) => (
                     <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-3">
@@ -1400,7 +1444,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {archivedBookings.length === 0 ? (
+                    {filteredArchivedBookings.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-3">
@@ -1408,14 +1452,14 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                             <div>
                               <div className="font-medium text-lg">No archived bookings found</div>
                               <div className="text-sm text-gray-500 mt-1">
-                                Completed, cancelled, and no-show bookings will appear here.
+                                {archivedSearch ? 'Try a different search.' : 'Completed, cancelled, and no-show bookings will appear here.'}
                               </div>
                             </div>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : (
-                      archivedBookings.map((booking: Booking) => (
+                      filteredArchivedBookings.map((booking: Booking) => (
                         <TableRow key={booking.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
