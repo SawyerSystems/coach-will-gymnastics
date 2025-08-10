@@ -1189,7 +1189,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
         </TabsContent>
         <TabsContent value="calendar">
           {/* Calendar Header */}
-          <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 mb-6">
+          <div className="mt-4 sm:mt-6 bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 mb-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-[#0F0276]">Calendar View</h2>
