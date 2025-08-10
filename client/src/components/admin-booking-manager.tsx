@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import { Textarea } from "@/components/ui/textarea";
 import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
 import { useToast } from "@/hooks/use-toast";
@@ -754,31 +755,32 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   return (
     <>
       {/* Modern Tabs for Active/Archived */}
-      <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')} className="w-full">
-        {/* Tabs: responsive to fit on mobile (wrap/grid), icons hidden on small screens */}
-  <TabsList className="mb-8 sm:mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-2 gap-2 sm:flex sm:gap-2">
-          <TabsTrigger 
-            value="active"
-      className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto border-2 data-[state=active]:border-[#0F0276] data-[state=inactive]:border-[#D8BD2A] data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
-          >
-            <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />
-            Active Bookings
-          </TabsTrigger>
-          <TabsTrigger 
-            value="calendar"
-      className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto border-2 data-[state=active]:border-[#0F0276] data-[state=inactive]:border-[#D8BD2A] data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
-          >
-            <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />
-            Calendar View
-          </TabsTrigger>
-          <TabsTrigger 
-            value="archived"
-      className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto border-2 data-[state=active]:border-[#0F0276] data-[state=inactive]:border-[#D8BD2A] data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
-          >
-            <FileCheck className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />
-            Archived Bookings
-          </TabsTrigger>
-        </TabsList>
+      <AdminContentTabs
+        value={tab}
+        onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')}
+        items={[
+          {
+            value: "active",
+            label: "Active Bookings",
+            icon: <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+          {
+            value: "calendar",
+            label: "Calendar View",
+            icon: <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+          {
+            value: "archived",
+            label: "Archived Bookings",
+            icon: <FileCheck className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+        ]}
+  listClassName="mb-8 sm:mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-2 gap-2 sm:flex sm:gap-2 overflow-visible"
+  triggerClassName="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto min-w-0 border-2 data-[state=inactive]:border-[#D8BD2A] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
+      >
         <TabsContent value="active">
           {/* Modern Header Section */}
           <div className="rounded-xl p-6 mb-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 text-[#0F0276] dark:bg-[#2A4A9B] dark:text-white dark:border-white/20">
@@ -1522,7 +1524,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             </>
           )}
         </TabsContent>
-      </Tabs>
+      </AdminContentTabs>
 
       {/* Booking Detail Modal */}
       {selectedBooking && (

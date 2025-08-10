@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,18 +53,32 @@ export default function AdminMessagesTab() {
 
   return (
     <div className="space-y-6">
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="bg-slate-100 text-[#0F0276] dark:bg-[#D8BD2A]/10 dark:text-white border-slate-200 dark:border-[#D8BD2A]/20 mb-4">
-          <TabsTrigger value="sms" className="gap-2 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]">
-            <MessageCircle className="h-4 w-4" /> SMS
-          </TabsTrigger>
-          <TabsTrigger value="emails" className="gap-2 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]">
-            <Mail className="h-4 w-4" /> Emails
-          </TabsTrigger>
-          <TabsTrigger value="inquiries" className="gap-2 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]">
-            <Inbox className="h-4 w-4" /> Site Inquiries
-          </TabsTrigger>
-        </TabsList>
+      <AdminContentTabs
+        value={tab}
+        onValueChange={setTab}
+        items={[
+          {
+            value: "sms",
+            label: "SMS",
+            icon: <MessageCircle className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+          {
+            value: "emails",
+            label: "Emails",
+            icon: <Mail className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+          {
+            value: "inquiries",
+            label: "Site Inquiries",
+            icon: <Inbox className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+        ]}
+        listClassName="bg-slate-100 text-[#0F0276] dark:bg-[#D8BD2A]/10 dark:text-white border-slate-200 dark:border-[#D8BD2A]/20 mb-4"
+        triggerClassName="gap-2"
+      >
 
         <TabsContent value="sms">
           <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
@@ -135,7 +150,7 @@ export default function AdminMessagesTab() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+      </AdminContentTabs>
     </div>
   );
 }

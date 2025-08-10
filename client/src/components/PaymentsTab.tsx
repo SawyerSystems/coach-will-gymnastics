@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -383,29 +384,27 @@ export function PaymentsTab() {
         {/* Enhanced Tabs for different views */}
         <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-blue-50/30 shadow-lg">
           <CardContent className="p-3 sm:p-4 lg:p-6">
-            <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
-                <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-0.5 sm:p-1 rounded-lg sm:rounded-xl shadow-sm w-full sm:w-auto overflow-x-auto">
-                  <TabsTrigger 
-                    value="overview" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200"
-                  >
-                    All Transactions
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="pending" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
-                  >
-                    Pending Payments
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="completed" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-4 py-2 font-semibold text-sm transition-all duration-200"
-                  >
-                    Completed
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+            <AdminContentTabs
+              value={selectedTab}
+              onValueChange={setSelectedTab}
+              items={[
+                {
+                  value: "overview",
+                  label: "All Transactions",
+                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600",
+                },
+                {
+                  value: "pending",
+                  label: "Pending Payments",
+                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600",
+                },
+                {
+                  value: "completed",
+                  label: "Completed",
+                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600",
+                },
+              ]}
+            >
             <TabsContent value="overview">
               <div className="overflow-x-auto rounded-lg border border-slate-100">
                 <Table>
@@ -718,7 +717,7 @@ export function PaymentsTab() {
                 </TableBody>
               </Table>
             </TabsContent>
-          </Tabs>
+          </AdminContentTabs>
           </CardContent>
         </Card>
       </div>

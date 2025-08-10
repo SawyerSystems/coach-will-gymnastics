@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -328,29 +329,29 @@ export function AdminWaiverManagement() {
         </Card>
       </div>
 
-      <Tabs defaultValue="signed" className="space-y-4 sm:space-y-6 w-full">
-        <div className="flex items-center justify-center sm:justify-start w-full">
-          <TabsList className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-0.5 sm:p-1 rounded-lg sm:rounded-xl shadow-sm w-full sm:w-auto overflow-x-auto">
-            <TabsTrigger 
-              value="signed" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-none"
-            >
-              Signed ({signedWaivers.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="missing" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-none"
-            >
-              Missing ({missingWaivers.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="archived" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-semibold text-xs sm:text-sm transition-all duration-200 flex-1 sm:flex-none"
-            >
-              Archived ({archivedWaivers.length})
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      <AdminContentTabs
+        defaultValue="signed"
+        items={[
+          {
+            value: "signed",
+            label: `Signed (${signedWaivers.length})`,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600",
+            badge: signedWaivers.length,
+          },
+          {
+            value: "missing",
+            label: `Missing (${missingWaivers.length})`,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600",
+            badge: missingWaivers.length,
+          },
+          {
+            value: "archived",
+            label: `Archived (${archivedWaivers.length})`,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600",
+            badge: archivedWaivers.length,
+          },
+        ]}
+      >
 
         <TabsContent value="signed" className="space-y-4">
           <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-green-50/30 to-emerald-50/30 shadow-lg">
@@ -841,7 +842,7 @@ export function AdminWaiverManagement() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+      </AdminContentTabs>
     </div>
   );
 }

@@ -1,29 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, Clock, List, User } from "lucide-react";
 import { useState } from "react";
 
-// Helper function to format date without timezone issues
-function formatDateWithoutTimezoneIssues(dateString: string): string {
-  // Split the date string into components
-  const [year, month, day] = dateString.split('-').map(Number);
-  
-  // Use the Date constructor with explicit year, month (0-based), and day parameters
-  // This avoids timezone issues
-  const date = new Date(year, month - 1, day);
-  
-  // Format the date as desired
-  return date.toLocaleDateString('en-US', { 
-    weekday: 'short', 
-    month: 'short', 
-    day: 'numeric',
-    year: 'numeric'
-  });
-}
+// (removed unused helper formatDateWithoutTimezoneIssues)
 
 interface UpcomingSession {
   id: number;
@@ -174,26 +159,21 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
   }
 
   // Convert sessions to calendar events format
-  const calendarBookings = sessions.map(session => {
-    // Format for calendar
-    const dateTime = `${session.sessionDate}T${session.sessionTime}`;
-    
-    return {
-      id: session.id,
-      preferred_date: session.sessionDate,
-      preferred_time: session.sessionTime,
-      lesson_type: session.lessonType,
-      athlete_names: session.athleteNames.join(', '),
-      focusAreas: session.focusAreas,
-      payment_status: session.paymentStatus,
-      attendance_status: session.attendanceStatus
-    };
-  });
+  const calendarBookings = sessions.map((session) => ({
+    id: session.id,
+    preferred_date: session.sessionDate,
+    preferred_time: session.sessionTime,
+    lesson_type: session.lessonType,
+    athlete_names: session.athleteNames.join(", "),
+    focusAreas: session.focusAreas,
+    payment_status: session.paymentStatus,
+    attendance_status: session.attendanceStatus,
+  }));
 
   return (
     <div className="space-y-6 rounded-xl sm:rounded-2xl lg:rounded-3xl dark:bg-[#0F0276] dark:p-6">
       {/* Modern Header Section */}
-  <div className="border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md rounded-xl p-6 dark:bg-[#2A4A9B] dark:border-white/20">
+      <div className="border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md rounded-xl p-6 dark:bg-[#2A4A9B] dark:border-white/20">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3 mb-2">
@@ -204,221 +184,124 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
             </h3>
             <p className="text-slate-600 dark:text-white">View and manage scheduled sessions</p>
           </div>
-          <Badge 
-            variant="secondary" 
+          <Badge
+            variant="secondary"
             className="bg-slate-100 text-[#0F0276] dark:text-white dark:bg-[#D8BD2A]/10 border-slate-200 dark:border-[#D8BD2A]/20 font-bold text-lg px-4 py-2 w-fit"
           >
             {sessions.length} sessions
           </Badge>
         </div>
-        
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'calendar')}>
-          <TabsList className="bg-slate-100 dark:bg-slate-900/40 p-1 rounded-lg w-fit mb-4 sm:mb-6">
-            <TabsTrigger 
-              value="list" 
-              className="rounded-md border border-transparent data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276] dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
-            >
-              <List className="h-4 w-4 mr-2" />
-              List View
-            </TabsTrigger>
-            <TabsTrigger 
-              value="calendar" 
-              className="rounded-md border border-transparent data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276] dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Calendar View
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
 
-    <Tabs value={viewMode} className="mt-0 hidden">
-        <TabsContent value="list">
-      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
-            <CardContent className="p-6">
-              {sessions.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-200 rounded-full flex items-center justify-center mb-4">
-                    <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-600" />
+        <AdminContentTabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as "list" | "calendar")}
+          items={[
+            {
+              value: "list",
+              label: "List View",
+              icon: <List className="h-4 w-4 mr-2" />,
+              activeGradient:
+                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
+            },
+            {
+              value: "calendar",
+              label: "Calendar View",
+              icon: <Calendar className="h-4 w-4 mr-2" />,
+              activeGradient:
+                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
+            },
+          ]}
+          listClassName="bg-slate-100 dark:bg-slate-900/40 p-1 rounded-lg w-fit mb-4 sm:mb-6"
+          triggerClassName="rounded-md border border-transparent data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
+        >
+          <TabsContent value="list">
+            <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
+              <CardContent className="p-6">
+                {sessions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-200 rounded-full flex items-center justify-center mb-4">
+                      <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-600" />
+                    </div>
+                    <p className="text-slate-600 dark:text-slate-700 font-medium">No upcoming sessions scheduled</p>
+                    <p className="text-slate-500 dark:text-slate-600 text-sm mt-2">When you book sessions, they will appear here</p>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-700 font-medium">No upcoming sessions scheduled</p>
-                  <p className="text-slate-500 dark:text-slate-600 text-sm mt-2">When you book sessions, they will appear here</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sessions.map((session) => {
-                    const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
-                    return (
-                      <div
-                        key={session.id}
-                        className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-md transition-all duration-300 dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white"
-                      >
-                        <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
+                ) : (
+                  <div className="space-y-4">
+                    {sessions.map((session) => {
+                      const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
+                      return (
+                        <div
+                          key={session.id}
+                          className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-md transition-all duration-300 dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white"
+                        >
+                          <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-slate-100 dark:bg-white/15 rounded-lg">
+                                    <Clock className="h-4 w-4 text-[#0F0276] dark:text-white" />
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-[#0F0276] dark:text-white">
+                                      {formattedDateTime !== "TBD" ? formattedDateTime.date : "Date TBD"}
+                                    </p>
+                                    <p className="text-sm text-slate-600 dark:text-white/90">
+                                      {formattedDateTime !== "TBD" ? formattedDateTime.time : "Time TBD"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className="border-slate-300 text-[#0F0276] bg-slate-50 dark:border-white/40 dark:text-white dark:bg-white/10 font-semibold"
+                                >
+                                  {session.lessonType.replace("-", " ").replace("min", "minute")}
+                                </Badge>
+                              </div>
                               <div className="flex items-center gap-3">
                                 <div className="p-2 bg-slate-100 dark:bg-white/15 rounded-lg">
-                                  <Clock className="h-4 w-4 text-[#0F0276] dark:text-white" />
+                                  <User className="h-4 w-4 text-[#0F0276] dark:text-white" />
                                 </div>
-                                <div>
-                                  <p className="font-semibold text-[#0F0276] dark:text-white">
-                                    {formattedDateTime !== 'TBD' ? formattedDateTime.date : 'Date TBD'}
-                                  </p>
-                                  <p className="text-sm text-slate-600 dark:text-white/90">
-                                    {formattedDateTime !== 'TBD' ? formattedDateTime.time : 'Time TBD'}
-                                  </p>
-                                </div>
+                                <span className="font-semibold text-[#0F0276] dark:text-white">
+                                  {session.athleteNames.join(", ") || "No athletes listed"}
+                                </span>
                               </div>
-                              <Badge
-                                variant="outline"
-                                className="border-slate-300 text-[#0F0276] bg-slate-50 dark:border-white/40 dark:text-white dark:bg-white/10 font-semibold"
-                              >
-                                {session.lessonType.replace('-', ' ').replace('min', 'minute')}
+                              {session.focusAreas && session.focusAreas.length > 0 && (
+                                <div className="text-slate-600 dark:text-white/90 ml-11">
+                                  <span className="font-medium">Focus Areas:</span> {session.focusAreas.join(", ")}
+                                </div>
+                              )}
+                              <div className="text-slate-600 dark:text-white/90 ml-11">
+                                <span className="font-medium">Parent:</span> {session.parentName}
+                              </div>
+                            </div>
+                            <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
+                              <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
+                                {session.paymentStatus.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </Badge>
+                              <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
+                                {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-slate-100 dark:bg-white/15 rounded-lg">
-                                <User className="h-4 w-4 text-[#0F0276] dark:text-white" />
-                              </div>
-                              <span className="font-semibold text-[#0F0276] dark:text-white">
-                                {session.athleteNames.join(', ') || 'No athletes listed'}
-                              </span>
-                            </div>
-                            {session.focusAreas && session.focusAreas.length > 0 && (
-                              <div className="text-slate-600 dark:text-white/90 ml-11">
-                                <span className="font-medium">Focus Areas:</span> {session.focusAreas.join(', ')}
-                              </div>
-                            )}
-                            <div className="text-slate-600 dark:text-white/90 ml-11">
-                              <span className="font-medium">Parent:</span> {session.parentName}
-                            </div>
-                          </div>
-                          <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
-                            <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
-                              {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                            </Badge>
-                            <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
-                              {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
-                            </Badge>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="calendar">
+            <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
+              <CardContent className="p-6">
+                <div className="h-[600px]">
+                  <BookingCalendar bookings={calendarBookings} onBookingSelect={handleBookingSelect} />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="calendar">
-          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
-            <CardContent className="p-6">
-              <div className="h-[600px]">
-                <BookingCalendar 
-                  bookings={calendarBookings} 
-                  onBookingSelect={handleBookingSelect}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {viewMode === 'list' && (
-        <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:border-[#D8BD2A]">
-          <CardContent className="p-6">
-            {sessions.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-200 rounded-full flex items-center justify-center mb-4">
-                  <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-600" />
-                </div>
-                <p className="text-slate-600 dark:text-slate-700 font-medium">No upcoming sessions scheduled</p>
-                <p className="text-slate-500 dark:text-slate-600 text-sm mt-2">When you book sessions, they will appear here</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {sessions.map((session) => {
-                  // Format the session date and time
-                  const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
-                  
-                  return (
-                    <div 
-                      key={session.id}
-                      className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-md transition-all duration-300 cursor-pointer hover:border-slate-300 dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white dark:hover:border-white/60"
-                      onClick={() => handleBookingSelect(session.id)}
-                    >
-                      <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
-                        <div className="space-y-4">
-                          {/* Date and time */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-slate-100 dark:bg-white/15 rounded-lg">
-                                <Clock className="h-4 w-4 text-slate-600 dark:text-white" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-slate-900 dark:text-white">
-                                  {formattedDateTime !== 'TBD' ? formattedDateTime.date : 'Date TBD'}
-                                </p>
-                                <p className="text-sm text-slate-600 dark:text-white/90">
-                                  {formattedDateTime !== 'TBD' ? formattedDateTime.time : 'Time TBD'}
-                                </p>
-                              </div>
-                            </div>
-                            <Badge 
-                              variant="outline" 
-                              className="border-slate-200 text-slate-700 bg-slate-50 dark:border-white/40 dark:text-white dark:bg-white/10 font-semibold"
-                            >
-                              {session.lessonType.replace('-', ' ').replace('min', 'minute')}
-                            </Badge>
-                          </div>
-                          
-                          {/* Athletes */}
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 dark:bg-white/15 rounded-lg">
-                              <User className="h-4 w-4 text-slate-600 dark:text-white" />
-                            </div>
-                            <span className="font-semibold text-slate-900 dark:text-white">
-                              {session.athleteNames.join(', ') || 'No athletes listed'}
-                            </span>
-                          </div>
-                          
-                          {/* Parent */}
-                          <div className="text-slate-600 dark:text-white/90 ml-11">
-                            <span className="font-medium">Parent:</span> {session.parentName}
-                          </div>
-                        </div>
-                        
-                        {/* Status badges */}
-                        <div className="flex flex-row lg:flex-col gap-3 lg:items-end">
-                          <Badge {...getPaymentStatusBadge(session.paymentStatus)} className="font-semibold">
-                            {session.paymentStatus.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </Badge>
-                          <Badge {...getAttendanceStatusBadge(session.attendanceStatus)} className="font-semibold">
-                            {session.attendanceStatus.charAt(0).toUpperCase() + session.attendanceStatus.slice(1)}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-      
-      {viewMode === 'calendar' && (
-  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-0 dark:bg-white dark:text-slate-900">
-          <CardContent className="p-6">
-            <div className="h-[600px]">
-              <BookingCalendar 
-                bookings={calendarBookings} 
-                onBookingSelect={handleBookingSelect}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </AdminContentTabs>
+      </div>
     </div>
   );
 }

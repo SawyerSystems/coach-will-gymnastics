@@ -19,6 +19,7 @@ import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/
 import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { AdminAnalyticsMetrics, type MetricCard } from "@/components/admin-ui/AdminAnalyticsMetrics";
 import { AdminTabButtonsRow } from "@/components/admin-ui/AdminTabButtons";
+import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import {
     Dialog,
     DialogContent,
@@ -1986,21 +1987,23 @@ export default function Admin() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 lg:p-8">
-                <Tabs defaultValue="blog" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl mb-4 sm:mb-6">
-                    <TabsTrigger 
-                      value="blog"
-                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
-                    >
-                      Blog Posts
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="tips"
-                      className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
-                    >
-                      Tips & Drills
-                    </TabsTrigger>
-                  </TabsList>
+                <AdminContentTabs
+                  defaultValue="blog"
+                  items={[
+                    {
+                      value: "blog",
+                      label: "Blog Posts",
+                      activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0F0276] data-[state=active]:to-[#0F0276]/90",
+                    },
+                    {
+                      value: "tips",
+                      label: "Tips & Drills",
+                      activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0F0276] data-[state=active]:to-[#0F0276]/90",
+                    },
+                  ]}
+                  listClassName="grid w-full grid-cols-2 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl mb-4 sm:mb-6"
+                  triggerClassName="rounded-lg data-[state=active]:shadow-md font-semibold transition-all duration-200"
+                >
                   <TabsContent value="blog" className="space-y-6 mt-6">
                     <div className="flex justify-end">
                       <Dialog>
@@ -2442,7 +2445,7 @@ export default function Admin() {
                       ))}
                     </div>
                   </TabsContent>
-                </Tabs>
+                </AdminContentTabs>
               </CardContent>
             </Card>
           </TabsContent>
