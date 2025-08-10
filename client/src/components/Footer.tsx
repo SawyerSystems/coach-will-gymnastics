@@ -63,9 +63,9 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-slate-800 text-white relative overflow-hidden">
+    <footer className="text-white relative overflow-hidden bg-slate-800 dark:bg-slate-950">
       {/* Background Logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+      <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
         <img 
           src={cwtLogo} 
           alt="Coach Will Tumbles Background" 
@@ -113,7 +113,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row md:space-x-12 lg:space-x-16 space-y-8 md:space-y-0">
             {/* Quick Links */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#0F0276]">Quick Links</h3>
+              <h3 className="text-lg font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Quick Links</h3>
               <ul className="space-y-2 text-sm">
                 <li><Link href="/booking" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">Private Lessons</Link></li>
                 <li><Link href="/about" className="text-gray-300 hover:text-[#D8BD2A] transition-colors">About Us</Link></li>
@@ -159,7 +159,7 @@ export function Footer() {
                 <Clock className="w-4 h-4" />
                 <div className="lg:text-right">
                   {orderedDays.map((day) => {
-                    const schedule = hours[day.toLowerCase()];
+                    const schedule = hours[day as keyof SiteHours] || (hours as any)[day];
                     const shortDay = day.slice(0, 3);
                     
                     if (!schedule?.available) {
@@ -183,7 +183,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-700 mt-8 pt-8">
+        <div className="border-t border-gray-700 dark:border-slate-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
             <p>&copy; 2025 Coach Will Tumbles. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
