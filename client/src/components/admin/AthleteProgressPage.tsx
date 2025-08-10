@@ -197,18 +197,18 @@ export default function AthleteProgressPage() {
       </div>
 
       {!athleteId ? (
-        <Card>
-          <CardContent className="py-10 text-center text-slate-600">Select an athlete to see progress.</CardContent>
+        <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+          <CardContent className="py-10 text-center text-slate-600 dark:text-white/80">Select an athlete to see progress.</CardContent>
         </Card>
       ) : loadingSkills ? (
-        <Card>
-          <CardContent className="py-10 text-center">Loading progress…</CardContent>
+        <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+          <CardContent className="py-10 text-center text-slate-600 dark:text-white/80">Loading progress…</CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
-          <Card>
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
             <CardHeader>
-              <CardTitle className="text-base">Overall Progress</CardTitle>
+              <CardTitle className="text-base text-[#0F0276] dark:text-white">Overall Progress</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
@@ -235,19 +235,19 @@ export default function AthleteProgressPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {perApparatus.map((row) => (
-              <Card key={row.apparatusId}>
+              <Card key={row.apparatusId} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
                 <CardHeader>
-                  <CardTitle className="text-base">{apparatusById.get(row.apparatusId)?.name || `Apparatus #${row.apparatusId}`}</CardTitle>
+                  <CardTitle className="text-base text-[#0F0276] dark:text-white">{apparatusById.get(row.apparatusId)?.name || `Apparatus #${row.apparatusId}`}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Mastered</span>
-                    <span className="text-slate-600">{row.masteredPct}%</span>
+                    <span className="text-slate-700 dark:text-white/90">Mastered</span>
+                    <span className="text-slate-600 dark:text-white/80">{row.masteredPct}%</span>
                   </div>
                   <Progress value={row.masteredPct} />
                   <div className="flex items-center justify-between text-sm mb-1 mt-3">
-                    <span>Consistent or Mastered</span>
-                    <span className="text-slate-600">{row.consistentPct}%</span>
+                    <span className="text-slate-700 dark:text-white/90">Consistent or Mastered</span>
+                    <span className="text-slate-600 dark:text-white/80">{row.consistentPct}%</span>
                   </div>
                   <Progress value={row.consistentPct} />
                   <div className="text-xs text-slate-600 mt-1">
@@ -257,26 +257,26 @@ export default function AthleteProgressPage() {
               </Card>
             ))}
             {!perApparatus.length && (
-              <Card className="md:col-span-2">
-                <CardContent className="py-10 text-center text-slate-600">No skills match the selected filters.</CardContent>
+              <Card className="md:col-span-2 rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+                <CardContent className="py-10 text-center text-slate-600 dark:text-white/80">No skills match the selected filters.</CardContent>
               </Card>
             )}
           </div>
           {perApparatusLevel.length > 0 ? (
-            <Card>
+            <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
               <CardHeader>
-                <CardTitle className="text-base">Progress by Level</CardTitle>
+                <CardTitle className="text-base text-[#0F0276] dark:text-white">Progress by Level</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {perApparatusLevel.map(group => (
                     <div key={group.apparatusId}>
-                      <div className="font-medium mb-2">{apparatusById.get(group.apparatusId)?.name || `Apparatus #${group.apparatusId}`}</div>
+                      <div className="font-medium mb-2 text-[#0F0276] dark:text-white">{apparatusById.get(group.apparatusId)?.name || `Apparatus #${group.apparatusId}`}</div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         {group.levels.map(l => (
-                          <div key={l.level} className="p-2 rounded border">
-                            <div className="text-sm mb-1">Level {l.level}</div>
-                            <div className="flex items-center justify-between text-xs mb-1"><span>Mastered</span><span>{l.masteredPct}%</span></div>
+                          <div key={l.level} className="p-2 rounded border border-slate-200/60 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50">
+                            <div className="text-sm mb-1 text-[#0F0276] dark:text-white">Level {l.level}</div>
+                            <div className="flex items-center justify-between text-xs mb-1"><span className="text-slate-700 dark:text-white/90">Mastered</span><span className="text-slate-600 dark:text-white/80">{l.masteredPct}%</span></div>
                             <Progress value={l.masteredPct} />
                             <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Consistent or Mastered</span><span>{l.consistentPct}%</span></div>
                             <Progress value={l.consistentPct} />

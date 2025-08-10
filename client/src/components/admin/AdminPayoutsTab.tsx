@@ -144,78 +144,90 @@ export default function AdminPayoutsTab() {
 	}, [start, end]);
 
 	return (
-		<Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-			<CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-				<CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
-					<DollarSign className="h-8 w-8 text-[#D8BD2A]" />
-					Payouts
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-				{/* Top toolbar */}
-					<div className="flex items-center justify-end gap-2">
-					<Button className="w-full sm:w-auto" variant="secondary" onClick={onRefresh}>
-						<RefreshCw className="h-4 w-4 mr-2" /> Refresh
-					</Button>
-					<Button className="w-full sm:w-auto" onClick={onExportCsv}>
-						<Download className="h-4 w-4 mr-2" /> CSV
-					</Button>
-					<Button className="w-full sm:w-auto" onClick={onExportPdf}>
-						<Download className="h-4 w-4 mr-2" /> PDF
-					</Button>
-						<ManualInvoiceDialog defaultStart={start} defaultEnd={end} />
-				</div>
-		{/* Filters */}
-				<div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-					<div className="space-y-1">
-						<Label htmlFor="start-date">Start</Label>
-						<Input id="start-date" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
-					</div>
-					<div className="space-y-1">
-						<Label htmlFor="end-date">End</Label>
-						<Input id="end-date" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
-					</div>
-					<div className="space-y-1">
-						<Label>Membership</Label>
-						<Select value={membership} onValueChange={(v: MembershipFilter) => setMembership(v)}>
-							<SelectTrigger>
-								<SelectValue placeholder="All" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All</SelectItem>
-								<SelectItem value="member">Member</SelectItem>
-								<SelectItem value="non-member">Non-member</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-					<div className="space-y-1">
-						<Label htmlFor="athlete-id">Athlete ID (optional)</Label>
-						<Input
-							id="athlete-id"
-							name="athlete-id"
-							// Hint browsers/extensions this is not an OTP or credential field
-							autoComplete="off"
-							autoCorrect="off"
-							autoCapitalize="off"
-							spellCheck={false}
-							aria-autocomplete="none"
-							// Use tel to get numeric keypad without triggering OTP managers
-							inputMode="tel"
-							pattern="[0-9]*"
-							// Common password-manager ignore flags
-							data-lpignore="true"
-							data-1p-ignore="true"
-							data-form-type="other"
-							data-gramm="false"
-							value={athleteId}
-							onChange={(e) => setAthleteId(e.target.value)}
-							placeholder="e.g. 123"
-						/>
-					</div>
+		<div className="space-y-6 sm:space-y-8">
+			{/* Top toolbar */}
+			<div className="flex items-center justify-end gap-2">
+				<Button className="w-full sm:w-auto" variant="secondary" onClick={onRefresh}>
+					<RefreshCw className="h-4 w-4 mr-2" /> Refresh
+				</Button>
+				<Button className="w-full sm:w-auto" onClick={onExportCsv}>
+					<Download className="h-4 w-4 mr-2" /> CSV
+				</Button>
+				<Button className="w-full sm:w-auto" onClick={onExportPdf}>
+					<Download className="h-4 w-4 mr-2" /> PDF
+				</Button>
+				<ManualInvoiceDialog defaultStart={start} defaultEnd={end} />
+			</div>
+
+			{/* Filters */}
+			<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+				<CardHeader className="pb-4">
+					<CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
+						<Filter className="h-5 w-5 text-[#D8BD2A]" />
+						Filters
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
 						<div className="space-y-1">
-							<Label>Attendance</Label>
+							<Label htmlFor="start-date" className="text-slate-700 dark:text-white">Start</Label>
+							<Input 
+								id="start-date" 
+								type="date" 
+								value={start} 
+								onChange={(e) => setStart(e.target.value)} 
+								className="bg-white/50 dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-600"
+							/>
+						</div>
+						<div className="space-y-1">
+							<Label htmlFor="end-date" className="text-slate-700 dark:text-white">End</Label>
+							<Input 
+								id="end-date" 
+								type="date" 
+								value={end} 
+								onChange={(e) => setEnd(e.target.value)} 
+								className="bg-white/50 dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-600"
+							/>
+						</div>
+						<div className="space-y-1">
+							<Label className="text-slate-700 dark:text-white">Membership</Label>
+							<Select value={membership} onValueChange={(v: MembershipFilter) => setMembership(v)}>
+								<SelectTrigger className="bg-white/50 dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-600">
+									<SelectValue placeholder="All" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All</SelectItem>
+									<SelectItem value="member">Member</SelectItem>
+									<SelectItem value="non-member">Non-member</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+						<div className="space-y-1">
+							<Label htmlFor="athlete-id" className="text-slate-700 dark:text-white">Athlete ID (optional)</Label>
+							<Input
+								id="athlete-id"
+								name="athlete-id"
+								autoComplete="off"
+								autoCorrect="off"
+								autoCapitalize="off"
+								spellCheck={false}
+								aria-autocomplete="none"
+								inputMode="tel"
+								pattern="[0-9]*"
+								data-lpignore="true"
+								data-1p-ignore="true"
+								data-form-type="other"
+								data-gramm="false"
+								value={athleteId}
+								onChange={(e) => setAthleteId(e.target.value)}
+								placeholder="e.g. 123"
+								className="bg-white/50 dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-600"
+							/>
+						</div>
+						<div className="space-y-1">
+							<Label className="text-slate-700 dark:text-white">Attendance</Label>
 							<Select value={state} onValueChange={(v: AttendanceFilter) => setState(v)}>
-								<SelectTrigger>
+								<SelectTrigger className="bg-white/50 dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-600">
 									<SelectValue placeholder="All" />
 								</SelectTrigger>
 								<SelectContent>
@@ -230,9 +242,9 @@ export default function AdminPayoutsTab() {
 							</Select>
 						</div>
 						<div className="space-y-1">
-							<Label>Duration</Label>
+							<Label className="text-slate-700 dark:text-white">Duration</Label>
 							<Select value={duration} onValueChange={(v: string) => setDuration(v)}>
-								<SelectTrigger>
+								<SelectTrigger className="bg-white/50 dark:bg-slate-800 dark:text-white border-slate-200 dark:border-slate-600">
 									<SelectValue placeholder="All" />
 								</SelectTrigger>
 								<SelectContent>
@@ -242,81 +254,92 @@ export default function AdminPayoutsTab() {
 								</SelectContent>
 							</Select>
 						</div>
-				</div>
+					</div>
+				</CardContent>
+			</Card>
 
-				{/* KPIs */}
-				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-					<div className="rounded-xl border bg-white p-4">
-						<div className="text-sm text-slate-500">Total Sessions</div>
-						<div className="text-2xl font-bold">{loadingSummary ? '—' : summary?.totalSessions ?? 0}</div>
-					</div>
-					<div className="rounded-xl border bg-white p-4">
-						<div className="text-sm text-slate-500">Total Owed</div>
-						<div className="text-2xl font-bold">{loadingSummary ? '—' : formatCents(summary?.totalOwedCents ?? 0)}</div>
-					</div>
-					<div className="rounded-xl border bg-white p-4">
-						<div className="text-sm text-slate-500">Unique Athletes</div>
-						<div className="text-2xl font-bold">{loadingSummary ? '—' : summary?.uniqueAthletes ?? 0}</div>
-					</div>
-				</div>
+			{/* KPIs */}
+			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+					<CardContent className="p-4">
+						<div className="text-sm text-slate-600 dark:text-white/80">Total Sessions</div>
+						<div className="text-2xl font-bold text-[#0F0276] dark:text-white">{loadingSummary ? '—' : summary?.totalSessions ?? 0}</div>
+					</CardContent>
+				</Card>
+				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+					<CardContent className="p-4">
+						<div className="text-sm text-slate-600 dark:text-white/80">Total Owed</div>
+						<div className="text-2xl font-bold text-[#0F0276] dark:text-white">{loadingSummary ? '—' : formatCents(summary?.totalOwedCents ?? 0)}</div>
+					</CardContent>
+				</Card>
+				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+					<CardContent className="p-4">
+						<div className="text-sm text-slate-600 dark:text-white/80">Unique Athletes</div>
+						<div className="text-2xl font-bold text-[#0F0276] dark:text-white">{loadingSummary ? '—' : summary?.uniqueAthletes ?? 0}</div>
+					</CardContent>
+				</Card>
+			</div>
 
 			{/* Table */}
-				<div className="overflow-x-auto rounded-xl border bg-white">
-					<table className="w-full text-sm">
-						<thead className="bg-slate-50">
-							<tr>
-								<th className="text-left px-4 py-2">Date</th>
-								<th className="text-left px-4 py-2">Athlete</th>
-								<th className="text-left px-4 py-2">Membership</th>
-								<th className="text-left px-4 py-2">Duration</th>
-								<th className="text-right px-4 py-2">Owed</th>
-								<th className="text-right px-4 py-2">Rate</th>
-							</tr>
-						</thead>
-						<tbody>
-							{loadingList ? (
+			<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+				<CardContent className="p-0">
+					<div className="overflow-x-auto">
+						<table className="w-full text-sm">
+							<thead className="bg-slate-100/50 dark:bg-slate-800/50">
 								<tr>
-									<td className="px-4 py-4" colSpan={5}>Loading…</td>
+									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Date</th>
+									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Athlete</th>
+									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Membership</th>
+									<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Duration</th>
+									<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Owed</th>
+									<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Rate</th>
 								</tr>
-							) : list.length === 0 ? (
+							</thead>
+							<tbody>
+								{loadingList ? (
+									<tr>
+										<td className="px-4 py-4 text-slate-600 dark:text-white/80" colSpan={6}>Loading…</td>
+									</tr>
+								) : list.length === 0 ? (
+									<tr>
+										<td className="px-4 py-6 text-slate-500 dark:text-white/70" colSpan={6}>No payout rows for the selected filters.</td>
+									</tr>
+								) : (
+									list.map((row) => {
+										const athleteName = row.athletes?.name || [row.athletes?.first_name, row.athletes?.last_name].filter(Boolean).join(' ');
+										const date = row.bookings?.preferred_date || '';
+										return (
+											<tr key={row.id} className="border-t border-slate-200/60 dark:border-slate-600/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+												<td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-white">{date}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-white">{athleteName || `Athlete #${row.athlete_id}`}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-white">{row.gym_member_at_booking ? 'Member' : 'Non-member'}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-white">{row.duration_minutes ? `${row.duration_minutes} min` : '—'}</td>
+												<td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-white">{formatCents(row.gym_payout_owed_cents)}</td>
+												<td className="px-4 py-3 text-right text-slate-500 dark:text-white/70">{formatCents(row.gym_rate_applied_cents)}</td>
+											</tr>
+										);
+									})
+								)}
+							</tbody>
+							<tfoot className="bg-slate-100/50 dark:bg-slate-800/50 border-t border-slate-200/60 dark:border-slate-600/60">
 								<tr>
-									<td className="px-4 py-6 text-slate-500" colSpan={5}>No payout rows for the selected filters.</td>
+									<td className="px-4 py-3 font-semibold text-slate-700 dark:text-white" colSpan={4}>Totals (visible)</td>
+									<td className="px-4 py-3 text-right font-bold text-slate-700 dark:text-white">{formatCents(totals.all)}</td>
+									<td className="px-4 py-3 text-right text-slate-500 dark:text-white/70">
+										<span className="mr-2">Members: {formatCents(totals.members)}</span>
+										<span>Non-members: {formatCents(totals.nonMembers)}</span>
+									</td>
 								</tr>
-							) : (
-								list.map((row) => {
-									const athleteName = row.athletes?.name || [row.athletes?.first_name, row.athletes?.last_name].filter(Boolean).join(' ');
-									const date = row.bookings?.preferred_date || '';
-									return (
-										<tr key={row.id} className="border-t">
-											<td className="px-4 py-2 whitespace-nowrap">{date}</td>
-											<td className="px-4 py-2">{athleteName || `Athlete #${row.athlete_id}`}</td>
-											<td className="px-4 py-2">{row.gym_member_at_booking ? 'Member' : 'Non-member'}</td>
-											<td className="px-4 py-2">{row.duration_minutes ? `${row.duration_minutes} min` : '—'}</td>
-											<td className="px-4 py-2 text-right">{formatCents(row.gym_payout_owed_cents)}</td>
-											<td className="px-4 py-2 text-right text-slate-500">{formatCents(row.gym_rate_applied_cents)}</td>
-										</tr>
-									);
-								})
-							)}
-						</tbody>
-						<tfoot className="bg-slate-50">
-							<tr className="border-t">
-								<td className="px-4 py-2" colSpan={4}>Totals (visible)</td>
-								<td className="px-4 py-2 text-right font-semibold">{formatCents(totals.all)}</td>
-								<td className="px-4 py-2 text-right text-slate-500">
-									<span className="mr-2">Members: {formatCents(totals.members)}</span>
-									<span>Non-members: {formatCents(totals.nonMembers)}</span>
-								</td>
-							</tr>
-						</tfoot>
-					</table>
-				</div>
+							</tfoot>
+						</table>
+					</div>
+				</CardContent>
+			</Card>
 
-						{/* Payout runs */}
-						<PayoutRunsPanel start={start} end={end} onDataChanged={onRefresh} />
-									<PayoutRatesPanel />
-			</CardContent>
-		</Card>
+			{/* Payout runs */}
+			<PayoutRunsPanel start={start} end={end} onDataChanged={onRefresh} />
+			<PayoutRatesPanel />
+		</div>
 	);
 }
 
@@ -339,75 +362,82 @@ export default function AdminPayoutsTab() {
 			};
 
 			return (
-				<div className="space-y-3">
-					<div className="flex items-center justify-between">
-						<div className="font-semibold text-slate-700 flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> Recent payout runs</div>
-						<div className="flex gap-2">
-							<Button onClick={onGenerate} disabled={gen.isPending}>
-								{gen.isPending ? 'Updating…' : 'Generate/Refresh current period'}
-							</Button>
-							<Button variant="secondary" onClick={async () => {
-								try {
-									const result = await backfill.mutateAsync({ periodStart: start, periodEnd: end });
-									await refetch();
-									await onDataChanged?.();
-									toast({ title: 'Backfill complete', description: `Updated ${result.updated} / ${result.total} rows` });
-								} catch (e: any) {
-									toast({ title: 'Backfill failed', description: e?.message || 'Unknown error', variant: 'destructive' });
-								}
-							}} disabled={backfill.isPending}>
-								{backfill.isPending ? 'Backfilling…' : 'Backfill current period'}
-							</Button>
-							<Button variant="destructive" onClick={async () => {
-								if (!confirm(`Clear payout calculations for ${start} → ${end}? This will reset owed and applied rate values for this period. You can backfill again later.`)) return;
-								try {
-									const result = await clearPayouts.mutateAsync({ periodStart: start, periodEnd: end });
-									await refetch();
-									await onDataChanged?.();
-									toast({ title: 'Payouts cleared', description: `Reset ${result.updated} rows` });
-								} catch (e: any) {
-									toast({ title: 'Clear failed', description: e?.message || 'Unknown error', variant: 'destructive' });
-								}
-							}} disabled={clearPayouts.isPending}>
-								{clearPayouts.isPending ? 'Clearing…' : 'Clear current period'}
-							</Button>
+				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+					<CardHeader className="pb-4">
+						<div className="flex items-center justify-between">
+							<CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
+								<CalendarIcon className="h-5 w-5 text-[#D8BD2A]" />
+								Recent payout runs
+							</CardTitle>
+							<div className="flex gap-2">
+								<Button onClick={onGenerate} disabled={gen.isPending} size="sm">
+									{gen.isPending ? 'Updating…' : 'Generate/Refresh current period'}
+								</Button>
+								<Button variant="secondary" size="sm" onClick={async () => {
+									try {
+										const result = await backfill.mutateAsync({ periodStart: start, periodEnd: end });
+										await refetch();
+										await onDataChanged?.();
+										toast({ title: 'Backfill complete', description: `Updated ${result.updated} / ${result.total} rows` });
+									} catch (e: any) {
+										toast({ title: 'Backfill failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+									}
+								}} disabled={backfill.isPending}>
+									{backfill.isPending ? 'Backfilling…' : 'Backfill current period'}
+								</Button>
+								<Button variant="destructive" size="sm" onClick={async () => {
+									if (!confirm(`Clear payout calculations for ${start} → ${end}? This will reset owed and applied rate values for this period. You can backfill again later.`)) return;
+									try {
+										const result = await clearPayouts.mutateAsync({ periodStart: start, periodEnd: end });
+										await refetch();
+										await onDataChanged?.();
+										toast({ title: 'Payouts cleared', description: `Reset ${result.updated} rows` });
+									} catch (e: any) {
+										toast({ title: 'Clear failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+									}
+								}} disabled={clearPayouts.isPending}>
+									{clearPayouts.isPending ? 'Clearing…' : 'Clear current period'}
+								</Button>
+							</div>
 						</div>
-					</div>
-					<div className="overflow-x-auto rounded-xl border bg-white">
-						<table className="w-full text-sm">
-							<thead className="bg-slate-50">
-								<tr>
-									<th className="text-left px-4 py-2">Period</th>
-									<th className="text-left px-4 py-2">Status</th>
-									<th className="text-right px-4 py-2">Sessions</th>
-									<th className="text-right px-4 py-2">Total Owed</th>
-									<th className="text-left px-4 py-2">Updated</th>
-									<th className="text-right px-4 py-2">Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{runs.length === 0 ? (
+					</CardHeader>
+					<CardContent className="p-0">
+						<div className="overflow-x-auto">
+							<table className="w-full text-sm">
+								<thead className="bg-slate-100/50 dark:bg-slate-800/50">
 									<tr>
-										<td className="px-4 py-6 text-slate-500" colSpan={5}>No runs yet. Generate one for the current period.</td>
+										<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Period</th>
+										<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Status</th>
+										<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Sessions</th>
+										<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Total Owed</th>
+										<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Updated</th>
+										<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Actions</th>
 									</tr>
-								) : (
-									runs.map((r) => (
-										<tr key={r.id} className="border-t">
-											<td className="px-4 py-2">{r.period_start} → {r.period_end}</td>
-											<td className="px-4 py-2 capitalize">{r.status}</td>
-											<td className="px-4 py-2 text-right">{r.total_sessions}</td>
-											<td className="px-4 py-2 text-right">{formatCents(r.total_owed_cents)}</td>
-											<td className="px-4 py-2">{new Date(r.updated_at).toLocaleString()}</td>
-											<td className="px-4 py-2 text-right">
-		                    <RunActions r={r} onChanged={async () => { await refetch(); await onDataChanged?.(); }} />
-		                  </td>
+								</thead>
+								<tbody>
+									{runs.length === 0 ? (
+										<tr>
+											<td className="px-4 py-6 text-slate-500 dark:text-white/70" colSpan={6}>No runs yet. Generate one for the current period.</td>
 										</tr>
-									))
-								)}
-							</tbody>
-						</table>
-					</div>
-				</div>
+									) : (
+										runs.map((r) => (
+											<tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-600/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+												<td className="px-4 py-3 text-slate-700 dark:text-white">{r.period_start} → {r.period_end}</td>
+												<td className="px-4 py-3 capitalize text-slate-700 dark:text-white">{r.status}</td>
+												<td className="px-4 py-3 text-right text-slate-700 dark:text-white">{r.total_sessions}</td>
+												<td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-white">{formatCents(r.total_owed_cents)}</td>
+												<td className="px-4 py-3 text-slate-700 dark:text-white">{new Date(r.updated_at).toLocaleString()}</td>
+												<td className="px-4 py-3 text-right">
+			                    <RunActions r={r} onChanged={async () => { await refetch(); await onDataChanged?.(); }} />
+			                  </td>
+											</tr>
+										))
+									)}
+								</tbody>
+							</table>
+						</div>
+					</CardContent>
+				</Card>
 			);
 		}
 

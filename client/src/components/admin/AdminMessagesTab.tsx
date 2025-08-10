@@ -53,69 +53,84 @@ export default function AdminMessagesTab() {
   return (
     <div className="space-y-6">
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="mb-2">
-          <TabsTrigger value="sms" className="gap-2"><MessageCircle className="h-4 w-4" /> SMS</TabsTrigger>
-          <TabsTrigger value="emails" className="gap-2"><Mail className="h-4 w-4" /> Emails</TabsTrigger>
-          <TabsTrigger value="inquiries" className="gap-2"><Inbox className="h-4 w-4" /> Site Inquiries</TabsTrigger>
+        <TabsList className="bg-slate-100 text-[#0F0276] dark:bg-[#D8BD2A]/10 dark:text-white border-slate-200 dark:border-[#D8BD2A]/20 mb-4">
+          <TabsTrigger value="sms" className="gap-2 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]">
+            <MessageCircle className="h-4 w-4" /> SMS
+          </TabsTrigger>
+          <TabsTrigger value="emails" className="gap-2 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]">
+            <Mail className="h-4 w-4" /> Emails
+          </TabsTrigger>
+          <TabsTrigger value="inquiries" className="gap-2 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] dark:data-[state=active]:bg-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]">
+            <Inbox className="h-4 w-4" /> Site Inquiries
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="sms">
-          <Card>
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
             <CardHeader>
-              <CardTitle>SMS Messages</CardTitle>
+              <CardTitle className="text-[#0F0276] dark:text-white">SMS Messages</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">SMS integration coming soon. This tab will show inbound/outbound texts.</p>
+              <p className="text-sm text-slate-600 dark:text-white/80">SMS integration coming soon. This tab will show inbound/outbound texts.</p>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="emails">
-          <Card>
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
             <CardHeader>
-              <CardTitle>Email Messages</CardTitle>
+              <CardTitle className="text-[#0F0276] dark:text-white">Email Messages</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">Email logs overview coming soon. We’ll surface recent sends and failures.</p>
+              <p className="text-sm text-slate-600 dark:text-white/80">Email logs overview coming soon. We'll surface recent sends and failures.</p>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="inquiries">
-          <Card>
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
             <CardHeader>
-              <CardTitle>Site Inquiries</CardTitle>
+              <CardTitle className="text-[#0F0276] dark:text-white">Site Inquiries</CardTitle>
             </CardHeader>
             <CardContent>
               {inquiries.isLoading ? (
-                <div className="flex items-center gap-2 text-gray-600"><Loader2 className="h-4 w-4 animate-spin" /> Loading inquiries…</div>
+                <div className="flex items-center gap-2 text-slate-600 dark:text-white/80">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading inquiries…
+                </div>
               ) : (inquiries.data?.length ? (
                 <div className="space-y-3">
                   {inquiries.data.map((inq) => (
-                    <div key={inq.id} className="border rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="font-medium">{inq.name} <span className="text-gray-500">•</span> <span className="text-gray-600 text-sm">{new Date(inq.createdAt).toLocaleString()}</span></div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'}>{inq.status}</Badge>
-                          <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}>
-                            Mark {inq.status === 'new' ? 'Open' : inq.status === 'open' ? 'Closed' : 'Archived'}
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)}>
-                            <Trash2 className="h-4 w-4 mr-1" /> Delete
-                          </Button>
+                    <Card key={inq.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="font-medium text-[#0F0276] dark:text-white">
+                            {inq.name} <span className="text-slate-500 dark:text-white/70">•</span>{" "}
+                            <span className="text-slate-600 dark:text-white/80 text-sm">{new Date(inq.createdAt).toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'}>
+                              {inq.status}
+                            </Badge>
+                            <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}>
+                              Mark {inq.status === 'new' ? 'Open' : inq.status === 'open' ? 'Closed' : 'Archived'}
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)}>
+                              <Trash2 className="h-4 w-4 mr-1" /> Delete
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-sm text-gray-700">
-                        <div><span className="text-gray-500">Email:</span> {inq.email}</div>
-                        {inq.phone ? <div><span className="text-gray-500">Phone:</span> {inq.phone}</div> : null}
-                        {inq.athleteInfo ? <div><span className="text-gray-500">Athlete:</span> {inq.athleteInfo}</div> : null}
-                        <div className="mt-2 whitespace-pre-wrap">{inq.message}</div>
-                      </div>
-                    </div>
+                        <div className="text-sm text-slate-700 dark:text-white/90">
+                          <div><span className="text-slate-500 dark:text-white/70">Email:</span> {inq.email}</div>
+                          {inq.phone ? <div><span className="text-slate-500 dark:text-white/70">Phone:</span> {inq.phone}</div> : null}
+                          {inq.athleteInfo ? <div><span className="text-slate-500 dark:text-white/70">Athlete:</span> {inq.athleteInfo}</div> : null}
+                          <div className="mt-2 whitespace-pre-wrap">{inq.message}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-600">No inquiries yet. Messages sent via the Contact page will appear here.</p>
+                <p className="text-sm text-slate-600 dark:text-white/80">No inquiries yet. Messages sent via the Contact page will appear here.</p>
               ))}
             </CardContent>
           </Card>

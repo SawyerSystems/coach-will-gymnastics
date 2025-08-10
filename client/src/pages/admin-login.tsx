@@ -76,13 +76,13 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
-      <Card className="w-full max-w-md glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
+      <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30 border border-orange-200/60 dark:border-orange-800/60">
-            <Shield className="h-6 w-6 text-orange-600" />
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-[#D8BD2A]/20 border border-slate-200/60 dark:border-[#D8BD2A]/40">
+            <Shield className="h-6 w-6 text-[#0F0276] dark:text-[#D8BD2A]" />
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Login</CardTitle>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <CardTitle className="text-2xl font-bold text-[#0F0276] dark:text-white">Admin Login</CardTitle>
+          <p className="text-sm text-slate-600 dark:text-white/80">
             Sign in to access the admin dashboard
           </p>
         </CardHeader>
@@ -94,11 +94,12 @@ export default function AdminLogin() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Email</FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
                         placeholder="admin@coachwilltumbles.com"
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
                         {...field} 
                       />
                     </FormControl>
@@ -111,11 +112,12 @@ export default function AdminLogin() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Password</FormLabel>
                     <FormControl>
                       <Input 
                         type="password" 
                         placeholder="Enter your password"
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
                         {...field} 
                       />
                     </FormControl>
@@ -125,7 +127,7 @@ export default function AdminLogin() {
               />
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276] font-semibold transition-all duration-200"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? (

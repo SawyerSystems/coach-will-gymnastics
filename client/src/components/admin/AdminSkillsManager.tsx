@@ -52,18 +52,18 @@ export default function AdminSkillsManager() {
 
   function CreateForm() {
     return (
-      <div className="rounded-xl border border-[#0F0276]/10 p-3 bg-white">
+      <div className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md p-4 shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label>Name</Label>
+            <Label className="text-[#0F0276] dark:text-white">Name</Label>
             <Input value={draft.name || ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label className="text-[#0F0276] dark:text-white">Category</Label>
             <Input value={draft.category || ""} onChange={e => setDraft(d => ({ ...d, category: e.target.value }))} />
           </div>
           <div className="space-y-2">
-            <Label>Level</Label>
+            <Label className="text-[#0F0276] dark:text-white">Level</Label>
             <Select value={draft.level || "beginner"} onValueChange={v => setDraft(d => ({ ...d, level: v }))}>
               <SelectTrigger>
                 <SelectValue />
@@ -74,7 +74,7 @@ export default function AdminSkillsManager() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Apparatus</Label>
+            <Label className="text-[#0F0276] dark:text-white">Apparatus</Label>
             <Select value={draft.apparatusId ? String(draft.apparatusId) : ""} onValueChange={v => setDraft(d => ({ ...d, apparatusId: v ? Number(v) : undefined }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select apparatus" />
@@ -85,18 +85,18 @@ export default function AdminSkillsManager() {
             </Select>
           </div>
           <div className="md:col-span-2 space-y-2">
-            <Label>Description</Label>
+            <Label className="text-[#0F0276] dark:text-white">Description</Label>
             <Input value={draft.description || ""} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} />
           </div>
           <div className="space-y-2">
-            <Label>Display Order</Label>
+            <Label className="text-[#0F0276] dark:text-white">Display Order</Label>
             <Input type="number" value={draft.displayOrder ?? ""} onChange={e => setDraft(d => ({ ...d, displayOrder: e.target.value === "" ? undefined : Number(e.target.value) }))} />
           </div>
           <div className="space-y-2">
-            <Label>Connected Combo</Label>
+            <Label className="text-[#0F0276] dark:text-white">Connected Combo</Label>
             <div className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={!!draft.isConnectedCombo} onChange={e => setDraft(d => ({ ...d, isConnectedCombo: e.target.checked }))} />
-              <span>Mark this as a connected combo</span>
+              <span className="text-slate-700 dark:text-white/90">Mark this as a connected combo</span>
             </div>
           </div>
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -215,12 +215,12 @@ export default function AdminSkillsManager() {
 
   if (!auth?.loggedIn) {
     return (
-      <Card>
+      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
         <CardHeader>
-          <CardTitle>Skills</CardTitle>
+          <CardTitle className="text-[#0F0276] dark:text-white">Skills</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="text-sm text-gray-600">Admin login required to view and edit skills.</div>
+          <div className="text-sm text-slate-600 dark:text-white/80">Admin login required to view and edit skills.</div>
           <Button onClick={() => setLocation("/admin-login")}>Go to Admin Login</Button>
         </CardContent>
       </Card>
@@ -229,13 +229,13 @@ export default function AdminSkillsManager() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-50 to-white overflow-hidden">
+      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
         <CardHeader>
-          <CardTitle className="text-lg font-black tracking-tight text-[#0F0276]">Filters</CardTitle>
+          <CardTitle className="text-lg font-black tracking-tight text-[#0F0276] dark:text-white">Filters</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <Label>Apparatus</Label>
+            <Label className="text-[#0F0276] dark:text-white">Apparatus</Label>
             <Select
               value={filters.apparatusId ? String(filters.apparatusId) : ""}
               onValueChange={(v) => setFilters(f => ({ ...f, apparatusId: v === 'all' ? undefined : Number(v) }))}
@@ -246,7 +246,7 @@ export default function AdminSkillsManager() {
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 {isAppLoading ? (
-                  <div className="px-2 py-1 text-sm text-gray-500">Loading…</div>
+                  <div className="px-2 py-1 text-sm text-slate-500 dark:text-white/70">Loading…</div>
                 ) : apparatus.map(a => (
                   <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
                 ))}
@@ -254,7 +254,7 @@ export default function AdminSkillsManager() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Level</Label>
+            <Label className="text-[#0F0276] dark:text-white">Level</Label>
             <Select
               value={filters.level || ""}
               onValueChange={(v) => setFilters(f => ({ ...f, level: v === 'all' ? undefined : v }))}
@@ -271,7 +271,7 @@ export default function AdminSkillsManager() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Sort within apparatus</Label>
+            <Label className="text-[#0F0276] dark:text-white">Sort within apparatus</Label>
             <Select value={sortWithin} onValueChange={(v) => setSortWithin(v as 'display' | 'name')}>
               <SelectTrigger>
                 <SelectValue />
@@ -285,13 +285,13 @@ export default function AdminSkillsManager() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-50 to-white overflow-hidden">
+      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-lg font-black tracking-tight text-[#0F0276]">Skills</CardTitle>
+            <CardTitle className="text-lg font-black tracking-tight text-[#0F0276] dark:text-white">Skills</CardTitle>
             <Button
               onClick={() => setIsCreateOpen(v => !v)}
-              className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+              className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]"
             >
               {isCreateOpen ? 'Close' : 'New Skill'}
             </Button>

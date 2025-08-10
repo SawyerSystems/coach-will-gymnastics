@@ -267,16 +267,16 @@ export function AdminLessonTypeManager() {
       </div>
 
       {showForm && (
-        <Card>
+        <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
           <CardHeader>
-            <CardTitle>
+            <CardTitle className="text-[#0F0276] dark:text-white">
               {editingId ? 'Edit Lesson Type' : 'Create New Lesson Type'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name" className="text-[#0F0276] dark:text-white">Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -285,7 +285,7 @@ export function AdminLessonTypeManager() {
                 />
               </div>
               <div>
-                <Label htmlFor="duration">Duration (minutes) *</Label>
+                <Label htmlFor="duration" className="text-[#0F0276] dark:text-white">Duration (minutes) *</Label>
                 <Input
                   id="duration"
                   type="number"
@@ -297,7 +297,7 @@ export function AdminLessonTypeManager() {
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="text-[#0F0276] dark:text-white">Description</Label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -400,12 +400,12 @@ export function AdminLessonTypeManager() {
 
       <div className="grid gap-4">
         {lessonTypes.map((lessonType) => (
-          <Card key={lessonType.id}>
+          <Card key={lessonType.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold">{lessonType.name}</h3>
+                    <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white">{lessonType.name}</h3>
                     <Badge variant={lessonType.isActive ? 'default' : 'secondary'}>
                       {lessonType.isActive ? 'Active' : 'Inactive'}
                     </Badge>
@@ -414,7 +414,7 @@ export function AdminLessonTypeManager() {
                     </Badge>
                   </div>
                   {lessonType.description && (
-                    <p className="text-gray-600 mb-2">{lessonType.description}</p>
+                    <p className="text-slate-600 dark:text-white/80 mb-2">{lessonType.description}</p>
                   )}
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
