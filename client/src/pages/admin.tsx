@@ -1398,7 +1398,7 @@ export default function Admin() {
           {!bookings || !athletes ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mx-auto w-full">
               {[...Array(4)].map((_, index) => (
-                <Card key={index} className="rounded-3xl shadow-lg bg-gradient-to-br from-slate-100 to-white transform transition-transform hover:scale-[1.02] duration-300">
+                <Card key={index} className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 transform transition-transform hover:scale-[1.02] duration-300">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-4 w-4 rounded" />
@@ -1748,7 +1748,7 @@ export default function Admin() {
                 <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
                   <User className="h-8 w-8 text-[#D8BD2A]" />
                   Parents Management
-                  <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-bold rounded-xl px-3 py-1">
+                  <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
                     {parentsData?.parents?.length || 0} total
                   </Badge>
                 </AdminCardTitle>
@@ -1834,7 +1834,7 @@ export default function Admin() {
 
                                   <div className="flex items-center gap-6 text-sm">
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 rounded-lg">
-                                      <Users className="h-4 w-4 text-[#0F0276]" />
+                                      <Users className="h-4 w-4 text-[#0F0276] dark:text-white" />
                                       <span className="font-semibold text-[#0F0276] dark:text-white">
                                         {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
                                       </span>
@@ -2150,7 +2150,7 @@ export default function Admin() {
                           <CardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
                               <div className="flex-1 min-w-0 space-y-3">
-                                <h3 className="text-xl font-bold text-[#0F0276] group-hover:text-[#0F0276]/80 transition-colors line-clamp-2">
+                                <h3 className="text-xl font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors line-clamp-2">
                                   {post.title}
                                 </h3>
                                 <p className="text-slate-600 text-sm leading-relaxed line-clamp-3">
@@ -2159,7 +2159,7 @@ export default function Admin() {
                                 <div className="flex items-center gap-3 pt-2">
                                   <Badge 
                                     variant="secondary" 
-                                    className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-medium rounded-lg px-3 py-1"
+                                    className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-medium rounded-lg px-3 py-1"
                                   >
                                     {post.category}
                                   </Badge>
@@ -2398,13 +2398,13 @@ export default function Admin() {
                           <CardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
                               <div className="flex-1 min-w-0 space-y-3">
-                                <h3 className="text-xl font-bold text-[#0F0276] group-hover:text-[#0F0276]/80 transition-colors line-clamp-2">
+                                <h3 className="text-xl font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors line-clamp-2">
                                   {tip.title}
                                 </h3>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Badge 
                                     variant="secondary" 
-                                    className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-medium rounded-lg px-3 py-1"
+                                    className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-medium rounded-lg px-3 py-1"
                                   >
                                     {tip.category}
                                   </Badge>
@@ -2470,22 +2470,22 @@ export default function Admin() {
                         The system automatically prevents scheduling conflicts by restricting lesson bookings based on your availability and lesson duration.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <Card className="rounded-lg border-0 bg-white/80 shadow-md">
+                        <Card className="rounded-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md">
                           <CardContent className="p-4">
-                            <h4 className="font-bold text-green-700 mb-2 flex items-center gap-2">
+                            <h4 className="font-bold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
                               📅 30-minute Lessons
                             </h4>
-                            <p className="text-slate-600 leading-relaxed">
+                            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                               Quick Journey & Dual Quest lessons automatically cut off 30 minutes before your end time.
                             </p>
                           </CardContent>
                         </Card>
-                        <Card className="rounded-lg border-0 bg-white/80 shadow-md">
+                        <Card className="rounded-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md">
                           <CardContent className="p-4">
-                            <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                            <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
                               ⏰ 60-minute Lessons
                             </h4>
-                            <p className="text-slate-600 leading-relaxed">
+                            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                               Deep Dive & Partner Progression lessons automatically cut off 60 minutes before your end time.
                             </p>
                             <p className="text-xs text-slate-500 mt-2">
@@ -2498,7 +2498,7 @@ export default function Admin() {
                   </Card>
                   
                   <div className="space-y-6">
-                    <h3 className="text-2xl font-bold text-[#0F0276] flex items-center gap-3">
+                    <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
                       <Clock className="h-7 w-7 text-[#D8BD2A]" />
                       Weekly Availability
                     </h3>
@@ -2517,7 +2517,7 @@ export default function Admin() {
                           <Card key={day.value} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                             <CardContent className="p-6">
                               <div className="flex justify-between items-center">
-                                <h4 className="text-lg font-bold text-[#0F0276]">{day.label}</h4>
+                                <h4 className="text-lg font-bold text-[#0F0276] dark:text-white">{day.label}</h4>
                               {dayAvailability ? (
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-4">
@@ -2626,7 +2626,7 @@ export default function Admin() {
 
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-2xl font-bold text-[#0F0276] flex items-center gap-3">
+                      <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
                         <CalendarX className="h-7 w-7 text-[#D8BD2A]" />
                         Availability Exceptions
                       </h3>
@@ -2776,7 +2776,7 @@ export default function Admin() {
                   {/* Message List */}
                   <div className="lg:col-span-1">
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-bold text-[#0F0276]">Messages</h3>
+                      <h3 className="text-xl font-bold text-[#0F0276] dark:text-white">Messages</h3>
                       <Button 
                         size="sm" 
                         variant="outline"
@@ -2803,7 +2803,7 @@ export default function Admin() {
                           <CardContent className="p-4">
                             <div className="flex justify-between items-start gap-3">
                               <div className="flex-1 min-w-0">
-                                <p className="font-bold text-[#0F0276] truncate">{thread.parent}</p>
+                                <p className="font-bold text-[#0F0276] dark:text-white truncate">{thread.parent}</p>
                                 <p className="text-sm text-slate-600 font-medium truncate">{thread.athlete}</p>
                                 <p className="text-sm text-slate-500 mt-2 line-clamp-2">{thread.lastMessage}</p>
                               </div>
@@ -2822,12 +2822,12 @@ export default function Admin() {
 
                   {/* Message Thread */}
                   <div className="lg:col-span-2">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg h-fit">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg h-fit">
                       <CardHeader className="pb-4">
                         <div className="flex justify-between items-center">
                           <div>
-                            <h3 className="text-lg font-bold text-[#0F0276]">Sarah Johnson</h3>
-                            <p className="text-sm text-slate-600 font-medium">Parent of Emma Johnson</p>
+                            <h3 className="text-lg font-bold text-[#0F0276] dark:text-white">Sarah Johnson</h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">Parent of Emma Johnson</p>
                           </div>
                           <div className="flex gap-2">
                             <Button 
@@ -3382,23 +3382,23 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="general" className="space-y-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
+                        <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
                           <AlertCircle className="h-6 w-6 text-[#D8BD2A]" />
                           General Settings
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-6">
-                        <p className="text-gray-600">General application settings will be implemented here.</p>
+                        <p className="text-gray-600 dark:text-gray-300">General application settings will be implemented here.</p>
                       </CardContent>
                     </Card>
                   </TabsContent>
                   
                   <TabsContent value="site-content" className="space-y-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
+                        <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
                           <MessageSquare className="h-6 w-6 text-[#D8BD2A]" />
                           Site Content Management
                         </CardTitle>
@@ -3410,15 +3410,15 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="backup" className="space-y-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
+                        <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
                           <RefreshCw className="h-6 w-6 text-[#D8BD2A]" />
                           Backup & Restore
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-6">
-                        <p className="text-gray-600">Data backup and restore functionality will be implemented here.</p>
+                        <p className="text-gray-600 dark:text-gray-300">Data backup and restore functionality will be implemented here.</p>
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -3458,14 +3458,14 @@ export default function Admin() {
               return (
               <div className="space-y-6 p-6 bg-gradient-to-br from-white to-slate-50">
                 {/* Basic Info */}
-                <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
-                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-t-xl">
-                    <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                      <User className="h-5 w-5 text-blue-700" />
+                <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-[#0F0276]/50 dark:to-[#2A4A9B]/50 rounded-t-xl">
+                    <CardTitle className="text-lg font-semibold text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                      <User className="h-5 w-5 text-blue-700 dark:text-blue-300" />
                       Basic Information
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4 space-y-4 bg-gradient-to-br from-white to-blue-50/30">
+                  <CardContent className="pt-4 space-y-4 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label className="text-sm font-medium text-gray-600">Full Name</Label>
@@ -3516,15 +3516,15 @@ export default function Admin() {
 
                 {/* Athletes */}
                 {selectedParentDetails.athletes && selectedParentDetails.athletes.length > 0 && (
-                  <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-teal-100 to-green-100 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-teal-800 flex items-center gap-2">
-                        <Dumbbell className="h-5 w-5 text-teal-700" />
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-teal-100 to-green-100 dark:from-[#0F0276]/50 dark:to-[#2A4A9B]/50 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-teal-800 dark:text-teal-200 flex items-center gap-2">
+                        <Dumbbell className="h-5 w-5 text-teal-700 dark:text-teal-300" />
                         Athletes
-                        <Badge variant="secondary" className="bg-teal-100 text-teal-800 border-teal-200">{selectedParentDetails.athletes.length}</Badge>
+                        <Badge variant="secondary" className="bg-teal-100 dark:bg-teal-800 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-600">{selectedParentDetails.athletes.length}</Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-4 bg-gradient-to-br from-white to-teal-50/30">
+                    <CardContent className="pt-4 bg-gradient-to-br from-white to-teal-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {selectedParentDetails.athletes.map((athlete: any) => (
                           <Card
@@ -3617,15 +3617,15 @@ export default function Admin() {
 
                 {/* Booking History */}
                 {selectedParentDetails.bookings && selectedParentDetails.bookings.length > 0 && (
-                  <Card className="rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-white">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-purple-100 to-blue-100 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-blue-900 flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-blue-700" />
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <CardHeader className="pb-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-[#0F0276]/50 dark:to-[#2A4A9B]/50 rounded-t-xl">
+                      <CardTitle className="text-lg font-semibold text-blue-900 dark:text-blue-200 flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-blue-700 dark:text-blue-300" />
                         Booking History
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">{selectedParentDetails.bookings.length}</Badge>
+                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-600">{selectedParentDetails.bookings.length}</Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-4 bg-gradient-to-br from-white to-blue-50/30">
+                    <CardContent className="pt-4 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
                       <div className="space-y-3">
                         {editingParent.bookings
                           .sort((a: any, b: any) => new Date(b.preferred_date).getTime() - new Date(a.preferred_date).getTime())
@@ -3704,7 +3704,7 @@ export default function Admin() {
             aria-describedby="athlete-photo-description"
           >
             <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
-              <DialogTitle id="athlete-photo-title" className="text-2xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+              <DialogTitle id="athlete-photo-title" className="text-2xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3">
                 <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
                   <User className="h-5 w-5 text-[#D8BD2A]" />
                 </div>
@@ -3734,7 +3734,7 @@ export default function Admin() {
             aria-describedby="edit-athlete-description"
           >
             <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
-              <DialogTitle id="edit-athlete-title" className="text-2xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+              <DialogTitle id="edit-athlete-title" className="text-2xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3">
                 <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
                   <Edit className="h-5 w-5 text-[#D8BD2A]" />
                 </div>
