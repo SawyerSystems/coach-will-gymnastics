@@ -802,7 +802,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                     setPreSelectedAthleteId(undefined);
                     setShowUnifiedBooking(true);
                   }}
-                  className="border-[#0F0276]/20 text-[#0F0276] hover:bg-[#0F0276]/5 rounded-xl font-semibold"
+                  className="border-[#0F0276]/20 text-[#0F0276] hover:bg-[#0F0276]/5 rounded-xl font-semibold dark:bg-white dark:text-[#0F0276] dark:hover:bg-white/90 dark:border-[#D8BD2A]"
                 >
                   <User className="h-4 w-4 mr-2" />
                   Existing Athlete
@@ -1208,7 +1208,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                       }
                     }}
                   />
-                  <Label htmlFor="show-archived" className="text-sm cursor-pointer dark:text-white">
+                  <Label htmlFor="show-archived" className="text-sm cursor-pointer text-[#0F0276] dark:text-[#0F0276]">
                     Show completed/cancelled
                   </Label>
                 </div>

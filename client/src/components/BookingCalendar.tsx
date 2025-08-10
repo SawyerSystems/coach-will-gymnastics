@@ -257,6 +257,16 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         :root.dark .rbc-event { background-color: rgba(59,130,246,0.2); color: #fff; }
         :root.dark .rbc-event-label { color: #fff; }
         :root.dark .rbc-toolbar button { color: #fff; border-color: rgba(255,255,255,0.4); }
+        :root.dark .rbc-toolbar button.rbc-active, :root.dark .rbc-toolbar button:active {
+          background-color: #D8BD2A !important;
+          color: #0F0276 !important;
+          border-color: #D8BD2A !important;
+        }
+        .rbc-toolbar button.rbc-active, .rbc-toolbar button:active {
+          background-color: #D8BD2A !important;
+          color: #0F0276 !important;
+          border-color: #D8BD2A !important;
+        }
       `}</style>
       <div className="flex-1 relative">
         <div className="h-full overflow-y-auto">

@@ -1513,10 +1513,10 @@ export default function Admin() {
             </div>
           </TabsContent>
 
-          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 dark:bg-white/10 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <Users className="h-8 w-8 text-[#D8BD2A]" />
                   Athletes Management
                 </CardTitle>
@@ -1525,12 +1525,12 @@ export default function Admin() {
                 <div className="space-y-6">
                   {/* Search Bar */}
                   <div className="relative max-w-md">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-300 h-5 w-5" />
                     <Input
                       placeholder="Search athletes..."
                       value={athleteSearchTerm}
                       onChange={(e) => setAthleteSearchTerm(e.target.value)}
-                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 focus:ring-2 focus:ring-[#0F0276] focus:bg-white transition-all duration-200 text-base"
+                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 dark:bg-white/10 dark:text-white dark:placeholder-white/70 focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] focus:bg-white dark:focus:bg-white/20 transition-all duration-200 text-base"
                     />
                   </div>
                   {/* Athletes Grid */}
@@ -1562,12 +1562,12 @@ export default function Admin() {
                         const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
                         const parentInfo = parentMapping.get(athleteKey);
                         return (
-                          <div
+          <div
                             key={athlete.id}
                             className={
                               isUpcomingBirthday
-                                ? 'relative bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]'
-                                : 'relative bg-gradient-to-br from-white via-slate-50 to-white border border-slate-200 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]'
+            ? 'relative bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-[#D8BD2A]/10 dark:via-[#D8BD2A]/5 dark:to-transparent border-2 border-amber-300 dark:border-[#D8BD2A]/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
+            : 'relative bg-gradient-to-br from-white via-slate-50 to-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
                             }
                           >
                             {/* Action buttons - responsive layout */}
@@ -1613,16 +1613,16 @@ export default function Admin() {
                                 <img 
                                   src={athlete.photo} 
                                   alt={`${athlete.name}'s photo`} 
-                                  className="w-16 h-16 rounded-2xl object-cover cursor-pointer hover:opacity-80 transition-all duration-200 shadow-md ring-2 ring-slate-200" 
+                                  className="w-16 h-16 rounded-2xl object-cover cursor-pointer hover:opacity-80 transition-all duration-200 shadow-md ring-2 ring-slate-200 dark:ring-white/20" 
                                   onClick={() => handlePhotoClick(athlete.photo!)} 
                                 />
                               ) : (
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center shadow-md">
-                                  <User className="h-8 w-8 text-slate-500" />
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 dark:from-white/10 dark:to-white/5 flex items-center justify-center shadow-md">
+                                  <User className="h-8 w-8 text-slate-500 dark:text-slate-200" />
                                 </div>
                               )}
                               <div className="flex-1 space-y-3 pt-1">
-                                <h3 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2 leading-tight">
+                                <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2 leading-tight">
                                   🧑 {athlete.firstName && athlete.lastName ? `${athlete.firstName} ${athlete.lastName}` : athlete.name}
                                 </h3>
                                 {isUpcomingBirthday && (
@@ -1634,13 +1634,13 @@ export default function Admin() {
                                   </div>
                                 )}
                                 <div className="space-y-2">
-                                  <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
+                                  <p className="text-sm text-slate-600 dark:text-slate-200 flex items-center gap-2 font-medium">
                                     🎂 <span className="font-semibold">Age:</span> {athlete.dateOfBirth ? calculateAge(athlete.dateOfBirth) : 'Unknown'} 
-                                    <span className="text-slate-400">|</span> 
+                                    <span className="text-slate-400 dark:text-slate-300">|</span> 
                                     🥇 <span className="font-semibold">Level:</span> {athlete.experience.charAt(0).toUpperCase() + athlete.experience.slice(1)}
                                   </p>
                                   {parentInfo && (
-                                    <p className="text-sm text-slate-600 flex items-center gap-2 font-medium">
+                                    <p className="text-sm text-slate-600 dark:text-slate-200 flex items-center gap-2 font-medium">
                                       👨‍👦 <span className="font-semibold">Parent:</span> {parentInfo.firstName} {parentInfo.lastName}
                                     </p>
                                   )}
@@ -1660,10 +1660,10 @@ export default function Admin() {
             <AdminPayoutsTab />
           </TabsContent>
 
-          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 dark:bg-white/10 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <User className="h-8 w-8 text-[#D8BD2A]" />
                   Parents Management
                   <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] font-bold rounded-xl px-3 py-1">
@@ -1675,13 +1675,13 @@ export default function Admin() {
                 {/* Search bar */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                   <div className="relative flex-1 max-w-xl">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-slate-300" />
                     <Input
                       type="text"
                       placeholder="Search parents by name, email, or phone..."
                       value={parentSearchTerm}
                       onChange={(e) => setParentSearchTerm(e.target.value)}
-                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 focus:ring-2 focus:ring-[#0F0276] focus:bg-white transition-all duration-200 text-base"
+                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 dark:bg-white/10 dark:text-white dark:placeholder-white/70 focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] focus:bg-white dark:focus:bg-white/20 transition-all duration-200 text-base"
                     />
                   </div>
                   <Button
@@ -1698,17 +1698,17 @@ export default function Admin() {
                 {parentsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center space-y-4">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0F0276]" />
-                      <p className="text-slate-600 font-medium">Loading parents data...</p>
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0F0276] dark:text-[#D8BD2A]" />
+                      <p className="text-slate-600 dark:text-slate-200 font-medium">Loading parents data...</p>
                     </div>
                   </div>
                 ) : parentsData?.parents?.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="mx-auto w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mb-4">
-                      <User className="h-12 w-12 text-slate-400" />
+                    <div className="mx-auto w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/10 dark:to-white/5 rounded-full flex items-center justify-center mb-4">
+                      <User className="h-12 w-12 text-slate-400 dark:text-slate-300" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">No parents found</h3>
-                    <p className="text-slate-600 max-w-md mx-auto">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No parents found</h3>
+                    <p className="text-slate-600 dark:text-slate-200 max-w-md mx-auto">
                       {parentSearchTerm 
                         ? `No parents match "${parentSearchTerm}". Try adjusting your search terms.`
                         : "No parent accounts have been created yet. They'll appear here when parents complete bookings."
@@ -1725,26 +1725,26 @@ export default function Admin() {
                         return (
                           <Card 
                             key={parent.id} 
-                            className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                            className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white dark:bg-white/10 hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                           >
                             <CardContent className="p-6">
                               <div className="flex justify-between items-start gap-4">
                                 <div className="flex-1 min-w-0 space-y-4">
                                   <div className="flex items-center gap-3">
-                                    <h3 className="font-bold text-xl text-[#0F0276] group-hover:text-[#0F0276]/80 transition-colors">
+                                    <h3 className="font-bold text-xl text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors">
                                       {parent.first_name} {parent.last_name}
                                     </h3>
-                                    <Badge variant="outline" className="text-xs font-medium bg-slate-50/80 border-slate-200 text-slate-600">
+                                    <Badge variant="outline" className="text-xs font-medium bg-slate-50/80 dark:bg-white/10 border-slate-200 dark:border-white/20 text-slate-600 dark:text-slate-200">
                                       ID: {parent.id}
                                     </Badge>
                                   </div>
                                   
                                   <div className="grid grid-cols-1 gap-3">
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-200">
                                       <Mail className="h-4 w-4 text-[#D8BD2A] flex-shrink-0" />
                                       <span className="truncate font-medium">{parent.email}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-200">
                                       <Phone className="h-4 w-4 text-[#D8BD2A] flex-shrink-0" />
                                       <span className="font-medium">{parent.phone}</span>
                                     </div>
@@ -1753,13 +1753,13 @@ export default function Admin() {
                                   <div className="flex items-center gap-6 text-sm">
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 rounded-lg">
                                       <Users className="h-4 w-4 text-[#0F0276]" />
-                                      <span className="font-semibold text-[#0F0276]">
+                                      <span className="font-semibold text-[#0F0276] dark:text-white">
                                         {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg">
                                       <Calendar className="h-4 w-4 text-blue-600" />
-                                      <span className="font-semibold text-blue-700">
+                                      <span className="font-semibold text-blue-700 dark:text-white">
                                         {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
                                       </span>
                                     </div>
@@ -1767,13 +1767,13 @@ export default function Admin() {
 
                                   {parent.athletes && parent.athletes.length > 0 && (
                                     <div className="pt-3 border-t border-slate-100">
-                                      <p className="text-sm font-semibold text-[#0F0276] mb-2">Athletes:</p>
+                                      <p className="text-sm font-semibold text-[#0F0276] dark:text-white mb-2">Athletes:</p>
                                       <div className="flex flex-wrap gap-1">
                                         {parent.athletes.map((athlete: any, index: number) => (
                                           <Badge 
                                             key={index}
                                             variant="secondary" 
-                                            className="bg-gradient-to-r from-slate-100 to-slate-200/50 text-slate-700 text-xs font-medium rounded-lg px-2 py-1"
+                                            className="bg-gradient-to-r from-slate-100 to-slate-200/50 dark:from-white/10 dark:to-white/5 text-slate-700 dark:text-white text-xs font-medium rounded-lg px-2 py-1"
                                           >
                                             {athlete.first_name} {athlete.last_name}
                                           </Badge>
@@ -1838,7 +1838,7 @@ export default function Admin() {
 
                     {/* Pagination */}
                     {parentsData?.pagination && parentsData.pagination.totalPages > 1 && (
-                      <div className="flex justify-center items-center gap-4 pt-6 border-t border-slate-100">
+                      <div className="flex justify-center items-center gap-4 pt-6 border-t border-slate-100 dark:border-white/10">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1850,7 +1850,7 @@ export default function Admin() {
                           Previous
                         </Button>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-600 px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-200 px-3 py-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-white/10 dark:to-white/5 rounded-lg">
                             Page {currentParentPage} of {parentsData.pagination.totalPages}
                           </span>
                         </div>
@@ -1872,34 +1872,26 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
-                  <Clock className="h-8 w-8 text-[#D8BD2A]" />
-                  Upcoming Sessions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
-                <UpcomingSessions 
-                  onBookingSelect={async (bookingId) => {
-                    // Switch to bookings tab
-                    setActiveTab("bookings");
-                    
-                    // Fetch full booking details with athlete information
-                    try {
-                      const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
-                      const bookingData = await response.json();
-                      if (bookingData) {
-                        setSelectedBooking(bookingData);
-                      }
-                    } catch (error) {
-                      console.error("Error fetching booking details:", error);
+          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <div className="dark:bg-[#0F0276] dark:p-4 dark:rounded-xl">
+              <UpcomingSessions 
+                onBookingSelect={async (bookingId) => {
+                  // Switch to bookings tab
+                  setActiveTab("bookings");
+                  
+                  // Fetch full booking details with athlete information
+                  try {
+                    const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
+                    const bookingData = await response.json();
+                    if (bookingData) {
+                      setSelectedBooking(bookingData);
                     }
-                  }}
-                />
-              </CardContent>
-            </Card>
+                  } catch (error) {
+                    console.error("Error fetching booking details:", error);
+                  }
+                }}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2">
