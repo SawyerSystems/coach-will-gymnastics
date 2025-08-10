@@ -1647,7 +1647,7 @@ export default function Admin() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 dark:text-amber-200' : 'bg-white hover:bg-blue-50 text-blue-600 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-blue-300'}`} 
+                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-800 dark:hover:bg-amber-700 dark:text-amber-200' : 'bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:bg-blue-50 text-blue-600 dark:bg-[#0F0276]/90 dark:hover:bg-slate-600 dark:text-blue-300'}`} 
                                 onClick={() => { setSelectedAthlete(athlete); setIsAthleteViewOpen(true); }} 
                                 title="View Details"
                               >
@@ -1656,7 +1656,7 @@ export default function Admin() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' : 'bg-white hover:bg-green-50 text-green-600'}`} 
+                                className={`h-9 w-9 p-0 rounded-xl border-0 shadow-md transition-all duration-200 ${isUpcomingBirthday ? 'bg-amber-100 hover:bg-amber-200 text-amber-700' : 'bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:bg-green-50 text-green-600 dark:bg-[#0F0276]/90 dark:hover:bg-green-800 dark:text-green-400'}`} 
                                 onClick={() => { setSelectedAthlete(athlete); setIsAthleteEditOpen(true); }} 
                                 title="Edit Athlete"
                               >
@@ -1665,7 +1665,7 @@ export default function Admin() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-9 w-9 p-0 rounded-xl border-0 bg-white hover:bg-red-50 text-red-600 dark:bg-slate-700 dark:hover:bg-red-800 dark:text-red-400 shadow-md transition-all duration-200" 
+                                className="h-9 w-9 p-0 rounded-xl border-0 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:bg-red-50 text-red-600 dark:bg-[#0F0276]/90 dark:hover:bg-red-800 dark:text-red-400 shadow-md transition-all duration-200" 
                                 onClick={() => { 
                                   const activeBookings = bookings.filter(b => (b.athlete1Name === athlete.name || b.athlete2Name === athlete.name) && (b.status === 'confirmed' || b.status === 'pending')); 
                                   if (activeBookings.length > 0) { 
@@ -1771,7 +1771,7 @@ export default function Admin() {
                     variant="outline"
                     size="sm"
                     disabled={parentsLoading}
-                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-3 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
+                    className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-3 font-semibold dark:bg-[#0F0276]/90 dark:hover:bg-slate-600 dark:text-white"
                   >
                     <RefreshCw className={`h-5 w-5 ${parentsLoading ? 'animate-spin' : ''}`} />
                   </Button>
@@ -1877,7 +1877,7 @@ export default function Admin() {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
                                       }
                                     }}
-                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
+                                    className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-[#0F0276]/90 dark:hover:bg-slate-600 dark:text-white"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -1894,7 +1894,7 @@ export default function Admin() {
                                         console.warn(`Parent ${parent.id} not found in current parents list`);
                                       }
                                     }}
-                                    className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
+                                    className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-[#0F0276]/90 dark:hover:bg-slate-600 dark:text-white"
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
@@ -2461,12 +2461,12 @@ export default function Admin() {
               <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
                 <div className="space-y-6">
                   {/* Booking Cutoff System Overview */}
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg dark:from-blue-900/20 dark:via-green-900/10 dark:to-blue-900/20">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-bold mb-3 text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                      <h3 className="text-xl font-bold mb-3 text-blue-800 dark:text-white flex items-center gap-2">
                         🚀 Booking Cutoff System
                       </h3>
-                      <p className="text-sm text-slate-700 mb-4 leading-relaxed">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 mb-4 leading-relaxed">
                         The system automatically prevents scheduling conflicts by restricting lesson bookings based on your availability and lesson duration.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -2534,7 +2534,7 @@ export default function Admin() {
                                     </Button>
                                   </div>
                                   {/* Booking Cutoff Visual Indicators */}
-                                  <div className="text-xs text-gray-600 space-y-1">
+                                  <div className="text-xs text-gray-600 dark:text-slate-300 space-y-1">
                                     <div className="flex items-center justify-between">
                                       <span>📅 30-min lessons:</span>
                                       <span className="font-mono bg-green-100 text-green-800 px-2 py-1 rounded">
@@ -2656,7 +2656,7 @@ export default function Admin() {
                                 })}
                               />
                               {newException.date && (
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
                                   Selected: {new Date(`${newException.date}T12:00:00Z`).toLocaleDateString('en-US', {
                                     weekday: 'long',
                                     year: 'numeric',
@@ -2714,11 +2714,11 @@ export default function Admin() {
                       {availabilityExceptions
                         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                         .map((exception) => (
-                          <Card key={exception.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-red-900/20 dark:via-orange-900/10 dark:to-red-900/20">
+                          <Card key={exception.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
                             <CardContent className="p-4">
                               <div className="flex justify-between items-center">
                                 <div className="space-y-1">
-                                  <p className="font-bold text-lg text-red-800">
+                                  <p className="font-bold text-lg text-red-800 dark:text-white">
                                     {new Date(`${exception.date}T12:00:00Z`).toLocaleDateString('en-US', {
                                       weekday: 'short',
                                       year: 'numeric',
@@ -2726,7 +2726,7 @@ export default function Admin() {
                                       day: 'numeric'
                                     })}
                                   </p>
-                                  <div className="flex items-center gap-2 text-sm text-red-600">
+                                  <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
                                     <Clock className="h-4 w-4" />
                                     <span className="font-medium">
                                       {exception.startTime} - {exception.endTime}
@@ -2906,7 +2906,7 @@ export default function Admin() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm">Test Email Templates</CardTitle>
-                      <p className="text-sm text-gray-600">Send test emails to verify the system is working properly</p>
+                      <p className="text-sm text-gray-600 dark:text-slate-300">Send test emails to verify the system is working properly</p>
                     </CardHeader>
                     <CardContent>
                       <form onSubmit={(e) => {
@@ -3134,13 +3134,13 @@ export default function Admin() {
                   </div>
                   
                   <TabsContent value="developer" className="space-y-6">{/* Clean separation with container above */}
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg dark:from-yellow-900/20 dark:via-orange-900/10 dark:to-yellow-900/20">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
-                          <AlertCircle className="h-6 w-6 text-yellow-600" />
-                          <h3 className="text-lg font-bold text-yellow-800">Developer Tools</h3>
+                          <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                          <h3 className="text-lg font-bold text-yellow-800 dark:text-white">Developer Tools</h3>
                         </div>
-                        <p className="text-sm text-yellow-700 leading-relaxed">
+                        <p className="text-sm text-yellow-700 dark:text-slate-300 leading-relaxed">
                           These tools are for testing and development purposes only. Use with caution as they can alter or delete data.
                         </p>
                       </CardContent>
@@ -3148,17 +3148,17 @@ export default function Admin() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {/* Data Management */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-red-900/20 dark:via-red-900/10 dark:to-red-900/20">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-red-800 flex items-center gap-3">
-                            <Trash2 className="h-6 w-6 text-red-600" />
+                          <CardTitle className="text-lg font-bold text-red-800 dark:text-white flex items-center gap-3">
+                            <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
                             Data Management
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="space-y-2">
                             <Label>Clear Test Data</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Remove all parents, athletes, bookings, and auth codes from the database.
                             </p>
                             <Dialog>
@@ -3206,17 +3206,17 @@ export default function Admin() {
                       </Card>
 
                       {/* Test Data Generation */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-blue-900/20 dark:via-blue-900/10 dark:to-blue-900/20">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-blue-800 dark:text-blue-200 flex items-center gap-3">
-                            <Plus className="h-6 w-6 text-blue-600 dark:text-blue-300" />
+                          <CardTitle className="text-lg font-bold text-blue-800 dark:text-white flex items-center gap-3">
+                            <Plus className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             Test Data Generation
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="space-y-2">
                             <Label>Generate Sample Bookings</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Create realistic sample bookings for testing purposes.
                             </p>
                             <Button
@@ -3236,7 +3236,7 @@ export default function Admin() {
                           
                           <div className="space-y-2">
                             <Label>Create Test Parent Account</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Create a test parent account for authentication testing.
                             </p>
                             <Button
@@ -3256,7 +3256,7 @@ export default function Admin() {
 
                           <div className="space-y-2">
                             <Label>Delete User Accounts</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Delete all user accounts created during booking process.
                             </p>
                             <Button
@@ -3278,17 +3278,17 @@ export default function Admin() {
                       </Card>
 
                       {/* Payment Testing */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-green-900/20 dark:via-green-900/10 dark:to-green-900/20">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
-                            <DollarSign className="h-6 w-6 text-green-600" />
+                          <CardTitle className="text-lg font-bold text-green-800 dark:text-white flex items-center gap-3">
+                            <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
                             Payment Testing
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="space-y-2">
                             <Label>Simulate Payment Success</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Mark reservation-paid bookings as session-paid for testing.
                             </p>
                             <Button
@@ -3308,7 +3308,7 @@ export default function Admin() {
                           
                           <div className="space-y-2">
                             <Label>Reset Payment Status</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Reset all bookings to reservation-paid status.
                             </p>
                             <Button
@@ -3329,17 +3329,17 @@ export default function Admin() {
                       </Card>
 
                       {/* System Status */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300 dark:from-purple-900/20 dark:via-purple-900/10 dark:to-purple-900/20">
+                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-purple-800 flex items-center gap-3">
-                            <BarChart className="h-6 w-6 text-purple-600" />
+                          <CardTitle className="text-lg font-bold text-purple-800 dark:text-white flex items-center gap-3">
+                            <BarChart className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                             System Status
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="space-y-2">
                             <Label>Run System Health Check</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Test all system components and API endpoints.
                             </p>
                             <Button
@@ -3359,7 +3359,7 @@ export default function Admin() {
                           
                           <div className="space-y-2">
                             <Label>Database Connection Test</Label>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-300">
                               Verify Supabase database connectivity and permissions.
                             </p>
                             <Button
@@ -3390,7 +3390,7 @@ export default function Admin() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-6">
-                        <p className="text-gray-600 dark:text-gray-300">General application settings will be implemented here.</p>
+                        <p className="text-gray-600 dark:text-slate-300 dark:text-gray-300">General application settings will be implemented here.</p>
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -3418,7 +3418,7 @@ export default function Admin() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="p-6">
-                        <p className="text-gray-600 dark:text-gray-300">Data backup and restore functionality will be implemented here.</p>
+                        <p className="text-gray-600 dark:text-slate-300 dark:text-gray-300">Data backup and restore functionality will be implemented here.</p>
                       </CardContent>
                     </Card>
                   </TabsContent>
@@ -3468,35 +3468,35 @@ export default function Admin() {
                   <CardContent className="pt-4 space-y-4 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Full Name</Label>
+                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Full Name</Label>
                         <p className="text-lg font-semibold text-blue-900">
                           {selectedParentDetails.firstName || selectedParentDetails.first_name} {selectedParentDetails.lastName || selectedParentDetails.last_name}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Parent ID</Label>
+                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Parent ID</Label>
                         <p className="text-lg text-gray-800">{selectedParentDetails.id}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Email</Label>
+                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Email</Label>
                         <p className="text-lg text-gray-800 flex items-center gap-2">
                           <Mail className="h-4 w-4 text-blue-600" />
                           {selectedParentDetails.email}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Phone</Label>
+                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Phone</Label>
                         <p className="text-lg text-gray-800 flex items-center gap-2">
                           <Phone className="h-4 w-4 text-blue-600" />
                           {selectedParentDetails.phone}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Emergency Contact</Label>
+                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Emergency Contact</Label>
                         <p className="text-lg text-gray-800">
                           {selectedParentDetails.emergencyContactName || selectedParentDetails.emergency_contact_name || 'Not provided'}
                           {(selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone) && (
-                            <span className="block text-sm text-gray-600 flex items-center gap-2 mt-1">
+                            <span className="block text-sm text-gray-600 dark:text-slate-300 flex items-center gap-2 mt-1">
                               <AlertCircle className="h-4 w-4 text-amber-500" />
                               {selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone}
                             </span>
@@ -3504,7 +3504,7 @@ export default function Admin() {
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Member Since</Label>
+                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Member Since</Label>
                         <p className="text-lg text-gray-800 flex items-center gap-2">
                           <CalendarDays className="h-4 w-4 text-blue-600" />
                           {(selectedParentDetails.createdAt || selectedParentDetails.created_at) ? new Date(selectedParentDetails.createdAt || selectedParentDetails.created_at).toLocaleDateString() : 'Unknown'}
@@ -3564,7 +3564,7 @@ export default function Admin() {
                                 </h4>
                                 <Badge variant="outline" className="bg-white border-teal-200 text-teal-700 font-medium">ID: {athlete.id}</Badge>
                               </div>
-                              <div className="text-sm text-gray-600 space-y-1">
+                              <div className="text-sm text-gray-600 dark:text-slate-300 space-y-1">
                                 <p>
                                   <strong>Age:</strong>{' '}
                                   {(() => {
@@ -4027,7 +4027,7 @@ export default function Admin() {
                       {deleteAthleteError.activeBookings.map((booking) => (
                         <div key={booking.id} className="text-sm border rounded p-2">
                           <p className="font-medium">{booking.preferredDate} at {booking.preferredTime}</p>
-                          <p className="text-gray-600">{(() => {
+                          <p className="text-gray-600 dark:text-slate-300">{(() => {
                             const lt = booking.lessonType;
                             const name = (typeof lt === 'object' && lt && 'name' in lt) 
                               ? (lt as any).name 

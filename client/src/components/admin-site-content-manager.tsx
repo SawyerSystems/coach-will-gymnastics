@@ -648,10 +648,10 @@ export function AdminSiteContentManager() {
     };
 
     return (
-      <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-3">
-            <Users className="h-6 w-6 text-blue-600" />
+          <CardTitle className="text-lg font-bold text-blue-800 dark:text-blue-200 flex items-center gap-3">
+            <Users className="h-6 w-6 text-blue-600 dark:text-blue-300" />
             About Coach Will
           </CardTitle>
         </CardHeader>
@@ -874,10 +874,10 @@ export function AdminSiteContentManager() {
     };
 
     return (
-      <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-green-800 flex items-center gap-3">
-            <MapPin className="h-6 w-6 text-green-600" />
+          <CardTitle className="text-lg font-bold text-green-800 dark:text-green-200 flex items-center gap-3">
+            <MapPin className="h-6 w-6 text-green-600 dark:text-green-300" />
             Contact Information
           </CardTitle>
         </CardHeader>
@@ -1090,10 +1090,10 @@ export function AdminSiteContentManager() {
     };
 
     return (
-      <Card className="rounded-xl border-0 bg-gradient-to-br from-indigo-50 via-indigo-25 to-indigo-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-indigo-800 flex items-center gap-3">
-            <Clock className="h-6 w-6 text-indigo-600" />
+          <CardTitle className="text-lg font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-3">
+            <Clock className="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
             Hours of Operation
           </CardTitle>
         </CardHeader>
@@ -1201,10 +1201,10 @@ export function AdminSiteContentManager() {
     };
 
     return (
-      <Card className="rounded-xl border-0 bg-gradient-to-br from-yellow-50 via-yellow-25 to-yellow-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-yellow-800 flex items-center gap-3">
-            <HelpCircle className="h-6 w-6 text-yellow-600" />
+          <CardTitle className="text-lg font-bold text-yellow-800 dark:text-yellow-200 flex items-center gap-3">
+            <HelpCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-300" />
             Frequently Asked Questions
           </CardTitle>
         </CardHeader>
@@ -1324,10 +1324,10 @@ export function AdminSiteContentManager() {
 
         {/* Media Tab */}
         <TabsContent value="media" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-purple-800 flex items-center gap-3">
-                <Video className="h-6 w-6 text-purple-600" />
+              <CardTitle className="text-lg font-bold text-purple-800 dark:text-purple-200 flex items-center gap-3">
+                <Video className="h-6 w-6 text-purple-600 dark:text-purple-300" />
                 Banner Video
               </CardTitle>
             </CardHeader>
@@ -1463,10 +1463,10 @@ export function AdminSiteContentManager() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-3">
-                <Image className="h-6 w-6 text-blue-600" />
+              <CardTitle className="text-lg font-bold text-blue-800 dark:text-blue-200 flex items-center gap-3">
+                <Image className="h-6 w-6 text-blue-600 dark:text-blue-300" />
                 Hero Images
               </CardTitle>
             </CardHeader>
