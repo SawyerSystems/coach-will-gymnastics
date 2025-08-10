@@ -408,7 +408,7 @@ export function PaymentsTab() {
             >
             <TabsContent value="overview">
               {/* Mobile card list */}
-              <div className="sm:hidden space-y-3">
+              <div className="sm:hidden space-y-3 max-w-screen-sm mx-auto px-4">
                 {filteredBookings.map((booking) => {
                   const totalPrice = getLessonPrice(booking);
                   let displayPaidAmount = 0;
@@ -438,46 +438,47 @@ export function PaymentsTab() {
                   if (balanceDue < 0) balanceDue = 0;
 
                   return (
-                    <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
-                      <CardContent className="p-4">
-                        <div className="relative min-h-40 pb-28">
+                    <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white shadow-sm sm:shadow-md">
+                      <CardContent className="p-3 sm:p-5">
+                        <div className="relative min-h-40 pb-20">
                           {/* Actions stack */}
-                          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
+                          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10">
                             <AdminButton
                               variant="secondary"
                               size="sm"
-                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}`, '_blank')}
                             >
-                              Stripe
+                              <ExternalLink className="h-4 w-4" />
+                              <span className="hidden sm:inline">Stripe</span>
                             </AdminButton>
                             <AdminButton
                               variant="secondary"
                               size="sm"
-                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
                             >
-                              <Eye className="h-3.5 w-3.5 mr-1" /> Details
+                              <Eye className="h-4 w-4" />
+                              <span className="hidden sm:inline">Details</span>
                             </AdminButton>
                           </div>
 
                           {/* Content */}
-                          <div className="pr-36">
+                          <div className="pr-20">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <div className="font-semibold text-slate-900">{formatDate(booking.preferredDate || '')}</div>
-                                <div className="text-xs text-slate-600">{booking.preferredTime}</div>
-                              </div>
-                              <div className="text-right space-y-1">
-                                <Badge variant="outline" className="text-slate-800 border-slate-300">
-                                  {typeof booking.status === 'object' && booking.status !== null ? JSON.stringify(booking.status) : booking.status}
-                                </Badge>
-                                <div>
-                                  <Badge variant="outline" className="text-slate-800 border-slate-300">
-                                    {booking.paymentStatus || 'unpaid'}
-                                  </Badge>
+                                <div className="font-semibold text-slate-900 text-base sm:text-xl leading-snug tracking-tight">
+                                  {formatDate(booking.preferredDate || '')}{booking.preferredTime ? ` • ${booking.preferredTime}` : ''}
                                 </div>
                               </div>
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              <Badge variant="outline" className="border-slate-300 text-xs px-2 py-0.5">
+                                {typeof booking.status === 'object' && booking.status !== null ? JSON.stringify(booking.status) : booking.status}
+                              </Badge>
+                              <Badge variant="outline" className="border-slate-300 text-xs px-2 py-0.5">
+                                {booking.paymentStatus || 'unpaid'}
+                              </Badge>
                             </div>
 
                             <div className="mt-2 text-sm text-slate-800">
@@ -486,27 +487,26 @@ export function PaymentsTab() {
                                   ? getNameOrDescription(booking.lessonType)
                                   : booking.lessonType}
                               </div>
-                              <div className="text-slate-600">
+                              <div className="text-slate-600 line-clamp-1">
                                 {booking.athlete1Name}{booking.athlete2Name ? ` & ${booking.athlete2Name}` : ''}
                               </div>
-                              <div className="text-slate-600">
+                              <div className="text-slate-600 line-clamp-2">
                                 {booking.parentFirstName} {booking.parentLastName} · {booking.parentEmail}
                               </div>
                             </div>
 
-                            {/* Amounts and controls */}
-                            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                            {/* Amounts compact pills */}
+                            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                              <div className="rounded-md bg-slate-50 px-2.5 py-1.5">
                                 <div className="text-slate-500">Total</div>
-                                <div className="font-semibold text-slate-900">${totalPrice.toFixed(2)}</div>
+                                <div className="font-semibold text-slate-900 text-sm">${totalPrice.toFixed(2)}</div>
                               </div>
-                              <div className="p-2 rounded-lg bg-green-50 border border-green-200">
+                              <div className="rounded-md bg-green-50 px-2.5 py-1.5">
                                 <div className="text-green-700">Paid</div>
-                                <div className="font-semibold text-green-700">${displayPaidAmount.toFixed(2)}</div>
+                                <div className="font-semibold text-green-700 text-sm">${displayPaidAmount.toFixed(2)}</div>
                               </div>
-                              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 col-span-2">
-                                <div className="text-amber-700">Balance Due</div>
-                                <div className="font-bold text-amber-700">${balanceDue.toFixed(2)}</div>
+                              <div className="rounded-full bg-amber-50 px-3 py-1.5 text-center font-semibold text-amber-800 self-center">
+                                Balance ${balanceDue.toFixed(2)}
                               </div>
                             </div>
 
@@ -517,7 +517,7 @@ export function PaymentsTab() {
                                 value={booking.paymentStatus || "unpaid"}
                                 onValueChange={(value) => updatePaymentStatusMutation.mutate({ id: booking.id, paymentStatus: value })}
                               >
-                                <SelectTrigger className="h-9 w-full rounded-lg border-slate-300 focus:border-blue-400">
+                                <SelectTrigger className="h-10 w-full text-sm rounded-lg border-slate-300 focus:border-blue-400">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -668,15 +668,15 @@ export function PaymentsTab() {
 
             {/* Pending Payments Tab */}
             <TabsContent value="pending">
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-xl p-4 shadow-sm">
+              <div className="space-y-3 sm:space-y-5">
+                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-xl p-3 sm:p-5 shadow-sm">
                   <div className="flex items-start space-x-3">
                     <div className="p-2 bg-orange-100 rounded-lg">
                       <Clock className="h-5 w-5 text-orange-600" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-orange-900 mb-1">Pending Session Payments</h4>
-                      <p className="text-sm text-orange-800">
+                      <h4 className="font-semibold text-orange-900 mb-1 text-base sm:text-xl leading-snug tracking-tight">Pending Session Payments</h4>
+                      <p className="text-sm text-orange-800 leading-snug">
                         These bookings have paid the reservation fee but still owe the remaining balance at the time of the lesson.
                       </p>
                     </div>
@@ -684,17 +684,17 @@ export function PaymentsTab() {
                 </div>
                 
                 {/* Mobile card list */}
-                <div className="sm:hidden space-y-3">
+                <div className="sm:hidden space-y-3 max-w-screen-sm mx-auto px-4">
                   {pendingPayments.map((payment) => (
-                    <Card key={payment.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
-                      <CardContent className="p-4">
-                        <div className="relative min-h-40 pb-28">
+                    <Card key={payment.id} className="rounded-xl border border-slate-200 bg-white shadow-sm sm:shadow-md">
+                      <CardContent className="p-3 sm:p-5">
+                        <div className="relative min-h-40 pb-20">
                           {/* Actions stack */}
-                          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
+                          <div className="absolute right-2 top-2 flex flex-col gap-2 z-10">
                             <AdminButton
                               variant="secondary"
                               size="sm"
-                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               onClick={() => {
                                 const currentStatus = payment.paymentStatus;
                                 let newStatus = PaymentStatusEnum.SESSION_PAID;
@@ -707,25 +707,28 @@ export function PaymentsTab() {
                               }}
                               disabled={updatePaymentStatusMutation.isPending}
                             >
-                              Mark Paid
+                              <Check className="h-4 w-4" />
+                              <span className="hidden sm:inline">Mark Paid</span>
                             </AdminButton>
                             <AdminButton
                               variant="secondary"
                               size="sm"
-                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${payment.parentEmail}`, '_blank')}
                             >
-                              Stripe
+                              <ExternalLink className="h-4 w-4" />
+                              <span className="hidden sm:inline">Stripe</span>
                             </AdminButton>
                           </div>
 
-                          <div className="pr-36">
+                          <div className="pr-20">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <div className="font-semibold text-slate-900">{formatDate(payment.preferredDate || '')}</div>
-                                <div className="text-xs text-slate-600">{payment.preferredTime}</div>
+                                <div className="font-semibold text-slate-900 text-base sm:text-xl leading-snug tracking-tight">{formatDate(payment.preferredDate || '')}{payment.preferredTime ? ` • ${payment.preferredTime}` : ''}</div>
                               </div>
-                              <Badge variant="outline" className="text-slate-800 border-slate-300">
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              <Badge variant="outline" className="border-slate-300 text-xs px-2 py-0.5">
                                 {typeof payment.lessonType === 'object' && payment.lessonType !== null
                                   ? getNameOrDescription(payment.lessonType)
                                   : payment.lessonType}
@@ -733,26 +736,25 @@ export function PaymentsTab() {
                             </div>
 
                             <div className="mt-2 text-sm text-slate-800">
-                              <div className="text-slate-600">
+                              <div className="text-slate-600 line-clamp-1">
                                 {payment.athlete1Name}{payment.athlete2Name ? ` & ${payment.athlete2Name}` : ''}
                               </div>
-                              <div className="text-slate-600">
+                              <div className="text-slate-600 line-clamp-2">
                                 {payment.parentFirstName} {payment.parentLastName} · {payment.parentPhone}
                               </div>
                             </div>
 
-                            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
+                            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                              <div className="rounded-md bg-slate-50 px-2.5 py-1.5">
                                 <div className="text-slate-500">Total</div>
-                                <div className="font-semibold text-slate-900">${payment.totalPrice.toFixed(2)}</div>
+                                <div className="font-semibold text-slate-900 text-sm">${payment.totalPrice.toFixed(2)}</div>
                               </div>
-                              <div className="p-2 rounded-lg bg-green-50 border border-green-200">
-                                <div className="text-green-700">Reservation Paid</div>
-                                <div className="font-semibold text-green-700">${payment.paidAmount.toFixed(2)}</div>
+                              <div className="rounded-md bg-green-50 px-2.5 py-1.5">
+                                <div className="text-green-700">Resv Paid</div>
+                                <div className="font-semibold text-green-700 text-sm">${payment.paidAmount.toFixed(2)}</div>
                               </div>
-                              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 col-span-2">
-                                <div className="text-amber-700">Balance Due</div>
-                                <div className="font-bold text-amber-700">${payment.remainingBalance.toFixed(2)}</div>
+                              <div className="rounded-full bg-amber-50 px-3 py-1.5 text-center font-semibold text-amber-800 self-center">
+                                Balance ${payment.remainingBalance.toFixed(2)}
                               </div>
                             </div>
                           </div>
@@ -871,44 +873,46 @@ export function PaymentsTab() {
             {/* Completed Tab */}
             <TabsContent value="completed">
               {/* Mobile card list */}
-              <div className="sm:hidden space-y-3">
+              <div className="sm:hidden space-y-3 max-w-screen-sm mx-auto px-4">
                 {completedArchived.map((booking) => (
-                  <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
-                    <CardContent className="p-4">
-                      <div className="relative min-h-40 pb-28">
+                  <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white shadow-sm sm:shadow-md">
+                    <CardContent className="p-3 sm:p-5">
+                      <div className="relative min-h-40 pb-20">
                         {/* Actions stack */}
-                        <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
+                        <div className="absolute right-2 top-2 flex flex-col gap-2 z-10">
                           <AdminButton
                             variant="secondary"
                             size="sm"
-                            className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                            className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                             onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
                           >
-                            <Eye className="h-3.5 w-3.5 mr-1" /> Details
+                            <Eye className="h-4 w-4" />
+                            <span className="hidden sm:inline">Details</span>
                           </AdminButton>
                           {booking.parentEmail && (
                             <AdminButton
                               variant="secondary"
                               size="sm"
-                              className="h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                               onClick={() => window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}`, '_blank')}
                             >
-                              Stripe
+                              <ExternalLink className="h-4 w-4" />
+                              <span className="hidden sm:inline">Stripe</span>
                             </AdminButton>
                           )}
                         </div>
-                        <div className="pr-36">
+                        <div className="pr-20">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <div className="font-semibold text-slate-900">{booking.updatedAt ? formatDate(booking.updatedAt.toString().split('T')[0]) : 'N/A'}</div>
+                              <div className="font-semibold text-slate-900 text-base sm:text-xl leading-snug tracking-tight">{booking.updatedAt ? formatDate(booking.updatedAt.toString().split('T')[0]) : 'N/A'}</div>
                             </div>
-                            <div className="text-right">
-                              <Badge variant="outline" className="text-slate-800 border-slate-300">
-                                {typeof booking.bookingMethod === 'object' && booking.bookingMethod !== null
-                                  ? getNameOrDescription(booking.bookingMethod)
-                                  : booking.bookingMethod}
-                              </Badge>
-                            </div>
+                          </div>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            <Badge variant="outline" className="border-slate-300 text-xs px-2 py-0.5">
+                              {typeof booking.bookingMethod === 'object' && booking.bookingMethod !== null
+                                ? getNameOrDescription(booking.bookingMethod)
+                                : booking.bookingMethod}
+                            </Badge>
                           </div>
                           <div className="mt-2 text-sm text-slate-800">
                             <div className="font-medium">
@@ -916,16 +920,15 @@ export function PaymentsTab() {
                                 ? getNameOrDescription(booking.lessonType)
                                 : booking.lessonType}
                             </div>
-                            <div className="text-slate-600">
+                            <div className="text-slate-600 line-clamp-1">
                               {booking.athlete1Name}{booking.athlete2Name ? ` & ${booking.athlete2Name}` : ''}
                             </div>
-                            <div className="text-slate-600">
+                            <div className="text-slate-600 line-clamp-2">
                               {booking.parentFirstName} {booking.parentLastName} · {booking.parentEmail}
                             </div>
                           </div>
-                          <div className="mt-3 p-2 rounded-lg bg-slate-50 border border-slate-200 text-sm">
-                            <div className="text-slate-500">Amount</div>
-                            <div className="font-semibold text-slate-900">${getLessonPrice(booking).toFixed(2)}</div>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-900">Amount ${getLessonPrice(booking).toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
