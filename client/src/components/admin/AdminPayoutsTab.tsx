@@ -403,31 +403,31 @@ export default function AdminPayoutsTab() {
 					</CardHeader>
 					<CardContent className="p-0">
 						<div className="overflow-x-auto">
-							<table className="w-full text-sm">
-								<thead className="bg-slate-100/50 dark:bg-slate-800/50">
-									<tr>
-										<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Period</th>
-										<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Status</th>
-										<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Sessions</th>
-										<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Total Owed</th>
-										<th className="text-left px-4 py-3 font-semibold text-slate-700 dark:text-white">Updated</th>
-										<th className="text-right px-4 py-3 font-semibold text-slate-700 dark:text-white">Actions</th>
+							<table className="w-full text-sm border-separate border-spacing-y-2">
+								<thead>
+									<tr className="border-transparent">
+										<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Period</th>
+										<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Status</th>
+										<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Sessions</th>
+										<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Total Owed</th>
+										<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Updated</th>
+										<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Actions</th>
 									</tr>
 								</thead>
 								<tbody>
 									{runs.length === 0 ? (
 										<tr>
-											<td className="px-4 py-6 text-slate-500 dark:text-white/70" colSpan={6}>No runs yet. Generate one for the current period.</td>
+											<td className="py-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276]/80 border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white/80 dark:border-transparent" colSpan={6}>No runs yet. Generate one for the current period.</td>
 										</tr>
 									) : (
 										runs.map((r) => (
-											<tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-600/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-												<td className="px-4 py-3 text-slate-700 dark:text-white">{r.period_start} → {r.period_end}</td>
-												<td className="px-4 py-3 capitalize text-slate-700 dark:text-white">{r.status}</td>
-												<td className="px-4 py-3 text-right text-slate-700 dark:text-white">{r.total_sessions}</td>
-												<td className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-white">{formatCents(r.total_owed_cents)}</td>
-												<td className="px-4 py-3 text-slate-700 dark:text-white">{new Date(r.updated_at).toLocaleString()}</td>
-												<td className="px-4 py-3 text-right">
+											<tr key={r.id} className="transition-colors border-transparent">
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{r.period_start} → {r.period_end}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent capitalize">{r.status}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right">{r.total_sessions}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right font-semibold">{formatCents(r.total_owed_cents)}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{new Date(r.updated_at).toLocaleString()}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right">
 			                    <RunActions r={r} onChanged={async () => { await refetch(); await onDataChanged?.(); }} />
 			                  </td>
 											</tr>

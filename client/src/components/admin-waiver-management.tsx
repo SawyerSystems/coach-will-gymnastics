@@ -711,34 +711,32 @@ export function AdminWaiverManagement() {
 
                   {/* Desktop table */}
                   <div className="hidden sm:block overflow-x-auto rounded-lg border border-orange-100">
-                    <Table>
-                      <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
-                        <TableRow className="border-b border-slate-200">
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete Name</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Date of Birth</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Status</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Last Updated</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                    <Table className="border-separate border-spacing-y-2">
+                      <TableHeader>
+                        <TableRow className="border-transparent">
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Athlete Name</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Date of Birth</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Status</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Last Updated</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody className="divide-y divide-slate-100">
+                      <TableBody>
                         {filteredMissingWaivers.map((waiver, index) => (
                           <TableRow 
                             key={waiver.id} 
-                            className={`hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-red-50/30 transition-all duration-200 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-                            }`}
+                            className="transition-colors border-transparent"
                           >
-                            <TableCell className="px-6 py-4 font-semibold text-slate-900">{waiver.athleteName}</TableCell>
-                            <TableCell className="px-6 py-4 text-slate-700">{waiver.dateOfBirth ? formatDate(waiver.dateOfBirth) : 'N/A'}</TableCell>
-                            <TableCell className="px-6 py-4">
-                              <Badge variant="outline" className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200 font-semibold">
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-semibold">{waiver.athleteName}</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{waiver.dateOfBirth ? formatDate(waiver.dateOfBirth) : 'N/A'}</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                              <Badge variant="outline" className="border-orange-600/30 text-orange-700 bg-orange-50/50 dark:border-orange-400/40 dark:text-orange-400 dark:bg-orange-900/20 font-medium">
                                 <AlertCircle className="h-3 w-3 mr-1" />
                                 Waiver Required
                               </Badge>
                             </TableCell>
-                            <TableCell className="px-6 py-4 text-slate-600 font-medium">Real-time</TableCell>
-                            <TableCell className="px-6 py-4">
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-medium">Real-time</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -748,7 +746,7 @@ export function AdminWaiverManagement() {
                                     description: "Contact the parent to complete the waiver through the booking system or parent portal.",
                                   });
                                 }}
-                                className="border-orange-200 text-orange-700 hover:bg-orange-50 font-medium"
+                                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
                               >
                                 <Mail className="h-4 w-4 mr-1" />
                                 Contact Parent
@@ -875,39 +873,37 @@ export function AdminWaiverManagement() {
 
                   {/* Desktop table */}
                   <div className="hidden sm:block overflow-x-auto rounded-lg border border-slate-100">
-                    <Table>
-                      <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
-                        <TableRow className="border-b border-slate-200">
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Signer</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Relationship</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Signed Date</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Archived Date</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Archive Reason</TableHead>
-                          <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                    <Table className="border-separate border-spacing-y-2">
+                      <TableHeader>
+                        <TableRow className="border-transparent">
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Athlete</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Signer</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Relationship</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Signed Date</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Archived Date</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Archive Reason</TableHead>
+                          <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody className="divide-y divide-slate-100">
+                      <TableBody>
                         {archivedWaivers.map((waiver, index) => (
                           <TableRow 
                             key={waiver.id} 
-                            className={`hover:bg-gradient-to-r hover:from-slate-50/30 hover:to-blue-50/30 transition-all duration-200 ${
-                              index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-                            }`}
+                            className="transition-colors border-transparent"
                           >
-                            <TableCell className="px-6 py-4 font-semibold text-slate-900">{waiver.athleteName}</TableCell>
-                            <TableCell className="px-6 py-4 text-slate-700">{waiver.signerName}</TableCell>
-                            <TableCell className="px-6 py-4 text-slate-600">{waiver.relationshipToAthlete}</TableCell>
-                            <TableCell className="px-6 py-4 text-slate-600 font-medium">{formatDate(waiver.signedAt.split('T')[0])}</TableCell>
-                            <TableCell className="px-6 py-4 text-slate-600 font-medium">
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-semibold">{waiver.athleteName}</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{waiver.signerName}</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{waiver.relationshipToAthlete}</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-medium">{formatDate(waiver.signedAt.split('T')[0])}</TableCell>
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-medium">
                               {(waiver as any).archivedAt ? formatDate((waiver as any).archivedAt.split('T')[0]) : 'N/A'}
                             </TableCell>
-                            <TableCell className="px-6 py-4">
-                              <span className="bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800 px-2.5 py-1 rounded-full text-xs font-semibold border border-orange-200">
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                              <span className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10 px-2.5 py-1 rounded-full text-xs font-semibold border">
                                 {(waiver as any).archiveReason || 'Account deleted'}
                               </span>
                             </TableCell>
-                            <TableCell className="px-6 py-4">
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                               <div className="flex items-center gap-2">
                                 <Dialog>
                                   <DialogTrigger asChild>
@@ -915,7 +911,7 @@ export function AdminWaiverManagement() {
                                       variant="outline"
                                       size="sm"
                                       onClick={() => setSelectedWaiver(waiver)}
-                                      className="border-slate-200 text-slate-700 hover:bg-slate-50 font-medium"
+                                      className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
                                     >
                                       <Eye className="h-4 w-4 mr-1" />
                                       View
@@ -998,7 +994,7 @@ export function AdminWaiverManagement() {
                                   size="sm"
                                   onClick={() => downloadPDF(waiver.id, waiver.athleteName)}
                                   disabled={typeof waiver.id !== 'number'}
-                                  className="border-blue-200 text-blue-700 hover:bg-blue-50 font-medium disabled:opacity-50"
+                                  className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
                                 >
                                   <Download className="h-4 w-4 mr-1" />
                                   PDF

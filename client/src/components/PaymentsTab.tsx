@@ -764,62 +764,60 @@ export function PaymentsTab() {
 
                 {/* Desktop table */}
                 <div className="hidden sm:block overflow-x-auto rounded-lg border border-orange-100">
-                  <Table>
-                    <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
-                      <TableRow className="border-b border-slate-200">
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Session Date</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Athlete(s)</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Parent</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Lesson Type</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Total Price</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Reservation Paid</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Balance Due</TableHead>
-                        <TableHead className="px-6 py-4 text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</TableHead>
+                  <Table className="border-separate border-spacing-y-2">
+                    <TableHeader>
+                      <TableRow className="border-transparent">
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Session Date</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Athlete(s)</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Parent</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Lesson Type</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Total Price</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Reservation Paid</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Balance Due</TableHead>
+                        <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody className="divide-y divide-slate-100">
+                    <TableBody>
                     {pendingPayments.map((payment, index) => (
                       <TableRow 
                         key={payment.id}
-                        className={`hover:bg-gradient-to-r hover:from-orange-50/30 hover:to-amber-50/30 transition-all duration-200 ${
-                          index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-                        }`}
+                        className="transition-colors border-transparent"
                       >
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <div className="space-y-1">
-                            <p className="font-semibold text-slate-900">
+                            <p className="font-semibold text-[#0F0276] dark:text-white">
                               {formatDate(payment.preferredDate || '')}
                             </p>
-                            <p className="text-sm text-slate-600">{payment.preferredTime}</p>
+                            <p className="text-sm text-[#0F0276]/90 dark:text-white/90">{payment.preferredTime}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <p className="text-sm font-medium text-slate-900">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                          <p className="text-sm font-medium text-[#0F0276] dark:text-white">
                             {payment.athlete1Name}
                             {payment.athlete2Name && ` & ${payment.athlete2Name}`}
                           </p>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-slate-900">{payment.parentFirstName} {payment.parentLastName}</p>
-                            <p className="text-xs text-slate-600">{payment.parentPhone}</p>
+                            <p className="text-sm font-medium text-[#0F0276] dark:text-white">{payment.parentFirstName} {payment.parentLastName}</p>
+                            <p className="text-xs text-[#0F0276]/90 dark:text-white/90">{payment.parentPhone}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <Badge variant="outline" className="font-medium">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                          <Badge variant="outline" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10 font-medium">
                             {typeof payment.lessonType === 'object' && payment.lessonType !== null
                               ? getNameOrDescription(payment.lessonType)
                               : payment.lessonType}
                           </Badge>
                         </TableCell>
-                        <TableCell className="px-6 py-4 text-slate-900 font-semibold">${payment.totalPrice.toFixed(2)}</TableCell>
-                        <TableCell className="px-6 py-4 text-green-700 font-semibold">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-semibold">${payment.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent text-green-700 dark:text-green-400 font-semibold">
                           ${payment.paidAmount.toFixed(2)}
                         </TableCell>
-                        <TableCell className="px-6 py-4 text-orange-600 font-bold">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent text-orange-600 dark:text-orange-400 font-bold">
                           ${payment.remainingBalance.toFixed(2)}
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <Button
                             size="sm"
                             variant="default"
@@ -935,58 +933,59 @@ export function PaymentsTab() {
                 ))}
               </div>
               {/* Desktop table */}
-              <Table className="hidden sm:table">
+              <Table className="hidden sm:table border-separate border-spacing-y-2">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Completion Date</TableHead>
-                    <TableHead>Lesson Details</TableHead>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Payment Method</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="border-transparent">
+                    <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Completion Date</TableHead>
+                    <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Lesson Details</TableHead>
+                    <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Parent</TableHead>
+                    <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Amount</TableHead>
+                    <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Payment Method</TableHead>
+                    <TableHead className="px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                     <TableBody>
                   {completedArchived
                     .map((booking) => (
-                      <TableRow key={booking.id}>
-                        <TableCell>
+                      <TableRow key={booking.id} className="transition-colors border-transparent">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           {booking.updatedAt ? formatDate(booking.updatedAt.toString().split('T')[0]) : 'N/A'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <div className="space-y-1">
-                            <p className="font-medium">
+                            <p className="font-medium text-[#0F0276] dark:text-white">
                               {typeof booking.lessonType === 'object' && booking.lessonType !== null
                                 ? getNameOrDescription(booking.lessonType)
                                 : booking.lessonType}
                             </p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-[#0F0276]/90 dark:text-white/90">
                               {booking.athlete1Name}
                               {booking.athlete2Name && ` & ${booking.athlete2Name}`}
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <div className="space-y-1">
-                            <p className="text-sm">{booking.parentFirstName} {booking.parentLastName}</p>
-                            <p className="text-xs text-muted-foreground">{booking.parentEmail}</p>
+                            <p className="text-sm text-[#0F0276] dark:text-white">{booking.parentFirstName} {booking.parentLastName}</p>
+                            <p className="text-xs text-[#0F0276]/90 dark:text-white/90">{booking.parentEmail}</p>
                           </div>
                         </TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent font-medium">
                               ${getLessonPrice(booking).toFixed(2)}
                             </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
+                          <Badge variant="outline" className="border-[#0F0276]/30 text-[#0F0276] bg-[#0F0276]/5 dark:border-white/40 dark:text-white dark:bg-white/10">
                             {typeof booking.bookingMethod === 'object' && booking.bookingMethod !== null
                               ? getNameOrDescription(booking.bookingMethod)
                               : booking.bookingMethod}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
+                            className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
                           >
                             View Details
                           </Button>
