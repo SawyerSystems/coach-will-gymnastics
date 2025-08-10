@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
+import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -370,7 +371,105 @@ export function AdminWaiverManagement() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {/* Mobile cards */}
+              <div className="sm:hidden p-3 space-y-3">
+                {filteredSignedWaivers.length === 0 ? (
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                    <CardContent className="p-6 text-center text-slate-600">No signed waivers found.</CardContent>
+                  </Card>
+                ) : (
+                  filteredSignedWaivers.map((waiver) => (
+                    <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                      <CardContent className="p-4">
+                        <div className="relative">
+                          {/* top-right vertical actions */}
+                          <div className="absolute right-0 top-0 flex flex-col gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <AdminButton variant="secondary" size="sm" className="justify-center">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View
+                                </AdminButton>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Waiver Details - {waiver.athleteName}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 gap-2 text-sm">
+                                    <div className="flex justify-between"><span className="font-semibold">Athlete:</span><span>{waiver.athleteName}</span></div>
+                                    <div className="flex justify-between"><span className="font-semibold">Signer:</span><span>{waiver.signerName}</span></div>
+                                    <div className="flex justify-between"><span className="font-semibold">Relationship:</span><span>{waiver.relationshipToAthlete}</span></div>
+                                    <div className="flex justify-between"><span className="font-semibold">Emergency Contact:</span><span>{waiver.emergencyContactNumber}</span></div>
+                                    <div className="flex justify-between"><span className="font-semibold">Signed:</span><span>{formatDate(waiver.signedAt.split('T')[0])}</span></div>
+                                    <div className="flex justify-between"><span className="font-semibold">Email Sent:</span><span>{waiver.emailSentAt ? formatDate(waiver.emailSentAt.split('T')[0]) : 'Not sent'}</span></div>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            {waiver.pdfPath && typeof waiver.id === 'number' ? (
+                              <AdminButton
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => downloadPDF(waiver.id as number, waiver.athleteName)}
+                                className="justify-center"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                PDF
+                              </AdminButton>
+                            ) : typeof waiver.id === 'number' ? (
+                              <AdminButton
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => generatePDFMutation.mutate(waiver.id)}
+                                disabled={generatingWaiverId === waiver.id}
+                                className="justify-center"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                {generatingWaiverId === waiver.id ? 'Generating…' : 'Generate PDF'}
+                              </AdminButton>
+                            ) : (
+                              <Badge variant="secondary" className="self-end bg-slate-100 text-slate-600">Missing</Badge>
+                            )}
+                            {typeof waiver.id === 'number' ? (
+                              <AdminButton
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => resendEmailMutation.mutate(waiver.id)}
+                                disabled={sendingWaiverId === waiver.id || !!waiver.signedAt}
+                                className="justify-center"
+                                title={!!waiver.signedAt ? 'Waiver already signed' : undefined}
+                              >
+                                <Mail className="h-4 w-4 mr-2" />
+                                {sendingWaiverId === waiver.id ? 'Sending…' : 'Email'}
+                              </AdminButton>
+                            ) : (
+                              <AdminButton variant="secondary" size="sm" disabled className="justify-center opacity-60">
+                                <Mail className="h-4 w-4 mr-2" />
+                                N/A
+                              </AdminButton>
+                            )}
+                          </div>
+
+                          {/* content with right padding so it doesn't overlap actions */}
+                          <div className="pr-32">
+                            <div className="font-semibold text-slate-900">{waiver.athleteName}</div>
+                            <div className="text-sm text-slate-700">Signer: {waiver.signerName}</div>
+                            <div className="mt-2">
+                              <Badge variant="default" className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200 font-semibold">
+                                <CheckCircle className="h-3 w-3 mr-1" /> Signed {formatDate(waiver.signedAt.split('T')[0])}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden sm:block overflow-x-auto">
                 <Table className="w-full">
                   <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                     <TableRow className="border-b border-slate-200">
@@ -420,7 +519,7 @@ export function AdminWaiverManagement() {
                                   View
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
+                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>Waiver Details - {waiver.athleteName}</DialogTitle>
                                 </DialogHeader>
@@ -579,7 +678,41 @@ export function AdminWaiverManagement() {
                       </div>
                     </div>
                   </div>
-                  <div className="overflow-x-auto rounded-lg border border-orange-100">
+                  {/* Mobile cards */}
+                  <div className="sm:hidden space-y-3">
+                    {filteredMissingWaivers.map((waiver) => (
+                      <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                        <CardContent className="p-4">
+                          <div className="relative">
+                            <div className="absolute right-0 top-0 flex flex-col gap-2">
+                              <Badge variant="outline" className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border border-orange-200 font-semibold">Waiver Required</Badge>
+                              <AdminButton
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: "Manual Waiver Process",
+                                    description: "Contact the parent to complete the waiver through the booking system or parent portal.",
+                                  });
+                                }}
+                                className="justify-center"
+                              >
+                                <Mail className="h-4 w-4 mr-2" /> Contact Parent
+                              </AdminButton>
+                            </div>
+                            <div className="pr-40">
+                              <div className="font-semibold text-slate-900">{waiver.athleteName}</div>
+                              <div className="text-sm text-slate-700">DOB: {waiver.dateOfBirth ? formatDate(waiver.dateOfBirth) : 'N/A'}</div>
+                              <div className="text-xs text-slate-500 mt-1">Status updates in real-time</div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden sm:block overflow-x-auto rounded-lg border border-orange-100">
                     <Table>
                       <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                         <TableRow className="border-b border-slate-200">
@@ -688,7 +821,62 @@ export function AdminWaiverManagement() {
                       </div>
                     </div>
                   </div>
-                  <div className="overflow-x-auto rounded-lg border border-slate-100">
+                  {/* Mobile cards */}
+                  <div className="sm:hidden space-y-3">
+                    {archivedWaivers.map((waiver) => (
+                      <Card key={waiver.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
+                        <CardContent className="p-4">
+                          <div className="relative">
+                            <div className="absolute right-0 top-0 flex flex-col gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <AdminButton variant="secondary" size="sm" className="justify-center">
+                                    <Eye className="h-4 w-4 mr-2" /> View
+                                  </AdminButton>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                                  <DialogHeader>
+                                    <DialogTitle>Archived Waiver - {waiver.athleteName}</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4 text-sm">
+                                    <div className="grid grid-cols-1 gap-2">
+                                      <div className="flex justify-between"><span className="font-semibold">Athlete:</span><span>{waiver.athleteName}</span></div>
+                                      <div className="flex justify-between"><span className="font-semibold">Signer:</span><span>{waiver.signerName}</span></div>
+                                      <div className="flex justify-between"><span className="font-semibold">Relationship:</span><span>{waiver.relationshipToAthlete}</span></div>
+                                      <div className="flex justify-between"><span className="font-semibold">Emergency Contact:</span><span>{waiver.emergencyContactNumber}</span></div>
+                                      <div className="flex justify-between"><span className="font-semibold">Signed:</span><span>{formatDate(waiver.signedAt.split('T')[0])}</span></div>
+                                      <div className="flex justify-between"><span className="font-semibold">Archived:</span><span>{(waiver as any).archivedAt ? formatDate((waiver as any).archivedAt.split('T')[0]) : 'N/A'}</span></div>
+                                      <div className="flex justify-between"><span className="font-semibold">Reason:</span><span>{(waiver as any).archiveReason || 'Account deleted'}</span></div>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <AdminButton
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => typeof waiver.id === 'number' && downloadPDF(waiver.id as number, waiver.athleteName)}
+                                disabled={typeof waiver.id !== 'number'}
+                                className="justify-center"
+                              >
+                                <Download className="h-4 w-4 mr-2" /> PDF
+                              </AdminButton>
+                            </div>
+                            <div className="pr-40">
+                              <div className="font-semibold text-slate-900">{waiver.athleteName}</div>
+                              <div className="text-sm text-slate-700">Signer: {waiver.signerName}</div>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <Badge className="bg-slate-100 text-slate-700 border border-slate-200">Signed {formatDate(waiver.signedAt.split('T')[0])}</Badge>
+                                <Badge className="bg-amber-100 text-amber-800 border border-amber-200">Archived {(waiver as any).archivedAt ? formatDate((waiver as any).archivedAt.split('T')[0]) : 'N/A'}</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <div className="hidden sm:block overflow-x-auto rounded-lg border border-slate-100">
                     <Table>
                       <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100">
                         <TableRow className="border-b border-slate-200">
@@ -735,7 +923,7 @@ export function AdminWaiverManagement() {
                                       View
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent className="max-w-2xl">
+                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                     <DialogHeader>
                                       <DialogTitle>Archived Waiver - {waiver.athleteName}</DialogTitle>
                                     </DialogHeader>
