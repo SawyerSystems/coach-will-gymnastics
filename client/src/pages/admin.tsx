@@ -1266,7 +1266,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
 
-                  <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.06] to-white dark:bg-[#0F0276] dark:border-white/20 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                  <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 dark:border-white/10 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                     <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                       <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-white">Total Missions</CardTitle>
                       <div className="bg-[#0F0276]/10 dark:bg-transparent p-1.5 sm:p-2 rounded-full ring-1 ring-transparent dark:ring-white/40">
@@ -1278,7 +1278,7 @@ export default function Admin() {
                     </CardContent>
                   </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#D8BD2A]/[.08] to-white border-l-4 sm:border-l-8 border-[#D8BD2A] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+              <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-[#D8BD2A] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#D8BD2A]">Pending</CardTitle>
                   <div className="bg-[#D8BD2A]/10 p-1.5 sm:p-2 rounded-full">
@@ -1290,7 +1290,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
 
-        <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-green-100 to-white border-l-4 sm:border-l-8 border-green-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+  <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-green-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-green-600">Confirmed</CardTitle>
                   <div className="bg-green-100 p-1.5 sm:p-2 rounded-full">
@@ -1302,7 +1302,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-blue-100 to-white border-l-4 sm:border-l-8 border-blue-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+              <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-blue-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-blue-700">Total Athletes</CardTitle>
                   <div className="bg-blue-100 p-1.5 sm:p-2 rounded-full">
@@ -1314,7 +1314,7 @@ export default function Admin() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-indigo-100 to-white border-l-4 sm:border-l-8 border-indigo-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+              <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-indigo-500 hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                   <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-indigo-700">Total Parents</CardTitle>
                   <div className="bg-indigo-100 p-1.5 sm:p-2 rounded-full">
@@ -1327,7 +1327,7 @@ export default function Admin() {
               </Card>
 
               {missingWaivers.length > 0 && (
-                <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#E10B0B]/[.08] to-white border-l-4 sm:border-l-8 border-[#E10B0B] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                <Card className="rounded-3xl shadow-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border-l-4 sm:border-l-8 border-[#E10B0B] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                   <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
                     <CardTitle className="text-sm font-black tracking-tight text-[#E10B0B]">Missing Waivers</CardTitle>
                     <AlertCircle className="h-5 w-5 text-[#E10B0B]" />
@@ -1451,7 +1451,7 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2">
+          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
             <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
@@ -1469,10 +1469,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   {/* Graduation cap icon inline to avoid additional import churn since lucide already imported many */}
                   <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🎓</span>
                   Lesson Type Management
@@ -1484,10 +1484,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="skills" role="tabpanel" id="skills-panel" aria-labelledby="skills-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="skills" role="tabpanel" id="skills-panel" aria-labelledby="skills-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🥇</span>
                   Skills Management
                 </CardTitle>
@@ -1503,18 +1503,20 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="progress" role="tabpanel" id="progress-panel" aria-labelledby="progress-tab" className="w-full max-w-full px-0 sm:px-2">
-            <div className="p-2 sm:p-4">
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold">Athlete Progress</h2>
-                <p className="text-slate-600">Track progress with filters and summary bars.</p>
-              </div>
-              <AthleteProgressPage />
-            </div>
+          <TabsContent value="progress" role="tabpanel" id="progress-panel" aria-labelledby="progress-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight">Athlete Progress</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-6 lg:p-8">
+                <p className="text-slate-600 dark:text-slate-200 mb-4">Track progress with filters and summary bars.</p>
+                <AthleteProgressPage />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 dark:bg-white/10 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <Users className="h-8 w-8 text-[#D8BD2A]" />
@@ -1566,8 +1568,8 @@ export default function Admin() {
                             key={athlete.id}
                             className={
                               isUpcomingBirthday
-            ? 'relative bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-[#D8BD2A]/10 dark:via-[#D8BD2A]/5 dark:to-transparent border-2 border-amber-300 dark:border-[#D8BD2A]/40 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
-            : 'relative bg-gradient-to-br from-white via-slate-50 to-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
+            ? 'relative border-2 border-amber-300 dark:border-[#D8BD2A]/40 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
+            : 'relative border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
                             }
                           >
                             {/* Action buttons - responsive layout */}
@@ -1656,12 +1658,12 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2">
+          <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
             <AdminPayoutsTab />
           </TabsContent>
 
           <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 dark:bg-white/10 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <User className="h-8 w-8 text-[#D8BD2A]" />
@@ -1872,32 +1874,34 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden dark:bg-[#0F0276] dark:text-white">
-            <div className="dark:bg-[#0F0276] dark:p-4 rounded-xl sm:rounded-2xl lg:rounded-3xl">
-              <UpcomingSessions 
-                onBookingSelect={async (bookingId) => {
-                  // Switch to bookings tab
-                  setActiveTab("bookings");
-                  
-                  // Fetch full booking details with athlete information
-                  try {
-                    const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
-                    const bookingData = await response.json();
-                    if (bookingData) {
-                      setSelectedBooking(bookingData);
+          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+              <CardContent className="p-2 sm:p-4 lg:p-6">
+                <UpcomingSessions 
+                  onBookingSelect={async (bookingId) => {
+                    // Switch to bookings tab
+                    setActiveTab("bookings");
+                    
+                    // Fetch full booking details with athlete information
+                    try {
+                      const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
+                      const bookingData = await response.json();
+                      if (bookingData) {
+                        setSelectedBooking(bookingData);
+                      }
+                    } catch (error) {
+                      console.error("Error fetching booking details:", error);
                     }
-                  } catch (error) {
-                    console.error("Error fetching booking details:", error);
-                  }
-                }}
-              />
-            </div>
+                  }}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Content Management
                 </CardTitle>
@@ -2046,7 +2050,7 @@ export default function Admin() {
                       {blogPosts.map((post) => (
                         <Card 
                           key={post.id} 
-                          className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
                           <CardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
@@ -2281,7 +2285,7 @@ export default function Admin() {
                       {tips.map((tip) => (
                         <Card 
                           key={tip.id} 
-                          className="group rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white hover:from-slate-50 hover:via-white hover:to-slate-50 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
                           <CardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
@@ -2338,10 +2342,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="schedule" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="schedule" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Schedule & Availability
                 </CardTitle>
@@ -2402,7 +2406,7 @@ export default function Admin() {
                       ].map((day) => {
                         const dayAvailability = availability.find(a => a.dayOfWeek === day.value);
                         return (
-                          <Card key={day.value} className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/50 to-white shadow-lg hover:shadow-xl transition-all duration-300">
+                          <Card key={day.value} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                             <CardContent className="p-6">
                               <div className="flex justify-between items-center">
                                 <h4 className="text-lg font-bold text-[#0F0276]">{day.label}</h4>
@@ -2634,11 +2638,11 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
-                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                     <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
                     Parent Communication
                   </CardTitle>
@@ -2670,10 +2674,10 @@ export default function Admin() {
                       ].map((thread) => (
                         <Card 
                           key={thread.id} 
-                          className={`rounded-xl border-0 cursor-pointer transition-all duration-300 ${
+                          className={`rounded-xl cursor-pointer transition-all duration-300 border ${
                             thread.unread 
-                              ? 'bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl' 
-                              : 'bg-gradient-to-br from-white via-slate-50/50 to-white shadow-md hover:shadow-lg'
+                              ? 'border-blue-300 bg-white/75 supports-[backdrop-filter]:bg-white/45 backdrop-blur-md shadow-lg hover:shadow-xl' 
+                              : 'border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-md hover:shadow-lg'
                           }`}
                         >
                           <CardContent className="p-4">
@@ -2698,7 +2702,7 @@ export default function Admin() {
 
                   {/* Message Thread */}
                   <div className="lg:col-span-2">
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-white shadow-lg h-fit">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg h-fit">
                       <CardHeader className="pb-4">
                         <div className="flex justify-between items-center">
                           <div>
@@ -2727,19 +2731,19 @@ export default function Admin() {
                       <CardContent className="space-y-6">
                         <div className="space-y-4 max-h-96 overflow-y-auto px-2">
                           <div className="flex justify-start">
-                            <div className="bg-gradient-to-br from-slate-100 to-slate-200/50 rounded-xl p-4 max-w-xs shadow-md">
+                              <div className="rounded-xl p-4 max-w-xs shadow-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                               <p className="text-sm text-slate-700 leading-relaxed">Hi Coach Will! Emma is really excited about her upcoming competition.</p>
                               <p className="text-xs text-slate-500 mt-2 font-medium">Yesterday, 3:45 PM</p>
                             </div>
                           </div>
                           <div className="flex justify-end">
-                            <div className="bg-gradient-to-br from-[#0F0276] to-[#0F0276]/90 text-white rounded-xl p-4 max-w-xs shadow-lg">
+                            <div className="bg-[#0F0276] text-white rounded-xl p-4 max-w-xs shadow-lg">
                               <p className="text-sm leading-relaxed">That's wonderful! Emma has been working so hard. She's definitely ready!</p>
                               <p className="text-xs text-blue-100 mt-2 font-medium">Yesterday, 4:10 PM</p>
                             </div>
                           </div>
                           <div className="flex justify-start">
-                            <div className="bg-gradient-to-br from-slate-100 to-slate-200/50 rounded-xl p-4 max-w-xs shadow-md">
+                            <div className="rounded-xl p-4 max-w-xs shadow-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                               <p className="text-sm text-slate-700 leading-relaxed">Thank you for the great lesson!</p>
                               <p className="text-xs text-slate-500 mt-2 font-medium">Today, 10:30 AM</p>
                             </div>
@@ -2832,10 +2836,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
                   Payment Management
                 </CardTitle>
@@ -2846,10 +2850,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <BarChart className="h-8 w-8 text-[#D8BD2A]" />
                   Analytics Dashboard
                 </CardTitle>
@@ -2858,7 +2862,7 @@ export default function Admin() {
                 <div className="space-y-4 sm:space-y-6">
                   {/* Key Metrics */}
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-blue-50 via-blue-25 to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-blue-800">Total Bookings</CardTitle>
                       </CardHeader>
@@ -2868,7 +2872,7 @@ export default function Admin() {
                       </CardContent>
                     </Card>
                     
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-green-50 via-green-25 to-green-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-green-800">This Month</CardTitle>
                       </CardHeader>
@@ -2886,7 +2890,7 @@ export default function Admin() {
                       </CardContent>
                     </Card>
                     
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-purple-50 via-purple-25 to-purple-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-purple-800">Conversion Rate</CardTitle>
                       </CardHeader>
@@ -2900,7 +2904,7 @@ export default function Admin() {
                       </CardContent>
                     </Card>
                     
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-orange-50 via-orange-25 to-orange-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-orange-800">Avg Booking Value</CardTitle>
                       </CardHeader>
@@ -2943,7 +2947,7 @@ export default function Admin() {
                       </CardContent>
                     </Card>
 
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-cyan-50 via-cyan-25 to-cyan-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-cyan-800">Online Bookings</CardTitle>
                       </CardHeader>
@@ -2957,7 +2961,7 @@ export default function Admin() {
                       </CardContent>
                     </Card>
 
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-rose-50 via-rose-25 to-rose-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm font-bold text-rose-800">Admin Booked</CardTitle>
                       </CardHeader>
@@ -2973,7 +2977,7 @@ export default function Admin() {
                   </div>
 
                   {/* Date Range Filter - Mobile Responsive */}
-                  <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-lg font-bold text-[#0F0276] flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-[#D8BD2A]" />
@@ -3030,7 +3034,7 @@ export default function Admin() {
                       </div>
                     </CardContent>
                   </Card>                  {/* Popular Focus Areas Chart */}
-                  <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-white shadow-lg">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-2">
                         <BarChart className="h-6 w-6 text-[#D8BD2A]" />
@@ -3095,7 +3099,7 @@ export default function Admin() {
                   </Card>
 
                   {/* Lesson Type Distribution */}
-                  <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-white shadow-lg">
+                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                     <CardHeader className="pb-4">
                       <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-2">
                         <DollarSign className="h-6 w-6 text-[#D8BD2A]" />
@@ -3128,17 +3132,17 @@ export default function Admin() {
                             return <p className="text-gray-500">No lesson types found.</p>;
                           }
 
-                          return items.map((type) => (
-                            <Card key={type.key} className={`text-center rounded-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${
-                              type.color === 'blue' ? 'bg-gradient-to-br from-blue-50 to-blue-100/50' :
-                              type.color === 'green' ? 'bg-gradient-to-br from-green-50 to-green-100/50' :
-                              type.color === 'purple' ? 'bg-gradient-to-br from-purple-50 to-purple-100/50' :
-                              type.color === 'orange' ? 'bg-gradient-to-br from-orange-50 to-orange-100/50' :
-                              type.color === 'indigo' ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50' :
-                              type.color === 'emerald' ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50' :
-                              type.color === 'rose' ? 'bg-gradient-to-br from-rose-50 to-rose-100/50' :
-                              'bg-gradient-to-br from-amber-50 to-amber-100/50'
-                            }`}>
+                            return items.map((type) => (
+                            <Card key={type.key} className={`text-center rounded-xl border shadow-lg hover:shadow-xl transition-all duration-300 ${
+                              type.color === 'blue' ? 'border-blue-200' :
+                              type.color === 'green' ? 'border-green-200' :
+                              type.color === 'purple' ? 'border-purple-200' :
+                              type.color === 'orange' ? 'border-orange-200' :
+                              type.color === 'indigo' ? 'border-indigo-200' :
+                              type.color === 'emerald' ? 'border-emerald-200' :
+                              type.color === 'rose' ? 'border-rose-200' :
+                              'border-amber-200'
+                            } bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md`}>
                               <CardContent className="p-6">
                                 <div className={`text-4xl font-black mb-2 ${
                                   type.color === 'blue' ? 'text-blue-700' :
@@ -3164,10 +3168,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="waivers" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="waivers" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Waiver Management
                 </CardTitle>
@@ -3178,10 +3182,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="messages" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="messages" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Messages
                 </CardTitle>
@@ -3192,10 +3196,10 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+          <TabsContent value="settings" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-0 dark:bg-[#0F0276] shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <AlertCircle className="h-8 w-8 text-[#D8BD2A]" />
                   Settings
                 </CardTitle>
@@ -3478,7 +3482,7 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="general">
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
                           <AlertCircle className="h-6 w-6 text-[#D8BD2A]" />
@@ -3492,7 +3496,7 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="site-content">
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
                           <MessageSquare className="h-6 w-6 text-[#D8BD2A]" />
@@ -3506,7 +3510,7 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="backup">
-                    <Card className="rounded-xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 shadow-lg">
+                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg">
                       <CardHeader className="pb-4">
                         <CardTitle className="text-xl font-bold text-[#0F0276] flex items-center gap-3">
                           <RefreshCw className="h-6 w-6 text-[#D8BD2A]" />
