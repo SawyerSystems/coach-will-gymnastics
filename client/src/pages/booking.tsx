@@ -135,14 +135,14 @@ export default function Booking() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
+      <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
             Start Your Athlete's Journey
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto mb-8">
             Every athlete begins somewhere. Whether it's their first handstand or they're chasing a new tumbling pass, we'll build a personalized plan that helps them grow with confidence.
           </p>
           <Button 
@@ -161,13 +161,13 @@ export default function Booking() {
       </section>
 
       {/* Lesson Types */}
-      <section className="py-16 lg:py-24 bg-white">
+  <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               Choose a <span className="text-purple-600">Lesson Path</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+    <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
               Select the journey that fits your schedule and goals. Whether it's 1-on-1 focus or shared learning with a teammate, each session is personalized to match your athlete's level, style, and progress pace.
             </p>
           </div>
@@ -175,12 +175,6 @@ export default function Booking() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {(lessonTypes || []).map((lt, idx) => {
               const key = lt.name.toLowerCase().replace(/\s+/g, '-');
-              const colorClasses = {
-                blue: "from-blue-50 to-blue-100 border-blue-200 text-blue-600",
-                purple: "from-purple-50 to-purple-100 border-purple-200 text-purple-600",
-                teal: "from-teal-50 to-teal-100 border-teal-200 text-teal-600",
-                orange: "from-orange-50 to-orange-100 border-orange-200 text-orange-600"
-              };
 
               const iconClasses = {
                 blue: "bg-blue-600",
@@ -202,7 +196,7 @@ export default function Booking() {
               return (
                 <Card 
                   key={key}
-                  className={`bg-gradient-to-br ${colorClasses[color]} border shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300`}
+                  className={`glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300`}
                 >
                   <CardContent className="p-6 text-center">
                     <div className={`w-16 h-16 ${iconClasses[color]} rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle`}>
@@ -212,26 +206,26 @@ export default function Booking() {
                         <Users className="h-8 w-8 text-white" />
                       )}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{lt.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{lt.name}</h3>
                     <div className={`text-3xl font-bold mb-4 ${color === 'blue' ? 'text-blue-600' : color === 'purple' ? 'text-purple-600' : color === 'teal' ? 'text-teal-600' : 'text-orange-600'}`}>
                       ${lt.price}
                     </div>
-                    <p className="text-gray-600 mb-6">{lt.description}</p>
+                    <p className="text-slate-700 dark:text-slate-300 mb-6">{lt.description}</p>
                     
                     <div className="space-y-3 mb-6">
-                      <div className="flex items-center justify-center text-sm text-gray-700">
+                      <div className="flex items-center justify-center text-sm text-slate-700 dark:text-slate-300">
                         <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
                         <span>{lt.maxAthletes} Athlete{lt.maxAthletes > 1 ? 's' : ''}</span>
                       </div>
-                      <div className="flex items-center justify-center text-sm text-gray-700">
+                      <div className="flex items-center justify-center text-sm text-slate-700 dark:text-slate-300">
                         <Clock className="h-4 w-4 text-teal-600 mr-2" />
                         <span>{lt.duration} Minutes</span>
                       </div>
-                      <div className="flex items-center justify-center text-sm text-gray-700">
+                      <div className="flex items-center justify-center text-sm text-slate-700 dark:text-slate-300">
                         <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
                         <span>Up to {lt.duration >= 60 ? 4 : 2} Focus Areas</span>
                       </div>
-                      <div className="flex items-center justify-center text-sm text-gray-700">
+                      <div className="flex items-center justify-center text-sm text-slate-700 dark:text-slate-300">
                         <CheckCircle className="h-4 w-4 text-teal-600 mr-2" />
                         <span>Progress Report Included</span>
                       </div>
@@ -252,13 +246,13 @@ export default function Booking() {
       </section>
 
       {/* Side Quests Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-yellow-50 to-orange-50">
+  <section className="py-16 lg:py-24 bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-slate-800/40 dark:to-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               <span className="text-orange-600">Side Quests</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+    <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto mb-8">
               Each journey can include optional Side Quests that help athletes grow in areas beyond the mat. These can be selected as add-ons or embedded into any session depending on your athlete's goals:
             </p>
           </div>
@@ -271,17 +265,17 @@ export default function Booking() {
               { name: "Meditation & Breathing Techniques", icon: "🌬️", color: "from-teal-100 to-teal-200 border-teal-300" },
               { name: "Overcoming Mental Blocks", icon: "🧠", color: "from-indigo-100 to-indigo-200 border-indigo-300" }
             ].map((quest, index) => (
-              <Card key={index} className={`bg-gradient-to-br ${quest.color} border-2 text-center hover:shadow-lg transform hover:scale-105 transition-all duration-300`}>
+      <Card key={index} className={`glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700 text-center hover:shadow-lg transform hover:scale-105 transition-all duration-300`}>
                 <CardContent className="p-6">
                   <div className="text-4xl mb-4">{quest.icon}</div>
-                  <h3 className="font-bold text-gray-800 text-sm">{quest.name}</h3>
+      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{quest.name}</h3>
                 </CardContent>
               </Card>
             ))}
           </div>
 
           <div className="text-center">
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+    <p className="text-lg text-slate-700 dark:text-slate-300 max-w-2xl mx-auto">
               These quests unlock confidence, focus, and body control—essential ingredients for any successful athlete.
             </p>
           </div>
@@ -289,13 +283,13 @@ export default function Booking() {
       </section>
 
       {/* What's Included Section */}
-      <section className="py-16 lg:py-24 bg-gray-50">
+  <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               What Comes With Every <span className="text-teal-600">Journey</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+    <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
               Every step is supported by the tools, environment, and coaching style your child needs to thrive.
             </p>
           </div>
@@ -328,11 +322,11 @@ export default function Booking() {
                 icon: "🎉"
               }
             ].map((item, index) => (
-              <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow duration-300">
+              <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                 <CardContent className="pt-6">
                   <div className="text-4xl mb-4">{item.icon}</div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-3">{item.title}</h3>
-                  <p className="text-gray-600">{item.description}</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">{item.title}</h3>
+                  <p className="text-slate-700 dark:text-slate-300">{item.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -341,47 +335,47 @@ export default function Booking() {
       </section>
 
       {/* Location & Contact Info */}
-      <section className="py-16 lg:py-24 bg-white">
+  <section className="py-16 lg:py-24 bg-white dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               Where & When We <span className="text-orange-600">Train</span>
             </h2>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12">
-            <Card className="p-8">
+    <Card className="p-8 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">Training Location</h3>
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Training Location</h3>
                 <div className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-5 w-5 text-blue-600 mt-1" />
                     <div>
                       {siteContent?.contact?.address ? (
                         <>
-                          <p className="font-semibold text-gray-800">🏛️ {siteContent.contact.address.name}</p>
-                          <p className="text-gray-600">
+          <p className="font-semibold text-slate-900 dark:text-slate-100">🏛️ {siteContent.contact.address.name}</p>
+          <p className="text-slate-700 dark:text-slate-300">
                             {siteContent.contact.address.street}<br/>
                             {siteContent.contact.address.city}, {siteContent.contact.address.state} {siteContent.contact.address.zip}
                           </p>
                         </>
                       ) : (
                         <>
-                          <p className="font-semibold text-gray-800">🏛️ Oceanside Gymnastics</p>
-                          <p className="text-gray-600">1935 Ave. del Oro #A<br/>Oceanside, CA 92056</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">🏛️ Oceanside Gymnastics</p>
+          <p className="text-slate-700 dark:text-slate-300">1935 Ave. del Oro #A<br/>Oceanside, CA 92056</p>
                         </>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Phone className="h-5 w-5 text-blue-600" />
-                    <p className="text-gray-600">
+        <p className="text-slate-700 dark:text-slate-300">
                       📞 {siteContent?.contact?.phone || '(585) 755-8122'}
                     </p>
                   </div>
                   <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-blue-600" />
-                    <p className="text-gray-600">
+        <p className="text-slate-700 dark:text-slate-300">
                       📧 {siteContent?.contact?.email || 'admin@coachwilltumbles.com'}
                     </p>
                   </div>
@@ -389,9 +383,9 @@ export default function Booking() {
               </CardContent>
             </Card>
 
-            <Card className="p-8">
+    <Card className="p-8 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="pt-6">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">Hours of Operation</h3>
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Hours of Operation</h3>
                 <div className="space-y-4">
                   {siteContent?.hours?.hours ? (
                     // Display saved hours from admin dashboard in proper order
@@ -404,8 +398,8 @@ export default function Booking() {
                         if (!times.available) {
                           return (
                             <div key={day} className="flex justify-between items-center">
-                              <span className="font-medium text-gray-800">{day}</span>
-                              <span className="text-gray-600">Closed</span>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{day}</span>
+                              <span className="text-slate-700 dark:text-slate-300">Closed</span>
                             </div>
                           );
                         }
@@ -426,16 +420,16 @@ export default function Booking() {
                         
                         return (
                           <div key={day} className="flex justify-between items-center">
-                            <span className="font-medium text-gray-800">{day}</span>
-                            <span className="text-gray-600">{timeDisplay}</span>
+                            <span className="font-medium text-slate-900 dark:text-slate-100">{day}</span>
+                            <span className="text-slate-700 dark:text-slate-300">{timeDisplay}</span>
                           </div>
                         );
                       }
                       
                       return (
                         <div key={day} className="flex justify-between items-center">
-                          <span className="font-medium text-gray-800">{day}</span>
-                          <span className="text-gray-600">Ask us about availability</span>
+                          <span className="font-medium text-slate-900 dark:text-slate-100">{day}</span>
+                          <span className="text-slate-700 dark:text-slate-300">Ask us about availability</span>
                         </div>
                       );
                     })
@@ -443,26 +437,26 @@ export default function Booking() {
                     // Fallback hardcoded hours if site content not available
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-800">Monday, Wednesday, Friday</span>
-                        <span className="text-gray-600">9:00 AM – 4:00 PM</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">Monday, Wednesday, Friday</span>
+                        <span className="text-slate-700 dark:text-slate-300">9:00 AM – 4:00 PM</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-800">Tuesday, Thursday</span>
-                        <span className="text-gray-600">9:00 AM – 3:30 PM</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">Tuesday, Thursday</span>
+                        <span className="text-slate-700 dark:text-slate-300">9:00 AM – 3:30 PM</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-800">Saturday</span>
-                        <span className="text-gray-600">10:00 AM – 2:00 PM</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">Saturday</span>
+                        <span className="text-slate-700 dark:text-slate-300">10:00 AM – 2:00 PM</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-800">Sunday</span>
-                        <span className="text-gray-600">Ask us about availability</span>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">Sunday</span>
+                        <span className="text-slate-700 dark:text-slate-300">Ask us about availability</span>
                       </div>
                     </>
                   )}
                 </div>
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-slate-800/50 rounded-lg border border-blue-100 dark:border-slate-700">
+                  <p className="text-sm text-blue-800 dark:text-slate-200">
                     <strong>Note:</strong> Lesson times are flexible within operating hours. 
                     We'll work with you to find the perfect time slot for your family.
                   </p>
