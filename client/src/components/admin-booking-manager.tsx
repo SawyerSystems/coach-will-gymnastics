@@ -1150,7 +1150,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                               <DialogHeader className="flex flex-row items-center justify-between pr-6">
                                 <DialogTitle>Booking Details</DialogTitle>
                                 <AdminBookingDetailActions booking={booking} />
@@ -1431,7 +1431,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                                 Details
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                               <DialogHeader className="flex flex-row items-center justify-between pr-6">
                                 <DialogTitle>Booking Details</DialogTitle>
                                 <AdminBookingDetailActions booking={booking} />
@@ -1579,7 +1579,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
+                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>Booking Details</DialogTitle>
                                 </DialogHeader>
