@@ -214,7 +214,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
         </div>
         
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'calendar')}>
-          <TabsList className="bg-white/50 dark:bg-slate-900/40 p-1 rounded-lg w-fit">
+          <TabsList className="bg-white/50 dark:bg-slate-900/40 p-1 rounded-lg w-fit mb-4 sm:mb-6">
             <TabsTrigger value="list" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <List className="h-4 w-4 mr-2" />
               List View

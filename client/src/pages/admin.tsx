@@ -1912,7 +1912,7 @@ export default function Admin() {
               </CardHeader>
               <CardContent className="p-4 sm:p-6 lg:p-8">
                 <Tabs defaultValue="blog" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
+                  <TabsList className="grid w-full grid-cols-2 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl mb-4 sm:mb-6">
                     <TabsTrigger 
                       value="blog"
                       className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200"
