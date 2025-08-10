@@ -131,15 +131,16 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       const paymentStatus = booking.paymentStatus || booking.payment_status;
       const attendanceStatus = booking.attendanceStatus || booking.attendance_status;
       
-      // Status-based coloring
+      // Status-based coloring (ensure contrast and brand rules: blue -> white/yellow text)
       if (attendanceStatus === 'completed') {
-        color = 'bg-green-100 border-green-300';
+        color = 'bg-emerald-100 border-emerald-300';
       } else if (attendanceStatus === 'no-show') {
         color = 'bg-red-100 border-red-300';
       } else if (attendanceStatus === 'cancelled') {
         color = 'bg-gray-100 border-gray-300';
       } else if (paymentStatus === 'reservation-paid' || paymentStatus === 'session-paid') {
-        color = 'bg-blue-100 border-blue-300';
+        // Blue event background; event text will render white/yellow
+        color = 'bg-blue-600/20 border-blue-400';
       } else {
         color = 'bg-amber-100 border-amber-300';
       }
@@ -217,11 +218,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     
     return (
       <div 
-        className={`rounded p-1 ${event.color || 'bg-blue-100 border-blue-300'} border`}
+        className={`rounded p-1 ${event.color || 'bg-blue-600/20 border-blue-400'} border`}
         style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         title={`${event.title} - ${event.status}`}
       >
-        <span className={`text-xs font-medium ${statusClass || 'text-blue-900'}`}>
+        <span className={`text-xs font-medium ${statusClass || 'text-blue-900 dark:text-yellow-200'}`}>
           {format(event.start, 'h:mm a')} - {event.title}
           {statusIcon && <span className="ml-1 font-bold">{statusIcon}</span>}
         </span>
@@ -265,7 +266,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
           />
         </div>
         {selectedDate && dateEvents.length > 0 && (
-          <div className="absolute bottom-4 right-4 w-72 shadow-xl rounded-xl border border-gray-200 bg-white z-10">
+          <div className="absolute bottom-4 right-4 w-72 shadow-xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 backdrop-blur-md glass-surface glass-card z-10">
             <Card>
               <div className="flex items-center justify-between p-3 border-b">
                 <h3 className="font-medium">

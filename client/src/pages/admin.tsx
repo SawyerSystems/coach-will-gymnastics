@@ -1180,12 +1180,12 @@ export default function Admin() {
 
   // RENDER
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
       {/* Mobile Hamburger Menu */}
       {!isSidebarOpen && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          className="fixed z-40 top-20 left-4 md:hidden p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md shadow-sm transition-all duration-200"
+          className="fixed z-40 top-20 left-4 md:hidden p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-sm rounded-md shadow-sm transition-all duration-200"
           aria-label="Open navigation menu"
         >
           <Menu size={20} />
@@ -1214,7 +1214,7 @@ export default function Admin() {
           <div className="max-w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full">
             {/* Dashboard Header */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 sm:mb-10 gap-4">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F0276] dark:text-white drop-shadow-sm">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#0F0276] dark:text-[#D8BD2A] drop-shadow-sm">
                 {/* Show different titles based on active tab */}
                 {activeTab === 'bookings' && 'Booking Manager'}
                 {activeTab === 'upcoming' && 'Upcoming Sessions'}
@@ -1253,28 +1253,28 @@ export default function Admin() {
             ))
           ) : (
             <>
-              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+              <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.06] to-white dark:from-[#0F0276]/30 dark:to-slate-900/40 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                 <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276]">Upcoming Missions</CardTitle>
-                  <div className="bg-[#0F0276]/10 p-1.5 sm:p-2 rounded-full">
-                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276]" />
+                        <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-yellow-200">Upcoming Missions</CardTitle>
+                  <div className="bg-[#0F0276]/10 dark:bg-[#0F0276]/40 p-1.5 sm:p-2 rounded-full">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276] dark:text-yellow-200" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{upcomingBookingsCount}</div>
-                      <p className="text-xs text-[#0F0276] font-medium mt-1">of {totalBookingsAll} total</p>
+                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-yellow-200">{upcomingBookingsCount}</div>
+                      <p className="text-xs text-[#0F0276] dark:text-yellow-200 font-medium mt-1">of {totalBookingsAll} total</p>
                 </CardContent>
               </Card>
 
-                  <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.04] to-white border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
+                  <Card className="rounded-3xl shadow-lg bg-gradient-to-br from-[#0F0276]/[.06] to-white dark:from-[#0F0276]/30 dark:to-slate-900/40 border-l-4 sm:border-l-8 border-[#0F0276] hover:shadow-2xl transform transition-all duration-300 hover:scale-[1.02]">
                     <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2">
-                      <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276]">Total Missions</CardTitle>
+                      <CardTitle className="text-xs sm:text-sm font-black tracking-tight text-[#0F0276] dark:text-yellow-200">Total Missions</CardTitle>
                       <div className="bg-[#0F0276]/10 p-1.5 sm:p-2 rounded-full">
                         <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#0F0276]" />
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276]">{totalBookingsAll}</div>
+                      <div className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-yellow-200">{totalBookingsAll}</div>
                     </CardContent>
                   </Card>
 
@@ -1452,14 +1452,14 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
+            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border-0 bg-gradient-to-br from-slate-50 via-white to-slate-50/30 dark:bg-[#0F0276] dark:from-[#0F0276] dark:via-[#0F0276] dark:to-[#0F0276] backdrop-blur-sm shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
               <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3">
+                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Booking Management
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0">
+              <CardContent className="p-3 sm:p-6 lg:p-8 pt-0 dark:text-white">
                 <AdminBookingManager 
                   openAthleteModal={openAthleteModal}
                   selectedBooking={selectedBooking}

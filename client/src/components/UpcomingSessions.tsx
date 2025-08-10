@@ -130,7 +130,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
     return (
       <div className="space-y-6">
         {/* Modern Loading State */}
-        <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6">
+        <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:border-slate-700">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
               <Clock className="h-6 w-6 text-[#D8BD2A]" />
@@ -139,7 +139,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
           </div>
           <p className="text-slate-600">Loading session information...</p>
         </div>
-        <Card className="rounded-xl border-0 shadow-lg">
+  <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
           <CardContent className="p-8">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F0276]"></div>
@@ -154,7 +154,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
     return (
       <div className="space-y-6">
         {/* Modern Error State */}
-        <div className="bg-gradient-to-r from-red-100 to-red-50 rounded-xl border border-red-200 p-6">
+        <div className="bg-gradient-to-r from-red-100 to-red-50 rounded-xl border border-red-200 p-6 glass-surface glass-card">
           <h3 className="text-2xl font-black text-red-800 tracking-tight flex items-center gap-3">
             <div className="p-2 bg-red-100 rounded-lg">
               <Clock className="h-6 w-6 text-red-600" />
@@ -163,7 +163,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
           </h3>
           <p className="text-red-600">Error loading session information</p>
         </div>
-        <Card className="rounded-xl border-0 shadow-lg">
+  <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
           <CardContent className="p-8">
             <div className="text-red-500 text-center">
               Error loading upcoming sessions. Please try again.
@@ -194,7 +194,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
   return (
     <div className="space-y-6">
       {/* Modern Header Section */}
-      <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6">
+  <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 glass-surface glass-card glass-gradient dark:border-slate-700">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3 mb-2">
@@ -214,7 +214,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
         </div>
         
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'calendar')}>
-          <TabsList className="bg-white/50 p-1 rounded-lg w-fit">
+          <TabsList className="bg-white/50 dark:bg-slate-900/40 p-1 rounded-lg w-fit">
             <TabsTrigger value="list" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <List className="h-4 w-4 mr-2" />
               List View
@@ -227,9 +227,9 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
         </Tabs>
       </div>
 
-      <Tabs value={viewMode} className="mt-0 hidden">
+    <Tabs value={viewMode} className="mt-0 hidden">
         <TabsContent value="list">
-          <Card className="rounded-xl border-0 shadow-lg">
+      <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
             <CardContent className="p-6">
               {sessions.length === 0 ? (
                 <div className="text-center py-12">
@@ -248,15 +248,15 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                     return (
                       <div 
                         key={session.id}
-                        className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-md transition-all duration-300"
+                        className="rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/40 dark:to-slate-900/50 hover:shadow-md transition-all duration-300"
                       >
                         <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
                           <div className="space-y-4">
                             {/* Date and time */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-50 rounded-lg">
-                                  <Clock className="h-4 w-4 text-indigo-600" />
+                                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                                  <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
                                 </div>
                                 <div>
                                   <p className="font-semibold text-indigo-900">
@@ -269,7 +269,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                               </div>
                               <Badge 
                                 variant="outline" 
-                                className="border-slate-300 text-slate-700 bg-slate-50 font-semibold"
+                                className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/40 font-semibold"
                               >
                                 {session.lessonType.replace('-', ' ').replace('min', 'minute')}
                               </Badge>
@@ -277,8 +277,8 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                             
                             {/* Athletes */}
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-50 rounded-lg">
-                                <User className="h-4 w-4 text-blue-600" />
+                              <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <User className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                               </div>
                               <span className="font-semibold text-slate-800">
                                 {session.athleteNames.join(', ') || 'No athletes listed'}
@@ -317,7 +317,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
           </Card>
         </TabsContent>
         <TabsContent value="calendar">
-          <Card className="rounded-xl border-0 shadow-lg">
+          <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
             <CardContent className="p-6">
               <div className="h-[600px]">
                 <BookingCalendar 
@@ -331,7 +331,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
       </Tabs>
       
       {viewMode === 'list' && (
-        <Card className="rounded-xl border-0 shadow-lg">
+        <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
           <CardContent className="p-6">
             {sessions.length === 0 ? (
               <div className="text-center py-12">
@@ -350,7 +350,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                   return (
                     <div 
                       key={session.id}
-                      className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-md transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white"
+                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/40 dark:to-slate-900/50 hover:shadow-md transition-all duration-300 cursor-pointer hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white dark:hover:from-blue-900/30 dark:hover:to-slate-900/60"
                       onClick={() => handleBookingSelect(session.id)}
                     >
                       <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
@@ -358,8 +358,8 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                           {/* Date and time */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-indigo-50 rounded-lg">
-                                <Clock className="h-4 w-4 text-indigo-600" />
+                              <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                                <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />
                               </div>
                               <div>
                                 <p className="font-semibold text-indigo-900">
@@ -372,7 +372,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                             </div>
                             <Badge 
                               variant="outline" 
-                              className="border-slate-300 text-slate-700 bg-slate-50 font-semibold"
+                              className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/40 font-semibold"
                             >
                               {session.lessonType.replace('-', ' ').replace('min', 'minute')}
                             </Badge>
@@ -380,8 +380,8 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                           
                           {/* Athletes */}
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-50 rounded-lg">
-                              <User className="h-4 w-4 text-blue-600" />
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                              <User className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                             </div>
                             <span className="font-semibold text-slate-800">
                               {session.athleteNames.join(', ') || 'No athletes listed'}
@@ -414,7 +414,7 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
       )}
       
       {viewMode === 'calendar' && (
-        <Card className="rounded-xl border-0 shadow-lg">
+  <Card className="rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg glass-surface glass-card glass-gradient">
           <CardContent className="p-6">
             <div className="h-[600px]">
               <BookingCalendar 

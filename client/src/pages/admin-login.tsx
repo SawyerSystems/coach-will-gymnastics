@@ -75,14 +75,14 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-purple-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
+      <Card className="w-full max-w-md glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30 border border-orange-200/60 dark:border-orange-800/60">
             <Shield className="h-6 w-6 text-orange-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Login</CardTitle>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Sign in to access the admin dashboard
           </p>
         </CardHeader>

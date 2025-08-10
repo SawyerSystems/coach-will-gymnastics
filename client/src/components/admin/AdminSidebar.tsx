@@ -149,13 +149,13 @@ export function AdminSidebar({
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "fixed z-40 h-screen bg-white shadow-xl transition-all duration-300 hidden md:flex flex-col border-r border-gray-200",
+          "fixed z-40 h-screen theme-smooth glass-surface glass-card glass-gradient shadow-xl transition-all duration-300 hidden md:flex flex-col border border-slate-200 dark:border-slate-700",
           (isOpen || isDesktop) ? "left-0" : "-left-[280px]", // Always visible on desktop
           effectivelyCollapsed ? "w-[80px]" : "w-[280px]"
         )}
       >
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-gray-200">
+        <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
           {!effectivelyCollapsed && (
             <div className="flex items-center space-x-2">
               <div className="h-9 w-9">
@@ -165,7 +165,7 @@ export function AdminSidebar({
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h2 className="font-bold text-[#0F0276]">ADVENTURE HQ</h2>
+              <h2 className="font-bold text-[#0F0276] dark:text-[#D8BD2A]">ADVENTURE HQ</h2>
             </div>
           )}
           
@@ -178,7 +178,7 @@ export function AdminSidebar({
                 setIsCollapsed(newCollapsedState);
                 onCollapseChange?.(newCollapsedState);
               }} 
-              className="rounded-full p-1.5"
+              className="rounded-full p-1.5 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
             >
               {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </Button>
@@ -196,9 +196,9 @@ export function AdminSidebar({
                   className={cn(
                     "w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-all duration-200 text-left font-medium",
                     activeTab === item.id ? (
-                      "bg-[#0F0276] text-white shadow-sm"
+                      "bg-[#0F0276] text-white shadow-sm border border-[#0F0276]"
                     ) : (
-                      "text-gray-700 hover:bg-gray-100"
+                      "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                     )
                   )}
                 >
@@ -211,11 +211,11 @@ export function AdminSidebar({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
           <Button 
             variant="ghost" 
             onClick={onLogout} 
-            className="w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-colors duration-200 font-medium text-slate-700 hover:bg-slate-100"
+            className="w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-colors duration-200 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
           >
             <LogOut className="h-5 w-5" />
             {!effectivelyCollapsed && <span>Logout</span>}
@@ -227,11 +227,11 @@ export function AdminSidebar({
       {isOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={onClose}>
           <aside 
-            className="fixed left-0 top-0 h-full w-[85vw] max-w-[280px] bg-white shadow-xl animate-slideInFromLeft overflow-y-auto"
+            className="fixed left-0 top-0 h-full w-[85vw] max-w-[280px] theme-smooth glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700 shadow-xl animate-slideInFromLeft overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile Header */}
-            <div className="p-3 sm:p-4 flex items-center justify-between border-b border-gray-200">
+            <div className="p-3 sm:p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center space-x-2">
                 <div className="h-9 w-9">
                   <img 
@@ -240,13 +240,13 @@ export function AdminSidebar({
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <h2 className="font-bold text-[#0F0276]">ADVENTURE HQ</h2>
+                <h2 className="font-bold text-[#0F0276] dark:text-[#D8BD2A]">ADVENTURE HQ</h2>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={onClose} 
-                className="rounded-full p-1.5"
+                className="rounded-full p-1.5 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
               >
                 <X size={18} />
               </Button>
@@ -266,8 +266,8 @@ export function AdminSidebar({
                       className={cn(
                         "w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-colors duration-200 font-medium",
                         activeTab === item.id
-                          ? "bg-[#0F0276] text-white"
-                          : "text-slate-700 hover:bg-slate-100"
+                          ? "bg-[#0F0276] text-white border border-[#0F0276]"
+                          : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                       )}
                     >
                       {item.icon}
@@ -279,11 +279,11 @@ export function AdminSidebar({
             </nav>
 
             {/* Mobile Footer */}
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
               <Button 
                 variant="ghost" 
                 onClick={onLogout} 
-                className="w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-colors duration-200 font-medium text-slate-700 hover:bg-slate-100"
+                className="w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-colors duration-200 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Logout</span>

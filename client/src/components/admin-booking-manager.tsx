@@ -32,7 +32,8 @@ export const getStatusBadgeProps = (status: string): { variant: "default" | "sec
     case "pending":
       return { variant: "secondary", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200" };
     case "paid":
-      return { variant: "default", className: "bg-blue-100 text-blue-800 hover:bg-blue-200" };
+  // Blue background must have white or yellow text per brand rule
+  return { variant: "default", className: "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:brightness-110" };
     case "confirmed":
       return { variant: "default", className: "bg-green-100 text-green-800 hover:bg-green-200" };
     case "manual":
@@ -143,8 +144,8 @@ export const getAttendanceStatusBadgeProps = (status: string): {
   switch (status) {
     case "pending":
       return { 
-        variant: "outline", 
-        className: "border-blue-300 text-blue-700 bg-blue-50",
+        variant: "default", 
+        className: "bg-blue-500 text-white border-blue-600",
         icon: <Clock className="h-3 w-3" />,
         text: "Scheduled"
       };
@@ -178,8 +179,8 @@ export const getAttendanceStatusBadgeProps = (status: string): {
       };
     case "manual":
       return { 
-        variant: "outline", 
-        className: "border-blue-300 text-blue-700 bg-blue-50",
+        variant: "default", 
+        className: "bg-blue-500 text-white border-blue-600",
         icon: <User className="h-3 w-3" />,
         text: "Manual Entry"
       };
@@ -745,24 +746,24 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
     <>
       {/* Modern Tabs for Active/Archived */}
       <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')} className="w-full">
-        <TabsList className="mb-6 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl">
+        <TabsList className="mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276]">
           <TabsTrigger 
             value="active"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 px-6"
+            className="rounded-lg font-semibold transition-all duration-200 px-6 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
           >
             <Calendar className="h-4 w-4 mr-2" />
             Active Bookings
           </TabsTrigger>
           <TabsTrigger 
             value="calendar"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 px-6"
+            className="rounded-lg font-semibold transition-all duration-200 px-6 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
           >
             <Calendar className="h-4 w-4 mr-2" />
             Calendar View
           </TabsTrigger>
           <TabsTrigger 
             value="archived"
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-[#0F0276] font-semibold transition-all duration-200 px-6"
+            className="rounded-lg font-semibold transition-all duration-200 px-6 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
           >
             <FileCheck className="h-4 w-4 mr-2" />
             Archived Bookings
@@ -856,18 +857,18 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           </div>
           
           {/* Bookings table (active) */}
-          <Card className="rounded-xl border-0 shadow-lg">
+          <Card className="rounded-xl border-0 shadow-lg dark:bg-[#0F0276]">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-200">
-                    <TableHead className="font-semibold text-slate-700">Date & Time</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Athletes</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Lesson Type</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Payment Status</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Attendance</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Amount</TableHead>
-                    <TableHead className="font-semibold text-slate-700">Actions</TableHead>
+                  <TableRow className="border-slate-200 dark:border-white/30">
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Date & Time</TableHead>
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Athletes</TableHead>
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Lesson Type</TableHead>
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Payment Status</TableHead>
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Attendance</TableHead>
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Amount</TableHead>
+                    <TableHead className="font-semibold text-slate-700 dark:text-white">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -890,37 +891,37 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                     </TableRow>
                   ) : (
                     filteredAndSortedBookings.map((booking: Booking) => (
-                    <TableRow key={booking.id} className="hover:bg-slate-50/50 transition-colors border-slate-100">
+                    <TableRow key={booking.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10 transition-colors border-slate-100 dark:border-white/20">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
                             <Calendar className="h-4 w-4 text-[#D8BD2A]" />
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900">{booking.preferredDate}</div>
-                            <div className="text-sm text-slate-500">{booking.preferredTime}</div>
+                            <div className="font-semibold text-slate-900 dark:text-white">{booking.preferredDate}</div>
+                            <div className="text-sm text-slate-500 dark:text-white/80">{booking.preferredTime}</div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
                         <div className="space-y-1">
                           {booking.athletes?.map((athlete: any, index: number) => (
-                            <div key={index} className={index === 0 ? "font-semibold text-slate-900" : "text-sm text-slate-600"}>
+                            <div key={index} className={index === 0 ? "font-semibold text-slate-900 dark:text-white" : "text-sm text-slate-600 dark:text-white/80"}>
                               {athlete.name}
                             </div>
                           )) || (
                             <div className="space-y-1">
-                              {booking.athlete1Name && <div className="font-semibold text-slate-900">{booking.athlete1Name}</div>}
-                              {booking.athlete2Name && <div className="text-sm text-slate-600">{booking.athlete2Name}</div>}
+                              {booking.athlete1Name && <div className="font-semibold text-slate-900 dark:text-white">{booking.athlete1Name}</div>}
+                              {booking.athlete2Name && <div className="text-sm text-slate-600 dark:text-white/80">{booking.athlete2Name}</div>}
                               {!booking.athlete1Name && !booking.athlete2Name && (
-                                <div className="text-slate-500 italic">No athletes</div>
+                                <div className="text-slate-500 dark:text-white/70 italic">No athletes</div>
                               )}
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell className="py-4">
-                        <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50 font-medium">
+                        <Badge variant="outline" className="border-slate-200 dark:border-white text-slate-700 dark:text-white bg-slate-50 dark:bg-transparent font-medium">
                           {(() => {
                             const lessonType = booking.lessonType;
                             if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
@@ -941,8 +942,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           }
                           disabled={updatePaymentStatusMutation.isPending}
                         >
-                          <SelectTrigger className="h-9 w-[150px] rounded-lg border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
-                            <SelectValue />
+                          <SelectTrigger className="h-9 w-[150px] rounded-lg border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] dark:bg-transparent dark:text-white dark:border-white">
+                            <SelectValue className="dark:text-white" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="unpaid">Unpaid</SelectItem>
@@ -966,8 +967,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           }
                           disabled={updateAttendanceStatusMutation.isPending}
                         >
-                          <SelectTrigger className="h-8 w-[120px]">
-                            <SelectValue />
+                          <SelectTrigger className="h-8 w/[120px] dark:bg-transparent dark:text-white dark:border dark:border-white">
+                            <SelectValue className="dark:text-white" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
@@ -979,7 +980,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium dark:text-white">
                           ${(() => {
                             const price = resolvePrice(booking);
                             return price > 0 ? price.toFixed(2) : '0.00';
@@ -990,7 +991,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                         <div className="flex items-center gap-1">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" className="dark:text-white dark:border-white">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
@@ -1009,6 +1010,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               setRescheduleBooking(booking);
                               setShowRescheduleModal(true);
                             }}
+                            className="dark:text-white dark:border-white"
                           >
                             Reschedule
                           </Button>
@@ -1018,6 +1020,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                             onClick={() => sendWaiverEmailMutation.mutate(booking.id)}
                             disabled={!booking.parentEmail || sendWaiverEmailMutation.isPending}
                             title={!booking.parentEmail ? 'No parent email on file for this booking' : undefined}
+                            className="dark:text-white dark:border-white"
                           >
                             Send Waiver
                           </Button>
