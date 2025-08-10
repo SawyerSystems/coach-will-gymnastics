@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from './ui/button';
+import { AdminButton } from '@/components/admin-ui/AdminButton';
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from '@/components/admin-ui/AdminCard';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
@@ -259,21 +261,21 @@ export function AdminLessonTypeManager() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Lesson Type Management</h2>
         {!showForm && (
-          <Button onClick={handleCreate}>
+          <AdminButton onClick={handleCreate} className="rounded-xl px-6 py-3">
             <Plus className="mr-2 h-4 w-4" />
             Create Lesson Type
-          </Button>
+          </AdminButton>
         )}
       </div>
 
       {showForm && (
-        <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-          <CardHeader>
-            <CardTitle className="text-[#0F0276] dark:text-white">
+        <AdminCard>
+          <AdminCardHeader>
+            <AdminCardTitle className="text-xl">
               {editingId ? 'Edit Lesson Type' : 'Create New Lesson Type'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </AdminCardTitle>
+          </AdminCardHeader>
+          <AdminCardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name" className="text-[#0F0276] dark:text-white">Name *</Label>
@@ -342,7 +344,13 @@ export function AdminLessonTypeManager() {
                     placeholder="Add a key point"
                     onKeyPress={(e) => e.key === 'Enter' && addKeyPoint()}
                   />
-                  <Button type="button" onClick={addKeyPoint}>Add</Button>
+                  <AdminButton 
+                    type="button" 
+                    onClick={addKeyPoint}
+                    className="rounded-xl px-4 py-2"
+                  >
+                    Add
+                  </AdminButton>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.keyPoints.map((point, index) => (
@@ -385,17 +393,25 @@ export function AdminLessonTypeManager() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+              <AdminButton 
+                onClick={handleSave} 
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="rounded-xl px-6 py-3"
+              >
                 <Save className="mr-2 h-4 w-4" />
                 {editingId ? 'Update' : 'Create'}
-              </Button>
-              <Button variant="outline" onClick={handleCancel}>
+              </AdminButton>
+              <AdminButton 
+                variant="secondary"
+                onClick={handleCancel}
+                className="rounded-xl px-6 py-3"
+              >
                 <X className="mr-2 h-4 w-4" />
                 Cancel
-              </Button>
+              </AdminButton>
             </div>
-          </CardContent>
-        </Card>
+          </AdminCardContent>
+        </AdminCard>
       )}
 
       <div className="grid gap-4">
@@ -444,22 +460,24 @@ export function AdminLessonTypeManager() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <AdminButton
+                    variant="secondary"
+                    size={"sm" as any}
                     onClick={() => handleEdit(lessonType)}
                     disabled={showForm}
+                    className="rounded-lg px-3 py-2"
                   >
                     <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  </AdminButton>
+                  <AdminButton
+                    variant="destructive"
+                    size={"sm" as any}
                     onClick={() => handleDelete(lessonType.id)}
                     disabled={showForm || deleteMutation.isPending}
+                    className="rounded-lg px-3 py-2"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </Button>
+                  </AdminButton>
                 </div>
               </div>
             </CardContent>

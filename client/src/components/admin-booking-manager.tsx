@@ -295,10 +295,19 @@ function AdminRescheduleForm({ booking, onSubmit, onCancel }: {
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel}
+          className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={!selectedDate || !selectedTime}>
+        <Button 
+          type="submit" 
+          disabled={!selectedDate || !selectedTime}
+          className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+        >
           Reschedule
         </Button>
       </div>

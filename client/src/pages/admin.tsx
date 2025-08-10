@@ -1984,10 +1984,13 @@ export default function Admin() {
                                 onChange={setNewPostSections}
                               />
                             </div>
-                            <Button onClick={() => {
-                              const content = sectionsToContent(newPostSections);
-                              createBlogPostMutation.mutate({ ...newPost, content });
-                            }}>
+                            <Button 
+                              onClick={() => {
+                                const content = sectionsToContent(newPostSections);
+                                createBlogPostMutation.mutate({ ...newPost, content });
+                              }}
+                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                            >
                               Create Post
                             </Button>
                           </div>
@@ -2045,8 +2048,18 @@ export default function Admin() {
                                 />
                               </div>
                               <div className="flex gap-2">
-                                <Button type="submit">Save Changes</Button>
-                                <Button type="button" variant="outline" onClick={() => setEditingPost(null)}>
+                                <Button 
+                                  type="submit"
+                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
+                                  Save Changes
+                                </Button>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  onClick={() => setEditingPost(null)}
+                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
                                   Cancel
                                 </Button>
                               </div>
@@ -2188,14 +2201,17 @@ export default function Admin() {
                                 placeholder="https://youtube.com/..."
                               />
                             </div>
-                            <Button onClick={() => {
-                              const content = sectionsToContent(newTipSections);
-                              createTipMutation.mutate({
-                                ...newTip,
-                                content,
-                                videoUrl: newTip.videoUrl || null
-                              });
-                            }}>
+                            <Button 
+                              onClick={() => {
+                                const content = sectionsToContent(newTipSections);
+                                createTipMutation.mutate({
+                                  ...newTip,
+                                  content,
+                                  videoUrl: newTip.videoUrl || null
+                                });
+                              }}
+                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                            >
                               Create Tip
                             </Button>
                           </div>
@@ -2280,8 +2296,18 @@ export default function Admin() {
                                 />
                               </div>
                               <div className="flex gap-2">
-                                <Button type="submit">Save Changes</Button>
-                                <Button type="button" variant="outline" onClick={() => setEditingTip(null)}>
+                                <Button 
+                                  type="submit"
+                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
+                                  Save Changes
+                                </Button>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  onClick={() => setEditingTip(null)}
+                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
                                   Cancel
                                 </Button>
                               </div>
@@ -2430,6 +2456,7 @@ export default function Admin() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => deleteAvailabilityMutation.mutate(dayAvailability.id)}
+                                      className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold text-white hover:text-white"
                                     >
                                       Remove
                                     </Button>
@@ -2465,7 +2492,12 @@ export default function Admin() {
                               ) : (
                                 <Dialog>
                                   <DialogTrigger asChild>
-                                    <Button size="sm">Set Hours</Button>
+                                    <Button 
+                                      size="sm"
+                                      className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                    >
+                                      Set Hours
+                                    </Button>
                                   </DialogTrigger>
                                   <DialogContent>
                                     <DialogHeader>
@@ -2497,12 +2529,15 @@ export default function Admin() {
                                           })}
                                         />
                                       </div>
-                                      <Button onClick={() => {
-                                        createAvailabilityMutation.mutate({
-                                          ...newAvailability,
-                                          dayOfWeek: day.value
-                                        });
-                                      }}>
+                                      <Button 
+                                        onClick={() => {
+                                          createAvailabilityMutation.mutate({
+                                            ...newAvailability,
+                                            dayOfWeek: day.value
+                                          });
+                                        }}
+                                        className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                      >
                                         Save Hours
                                       </Button>
                                     </div>
@@ -2592,7 +2627,10 @@ export default function Admin() {
                                 placeholder="e.g., Personal appointment, Holiday"
                               />
                             </div>
-                            <Button onClick={() => createExceptionMutation.mutate(newException)}>
+                            <Button 
+                              onClick={() => createExceptionMutation.mutate(newException)}
+                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                            >
                               Block Time
                             </Button>
                           </div>
