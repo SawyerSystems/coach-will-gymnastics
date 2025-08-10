@@ -746,26 +746,27 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
     <>
       {/* Modern Tabs for Active/Archived */}
       <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')} className="w-full">
-        <TabsList className="mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276]">
+        {/* Tabs: responsive to fit on mobile (wrap/grid), icons hidden on small screens */}
+        <TabsList className="mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-2 gap-2 sm:flex sm:gap-0">
           <TabsTrigger 
             value="active"
-            className="rounded-lg font-semibold transition-all duration-200 px-6 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
+            className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
           >
-            <Calendar className="h-4 w-4 mr-2" />
+            <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />
             Active Bookings
           </TabsTrigger>
           <TabsTrigger 
             value="calendar"
-            className="rounded-lg font-semibold transition-all duration-200 px-6 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
+            className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
           >
-            <Calendar className="h-4 w-4 mr-2" />
+            <Calendar className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />
             Calendar View
           </TabsTrigger>
           <TabsTrigger 
             value="archived"
-            className="rounded-lg font-semibold transition-all duration-200 px-6 data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
+            className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
           >
-            <FileCheck className="h-4 w-4 mr-2" />
+            <FileCheck className="h-4 w-4 sm:mr-2 hidden sm:inline-block" />
             Archived Bookings
           </TabsTrigger>
         </TabsList>
@@ -774,11 +775,11 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50 p-6 mb-6">
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3 mb-2">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Active Bookings
                 </h2>
-                <p className="text-slate-600">Manage upcoming sessions and bookings</p>
+                <p className="text-slate-600 dark:text-white">Manage upcoming sessions and bookings</p>
               </div>
               
               {/* Action Buttons */}
@@ -856,8 +857,120 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             </div>
           </div>
           
-          {/* Bookings table (active) */}
-          <Card className="rounded-xl border-0 shadow-lg dark:bg-[#0F0276]">
+          {/* Mobile list (active) to avoid horizontal scroll */}
+          <div className="sm:hidden space-y-3">
+            {filteredAndSortedBookings.length === 0 ? (
+              <Card className="rounded-xl border-0 shadow-lg dark:bg-[#0F0276]">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <Calendar className="h-8 w-8 text-gray-400" />
+                    <div className="font-medium text-lg dark:text-white">No active bookings found</div>
+                    <div className="text-sm text-gray-500 dark:text-white/80">
+                      Active bookings will appear here when athletes have pending, confirmed, or paid sessions.
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-white/80">
+                      Completed, cancelled, and no-show bookings can be found in the "Archived" tab.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredAndSortedBookings.map((booking: Booking) => (
+                <Card key={booking.id} className="rounded-xl border border-slate-200 dark:border-white/20 bg-white/70 dark:bg-white/10 backdrop-blur">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-[#D8BD2A]/10 rounded-lg">
+                          <Calendar className="h-4 w-4 text-[#D8BD2A]" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-900 dark:text-white">{booking.preferredDate}</div>
+                          <div className="text-sm text-slate-500 dark:text-white/80">{booking.preferredTime}</div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {/* Payment */}
+                        <div>
+                          <Badge variant="outline" className="border-slate-200 dark:border-white text-slate-700 dark:text-white bg-slate-50 dark:bg-transparent">
+                            {(booking.paymentStatus || 'unpaid').replace('-', ' ')}
+                          </Badge>
+                        </div>
+                        {/* Attendance */}
+                        <div>
+                          <Badge variant="outline" className="border-slate-200 dark:border-white text-slate-700 dark:text-white bg-slate-50 dark:bg-transparent">
+                            {(booking.attendanceStatus || 'pending').replace('-', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Athletes */}
+                    <div className="mt-3 text-slate-900 dark:text-white text-sm">
+                      {(() => {
+                        const names = booking.athletes?.map((a: any) => a.name).filter(Boolean) || [booking.athlete1Name, booking.athlete2Name].filter(Boolean as any);
+                        const validNames = (names as string[]).filter(Boolean);
+                        if (validNames.length === 0) return <span className="italic text-slate-500 dark:text-white/70">No athletes</span>;
+                        const first = validNames[0];
+                        const rest = validNames.length - 1;
+                        return <span>{first}{rest > 0 ? ` +${rest} more` : ''}</span>;
+                      })()}
+                    </div>
+                    {/* Lesson type */}
+                    <div className="mt-2">
+                      <Badge variant="outline" className="border-slate-200 dark:border-white text-slate-700 dark:text-white bg-slate-50 dark:bg-transparent font-medium">
+                        {(() => {
+                          const lessonType = booking.lessonType;
+                          if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
+                            return (lessonType as any).name;
+                          }
+                          return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
+                        })()}
+                      </Badge>
+                    </div>
+                    {/* Quick actions */}
+                    <div className="mt-3 grid grid-cols-1 gap-2">
+                      <Select
+                        value={booking.paymentStatus || 'unpaid'}
+                        onValueChange={(value) => updatePaymentStatusMutation.mutate({ id: booking.id, paymentStatus: value })}
+                        disabled={updatePaymentStatusMutation.isPending}
+                      >
+                        <SelectTrigger className="h-9 w-full rounded-lg border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] dark:bg-transparent dark:text-white dark:border-white">
+                          <SelectValue className="dark:text-white" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unpaid">Unpaid</SelectItem>
+                          <SelectItem value="reservation-pending">Reservation: Pending</SelectItem>
+                          <SelectItem value="reservation-failed">Reservation: Failed</SelectItem>
+                          <SelectItem value="reservation-paid">Reservation: Paid</SelectItem>
+                          <SelectItem value="session-paid">Session Paid</SelectItem>
+                          <SelectItem value="reservation-refunded">Reservation: Refunded</SelectItem>
+                          <SelectItem value="session-refunded">Session: Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={booking.attendanceStatus || 'pending'}
+                        onValueChange={(value) => updateAttendanceStatusMutation.mutate({ id: booking.id, attendanceStatus: value })}
+                        disabled={updateAttendanceStatusMutation.isPending}
+                      >
+                        <SelectTrigger className="h-9 w-full rounded-lg dark:bg-transparent dark:text-white dark:border dark:border-white">
+                          <SelectValue className="dark:text-white" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="no-show">No Show</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table (active) */}
+          <Card className="hidden sm:block rounded-xl border-0 shadow-lg dark:bg-[#0F0276]">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -1182,9 +1295,77 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
               <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
             </div>
           ) : (
-            <Card className="rounded-xl border-0 shadow-lg">
-              <CardContent className="p-0">
-                <Table>
+            <>
+              {/* Mobile list (archived) */}
+              <div className="sm:hidden space-y-3">
+                {archivedBookings.length === 0 ? (
+                  <Card className="rounded-xl border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <FileCheck className="h-8 w-8 text-gray-400" />
+                        <div className="font-medium text-lg">No archived bookings found</div>
+                        <div className="text-sm text-gray-500">
+                          Completed, cancelled, and no-show bookings will appear here.
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  archivedBookings.map((booking: Booking) => (
+                    <Card key={booking.id} className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-slate-100 rounded-lg">
+                              <Calendar className="h-4 w-4 text-gray-600" />
+                            </div>
+                            <div>
+                              <div className="font-semibold">{booking.preferredDate}</div>
+                              <div className="text-sm text-slate-600">{booking.preferredTime}</div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50">
+                              {(booking.paymentStatus || 'unpaid').replace('-', ' ')}
+                            </Badge>
+                            <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50">
+                              {(booking.attendanceStatus || 'pending').replace('-', ' ')}
+                            </Badge>
+                          </div>
+                        </div>
+                        {/* Athletes */}
+                        <div className="mt-3 text-slate-900 text-sm">
+                          {(() => {
+                            const names = booking.athletes?.map((a: any) => a.name).filter(Boolean) || [booking.athlete1Name, booking.athlete2Name].filter(Boolean as any);
+                            const validNames = (names as string[]).filter(Boolean);
+                            if (validNames.length === 0) return <span className="italic text-slate-500">No athletes</span>;
+                            const first = validNames[0];
+                            const rest = validNames.length - 1;
+                            return <span>{first}{rest > 0 ? ` +${rest} more` : ''}</span>;
+                          })()}
+                        </div>
+                        {/* Lesson type */}
+                        <div className="mt-2">
+                          <Badge variant="outline" className="border-slate-200 text-slate-700 bg-slate-50 font-medium">
+                            {(() => {
+                              const lessonType = booking.lessonType;
+                              if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
+                                return (lessonType as any).name;
+                              }
+                              return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
+                            })()}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop table (archived) */}
+              <Card className="hidden sm:block rounded-xl border-0 shadow-lg">
+                <CardContent className="p-0">
+                  <Table>
                   <TableHeader>
                     <TableRow className="border-slate-200">
                       <TableHead className="font-semibold text-slate-700">Date & Time</TableHead>
@@ -1329,6 +1510,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                 </Table>
               </CardContent>
             </Card>
+            </>
           )}
         </TabsContent>
       </Tabs>
