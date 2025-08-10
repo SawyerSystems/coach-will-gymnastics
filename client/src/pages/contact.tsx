@@ -332,10 +332,13 @@ export default function Contact() {
                   <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Follow Our Journey</h3>
                   <div className="flex space-x-4 mb-6">
                     <Button 
+                      asChild
                       size="icon"
                       className="w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-full"
                     >
-                      <Instagram className="h-6 w-6" />
+                      <a href="https://www.instagram.com/coachwilltumbles/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <Instagram className="h-6 w-6" />
+                      </a>
                     </Button>
                     <Button 
                       size="icon"
