@@ -781,12 +781,12 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             },
           ]}
           // Tab list should sit above, have its own height, and not block below
-          listClassName="relative z-10 mb-8 sm:mb-4 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:gap-2 pointer-events-auto shadow-sm"
+          listClassName="relative z-10 mb-16 sm:mb-4 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:gap-2 pointer-events-auto shadow-sm"
           triggerClassName="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto min-w-0 border-2 data-[state=inactive]:border-[#D8BD2A] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
         >
           <TabsContent value="active">
             {/* CONTENT: push it down and ensure it’s clickable */}
-            <div className="relative z-0 mt-6 pointer-events-auto">
+            <div className="relative z-0 mt-12 sm:mt-6 pointer-events-auto">
           {/* Modern Header Section */}
           <div className="mt-6 rounded-xl p-6 mb-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 text-[#0F0276] dark:bg-[#2A4A9B] dark:text-white dark:border-white/20">
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6">
@@ -1206,7 +1206,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
         </TabsContent>
         <TabsContent value="calendar">
           {/* CONTENT: push it down and ensure it’s clickable */}
-          <div className="relative z-0 mt-6 pointer-events-auto">
+          <div className="relative z-0 mt-12 sm:mt-6 pointer-events-auto">
             {/* Calendar Header */}
             <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 dark:bg-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1302,7 +1302,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
         </TabsContent>
         <TabsContent value="archived">
           {/* CONTENT: push it down and ensure it’s clickable */}
-          <div className="relative z-0 mt-6 pointer-events-auto">
+          <div className="relative z-0 mt-12 sm:mt-6 pointer-events-auto">
           {/* Modern Archived Header */}
           <div className="bg-gradient-to-r from-slate-100/50 to-slate-200/30 dark:bg-[#0F0276] dark:from-[#0F0276] dark:to-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-700 dark:text-white tracking-tight flex items-center gap-3">
