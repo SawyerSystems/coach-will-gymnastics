@@ -843,36 +843,36 @@ function PayoutRatesPanel() {
 					<p className="text-xs text-slate-500">Creating a new rate automatically retires the previous active rate for the same duration & membership.</p>
 				</div>
 			)}
-			<div className="overflow-x-auto rounded-xl border bg-white">
-				<table className="w-full text-sm">
-					<thead className="bg-slate-50">
-						<tr>
-							<th className="text-left px-4 py-2">Duration</th>
-							<th className="text-left px-4 py-2">Membership</th>
-							<th className="text-right px-4 py-2">Rate</th>
-							<th className="text-left px-4 py-2">Effective From</th>
-							<th className="text-left px-4 py-2">Effective To</th>
-							<th className="text-left px-4 py-2">Status</th>
-							<th className="text-right px-4 py-2">Actions</th>
+			<div className="overflow-x-auto">
+				<table className="w-full text-sm border-separate border-spacing-y-2">
+					<thead>
+						<tr className="text-[#0F0276] dark:text-white">
+							<th className="text-left px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Duration</th>
+							<th className="text-left px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Membership</th>
+							<th className="text-right px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Rate</th>
+							<th className="text-left px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Effective From</th>
+							<th className="text-left px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Effective To</th>
+							<th className="text-left px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Status</th>
+							<th className="text-right px-4 py-3 font-semibold bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:border-transparent">Actions</th>
 						</tr>
 					</thead>
 					<tbody>
 						{isLoading ? (
-							<tr><td className="px-4 py-4" colSpan={7}>Loading…</td></tr>
+							<tr><td className="px-4 py-4 text-center text-slate-500" colSpan={7}>Loading…</td></tr>
 						) : rates.length === 0 ? (
-							<tr><td className="px-4 py-6 text-slate-500" colSpan={7}>No rates configured.</td></tr>
+							<tr><td className="px-4 py-6 text-center text-slate-500" colSpan={7}>No rates configured.</td></tr>
 						) : (
 							rates.map(r => {
 								const active = !r.effective_to || new Date(r.effective_to).getTime() > now;
 								return (
-									<tr key={r.id} className="border-t">
-										<td className="px-4 py-2">{r.duration_minutes} min</td>
-										<td className="px-4 py-2">{r.is_member ? 'Member' : 'Non-member'}</td>
-										<td className="px-4 py-2 text-right">{(r.rate_cents/100).toLocaleString(undefined,{style:'currency',currency:'USD'})}</td>
-										<td className="px-4 py-2 whitespace-nowrap">{r.effective_from}</td>
-										<td className="px-4 py-2 whitespace-nowrap">{r.effective_to || '—'}</td>
-										<td className="px-4 py-2">{active ? <span className="text-green-600 font-medium">Active</span> : 'Historical'}</td>
-										<td className="px-4 py-2 text-right">
+									<tr key={r.id}>
+										<td className="px-4 py-3 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{r.duration_minutes} min</td>
+										<td className="px-4 py-3 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{r.is_member ? 'Member' : 'Non-member'}</td>
+										<td className="px-4 py-3 text-right bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{(r.rate_cents/100).toLocaleString(undefined,{style:'currency',currency:'USD'})}</td>
+										<td className="px-4 py-3 whitespace-nowrap bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{r.effective_from}</td>
+										<td className="px-4 py-3 whitespace-nowrap bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{r.effective_to || '—'}</td>
+										<td className="px-4 py-3 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{active ? <span className="text-green-600 font-medium dark:text-green-400">Active</span> : <span className="text-slate-500">Historical</span>}</td>
+										<td className="px-4 py-3 text-right bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
 											{active && !r.effective_to && (
 												<Button size="sm" variant="secondary" disabled={retireRate.isPending} onClick={async () => {
 													try {
