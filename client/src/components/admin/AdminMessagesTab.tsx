@@ -117,19 +117,25 @@ export default function AdminMessagesTab() {
                   {inquiries.data.map((inq) => (
                     <Card key={inq.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="font-medium text-[#0F0276] dark:text-white">
+                        {/* Header: name/date left, actions top-right on mobile */}
+                        <div className="relative mb-24 sm:mb-3">
+                          <div className="font-medium text-[#0F0276] dark:text-white pr-28 sm:pr-0">
                             {inq.name} <span className="text-slate-500 dark:text-white/70">•</span>{" "}
                             <span className="text-slate-600 dark:text-white/80 text-sm">{new Date(inq.createdAt).toLocaleString()}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'}>
+                          <div className="absolute right-2 top-2 flex flex-col items-end gap-2 sm:static sm:flex-row sm:items-center">
+                            <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'} className="uppercase">
                               {inq.status}
                             </Badge>
-                            <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}
+                              className="w-auto"
+                            >
                               Mark {inq.status === 'new' ? 'Open' : inq.status === 'open' ? 'Closed' : 'Archived'}
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)}>
+                            <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)} className="w-auto">
                               <Trash2 className="h-4 w-4 mr-1" /> Delete
                             </Button>
                           </div>
