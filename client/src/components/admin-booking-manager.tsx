@@ -747,7 +747,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
       {/* Modern Tabs for Active/Archived */}
       <Tabs value={tab} onValueChange={v => setTab(v as 'active' | 'archived' | 'calendar')} className="w-full">
         {/* Tabs: responsive to fit on mobile (wrap/grid), icons hidden on small screens */}
-    <TabsList className="mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+  <TabsList className="mb-8 sm:mb-6 p-1 rounded-xl bg-white dark:bg-[#0F0276] grid grid-cols-2 gap-2 sm:flex sm:gap-2">
           <TabsTrigger 
             value="active"
       className="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto border-2 data-[state=active]:border-[#0F0276] data-[state=inactive]:border-[#D8BD2A] data-[state=active]:bg-[#D8BD2A] data-[state=active]:text-[#0F0276] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
@@ -1284,7 +1284,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           {/* Modern Archived Header */}
           <div className="bg-gradient-to-r from-slate-100/50 to-slate-200/30 dark:bg-[#0F0276] dark:from-[#0F0276] dark:to-[#0F0276] rounded-xl border border-slate-200/50 dark:border-white/20 p-6 mb-6">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-700 dark:text-white tracking-tight flex items-center gap-3">
-              <FileCheck className="h-8 w-8 text-slate-500 dark:text-white" />
+              <FileCheck className="h-8 w-8 text-slate-500 dark:text-[#D8BD2A]" />
               Archived Bookings
             </h2>
             <p className="text-slate-600 dark:text-white mt-1">Completed, cancelled, and no-show sessions</p>
