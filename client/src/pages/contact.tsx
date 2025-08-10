@@ -99,29 +99,29 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
       {/* Hero Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
+      <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-800 mb-6">
+          <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-6">
             Reach Out to <span className="text-purple-600">Coach Will</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto">
             Have more questions or want to chat before booking? I'm here to help every step of the way.
           </p>
         </div>
       </section>
 
       {/* Contact Form and Info */}
-      <section className="py-16 lg:py-24 bg-white">
+      <section className="py-16 lg:py-24 bg-white dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
-            <Card className="shadow-xl">
+            <Card className="shadow-xl glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
               <CardContent className="p-8">
                 {!isSubmitted ? (
                   <>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-6">Send us a Message</h3>
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Send us a Message</h3>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         <div className="grid md:grid-cols-2 gap-6">
@@ -219,8 +219,8 @@ export default function Contact() {
                 ) : (
                   <div className="text-center py-8">
                     <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Message Sent Successfully!</h3>
-                    <p className="text-gray-600 mb-6">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Message Sent Successfully!</h3>
+                    <p className="text-slate-700 dark:text-slate-300 mb-6">
                       Thank you for reaching out! I'll get back to you within 24 hours.
                     </p>
                     <Button 
@@ -237,17 +237,17 @@ export default function Contact() {
 
             {/* Contact Information */}
             <div className="space-y-8">
-              <Card className="shadow-xl">
+              <Card className="shadow-xl glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                 <CardContent className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-6">Contact Information</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Contact Information</h3>
                   <div className="space-y-6">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                         <Phone className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">Phone</p>
-                        <p className="text-gray-600">{siteContent?.contact?.phone || '(585) 755-8122'}</p>
+                        <p className="font-medium text-slate-900 dark:text-slate-100">Phone</p>
+                        <p className="text-slate-700 dark:text-slate-300">{siteContent?.contact?.phone || '(585) 755-8122'}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -255,8 +255,8 @@ export default function Contact() {
                         <Mail className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">Email</p>
-                        <p className="text-gray-600">{siteContent?.contact?.email || 'Admin@coachwilltumbles.com'}</p>
+                        <p className="font-medium text-slate-900 dark:text-slate-100">Email</p>
+                        <p className="text-slate-700 dark:text-slate-300">{siteContent?.contact?.email || 'Admin@coachwilltumbles.com'}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -264,8 +264,8 @@ export default function Contact() {
                         <MapPin className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">Location</p>
-                        <p className="text-gray-600">
+                        <p className="font-medium text-slate-900 dark:text-slate-100">Location</p>
+                        <p className="text-slate-700 dark:text-slate-300">
                           {siteContent?.contact?.address ? (
                             <>
                               {siteContent.contact.address.name}<br />
@@ -287,11 +287,12 @@ export default function Contact() {
                         <Clock className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">Hours</p>
-                        <div className="text-gray-600">
+                        <p className="font-medium text-slate-900 dark:text-slate-100">Hours</p>
+                        <div className="text-slate-700 dark:text-slate-300">
                           {siteContent?.hours?.hours ? (
                             orderedDays.map((day) => {
-                              const hours = siteContent.hours.hours[day.toLowerCase()];
+                              const hoursMap: any = siteContent.hours.hours;
+                              const hours = hoursMap?.[day] ?? hoursMap?.[day.toLowerCase()] ?? hoursMap?.[day.toUpperCase()];
                               
                               // Format time from 24-hour to 12-hour
                               const formatTime = (timeStr: string) => {
@@ -326,9 +327,9 @@ export default function Contact() {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-xl">
+              <Card className="shadow-xl glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                 <CardContent className="p-8">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-6">Follow Our Journey</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Follow Our Journey</h3>
                   <div className="flex space-x-4 mb-6">
                     <Button 
                       size="icon"
@@ -355,7 +356,7 @@ export default function Contact() {
                       <MessageCircle className="h-6 w-6" />
                     </Button>
                   </div>
-                  <p className="text-gray-600">
+      <p className="text-slate-700 dark:text-slate-300">
                     Follow me on social media for daily gymnastics tips, student highlights, 
                     and behind-the-scenes content!
                   </p>
@@ -367,10 +368,10 @@ export default function Contact() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 lg:py-24 bg-gray-50">
+  <section className="py-16 lg:py-24 bg-gray-50 dark:bg-slate-900/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mb-4">
+    <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               Frequently Asked <span className="text-teal-600">Questions</span>
             </h2>
           </div>
@@ -397,11 +398,11 @@ export default function Contact() {
                 answer: "Absolutely. We have a designated viewing area in the lobby where parents can comfortably watch and cheer from a distance.",
                 category: "General"
               }
-            ]).map((faq: any, index: number) => (
-              <Card key={index} className="p-6 hover:shadow-lg transition-shadow duration-300">
+    ]).map((faq: any, index: number) => (
+      <Card key={index} className="p-6 hover:shadow-lg transition-shadow duration-300 glass-surface glass-card glass-gradient border border-slate-200 dark:border-slate-700">
                 <CardContent className="pt-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-3">{faq.question}</h3>
-                  <p className="text-gray-600">{faq.answer}</p>
+      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-3">{faq.question}</h3>
+      <p className="text-slate-700 dark:text-slate-300">{faq.answer}</p>
                 </CardContent>
               </Card>
             ))}
@@ -410,19 +411,19 @@ export default function Contact() {
       </section>
 
       {/* Quote Section */}
-      <section className="py-16 bg-gray-100">
+  <section className="py-16 bg-gray-100 dark:bg-slate-900/30">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
-            <blockquote className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+    <blockquote className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               "I believe every child has a superpower. Gymnastics helps bring it out."
             </blockquote>
-            <p className="text-lg text-gray-600">– Coach Will</p>
+    <p className="text-lg text-slate-700 dark:text-slate-300">– Coach Will</p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-br from-purple-600 to-pink-600">
+  <section className="py-16 lg:py-24 bg-gradient-to-br from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
             Ready to Get Started?
