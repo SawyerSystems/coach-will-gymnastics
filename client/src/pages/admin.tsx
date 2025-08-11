@@ -1524,20 +1524,22 @@ export default function Admin() {
 
           <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
             <MainContentContainer
-              title={
+              heading={
                 <span className="inline-flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Booking Management
                 </span>
               }
             >
-              <div className="text-[#0F0276] dark:text-white">
-                <AdminBookingManager 
-                  openAthleteModal={openAthleteModal}
-                  selectedBooking={selectedBooking}
-                  onSelectBooking={setSelectedBooking}
-                />
-              </div>
+              <AdminCard className="w-full">
+                <AdminCardContent className="pt-0 text-[#0F0276] dark:text-white">
+                  <AdminBookingManager 
+                    openAthleteModal={openAthleteModal}
+                    selectedBooking={selectedBooking}
+                    onSelectBooking={setSelectedBooking}
+                  />
+                </AdminCardContent>
+              </AdminCard>
             </MainContentContainer>
           </TabsContent>
 
@@ -1587,15 +1589,16 @@ export default function Admin() {
             </AdminCard>
           </TabsContent>
 
-          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
                   <Users className="h-8 w-8 text-[#D8BD2A]" />
                   Athletes Management
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="space-y-6 sm:space-y-8">
+                </span>
+              }
+            >
+              <div className="space-y-6 sm:space-y-8">
                 <div className="space-y-6">
                   {/* Search Bar */}
                   <div className="relative max-w-md">
@@ -1636,12 +1639,12 @@ export default function Admin() {
                         const athleteKey = `${athlete.name}-${athlete.dateOfBirth || 'no-dob'}`;
                         const parentInfo = parentMapping.get(athleteKey);
                         return (
-          <div
+                          <div
                             key={athlete.id}
                             className={
                               isUpcomingBirthday
-            ? 'relative border-2 border-amber-300 dark:border-[#D8BD2A]/40 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
-            : 'relative border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
+                                ? 'relative border-2 border-amber-300 dark:border-[#D8BD2A]/40 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
+                                : 'relative border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:text-white'
                             }
                           >
                             {/* Action buttons - responsive layout */}
@@ -1726,8 +1729,8 @@ export default function Admin() {
                       })}
                   </div>
                 </div>
-              </AdminCardContent>
-            </AdminCard>
+              </div>
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">

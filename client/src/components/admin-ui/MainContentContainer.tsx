@@ -1,11 +1,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface MainContentContainerProps extends React.HTMLAttributes<HTMLDivElement> {
-  title?: React.ReactNode;
+type MainContentContainerProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> & {
+  heading?: React.ReactNode;
   icon?: React.ReactNode;
   actions?: React.ReactNode;
-}
+  className?: string;
+  children?: React.ReactNode;
+};
 
 /**
  * Bottom layer container for admin sections.
@@ -13,7 +15,7 @@ export interface MainContentContainerProps extends React.HTMLAttributes<HTMLDivE
  * - Light mode: soft white/70 with blur, to match existing aesthetic
  * Place AdminCards as children inside to create the layered look.
  */
-export function MainContentContainer({ title, icon, actions, className, children, ...props }: MainContentContainerProps) {
+export function MainContentContainer({ heading, icon, actions, className, children, ...props }: MainContentContainerProps) {
   return (
     <section
       className={cn(
@@ -29,13 +31,13 @@ export function MainContentContainer({ title, icon, actions, className, children
       )}
       {...props}
     >
-      {(title || actions) && (
+  {(heading || actions) && (
         <header className="mb-4 sm:mb-6 flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             {icon}
-            {title && (
+    {heading && (
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#0F0276] dark:text-white">
-                {title}
+        {heading}
               </h2>
             )}
           </div>
