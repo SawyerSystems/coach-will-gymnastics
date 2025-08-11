@@ -238,30 +238,15 @@ export function AdminWaiverManagement() {
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full">
-      {/* Modern Header Section */}
-      <div className="bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-lg sm:rounded-xl border border-slate-200/50 p-3 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-6">
-          <div>
-            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
-              <div className="p-1.5 sm:p-2 bg-[#D8BD2A]/10 rounded-lg">
-                <FileText className="h-4 w-4 sm:h-6 sm:w-6 text-[#D8BD2A]" />
-              </div>
-              Waiver Management
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-600">Manage liability waivers and athlete documentation</p>
-          </div>
-          
-          {/* Search Section */}
-          <div className="relative w-full sm:w-auto mt-2 sm:mt-0">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <Input
-              placeholder="Search athletes or signers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 sm:pl-10 h-8 sm:h-10 text-sm w-full sm:w-64 md:w-80 rounded-lg sm:rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-            />
-          </div>
-        </div>
+      {/* Search Section */}
+      <div className="relative w-full max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        <Input
+          placeholder="Search athletes or signers..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9 sm:pl-10 h-8 sm:h-10 text-sm w-full sm:w-64 md:w-80 rounded-lg sm:rounded-xl border-slate-200 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+        />
       </div>
 
       {/* Modern Stats Cards */}
