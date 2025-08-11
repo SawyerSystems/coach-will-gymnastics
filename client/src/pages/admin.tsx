@@ -1531,15 +1531,11 @@ export default function Admin() {
                 </span>
               }
             >
-              <AdminCard className="w-full">
-                <AdminCardContent className="pt-0 text-[#0F0276] dark:text-white">
-                  <AdminBookingManager 
-                    openAthleteModal={openAthleteModal}
-                    selectedBooking={selectedBooking}
-                    onSelectBooking={setSelectedBooking}
-                  />
-                </AdminCardContent>
-              </AdminCard>
+              <AdminBookingManager 
+                openAthleteModal={openAthleteModal}
+                selectedBooking={selectedBooking}
+                onSelectBooking={setSelectedBooking}
+              />
             </MainContentContainer>
           </TabsContent>
 

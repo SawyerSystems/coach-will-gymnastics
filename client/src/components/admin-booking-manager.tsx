@@ -901,7 +901,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           {/* Mobile list (active) to avoid horizontal scroll */}
           <div className="sm:hidden space-y-3">
             {filteredAndSortedBookings.length === 0 ? (
-              <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
+              <Card className="rounded-2xl border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 text-[#0F0276] dark:text-white">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center gap-3 text-center">
                     <Calendar className="h-8 w-8 text-gray-400" />
@@ -917,7 +917,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
               </Card>
             ) : (
               filteredAndSortedBookings.map((booking: Booking) => (
-                <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
+                <Card key={booking.id} className="rounded-2xl border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 text-[#0F0276] dark:text-white">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -1416,7 +1416,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
               {/* Mobile list (archived) */}
               <div className="sm:hidden space-y-3">
                 {filteredArchivedBookings.length === 0 ? (
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
+                  <Card className="rounded-2xl border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 text-[#0F0276] dark:text-white">
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center gap-3 text-center">
                         <FileCheck className="h-8 w-8 text-gray-400" />
@@ -1429,7 +1429,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   </Card>
                 ) : (
                   filteredArchivedBookings.map((booking: Booking) => (
-                    <Card key={booking.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] dark:border-[#2A4A9B] dark:bg-[#2A4A9B] dark:text-white">
+                    <Card key={booking.id} className="rounded-2xl border border-slate-200/60 dark:border-white/10 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 text-[#0F0276] dark:text-white">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3">
