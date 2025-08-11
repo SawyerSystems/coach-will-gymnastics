@@ -3070,6 +3070,7 @@ export default function Admin() {
           onClose={() => setViewingParent(null)}
           title="Parent Details"
           size="4xl"
+          showCloseButton={false}
         >
           {viewingParent && selectedParentDetails && (
             <>
