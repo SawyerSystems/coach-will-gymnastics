@@ -3046,6 +3046,18 @@ export default function Admin() {
                 handleClearTestData={handleClearTestData}
                 handleGenerateTestBookings={handleGenerateTestBookings}
                 generateBookingsMutation={generateBookingsMutation}
+                handleCreateTestParent={handleCreateTestParent}
+                handleSimulatePaymentSuccess={handleSimulatePaymentSuccess}
+                handleResetPaymentStatus={handleResetPaymentStatus}
+                handleSystemHealthCheck={handleSystemHealthCheck}
+                handleDatabaseTest={handleDatabaseTest}
+                createParentMutation={createParentMutation}
+                paymentSimulationMutation={paymentSimulationMutation}
+                paymentResetMutation={paymentResetMutation}
+                healthCheckMutation={healthCheckMutation}
+                databaseTestMutation={databaseTestMutation}
+                deleteUserAccountsMutation={deleteUserAccountsMutation}
+                setIsDeleteUsersConfirmOpen={setIsDeleteUsersConfirmOpen}
               />
             </MainContentContainer>
           </TabsContent>

@@ -32,6 +32,24 @@ interface AdminSettingsTabProps {
   handleClearTestData: () => void;
   handleGenerateTestBookings: () => void;
   generateBookingsMutation: any;
+  
+  // Additional handler functions
+  handleCreateTestParent: () => void;
+  handleSimulatePaymentSuccess: () => void;
+  handleResetPaymentStatus: () => void;
+  handleSystemHealthCheck: () => void;
+  handleDatabaseTest: () => void;
+  
+  // Additional mutations
+  createParentMutation: any;
+  paymentSimulationMutation: any;
+  paymentResetMutation: any;
+  healthCheckMutation: any;
+  databaseTestMutation: any;
+  deleteUserAccountsMutation: any;
+  
+  // Additional state handlers
+  setIsDeleteUsersConfirmOpen: (open: boolean) => void;
 }
 
 export default function AdminSettingsTab({
@@ -40,7 +58,19 @@ export default function AdminSettingsTab({
   clearDataMutation,
   handleClearTestData,
   handleGenerateTestBookings,
-  generateBookingsMutation
+  generateBookingsMutation,
+  handleCreateTestParent,
+  handleSimulatePaymentSuccess,
+  handleResetPaymentStatus,
+  handleSystemHealthCheck,
+  handleDatabaseTest,
+  createParentMutation,
+  paymentSimulationMutation,
+  paymentResetMutation,
+  healthCheckMutation,
+  databaseTestMutation,
+  deleteUserAccountsMutation,
+  setIsDeleteUsersConfirmOpen
 }: AdminSettingsTabProps) {
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8">
@@ -118,6 +148,26 @@ export default function AdminSettingsTab({
                   </Button>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>User Account Management</Label>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Delete all user accounts for testing purposes. Use with extreme caution.
+                  </p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setIsDeleteUsersConfirmOpen(true)}
+                    disabled={deleteUserAccountsMutation.isPending}
+                  >
+                    {deleteUserAccountsMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-2" />
+                    )}
+                    Delete User Accounts
+                  </Button>
+                </div>
+
                 {/* Delete Confirmation Dialog */}
                 <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                   <DialogContent className="max-w-md">
@@ -186,6 +236,133 @@ export default function AdminSettingsTab({
                       <Plus className="h-4 w-4 mr-2" />
                     )}
                     Generate Test Bookings
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Create Test Parent</Label>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Create a test parent account for testing purposes.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateTestParent}
+                    disabled={createParentMutation.isPending}
+                    className="w-full"
+                  >
+                    {createParentMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Create Test Parent
+                  </Button>
+                </div>
+              </AdminCardContent>
+            </AdminCard>
+
+            {/* Payment Testing */}
+            <AdminCard className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md hover:shadow-lg transition-all duration-300">
+              <AdminCardHeader className="pb-4">
+                <AdminCardTitle className="text-green-800 dark:text-white flex items-center gap-3">
+                  <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  Payment Testing
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Simulate Payment Success</Label>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Test the payment success flow for incomplete bookings.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSimulatePaymentSuccess}
+                    disabled={paymentSimulationMutation.isPending}
+                    className="w-full"
+                  >
+                    {paymentSimulationMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Calendar className="h-4 w-4 mr-2" />
+                    )}
+                    Simulate Payment Success
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Reset Payment Status</Label>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Reset all bookings to pending payment status.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetPaymentStatus}
+                    disabled={paymentResetMutation.isPending}
+                    className="w-full"
+                  >
+                    {paymentResetMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Reset Payment Status
+                  </Button>
+                </div>
+              </AdminCardContent>
+            </AdminCard>
+
+            {/* System Status */}
+            <AdminCard className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md hover:shadow-lg transition-all duration-300">
+              <AdminCardHeader className="pb-4">
+                <AdminCardTitle className="text-purple-800 dark:text-white flex items-center gap-3">
+                  <Monitor className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  System Status
+                </AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>System Health Check</Label>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Check the health of all system components.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSystemHealthCheck}
+                    disabled={healthCheckMutation.isPending}
+                    className="w-full"
+                  >
+                    {healthCheckMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Monitor className="h-4 w-4 mr-2" />
+                    )}
+                    Run Health Check
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Database Test</Label>
+                  <p className="text-sm text-gray-600 dark:text-slate-300">
+                    Test database connectivity and operations.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDatabaseTest}
+                    disabled={databaseTestMutation.isPending}
+                    className="w-full"
+                  >
+                    {databaseTestMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Database className="h-4 w-4 mr-2" />
+                    )}
+                    Test Database
                   </Button>
                 </div>
               </AdminCardContent>
