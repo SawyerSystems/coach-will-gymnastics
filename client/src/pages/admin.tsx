@@ -2154,11 +2154,11 @@ export default function Admin() {
                     
                     <div className="grid grid-cols-1 gap-6">
                       {blogPosts.map((post) => (
-                        <Card 
+                        <AdminCard 
                           key={post.id} 
-                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
-                          <CardContent className="p-6">
+                          <AdminCardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
                               <div className="flex-1 min-w-0 space-y-3">
                                 <h3 className="text-xl font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors line-clamp-2">
@@ -2201,8 +2201,8 @@ export default function Admin() {
                                 </Button>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
+                          </AdminCardContent>
+                        </AdminCard>
                       ))}
                     </div>
                   </TabsContent>
@@ -2211,7 +2211,7 @@ export default function Admin() {
                     <div className="flex justify-end">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                          <Button className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]">
                             <Plus className="h-5 w-5 mr-2" />
                             New Tip
                           </Button>
@@ -2402,11 +2402,11 @@ export default function Admin() {
                     
                     <div className="grid grid-cols-1 gap-6">
                       {tips.map((tip) => (
-                        <Card 
+                        <AdminCard 
                           key={tip.id} 
-                          className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
-                          <CardContent className="p-6">
+                          <AdminCardContent className="p-6">
                             <div className="flex justify-between items-start gap-4">
                               <div className="flex-1 min-w-0 space-y-3">
                                 <h3 className="text-xl font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors line-clamp-2">
@@ -2451,8 +2451,8 @@ export default function Admin() {
                                 </Button>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
+                          </AdminCardContent>
+                        </AdminCard>
                       ))}
                     </div>
                   </TabsContent>
