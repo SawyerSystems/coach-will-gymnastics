@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { ParentFormInput } from '@/components/parent-ui/ParentFormComponents';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
@@ -71,7 +71,7 @@ export function ParentAuthModal({ isOpen, onClose }: ParentAuthModalProps) {
           <form onSubmit={handleSendCode} className="space-y-4">
             <div>
               <Label htmlFor="email">Email Address</Label>
-              <Input
+              <ParentFormInput
                 id="email"
                 type="email"
                 value={email}

@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { ParentFormInput, ParentFormTextarea } from "@/components/parent-ui/ParentFormComponents";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -260,7 +259,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="athleteName">Athlete Name *</Label>
-                      <Input
+                      <ParentFormInput
                         id="athleteName"
                         {...form.register("athleteName")}
                         placeholder="Enter athlete's full name"
@@ -271,7 +270,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
                     </div>
                     <div>
                       <Label htmlFor="athleteDateOfBirth">Date of Birth *</Label>
-                      <Input
+                      <ParentFormInput
                         id="athleteDateOfBirth"
                         type="date"
                         {...form.register("athleteDateOfBirth")}
@@ -285,7 +284,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="signerName">Parent/Guardian Name *</Label>
-                      <Input
+                      <ParentFormInput
                         id="signerName"
                         {...form.register("signerName")}
                         placeholder="Enter your full name"
@@ -296,7 +295,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
                     </div>
                     <div>
                       <Label htmlFor="relationshipToAthlete">Relationship to Athlete *</Label>
-                      <Input
+                      <ParentFormInput
                         id="relationshipToAthlete"
                         {...form.register("relationshipToAthlete")}
                         placeholder="e.g., Parent, Guardian"
@@ -309,15 +308,15 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
 
                   <div className="space-y-4">
                     <Label>Medical Information (Optional)</Label>
-                    <Textarea
+                    <ParentFormTextarea
                       placeholder="Any medical conditions we should know about?"
                       {...form.register("medicalConditions")}
                     />
-                    <Textarea
+                    <ParentFormTextarea
                       placeholder="Any allergies?"
                       {...form.register("allergies")}
                     />
-                    <Textarea
+                    <ParentFormTextarea
                       placeholder="Any medications?"
                       {...form.register("medications")}
                     />
@@ -339,7 +338,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="emergencyContactName">Emergency Contact Name *</Label>
-                      <Input
+                      <ParentFormInput
                         id="emergencyContactName"
                         {...form.register("emergencyContactName")}
                         placeholder="Full name"
@@ -350,7 +349,7 @@ export function WaiverModal({ isOpen, onClose, onWaiverSigned, athleteId, parent
                     </div>
                     <div>
                       <Label htmlFor="emergencyContactPhone">Emergency Contact Phone *</Label>
-                      <Input
+                      <ParentFormInput
                         id="emergencyContactPhone"
                         type="tel"
                         {...form.register("emergencyContactPhone")}

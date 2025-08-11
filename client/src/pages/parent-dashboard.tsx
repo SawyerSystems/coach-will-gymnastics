@@ -2,6 +2,7 @@ import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { ParentAthleteDetailDialog } from '@/components/ParentAthleteDetailDialog';
 import { SafetyInformationDialog } from '@/components/safety-information-dialog';
+import { ParentFormInput, ParentFormTextarea, ParentFormSelectTrigger, Select, SelectContent, SelectItem, SelectValue } from '@/components/parent-ui/ParentFormComponents';
 import { TwoStepFocusAreas } from '@/components/two-step-focus-areas-edit';
 import { AddAthleteModal } from '@/components/AddAthleteModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -9,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UnifiedBookingModal } from '@/components/UnifiedBookingModal';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
 import { toast } from '@/hooks/use-toast';
@@ -133,9 +133,9 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
               onValueChange={setSelectedTime}
               disabled={!selectedDate || slotsLoading}
             >
-              <ParentFormSelect>
+              <ParentFormSelectTrigger>
                 <SelectValue placeholder={slotsLoading ? "Loading times..." : "Select a time"} />
-              </ParentFormSelect>
+              </ParentFormSelectTrigger>
               <SelectContent>
                 {availableSlots.length > 0 ? (
                   availableSlots.map((slot) => (
@@ -453,30 +453,6 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
     </form>
   );
 }
-
-// Unified Form Input Components for Parent Dashboard
-const ParentFormInput = ({ className = "", ...props }: React.ComponentProps<typeof Input>) => (
-  <Input
-    className={`mt-1 bg-[#1a237e] text-[#B8860B] border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] placeholder:text-[#B8860B]/60 ${className}`}
-    {...props}
-  />
-);
-
-const ParentFormTextarea = ({ className = "", ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea
-    className={`mt-1 w-full min-h-[100px] bg-[#1a237e] text-[#B8860B] border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] placeholder:text-[#B8860B]/60 rounded-md border px-3 py-2 ${className}`}
-    {...props}
-  />
-);
-
-const ParentFormSelect = ({ className = "", children, ...props }: React.ComponentProps<typeof SelectTrigger>) => (
-  <SelectTrigger
-    className={`mt-1 bg-[#1a237e] text-[#B8860B] border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] ${className}`}
-    {...props}
-  >
-    {children}
-  </SelectTrigger>
-);
 
 function ParentDashboard() {
   const [, setLocation] = useLocation();
@@ -1751,9 +1727,9 @@ function ParentDashboard() {
                 <div>
                   <Label htmlFor="athlete-experience" className="text-sm font-medium text-gray-700 dark:text-white">Experience Level</Label>
                   <Select defaultValue={editingAthleteInfo.experience}>
-                    <ParentFormSelect>
+                    <ParentFormSelectTrigger>
                       <SelectValue placeholder="Select experience level" />
-                    </ParentFormSelect>
+                    </ParentFormSelectTrigger>
                     <SelectContent>
                       <SelectItem value="beginner">Beginner</SelectItem>
                       <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -1931,9 +1907,9 @@ function ParentDashboard() {
                     Relationship
                   </Label>
                   <Select defaultValue="parent">
-                    <ParentFormSelect>
+                    <ParentFormSelectTrigger>
                       <SelectValue placeholder="Select relationship" />
-                    </ParentFormSelect>
+                    </ParentFormSelectTrigger>
                     <SelectContent>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="guardian">Guardian</SelectItem>
@@ -1974,9 +1950,9 @@ function ParentDashboard() {
                     Relationship
                   </Label>
                   <Select>
-                    <ParentFormSelect>
+                    <ParentFormSelectTrigger>
                       <SelectValue placeholder="Select relationship" />
-                    </ParentFormSelect>
+                    </ParentFormSelectTrigger>
                     <SelectContent>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="guardian">Guardian</SelectItem>
@@ -2017,9 +1993,9 @@ function ParentDashboard() {
                     Relationship
                   </Label>
                   <Select>
-                    <ParentFormSelect>
+                    <ParentFormSelectTrigger>
                       <SelectValue placeholder="Select relationship" />
-                    </ParentFormSelect>
+                    </ParentFormSelectTrigger>
                     <SelectContent>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="guardian">Guardian</SelectItem>

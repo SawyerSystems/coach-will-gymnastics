@@ -153,7 +153,7 @@ export function SafetyInformationDialog({
                       <FormControl>
                         <Input 
                           placeholder="Full name" 
-                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]"
                           {...field} 
                         />
                       </FormControl>
@@ -172,7 +172,7 @@ export function SafetyInformationDialog({
                         <Input 
                           type="tel" 
                           placeholder="(555) 123-4567" 
-                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]"
                           {...field} 
                         />
                       </FormControl>
@@ -190,7 +190,7 @@ export function SafetyInformationDialog({
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                        <SelectTrigger className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]">
                           <SelectValue placeholder="Select relationship" />
                         </SelectTrigger>
                       </FormControl>
@@ -220,7 +220,7 @@ export function SafetyInformationDialog({
                       <FormControl>
                         <Input 
                           placeholder="Full name" 
-                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]"
                           {...field} 
                         />
                       </FormControl>
@@ -239,7 +239,7 @@ export function SafetyInformationDialog({
                         <Input 
                           type="tel" 
                           placeholder="(555) 123-4567" 
-                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]"
                           {...field} 
                         />
                       </FormControl>
@@ -257,7 +257,7 @@ export function SafetyInformationDialog({
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                        <SelectTrigger className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]">
                           <SelectValue placeholder="Select relationship" />
                         </SelectTrigger>
                       </FormControl>
@@ -287,7 +287,7 @@ export function SafetyInformationDialog({
                       <FormControl>
                         <Input 
                           placeholder="Full name (optional)" 
-                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]"
                           {...field} 
                           value={field.value || ""} 
                         />
@@ -307,7 +307,7 @@ export function SafetyInformationDialog({
                         <Input 
                           type="tel" 
                           placeholder="(555) 123-4567" 
-                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]"
                           {...field} 
                           value={field.value || ""} 
                         />
@@ -326,7 +326,7 @@ export function SafetyInformationDialog({
                     <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                       <FormControl>
-                        <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                        <SelectTrigger className="mt-1 border-gray-300 dark:!border-[#B8860B] focus:border-[#0F0276] dark:focus:!border-[#B8860B] dark:!text-[#B8860B]">
                           <SelectValue placeholder="Select relationship (optional)" />
                         </SelectTrigger>
                       </FormControl>

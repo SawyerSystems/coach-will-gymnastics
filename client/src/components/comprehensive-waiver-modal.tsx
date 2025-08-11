@@ -6,7 +6,7 @@ import SignatureCanvas from "react-signature-canvas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { ParentFormInput } from "@/components/parent-ui/ParentFormComponents";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -294,7 +294,7 @@ export function ComprehensiveWaiverModal({
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="athleteName">Athlete Name</Label>
-                    <Input
+                    <ParentFormInput
                       id="athleteName"
                       {...form.register("athleteName")}
                       placeholder="Full name of athlete"
@@ -308,7 +308,7 @@ export function ComprehensiveWaiverModal({
 
                   <div>
                     <Label htmlFor="signerName">Name of Signer</Label>
-                    <Input
+                    <ParentFormInput
                       id="signerName"
                       {...form.register("signerName")}
                       placeholder="Your full name"
@@ -322,7 +322,7 @@ export function ComprehensiveWaiverModal({
 
                   <div>
                     <Label htmlFor="relationshipToAthlete">Relationship to Athlete</Label>
-                    <Input
+                    <ParentFormInput
                       id="relationshipToAthlete"
                       {...form.register("relationshipToAthlete")}
                       placeholder="e.g., Parent/Guardian"
@@ -336,7 +336,7 @@ export function ComprehensiveWaiverModal({
 
                   <div>
                     <Label htmlFor="emergencyContactNumber">Emergency Contact Number</Label>
-                    <Input
+                    <ParentFormInput
                       id="emergencyContactNumber"
                       {...form.register("emergencyContactNumber")}
                       placeholder="Phone number for emergencies"

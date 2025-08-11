@@ -15,7 +15,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { ParentFormInput } from "@/components/parent-ui/ParentFormComponents";
 import {
     Select,
     SelectContent,
@@ -590,7 +590,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                         <FormItem>
                           <FormLabel>Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter athlete name" {...field} />
+                            <ParentFormInput placeholder="Enter athlete name" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -603,7 +603,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                         <FormItem>
                           <FormLabel>Date of Birth</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <ParentFormInput type="date" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -666,7 +666,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                         <FormItem>
                           <FormLabel>Allergies/Medical</FormLabel>
                           <FormControl>
-                            <Input placeholder="None" {...field} value={field.value ?? ""} />
+                            <ParentFormInput placeholder="None" {...field} value={field.value ?? ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -687,7 +687,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>Name</FormLabel>
                             <FormControl>
-                              <Input 
+                              <ParentFormInput 
                                 placeholder="Enter athlete name" 
                                 value={field.value || ""} 
                                 onChange={field.onChange}
@@ -708,7 +708,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>Date of Birth</FormLabel>
                             <FormControl>
-                              <Input type="date" value={field.value || ""} onChange={field.onChange} />
+                              <ParentFormInput type="date" value={field.value || ""} onChange={field.onChange} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -771,7 +771,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>Allergies/Medical</FormLabel>
                             <FormControl>
-                              <Input placeholder="None" {...field} value={field.value ?? ""} />
+                              <ParentFormInput placeholder="None" {...field} value={field.value ?? ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -799,7 +799,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           Preferred Date
                         </FormLabel>
                         <FormControl>
-                          <Input 
+                          <ParentFormInput 
                             type="date" 
                             value={field.value ? field.value.toISOString().split('T')[0] : ''} 
                             onChange={(e) => field.onChange(new Date(e.target.value))}
@@ -884,7 +884,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>First Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter first name" {...field} />
+                              <ParentFormInput placeholder="Enter first name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -897,7 +897,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>Last Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter last name" {...field} />
+                              <ParentFormInput placeholder="Enter last name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -911,7 +911,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="Enter email address" {...field} />
+                            <ParentFormInput type="email" placeholder="Enter email address" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -924,7 +924,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                         <FormItem>
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input type="tel" placeholder="Enter phone number" {...field} />
+                            <ParentFormInput type="tel" placeholder="Enter phone number" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -940,7 +940,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>Emergency Contact Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Enter emergency contact name" {...field} />
+                              <ParentFormInput placeholder="Enter emergency contact name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -953,7 +953,7 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           <FormItem>
                             <FormLabel>Emergency Contact Phone</FormLabel>
                             <FormControl>
-                              <Input type="tel" placeholder="Enter emergency contact phone" {...field} />
+                              <ParentFormInput type="tel" placeholder="Enter emergency contact phone" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
