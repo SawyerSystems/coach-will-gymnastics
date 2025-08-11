@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from '@/components/admin-ui/AdminModal';
+import { AdminButton } from '@/components/admin-ui/AdminButton';
 import { useToast } from '@/hooks/use-toast';
 import { determineBookingStatus } from '@/lib/booking-status';
 import { apiRequest } from '@/lib/queryClient';
@@ -816,8 +818,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
     try {
       // Run form validation
@@ -940,48 +942,75 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     return lessonType ? lessonType.isPrivate : true;
   };
 
-  return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          resetForm();
-          onClose();
-        }
-      }}
-    >
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="bg-gradient-to-r from-blue-700 to-blue-900 text-white px-6 py-4 rounded-t-lg">
-          <DialogTitle className="text-xl font-bold">
-            Edit Booking #{booking.id}
-          </DialogTitle>
-          <p className="text-sm text-blue-100 mt-1">
-            Edit booking details including status, payment, athletes, and safety information
-          </p>
-        </DialogHeader>
+  const footer = (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        {isDevMode && attendanceStatus === "confirmed" && (
+          <AdminButton
+            variant="destructive"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+                deleteBookingMutation.mutate(booking.id);
+              }
+            }}
+            className="flex items-center gap-2"
+          >
+            Delete Booking
+          </AdminButton>
+        )}
+      </div>
+      <div className="flex gap-3">
+        <AdminButton 
+          variant="secondary"
+          onClick={() => onClose()}
+        >
+          Cancel
+        </AdminButton>
+        <AdminButton 
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={updateBookingMutation.isPending}
+        >
+          {updateBookingMutation.isPending ? 'Updating...' : 'Update Booking'}
+        </AdminButton>
+      </div>
+    </div>
+  );
 
-        <form onSubmit={handleSubmit} className="space-y-6 px-6 py-4">
-          {isValidationError && (
-            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 flex items-start gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-              <div className="text-sm">{validationMessage}</div>
-            </div>
-          )}
-          
-          <Tabs value={tab} onValueChange={setTab} className="w-full">
-            <TabsList className="grid grid-cols-4 bg-gray-100 p-1 rounded-lg">
-              <TabsTrigger value="general" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">General</TabsTrigger>
-              <TabsTrigger value="athletes" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">Athletes</TabsTrigger>
-              <TabsTrigger value="safety" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">Safety Info</TabsTrigger>
-              <TabsTrigger value="notes" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">Notes</TabsTrigger>
-            </TabsList>
+  return (
+    <AdminModal
+      isOpen={open}
+      onClose={() => {
+        resetForm();
+        onClose();
+      }}
+      title={`Edit Booking #${booking.id}`}
+      size="3xl"
+      showCloseButton={false}
+      footer={footer}
+    >
+      <div className="space-y-6">
+        {isValidationError && (
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 flex items-start gap-2 dark:bg-red-900/20 dark:border-red-800/40 dark:text-red-300">
+            <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+            <div className="text-sm">{validationMessage}</div>
+          </div>
+        )}
+        
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className="grid grid-cols-4 bg-gray-100 p-1 rounded-lg dark:bg-[#0F0276]/20">
+            <TabsTrigger value="general" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm dark:data-[state=active]:bg-[#0F0276]/40 dark:data-[state=active]:text-blue-200">General</TabsTrigger>
+            <TabsTrigger value="athletes" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm dark:data-[state=active]:bg-[#0F0276]/40 dark:data-[state=active]:text-blue-200">Athletes</TabsTrigger>
+            <TabsTrigger value="safety" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm dark:data-[state=active]:bg-[#0F0276]/40 dark:data-[state=active]:text-blue-200">Safety Info</TabsTrigger>
+            <TabsTrigger value="notes" className="data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm dark:data-[state=active]:bg-[#0F0276]/40 dark:data-[state=active]:text-blue-200">Notes</TabsTrigger>
+          </TabsList>
             
             <TabsContent value="general" className="space-y-4 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
                   <div className="flex justify-between items-center">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <CheckCircle className="h-4 w-4 text-blue-500" />
+                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200">
+                      <CheckCircle className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                       Booking Status
                     </Label>
                     
@@ -1056,9 +1085,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                   </div>
                 </div>
                 
-                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <CreditCard className="h-4 w-4 text-green-500" />
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200">
+                    <CreditCard className="h-4 w-4 text-green-500 dark:text-green-400" />
                     Payment Status
                   </Label>
                   <Select value={paymentStatus} onValueChange={setPaymentStatus}>
@@ -1077,9 +1106,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <UserCheck className="h-4 w-4 text-purple-500" />
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200">
+                    <UserCheck className="h-4 w-4 text-purple-500 dark:text-purple-400" />
                     Attendance Status
                   </Label>
                   <Select value={attendanceStatus} onValueChange={setAttendanceStatus}>
@@ -1096,9 +1125,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                   </Select>
                 </div>
                 
-                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm">
-                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <DollarSign className="h-4 w-4 text-green-600" />
+                <div className="bg-white bg-opacity-80 p-3 rounded-lg border border-gray-200 shadow-sm dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200">
+                    <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
                     Paid Amount
                   </Label>
                   <div className="relative mt-1.5">
@@ -1152,9 +1181,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                 </div>
                 
                 {/* Step 1: Select Apparatus */}
-                <div className="mb-4 bg-white p-3 rounded-lg">
-                  <Label className="text-sm font-medium text-blue-700 flex items-center gap-1.5 mb-2">
-                    <Target className="h-4 w-4 text-blue-600" />
+                <div className="mb-4 bg-white p-3 rounded-lg dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40 border border-gray-200">
+                  <Label className="text-sm font-medium text-blue-700 flex items-center gap-1.5 mb-2 dark:text-blue-200">
+                    <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     Step 1: Select Apparatus
                   </Label>
                   <div className="flex flex-wrap gap-2">
@@ -1186,10 +1215,10 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
 
                 {/* Step 2: Select Focus Areas */}
                 <div className="flex flex-col gap-3">
-                  <div className="bg-white p-3 rounded-lg">
+                  <div className="bg-white p-3 rounded-lg dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40 border border-gray-200">
                     <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm font-medium text-teal-700 flex items-center gap-1.5">
-                        <Target className="h-4 w-4 text-teal-600" />
+                      <Label className="text-sm font-medium text-teal-700 flex items-center gap-1.5 dark:text-blue-200">
+                        <Target className="h-4 w-4 text-teal-600 dark:text-blue-400" />
                         Step 2: Select Focus Areas
                       </Label>
                       {selectedApparatusId && (
@@ -1634,44 +1663,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
               </div>
             </TabsContent>
           </Tabs>
-
-          <div className="flex justify-between gap-4 pt-6 mt-2">
-            <div>
-              {booking.id && (
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to delete this booking? This action cannot be undone.")) {
-                      handleDeleteBooking(booking.id);
-                    }
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Delete Booking
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onClose()}
-                className="border-gray-300 hover:bg-gray-50"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={updateBookingMutation.isPending}
-                className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800"
-              >
-                {updateBookingMutation.isPending ? 'Updating...' : 'Update Booking'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+    </AdminModal>
   );
 }
