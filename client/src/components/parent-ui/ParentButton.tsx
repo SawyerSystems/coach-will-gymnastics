@@ -30,23 +30,23 @@ const sizes: Record<NonNullable<ParentButtonProps["size"]>, string> = {
 
 const variants: Record<ParentButtonVariant, string> = {
   primary:
-    "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 shadow-lg hover:shadow-xl",
+    "bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] text-white border-0 shadow-lg hover:shadow-xl",
   secondary:
-    "border border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-purple-400/40 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 backdrop-blur-sm text-blue-800 dark:text-white",
+    "border border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm text-[#0F0276] dark:text-white",
   destructive:
     "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md hover:shadow-lg",
   success:
     "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-md hover:shadow-lg",
   ghost:
-    "bg-transparent hover:bg-white/50 dark:hover:bg-purple-400/10 text-blue-800 dark:text-purple-300",
+    "bg-transparent hover:bg-white/50 dark:hover:bg-white/10 text-[#0F0276] dark:text-white",
   iconPurple:
-    "bg-white hover:bg-purple-50 text-purple-600 border-0 shadow-md hover:shadow-lg dark:bg-purple-900/50 dark:hover:bg-purple-900/70 dark:text-purple-300",
+    "bg-white hover:bg-purple-50 text-purple-600 border-0 shadow-md hover:shadow-lg dark:bg-white/10 dark:hover:bg-white/20 dark:text-purple-300",
   iconBlue:
-    "bg-white hover:bg-blue-50 text-blue-600 border-0 shadow-md hover:shadow-lg dark:bg-blue-900/50 dark:hover:bg-blue-900/70 dark:text-blue-300",
+    "bg-white hover:bg-blue-50 text-blue-600 border-0 shadow-md hover:shadow-lg dark:bg-white/10 dark:hover:bg-white/20 dark:text-blue-300",
   iconGreen:
-    "bg-white hover:bg-green-50 text-green-600 border-0 shadow-md hover:shadow-lg dark:bg-green-900/50 dark:hover:bg-green-900/70 dark:text-green-300",
+    "bg-white hover:bg-green-50 text-green-600 border-0 shadow-md hover:shadow-lg dark:bg-white/10 dark:hover:bg-white/20 dark:text-green-300",
   iconRed:
-    "bg-white hover:bg-red-50 text-red-600 border-0 shadow-md hover:shadow-lg dark:bg-red-900/50 dark:hover:bg-red-900/70 dark:text-red-300",
+    "bg-white hover:bg-red-50 text-red-600 border-0 shadow-md hover:shadow-lg dark:bg-white/10 dark:hover:bg-white/20 dark:text-red-300",
 };
 
 export const ParentButton = React.forwardRef<HTMLButtonElement, ParentButtonProps>(

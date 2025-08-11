@@ -5,8 +5,8 @@ export function ParentMainContainer({ className, ...props }: React.HTMLAttribute
   return (
     <div
       className={cn(
-        // Main container with purple-themed gradient background
-        "min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20",
+        // Main container with blue-themed gradient background matching admin
+        "min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-[#0F0276] dark:via-[#1e293b] dark:to-[#0F0276]",
         className
       )}
       {...props}
@@ -42,7 +42,7 @@ export function ParentPageTitle({ className, ...props }: React.HTMLAttributes<HT
   return (
     <h1
       className={cn(
-        "text-2xl sm:text-3xl font-bold text-blue-800 dark:text-white mb-2",
+        "text-2xl sm:text-3xl font-bold text-[#0F0276] dark:text-white mb-2",
         className
       )}
       {...props}
@@ -54,7 +54,7 @@ export function ParentPageSubtitle({ className, ...props }: React.HTMLAttributes
   return (
     <p
       className={cn(
-        "text-blue-600/80 dark:text-purple-300",
+        "text-[#0F0276]/80 dark:text-white/70",
         className
       )}
       {...props}

@@ -1,18 +1,16 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
-export interface ParentTabsProps {
-  defaultValue: string;
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function ParentTabs({ defaultValue, children, className }: ParentTabsProps) {
+export function ParentTabs({ className, ...props }: React.ComponentProps<typeof Tabs>) {
   return (
-    <Tabs defaultValue={defaultValue} className={cn("w-full", className)}>
-      {children}
-    </Tabs>
+    <Tabs
+      className={cn(
+        "w-full",
+        className
+      )}
+      {...props}
+    />
   );
 }
 
@@ -20,7 +18,7 @@ export function ParentTabsList({ className, ...props }: React.HTMLAttributes<HTM
   return (
     <TabsList
       className={cn(
-        "grid w-full rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-200/60 p-2 dark:bg-purple-900/30 dark:border-purple-400/20",
+        "grid w-full rounded-2xl bg-white/60 backdrop-blur-sm border border-slate-200/60 p-2 dark:bg-[#0F0276]/30 dark:border-white/10",
         className
       )}
       {...props}
@@ -37,7 +35,7 @@ export function ParentTabsTrigger({ className, value, ...props }: ParentTabsTrig
     <TabsTrigger
       value={value}
       className={cn(
-        "rounded-xl font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md text-blue-800 dark:text-purple-300 dark:data-[state=active]:text-white",
+        "rounded-xl font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-400 data-[state=active]:to-yellow-500 data-[state=active]:text-[#0F0276] data-[state=active]:shadow-md text-yellow-600 dark:text-yellow-400 dark:data-[state=active]:text-[#0F0276]",
         className
       )}
       {...props}
