@@ -487,9 +487,9 @@ export function AthleteDetailDialog({
 
                 {waiverStatus.waiverSigned ? (
                   <div className="space-y-4">
-                    <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800/40">
+                    <div className="bg-green-50/50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200/50 dark:border-green-800/40">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-green-100 dark:bg-green-800/40 rounded-full">
+                        <div className="p-2 bg-green-100/70 dark:bg-green-800/40 rounded-full">
                           <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                         </div>
                         <div>
@@ -527,7 +527,7 @@ export function AthleteDetailDialog({
                     </div>
 
                     {waiverStatus.waiverAgreements && (
-                      <div className="bg-slate-50 dark:bg-[#0F0276]/20 p-4 rounded-lg border dark:border-[#2A4A9B]/40">
+                      <div className="bg-slate-50/30 dark:bg-[#0F0276]/10 p-4 rounded-lg border border-slate-200/50 dark:border-[#2A4A9B]/30">
                         <div className="flex items-center gap-2 mb-3">
                           <FileText className="h-4 w-4 text-slate-600 dark:text-blue-400" />
                           <h4 className="font-medium text-slate-800 dark:text-blue-200">Agreement Details</h4>
@@ -565,9 +565,9 @@ export function AthleteDetailDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg border border-red-200 dark:border-red-800/40">
+                  <div className="bg-red-50/50 dark:bg-red-900/20 p-6 rounded-lg border border-red-200/50 dark:border-red-800/40">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-red-100 dark:bg-red-800/40 rounded-full">
+                      <div className="p-2 bg-red-100/70 dark:bg-red-800/40 rounded-full">
                         <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                       </div>
                       <div>

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "@/components/admin-ui/AdminModal";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -80,39 +80,23 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
 
   if (isLoading) {
     return (
-      <Card className="rounded-xl border shadow-sm mb-6" role="region" aria-labelledby="booking-history-heading">
-        <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-t-xl">
-          <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            Booking History
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-            <span className="ml-2 text-gray-600">Loading booking history...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <AdminModalSection title="Booking History" className="mb-6">
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading booking history...</span>
+        </div>
+      </AdminModalSection>
     );
   }
 
   if (error && fallbackBookings.length === 0) {
     return (
-      <Card className="rounded-xl border shadow-sm mb-6" role="region" aria-labelledby="booking-history-heading">
-        <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-t-xl">
-          <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            Booking History
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-center py-4 text-amber-600">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            <span>Unable to load detailed booking history</span>
-          </div>
-        </CardContent>
-      </Card>
+      <AdminModalSection title="Booking History" className="mb-6">
+        <div className="flex items-center justify-center py-4 text-amber-600 dark:text-amber-400">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          <span>Unable to load detailed booking history</span>
+        </div>
+      </AdminModalSection>
     );
   }
 
@@ -176,19 +160,12 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
   };
 
   return (
-    <Card className="rounded-xl border shadow-sm mb-6" role="region" aria-labelledby="booking-history-heading">
-      <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-green-50 rounded-t-xl">
-        <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-blue-600" />
-          Booking History ({bookings.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4">
+    <AdminModalSection title={`Booking History (${bookings.length})`} className="mb-6">
       
       {bookings.length === 0 ? (
         <div className="text-center py-8">
-          <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500" role="status">No bookings found for this athlete</p>
+          <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400" role="status">No bookings found for this athlete</p>
         </div>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -204,7 +181,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
               return (
                 <div 
                   key={booking.id} 
-                  className="border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                  className="border rounded-lg bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                   role="article" 
                   aria-label={`Booking ${booking.id}`}
                 >
@@ -266,7 +243,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                             if (status.includes('session') && status.includes('paid') && anyPrice) amount = String(anyPrice);
                           }
                           return amount ? (
-                            <span className="text-xs text-gray-600">${amount}</span>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">${amount}</span>
                           ) : null;
                         })()}
                       </div>
@@ -274,7 +251,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                       {/* Booking status */}
                       <div className="flex items-center space-x-1">
                         {getStatusIcon(booking.attendanceStatus || booking.status)}
-                        <span className="text-xs font-medium capitalize text-gray-700">
+                        <span className="text-xs font-medium capitalize text-gray-700 dark:text-gray-300">
                           {booking.attendanceStatus || booking.status}
                         </span>
                       </div>
@@ -283,7 +260,7 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                       {booking.athleteCount > 1 && (
                         <div className="flex items-center">
                           <Users className="w-4 h-4 text-blue-500" />
-                          <span className="text-xs text-gray-600 ml-1">
+                          <span className="text-xs text-gray-600 dark:text-gray-400 ml-1">
                             {booking.athleteCount}
                           </span>
                         </div>
@@ -293,66 +270,63 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
 
                   {/* Expanded details - only visible when expanded */}
                   {isExpanded && (
-                    <div className="px-6 pb-4 border-t bg-gray-50">
+                    <div className="px-6 pb-4 border-t border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/50">
                       <div className="pt-3 space-y-3">
                         {/* Basic details grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <AdminModalGrid cols={2}>
                           {/* Coach info */}
-                          <div className="flex items-center">
-                            <User className="w-4 h-4 text-gray-500 mr-2" />
-                            <span className="text-sm">{booking.coachName || 'Coach Will'}</span>
-                          </div>
+                          <AdminModalDetailRow
+                            label="Coach"
+                            value={booking.coachName || 'Coach Will'}
+                            icon={<User className="w-4 h-4" />}
+                          />
 
                           {/* Booking method */}
-                          <div className="flex items-center">
-                            <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-                            <span className="text-sm capitalize">{booking.bookingMethod}</span>
-                          </div>
+                          <AdminModalDetailRow
+                            label="Booking Method"
+                            value={booking.bookingMethod}
+                            icon={<MapPin className="w-4 h-4" />}
+                          />
 
                           {/* Payment details */}
-                          <div className="flex items-center">
-                            <DollarSign className="w-4 h-4 text-gray-500 mr-2" />
-                            <span className="text-sm">
-                              <span className="font-medium capitalize">{booking.paymentStatus}</span>
-                              {(() => {
-                                const status = (booking.paymentStatus || '').toLowerCase();
-                                let amount = booking.paidAmount;
-                                if (!amount || amount === '0.00') {
-                                  const anyPrice = (booking as any).lessonTypeTotalPrice || (booking as any).lesson_types?.total_price;
-                                  const anyFee = (booking as any).lessonTypeReservationFee || (booking as any).lesson_types?.reservation_fee;
-                                  if (status.includes('reservation') && status.includes('paid') && anyFee) amount = String(anyFee);
-                                  if (status.includes('session') && status.includes('paid') && anyPrice) amount = String(anyPrice);
-                                }
-                                return amount ? (
-                                  <span className="text-gray-600"> - ${amount}</span>
-                                ) : null;
-                              })()}
-                            </span>
-                          </div>
+                          <AdminModalDetailRow
+                            label="Payment Status"
+                            value={(() => {
+                              const status = (booking.paymentStatus || '').toLowerCase();
+                              let amount = booking.paidAmount;
+                              if (!amount || amount === '0.00') {
+                                const anyPrice = (booking as any).lessonTypeTotalPrice || (booking as any).lesson_types?.total_price;
+                                const anyFee = (booking as any).lessonTypeReservationFee || (booking as any).lesson_types?.reservation_fee;
+                                if (status.includes('reservation') && status.includes('paid') && anyFee) amount = String(anyFee);
+                                if (status.includes('session') && status.includes('paid') && anyPrice) amount = String(anyPrice);
+                              }
+                              return `${booking.paymentStatus}${amount ? ` - $${amount}` : ''}`;
+                            })()}
+                            icon={<DollarSign className="w-4 h-4" />}
+                          />
 
                           {/* Attendance status */}
                           {booking.attendanceStatus && booking.attendanceStatus !== 'pending' && (
-                            <div className="flex items-center">
-                              {getStatusIcon(booking.attendanceStatus)}
-                              <span className="ml-2 text-sm">
-                                Attendance: <span className="font-medium capitalize">{booking.attendanceStatus}</span>
-                              </span>
-                            </div>
+                            <AdminModalDetailRow
+                              label="Attendance"
+                              value={booking.attendanceStatus}
+                              icon={getStatusIcon(booking.attendanceStatus)}
+                            />
                           )}
-                        </div>
+                        </AdminModalGrid>
 
-                        {/* Focus areas */}
+                        {/* Focus Areas */}
                         {booking.focusAreas && booking.focusAreas.length > 0 && (
                           <div>
                             <div className="flex items-center mb-2">
                               <Target className="w-4 h-4 text-orange-500 mr-1" />
-                              <span className="text-sm font-medium">Focus Areas:</span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Focus Areas:</span>
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {booking.focusAreas.map((area: string, index: number) => (
                                 <span 
                                   key={index}
-                                  className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full"
+                                  className="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 text-xs px-2 py-1 rounded-full"
                                 >
                                   {area}
                                 </span>
@@ -366,9 +340,35 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                           <div>
                             <div className="flex items-center mb-2">
                               <FileText className="w-4 h-4 text-green-500 mr-1" />
-                              <span className="text-sm font-medium">Progress Note:</span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Progress Note:</span>
                             </div>
-                            <p className="text-sm text-gray-700 bg-green-50 p-2 rounded">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-green-50/50 dark:bg-green-900/20 p-2 rounded border border-green-200/50 dark:border-green-800/30">
+                              {booking.progressNote}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Special requests */}
+                        {booking.specialRequests && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <AlertCircle className="w-4 h-4 text-blue-500 mr-1" />
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Special Requests:</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-blue-50/50 dark:bg-blue-900/20 p-2 rounded border border-blue-200/50 dark:border-blue-800/30">
+                              {booking.specialRequests}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Progress note */}
+                        {booking.progressNote && (
+                          <div>
+                            <div className="flex items-center mb-2">
+                              <FileText className="w-4 h-4 text-green-500 mr-1" />
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Progress Note:</span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-green-50/50 dark:bg-green-900/20 p-2 rounded border border-green-200/50 dark:border-green-800/30">
                               {booking.progressNote}
                             </p>
                           </div>
@@ -392,9 +392,9 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                           <div>
                             <div className="flex items-center mb-2">
                               <AlertCircle className="w-4 h-4 text-purple-500 mr-1" />
-                              <span className="text-sm font-medium">Admin Notes:</span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Admin Notes:</span>
                             </div>
-                            <p className="text-sm text-gray-700 bg-purple-50 p-2 rounded">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 bg-purple-50/50 dark:bg-purple-900/20 p-2 rounded border border-purple-200/50 dark:border-purple-800/30">
                               {booking.adminNotes}
                             </p>
                           </div>
@@ -403,8 +403,8 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                         {/* Pickup/Dropoff info */}
                         {(booking.dropoffPersonName || booking.pickupPersonName) && (
                           <div>
-                            <div className="text-sm font-medium mb-2">Transportation:</div>
-                            <div className="text-sm text-gray-600 bg-gray-100 p-2 rounded space-y-1">
+                            <div className="text-sm font-medium mb-2 text-gray-900 dark:text-gray-100">Transportation:</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-100/50 dark:bg-gray-800/50 p-2 rounded border border-gray-200/50 dark:border-gray-700/50 space-y-1">
                               {booking.dropoffPersonName && (
                                 <div>
                                   <span className="font-medium">Drop-off:</span> {booking.dropoffPersonName}
@@ -422,16 +422,16 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
                         )}
 
                         {/* Footer with safety and booking info */}
-                        <div className="flex items-center justify-between text-xs text-gray-500 border-t pt-2 mt-3">
+                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 border-t border-slate-200 dark:border-slate-600 pt-2 mt-3">
                           <div className="flex items-center space-x-4">
                             {booking.safetyVerificationSigned && (
-                              <div className="flex items-center text-green-600">
+                              <div className="flex items-center text-green-600 dark:text-green-400">
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Safety Verified
                               </div>
                             )}
                             {booking.waiverStatus === 'signed' && (
-                              <div className="flex items-center text-green-600">
+                              <div className="flex items-center text-green-600 dark:text-green-400">
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Waiver Signed
                               </div>
@@ -449,7 +449,6 @@ export function BookingHistoryDisplay({ athleteId, fallbackBookings = [] }: Book
             })}
         </div>
       )}
-    </CardContent>
-    </Card>
+    </AdminModalSection>
   );
 }
