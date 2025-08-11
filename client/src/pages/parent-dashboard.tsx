@@ -605,7 +605,11 @@ function ParentDashboard() {
   if (!authStatus) {
     return (
       <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#0F0276] dark:border-[#D8BD2A] border-t-transparent rounded-full"></div>
+        <img 
+          src="/CWT_Circle_LogoSPIN.png" 
+          alt="Loading" 
+          className="animate-spin w-16 h-16" 
+        />
       </div>
     );
   }
@@ -614,7 +618,11 @@ function ParentDashboard() {
   if (!authStatus.loggedIn) {
     return (
       <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#0F0276] dark:border-[#D8BD2A] border-t-transparent rounded-full"></div>
+        <img 
+          src="/CWT_Circle_LogoSPIN.png" 
+          alt="Loading" 
+          className="animate-spin w-16 h-16" 
+        />
       </div>
     );
   }

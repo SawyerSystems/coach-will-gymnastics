@@ -110,7 +110,11 @@ export const LazyImage = memo(function LazyImage({
       {/* Loading indicator */}
       {isLoading && isInView && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+          <img 
+            src="/CWT_Circle_LogoSPIN.png" 
+            alt="Loading" 
+            className="w-6 h-6 animate-spin" 
+          />
         </div>
       )}
     </div>

@@ -198,7 +198,11 @@ export default function ParentRegister() {
               >
                 {registerMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <img 
+                      src="/CWT_Circle_LogoSPIN.png" 
+                      alt="Loading" 
+                      className="mr-2 h-4 w-4 animate-spin" 
+                    />
                     Registering...
                   </>
                 ) : (

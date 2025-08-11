@@ -394,6 +394,29 @@
     animation: glowYellow 2s ease-in-out infinite alternate;
   }
   
+  .animate-logo-spin {
+    animation: logoSpin 15s ease-in-out infinite;
+  }
+  
+  .animate-logo-spin:hover {
+    animation-play-state: paused;
+  }
+  
+  @keyframes logoSpin {
+    0%, 80% {
+      transform: rotate(0deg);
+    }
+    6.67%, 13.33% {
+      transform: rotate(360deg);
+    }
+    20%, 26.67% {
+      transform: rotate(720deg);
+    }
+    33.33%, 40% {
+      transform: rotate(1080deg);
+    }
+  }
+  
   @keyframes pulseGold {
     0%, 100% {
       background-color: #D8BD2A;

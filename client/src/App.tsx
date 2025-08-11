@@ -11,7 +11,11 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 const PageLoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-[400px]">
     <div className="text-center space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-300 border-t-blue-600 mx-auto" />
+      <img 
+        src="/CWT_Circle_LogoSPIN.png" 
+        alt="Loading" 
+        className="animate-spin h-12 w-12 mx-auto" 
+      />
       <p className="text-muted-foreground">Loading...</p>
     </div>
   </div>

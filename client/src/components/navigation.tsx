@@ -111,7 +111,7 @@ export const Navigation = memo(function Navigation() {
       <div className="container mx-auto flex h-20 md:h-20 items-center justify-between px-4 py-4 md:px-6 md:py-0">
         <Link href="/">
           <div className="flex items-center space-x-2 cursor-pointer relative">
-            <div className="w-14 h-14 animate-spin" style={{ animationDuration: '3s' }}>
+            <div className="w-14 h-14 animate-logo-spin">
               <img 
                 src={logoSpin} 
                 alt="Coach Will Tumbles Logo" 

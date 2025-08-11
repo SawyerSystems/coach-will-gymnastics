@@ -138,7 +138,7 @@ export function BookingLoginModal({ isOpen, onClose, onLoginSuccess }: BookingLo
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="mr-2 h-4 w-4 animate-spin" />}
             Login
           </Button>
 

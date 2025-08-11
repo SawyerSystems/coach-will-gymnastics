@@ -87,7 +87,11 @@ export default function BookingSuccess() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto mb-4" />
+          <img 
+            src="/CWT_Circle_LogoSPIN.png" 
+            alt="Loading" 
+            className="h-8 w-8 animate-spin mx-auto mb-4" 
+          />
           <p className="text-gray-600">Loading your booking details...</p>
         </div>
       </div>

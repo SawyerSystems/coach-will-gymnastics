@@ -777,8 +777,12 @@ export default function Admin() {
   // EARLY RETURNS AFTER ALL HOOKS
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
+        <img 
+          src="/CWT_Circle_LogoSPIN.png" 
+          alt="Loading" 
+          className="animate-spin w-16 h-16" 
+        />
       </div>
     );
   }
@@ -1789,7 +1793,11 @@ export default function Admin() {
                 {parentsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center space-y-4">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0F0276] dark:text-[#D8BD2A]" />
+                      <img 
+                        src="/CWT_Circle_LogoSPIN.png" 
+                        alt="Loading" 
+                        className="h-8 w-8 animate-spin mx-auto" 
+                      />
                       <p className="text-slate-600 dark:text-slate-200 font-medium">Loading parents data...</p>
                     </div>
                   </div>
@@ -3398,7 +3406,11 @@ export default function Admin() {
                       />
                       {uploadingPhoto && (
                         <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                          <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                          <img 
+                            src="/CWT_Circle_LogoSPIN.png" 
+                            alt="Loading" 
+                            className="animate-spin w-6 h-6" 
+                          />
                         </div>
                       )}
                     </div>

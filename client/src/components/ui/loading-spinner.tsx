@@ -14,10 +14,11 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
 
   return (
     <div className={cn("flex items-center justify-center", className)}>
-      <div className={cn(
-        "animate-spin rounded-full border-2 border-gray-300 border-t-blue-600",
-        sizeClasses[size]
-      )} />
+      <img 
+        src="/CWT_Circle_LogoSPIN.png" 
+        alt="Loading" 
+        className={cn("animate-spin", sizeClasses[size])} 
+      />
     </div>
   );
 }
