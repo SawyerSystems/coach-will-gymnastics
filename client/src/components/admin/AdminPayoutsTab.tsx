@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, DollarSign, Filter, RefreshCw, Calendar as CalendarIcon, Plus, Trash2, Users, BarChart3 } from 'lucide-react';
+import { Download, DollarSign, Filter, RefreshCw, Calendar as CalendarIcon, Plus, Trash2, Users, BarChart3, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AdminAnalyticsMetrics, type MetricCard } from '@/components/admin-ui/AdminAnalyticsMetrics';
+import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from '@/components/admin-ui/AdminModal';
+import { AdminButton } from '@/components/admin-ui/AdminButton';
 import { apiRequest } from '@/lib/queryClient';
 import { useBackfillPayouts, useDeletePayoutRun, useGeneratePayoutRun, useLockPayoutRun, usePayoutRuns, useClearPayouts } from '@/hooks/useAdminPayouts';
 import { usePayoutRates, useCreatePayoutRate, useRetirePayoutRate } from '@/hooks/usePayoutRates';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 
 type MembershipFilter = 'all' | 'member' | 'non-member';
@@ -626,165 +627,257 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 		}
 	};
 
-		return (
-			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogTrigger asChild>
-					<Button className="w-full sm:w-auto" variant="outline">
-						<Plus className="h-4 w-4 mr-2" /> Manual Invoice
-					</Button>
-				</DialogTrigger>
-				<DialogContent className="w-[96vw] max-w-6xl p-0 overflow-hidden rounded-2xl border shadow-2xl">
-		    <div className="border-b px-6 py-4 bg-gradient-to-r from-white to-slate-50/60">
-						<DialogHeader className="space-y-1">
-			    <DialogTitle className="text-xl font-bold tracking-tight text-slate-800">Create Manual Invoice</DialogTitle>
-			    <p className="text-xs text-muted-foreground">Generate a branded PDF invoice with custom line items and notes.</p>
-						</DialogHeader>
-					</div>
-		    <div className="px-6 py-5 space-y-6 max-h-[72vh] overflow-y-auto bg-gradient-to-b from-white to-slate-50/30">
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							<div className="space-y-1">
-								<Label>Title</Label>
-								<Input value={invoiceTitle} onChange={(e) => setInvoiceTitle(e.target.value)} placeholder="Manual Invoice" />
-							</div>
-							<div className="space-y-1">
-								<Label>Timezone</Label>
-								<Input value={timezone} onChange={(e) => setTimezone(e.target.value)} placeholder="America/Los_Angeles" />
-								<p className="text-[10px] text-muted-foreground">Default America/Los_Angeles</p>
-							</div>
-							<div className="space-y-1">
-								<Label>Period Start</Label>
-								<Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
-							</div>
-							<div className="space-y-1">
-								<Label>Period End</Label>
-								<Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
-							</div>
-							<div className="sm:col-span-2 space-y-1">
-								<Label>Notes</Label>
-								<Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes that appear beneath the header" />
-							</div>
+	return (
+		<>
+			<Button className="w-full sm:w-auto" variant="outline" onClick={() => setOpen(true)}>
+				<Plus className="h-4 w-4 mr-2" /> Manual Invoice
+			</Button>
+			<AdminModal
+				isOpen={open}
+				onClose={() => setOpen(false)}
+				title="Create Manual Invoice"
+				size="3xl"
+				footer={
+					<div className="flex items-center justify-between w-full">
+						<p className="text-xs text-slate-600 dark:text-slate-400">
+							All currency values should be entered in dollars (will be converted to cents).
+						</p>
+						<div className="flex gap-2">
+							<AdminButton variant="secondary" onClick={() => setOpen(false)}>
+								Cancel
+							</AdminButton>
+							<AdminButton onClick={onSubmit}>
+								Generate PDF
+							</AdminButton>
 						</div>
+					</div>
+				}
+			>
+				<AdminModalSection title="Invoice Settings" icon={<FileText className="h-5 w-5" />}>
+					<AdminModalGrid cols={2}>
+						<div>
+							<label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+								Title
+							</label>
+							<Input
+								value={invoiceTitle}
+								onChange={(e) => setInvoiceTitle(e.target.value)}
+								placeholder="Manual Invoice"
+								className="w-full"
+							/>
+						</div>
+						<div>
+							<label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+								Timezone
+							</label>
+							<Input
+								value={timezone}
+								onChange={(e) => setTimezone(e.target.value)}
+								placeholder="America/Los_Angeles"
+								className="w-full"
+							/>
+						</div>
+						<div>
+							<label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+								Period Start
+							</label>
+							<Input
+								type="date"
+								value={periodStart}
+								onChange={(e) => setPeriodStart(e.target.value)}
+								className="w-full"
+							/>
+						</div>
+						<div>
+							<label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+								Period End
+							</label>
+							<Input
+								type="date"
+								value={periodEnd}
+								onChange={(e) => setPeriodEnd(e.target.value)}
+								className="w-full"
+							/>
+						</div>
+					</AdminModalGrid>
+					<div className="mt-4">
+						<label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
+							Notes
+						</label>
+						<Textarea
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+							placeholder="Optional notes that appear beneath the header"
+							className="w-full min-h-[60px]"
+						/>
+					</div>
+				</AdminModalSection>
 
+				<AdminModalSection title="Line Items" icon={<Plus className="h-5 w-5" />} className="mt-6">
+					<div className="space-y-4">
+						<div className="flex items-center justify-between">
+							<div className="text-sm font-medium text-slate-700 dark:text-slate-300">Session Details</div>
+							<AdminButton size="sm" variant="secondary" onClick={addLine}>
+								<Plus className="h-4 w-4 mr-1" /> Add Line
+							</AdminButton>
+						</div>
+						
+						{/* Mobile-first responsive design */}
 						<div className="space-y-3">
-							<div className="flex items-center justify-between">
-								<div className="font-semibold tracking-tight text-slate-800">Line Items</div>
-								<Button size="sm" variant="secondary" onClick={addLine}><Plus className="h-4 w-4 mr-1" /> Add line</Button>
-							</div>
-							<div className="overflow-x-auto rounded-lg border bg-white/90 shadow-md">
-								<table className="w-full text-sm border-collapse table-fixed">
-									<thead className="bg-slate-50 sticky top-0 z-10 shadow-xs">
-										<tr className="text-[11px] uppercase tracking-wide text-slate-600">
-											<th className="text-left px-3 py-2 font-medium w-[220px]">Athlete</th>
-											<th className="text-left px-3 py-2 font-medium w-[240px]">Custom name</th>
-											<th className="text-left px-3 py-2 font-medium w-[160px]">Date</th>
-											<th className="text-left px-3 py-2 font-medium w-[100px]">Dur</th>
-											<th className="text-left px-3 py-2 font-medium w-[100px]">Member</th>
-											<th className="text-right px-3 py-2 font-medium w-[140px]">Rate $</th>
-											<th className="text-right px-3 py-2 font-medium w-[140px]">Amount $</th>
-											<th className="text-left px-3 py-2 font-medium w-[320px]">Description</th>
-											<th className="px-2 py-2 w-[48px]" />
-										</tr>
-									</thead>
-									<tbody className="divide-y divide-slate-100">
-								{lines.map((l, idx) => (
-									<tr key={idx} className="border-t align-top odd:bg-slate-50/40 hover:bg-slate-50/70 transition-colors">
-															<td className="px-3 py-2 min-w-[220px]">
-																<Select value={l.athleteId ? String(l.athleteId) : 'none'} onValueChange={(v) => updateLine(idx, { athleteId: v === 'none' ? undefined : Number(v) })}>
-																	<SelectTrigger className="w-full">
-													<SelectValue placeholder="Select athlete (optional)" />
+							{lines.map((l, idx) => (
+								<div key={idx} className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm">
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Athlete
+											</label>
+											<Select value={l.athleteId ? String(l.athleteId) : 'none'} onValueChange={(v) => updateLine(idx, { athleteId: v === 'none' ? undefined : Number(v) })}>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select athlete" />
 												</SelectTrigger>
 												<SelectContent>
-																		<SelectItem value="none">—</SelectItem>
+													<SelectItem value="none">—</SelectItem>
 													{athletes.map((a) => (
 														<SelectItem key={a.id} value={String(a.id)}>{athleteLabel(a)}</SelectItem>
 													))}
 												</SelectContent>
 											</Select>
-										</td>
-										<td className="px-3 py-2 min-w-[240px]">
-											<Input className="w-full" value={l.athleteName || ''} onChange={(e) => updateLine(idx, { athleteName: e.target.value })} placeholder="Or type a custom name" />
-										</td>
-										<td className="px-3 py-2 min-w-[160px]">
-											<Input className="w-full" type="date" value={l.date} onChange={(e) => updateLine(idx, { date: e.target.value })} />
-										</td>
-															<td className="px-3 py-2 min-w-[100px]">
-																<Select
-																					value={l.durationMinutes ? String(l.durationMinutes) : 'none'}
-																					onValueChange={(v) => {
-																						const dur = v === 'none' ? undefined : Number(v);
-																						const autoRate = (!l._userEditedRate) ? getRateDollars(dur, l.member) : undefined;
-																						updateLine(idx, {
-																							durationMinutes: dur,
-																							...(autoRate ? { rateDollars: autoRate } : {}),
-																						});
-																					}}
-																				>
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Custom Name
+											</label>
+											<Input 
+												value={l.athleteName || ''} 
+												onChange={(e) => updateLine(idx, { athleteName: e.target.value })} 
+												placeholder="Or type custom name" 
+												className="w-full"
+											/>
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Date
+											</label>
+											<Input 
+												type="date" 
+												value={l.date} 
+												onChange={(e) => updateLine(idx, { date: e.target.value })} 
+												className="w-full"
+											/>
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Duration
+											</label>
+											<Select
+												value={l.durationMinutes ? String(l.durationMinutes) : 'none'}
+												onValueChange={(v) => {
+													const dur = v === 'none' ? undefined : Number(v);
+													const autoRate = (!l._userEditedRate) ? getRateDollars(dur, l.member) : undefined;
+													updateLine(idx, {
+														durationMinutes: dur,
+														...(autoRate ? { rateDollars: autoRate } : {}),
+													});
+												}}
+											>
 												<SelectTrigger>
-													<SelectValue placeholder="—" />
+													<SelectValue placeholder="Duration" />
 												</SelectTrigger>
 												<SelectContent>
-																		<SelectItem value="none">—</SelectItem>
-													<SelectItem value="30">30</SelectItem>
-													<SelectItem value="60">60</SelectItem>
+													<SelectItem value="none">—</SelectItem>
+													<SelectItem value="30">30 min</SelectItem>
+													<SelectItem value="60">60 min</SelectItem>
 												</SelectContent>
 											</Select>
-										</td>
-										<td className="px-3 py-2 text-center min-w-[100px]">
-											<Switch
-																checked={!!l.member}
-																onCheckedChange={(v) => {
-																	const autoRate = (!l._userEditedRate) ? getRateDollars(l.durationMinutes, v) : undefined;
-																	updateLine(idx, {
-																		member: v,
-																		...(autoRate ? { rateDollars: autoRate } : {}),
-																	});
-																}}
-															/>
-										</td>
-										<td className="px-3 py-2 min-w-[140px]">
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Member
+											</label>
+											<div className="flex items-center justify-center h-9">
+												<Switch
+													checked={!!l.member}
+													onCheckedChange={(v) => {
+														const autoRate = (!l._userEditedRate) ? getRateDollars(l.durationMinutes, v) : undefined;
+														updateLine(idx, {
+															member: v,
+															...(autoRate ? { rateDollars: autoRate } : {}),
+														});
+													}}
+												/>
+											</div>
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Rate ($)
+											</label>
 											<Input
-																inputMode="decimal"
-																placeholder="0.00"
-																value={l.rateDollars || ''}
-																onChange={(e) => {
-																	const val = e.target.value;
-																	// mark as user-edited when non-empty; if cleared, allow auto-fill on next dur/member change
-																	updateLine(idx, { rateDollars: val, _userEditedRate: val.trim() !== '' });
-																}}
-						  className="text-right w-full"
-															/>
-										</td>
-										<td className="px-3 py-2 min-w-[140px]">
-											<Input inputMode="decimal" placeholder="0.00" value={l.amountDollars || ''} onChange={(e) => updateLine(idx, { amountDollars: e.target.value })} className="text-right w-full" />
-										</td>
-										<td className="px-3 py-2 min-w-[320px]">
-											<Input className="w-full" placeholder="Description" value={l.description || ''} onChange={(e) => updateLine(idx, { description: e.target.value })} />
-										</td>
-					<td className="px-3 py-2">
-											<Button size="icon" variant="ghost" onClick={() => removeLine(idx)} aria-label="Remove line">
-												<Trash2 className="h-4 w-4" />
-											</Button>
-										</td>
-									</tr>
-								))}
-						</tbody>
-					</table>
-					{!lines.length && (
-						<div className="p-6 text-center text-xs text-muted-foreground">No line items — add one to begin.</div>
-					)}
-				</div>
+												inputMode="decimal"
+												placeholder="0.00"
+												value={l.rateDollars || ''}
+												onChange={(e) => {
+													updateLine(idx, { rateDollars: e.target.value, _userEditedRate: true });
+												}}
+												className="w-full"
+											/>
+										</div>
+									</div>
+									
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Amount ($)
+											</label>
+											<Input
+												inputMode="decimal"
+												placeholder="0.00"
+												value={l.amountDollars || ''}
+												onChange={(e) => updateLine(idx, { amountDollars: e.target.value })}
+												className="w-full"
+											/>
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Description
+											</label>
+											<div className="flex gap-2">
+												<Input
+													value={l.description || ''}
+													onChange={(e) => updateLine(idx, { description: e.target.value })}
+													placeholder="Description"
+													className="flex-1"
+												/>
+												<AdminButton
+													size="sm"
+													variant="destructive"
+													onClick={() => removeLine(idx)}
+													className="px-2"
+												>
+													<Trash2 className="h-4 w-4" />
+												</AdminButton>
+											</div>
+										</div>
+									</div>
+								</div>
+							))}
 						</div>
+						
+						{lines.length === 0 && (
+							<div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-600">
+								No line items — click "Add Line" to begin.
+							</div>
+						)}
 					</div>
-		    <div className="px-6 py-4 border-t bg-slate-50/80 backdrop-blur flex items-center justify-between">
-						<p className="text-[11px] text-muted-foreground">All currency values should be entered in dollars (will be converted to cents).</p>
-						<div className="space-x-2">
-							<Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-			    <Button onClick={onSubmit}>Generate PDF</Button>
-						</div>
-					</div>
-				</DialogContent>
-			</Dialog>
-		);
+				</AdminModalSection>
+			</AdminModal>
+		</>
+	);
 }
 
 // Payout Rates Management Panel
