@@ -27,6 +27,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck, FileText, FileX, Filter, HelpCircle, Mail, Medal, Phone, Plus, Shield, Target, User, Users, X, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AdminBookingDetailActions } from "./admin-booking-detail-actions";
+import { BookingDetailsModal } from "./modals/BookingDetailsModal";
 
 // Helper function to get status badge variant and color
 export const getStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
@@ -402,6 +403,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   const [preSelectedAthleteId, setPreSelectedAthleteId] = useState<number | undefined>();
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<Booking | null>(null);
   const [sortOption, setSortOption] = useState<string>("recent");
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
@@ -1007,21 +1009,17 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
 
                     {/* Action buttons (mobile) */}
                     <div className="mt-3 grid grid-cols-2 gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <AdminButton variant="secondary" size="sm" className="w-full justify-center">
-                            <Eye className="h-4 w-4 mr-2" />
-                            Details
-                          </AdminButton>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader className="flex flex-row items-center justify-between pr-6">
-                            <DialogTitle>Booking Details</DialogTitle>
-                            <AdminBookingDetailActions booking={booking} />
-                          </DialogHeader>
-                          <BookingDetailsView booking={booking} />
-                        </DialogContent>
-                      </Dialog>
+                      <AdminButton 
+                        variant="secondary" 
+                        size="sm" 
+                        className="w-full justify-center"
+                        onClick={() => {
+                          setSelectedBookingForDetails(booking);
+                        }}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Details
+                      </AdminButton>
                       <AdminButton
                         variant="secondary"
                         size="sm"
@@ -1195,20 +1193,16 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                       </TableCell>
                       <TableCell className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                         <div className="flex items-center gap-1">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                              <DialogHeader className="flex flex-row items-center justify-between pr-6">
-                                <DialogTitle>Booking Details</DialogTitle>
-                                <AdminBookingDetailActions booking={booking} />
-                              </DialogHeader>
-                              <BookingDetailsView booking={booking} />
-                            </DialogContent>
-                          </Dialog>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
+                            onClick={() => {
+                              setSelectedBookingForDetails(booking);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -1475,21 +1469,17 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                         </div>
                         {/* Details action */}
                         <div className="mt-3 flex justify-end">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Details
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                              <DialogHeader className="flex flex-row items-center justify-between pr-6">
-                                <DialogTitle>Booking Details</DialogTitle>
-                                <AdminBookingDetailActions booking={booking} />
-                              </DialogHeader>
-                              <BookingDetailsView booking={booking} />
-                            </DialogContent>
-                          </Dialog>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
+                            onClick={() => {
+                              setSelectedBookingForDetails(booking);
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Details
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -1627,18 +1617,16 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           </TableCell>
                           <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                             <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader className="flex flex-row items-center justify-between pr-6">
-                                  <DialogTitle>Booking Details</DialogTitle>
-                                  <AdminBookingDetailActions booking={booking} />
-                                </DialogHeader>
-                                <BookingDetailsView booking={booking} />
-                              </DialogContent>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
+                                onClick={() => {
+                                  setSelectedBookingForDetails(booking);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </Dialog>
                           </TableCell>
                         </TableRow>
@@ -1655,7 +1643,25 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
         </AdminContentTabs>
       </div>
 
-      {/* Booking Detail Modal */}
+      {/* New Booking Details Modal using AdminModal */}
+      <BookingDetailsModal
+        isOpen={!!selectedBookingForDetails}
+        onClose={() => setSelectedBookingForDetails(null)}
+        booking={selectedBookingForDetails}
+        onOpenStripe={(booking) => {
+          const s = (booking as any)?.stripeSessionId;
+          if (s) {
+            window.open(`https://dashboard.stripe.com/checkout/sessions/${s}`, '_blank');
+          } else {
+            const email = booking.parent?.email || booking.parentEmail;
+            if (email) {
+              window.open(`https://dashboard.stripe.com/payments?query=${email}`, '_blank');
+            }
+          }
+        }}
+      />
+
+      {/* Legacy Booking Detail Modal - keeping for compatibility with selectedBooking */}
       {selectedBooking && (
         <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">

@@ -28,6 +28,7 @@ import { PaymentStatusEnum } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Clock, DollarSign, ExternalLink, RefreshCw, TrendingUp, X, Eye } from "lucide-react";
 import { useMemo, useState } from "react";
+import { BookingDetailsModal } from "./modals/BookingDetailsModal";
 
 // Extended payment status types
 export type ExtendedPaymentStatus = 
@@ -101,8 +102,7 @@ export function PaymentsTab() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsBooking, setDetailsBooking] = useState<any | null>(null);
+  const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<any | null>(null);
 
   // Fetch all bookings
   const { data: bookings = [], isLoading, refetch } = useQuery<Booking[]>({
@@ -457,7 +457,7 @@ export function PaymentsTab() {
                               variant="secondary"
                               size="sm"
                               className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
-                              onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
+                              onClick={() => setSelectedBookingForDetails(booking)}
                             >
                               <Eye className="h-4 w-4" />
                               <span className="hidden sm:inline">Details</span>
@@ -881,7 +881,7 @@ export function PaymentsTab() {
                             variant="secondary"
                             size="sm"
                             className="h-10 w-10 sm:w-28 sm:px-3 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
-                            onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
+                            onClick={() => setSelectedBookingForDetails(booking)}
                           >
                             <Eye className="h-4 w-4" />
                             <span className="hidden sm:inline">Details</span>
@@ -985,7 +985,7 @@ export function PaymentsTab() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => { setDetailsBooking(booking); setDetailsOpen(true); }}
+                            onClick={() => setSelectedBookingForDetails(booking)}
                             className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10"
                           >
                             View Details
@@ -1001,82 +1001,19 @@ export function PaymentsTab() {
         </AdminCard>
       </div>
       {/* Booking Details Modal */}
-      <Dialog open={detailsOpen} onOpenChange={(o) => { if (!o) { setDetailsOpen(false); setDetailsBooking(null); } }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Booking Details{detailsBooking?.id ? ` #${detailsBooking.id}` : ''}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-slate-500">Lesson</div>
-              <div className="font-medium">
-                {detailsBooking && (typeof detailsBooking.lessonType === 'object' && detailsBooking.lessonType !== null
-                  ? getNameOrDescription(detailsBooking.lessonType)
-                  : detailsBooking?.lessonType || '—')}
-              </div>
-              <div className="text-slate-500">Athlete(s)</div>
-              <div className="font-medium">{detailsBooking?.athlete1Name}{detailsBooking?.athlete2Name ? ` & ${detailsBooking.athlete2Name}` : ''}</div>
-              <div className="text-slate-500">Parent</div>
-              <div className="font-medium">{detailsBooking?.parentFirstName} {detailsBooking?.parentLastName}</div>
-              <div className="text-slate-500">Email</div>
-              <div className="font-medium">{detailsBooking?.parentEmail}</div>
-              <div className="text-slate-500">Date</div>
-              <div className="font-medium">{detailsBooking?.preferredDate} {detailsBooking?.preferredTime ? `• ${detailsBooking.preferredTime}` : ''}</div>
-              <div className="text-slate-500">Status</div>
-              <div className="font-medium">{detailsBooking?.status}</div>
-              <div className="text-slate-500">Attendance</div>
-              <div className="font-medium">{detailsBooking?.attendanceStatus}</div>
-              <div className="text-slate-500">Payment</div>
-              <div className="font-medium">{detailsBooking?.paymentStatus}</div>
-              <div className="text-slate-500">Total Price</div>
-              <div className="font-medium">${detailsBooking ? getLessonPrice(detailsBooking).toFixed(2) : '0.00'}</div>
-              <div className="text-slate-500">Paid Amount</div>
-              <div className="font-medium">{
-                (() => {
-                  if (!detailsBooking) return '$0.00';
-                  const total = getLessonPrice(detailsBooking);
-                  const status = detailsBooking.paymentStatus as string | undefined;
-                  let paid = 0;
-                  if (status === 'session-paid') {
-                    paid = total; // full lesson price paid
-                  } else if (status === 'reservation-paid') {
-                    paid = parseFloat(detailsBooking.paidAmount || '0');
-                    if (!Number.isFinite(paid) || paid <= 0) paid = 10.0; // fallback to default reservation fee
-                  } else {
-                    paid = parseFloat(detailsBooking.paidAmount || '0');
-                    if (!Number.isFinite(paid)) paid = 0;
-                  }
-                  return `$${paid.toFixed(2)}`;
-                })()
-              }</div>
-              <div className="text-slate-500">Booking Method</div>
-              <div className="font-medium">
-                {detailsBooking && (typeof detailsBooking.bookingMethod === 'object' && detailsBooking.bookingMethod !== null
-                  ? getNameOrDescription(detailsBooking.bookingMethod)
-                  : detailsBooking?.bookingMethod || '—')}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="flex items-center justify-between gap-2">
-            <Button variant="outline" onClick={() => setDetailsOpen(false)}>Close</Button>
-            {detailsBooking?.parentEmail && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const s = (detailsBooking as any)?.stripeSessionId;
-                  if (s) {
-                    window.open(`https://dashboard.stripe.com/checkout/sessions/${s}`, '_blank');
-                  } else {
-                    window.open(`https://dashboard.stripe.com/payments?query=${detailsBooking.parentEmail}` , '_blank');
-                  }
-                }}
-              >
-                Open in Stripe
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BookingDetailsModal
+        booking={selectedBookingForDetails}
+        isOpen={!!selectedBookingForDetails}
+        onClose={() => setSelectedBookingForDetails(null)}
+        onOpenStripe={(booking) => {
+          const s = (booking as any)?.stripeSessionId;
+          if (s) {
+            window.open(`https://dashboard.stripe.com/checkout/sessions/${s}`, '_blank');
+          } else {
+            window.open(`https://dashboard.stripe.com/payments?query=${booking.parentEmail}` , '_blank');
+          }
+        }}
+      />
     </>
   );
 }
