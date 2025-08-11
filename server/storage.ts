@@ -2707,7 +2707,7 @@ export class SupabaseStorage implements IStorage {
   async createAthlete(insertAthlete: InsertAthlete): Promise<Athlete> {
     // Map camelCase to snake_case for Supabase
     const supabaseData = {
-      name: insertAthlete.name,
+      name: insertAthlete.name || `${insertAthlete.firstName || ''} ${insertAthlete.lastName || ''}`.trim(),
       first_name: insertAthlete.firstName,
       last_name: insertAthlete.lastName,
       parent_id: insertAthlete.parentId,
@@ -2787,6 +2787,18 @@ export class SupabaseStorage implements IStorage {
     if (updateData.latestWaiverId !== undefined) dbUpdate.latest_waiver_id = updateData.latestWaiverId;
     if (updateData.waiverStatus !== undefined) dbUpdate.waiver_status = updateData.waiverStatus;
     if (updateData.waiverSigned !== undefined) dbUpdate.waiver_signed = updateData.waiverSigned;
+
+    // If firstName or lastName is being updated but name is not explicitly provided,
+    // we need to get the current values and update the name field
+    if ((updateData.firstName !== undefined || updateData.lastName !== undefined) && updateData.name === undefined) {
+      // Get current athlete data to compute the full name
+      const currentAthlete = await this.getAthlete(id);
+      if (currentAthlete) {
+        const newFirstName = updateData.firstName !== undefined ? updateData.firstName : currentAthlete.firstName;
+        const newLastName = updateData.lastName !== undefined ? updateData.lastName : currentAthlete.lastName;
+        dbUpdate.name = `${newFirstName || ''} ${newLastName || ''}`.trim();
+      }
+    }
 
     console.log('[STORAGE-UPDATE-ATHLETE] DB update object:', dbUpdate);
 
