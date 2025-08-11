@@ -80,6 +80,7 @@ import {
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { useLocation } from "wouter";
+import { MainContentContainer } from "@/components/admin-ui/MainContentContainer";
 
 // Lazy load heavy admin sub-pages to keep initial bundle light
 const AdminSkillsManager = lazy(() => import("@/components/admin/AdminSkillsManager"));
@@ -1521,22 +1522,23 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="bookings" role="tabpanel" id="bookings-panel" aria-labelledby="bookings-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
+            <MainContentContainer
+              title={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
                   <Calendar className="h-8 w-8 text-[#D8BD2A]" />
                   Booking Management
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="pt-0 text-[#0F0276] dark:text-white">
+                </span>
+              }
+            >
+              <div className="text-[#0F0276] dark:text-white">
                 <AdminBookingManager 
                   openAthleteModal={openAthleteModal}
                   selectedBooking={selectedBooking}
                   onSelectBooking={setSelectedBooking}
                 />
-              </AdminCardContent>
-            </AdminCard>
+              </div>
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
