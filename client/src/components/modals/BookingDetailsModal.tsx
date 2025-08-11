@@ -14,7 +14,8 @@ import {
   Shield, 
   FileText,
   ExternalLink,
-  CreditCard
+  CreditCard,
+  Edit
 } from "lucide-react";
 import type { Booking } from "@shared/schema";
 
@@ -23,6 +24,7 @@ interface BookingDetailsModalProps {
   onClose: () => void;
   booking: Booking | null;
   onOpenStripe?: (booking: Booking) => void;
+  onEdit?: (booking: Booking) => void;
 }
 
 // Helper function to calculate age
@@ -104,7 +106,13 @@ function getAttendanceStatusBadgeProps(status: string) {
   }
 }
 
-export function BookingDetailsModal({ isOpen, onClose, booking, onOpenStripe }: BookingDetailsModalProps) {
+export function BookingDetailsModal({ 
+  isOpen, 
+  onClose, 
+  booking, 
+  onOpenStripe,
+  onEdit 
+}: BookingDetailsModalProps) {
   if (!booking) return null;
 
   // Calculate lesson price
@@ -158,7 +166,21 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onOpenStripe }: 
       <AdminButton variant="secondary" onClick={onClose}>
         Close
       </AdminButton>
-      {onOpenStripe && (booking.parent?.email || booking.parentEmail) && (
+      
+      {/* Show Edit button if onEdit is provided (from booking manager) */}
+      {onEdit && (
+        <AdminButton
+          variant="primary"
+          onClick={() => onEdit(booking)}
+          className="flex items-center gap-2"
+        >
+          <Edit className="w-4 h-4" />
+          Edit Booking
+        </AdminButton>
+      )}
+      
+      {/* Show Stripe button if onOpenStripe is provided and no onEdit (from payments tab) */}
+      {onOpenStripe && !onEdit && (booking.parent?.email || booking.parentEmail) && (
         <AdminButton
           variant="secondary"
           onClick={() => onOpenStripe(booking)}
@@ -177,6 +199,7 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onOpenStripe }: 
       onClose={onClose}
       title={`Booking Details ${booking.id ? `#${booking.id}` : ''}`}
       size="3xl"
+      showCloseButton={false}
       footer={footer}
     >
       <div className="space-y-6">

@@ -28,6 +28,7 @@ import { AlertCircle, Calendar, CheckCircle, CheckCircle2, Clock, Eye, FileCheck
 import { useMemo, useState } from "react";
 import { AdminBookingDetailActions } from "./admin-booking-detail-actions";
 import { BookingDetailsModal } from "./modals/BookingDetailsModal";
+import { BookingEditModal } from "./BookingEditModal";
 
 // Helper function to get status badge variant and color
 export const getStatusBadgeProps = (status: string): { variant: "default" | "secondary" | "destructive" | "outline"; className?: string } => {
@@ -404,6 +405,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedBookingForDetails, setSelectedBookingForDetails] = useState<Booking | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [sortOption, setSortOption] = useState<string>("recent");
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
@@ -1648,6 +1650,10 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
         isOpen={!!selectedBookingForDetails}
         onClose={() => setSelectedBookingForDetails(null)}
         booking={selectedBookingForDetails}
+        onEdit={(booking) => {
+          setEditingBooking(booking);
+          setSelectedBookingForDetails(null);
+        }}
         onOpenStripe={(booking) => {
           const s = (booking as any)?.stripeSessionId;
           if (s) {
@@ -1660,6 +1666,20 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           }
         }}
       />
+
+      {/* Booking Edit Modal */}
+      {editingBooking && (
+        <BookingEditModal
+          booking={editingBooking}
+          open={!!editingBooking}
+          onClose={() => setEditingBooking(null)}
+          onSuccess={() => {
+            setEditingBooking(null);
+            // Refresh the bookings data
+            queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
+          }}
+        />
+      )}
 
       {/* Legacy Booking Detail Modal - keeping for compatibility with selectedBooking */}
       {selectedBooking && (
