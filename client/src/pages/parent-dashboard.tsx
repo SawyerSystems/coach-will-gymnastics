@@ -912,44 +912,74 @@ function ParentDashboard() {
                       </h3>
                       
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-                        <ParentStatCard
-                          label="Sessions Completed"
-                          value={pastBookings.length}
-                          icon={<Trophy />}
-                          color="blue"
-                          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
-                        />
+                        <ParentCard className="hover:shadow-md transition-all duration-200">
+                          <ParentCardContent className="pt-4 pb-4 px-4 sm:pt-6 sm:pb-6 sm:px-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              <div className="bg-blue-100 dark:bg-blue-900/50 p-2 sm:p-3 rounded-full">
+                                <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 truncate">Sessions Completed</p>
+                                <p className="text-xl sm:text-2xl font-bold text-blue-800 dark:text-white">{pastBookings.length}</p>
+                              </div>
+                            </div>
+                          </ParentCardContent>
+                        </ParentCard>
                         
-                        <ParentStatCard
-                          label="Skills Practiced"
-                          value={pastBookings.reduce((total, booking) => {
-                            return total + (booking.focusAreas?.length || 0);
-                          }, 0)}
-                          icon={<Target />}
-                          color="purple"
-                          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
-                        />
+                        <ParentCard className="hover:shadow-md transition-all duration-200">
+                          <ParentCardContent className="pt-4 pb-4 px-4 sm:pt-6 sm:pb-6 sm:px-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              <div className="bg-blue-100 dark:bg-blue-900/50 p-2 sm:p-3 rounded-full">
+                                <Target className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 truncate">Skills Practiced</p>
+                                <p className="text-xl sm:text-2xl font-bold text-blue-800 dark:text-white">
+                                  {pastBookings.reduce((total, booking) => {
+                                    return total + (booking.focusAreas?.length || 0);
+                                  }, 0)}
+                                </p>
+                              </div>
+                            </div>
+                          </ParentCardContent>
+                        </ParentCard>
                         
-                        <ParentStatCard
-                          label="Adventure Level"
-                          value={`Level ${Math.floor(pastBookings.length / 3) + 1}`}
-                          icon={<Award />}
-                          color="orange"
-                        />
+                        <ParentCard className="hover:shadow-md transition-all duration-200">
+                          <ParentCardContent className="pt-4 pb-4 px-4 sm:pt-6 sm:pb-6 sm:px-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              <div className="bg-blue-100 dark:bg-blue-900/50 p-2 sm:p-3 rounded-full">
+                                <Award className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 truncate">Adventure Level</p>
+                                <p className="text-xl sm:text-2xl font-bold text-blue-800 dark:text-white">Level {Math.floor(pastBookings.length / 3) + 1}</p>
+                              </div>
+                            </div>
+                          </ParentCardContent>
+                        </ParentCard>
                         
-                        <ParentStatCard
-                          label="Consistency"
-                          value={(() => {
-                            const sessionsPerMonth = pastBookings.length / Math.max(1, 
-                              Math.ceil((new Date().getTime() - new Date(Math.min(...pastBookings.map(b => b.createdAt ? new Date(b.createdAt).getTime() : Date.now()))).getTime()) / (1000 * 60 * 60 * 24 * 30))
-                            );
-                            if (sessionsPerMonth >= 4) return "Excellent 🔥";
-                            if (sessionsPerMonth >= 2) return "Good ⚡";
-                            return "Building 💪";
-                          })()}
-                          icon={<TrendingUp />}
-                          color="green"
-                        />
+                        <ParentCard className="hover:shadow-md transition-all duration-200">
+                          <ParentCardContent className="pt-4 pb-4 px-4 sm:pt-6 sm:pb-6 sm:px-6">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              <div className="bg-blue-100 dark:bg-blue-900/50 p-2 sm:p-3 rounded-full">
+                                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 truncate">Consistency</p>
+                                <p className="text-xl sm:text-2xl font-bold text-blue-800 dark:text-white">
+                                  {(() => {
+                                    const sessionsPerMonth = pastBookings.length / Math.max(1, 
+                                      Math.ceil((new Date().getTime() - new Date(Math.min(...pastBookings.map(b => b.createdAt ? new Date(b.createdAt).getTime() : Date.now()))).getTime()) / (1000 * 60 * 60 * 24 * 30))
+                                    );
+                                    if (sessionsPerMonth >= 4) return "Excellent 🔥";
+                                    if (sessionsPerMonth >= 2) return "Good ⚡";
+                                    return "Building 💪";
+                                  })()}
+                                </p>
+                              </div>
+                            </div>
+                          </ParentCardContent>
+                        </ParentCard>
                       </div>
                       
                       {/* Progress Bar */}
@@ -991,7 +1021,11 @@ function ParentDashboard() {
                       </h3>
                       
                       {pastBookings.map((booking) => (
-                        <div key={booking.id} className="border rounded-xl p-3 xs:p-4 sm:p-6 bg-gradient-to-r from-white to-blue-50 dark:from-gray-800 dark:to-gray-700 hover:shadow-md transition-all duration-200 dark:border-purple-400/20">
+                        <ParentCard 
+                          key={booking.id}
+                          className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        >
+                          <ParentCardContent className="p-3 xs:p-4 sm:p-6">
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                             {/* Left Column - Session Info */}
                             <div className="space-y-3 sm:space-y-4">
@@ -1099,8 +1133,8 @@ function ParentDashboard() {
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
+                          </ParentCardContent>
+                        </ParentCard>
                       ))}
                     </div>
 
