@@ -261,10 +261,10 @@ export function AdminLessonTypeManager() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Lesson Type Management</h2>
         {!showForm && (
-          <AdminButton onClick={handleCreate} className="rounded-xl px-6 py-3">
+          <Button className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]" onClick={handleCreate}>
             <Plus className="mr-2 h-4 w-4" />
             Create Lesson
-          </AdminButton>
+          </Button>
         )}
       </div>
 
