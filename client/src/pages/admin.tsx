@@ -1955,7 +1955,7 @@ export default function Admin() {
             </AdminCard>
           </TabsContent>
 
-          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+          <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
             <MainContentContainer 
               heading="Upcoming Sessions"
               icon={
