@@ -373,10 +373,10 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     return (
       <div className="space-y-6 py-4">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold text-[#D8BD2A] dark:text-[#D8BD2A]">
             {isAutoLinked ? "Linked Parent Information" : "Confirm Your Information"}
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-[#D8BD2A]/80 dark:text-[#D8BD2A]/80">
             {isAutoLinked 
               ? "This athlete is automatically linked to the following parent account."
               : "Please verify your contact information is up to date."}

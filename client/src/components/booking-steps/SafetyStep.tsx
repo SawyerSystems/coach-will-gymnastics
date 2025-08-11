@@ -220,15 +220,15 @@ export function SafetyStep() {
         </Alert>
       )}
 
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-[#0F0276]/30 bg-[#0F0276] dark:bg-[#0F0276] dark:border-[#0F0276]/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-orange-900">
+          <CardTitle className="flex items-center gap-2 text-red-500 dark:text-red-400">
             <Shield className="h-5 w-5" />
             Important Safety Information
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-orange-800 space-y-2">
+          <div className="text-sm text-red-500 dark:text-red-400 space-y-2">
             <p>
               <strong>Safety is our top priority.</strong> We need to know who is authorized 
               to drop off and pick up your athlete.
@@ -491,15 +491,15 @@ export function SafetyStep() {
         </Card>
       )}
 
-      <Card className="border-yellow-200 bg-yellow-50">
+      <Card className="border-[#0F0276]/30 bg-[#0F0276] dark:bg-[#0F0276] dark:border-[#0F0276]/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-900">
+          <CardTitle className="flex items-center gap-2 text-yellow-400 dark:text-yellow-400">
             <AlertTriangle className="h-5 w-5" />
             Important Notes
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="text-sm text-yellow-800 space-y-2">
+          <ul className="text-sm text-yellow-400 dark:text-yellow-400 space-y-2">
             <li>• All authorized people must be able to show photo ID if requested</li>
             <li>• If plans change, please contact us as soon as possible</li>
             <li>• For emergency situations, we'll contact you using the information provided</li>

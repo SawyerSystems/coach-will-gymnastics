@@ -101,7 +101,7 @@ export function ScheduleStep() {
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal min-h-[48px] bg-white/70 border-slate-200/60 hover:bg-white/80 dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/15",
+                  "w-full justify-start text-left font-normal min-h-[48px] bg-white/70 border-slate-200/60 hover:bg-white/80 dark:bg-white/10 dark:border-white/20 dark:hover:bg-white/15 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:focus:border-white/40",
                   !selectedDate && "text-[#0F0276]/50 dark:text-white/50"
                 )}
               >
@@ -150,14 +150,19 @@ export function ScheduleStep() {
                     className={cn(
                       "cursor-pointer transition-all bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20",
                       state.selectedTimeSlot?.time === time
-                        ? "ring-2 ring-[#B8860B] border-[#B8860B] bg-white/80 dark:bg-white/20"
+                        ? "ring-2 ring-[#D8BD2A] border-[#D8BD2A] bg-white/80 dark:bg-[#0F0276] dark:ring-[#D8BD2A] dark:border-[#D8BD2A]"
                         : "hover:border-[#0F0276]/30 hover:bg-white/70 dark:hover:bg-white/15"
                     )}
                     onClick={() => handleTimeSelect(time)}
                   >
                     <CardContent className="flex items-center p-3">
                       <RadioGroupItem value={time} id={time} className="mr-2" />
-                      <Label htmlFor={time} className="cursor-pointer flex-1 text-[#0F0276] dark:text-white">
+                      <Label htmlFor={time} className={cn(
+                        "cursor-pointer flex-1",
+                        state.selectedTimeSlot?.time === time
+                          ? "text-[#0F0276] dark:text-[#D8BD2A]"
+                          : "text-[#0F0276] dark:text-white"
+                      )}>
                         {time}
                       </Label>
                     </CardContent>
@@ -170,8 +175,8 @@ export function ScheduleStep() {
       </div>
 
       {state.selectedTimeSlot?.date && state.selectedTimeSlot?.time && (
-        <div className="bg-gradient-to-r from-[#B8860B]/10 to-yellow-500/10 border border-[#B8860B]/30 p-4 rounded-lg backdrop-blur-sm dark:from-white/5 dark:to-white/10 dark:border-white/20">
-          <p className="text-sm text-[#B8860B] dark:text-white font-medium">
+        <div className="bg-gradient-to-r from-[#D8BD2A]/10 to-yellow-500/10 border border-[#D8BD2A]/30 p-4 rounded-lg backdrop-blur-sm dark:from-[#D8BD2A]/5 dark:to-yellow-500/5 dark:border-[#D8BD2A]/20">
+          <p className="text-sm text-[#D8BD2A] dark:text-[#D8BD2A] font-medium">
             <strong>✅ Selected:</strong> {formatBookingDate(state.selectedTimeSlot.date)} at {state.selectedTimeSlot.time}
           </p>
         </div>
