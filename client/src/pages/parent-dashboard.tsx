@@ -100,8 +100,8 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
       <ParentModalSection title="Current Session Details">
         <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
           <p>
-            <span className="font-medium">Athletes:</span> {booking.athlete1Name}
-            {booking.athlete2Name && ` & ${booking.athlete2Name}`}
+            <span className="font-medium">Athletes:</span> <span className="text-[#B8860B]">{booking.athlete1Name}</span>
+            {booking.athlete2Name && <span className="text-[#B8860B]"> & {booking.athlete2Name}</span>}
           </p>
           <p>
             <span className="font-medium">Current Date:</span> {booking.preferredDate} at {booking.preferredTime}
@@ -741,7 +741,7 @@ function ParentDashboard() {
                                   <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 {booking.athletes && booking.athletes.length > 0 ? (
-                                  <h3 className="text-lg font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors">
+                                  <h3 className="text-lg font-bold text-[#B8860B] dark:text-[#B8860B] group-hover:text-[#B8860B]/80 dark:group-hover:text-[#B8860B]/90 transition-colors">
                                     {booking.athletes.map((athlete: any) => 
                                       athlete.name || 
                                       `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || 
@@ -749,7 +749,7 @@ function ParentDashboard() {
                                     ).join(' & ')}
                                   </h3>
                                 ) : (
-                                  <h3 className="text-lg font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors">
+                                  <h3 className="text-lg font-bold text-[#B8860B] dark:text-[#B8860B] group-hover:text-[#B8860B]/80 dark:group-hover:text-[#B8860B]/90 transition-colors">
                                     {booking.athlete1Name || 'Your Athlete'}
                                     {booking.athlete2Name && ` & ${booking.athlete2Name}`}
                                   </h3>
@@ -984,10 +984,10 @@ function ParentDashboard() {
 
                     {/* Adventure Log Entries */}
                     <div className="space-y-4">
-                      <h3 className="text-base xs:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <h3 className="text-base xs:text-lg font-semibold text-white flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
                         Adventure History
-                        <span className="text-xs font-normal text-gray-500">({pastBookings.length} completed)</span>
+                        <span className="text-xs font-normal text-white">({pastBookings.length} completed)</span>
                       </h3>
                       
                       {pastBookings.map((booking) => (
@@ -1002,7 +1002,7 @@ function ParentDashboard() {
                                     <div className="bg-blue-100 p-1 rounded-full">
                                       <User className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600" />
                                     </div>
-                                    <span className="font-medium text-sm xs:text-base sm:text-lg text-gray-800">
+                                    <span className="font-medium text-sm xs:text-base sm:text-lg text-[#B8860B]">
                                       {booking.athletes && booking.athletes.length > 0 ? (
                                         booking.athletes.map((athlete: any) => athlete.name).join(' & ')
                                       ) : (
@@ -1108,11 +1108,11 @@ function ParentDashboard() {
                     <div className="border-t pt-4 xs:pt-6">
                       <div className="flex flex-col xs:flex-row justify-between xs:items-center gap-3">
                         <div>
-                          <h4 className="font-medium text-sm xs:text-base text-gray-700 flex items-center gap-1 xs:gap-2">
-                            <FileText className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-gray-700" />
+                          <h4 className="font-medium text-sm xs:text-base text-white flex items-center gap-1 xs:gap-2">
+                            <FileText className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-white" />
                             Export Progress Report
                           </h4>
-                          <p className="text-[10px] xs:text-xs text-gray-500">Download a complete progress report for your records</p>
+                          <p className="text-[10px] xs:text-xs text-white">Download a complete progress report for your records</p>
                         </div>
                         <ParentButton 
                           variant="secondary"
@@ -1160,7 +1160,7 @@ function ParentDashboard() {
                             <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-full">
                               <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <h3 className="font-semibold text-sm xs:text-base sm:text-lg text-blue-900 dark:text-white">{athlete.name}</h3>
+                            <h3 className="font-semibold text-sm xs:text-base sm:text-lg text-[#B8860B] dark:text-[#B8860B]">{athlete.name}</h3>
                           </div>
                           <ParentButton
                             size="sm"
@@ -1176,15 +1176,15 @@ function ParentDashboard() {
                         
                         <div className="space-y-2 mt-3">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                            <p className="text-xs xs:text-sm text-gray-600">
+                            <Calendar className="w-3.5 h-3.5 text-white" />
+                            <p className="text-xs xs:text-sm text-white">
                               Born: {athlete.dateOfBirth ? format(new Date(`${athlete.dateOfBirth}T12:00:00Z`), 'MMM d, yyyy') : 'Unknown'}
                             </p>
                           </div>
                           
                           <div className="flex items-center gap-1.5">
-                            <Medal className="w-3.5 h-3.5 text-gray-500" />
-                            <p className="text-xs xs:text-sm text-gray-600">
+                            <Medal className="w-3.5 h-3.5 text-white" />
+                            <p className="text-xs xs:text-sm text-white">
                               Experience: {athlete.experience}
                             </p>
                           </div>
@@ -1193,10 +1193,10 @@ function ParentDashboard() {
                             <div className="flex items-start gap-1.5">
                               <AlertCircle className="w-3.5 h-3.5 text-orange-500 mt-0.5" />
                               <div>
-                                <p className="text-xs xs:text-sm font-medium text-orange-700">
+                                <p className="text-xs xs:text-sm font-medium text-white">
                                   Allergies:
                                 </p>
-                                <p className="text-[10px] xs:text-xs text-gray-600">{athlete.allergies}</p>
+                                <p className="text-[10px] xs:text-xs text-white">{athlete.allergies}</p>
                               </div>
                             </div>
                           )}
@@ -1609,8 +1609,8 @@ function ParentDashboard() {
                       <div>
                         <span className="font-medium">Lesson Details:</span>
                         <p className="mt-1">
-                          {booking.athlete1Name}
-                          {booking.athlete2Name && ` & ${booking.athlete2Name}`} - 
+                          <span className="text-[#B8860B]">{booking.athlete1Name}</span>
+                          {booking.athlete2Name && <span className="text-[#B8860B]"> & {booking.athlete2Name}</span>} - 
                           {booking.lessonType?.replace('-', ' ') || 'Unknown Lesson Type'} on {booking.preferredDate} at {booking.preferredTime}
                         </p>
                       </div>
