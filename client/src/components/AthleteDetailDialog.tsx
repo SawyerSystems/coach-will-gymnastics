@@ -262,6 +262,7 @@ export function AthleteDetailDialog({
         onClose={() => onOpenChange(false)}
         title="Athlete Profile"
         size="4xl"
+        showCloseButton={false}
       >
           
           {/* Basic Info */}
@@ -367,24 +368,28 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Parent Info */}
-          <ParentInfoDisplay 
-            athleteId={athleteData.id}
-            parentInfo={parentInfo}
-          />
+          <AdminModalSection title="Parent Information" icon={<User className="h-5 w-5" />}>
+            <ParentInfoDisplay 
+              athleteId={athleteData.id}
+              parentInfo={parentInfo}
+            />
+          </AdminModalSection>
 
           {/* Waiver Status */}
-          <WaiverStatusDisplay 
-            athleteId={athleteData.id}
-            athleteName={athleteData.name || 'Unknown Athlete'}
-            onResendWaiver={() => {
-              const bookingId = selectTargetBookingId();
-              if (!bookingId) {
-                toast({ title: 'No Booking Found', description: 'No related booking to send a waiver for.', variant: 'destructive' });
-                return;
-              }
-              sendWaiverEmail.mutate(bookingId);
-            }}
-          />
+          <AdminModalSection title="Waiver Status" icon={<ShieldMinus className="h-5 w-5" />}>
+            <WaiverStatusDisplay 
+              athleteId={athleteData.id}
+              athleteName={athleteData.name || 'Unknown Athlete'}
+              onResendWaiver={() => {
+                const bookingId = selectTargetBookingId();
+                if (!bookingId) {
+                  toast({ title: 'No Booking Found', description: 'No related booking to send a waiver for.', variant: 'destructive' });
+                  return;
+                }
+                sendWaiverEmail.mutate(bookingId);
+              }}
+            />
+          </AdminModalSection>
 
           {/* Bookings History */}
           <BookingHistoryDisplay athleteId={athleteData.id} />
