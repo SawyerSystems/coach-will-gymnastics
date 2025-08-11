@@ -1956,27 +1956,32 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardContent className="p-2 sm:p-4 lg:p-6">
-                <UpcomingSessions 
-                  onBookingSelect={async (bookingId) => {
-                    // Switch to bookings tab
-                    setActiveTab("bookings");
-                    
-                    // Fetch full booking details with athlete information
-                    try {
-                      const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
-                      const bookingData = await response.json();
-                      if (bookingData) {
-                        setSelectedBooking(bookingData);
-                      }
-                    } catch (error) {
-                      console.error("Error fetching booking details:", error);
+            <MainContentContainer 
+              heading="Upcoming Sessions"
+              icon={
+                <div className="p-2 bg-slate-100 dark:bg-[#D8BD2A]/10 rounded-lg">
+                  <Clock className="h-6 w-6 text-[#0F0276] dark:text-[#D8BD2A]" />
+                </div>
+              }
+            >
+              <UpcomingSessions 
+                onBookingSelect={async (bookingId) => {
+                  // Switch to bookings tab
+                  setActiveTab("bookings");
+                  
+                  // Fetch full booking details with athlete information
+                  try {
+                    const response = await apiRequest("GET", `/api/bookings/${bookingId}`);
+                    const bookingData = await response.json();
+                    if (bookingData) {
+                      setSelectedBooking(bookingData);
                     }
-                  }}
-                />
-              </CardContent>
-            </Card>
+                  } catch (error) {
+                    console.error("Error fetching booking details:", error);
+                  }
+                }}
+              />
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
