@@ -123,7 +123,7 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
               }}
               min={new Date().toISOString().split('T')[0]}
               required
-              className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+              className="mt-1 dark:text-yellow-200"
             />
           </div>
 
@@ -134,7 +134,7 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
               onValueChange={setSelectedTime}
               disabled={!selectedDate || slotsLoading}
             >
-              <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+              <SelectTrigger className="mt-1 dark:text-yellow-200">
                 <SelectValue placeholder={slotsLoading ? "Loading times..." : "Select a time"} />
               </SelectTrigger>
               <SelectContent>
@@ -331,7 +331,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="dropoff-name"
                   value={dropoffPersonName}
                   onChange={(e) => setDropoffPersonName(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="Full name"
                   required
                 />
@@ -342,7 +342,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="dropoff-relationship"
                   value={dropoffPersonRelationship}
                   onChange={(e) => setDropoffPersonRelationship(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="Parent, Guardian, etc."
                   required
                 />
@@ -353,7 +353,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="dropoff-phone"
                   value={dropoffPersonPhone}
                   onChange={(e) => setDropoffPersonPhone(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="(555) 123-4567"
                   required
                 />
@@ -371,7 +371,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="pickup-name"
                   value={pickupPersonName}
                   onChange={(e) => setPickupPersonName(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="Full name"
                   required
                 />
@@ -382,7 +382,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="pickup-relationship"
                   value={pickupPersonRelationship}
                   onChange={(e) => setPickupPersonRelationship(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="Parent, Guardian, etc."
                   required
                 />
@@ -393,7 +393,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="pickup-phone"
                   value={pickupPersonPhone}
                   onChange={(e) => setPickupPersonPhone(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="(555) 123-4567"
                   required
                 />
@@ -411,7 +411,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="alt-pickup-name"
                   value={altPickupPersonName}
                   onChange={(e) => setAltPickupPersonName(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="Full name"
                 />
               </div>
@@ -421,7 +421,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="alt-pickup-relationship"
                   value={altPickupPersonRelationship}
                   onChange={(e) => setAltPickupPersonRelationship(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="Relative, Friend, etc."
                 />
               </div>
@@ -431,7 +431,7 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
                   id="alt-pickup-phone"
                   value={altPickupPersonPhone}
                   onChange={(e) => setAltPickupPersonPhone(e.target.value)}
-                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
+                  className="mt-1 dark:text-yellow-200"
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -1833,7 +1833,7 @@ function ParentDashboard() {
                   id="profile-first-name"
                   defaultValue={parentInfo?.firstName || ''}
                   placeholder="Enter your first name"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
               <div>
@@ -1844,7 +1844,7 @@ function ParentDashboard() {
                   id="profile-last-name"
                   defaultValue={parentInfo?.lastName || ''}
                   placeholder="Enter your last name"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
             </ParentModalGrid>
@@ -1859,7 +1859,7 @@ function ParentDashboard() {
                   type="email"
                   defaultValue={parentInfo?.email || authStatus?.email || ''}
                   placeholder="your.email@example.com"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
 
@@ -1872,7 +1872,7 @@ function ParentDashboard() {
                   type="tel"
                   defaultValue={parentInfo?.phone || ''}
                   placeholder="(555) 123-4567"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
             </div>
