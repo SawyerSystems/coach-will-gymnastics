@@ -152,7 +152,7 @@ export function ParentWaiverManagement() {
         </div>
 
         {/* Loading Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="overflow-hidden border-0 shadow-lg animate-pulse">
               <CardContent className="pt-6">
@@ -289,22 +289,22 @@ export function ParentWaiverManagement() {
       </div>
 
       {/* Enhanced Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Signed Waivers Card */}
-        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-green-50 via-green-100 to-emerald-50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-amber-50 via-yellow-100 to-amber-100 dark:from-amber-900/20 dark:via-yellow-900/30 dark:to-amber-800/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="bg-green-500 p-2 rounded-lg shadow-md">
+                  <div className="bg-[#B8860B] p-2 rounded-lg shadow-md">
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold text-green-700">{signedWaivers}</p>
-                    <p className="text-sm font-semibold text-green-600">Signed Waivers</p>
+                    <p className="text-3xl font-bold text-[#B8860B] dark:text-[#B8860B]">{signedWaivers}</p>
+                    <p className="text-sm font-semibold text-amber-700 dark:text-[#B8860B]">Signed Waivers</p>
                   </div>
                 </div>
-                <div className="text-xs text-green-600 flex items-center gap-1">
+                <div className="text-xs text-amber-600 dark:text-[#B8860B] flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   All requirements met
                 </div>
@@ -480,7 +480,7 @@ export function ParentWaiverManagement() {
       {athletesWithWaivers.length > 0 && (
         <div className="space-y-6">
           <Card className="overflow-hidden border-0 shadow-xl">
-            <CardHeader className="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 py-6">
+            <CardHeader className="bg-gradient-to-r from-[#B8860B] via-amber-600 to-yellow-600 dark:from-[#B8860B] dark:via-amber-700 dark:to-yellow-700 py-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-white flex items-center gap-3 text-xl">
                   <div className="bg-white/20 p-2 rounded-lg">
@@ -503,28 +503,28 @@ export function ParentWaiverManagement() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6 bg-gradient-to-b from-green-50/30 to-white">
+            <CardContent className="p-6 bg-gradient-to-b from-amber-50/30 to-white dark:from-amber-900/10 dark:to-gray-900">
               <div className="grid gap-6">
                 {athletesWithWaivers.map((status: AthleteWaiverStatus) => (
-                  <Card key={status.athlete.id} className="border-green-200 bg-gradient-to-br from-green-50/50 via-white to-emerald-50/30 hover:from-green-100/60 hover:to-emerald-100/40 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1">
+                  <Card key={status.athlete.id} className="border-amber-200 dark:border-[#B8860B]/30 bg-gradient-to-br from-amber-50/50 via-white to-yellow-50/30 dark:from-amber-900/20 dark:via-gray-800 dark:to-yellow-900/20 hover:from-amber-100/60 hover:to-yellow-100/40 dark:hover:from-amber-800/30 dark:hover:to-yellow-800/30 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <CardTitle className="text-xl text-green-800 mb-1">
+                          <CardTitle className="text-xl text-[#B8860B] dark:text-[#B8860B] mb-1">
                             {status.athlete.name || `${status.athlete.first_name} ${status.athlete.last_name}`}
                           </CardTitle>
-                          <CardDescription className="flex items-center gap-6 mt-2 text-green-700">
-                            <span className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
+                          <CardDescription className="flex items-center gap-6 mt-2 text-amber-700 dark:text-[#B8860B]">
+                            <span className="flex items-center gap-2 bg-amber-100 dark:bg-[#B8860B]/20 px-3 py-1 rounded-full">
                               <Calendar className="w-4 h-4" />
                               <span className="font-medium">Age: {getAthleteAge(status.athlete.date_of_birth)}</span>
                             </span>
-                            <span className="flex items-center gap-2 bg-emerald-100 px-3 py-1 rounded-full capitalize">
+                            <span className="flex items-center gap-2 bg-yellow-100 dark:bg-[#B8860B]/30 px-3 py-1 rounded-full capitalize">
                               <TrendingUp className="w-4 h-4" />
                               <span className="font-medium">Experience: {status.athlete.experience}</span>
                             </span>
                           </CardDescription>
                         </div>
-                        <Badge variant="outline" className="text-green-700 border-green-300 font-semibold bg-green-100 px-3 py-1">
+                        <Badge variant="outline" className="text-[#B8860B] border-[#B8860B]/50 dark:border-[#B8860B] font-semibold bg-amber-100 dark:bg-[#B8860B]/20 px-3 py-1">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Waiver Signed
                         </Badge>
@@ -533,26 +533,26 @@ export function ParentWaiverManagement() {
                     <CardContent className="pt-2">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded-lg">
-                            <span className="text-sm font-medium text-green-700">Signed by:</span>
-                            <span className="text-sm font-semibold text-green-800">{status.waiver?.signer_name}</span>
+                          <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
+                            <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Signed by:</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.signer_name}</span>
                           </div>
-                          <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded-lg">
-                            <span className="text-sm font-medium text-green-700">Date signed:</span>
-                            <span className="text-sm font-semibold text-green-800">
+                          <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
+                            <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Date signed:</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">
                               {status.waiver?.signed_at ? new Date(status.waiver.signed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
                             </span>
                           </div>
                         </div>
                         <div className="space-y-3">
-                          <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded-lg">
-                            <span className="text-sm font-medium text-green-700">Relationship:</span>
-                            <span className="text-sm font-semibold text-green-800">{status.waiver?.relationship_to_athlete}</span>
+                          <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
+                            <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Relationship:</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.relationship_to_athlete}</span>
                           </div>
                           {status.waiver?.emergency_contact_number && (
-                            <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded-lg">
-                              <span className="text-sm font-medium text-green-700">Emergency Contact:</span>
-                              <span className="text-sm font-semibold text-green-800 flex items-center gap-2">
+                            <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
+                              <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Emergency Contact:</span>
+                              <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B] flex items-center gap-2">
                                 <Phone className="w-3 h-3" />
                                 {status.waiver.emergency_contact_number}
                               </span>
@@ -562,11 +562,11 @@ export function ParentWaiverManagement() {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex gap-3 mt-4 pt-4 border-t border-green-200">
+                      <div className="flex gap-3 mt-4 pt-4 border-t border-amber-200 dark:border-[#B8860B]/30">
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="text-green-700 border-green-300 hover:bg-green-50 flex-1"
+                          className="text-[#B8860B] border-[#B8860B]/50 dark:border-[#B8860B] hover:bg-amber-50 dark:hover:bg-[#B8860B]/20 flex-1"
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Download PDF
@@ -574,7 +574,7 @@ export function ParentWaiverManagement() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="text-green-700 border-green-300 hover:bg-green-50 flex-1"
+                          className="text-[#B8860B] border-[#B8860B]/50 dark:border-[#B8860B] hover:bg-amber-50 dark:hover:bg-[#B8860B]/20 flex-1"
                         >
                           <FileText className="w-4 h-4 mr-2" />
                           View Details
