@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -197,20 +197,20 @@ export default function AthleteProgressPage() {
       </div>
 
       {!athleteId ? (
-        <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-          <CardContent className="py-10 text-center text-slate-600 dark:text-white/80">Select an athlete to see progress.</CardContent>
-        </Card>
+        <AdminCard>
+          <AdminCardContent className="py-10 text-center text-slate-600 dark:text-white/80">Select an athlete to see progress.</AdminCardContent>
+        </AdminCard>
       ) : loadingSkills ? (
-        <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-          <CardContent className="py-10 text-center text-slate-600 dark:text-white/80">Loading progress…</CardContent>
-        </Card>
+        <AdminCard>
+          <AdminCardContent className="py-10 text-center text-slate-600 dark:text-white/80">Loading progress…</AdminCardContent>
+        </AdminCard>
       ) : (
         <div className="space-y-6">
-          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-            <CardHeader>
-              <CardTitle className="text-base text-[#0F0276] dark:text-white">Overall Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <AdminCard>
+            <AdminCardHeader>
+              <AdminCardTitle>Overall Progress</AdminCardTitle>
+            </AdminCardHeader>
+            <AdminCardContent>
               <div className="grid gap-4">
                 <div>
                   <div className="flex items-center justify-between text-sm mb-1">
@@ -230,16 +230,16 @@ export default function AthleteProgressPage() {
                   Total skills: {overall.total} · Mastered: {overall.counts["mastered"] || 0} · Consistent: {overall.counts["consistent"] || 0} · Learning: {overall.counts["learning"] || 0} · Working: {overall.counts["working"] || 0}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {perApparatus.map((row) => (
-              <Card key={row.apparatusId} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                <CardHeader>
-                  <CardTitle className="text-base text-[#0F0276] dark:text-white">{apparatusById.get(row.apparatusId)?.name || `Apparatus #${row.apparatusId}`}</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <AdminCard key={row.apparatusId}>
+                <AdminCardHeader>
+                  <AdminCardTitle>{apparatusById.get(row.apparatusId)?.name || `Apparatus #${row.apparatusId}`}</AdminCardTitle>
+                </AdminCardHeader>
+                <AdminCardContent>
                   <div className="flex items-center justify-between text-sm mb-1">
                     <span className="text-slate-700 dark:text-white/90">Mastered</span>
                     <span className="text-slate-600 dark:text-white/80">{row.masteredPct}%</span>
@@ -253,21 +253,21 @@ export default function AthleteProgressPage() {
                   <div className="text-xs text-slate-600 mt-1">
                     Total: {row.total} · M: {row.counts["mastered"] || 0} · C: {row.counts["consistent"] || 0} · L: {row.counts["learning"] || 0} · W: {row.counts["working"] || 0}
                   </div>
-                </CardContent>
-              </Card>
+                </AdminCardContent>
+              </AdminCard>
             ))}
             {!perApparatus.length && (
-              <Card className="md:col-span-2 rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                <CardContent className="py-10 text-center text-slate-600 dark:text-white/80">No skills match the selected filters.</CardContent>
-              </Card>
+              <AdminCard className="md:col-span-2">
+                <AdminCardContent className="py-10 text-center text-slate-600 dark:text-white/80">No skills match the selected filters.</AdminCardContent>
+              </AdminCard>
             )}
           </div>
           {perApparatusLevel.length > 0 ? (
-            <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-              <CardHeader>
-                <CardTitle className="text-base text-[#0F0276] dark:text-white">Progress by Level</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AdminCard>
+              <AdminCardHeader>
+                <AdminCardTitle>Progress by Level</AdminCardTitle>
+              </AdminCardHeader>
+              <AdminCardContent>
                 <div className="space-y-4">
                   {perApparatusLevel.map(group => (
                     <div key={group.apparatusId}>
@@ -287,8 +287,8 @@ export default function AthleteProgressPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </AdminCardContent>
+            </AdminCard>
           ) : null}
         </div>
       )}

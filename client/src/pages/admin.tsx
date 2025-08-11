@@ -1961,11 +1961,13 @@ export default function Admin() {
 
           <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
             <MainContentContainer 
-              heading="Upcoming Sessions"
-              icon={
-                <div className="p-2 bg-slate-100 dark:bg-[#D8BD2A]/10 rounded-lg">
-                  <Clock className="h-6 w-6 text-[#0F0276] dark:text-[#D8BD2A]" />
-                </div>
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <div className="p-2 bg-slate-100 dark:bg-[#D8BD2A]/10 rounded-lg">
+                    <Clock className="h-6 w-6 text-[#0F0276] dark:text-[#D8BD2A]" />
+                  </div>
+                  Upcoming Sessions
+                </span>
               }
             >
               <UpcomingSessions 
