@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
+import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "@/components/admin-ui/AdminModal";
 import { AdminAnalyticsMetrics, type MetricCard } from "@/components/admin-ui/AdminAnalyticsMetrics";
 import { AdminTabButtonsRow } from "@/components/admin-ui/AdminTabButtons";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
@@ -3064,272 +3065,249 @@ export default function Admin() {
         </Tabs>
         
         {/* Parent Details Dialog */}
-        <Dialog 
-          open={!!viewingParent} 
-          onOpenChange={() => setViewingParent(null)}
+        <AdminModal 
+          isOpen={!!viewingParent} 
+          onClose={() => setViewingParent(null)}
+          title="Parent Details"
+          size="4xl"
         >
-          <DialogContent 
-            className="max-w-4xl max-h-[90vh] overflow-y-auto p-0"
-            // Adding explicit ARIA attributes to prevent accessibility issues
-            aria-labelledby="parent-details-title"
-            aria-describedby="parent-details-description"
-          >
-            <DialogHeader className="bg-gradient-to-r from-purple-100 to-indigo-100 px-6 py-4 rounded-t-lg mb-0">
-              <DialogTitle id="parent-details-title" className="text-2xl font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-3">
-                <div className="p-2 bg-indigo-200 rounded-lg shadow-sm">
-                  <User className="h-6 w-6 text-indigo-700" />
-                </div>
-                Parent Details
-                {viewingParent && (
-                  <Badge variant="outline" className="ml-2 bg-white border-indigo-200 text-indigo-700 font-medium">ID: {viewingParent.id}</Badge>
-                )}
-              </DialogTitle>
-              <DialogDescription id="parent-details-description" className="text-indigo-700/70 font-medium">
-                Complete parent profile with athletes and booking history
-              </DialogDescription>
-            </DialogHeader>
-            
-            {viewingParent && selectedParentDetails && (() => {
-              return (
-              <div className="space-y-6 p-6 bg-gradient-to-br from-white to-slate-50">
-                {/* Basic Info */}
-                <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
-                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-[#0F0276]/50 dark:to-[#2A4A9B]/50 rounded-t-xl">
-                    <CardTitle className="text-lg font-semibold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                      <User className="h-5 w-5 text-blue-700 dark:text-blue-300" />
-                      Basic Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Full Name</Label>
-                        <p className="text-lg font-semibold text-blue-900">
-                          {selectedParentDetails.firstName || selectedParentDetails.first_name} {selectedParentDetails.lastName || selectedParentDetails.last_name}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Parent ID</Label>
-                        <p className="text-lg text-gray-800">{selectedParentDetails.id}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Email</Label>
-                        <p className="text-lg text-gray-800 flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-blue-600" />
-                          {selectedParentDetails.email}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Phone</Label>
-                        <p className="text-lg text-gray-800 flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-blue-600" />
-                          {selectedParentDetails.phone}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Emergency Contact</Label>
-                        <p className="text-lg text-gray-800">
-                          {selectedParentDetails.emergencyContactName || selectedParentDetails.emergency_contact_name || 'Not provided'}
-                          {(selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone) && (
-                            <span className="block text-sm text-gray-600 dark:text-slate-300 flex items-center gap-2 mt-1">
-                              <AlertCircle className="h-4 w-4 text-amber-500" />
-                              {selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600 dark:text-slate-300">Member Since</Label>
-                        <p className="text-lg text-gray-800 flex items-center gap-2">
-                          <CalendarDays className="h-4 w-4 text-blue-600" />
-                          {(selectedParentDetails.createdAt || selectedParentDetails.created_at) ? new Date(selectedParentDetails.createdAt || selectedParentDetails.created_at).toLocaleDateString() : 'Unknown'}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+          {viewingParent && selectedParentDetails && (
+            <>
+              {/* Basic Information */}
+              <AdminModalSection
+                title="Basic Information"
+                icon={<User className="h-5 w-5" />}
+              >
+                <AdminModalGrid cols={2}>
+                  <div>
+                    <AdminModalDetailRow
+                      label="Full Name"
+                      value={`${selectedParentDetails.firstName || selectedParentDetails.first_name} ${selectedParentDetails.lastName || selectedParentDetails.last_name}`}
+                      icon={<User className="h-4 w-4" />}
+                    />
+                    <AdminModalDetailRow
+                      label="Parent ID"
+                      value={selectedParentDetails.id}
+                      icon={<User className="h-4 w-4" />}
+                    />
+                    <AdminModalDetailRow
+                      label="Email"
+                      value={selectedParentDetails.email}
+                      icon={<Mail className="h-4 w-4" />}
+                    />
+                    <AdminModalDetailRow
+                      label="Phone"
+                      value={selectedParentDetails.phone}
+                      icon={<Phone className="h-4 w-4" />}
+                    />
+                  </div>
+                  <div>
+                    <AdminModalDetailRow
+                      label="Emergency Contact"
+                      value={selectedParentDetails.emergencyContactName || selectedParentDetails.emergency_contact_name || 'Not provided'}
+                      icon={<AlertCircle className="h-4 w-4" />}
+                    />
+                    {(selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone) && (
+                      <AdminModalDetailRow
+                        label="Emergency Phone"
+                        value={selectedParentDetails.emergencyContactPhone || selectedParentDetails.emergency_contact_phone}
+                        icon={<Phone className="h-4 w-4" />}
+                      />
+                    )}
+                    <AdminModalDetailRow
+                      label="Member Since"
+                      value={(selectedParentDetails.createdAt || selectedParentDetails.created_at) ? new Date(selectedParentDetails.createdAt || selectedParentDetails.created_at).toLocaleDateString() : 'Unknown'}
+                      icon={<CalendarDays className="h-4 w-4" />}
+                    />
+                    <AdminModalDetailRow
+                      label="Last Login"
+                      value={selectedParentDetails.lastLoginAt ? `${new Date(selectedParentDetails.lastLoginAt).toLocaleDateString()} at ${new Date(selectedParentDetails.lastLoginAt).toLocaleTimeString()}` : 'Never logged in'}
+                      icon={<Clock className="h-4 w-4" />}
+                    />
+                  </div>
+                </AdminModalGrid>
+              </AdminModalSection>
 
-                {/* Athletes */}
-                {selectedParentDetails.athletes && selectedParentDetails.athletes.length > 0 && (
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-teal-100 to-green-100 dark:from-[#0F0276]/50 dark:to-[#2A4A9B]/50 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-teal-800 dark:text-teal-200 flex items-center gap-2">
-                        <Dumbbell className="h-5 w-5 text-teal-700 dark:text-teal-300" />
-                        Athletes
-                        <Badge variant="secondary" className="bg-teal-100 dark:bg-teal-800 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-600">{selectedParentDetails.athletes.length}</Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 bg-gradient-to-br from-white to-teal-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {selectedParentDetails.athletes.map((athlete: any) => (
-                          <Card
-                            key={athlete.id}
-                            className="p-4 cursor-pointer border border-teal-100 shadow-sm hover:shadow-md hover:bg-gradient-to-br hover:from-teal-50/50 hover:to-blue-50/50 focus:bg-blue-100 transition-all duration-300"
-                            tabIndex={0}
-                            role="button"
-                            aria-label={`View details for ${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
-                            onClick={() => {
-                              setSelectedAthlete({
-                                ...athlete,
-                                // Normalize name fields for detail modal
-                                name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
-                                dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
-                                photo: athlete.photo,
-                              });
-                              setIsAthleteViewOpen(true);
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setSelectedAthlete({
-                                  ...athlete,
-                                  name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
-                                  dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
-                                  photo: athlete.photo,
-                                });
-                                setIsAthleteViewOpen(true);
-                              }
-                            }}
-                          >
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-semibold text-teal-900 flex items-center gap-2">
-                                  <UserCircle className="h-4 w-4 text-teal-600" />
-                                  {athlete.firstName || athlete.first_name || ''} {athlete.lastName || athlete.last_name || athlete.name?.split(' ').slice(1).join(' ') || ''}
-                                </h4>
-                                <Badge variant="outline" className="bg-white border-teal-200 text-teal-700 font-medium">ID: {athlete.id}</Badge>
-                              </div>
-                              <div className="text-sm text-gray-600 dark:text-slate-300 space-y-1">
-                                <p>
-                                  <strong>Age:</strong>{' '}
-                                  {(() => {
-                                    const dob = athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date;
-                                    if (dob) {
-                                      const age = calculateAge(dob);
-                                      return isNaN(age) ? 'Not provided' : age;
-                                    }
-                                    return 'Not provided';
-                                  })()}
-                                </p>
-                                <p>
-                                  <strong>Gender:</strong> {(() => {
-                                    const genderRaw = athlete.gender || athlete.gender_identity || athlete.genderIdentity || '';
-                                    if (!genderRaw) return 'Not provided';
-                                    const g = genderRaw.toLowerCase().replace(/\s|_/g, '');
-                                    if (g === 'male') return 'Male';
-                                    if (g === 'female') return 'Female';
-                                    if (g === 'other') return 'Other';
-                                    if (g === 'prefernottosay' || g === 'prefernotosay' || g === 'prefer_not_to_say') return 'Prefer not to say';
-                                    return genderRaw;
-                                  })()}
-                                </p>
-                                {athlete.skill_level && (
-                                  <p>
-                                    <strong>Skill Level:</strong> {athlete.skill_level}
-                                  </p>
-                                )}
-                                {athlete.medical_conditions && (
-                                  <p>
-                                    <strong>Medical Conditions:</strong> {athlete.medical_conditions}
-                                  </p>
-                                )}
-                              </div>
-                              {athlete.waivers && athlete.waivers.length > 0 && (
-                                <div className="mt-2">
-                                  <WaiverStatusDisplay 
-                                    athleteId={athlete.id} 
-                                    athleteName={`${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Booking History */}
-                {selectedParentDetails.bookings && selectedParentDetails.bookings.length > 0 && (
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-[#0F0276]/50 dark:to-[#2A4A9B]/50 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-blue-900 dark:text-blue-200 flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-blue-700 dark:text-blue-300" />
-                        Booking History
-                        <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-600">{selectedParentDetails.bookings.length}</Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 bg-gradient-to-br from-white to-blue-50/30 dark:from-[#0F0276]/30 dark:to-[#2A4A9B]/20">
-                      <div className="space-y-3">
-                        {editingParent.bookings
-                          .sort((a: any, b: any) => new Date(b.preferred_date).getTime() - new Date(a.preferred_date).getTime())
-                          .slice(0, 10) // Show last 10 bookings
-                          .map((booking: any) => (
-                          <div key={booking.id} className="border border-blue-100 rounded-lg p-4 hover:shadow-md transition-all duration-300 bg-gradient-to-r from-white to-blue-50/20">
-                            <div className="flex justify-between items-start">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <CalendarDays className="h-4 w-4 text-blue-600" />
-                                  <span className="font-medium text-blue-900">
-                                    {new Date(`${booking.preferred_date}T12:00:00Z`).toLocaleDateString()}
-                                  </span>
-                                  <Badge variant="outline" className="bg-white border-blue-200 text-blue-700 font-medium">#{booking.id}</Badge>
-                                </div>
-                                <p className="text-sm text-gray-700 flex items-center gap-2">
-                                  <Dumbbell className="h-4 w-4 text-blue-600" />
-                                  <strong>Lesson:</strong> {booking.lesson_type}
-                                </p>
-                                {booking.special_requests && (
-                                  <p className="text-sm text-gray-700 flex items-center gap-2">
-                                    <MessageSquare className="h-4 w-4 text-blue-600" />
-                                    <strong>Notes:</strong> {booking.special_requests}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-right space-y-1">
-                                <Badge 
-                                  variant={
-                                    booking.payment_status === 'reservation-paid' ? 'default' :
-                                    booking.payment_status === 'reservation-pending' ? 'secondary' : 'destructive'
-                                  }
-                                  className={`px-3 py-1 ${booking.payment_status === 'reservation-paid' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}`}
-                                >
-                                  <DollarSign className="h-3 w-3 mr-1" />
-                                  {booking.payment_status}
-                                </Badge>
-                                <Badge 
-                                  variant={
-                                    booking.attendance_status === 'confirmed' ? 'default' :
-                                    booking.attendance_status === 'completed' ? 'default' : 'secondary'
-                                  }
-                                  className={`block mt-1 px-3 py-1 ${booking.attendance_status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}`}
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  {booking.attendance_status}
-                                </Badge>
-                              </div>
-                            </div>
+              {/* Athletes */}
+              {selectedParentDetails.athletes && selectedParentDetails.athletes.length > 0 && (
+                <AdminModalSection
+                  title={`Athletes (${selectedParentDetails.athletes.length})`}
+                  icon={<Dumbbell className="h-5 w-5" />}
+                  className="mt-6"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedParentDetails.athletes.map((athlete: any) => (
+                      <div
+                        key={athlete.id}
+                        className="p-4 cursor-pointer border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 bg-white dark:bg-slate-800/30"
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`View details for ${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
+                        onClick={() => {
+                          setSelectedAthlete({
+                            ...athlete,
+                            name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
+                            dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
+                            photo: athlete.photo,
+                          });
+                          setIsAthleteViewOpen(true);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedAthlete({
+                              ...athlete,
+                              name: `${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`.trim(),
+                              dateOfBirth: athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date || '',
+                              photo: athlete.photo,
+                            });
+                            setIsAthleteViewOpen(true);
+                          }
+                        }}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                              <UserCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              {athlete.firstName || athlete.first_name || ''} {athlete.lastName || athlete.last_name || athlete.name?.split(' ').slice(1).join(' ') || ''}
+                            </h4>
+                            <Badge variant="outline" className="bg-white dark:bg-slate-700 border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300 font-medium">
+                              ID: {athlete.id}
+                            </Badge>
                           </div>
-                        ))}
-                        
-                        {editingParent.bookings.length > 10 && (
-                          <div className="flex items-center justify-center bg-blue-50 rounded-lg p-2 mt-2">
-                            <Info className="h-4 w-4 text-blue-600 mr-2" />
-                            <p className="text-sm text-blue-700 font-medium">
-                              Showing 10 most recent bookings of {editingParent.bookings.length} total
+                          <div className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
+                            <p>
+                              <strong>Age:</strong>{' '}
+                              {(() => {
+                                const dob = athlete.date_of_birth || athlete.dateOfBirth || athlete.birth_date;
+                                if (dob) {
+                                  const age = calculateAge(dob);
+                                  return isNaN(age) ? 'Not provided' : age;
+                                }
+                                return 'Not provided';
+                              })()}
                             </p>
+                            <p>
+                              <strong>Gender:</strong> {(() => {
+                                const genderRaw = athlete.gender || athlete.gender_identity || athlete.genderIdentity || '';
+                                if (!genderRaw) return 'Not provided';
+                                const g = genderRaw.toLowerCase().replace(/\s|_/g, '');
+                                if (g === 'male') return 'Male';
+                                if (g === 'female') return 'Female';
+                                if (g === 'other') return 'Other';
+                                if (g === 'prefernottosay' || g === 'prefernotosay' || g === 'prefer_not_to_say') return 'Prefer not to say';
+                                return genderRaw;
+                              })()}
+                            </p>
+                            {athlete.skill_level && (
+                              <p>
+                                <strong>Skill Level:</strong> {athlete.skill_level}
+                              </p>
+                            )}
+                            {athlete.medical_conditions && (
+                              <p>
+                                <strong>Medical Conditions:</strong> {athlete.medical_conditions}
+                              </p>
+                            )}
                           </div>
-                        )}
+                          {athlete.waivers && athlete.waivers.length > 0 && (
+                            <div className="mt-2">
+                              <WaiverStatusDisplay 
+                                athleteId={athlete.id} 
+                                athleteName={`${athlete.firstName || athlete.first_name || ''} ${athlete.lastName || athlete.last_name || ''}`}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            );
-          })()}
-          </DialogContent>
-        </Dialog>
+                    ))}
+                  </div>
+                </AdminModalSection>
+              )}
+
+              {/* Booking History */}
+              {selectedParentDetails.bookings && selectedParentDetails.bookings.length > 0 && (
+                <AdminModalSection
+                  title={`Booking History (${selectedParentDetails.bookings.length})`}
+                  icon={<Calendar className="h-5 w-5" />}
+                  className="mt-6"
+                >
+                  <div className="space-y-3">
+                    {selectedParentDetails.bookings
+                      .sort((a: any, b: any) => new Date(b.preferred_date).getTime() - new Date(a.preferred_date).getTime())
+                      .slice(0, 10)
+                      .map((booking: any) => (
+                      <div key={booking.id} className="border border-slate-200 dark:border-slate-600 rounded-lg p-4 hover:shadow-md transition-all duration-300 bg-white dark:bg-slate-800/30">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <CalendarDays className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <span className="font-medium text-slate-900 dark:text-slate-100">
+                                {new Date(`${booking.preferred_date}T12:00:00Z`).toLocaleDateString()}
+                              </span>
+                              <Badge variant="outline" className="bg-white dark:bg-slate-700 border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300 font-medium">
+                                #{booking.id}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                              <Dumbbell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              <strong>Lesson:</strong> {booking.lesson_type}
+                            </p>
+                            {booking.special_requests && (
+                              <p className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                <strong>Notes:</strong> {booking.special_requests}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right space-y-1">
+                            <Badge 
+                              variant={
+                                booking.payment_status === 'reservation-paid' ? 'default' :
+                                booking.payment_status === 'reservation-pending' ? 'secondary' : 'destructive'
+                              }
+                              className={`px-3 py-1 ${
+                                booking.payment_status === 'reservation-paid' 
+                                  ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/60' 
+                                  : ''
+                              }`}
+                            >
+                              <DollarSign className="h-3 w-3 mr-1" />
+                              {booking.payment_status}
+                            </Badge>
+                            <Badge 
+                              variant={
+                                booking.attendance_status === 'confirmed' ? 'default' :
+                                booking.attendance_status === 'completed' ? 'default' : 'secondary'
+                              }
+                              className={`block mt-1 px-3 py-1 ${
+                                booking.attendance_status === 'completed' 
+                                  ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/60' 
+                                  : ''
+                              }`}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {booking.attendance_status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {selectedParentDetails.bookings.length > 10 && (
+                      <div className="flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-2 border border-blue-200 dark:border-blue-800">
+                        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
+                        <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                          Showing 10 most recent bookings of {selectedParentDetails.bookings.length} total
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </AdminModalSection>
+              )}
+            </>
+          )}
+        </AdminModal>
         
         {/* Photo Enlargement Modal */}
         <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
