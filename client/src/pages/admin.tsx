@@ -1591,6 +1591,9 @@ export default function Admin() {
                 <span className="inline-flex items-center gap-2 sm:gap-3">
                   <Users className="h-8 w-8 text-[#D8BD2A]" />
                   Athletes Management
+                  <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
+                    {athletes.length} total
+                  </Badge>
                 </span>
               }
             >
