@@ -8,6 +8,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
+import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "@/components/admin-ui/AdminModal";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
@@ -62,6 +63,7 @@ export function AdminWaiverManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWaiver, setSelectedWaiver] = useState<Waiver | null>(null);
+  const [isWaiverDetailsOpen, setIsWaiverDetailsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'signed' | 'missing' | 'archived'>('all');
   const [sendingWaiverId, setSendingWaiverId] = useState<number | string | null>(null);
   const [generatingWaiverId, setGeneratingWaiverId] = useState<number | string | null>(null);
@@ -364,29 +366,18 @@ export function AdminWaiverManagement() {
                         <div className="relative min-h-40 pb-28">
                           {/* top-right vertical actions */}
           <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
-                            <Dialog>
-                              <DialogTrigger asChild>
-            <AdminButton variant="secondary" size="sm" className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </AdminButton>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle>Waiver Details - {waiver.athleteName}</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-1 gap-2 text-sm">
-                                    <div className="flex justify-between"><span className="font-semibold">Athlete:</span><span>{waiver.athleteName}</span></div>
-                                    <div className="flex justify-between"><span className="font-semibold">Signer:</span><span>{waiver.signerName}</span></div>
-                                    <div className="flex justify-between"><span className="font-semibold">Relationship:</span><span>{waiver.relationshipToAthlete}</span></div>
-                                    <div className="flex justify-between"><span className="font-semibold">Emergency Contact:</span><span>{waiver.emergencyContactNumber}</span></div>
-                                    <div className="flex justify-between"><span className="font-semibold">Signed:</span><span>{formatDate(waiver.signedAt.split('T')[0])}</span></div>
-                                    <div className="flex justify-between"><span className="font-semibold">Email Sent:</span><span>{waiver.emailSentAt ? formatDate(waiver.emailSentAt.split('T')[0]) : 'Not sent'}</span></div>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                            <AdminButton 
+                              variant="secondary" 
+                              size="sm" 
+                              className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                              onClick={() => {
+                                setSelectedWaiver(waiver);
+                                setIsWaiverDetailsOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </AdminButton>
                             {waiver.pdfPath && typeof waiver.id === 'number' ? (
                               <AdminButton
                                 variant="secondary"
@@ -485,137 +476,73 @@ export function AdminWaiverManagement() {
                         </TableCell>
                         <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                           <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setSelectedWaiver(waiver)}
-                                  className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
-                                >
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle>Waiver Details - {waiver.athleteName}</DialogTitle>
-                                </DialogHeader>
-                              {selectedWaiver && (
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="font-semibold">Athlete Name:</label>
-                                      <p>{selectedWaiver.athleteName}</p>
-                                    </div>
-                                    <div>
-                                      <label className="font-semibold">Signer Name:</label>
-                                      <p>{selectedWaiver.signerName}</p>
-                                    </div>
-                                    <div>
-                                      <label className="font-semibold">Relationship:</label>
-                                      <p>{selectedWaiver.relationshipToAthlete}</p>
-                                    </div>
-                                    <div>
-                                      <label className="font-semibold">Emergency Contact:</label>
-                                      <p>{selectedWaiver.emergencyContactNumber}</p>
-                                    </div>
-                                    <div>
-                                      <label className="font-semibold">Signed Date:</label>
-                                      <p>{formatDate(selectedWaiver.signedAt.split('T')[0])}</p>
-                                    </div>
-                                    <div>
-                                      <label className="font-semibold">Email Sent:</label>
-                                      <p>{selectedWaiver.emailSentAt ? formatDate(selectedWaiver.emailSentAt.split('T')[0]) : 'Not sent'}</p>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold">Agreement Status:</h4>
-                                    <div className="grid grid-cols-1 gap-2">
-                                      <div className="flex items-center">
-                                        {selectedWaiver.understandsRisks ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                        <span>Understands Risks</span>
-                                      </div>
-                                      <div className="flex items-center">
-                                        {selectedWaiver.agreesToPolicies ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                        <span>Agrees to Policies</span>
-                                      </div>
-                                      <div className="flex items-center">
-                                        {selectedWaiver.authorizesEmergencyCare ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                        <span>Authorizes Emergency Care</span>
-                                      </div>
-                                      <div className="flex items-center">
-                                        {selectedWaiver.allowsPhotoVideo ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                        <span>Allows Photo/Video</span>
-                                      </div>
-                                      <div className="flex items-center">
-                                        {selectedWaiver.confirmsAuthority ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                        <span>Confirms Authority</span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </DialogContent>
-                          </Dialog>
-                          
-              {waiver.pdfPath && typeof waiver.id === 'number' ? (
-                            <Button
-                              variant="outline"
+                            <AdminButton
+                              variant="secondary"
                               size="sm"
-                              onClick={() => downloadPDF(waiver.id, waiver.athleteName)}
-                              className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
+                              onClick={() => {
+                                setSelectedWaiver(waiver);
+                                setIsWaiverDetailsOpen(true);
+                              }}
+                              className="text-[#0F0276] dark:text-white font-medium"
                             >
-                              <Download className="h-4 w-4 mr-1" />
-                              PDF
-                            </Button>
-                          ) : typeof waiver.id === 'number' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                onClick={() => generatePDFMutation.mutate(waiver.id)}
-                disabled={generatingWaiverId === waiver.id}
-                              className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
-                            >
-                              <FileText className="h-4 w-4 mr-1" />
-                {generatingWaiverId === waiver.id ? "Generating..." : "Generate PDF"}
-                            </Button>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs border-[#0F0276]/30 text-[#0F0276]/80 bg-[#0F0276]/5 dark:border-white/40 dark:text-white/80 dark:bg-white/10">
-                              Missing waiver
-                            </Badge>
-                          )}
-                          
-              {typeof waiver.id === 'number' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                onClick={() => resendEmailMutation.mutate(waiver.id)}
-                disabled={sendingWaiverId === waiver.id || waiver.status === 'signed' || !!waiver.signedAt}
-                title={waiver.status === 'signed' || !!waiver.signedAt ? 'Waiver is already signed' : undefined}
-                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
-                            >
-                              <Mail className="h-4 w-4 mr-1" />
-                {sendingWaiverId === waiver.id ? "Sending..." : "Email"}
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled
-                              className="opacity-50 border-slate-200 text-slate-400"
-                            >
-                              <Mail className="h-4 w-4 mr-1" />
-                              N/A
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </AdminButton>
+                            {waiver.pdfPath && typeof waiver.id === 'number' ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadPDF(waiver.id, waiver.athleteName)}
+                                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                PDF
+                              </Button>
+                            ) : typeof waiver.id === 'number' ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => generatePDFMutation.mutate(waiver.id)}
+                                disabled={generatingWaiverId === waiver.id}
+                                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                {generatingWaiverId === waiver.id ? 'Generating...' : 'Generate PDF'}
+                              </Button>
+                            ) : (
+                              <Badge variant="secondary" className="bg-slate-100 text-slate-600">
+                                N/A
+                              </Badge>
+                            )}
+                            {typeof waiver.id === 'number' ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => resendEmailMutation.mutate(waiver.id)}
+                                disabled={sendingWaiverId === waiver.id || waiver.status === 'signed' || !!waiver.signedAt}
+                                title={waiver.status === 'signed' || !!waiver.signedAt ? 'Waiver is already signed' : undefined}
+                                className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium disabled:opacity-50"
+                              >
+                                <Mail className="h-4 w-4 mr-1" />
+                                {sendingWaiverId === waiver.id ? 'Sending...' : 'Email'}
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                className="opacity-50 border-slate-200 text-slate-400"
+                              >
+                                <Mail className="h-4 w-4 mr-1" />
+                                N/A
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </AdminCardContent>
           </AdminCard>
@@ -782,29 +709,17 @@ export function AdminWaiverManagement() {
                         <CardContent className="p-4">
                           <div className="relative min-h-40 pb-28">
             <div className="absolute right-2 top-2 flex flex-col gap-2 z-10 max-w-[40%]">
-                              <Dialog>
-                                <DialogTrigger asChild>
-              <AdminButton variant="secondary" size="sm" className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                                    <Eye className="h-4 w-4 mr-2" /> View
-                                  </AdminButton>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                  <DialogHeader>
-                                    <DialogTitle>Archived Waiver - {waiver.athleteName}</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4 text-sm">
-                                    <div className="grid grid-cols-1 gap-2">
-                                      <div className="flex justify-between"><span className="font-semibold">Athlete:</span><span>{waiver.athleteName}</span></div>
-                                      <div className="flex justify-between"><span className="font-semibold">Signer:</span><span>{waiver.signerName}</span></div>
-                                      <div className="flex justify-between"><span className="font-semibold">Relationship:</span><span>{waiver.relationshipToAthlete}</span></div>
-                                      <div className="flex justify-between"><span className="font-semibold">Emergency Contact:</span><span>{waiver.emergencyContactNumber}</span></div>
-                                      <div className="flex justify-between"><span className="font-semibold">Signed:</span><span>{formatDate(waiver.signedAt.split('T')[0])}</span></div>
-                                      <div className="flex justify-between"><span className="font-semibold">Archived:</span><span>{(waiver as any).archivedAt ? formatDate((waiver as any).archivedAt.split('T')[0]) : 'N/A'}</span></div>
-                                      <div className="flex justify-between"><span className="font-semibold">Reason:</span><span>{(waiver as any).archiveReason || 'Account deleted'}</span></div>
-                                    </div>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
+                              <AdminButton 
+                                variant="secondary" 
+                                size="sm" 
+                                className="justify-center h-8 w-28 text-xs whitespace-nowrap overflow-hidden text-ellipsis"
+                                onClick={() => {
+                                  setSelectedWaiver(waiver);
+                                  setIsWaiverDetailsOpen(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-2" /> View
+                              </AdminButton>
                               <AdminButton
                                 variant="secondary"
                                 size="sm"
@@ -863,90 +778,18 @@ export function AdminWaiverManagement() {
                             </TableCell>
                             <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
                               <div className="flex items-center gap-2">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setSelectedWaiver(waiver)}
-                                      className="text-[#0F0276] border-[#0F0276]/40 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/60 dark:hover:bg-white/10 font-medium"
-                                    >
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      View
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                                    <DialogHeader>
-                                      <DialogTitle>Archived Waiver - {waiver.athleteName}</DialogTitle>
-                                    </DialogHeader>
-                                    {selectedWaiver && (
-                                      <div className="space-y-4">
-                                        <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/60 rounded-lg p-3">
-                                          <div className="flex items-center space-x-2">
-                                            <AlertCircle className="h-5 w-5 text-red-600" />
-                                            <div>
-                                              <p className="text-sm text-red-800 font-semibold">
-                                                ⚠️ Archived Record: This waiver is retained for legal compliance. Original parent/athlete accounts have been deleted.
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                          <div>
-                                            <label className="font-semibold">Athlete Name:</label>
-                                            <p>{selectedWaiver.athleteName}</p>
-                                          </div>
-                                          <div>
-                                            <label className="font-semibold">Signer Name:</label>
-                                            <p>{selectedWaiver.signerName}</p>
-                                          </div>
-                                          <div>
-                                            <label className="font-semibold">Relationship:</label>
-                                            <p>{selectedWaiver.relationshipToAthlete}</p>
-                                          </div>
-                                          <div>
-                                            <label className="font-semibold">Emergency Contact:</label>
-                                            <p>{selectedWaiver.emergencyContactNumber}</p>
-                                          </div>
-                                          <div>
-                                            <label className="font-semibold">Signed Date:</label>
-                                            <p>{formatDate(selectedWaiver.signedAt.split('T')[0])}</p>
-                                          </div>
-                                          <div>
-                                            <label className="font-semibold">Legal Retention Until:</label>
-                                            <p>{(selectedWaiver as any).legalRetentionPeriod || 'N/A'}</p>
-                                          </div>
-                                        </div>
-                                        
-                                        <div className="space-y-2">
-                                          <h4 className="font-semibold">Agreement Status:</h4>
-                                          <div className="grid grid-cols-1 gap-2">
-                                            <div className="flex items-center">
-                                              {selectedWaiver.understandsRisks ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                              <span>Understands Risks</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                              {selectedWaiver.agreesToPolicies ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                              <span>Agrees to Policies</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                              {selectedWaiver.authorizesEmergencyCare ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                              <span>Authorizes Emergency Care</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                              {selectedWaiver.allowsPhotoVideo ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                              <span>Allows Photo/Video</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                              {selectedWaiver.confirmsAuthority ? <CheckCircle className="h-4 w-4 text-green-600 mr-2" /> : <AlertCircle className="h-4 w-4 text-red-600 mr-2" />}
-                                              <span>Confirms Signing Authority</span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </DialogContent>
-                                </Dialog>
+                                <AdminButton
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedWaiver(waiver);
+                                    setIsWaiverDetailsOpen(true);
+                                  }}
+                                  className="text-[#0F0276] dark:text-white font-medium"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </AdminButton>
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -983,6 +826,177 @@ export function AdminWaiverManagement() {
           </AdminCard>
         </TabsContent>
       </AdminContentTabs>
+
+      {/* Waiver Details Modal */}
+      <AdminModal 
+        isOpen={isWaiverDetailsOpen} 
+        onClose={() => {
+          setIsWaiverDetailsOpen(false);
+          setSelectedWaiver(null);
+        }}
+        title={selectedWaiver ? `Waiver Details - ${selectedWaiver.athleteName}` : 'Waiver Details'}
+        size="4xl"
+        icon={<FileText className="h-6 w-6" />}
+        footer={
+          <div className="flex justify-end gap-3">
+            <AdminButton
+              variant="secondary"
+              onClick={() => {
+                setIsWaiverDetailsOpen(false);
+                setSelectedWaiver(null);
+              }}
+              className="flex items-center gap-2"
+            >
+              Close
+            </AdminButton>
+            {selectedWaiver && selectedWaiver.pdfPath && typeof selectedWaiver.id === 'number' && (
+              <AdminButton
+                onClick={() => downloadPDF(selectedWaiver.id as number, selectedWaiver.athleteName)}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download PDF
+              </AdminButton>
+            )}
+          </div>
+        }
+      >
+        {selectedWaiver && (
+          <>
+            {/* Archive Warning for Archived Waivers */}
+            {selectedWaiver.status === 'archived' && (
+              <AdminModalSection
+                title="Archive Notice"
+                icon={<AlertCircle className="h-5 w-5 text-red-600" />}
+                gradient="red"
+              >
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/60 dark:border-red-400/30 rounded-lg p-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <div>
+                      <p className="text-sm text-red-800 dark:text-red-200 font-semibold">
+                        ⚠️ Archived Record: This waiver is retained for legal compliance. Original parent/athlete accounts have been deleted.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </AdminModalSection>
+            )}
+
+            {/* Basic Information */}
+            <AdminModalSection
+              title="Basic Information"
+              icon={<FileText className="h-5 w-5 text-blue-600 dark:text-white" />}
+              gradient="blue"
+            >
+              <AdminModalGrid cols={2}>
+                <AdminModalDetailRow
+                  label="Athlete Name"
+                  value={selectedWaiver.athleteName}
+                />
+                <AdminModalDetailRow
+                  label="Signer Name"
+                  value={selectedWaiver.signerName}
+                />
+                <AdminModalDetailRow
+                  label="Relationship"
+                  value={selectedWaiver.relationshipToAthlete}
+                />
+                <AdminModalDetailRow
+                  label="Emergency Contact"
+                  value={selectedWaiver.emergencyContactNumber}
+                />
+                <AdminModalDetailRow
+                  label="Signed Date"
+                  value={selectedWaiver.signedAt ? formatDate(selectedWaiver.signedAt.split('T')[0]) : 'Not signed'}
+                />
+                <AdminModalDetailRow
+                  label="Email Sent"
+                  value={selectedWaiver.emailSentAt ? formatDate(selectedWaiver.emailSentAt.split('T')[0]) : 'Not sent'}
+                />
+                {selectedWaiver.status === 'archived' && (
+                  <>
+                    <AdminModalDetailRow
+                      label="Archived Date"
+                      value={(selectedWaiver as any).archivedAt ? formatDate((selectedWaiver as any).archivedAt.split('T')[0]) : 'N/A'}
+                    />
+                    <AdminModalDetailRow
+                      label="Archive Reason"
+                      value={(selectedWaiver as any).archiveReason || 'Account deleted'}
+                    />
+                    <AdminModalDetailRow
+                      label="Legal Retention Until"
+                      value={(selectedWaiver as any).legalRetentionPeriod || 'N/A'}
+                    />
+                  </>
+                )}
+              </AdminModalGrid>
+            </AdminModalSection>
+
+            {/* Agreement Status */}
+            {selectedWaiver.status !== 'missing' && (
+              <AdminModalSection
+                title="Agreement Status"
+                icon={<CheckCircle className="h-5 w-5 text-green-600 dark:text-white" />}
+                gradient="green"
+              >
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Understands Risks</span>
+                    <div className="flex items-center">
+                      {selectedWaiver.understandsRisks ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Agrees to Policies</span>
+                    <div className="flex items-center">
+                      {selectedWaiver.agreesToPolicies ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Authorizes Emergency Care</span>
+                    <div className="flex items-center">
+                      {selectedWaiver.authorizesEmergencyCare ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Allows Photo/Video</span>
+                    <div className="flex items-center">
+                      {selectedWaiver.allowsPhotoVideo ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Confirms Signing Authority</span>
+                    <div className="flex items-center">
+                      {selectedWaiver.confirmsAuthority ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </AdminModalSection>
+            )}
+          </>
+        )}
+      </AdminModal>
     </div>
   );
 }
