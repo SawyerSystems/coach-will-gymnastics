@@ -174,7 +174,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button 
                 size="lg"
-                className="btn-athletic-red text-white px-8 py-4 font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-2xl animate-glow border-2 border-[#E10B0B] glass-button"
+                className="btn-athletic-red text-white px-8 py-4 font-bold text-lg hover:scale-105 transform transition-all duration-300 shadow-2xl animate-glow glass-button !border-0"
                 onClick={handleStartBooking}
                 disabled={parentAuth?.loggedIn && parentInfoLoading}
               >
@@ -185,10 +185,10 @@ export default function Home() {
                 <Button 
                   variant="outline"
                   size="lg"
-                  className="btn-athletic-gold text-black px-8 py-4 font-bold text-lg border-2 border-[#D8BD2A] bg-[#D8BD2A]/10 hover:bg-[#D8BD2A] hover:text-black backdrop-blur-sm transform transition-all duration-300 shadow-2xl glass-button"
+                  className="text-black dark:text-white px-8 py-4 font-bold text-lg bg-[#D8BD2A] hover:bg-[#C7AA1F] dark:bg-[#0F0276] dark:hover:bg-[#0A0159] backdrop-blur-sm transform transition-all duration-300 shadow-2xl glass-button animate-glow-blue dark:animate-glow-blue !border-0"
                 >
                   <Trophy className="h-5 w-5 mr-2" />
-                  TRAINING VIDEOS
+                  TRAINING BLOGS
                 </Button>
               </Link>
             </div>

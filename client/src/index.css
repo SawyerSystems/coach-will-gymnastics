@@ -368,6 +368,32 @@
     }
   }
   
+  @keyframes glowBlue {
+    0% {
+      box-shadow: 0 0 5px #0F0276;
+    }
+    100% {
+      box-shadow: 0 0 20px #0F0276, 0 0 30px #0F0276;
+    }
+  }
+  
+  @keyframes glowYellow {
+    0% {
+      box-shadow: 0 0 5px #D8BD2A;
+    }
+    100% {
+      box-shadow: 0 0 20px #D8BD2A, 0 0 30px #D8BD2A;
+    }
+  }
+  
+  .animate-glow-blue {
+    animation: glowBlue 2s ease-in-out infinite alternate;
+  }
+  
+  .animate-glow-yellow {
+    animation: glowYellow 2s ease-in-out infinite alternate;
+  }
+  
   @keyframes pulseGold {
     0%, 100% {
       background-color: #D8BD2A;

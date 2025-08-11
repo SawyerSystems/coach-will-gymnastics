@@ -5,8 +5,8 @@ export function ParentMainContainer({ className, ...props }: React.HTMLAttribute
   return (
     <div
       className={cn(
-        // Main container with blue-themed gradient background matching admin
-        "min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-[#0F0276] dark:via-[#1e293b] dark:to-[#0F0276]",
+        // Main container with brand gradient background matching admin
+        "min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black",
         className
       )}
       {...props}

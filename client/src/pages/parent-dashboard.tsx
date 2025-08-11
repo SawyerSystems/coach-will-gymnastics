@@ -604,8 +604,8 @@ function ParentDashboard() {
   // Loading state while checking authentication
   if (!authStatus) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#0F0276] dark:border-[#D8BD2A] border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -613,8 +613,8 @@ function ParentDashboard() {
   // If not logged in, the useEffect will redirect - show loading state instead of null
   if (!authStatus.loggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+      <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#0F0276] dark:border-[#D8BD2A] border-t-transparent rounded-full"></div>
       </div>
     );
   }
