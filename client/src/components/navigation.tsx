@@ -6,6 +6,8 @@ import { Menu, Baby, Lock, User, UserCircle, LogOut } from "lucide-react";
 import { useAuthStatus, useParentAuthStatus, usePrefetchQueries } from "@/hooks/optimized-queries";
 import { apiRequest, queryClient, queryKeys } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 // Import logo assets for fallback
 import defaultLogoSpin from "@assets/CWT_Circle_LogoSPIN.png";
@@ -14,9 +16,7 @@ import defaultLogoText from "@assets/CoachWillTumblesText.png";
 export const Navigation = memo(function Navigation() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => 
-    document?.documentElement?.classList?.contains('dark') || false
-  );
+  const { actualTheme } = useTheme();
   
   // Use optimized auth hooks
   const { data: adminAuth } = useAuthStatus();
@@ -52,20 +52,6 @@ export const Navigation = memo(function Navigation() {
         break;
     }
   }, [prefetchBlogPosts, prefetchTips, prefetchStripeProducts]);
-
-  // Theme toggle function
-  const toggleTheme = useCallback(() => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-      window.localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      window.localStorage.setItem('theme', 'light');
-    }
-  }, [isDarkMode]);
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -220,41 +206,17 @@ export const Navigation = memo(function Navigation() {
               </Button>
             )}
 
-            {/* Enhanced Theme Toggle - Positioned after dashboard buttons */}
-            <button
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              className="glass-button rounded-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 hidden md:inline-flex items-center gap-2"
-            >
-              <span className="hidden xl:inline">Theme</span>
-              <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center transition-colors duration-300">
-                <span 
-                  className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-all duration-300 ease-in-out will-change-transform ${
-                    isDarkMode ? 'bg-[#D8BD2A] translate-x-3' : 'bg-[#0F0276] translate-x-0'
-                  }`} 
-                />
-              </span>
-            </button>
+            {/* Theme Toggle - Positioned after dashboard buttons */}
+            <div className="hidden md:inline-flex">
+              <ThemeToggle />
+            </div>
           </div>
         </nav>
 
         {/* Tablet Navigation - Simplified for medium screens */}
         <nav className="hidden md:flex lg:hidden items-center space-x-4">
           {/* Theme toggle for tablet */}
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="glass-button rounded-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 inline-flex items-center gap-2"
-          >
-            <span>Theme</span>
-            <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center transition-colors duration-300">
-              <span 
-                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-all duration-300 ease-in-out will-change-transform ${
-                  isDarkMode ? 'bg-[#D8BD2A] translate-x-3' : 'bg-[#0F0276] translate-x-0'
-                }`} 
-              />
-            </span>
-          </button>
+          <ThemeToggle />
           <Link href="/booking">
             <Button className="coach-will-gradient text-white px-4 py-2 rounded-full font-medium hover:scale-105 transform transition-all duration-200 shadow-lg">
               Book Now
@@ -319,21 +281,11 @@ export const Navigation = memo(function Navigation() {
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px]">
             <nav className="flex flex-col space-y-4 mt-8">
-              {/* Enhanced Theme toggle inside drawer */}
-              <button
-                onClick={toggleTheme}
-                aria-label="Toggle theme"
-                className="glass-button rounded-lg px-4 py-3 text-sm text-slate-900 dark:text-slate-100 flex items-center justify-between"
-              >
-                <span>Toggle Theme</span>
-                <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center transition-colors duration-300">
-                  <span 
-                    className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-all duration-300 ease-in-out will-change-transform ${
-                      isDarkMode ? 'bg-[#D8BD2A] translate-x-3' : 'bg-[#0F0276] translate-x-0'
-                    }`} 
-                  />
-                </span>
-              </button>
+              {/* Theme toggle inside drawer */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-sm text-slate-900 dark:text-slate-100">Theme</span>
+                <ThemeToggle />
+              </div>
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href}>
                   <span

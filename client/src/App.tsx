@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 // Simple loading component
 const PageLoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -104,12 +105,14 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="app-root">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </div>
+      <ThemeProvider>
+        <div className="app-root">
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </div>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
