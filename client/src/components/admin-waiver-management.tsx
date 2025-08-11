@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
@@ -321,43 +322,37 @@ export function AdminWaiverManagement() {
           {
             value: "signed",
             label: `Signed (${signedWaivers.length})`,
-            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600",
-            badge: signedWaivers.length,
+            icon: <CheckCircle className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
           },
           {
             value: "missing",
             label: `Missing (${missingWaivers.length})`,
-            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-600",
-            badge: missingWaivers.length,
+            icon: <AlertCircle className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
           },
           {
             value: "archived",
             label: `Archived (${archivedWaivers.length})`,
-            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500 data-[state=active]:to-slate-600",
-            badge: archivedWaivers.length,
+            icon: <FileText className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
           },
         ]}
+        listClassName="bg-slate-100 text-[#0F0276] dark:bg-[#D8BD2A]/10 dark:text-white border-slate-200 dark:border-[#D8BD2A]/20 mb-4"
+        triggerClassName="gap-2"
       >
 
         <TabsContent value="signed" className="space-y-4">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-green-50/30 to-emerald-50/30 shadow-lg">
-            <CardHeader className="border-b border-green-100/50 bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-black text-slate-900 flex items-center">
-                    <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-                    Signed Waivers
-                  </CardTitle>
-                  <p className="text-sm text-slate-600 mt-1">Complete and legally binding liability waivers</p>
-                </div>
-                <div className="text-xs text-green-700 bg-green-100 px-3 py-1 rounded-full font-bold">
-                  {filteredSignedWaivers.length} Signed
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
+          <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+            <AdminCardHeader>
+              <AdminCardTitle className="text-[#0F0276] dark:text-white flex items-center">
+                <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+                Signed Waivers
+              </AdminCardTitle>
+            </AdminCardHeader>
+            <AdminCardContent>
               {/* Mobile cards */}
-      <div className="sm:hidden p-3 space-y-3">
+              <div className="sm:hidden p-3 space-y-3">
                 {filteredSignedWaivers.length === 0 ? (
                   <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
                     <CardContent className="p-6 text-center text-slate-600">No signed waivers found.</CardContent>
@@ -622,30 +617,19 @@ export function AdminWaiverManagement() {
                 </TableBody>
               </Table>
               </div>
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
         </TabsContent>
 
         <TabsContent value="missing" className="space-y-4">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-orange-50/30 to-red-50/30 shadow-lg">
-            <CardHeader className="border-b border-orange-100/50 bg-gradient-to-r from-orange-50/50 to-red-50/50 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-black text-slate-900 flex items-center">
-                    <AlertCircle className="h-6 w-6 text-orange-600 mr-2" />
-                    Athletes Missing Waivers
-                  </CardTitle>
-                  <p className="text-sm text-slate-600 mt-1">Athletes with active bookings requiring liability waivers</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
-                  <div className="text-xs text-orange-700 bg-orange-100 px-3 py-1 rounded-full font-bold">
-                    {filteredMissingWaivers.length} Missing
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
+          <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+            <AdminCardHeader>
+              <AdminCardTitle className="text-[#0F0276] dark:text-white flex items-center">
+                <AlertCircle className="h-6 w-6 text-orange-600 mr-2" />
+                Athletes Missing Waivers
+              </AdminCardTitle>
+            </AdminCardHeader>
+            <AdminCardContent>
               {filteredMissingWaivers.length > 0 ? (
                 <div className="space-y-6">
                   <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200/60 rounded-xl p-4 shadow-sm">
@@ -755,30 +739,19 @@ export function AdminWaiverManagement() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
         </TabsContent>
 
         <TabsContent value="archived" className="space-y-4">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-blue-50/30 shadow-lg">
-            <CardHeader className="border-b border-slate-100/50 bg-gradient-to-r from-slate-50/50 to-blue-50/50 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-black text-slate-900 flex items-center">
-                    <FileText className="h-6 w-6 text-slate-600 mr-2" />
-                    Archived Waivers
-                  </CardTitle>
-                  <p className="text-sm text-slate-600 mt-1">Legal records retained for compliance purposes</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-slate-500 rounded-full animate-pulse"></div>
-                  <div className="text-xs text-slate-700 bg-slate-100 px-3 py-1 rounded-full font-bold">
-                    {archivedWaivers.length} Archived
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
+          <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+            <AdminCardHeader>
+              <AdminCardTitle className="text-[#0F0276] dark:text-white flex items-center">
+                <FileText className="h-6 w-6 text-slate-600 mr-2" />
+                Archived Waivers
+              </AdminCardTitle>
+            </AdminCardHeader>
+            <AdminCardContent>
               {waiversLoading ? (
                 <div className="text-center py-12">
                   <div className="animate-pulse space-y-4">
@@ -1006,8 +979,8 @@ export function AdminWaiverManagement() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
         </TabsContent>
       </AdminContentTabs>
     </div>
