@@ -8,11 +8,13 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
+  Dumbbell,
   FileText,
   GraduationCap,
   LogOut,
   MessageSquare,
   Settings,
+  Star,
   User,
   Users,
   X
@@ -95,12 +97,12 @@ export function AdminSidebar({
     {
       id: 'lesson-types',
       label: 'Lesson Types',
-      icon: <GraduationCap className="h-5 w-5" />
+      icon: <Dumbbell className="h-5 w-5" />
     },
     {
       id: 'skills',
       label: 'Skills',
-      icon: <GraduationCap className="h-5 w-5" />
+      icon: <Star className="h-5 w-5" />
     },
     {
       id: 'progress',
