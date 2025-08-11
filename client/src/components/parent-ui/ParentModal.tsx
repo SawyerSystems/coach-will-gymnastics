@@ -31,16 +31,16 @@ export function ParentModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className={cn(
-          "rounded-2xl border border-slate-200/60 bg-white/90 backdrop-blur-md dark:border-purple-400/20 dark:bg-purple-900/90",
+          "rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-white/10 dark:bg-white/10",
           sizeClasses[size]
         )}
       >
         <DialogHeader>
-          <DialogTitle className="text-blue-800 dark:text-white font-bold text-xl">
+          <DialogTitle className="text-[#0F0276] dark:text-white font-bold text-xl">
             {title}
           </DialogTitle>
           {description && (
-            <DialogDescription className="text-blue-600/70 dark:text-purple-300">
+            <DialogDescription className="text-gray-600 dark:text-gray-300">
               {description}
             </DialogDescription>
           )}
@@ -59,7 +59,7 @@ export function ParentModalSection({ className, title, children, ...props }: {
   return (
     <div className={cn("space-y-4", className)} {...props}>
       {title && (
-        <h3 className="font-semibold text-blue-800 dark:text-white border-b border-slate-200/60 dark:border-purple-400/20 pb-2">
+        <h3 className="font-semibold text-[#0F0276] dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
           {title}
         </h3>
       )}
@@ -87,10 +87,10 @@ export function ParentModalDetailRow({ label, value, className }: {
 }) {
   return (
     <div className={cn("flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4", className)}>
-      <span className="font-medium text-blue-700 dark:text-purple-300 text-sm">
+      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">
         {label}
       </span>
-      <span className="text-blue-900 dark:text-white text-sm sm:text-right">
+      <span className="text-[#0F0276] dark:text-white text-sm sm:text-right">
         {value}
       </span>
     </div>

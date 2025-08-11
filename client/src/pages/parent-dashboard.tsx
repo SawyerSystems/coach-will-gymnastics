@@ -40,6 +40,13 @@ import {
   ParentButton
 } from '@/components/parent-ui';
 
+// Import modal components
+import {
+  ParentModal,
+  ParentModalSection,
+  ParentModalGrid
+} from '@/components/parent-ui/ParentModal';
+
 // Import layout components directly
 import {
   ParentMainContainer,
@@ -1477,12 +1484,12 @@ function ParentDashboard() {
                   </ParentCardHeader>
                   <ParentCardContent className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <ParentButton variant="outline" className="justify-start">
+                      <ParentButton variant="secondary" className="justify-start">
                         <Download className="h-4 w-4 mr-2" />
                         Export My Data
                       </ParentButton>
                       
-                      <ParentButton variant="outline" className="justify-start">
+                      <ParentButton variant="secondary" className="justify-start">
                         <Mail className="h-4 w-4 mr-2" />
                         Contact Support
                       </ParentButton>
@@ -1800,226 +1807,241 @@ function ParentDashboard() {
         </Dialog>
 
         {/* Update Profile Modal */}
-        <Dialog open={showUpdateProfile} onOpenChange={setShowUpdateProfile}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-lg md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Update Profile</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                Update your personal information and contact details
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 px-0 pb-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="profile-first-name">First Name</Label>
-                  <Input
-                    id="profile-first-name"
-                    defaultValue={bookings && bookings.length > 0 ? bookings[0].parentFirstName || '' : ''}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="profile-last-name">Last Name</Label>
-                  <Input
-                    id="profile-last-name"
-                    defaultValue={bookings && bookings.length > 0 ? bookings[0].parentLastName || '' : ''}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
+        <ParentModal 
+          isOpen={showUpdateProfile} 
+          onClose={() => setShowUpdateProfile(false)}
+          title="Update Profile"
+          description="Update your personal information and contact details"
+          size="lg"
+        >
+          <ParentModalSection>
+            <ParentModalGrid>
               <div>
-                <Label htmlFor="profile-email">Email Address</Label>
+                <Label htmlFor="profile-first-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  First Name
+                </Label>
+                <Input
+                  id="profile-first-name"
+                  defaultValue={bookings && bookings.length > 0 ? bookings[0].parentFirstName || '' : ''}
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
+              </div>
+              <div>
+                <Label htmlFor="profile-last-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Last Name
+                </Label>
+                <Input
+                  id="profile-last-name"
+                  defaultValue={bookings && bookings.length > 0 ? bookings[0].parentLastName || '' : ''}
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
+              </div>
+            </ParentModalGrid>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="profile-email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Email Address
+                </Label>
                 <Input
                   id="profile-email"
                   type="email"
                   defaultValue={authStatus?.email || ''}
-                  className="mt-1"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                 />
               </div>
 
               <div>
-                <Label htmlFor="profile-phone">Phone Number</Label>
+                <Label htmlFor="profile-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Phone Number
+                </Label>
                 <Input
                   id="profile-phone"
                   type="tel"
                   defaultValue={bookings && bookings.length > 0 ? bookings[0].parentPhone || '' : ''}
-                  className="mt-1"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  placeholder="(555) 123-4567"
                 />
               </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <ParentButton variant="secondary" onClick={() => setShowUpdateProfile(false)}>
-                  Cancel
-                </ParentButton>
-                <ParentButton onClick={() => {
-                  toast({
-                    title: "Profile Updated",
-                    description: "Your profile information has been updated successfully.",
-                  });
-                  setShowUpdateProfile(false);
-                }}>
-                  Save Changes
-                </ParentButton>
-              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+
+            <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+              <ParentButton variant="secondary" onClick={() => setShowUpdateProfile(false)}>
+                Cancel
+              </ParentButton>
+              <ParentButton onClick={() => {
+                toast({
+                  title: "Profile Updated",
+                  description: "Your profile information has been updated successfully.",
+                });
+                setShowUpdateProfile(false);
+              }}>
+                Save Changes
+              </ParentButton>
+            </div>
+          </ParentModalSection>
+        </ParentModal>
 
         {/* Update Emergency Contact Modal */}
-        <Dialog open={showUpdateEmergencyContact} onOpenChange={setShowUpdateEmergencyContact}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-2xl md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Update Emergency Contacts</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                Manage your emergency contact information for athlete safety
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 px-0 pb-0">
-              {/* Primary Emergency Contact */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 border-b pb-2">Primary Emergency Contact</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="emergency-1-name">Contact Name</Label>
-                    <Input
-                      id="emergency-1-name"
-                      defaultValue={bookings && bookings.length > 0 ? bookings[0].emergencyContactName || '' : ''}
-                      placeholder="Full name"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-1-phone">Phone Number</Label>
-                    <Input
-                      id="emergency-1-phone"
-                      type="tel"
-                      defaultValue={bookings && bookings.length > 0 ? bookings[0].emergencyContactPhone || '' : ''}
-                      placeholder="(555) 123-4567"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-1-relationship">Relationship</Label>
-                    <Select defaultValue="parent">
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select relationship" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="parent">Parent</SelectItem>
-                        <SelectItem value="guardian">Guardian</SelectItem>
-                        <SelectItem value="grandparent">Grandparent</SelectItem>
-                        <SelectItem value="sibling">Sibling</SelectItem>
-                        <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
-                        <SelectItem value="family-friend">Family Friend</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+        <ParentModal 
+          isOpen={showUpdateEmergencyContact} 
+          onClose={() => setShowUpdateEmergencyContact(false)}
+          title="Update Emergency Contacts"
+          description="Manage your emergency contact information for athlete safety"
+          size="xl"
+        >
+          <ParentModalSection title="Primary Emergency Contact">
+            <ParentModalGrid>
+              <div>
+                <Label htmlFor="emergency-1-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Contact Name
+                </Label>
+                <Input
+                  id="emergency-1-name"
+                  defaultValue={bookings && bookings.length > 0 ? bookings[0].emergencyContactName || '' : ''}
+                  placeholder="Full name"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
               </div>
-
-              {/* Secondary Emergency Contact */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 border-b pb-2">Secondary Emergency Contact</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="emergency-2-name">Contact Name</Label>
-                    <Input
-                      id="emergency-2-name"
-                      placeholder="Full name"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-2-phone">Phone Number</Label>
-                    <Input
-                      id="emergency-2-phone"
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-2-relationship">Relationship</Label>
-                    <Select>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select relationship" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="parent">Parent</SelectItem>
-                        <SelectItem value="guardian">Guardian</SelectItem>
-                        <SelectItem value="grandparent">Grandparent</SelectItem>
-                        <SelectItem value="sibling">Sibling</SelectItem>
-                        <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
-                        <SelectItem value="family-friend">Family Friend</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <div>
+                <Label htmlFor="emergency-1-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Phone Number
+                </Label>
+                <Input
+                  id="emergency-1-phone"
+                  type="tel"
+                  defaultValue={bookings && bookings.length > 0 ? bookings[0].emergencyContactPhone || '' : ''}
+                  placeholder="(555) 123-4567"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
               </div>
-
-              {/* Additional Emergency Contact */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 border-b pb-2">Additional Emergency Contact (Optional)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="emergency-3-name">Contact Name</Label>
-                    <Input
-                      id="emergency-3-name"
-                      placeholder="Full name"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-3-phone">Phone Number</Label>
-                    <Input
-                      id="emergency-3-phone"
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-3-relationship">Relationship</Label>
-                    <Select>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Select relationship" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="parent">Parent</SelectItem>
-                        <SelectItem value="guardian">Guardian</SelectItem>
-                        <SelectItem value="grandparent">Grandparent</SelectItem>
-                        <SelectItem value="sibling">Sibling</SelectItem>
-                        <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
-                        <SelectItem value="family-friend">Family Friend</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="emergency-1-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Relationship
+                </Label>
+                <Select defaultValue="parent">
+                  <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                    <SelectValue placeholder="Select relationship" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="parent">Parent</SelectItem>
+                    <SelectItem value="guardian">Guardian</SelectItem>
+                    <SelectItem value="grandparent">Grandparent</SelectItem>
+                    <SelectItem value="sibling">Sibling</SelectItem>
+                    <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
+                    <SelectItem value="family-friend">Family Friend</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </ParentModalGrid>
+          </ParentModalSection>
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <ParentButton variant="secondary" onClick={() => setShowUpdateEmergencyContact(false)}>
-                  Cancel
-                </ParentButton>
-                <ParentButton onClick={() => {
-                  toast({
-                    title: "Emergency Contacts Updated",
-                    description: "Your emergency contact information has been updated successfully.",
-                  });
-                  setShowUpdateEmergencyContact(false);
-                }}>
-                  Save Contacts
-                </ParentButton>
+          <ParentModalSection title="Secondary Emergency Contact">
+            <ParentModalGrid>
+              <div>
+                <Label htmlFor="emergency-2-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Contact Name
+                </Label>
+                <Input
+                  id="emergency-2-name"
+                  placeholder="Full name"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+              <div>
+                <Label htmlFor="emergency-2-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Phone Number
+                </Label>
+                <Input
+                  id="emergency-2-phone"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="emergency-2-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Relationship
+                </Label>
+                <Select>
+                  <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                    <SelectValue placeholder="Select relationship" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="parent">Parent</SelectItem>
+                    <SelectItem value="guardian">Guardian</SelectItem>
+                    <SelectItem value="grandparent">Grandparent</SelectItem>
+                    <SelectItem value="sibling">Sibling</SelectItem>
+                    <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
+                    <SelectItem value="family-friend">Family Friend</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </ParentModalGrid>
+          </ParentModalSection>
+
+          <ParentModalSection title="Additional Emergency Contact (Optional)">
+            <ParentModalGrid>
+              <div>
+                <Label htmlFor="emergency-3-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Contact Name
+                </Label>
+                <Input
+                  id="emergency-3-name"
+                  placeholder="Full name"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
+              </div>
+              <div>
+                <Label htmlFor="emergency-3-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Phone Number
+                </Label>
+                <Input
+                  id="emergency-3-phone"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="emergency-3-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Relationship
+                </Label>
+                <Select>
+                  <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                    <SelectValue placeholder="Select relationship" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="parent">Parent</SelectItem>
+                    <SelectItem value="guardian">Guardian</SelectItem>
+                    <SelectItem value="grandparent">Grandparent</SelectItem>
+                    <SelectItem value="sibling">Sibling</SelectItem>
+                    <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
+                    <SelectItem value="family-friend">Family Friend</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </ParentModalGrid>
+          </ParentModalSection>
+
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+            <ParentButton variant="secondary" onClick={() => setShowUpdateEmergencyContact(false)}>
+              Cancel
+            </ParentButton>
+            <ParentButton onClick={() => {
+              toast({
+                title: "Emergency Contacts Updated",
+                description: "Your emergency contact information has been updated successfully.",
+              });
+              setShowUpdateEmergencyContact(false);
+            }}>
+              Save Contacts
+            </ParentButton>
+          </div>
+        </ParentModal>
 
         {/* Waiver Modal */}
         {selectedAthleteForWaiver && (
