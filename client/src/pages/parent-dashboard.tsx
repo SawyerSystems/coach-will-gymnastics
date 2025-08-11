@@ -20,7 +20,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent, FocusArea } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
+import { Activity, AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
@@ -618,36 +618,41 @@ function ParentDashboard() {
             <ParentPageSubtitle>Manage your athletes, sessions and waivers</ParentPageSubtitle>
           </ParentPageHeader>
 
-        <ParentStatsGrid>
-          <ParentStatCard
-            icon={<Users className="h-6 w-6" />}
-            label="Total Athletes"
-            value={athletes.length}
-            color="blue"
-          />
-          <ParentStatCard
-            icon={<Calendar className="h-6 w-6" />}
-            label="Upcoming Sessions"
-            value={upcomingBookings.length}
-            color="green"
-          />
-          <ParentStatCard
-            icon={<BookMarked className="h-6 w-6" />}
-            label="Total Bookings"
-            value={bookings.length}
-            color="purple"
-          />
-        </ParentStatsGrid>
+          {/* Statistics Overview Section */}
+          <section className="mb-8">
+            <ParentStatsGrid>
+              <ParentStatCard
+                icon={<Users className="h-6 w-6" />}
+                label="Total Athletes"
+                value={athletes.length}
+                color="blue"
+              />
+              <ParentStatCard
+                icon={<Calendar className="h-6 w-6" />}
+                label="Upcoming Sessions"
+                value={upcomingBookings.length}
+                color="green"
+              />
+              <ParentStatCard
+                icon={<BookMarked className="h-6 w-6" />}
+                label="Total Bookings"
+                value={bookings.length}
+                color="purple"
+              />
+            </ParentStatsGrid>
+          </section>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
-          <div>
-            <h2 className="text-2xl font-bold text-blue-800 dark:text-white">Booking Management</h2>
-            <p className="text-blue-600/80 dark:text-purple-300 text-sm">Schedule and manage your coaching sessions</p>
-          </div>
-          <div className="flex gap-2">
-            <ParentButton 
-              onClick={() => {
-                console.log('🎯 PARENT DASHBOARD: Book New Session clicked!', {
+          {/* Main Content Section */}
+          <section className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+              <div>
+                <h2 className="text-2xl font-bold text-[#0F0276] dark:text-white">Booking Management</h2>
+                <p className="text-[#0F0276]/80 dark:text-white/70 text-sm">Schedule and manage your coaching sessions</p>
+              </div>
+              <div className="flex gap-2">
+                <ParentButton 
+                  onClick={() => {
+                    console.log('🎯 PARENT DASHBOARD: Book New Session clicked!', {
                   hasParentInfo: !!parentInfo,
                   parentInfo: parentInfo ? { id: parentInfo.id, email: parentInfo.email } : null
                 });
@@ -664,7 +669,7 @@ function ParentDashboard() {
           </div>
         </div>
 
-        <ParentTabs defaultValue="upcoming">
+          <ParentTabs defaultValue="upcoming">
           <ParentTabsList className="w-full grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 p-1 sm:p-2 h-auto mb-4 sm:mb-6 overflow-x-auto">
             <ParentTabsTrigger value="upcoming" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
               <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
@@ -710,218 +715,161 @@ function ParentDashboard() {
                     <p className="text-gray-400 dark:text-gray-500 text-sm">Book a new session to see it here!</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {upcomingBookings.map((booking) => (
-                      <div 
-                        key={booking.id} 
-                        className="border border-slate-200/60 rounded-xl p-3 sm:p-4 bg-gradient-to-r from-white to-blue-50/50 hover:shadow-md transition-all duration-200 dark:border-purple-400/20 dark:from-purple-900/20 dark:to-blue-900/20"
+                      <ParentCard 
+                        key={booking.id}
+                        className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
                       >
-                        <div className="flex flex-col xs:flex-row justify-between gap-4">
-                          <div className="space-y-3">
-                            {/* Athlete Info */}
-                            <div className="flex items-center gap-2">
-                              <div className="bg-blue-100 p-1.5 rounded-full">
-                                <User className="w-3.5 h-3.5 text-blue-600" />
-                              </div>
-                              {booking.athletes && booking.athletes.length > 0 ? (
-                                <span className="font-medium text-sm sm:text-base">
-                                  {booking.athletes.map((athlete: any) => 
-                                    athlete.name || 
-                                    `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || 
-                                    'Athlete'
-                                  ).join(' & ')}
-                                </span>
-                              ) : (
-                                <>
-                                  <span className="font-medium text-sm sm:text-base">
-                                    {booking.athlete1Name || 'Your Athlete'}
-                                  </span>
-                                  {booking.athlete2Name && (
-                                    <span className="font-medium text-sm sm:text-base">& {booking.athlete2Name}</span>
-                                  )}
-                                </>
-                              )}
-                            </div>
-
-                            {/* Date and Time */}
-                            <div className="flex flex-wrap gap-x-4 gap-y-2">
-                              <div className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                                <span className="text-xs sm:text-sm">{booking.preferredDate ? formatDate(booking.preferredDate) : 'Date TBD'}</span>
-                              </div>
-
-                              <div className="flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-gray-500" />
-                                <span className="text-xs sm:text-sm">{booking.preferredTime}</span>
-                              </div>
-                              
-                              <Badge 
-                                variant="secondary"
-                                className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto"
-                              >
-                                {booking.lessonType?.replace('-', ' ').replace('min', 'minute') || 'Unknown Lesson Type'}
-                              </Badge>
-                            </div>
-
-                            {/* Status Row */}
-                            <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
-                              {/* Payment Status */}
-                              <div className="flex items-center gap-1.5">
-                                {booking.paymentStatus === 'reservation-pending' && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-600" />}
-                                {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />}
-                                {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-600" />}
-                                {booking.paymentStatus === 'failed' && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
-                                {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600" />}
-                                {!booking.paymentStatus && <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
-                                
-                                <Badge 
-                                  variant="outline"
-                                  className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto ${
-                                    booking.paymentStatus === 'session-paid' ? 'border-green-300 text-green-700 bg-green-50' :
-                                    booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50' :
-                                    booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50' :
-                                    booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50' :
-                                    booking.paymentStatus === 'failed' ? 'border-gray-300 text-gray-700 bg-gray-50' :
-                                    booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50' :
-                                    'border-gray-300 text-gray-700 bg-gray-50'
-                                  }`}
-                                >
-                                  {booking.paymentStatus === 'session-paid' ? 'Full Payment ✓' : 
-                                  booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
-                                  booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
-                                  booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
-                                  booking.paymentStatus === 'failed' ? 'Failed' :
-                                  booking.paymentStatus === 'unpaid' ? 'Unpaid' :
-                                  booking.paymentStatus || 'Unknown'}
-                                </Badge>
-                              </div>
-
-                              {/* Attendance Status */}
-                              <div className="flex items-center gap-1.5">
-                                {booking.attendanceStatus === 'pending' && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" />}
-                                {booking.attendanceStatus === 'confirmed' && <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />}
-                                {booking.attendanceStatus === 'completed' && <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />}
-                                {booking.attendanceStatus === 'no-show' && <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-600" />}
-                                {booking.attendanceStatus === 'cancelled' && <X className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
-                                {!booking.attendanceStatus && <HelpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-600" />}
-                                
-                                <Badge 
-                                  variant="outline"
-                                  className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto ${
-                                    booking.attendanceStatus === 'completed' ? 'border-green-300 text-green-700 bg-green-50' :
-                                    booking.attendanceStatus === 'confirmed' ? 'border-green-300 text-green-700 bg-green-50' :
-                                    booking.attendanceStatus === 'pending' ? 'border-blue-300 text-blue-700 bg-blue-50' :
-                                    booking.attendanceStatus === 'no-show' ? 'border-red-300 text-red-700 bg-red-50' :
-                                    booking.attendanceStatus === 'cancelled' ? 'border-gray-300 text-gray-700 bg-gray-50' :
-                                    'border-gray-300 text-gray-700 bg-gray-50'
-                                  }`}
-                                >
-                                  {booking.attendanceStatus === 'completed' ? 'Completed ✓' :
-                                  booking.attendanceStatus === 'confirmed' ? 'Confirmed ✓' :
-                                  booking.attendanceStatus === 'pending' ? 'Scheduled' :
-                                  booking.attendanceStatus === 'no-show' ? 'No Show' :
-                                  booking.attendanceStatus === 'cancelled' ? 'Cancelled' :
-                                  booking.attendanceStatus || 'Pending'}
-                                </Badge>
-                              </div>
-
-                              {/* Waiver Status */}
-                              <div className="flex items-center gap-1.5">
-                                {booking.waiverSigned ? (
-                                  <FileCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" />
+                        <ParentCardContent className="p-6">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0 space-y-3">
+                              {/* Athlete Info */}
+                              <div className="flex items-center gap-3">
+                                <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+                                  <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                {booking.athletes && booking.athletes.length > 0 ? (
+                                  <h3 className="text-lg font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors">
+                                    {booking.athletes.map((athlete: any) => 
+                                      athlete.name || 
+                                      `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || 
+                                      'Athlete'
+                                    ).join(' & ')}
+                                  </h3>
                                 ) : (
-                                  <FileX className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600" />
+                                  <h3 className="text-lg font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors">
+                                    {booking.athlete1Name || 'Your Athlete'}
+                                    {booking.athlete2Name && ` & ${booking.athlete2Name}`}
+                                  </h3>
                                 )}
-                                <Badge 
-                                  variant="outline"
-                                  className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto ${
-                                    booking.waiverSigned ? 'border-green-300 text-green-700 bg-green-50' : 
-                                    'border-orange-300 text-orange-700 bg-orange-50'
-                                  }`}
-                                >
-                                  {booking.waiverSigned ? 'Waiver Signed ✓' : 'Waiver Required'}
-                                </Badge>
+                              </div>
+
+                              {/* Session Details */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded-full">
+                                    <Calendar className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">Session Date</p>
+                                    <p className="font-semibold text-[#0F0276] dark:text-white">
+                                      {booking.preferredDate ? formatDate(booking.preferredDate) : 'Date TBD'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
+                                    <Clock className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">Session Time</p>
+                                    <p className="font-semibold text-[#0F0276] dark:text-white">
+                                      {booking.preferredTime}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Lesson Type */}
+                              <div className="flex items-center gap-3">
+                                <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
+                                  <Activity className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <div>
+                                  <p className="text-sm text-slate-600 dark:text-slate-300">Lesson Type</p>
+                                  <p className="font-semibold text-[#0F0276] dark:text-white">
+                                    {booking.lessonType?.replace('-', ' ').replace('min', 'minute') || 'Unknown Lesson Type'}
+                                  </p>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Status Notifications */}
-                            <div className="space-y-1 text-[10px] sm:text-xs">
-                              {booking.paymentStatus === 'reservation-pending' && (
-                                <p className="text-yellow-600">(Payment auto-expires in 24hr)</p>
-                              )}
-                              {booking.paymentStatus === 'reservation-paid' && booking.attendanceStatus === 'pending' && (
-                                <p className="text-blue-600">(Session will auto-confirm)</p>
-                              )}
-                              {!booking.waiverSigned && booking.paymentStatus === 'reservation-paid' && (
-                                <p className="text-red-500">(Waiver required before session)</p>
+                            {/* Status & Action Column */}
+                            <div className="flex-shrink-0 flex flex-col gap-3 min-w-[140px]">
+                              {/* Status Badges */}
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  {booking.paymentStatus === 'reservation-pending' && <Clock className="w-4 h-4 text-yellow-600" />}
+                                  {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-4 h-4 text-green-600" />}
+                                  {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-4 h-4 text-red-600" />}
+                                  {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-4 h-4 text-orange-600" />}
+                                  
+                                  <Badge 
+                                    variant="outline"
+                                    className={`text-xs px-2 py-1 ${
+                                      booking.paymentStatus === 'session-paid' ? 'border-green-300 text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400' :
+                                      booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400' :
+                                      booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                                      booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-400' :
+                                      booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400' :
+                                      'border-gray-300 text-gray-700 bg-gray-50 dark:bg-gray-900/20 dark:text-gray-400'
+                                    }`}
+                                  >
+                                    {booking.paymentStatus === 'session-paid' ? 'Full Payment ✓' : 
+                                    booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
+                                    booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
+                                    booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
+                                    booking.paymentStatus === 'unpaid' ? 'Unpaid' :
+                                    booking.paymentStatus || 'Unknown'}
+                                  </Badge>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  {booking.waiverSigned ? (
+                                    <FileCheck className="w-4 h-4 text-green-600" />
+                                  ) : (
+                                    <FileX className="w-4 h-4 text-orange-600" />
+                                  )}
+                                  <Badge 
+                                    variant="outline"
+                                    className={`text-xs px-2 py-1 ${
+                                      booking.waiverSigned ? 'border-green-300 text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : 
+                                      'border-orange-300 text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400'
+                                    }`}
+                                  >
+                                    {booking.waiverSigned ? 'Waiver Signed ✓' : 'Waiver Required'}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              {booking.status !== 'cancelled' && (
+                                <div className="flex flex-col gap-2">
+                                  <ParentButton
+                                    size="sm"
+                                    variant="secondary"
+                                    className="w-full text-xs"
+                                    onClick={() => handleReschedule(booking.id)}
+                                  >
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    Reschedule
+                                  </ParentButton>
+                                  <ParentButton
+                                    size="sm"
+                                    variant="primary"
+                                    className="w-full text-xs"
+                                    onClick={() => handleEditBooking(booking.id)}
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </ParentButton>
+                                  <ParentButton
+                                    size="sm"
+                                    variant="destructive"
+                                    className="w-full text-xs"
+                                    onClick={() => setCancelBookingId(booking.id)}
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                  </ParentButton>
+                                </div>
                               )}
                             </div>
-
-                            {/* Focus Areas (mobile only) */}
-                            {booking.focusAreas && booking.focusAreas.length > 0 && (
-                              <div className="flex items-center gap-1.5 xs:hidden mt-1">
-                                <MapPin className="w-3 h-3 text-gray-500" />
-                                <span className="text-[10px] text-gray-600">
-                                  Focus: {formatFocusAreas(booking.focusAreas as unknown as FocusAreaDisplay[])}
-                                </span>
-                              </div>
-                            )}
                           </div>
-
-                          {/* Right Column - Status & Actions */}
-                          <div className="flex xs:flex-col justify-between xs:justify-start gap-2 pt-1">
-                            <Badge 
-                              variant={booking.status === 'confirmed' ? 'default' : 'secondary'}
-                              className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 h-auto"
-                            >
-                              {booking.status === 'confirmed' ? 'Confirmed' : booking.status}
-                            </Badge>
-
-                            {/* Focus Areas (desktop only) */}
-                            {booking.focusAreas && booking.focusAreas.length > 0 && (
-                              <div className="hidden xs:flex items-center gap-1.5 mt-1">
-                                <MapPin className="w-3.5 h-3.5 text-gray-500" />
-                                <span className="text-xs text-gray-600">
-                                  Focus: {formatFocusAreas(booking.focusAreas as unknown as FocusAreaDisplay[])}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Actions */}
-                            {booking.status !== 'cancelled' && (
-                              <div className="flex xs:flex-col gap-2 mt-auto">
-                                <ParentButton
-                                  size="sm"
-                                  variant="iconBlue"
-                                  className="h-7 text-xs px-2"
-                                  onClick={() => handleReschedule(booking.id)}
-                                >
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  Reschedule
-                                </ParentButton>
-                                <ParentButton
-                                  size="sm"
-                                  variant="iconGreen"
-                                  className="h-7 text-xs px-2"
-                                  onClick={() => handleEditBooking(booking.id)}
-                                >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Edit
-                                </ParentButton>
-                                <ParentButton
-                                  size="sm"
-                                  variant="iconRed"
-                                  className="h-7 text-xs px-2"
-                                  onClick={() => setCancelBookingId(booking.id)}
-                                >
-                                  <X className="h-3 w-3 mr-1" />
-                                  Cancel
-                                </ParentButton>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        </ParentCardContent>
+                      </ParentCard>
                     ))}
                   </div>
                 )}
@@ -1396,6 +1344,7 @@ function ParentDashboard() {
             </ParentCard>
           </ParentTabsContent>
         </ParentTabs>
+        </section>
       </ParentContentContainer>
     </ParentMainContainer>
 
