@@ -2164,7 +2164,7 @@ export default function Admin() {
                                 <h3 className="text-xl font-bold text-[#0F0276] dark:text-white group-hover:text-[#0F0276]/80 dark:group-hover:text-white/90 transition-colors line-clamp-2">
                                   {post.title}
                                 </h3>
-                                <p className="text-slate-600 text-sm leading-relaxed line-clamp-3">
+                                <p className="text-slate-600 dark:text-white text-sm leading-relaxed line-clamp-3">
                                   {post.excerpt}
                                 </p>
                                 <div className="flex items-center gap-3 pt-2">
@@ -2174,7 +2174,7 @@ export default function Admin() {
                                   >
                                     {post.category}
                                   </Badge>
-                                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-white">
                                     <Calendar className="h-4 w-4" />
                                     <span className="font-medium">
                                       {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'No date'}
