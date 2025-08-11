@@ -147,11 +147,6 @@ export default function Admin() {
     reason: ""
   });
   
-  // Modal state for schedule modals
-  const [isSetHoursOpen, setIsSetHoursOpen] = useState(false);
-  const [isBlockTimeOpen, setIsBlockTimeOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<any>(null);
-  
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isAthleteViewOpen, setIsAthleteViewOpen] = useState(false);
   const [isAthleteEditOpen, setIsAthleteEditOpen] = useState(false);
@@ -1847,13 +1842,13 @@ export default function Admin() {
                                   </div>
 
                                   <div className="flex items-center gap-6 text-sm">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 dark:from-[#D8BD2A]/15 dark:to-[#D8BD2A]/25 rounded-lg border border-[#D8BD2A]/20 dark:border-[#D8BD2A]/30">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 rounded-lg">
                                       <Users className="h-4 w-4 text-[#0F0276] dark:text-white" />
                                       <span className="font-semibold text-[#0F0276] dark:text-white">
                                         {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/30 rounded-lg border border-blue-100/50 dark:border-blue-700/30">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg">
                                       <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                                       <span className="font-semibold text-blue-700 dark:text-blue-300">
                                         {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
@@ -2092,96 +2087,76 @@ export default function Admin() {
                       </Dialog>
                     </div>
                     
-                    {/* Edit Blog Post Modal */}
-                    <AdminModal
-                      isOpen={!!editingPost}
-                      onClose={() => setEditingPost(null)}
-                      title="Edit Blog Post"
-                      size="4xl"
-                      showCloseButton={false}
-                      footer={
-                        <div className="flex justify-end gap-3">
-                          <AdminButton 
-                            variant="secondary"
-                            onClick={() => setEditingPost(null)}
-                            className="flex items-center gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                            Cancel
-                          </AdminButton>
-                          <AdminButton 
-                            type="submit"
-                            form="edit-blog-form"
-                            className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
-                          >
-                            <Save className="h-4 w-4" />
-                            Save Changes
-                          </AdminButton>
-                        </div>
-                      }
-                    >
-                      {editingPost && (
-                        <>
-                          {/* Blog Details */}
-                          <AdminModalSection
-                            title="Blog Post Details"
-                            icon={<FileText className="h-5 w-5" />}
-                            gradient="blue"
-                          >
-                            <form id="edit-blog-form" onSubmit={(e) => {
-                              e.preventDefault();
-                              const content = sectionsToContent(editingPostSections);
-                              updateBlogPostMutation.mutate({ ...editingPost, content });
-                            }}>
-                              <AdminModalGrid cols={1}>
-                                <div>
-                                  <Label htmlFor="edit-blog-title" className="text-slate-700 dark:text-slate-300 font-medium">Title</Label>
-                                  <Input
-                                    id="edit-blog-title"
-                                    value={editingPost.title}
-                                    onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                                    required
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-blog-excerpt" className="text-slate-700 dark:text-slate-300 font-medium">Excerpt</Label>
-                                  <Textarea
-                                    id="edit-blog-excerpt"
-                                    value={editingPost.excerpt}
-                                    onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                                    rows={3}
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-blog-category" className="text-slate-700 dark:text-slate-300 font-medium">Category</Label>
-                                  <Input
-                                    id="edit-blog-category"
-                                    value={editingPost.category || ''}
-                                    onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
-                                    className="mt-1"
-                                  />
-                                </div>
-                              </AdminModalGrid>
-                            </form>
-                          </AdminModalSection>
-
-                          {/* Content Editor */}
-                          <AdminModalSection
-                            title="Content"
-                            icon={<Edit className="h-5 w-5" />}
-                            gradient="green"
-                            className="mt-6"
-                          >
-                            <SectionBasedContentEditor
-                              sections={editingPostSections}
-                              onChange={setEditingPostSections}
-                            />
-                          </AdminModalSection>
-                        </>
-                      )}
-                    </AdminModal>
+                    {/* Edit Blog Post Dialog */}
+                    <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
+                      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Edit Blog Post</DialogTitle>
+                          <DialogDescription>
+                            Edit the details of your blog post below.
+                          </DialogDescription>
+                        </DialogHeader>
+                        {editingPost && (
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const content = sectionsToContent(editingPostSections);
+                            updateBlogPostMutation.mutate({ ...editingPost, content });
+                          }}>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="edit-blog-title">Title</Label>
+                                <Input
+                                  id="edit-blog-title"
+                                  value={editingPost.title}
+                                  onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-blog-excerpt">Excerpt</Label>
+                                <Textarea
+                                  id="edit-blog-excerpt"
+                                  value={editingPost.excerpt}
+                                  onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                                  rows={3}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-blog-category">Category</Label>
+                                <Input
+                                  id="edit-blog-category"
+                                  value={editingPost.category || ''}
+                                  onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                                />
+                              </div>
+                              <div>
+                                <Label>Content</Label>
+                                <SectionBasedContentEditor
+                                  sections={editingPostSections}
+                                  onChange={setEditingPostSections}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  type="submit"
+                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
+                                  Save Changes
+                                </Button>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  onClick={() => setEditingPost(null)}
+                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </form>
+                        )}
+                      </DialogContent>
+                    </Dialog>
                     
                     <div className="grid grid-cols-1 gap-6">
                       {blogPosts.map((post) => (
@@ -2333,122 +2308,103 @@ export default function Admin() {
                       </Dialog>
                     </div>
                     
-                    {/* Edit Tip Modal */}
-                    <AdminModal
-                      isOpen={!!editingTip}
-                      onClose={() => setEditingTip(null)}
-                      title="Edit Tip"
-                      size="4xl"
-                      showCloseButton={false}
-                      footer={
-                        <div className="flex justify-end gap-3">
-                          <AdminButton 
-                            variant="secondary"
-                            onClick={() => setEditingTip(null)}
-                            className="flex items-center gap-2"
-                          >
-                            <X className="h-4 w-4" />
-                            Cancel
-                          </AdminButton>
-                          <AdminButton 
-                            type="submit"
-                            form="edit-tip-form"
-                            className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
-                          >
-                            <Save className="h-4 w-4" />
-                            Save Changes
-                          </AdminButton>
-                        </div>
-                      }
-                    >
-                      {editingTip && (
-                        <>
-                          {/* Tip Details */}
-                          <AdminModalSection
-                            title="Tip Details"
-                            icon={<Star className="h-5 w-5" />}
-                            gradient="amber"
-                          >
-                            <form id="edit-tip-form" onSubmit={(e) => {
-                              e.preventDefault();
-                              const content = sectionsToContent(editingTipSections);
-                              updateTipMutation.mutate({ ...editingTip, content });
-                            }}>
-                              <AdminModalGrid cols={2}>
-                                <div>
-                                  <Label htmlFor="edit-tip-title" className="text-slate-700 dark:text-slate-300 font-medium">Title</Label>
-                                  <Input
-                                    id="edit-tip-title"
-                                    value={editingTip.title}
-                                    onChange={(e) => setEditingTip({ ...editingTip, title: e.target.value })}
-                                    required
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-tip-video" className="text-slate-700 dark:text-slate-300 font-medium">Video URL (optional)</Label>
-                                  <Input
-                                    id="edit-tip-video"
-                                    value={editingTip.videoUrl || ''}
-                                    onChange={(e) => setEditingTip({ ...editingTip, videoUrl: e.target.value })}
-                                    placeholder="YouTube or Vimeo URL"
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-tip-category" className="text-slate-700 dark:text-slate-300 font-medium">Category</Label>
-                                  <Select
-                                    value={editingTip.category}
-                                    onValueChange={(value) => setEditingTip({ ...editingTip, category: value })}
-                                  >
-                                    <SelectTrigger className="mt-1">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="vault">Vault</SelectItem>
-                                      <SelectItem value="bars">Bars</SelectItem>
-                                      <SelectItem value="beam">Beam</SelectItem>
-                                      <SelectItem value="floor">Floor</SelectItem>
-                                      <SelectItem value="drills">Drills</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label htmlFor="edit-tip-difficulty" className="text-slate-700 dark:text-slate-300 font-medium">Difficulty</Label>
-                                  <Select
-                                    value={editingTip.difficulty}
-                                    onValueChange={(value) => setEditingTip({ ...editingTip, difficulty: value })}
-                                  >
-                                    <SelectTrigger className="mt-1">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="beginner">Beginner</SelectItem>
-                                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                                      <SelectItem value="advanced">Advanced</SelectItem>
-                                      <SelectItem value="elite">Elite</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </AdminModalGrid>
-                            </form>
-                          </AdminModalSection>
-
-                          {/* Content Editor */}
-                          <AdminModalSection
-                            title="Content"
-                            icon={<Edit className="h-5 w-5" />}
-                            gradient="green"
-                            className="mt-6"
-                          >
-                            <SectionBasedContentEditor
-                              sections={editingTipSections}
-                              onChange={setEditingTipSections}
-                            />
-                          </AdminModalSection>
-                        </>
-                      )}
-                    </AdminModal>
+                    {/* Edit Tip Dialog */}
+                    <Dialog open={!!editingTip} onOpenChange={() => setEditingTip(null)}>
+                      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Edit Tip</DialogTitle>
+                          <DialogDescription>
+                            Edit the tip details below.
+                          </DialogDescription>
+                        </DialogHeader>
+                        {editingTip && (
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const content = sectionsToContent(editingTipSections);
+                            updateTipMutation.mutate({ ...editingTip, content });
+                          }}>
+                            <div className="space-y-4">
+                              <div>
+                                <Label htmlFor="edit-tip-title">Title</Label>
+                                <Input
+                                  id="edit-tip-title"
+                                  value={editingTip.title}
+                                  onChange={(e) => setEditingTip({ ...editingTip, title: e.target.value })}
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-tip-category">Category</Label>
+                                <Select
+                                  value={editingTip.category}
+                                  onValueChange={(value) => setEditingTip({ ...editingTip, category: value })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="vault">Vault</SelectItem>
+                                    <SelectItem value="bars">Bars</SelectItem>
+                                    <SelectItem value="beam">Beam</SelectItem>
+                                    <SelectItem value="floor">Floor</SelectItem>
+                                    <SelectItem value="drills">Drills</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-tip-difficulty">Difficulty</Label>
+                                <Select
+                                  value={editingTip.difficulty}
+                                  onValueChange={(value) => setEditingTip({ ...editingTip, difficulty: value })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="beginner">Beginner</SelectItem>
+                                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                                    <SelectItem value="advanced">Advanced</SelectItem>
+                                    <SelectItem value="elite">Elite</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor="edit-tip-video">Video URL (optional)</Label>
+                                <Input
+                                  id="edit-tip-video"
+                                  value={editingTip.videoUrl || ''}
+                                  onChange={(e) => setEditingTip({ ...editingTip, videoUrl: e.target.value })}
+                                  placeholder="YouTube or Vimeo URL"
+                                />
+                              </div>
+                              <div>
+                                <Label>Content</Label>
+                                <SectionBasedContentEditor
+                                  sections={editingTipSections}
+                                  onChange={setEditingTipSections}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  type="submit"
+                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
+                                  Save Changes
+                                </Button>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  onClick={() => setEditingTip(null)}
+                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </form>
+                        )}
+                      </DialogContent>
+                    </Dialog>
                     
                     <div className="grid grid-cols-1 gap-6">
                       {tips.map((tip) => (
@@ -2623,16 +2579,59 @@ export default function Admin() {
                                   </div>
                                 </div>
                               ) : (
-                                <Button 
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedDay(day);
-                                    setIsSetHoursOpen(true);
-                                  }}
-                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] dark:from-[#D8BD2A] dark:to-[#D8BD2A]/90 dark:hover:from-[#D8BD2A]/90 dark:hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-white dark:text-[#0F0276]"
-                                >
-                                  Set Hours
-                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button 
+                                      size="sm"
+                                      className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                    >
+                                      Set Hours
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Set {day.label} Hours</DialogTitle>
+                                      <DialogDescription>
+                                        Set your available hours for {day.label}.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div>
+                                        <Label>Start Time</Label>
+                                        <Input
+                                          type="time"
+                                          value={newAvailability.startTime}
+                                          onChange={(e) => setNewAvailability({
+                                            ...newAvailability,
+                                            startTime: e.target.value
+                                          })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label>End Time</Label>
+                                        <Input
+                                          type="time"
+                                          value={newAvailability.endTime}
+                                          onChange={(e) => setNewAvailability({
+                                            ...newAvailability,
+                                            endTime: e.target.value
+                                          })}
+                                        />
+                                      </div>
+                                      <Button 
+                                        onClick={() => {
+                                          createAvailabilityMutation.mutate({
+                                            ...newAvailability,
+                                            dayOfWeek: day.value
+                                          });
+                                        }}
+                                        className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                                      >
+                                        Save Hours
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
                               )}
                               </div>
                             </AdminCardContent>
@@ -2649,13 +2648,82 @@ export default function Admin() {
                         Availability Exceptions
                       </h3>
                       <Dialog>
-                        <Button 
-                          onClick={() => setIsBlockTimeOpen(true)}
-                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-[#D8BD2A] dark:to-[#D8BD2A]/90 dark:hover:from-[#D8BD2A]/90 dark:hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-white dark:text-[#0F0276]"
-                        >
-                          <CalendarX className="h-5 w-5 mr-2 text-white dark:text-[#0F0276]" />
-                          Block Time
-                        </Button>
+                        <DialogTrigger asChild>
+                          <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                            <CalendarX className="h-5 w-5 mr-2" />
+                            Block Time
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Block Time</DialogTitle>
+                            <DialogDescription>
+                              Block specific dates or times when you're not available
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>Date</Label>
+                              <Input
+                                type="date"
+                                value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : newException.date}
+                                onChange={(e) => setNewException({
+                                  ...newException,
+                                  date: new Date(e.target.value)
+                                })}
+                              />
+                              {newException.date && (
+                                <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                  Selected: {new Date(`${newException.date}T12:00:00Z`).toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <Label>Start Time</Label>
+                              <Input
+                                type="time"
+                                value={newException.startTime}
+                                onChange={(e) => setNewException({
+                                  ...newException,
+                                  startTime: e.target.value
+                                })}
+                              />
+                            </div>
+                            <div>
+                              <Label>End Time</Label>
+                              <Input
+                                type="time"
+                                value={newException.endTime}
+                                onChange={(e) => setNewException({
+                                  ...newException,
+                                  endTime: e.target.value
+                                })}
+                              />
+                            </div>
+                            <div>
+                              <Label>Reason (optional)</Label>
+                              <Input
+                                value={newException.reason || ''}
+                                onChange={(e) => setNewException({
+                                  ...newException,
+                                  reason: e.target.value
+                                })}
+                                placeholder="e.g., Personal appointment, Holiday"
+                              />
+                            </div>
+                            <Button 
+                              onClick={() => createExceptionMutation.mutate(newException)}
+                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                            >
+                              Block Time
+                            </Button>
+                          </div>
+                        </DialogContent>
                       </Dialog>
                     </div>
                     
@@ -2676,7 +2744,7 @@ export default function Admin() {
                                     })}
                                   </p>
                                   <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-                                    <Clock className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                    <Clock className="h-4 w-4" />
                                     <span className="font-medium">
                                       {exception.startTime} - {exception.endTime}
                                     </span>
@@ -2704,186 +2772,6 @@ export default function Admin() {
                   </div>
                 </div>
             </MainContentContainer>
-            
-            {/* Set Hours Modal */}
-            <AdminModal
-              isOpen={isSetHoursOpen}
-              onClose={() => setIsSetHoursOpen(false)}
-              title={selectedDay ? `Set ${selectedDay.label} Hours` : "Set Hours"}
-              size="2xl"
-              showCloseButton={false}
-              footer={
-                <div className="flex justify-end gap-3">
-                  <AdminButton 
-                    variant="secondary"
-                    onClick={() => setIsSetHoursOpen(false)}
-                    className="flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </AdminButton>
-                  <button 
-                    onClick={() => {
-                      if (selectedDay) {
-                        createAvailabilityMutation.mutate({
-                          ...newAvailability,
-                          dayOfWeek: selectedDay.value
-                        });
-                        setIsSetHoursOpen(false);
-                      }
-                    }}
-                    className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl font-semibold transition-all duration-200 focus:outline-none bg-[#0F0276] dark:bg-[#D8BD2A] hover:bg-[#0F0276]/90 dark:hover:bg-[#D8BD2A]/90 text-white dark:text-[#0F0276] shadow-lg hover:shadow-xl"
-                  >
-                    <Save className="h-4 w-4 text-white dark:text-[#0F0276]" />
-                    Save Hours
-                  </button>
-                </div>
-              }
-            >
-              {selectedDay && (
-                <AdminModalSection
-                  title="Working Hours"
-                  icon={<Clock className="h-5 w-5 text-blue-600 dark:text-white" />}
-                  gradient="blue"
-                >
-                  <AdminModalGrid cols={2}>
-                    <div>
-                      <Label htmlFor="start-time" className="text-slate-700 dark:text-slate-300 font-medium">Start Time</Label>
-                      <Input
-                        id="start-time"
-                        type="time"
-                        value={newAvailability.startTime}
-                        onChange={(e) => setNewAvailability({
-                          ...newAvailability,
-                          startTime: e.target.value
-                        })}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="end-time" className="text-slate-700 dark:text-slate-300 font-medium">End Time</Label>
-                      <Input
-                        id="end-time"
-                        type="time"
-                        value={newAvailability.endTime}
-                        onChange={(e) => setNewAvailability({
-                          ...newAvailability,
-                          endTime: e.target.value
-                        })}
-                        className="mt-1"
-                      />
-                    </div>
-                  </AdminModalGrid>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-4">
-                    Set your available hours for {selectedDay.label}. These hours will be used for scheduling lessons.
-                  </p>
-                </AdminModalSection>
-              )}
-            </AdminModal>
-
-            {/* Block Time Modal */}
-            <AdminModal
-              isOpen={isBlockTimeOpen}
-              onClose={() => setIsBlockTimeOpen(false)}
-              title="Block Time"
-              size="2xl"
-              showCloseButton={false}
-              footer={
-                <div className="flex justify-end gap-3">
-                  <AdminButton 
-                    variant="secondary"
-                    onClick={() => setIsBlockTimeOpen(false)}
-                    className="flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </AdminButton>
-                  <button 
-                    onClick={() => {
-                      createExceptionMutation.mutate(newException);
-                      setIsBlockTimeOpen(false);
-                    }}
-                    className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl font-semibold transition-all duration-200 focus:outline-none bg-red-500 dark:bg-[#D8BD2A] hover:bg-red-600 dark:hover:bg-[#D8BD2A]/90 text-white dark:text-[#0F0276] shadow-lg hover:shadow-xl"
-                  >
-                    <CalendarX className="h-4 w-4 text-white dark:text-[#0F0276]" />
-                    Block Time
-                  </button>
-                </div>
-              }
-            >
-              <AdminModalSection
-                title="Block Availability"
-                icon={<CalendarX className="h-5 w-5 text-red-600 dark:text-white" />}
-                gradient="red"
-              >
-                <AdminModalGrid cols={1}>
-                  <div>
-                    <Label htmlFor="block-date" className="text-slate-700 dark:text-slate-300 font-medium">Date</Label>
-                    <Input
-                      id="block-date"
-                      type="date"
-                      value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : newException.date}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        date: new Date(e.target.value)
-                      })}
-                      className="mt-1"
-                    />
-                    {newException.date && (
-                      <p className="text-sm text-gray-600 dark:text-slate-400 mt-2">
-                        Selected: {new Date(`${newException.date}T12:00:00Z`).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                    )}
-                  </div>
-                </AdminModalGrid>
-                <AdminModalGrid cols={2} className="mt-4">
-                  <div>
-                    <Label htmlFor="block-start-time" className="text-slate-700 dark:text-slate-300 font-medium">Start Time</Label>
-                    <Input
-                      id="block-start-time"
-                      type="time"
-                      value={newException.startTime}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        startTime: e.target.value
-                      })}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="block-end-time" className="text-slate-700 dark:text-slate-300 font-medium">End Time</Label>
-                    <Input
-                      id="block-end-time"
-                      type="time"
-                      value={newException.endTime}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        endTime: e.target.value
-                      })}
-                      className="mt-1"
-                    />
-                  </div>
-                </AdminModalGrid>
-                <div className="mt-4">
-                  <Label htmlFor="block-reason" className="text-slate-700 dark:text-slate-300 font-medium">Reason (optional)</Label>
-                  <Input
-                    id="block-reason"
-                    value={newException.reason || ''}
-                    onChange={(e) => setNewException({
-                      ...newException,
-                      reason: e.target.value
-                    })}
-                    placeholder="e.g., Personal appointment, Holiday"
-                    className="mt-1"
-                  />
-                </div>
-              </AdminModalSection>
-            </AdminModal>
           </TabsContent>
 
           <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
@@ -3182,30 +3070,6 @@ export default function Admin() {
           onClose={() => setViewingParent(null)}
           title="Parent Details"
           size="4xl"
-          showCloseButton={false}
-          footer={
-            <div className="flex justify-end gap-3">
-              <AdminButton
-                variant="secondary"
-                onClick={() => setViewingParent(null)}
-                className="flex items-center gap-2"
-              >
-                Close
-              </AdminButton>
-              <AdminButton
-                onClick={() => {
-                  if (selectedParentDetails) {
-                    setEditingParent(selectedParentDetails);
-                    setIsParentEditOpen(true);
-                  }
-                }}
-                className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
-              >
-                <Edit className="h-4 w-4" />
-                Edit Parent
-              </AdminButton>
-            </div>
-          }
         >
           {viewingParent && selectedParentDetails && (
             <>
@@ -3222,11 +3086,6 @@ export default function Admin() {
                       icon={<User className="h-4 w-4" />}
                     />
                     <AdminModalDetailRow
-                      label="Parent ID"
-                      value={selectedParentDetails.id}
-                      icon={<User className="h-4 w-4" />}
-                    />
-                    <AdminModalDetailRow
                       label="Email"
                       value={selectedParentDetails.email}
                       icon={<Mail className="h-4 w-4" />}
@@ -3238,6 +3097,11 @@ export default function Admin() {
                     />
                   </div>
                   <div>
+                    <AdminModalDetailRow
+                      label="Parent ID"
+                      value={selectedParentDetails.id}
+                      icon={<User className="h-4 w-4" />}
+                    />
                     <AdminModalDetailRow
                       label="Emergency Contact"
                       value={selectedParentDetails.emergencyContactName || selectedParentDetails.emergency_contact_name || 'Not provided'}
@@ -3255,13 +3119,6 @@ export default function Admin() {
                       value={(selectedParentDetails.createdAt || selectedParentDetails.created_at) ? new Date(selectedParentDetails.createdAt || selectedParentDetails.created_at).toLocaleDateString() : 'Unknown'}
                       icon={<CalendarDays className="h-4 w-4" />}
                     />
-                    {(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at) && (
-                      <AdminModalDetailRow
-                        label="Last Login"
-                        value={`${new Date(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at).toLocaleDateString()} at ${new Date(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at).toLocaleTimeString()}`}
-                        icon={<Clock className="h-4 w-4 text-slate-600 dark:text-slate-300" />}
-                      />
-                    )}
                   </div>
                 </AdminModalGrid>
               </AdminModalSection>
@@ -3433,7 +3290,7 @@ export default function Admin() {
                     ))}
                     
                     {selectedParentDetails.bookings.length > 10 && (
-                      <div className="flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-2 border border-blue-200 dark:border-blue-700/30">
+                      <div className="flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-2 border border-blue-200 dark:border-blue-800">
                         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
                         <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
                           Showing 10 most recent bookings of {selectedParentDetails.bookings.length} total
@@ -3802,122 +3659,140 @@ export default function Admin() {
         </Dialog>
 
         {/* Parent Edit Modal */}
-        <AdminModal
-          isOpen={isParentEditOpen} 
-          onClose={() => setIsParentEditOpen(false)}
-          title="Edit Parent Information"
-          size="3xl"
-          showCloseButton={false}
-          footer={
-            <div className="flex justify-end gap-3">
-              <AdminButton 
-                variant="secondary" 
-                onClick={() => setIsParentEditOpen(false)}
-                className="flex items-center gap-2"
-              >
-                <X className="h-4 w-4" />
-                Cancel
-              </AdminButton>
-              <AdminButton 
-                onClick={() => {
-                  // TODO: Implement save functionality
-                  console.log('Save parent changes');
-                  setIsParentEditOpen(false);
-                }}
-                className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
-              >
-                <Save className="h-4 w-4" />
-                Save Changes
-              </AdminButton>
-            </div>
-          }
-        >
-          {editingParent && (
-            <>
-              {/* Contact Information */}
-              <AdminModalSection
-                title="Contact Information"
-                icon={<User className="h-5 w-5" />}
-                gradient="blue"
-              >
-                <AdminModalGrid cols={2}>
-                  <div>
-                    <Label htmlFor="parent-first-name" className="text-slate-700 dark:text-slate-300 font-medium">First Name</Label>
-                    <Input 
-                      id="parent-first-name"
-                      defaultValue={editingParent.first_name}
-                      placeholder="First Name"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="parent-last-name" className="text-slate-700 dark:text-slate-300 font-medium">Last Name</Label>
-                    <Input 
-                      id="parent-last-name"
-                      defaultValue={editingParent.last_name}
-                      placeholder="Last Name"
-                      className="mt-1"
-                    />
-                  </div>
-                </AdminModalGrid>
-                <div>
-                  <Label htmlFor="parent-email" className="text-slate-700 dark:text-slate-300 font-medium">Email</Label>
-                  <Input 
-                    id="parent-email"
-                    type="email"
-                    defaultValue={editingParent.email}
-                    placeholder="Email"
-                    className="mt-1"
-                  />
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center">
-                    <span className="p-1 bg-blue-100 dark:bg-blue-900 rounded-full mr-1">
-                      <Mail className="h-3 w-3" />
-                    </span>
-                    Used for account access and communication
-                  </p>
+        <Dialog open={isParentEditOpen} onOpenChange={setIsParentEditOpen}>
+          <DialogContent 
+            className="max-w-2xl"
+            // Adding explicit ARIA attributes to prevent accessibility issues
+            aria-labelledby="edit-parent-title"
+            aria-describedby="edit-parent-description"
+          >
+            <DialogHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
+              <DialogTitle id="edit-parent-title" className="text-2xl font-bold text-indigo-800 flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <User className="h-6 w-6 text-indigo-600" />
                 </div>
-                <div>
-                  <Label htmlFor="parent-phone" className="text-slate-700 dark:text-slate-300 font-medium">Phone</Label>
-                  <Input 
-                    id="parent-phone"
-                    defaultValue={editingParent.phone}
-                    placeholder="Phone Number"
-                    className="mt-1"
-                  />
-                </div>
-              </AdminModalSection>
+                Edit Parent Information
+              </DialogTitle>
+              <DialogDescription id="edit-parent-description" className="text-slate-600">
+                Update the parent's information below.
+              </DialogDescription>
+            </DialogHeader>
+            {editingParent && (
+              <div className="space-y-6">
+                {/* Contact Info Card */}
+                <Card className="rounded-xl border shadow-sm mb-6">
+                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                    <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+                      <User className="h-5 w-5 text-blue-600" />
+                      Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="parent-first-name" className="text-slate-700 font-medium">First Name</Label>
+                        <Input 
+                          id="parent-first-name"
+                          defaultValue={editingParent.first_name}
+                          placeholder="First Name"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="parent-last-name" className="text-slate-700 font-medium">Last Name</Label>
+                        <Input 
+                          id="parent-last-name"
+                          defaultValue={editingParent.last_name}
+                          placeholder="Last Name"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="parent-email" className="text-slate-700 font-medium">Email</Label>
+                      <Input 
+                        id="parent-email"
+                        type="email"
+                        defaultValue={editingParent.email}
+                        placeholder="Email"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-blue-600 mt-2 flex items-center">
+                        <span className="p-1 bg-blue-100 rounded-full mr-1">
+                          <Mail className="h-3 w-3" />
+                        </span>
+                        Used for account access and communication
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="parent-phone" className="text-slate-700 font-medium">Phone</Label>
+                      <Input 
+                        id="parent-phone"
+                        defaultValue={editingParent.phone}
+                        placeholder="Phone Number"
+                        className="mt-1"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Emergency Contact */}
-              <AdminModalSection
-                title="Emergency Contact"
-                icon={<AlertCircle className="h-5 w-5" />}
-                gradient="red"
-                className="mt-6"
-              >
-                <AdminModalGrid cols={2}>
-                  <div>
-                    <Label htmlFor="emergency-name" className="text-slate-700 dark:text-slate-300 font-medium">Contact Name</Label>
-                    <Input 
-                      id="emergency-name"
-                      defaultValue={editingParent?.emergencyContactName || editingParent?.emergency_contact_name || ''}
-                      placeholder="Emergency Contact Name"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-phone" className="text-slate-700 dark:text-slate-300 font-medium">Contact Phone</Label>
-                    <Input 
-                      id="emergency-phone"
-                      defaultValue={editingParent?.emergencyContactPhone || editingParent?.emergency_contact_phone || ''}
-                      placeholder="Emergency Contact Phone"
-                      className="mt-1"
-                    />
-                  </div>
-                </AdminModalGrid>
-              </AdminModalSection>
-            </>
-          )}
-        </AdminModal>
+                {/* Emergency Contact Card */}
+                <Card className="rounded-xl border shadow-sm mb-6">
+                  <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-xl">
+                    <CardTitle className="text-lg font-semibold text-red-800 flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      Emergency Contact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="emergency-name" className="text-slate-700 font-medium">Contact Name</Label>
+                        <Input 
+                          id="emergency-name"
+                          defaultValue={editingParent?.emergencyContactName || editingParent?.emergency_contact_name || ''}
+                          placeholder="Emergency Contact Name"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="emergency-phone" className="text-slate-700 font-medium">Contact Phone</Label>
+                        <Input 
+                          id="emergency-phone"
+                          defaultValue={editingParent?.emergencyContactPhone || editingParent?.emergency_contact_phone || ''}
+                          placeholder="Emergency Contact Phone"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-dashed border-slate-200">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsParentEditOpen(false)}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-800"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      // TODO: Implement save functionality
+                      console.log('Save parent changes');
+                      setIsParentEditOpen(false);
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Unified Booking Modal for Admin Flows */}
         <UnifiedBookingModal

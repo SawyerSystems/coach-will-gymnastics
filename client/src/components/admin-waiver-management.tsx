@@ -836,19 +836,8 @@ export function AdminWaiverManagement() {
         }}
         title={selectedWaiver ? `Waiver Details - ${selectedWaiver.athleteName}` : 'Waiver Details'}
         size="4xl"
-        icon={<FileText className="h-6 w-6" />}
         footer={
           <div className="flex justify-end gap-3">
-            <AdminButton
-              variant="secondary"
-              onClick={() => {
-                setIsWaiverDetailsOpen(false);
-                setSelectedWaiver(null);
-              }}
-              className="flex items-center gap-2"
-            >
-              Close
-            </AdminButton>
             {selectedWaiver && selectedWaiver.pdfPath && typeof selectedWaiver.id === 'number' && (
               <AdminButton
                 onClick={() => downloadPDF(selectedWaiver.id as number, selectedWaiver.athleteName)}
