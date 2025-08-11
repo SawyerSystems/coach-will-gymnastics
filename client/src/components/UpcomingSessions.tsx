@@ -171,9 +171,9 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
   }));
 
   return (
-    <div className="space-y-6 rounded-xl sm:rounded-2xl lg:rounded-3xl dark:bg-[#0F0276] dark:p-6">
-      {/* Header Section */}
-      <div className="border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md rounded-2xl p-6 dark:bg-white/10 dark:border-white/10">
+    <>
+      {/* Header Section with Tabs */}
+      <div className="border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md rounded-2xl p-6 dark:bg-white/10 dark:border-white/10 mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div>
             <p className="text-slate-600 dark:text-white">View and manage scheduled sessions</p>
@@ -186,49 +186,50 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
           </Badge>
         </div>
 
-        {/* Isolation container with proper spacing for tabs */}
-        <div className="mb-8 pt-8 pb-8 border-b border-slate-200/60 dark:border-white/20">
-          <AdminContentTabs
-            value={viewMode}
-            onValueChange={(v) => setViewMode(v as "list" | "calendar")}
-            items={[
-              {
-                value: "list",
-                label: "List View",
-                icon: <List className="h-4 w-4 mr-2" />,
-                activeGradient:
-                  "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
-              },
-              {
-                value: "calendar",
-                label: "Calendar View",
-                icon: <Calendar className="h-4 w-4 mr-2" />,
-                activeGradient:
-                  "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
-              },
-            ]}
-            listClassName="bg-slate-100 dark:bg-slate-900/40 p-1 rounded-lg w-fit"
-            triggerClassName="rounded-md border border-transparent data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
-          >
-          <TabsContent value="list">
-            <div className="mt-8">
-              {sessions.length === 0 ? (
-                <div className="text-center py-12 rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/10">
-                  <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-200 rounded-full flex items-center justify-center mb-4">
-                    <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-600" />
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-300 font-medium">No upcoming sessions scheduled</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">When you book sessions, they will appear here</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sessions.map((session) => {
-                    const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
-                    return (
-                      <div
-                        key={session.id}
-                        className="rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-md transition-all duration-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
-                      >
+        {/* View Mode Tabs */}
+        <AdminContentTabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as "list" | "calendar")}
+          items={[
+            {
+              value: "list",
+              label: "List View",
+              icon: <List className="h-4 w-4 mr-2" />,
+              activeGradient:
+                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
+            },
+            {
+              value: "calendar",
+              label: "Calendar View",
+              icon: <Calendar className="h-4 w-4 mr-2" />,
+              activeGradient:
+                "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white dark:data-[state=active]:from-[#D8BD2A] dark:data-[state=active]:to-[#D8BD2A] dark:data-[state=active]:text-[#0F0276]",
+            },
+          ]}
+          listClassName="bg-slate-100 dark:bg-slate-900/40 p-1 rounded-lg w-fit"
+          triggerClassName="rounded-md border border-transparent data-[state=active]:shadow-sm data-[state=active]:border-blue-300 dark:data-[state=active]:border-[#D8BD2A] dark:border-white/20"
+        />
+      </div>
+
+      {/* Session Content - sits directly on MainContentContainer */}
+      {viewMode === "list" ? (
+        sessions.length === 0 ? (
+          <div className="text-center py-12 rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/10">
+            <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-200 rounded-full flex items-center justify-center mb-4">
+              <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-600" />
+            </div>
+            <p className="text-slate-600 dark:text-slate-300 font-medium">No upcoming sessions scheduled</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">When you book sessions, they will appear here</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {sessions.map((session) => {
+              const formattedDateTime = formatSessionDateTime(session.sessionDate, session.sessionTime);
+              return (
+                <div
+                  key={session.id}
+                  className="rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md hover:shadow-md transition-all duration-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
+                >
                           <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between gap-4">
                             <div className="space-y-4">
                               <div className="flex items-center justify-between">
@@ -282,19 +283,14 @@ export function UpcomingSessions({ onBookingSelect }: UpcomingSessionsProps = {}
                       );
                     })}
                   </div>
-                )}
-            </div>
-          </TabsContent>
-          <TabsContent value="calendar">
-            <div className="mt-8 rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-white/10 dark:bg-white/10 dark:text-white p-6">
-              <div className="h-[600px]">
-                <BookingCalendar bookings={calendarBookings} onBookingSelect={handleBookingSelect} />
-              </div>
-            </div>
-          </TabsContent>
-        </AdminContentTabs>
-        </div> {/* Close isolation container */}
-      </div>
-    </div>
+                )
+              ) : (
+                <div className="rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-white/10 dark:bg-white/10 dark:text-white p-6">
+                  <div className="h-[600px]">
+                    <BookingCalendar bookings={calendarBookings} onBookingSelect={handleBookingSelect} />
+                  </div>
+                </div>
+              )}
+    </>
   );
 }
