@@ -1988,15 +1988,16 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="content" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
                   <MessageSquare className="h-8 w-8 text-[#D8BD2A]" />
                   Content Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8">
+                </span>
+              }
+            >
+              <div className="p-4 sm:p-6 lg:p-8">
                 <AdminContentTabs
                   defaultValue="blog"
                   items={[
@@ -2018,7 +2019,7 @@ export default function Admin() {
                     <div className="flex justify-end">
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                          <Button className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]">
                             <Plus className="h-5 w-5 mr-2" />
                             New Blog Post
                           </Button>
@@ -2456,8 +2457,8 @@ export default function Admin() {
                     </div>
                   </TabsContent>
                 </AdminContentTabs>
-              </CardContent>
-            </Card>
+              </div>
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="schedule" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
@@ -3412,17 +3413,16 @@ export default function Admin() {
                   </TabsContent>
                   
                   <TabsContent value="site-content" className="space-y-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                    <MainContentContainer
+                      heading={
+                        <span className="inline-flex items-center gap-2 sm:gap-3">
                           <MessageSquare className="h-6 w-6 text-[#D8BD2A]" />
                           Site Content Management
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-6">
-                        <AdminSiteContentManager />
-                      </CardContent>
-                    </Card>
+                        </span>
+                      }
+                    >
+                      <AdminSiteContentManager />
+                    </MainContentContainer>
                   </TabsContent>
                   
                   <TabsContent value="backup" className="space-y-6">
