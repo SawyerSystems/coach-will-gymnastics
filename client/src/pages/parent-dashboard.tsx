@@ -307,151 +307,153 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Focus Areas Section */}
-      <div className="border rounded-lg p-4">
-        <TwoStepFocusAreas
-          selectedFocusAreas={selectedFocusAreas}
-          onFocusAreasChange={setSelectedFocusAreas}
-          maxFocusAreas={lessonConfig.maxFocusAreas}
-          lessonDuration={lessonConfig.duration}
-        />
-      </div>
+      <ParentModalSection title="Focus Areas">
+        <div className="border border-blue-200 dark:border-blue-700 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
+          <TwoStepFocusAreas
+            selectedFocusAreas={selectedFocusAreas}
+            onFocusAreasChange={setSelectedFocusAreas}
+            maxFocusAreas={lessonConfig.maxFocusAreas}
+            lessonDuration={lessonConfig.duration}
+          />
+        </div>
+      </ParentModalSection>
 
       {/* Safety Information Section */}
-      <div className="border-t pt-6">
-        <h3 className="text-lg font-semibold mb-4">Safety Information</h3>
-        
+      <ParentModalSection title="Safety Information">
         <div className="space-y-6">
           {/* Drop-off Person Section */}
           <div className="space-y-4">
-            <h4 className="font-medium">Drop-off Person Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100">Drop-off Person Information</h4>
+            <ParentModalGrid>
               <div>
-                <Label htmlFor="dropoff-name">Name*</Label>
-                <input
+                <Label htmlFor="dropoff-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name*</Label>
+                <Input
                   id="dropoff-name"
                   value={dropoffPersonName}
                   onChange={(e) => setDropoffPersonName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="Full name"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="dropoff-relationship">Relationship to Athlete*</Label>
-                <input
+                <Label htmlFor="dropoff-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete*</Label>
+                <Input
                   id="dropoff-relationship"
                   value={dropoffPersonRelationship}
                   onChange={(e) => setDropoffPersonRelationship(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="Parent, Guardian, etc."
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="dropoff-phone">Phone Number*</Label>
-                <input
+                <Label htmlFor="dropoff-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number*</Label>
+                <Input
                   id="dropoff-phone"
                   value={dropoffPersonPhone}
                   onChange={(e) => setDropoffPersonPhone(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="(555) 123-4567"
                   required
                 />
               </div>
-            </div>
+            </ParentModalGrid>
           </div>
           
           {/* Pick-up Person Section */}
           <div className="space-y-4">
-            <h4 className="font-medium">Pick-up Person Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100">Pick-up Person Information</h4>
+            <ParentModalGrid>
               <div>
-                <Label htmlFor="pickup-name">Name*</Label>
-                <input
+                <Label htmlFor="pickup-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name*</Label>
+                <Input
                   id="pickup-name"
                   value={pickupPersonName}
                   onChange={(e) => setPickupPersonName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="Full name"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="pickup-relationship">Relationship to Athlete*</Label>
-                <input
+                <Label htmlFor="pickup-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete*</Label>
+                <Input
                   id="pickup-relationship"
                   value={pickupPersonRelationship}
                   onChange={(e) => setPickupPersonRelationship(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="Parent, Guardian, etc."
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="pickup-phone">Phone Number*</Label>
-                <input
+                <Label htmlFor="pickup-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number*</Label>
+                <Input
                   id="pickup-phone"
                   value={pickupPersonPhone}
                   onChange={(e) => setPickupPersonPhone(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="(555) 123-4567"
                   required
                 />
               </div>
-            </div>
+            </ParentModalGrid>
           </div>
           
           {/* Alternative Pick-up Person Section */}
           <div className="space-y-4">
-            <h4 className="font-medium">Alternative Pick-up Person (Optional)</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100">Alternative Pick-up Person (Optional)</h4>
+            <ParentModalGrid>
               <div>
-                <Label htmlFor="alt-pickup-name">Name</Label>
-                <input
+                <Label htmlFor="alt-pickup-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</Label>
+                <Input
                   id="alt-pickup-name"
                   value={altPickupPersonName}
                   onChange={(e) => setAltPickupPersonName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="Full name"
                 />
               </div>
               <div>
-                <Label htmlFor="alt-pickup-relationship">Relationship to Athlete</Label>
-                <input
+                <Label htmlFor="alt-pickup-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</Label>
+                <Input
                   id="alt-pickup-relationship"
                   value={altPickupPersonRelationship}
                   onChange={(e) => setAltPickupPersonRelationship(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="Relative, Friend, etc."
                 />
               </div>
               <div>
-                <Label htmlFor="alt-pickup-phone">Phone Number</Label>
-                <input
+                <Label htmlFor="alt-pickup-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</Label>
+                <Input
                   id="alt-pickup-phone"
                   value={altPickupPersonPhone}
                   onChange={(e) => setAltPickupPersonPhone(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="mt-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 focus:border-yellow-500 dark:focus:border-yellow-400 text-blue-900 dark:text-yellow-100"
                   placeholder="(555) 123-4567"
                 />
               </div>
-            </div>
+            </ParentModalGrid>
           </div>
         </div>
-      </div>
+      </ParentModalSection>
       
-      <div className="mt-6">
-        <Label htmlFor="special-notes">Special Notes</Label>
-        <textarea
-          id="special-notes"
-          value={specialNotes}
-          onChange={(e) => setSpecialNotes(e.target.value)}
-          className="w-full min-h-[100px] px-3 py-2 border rounded-md"
-          placeholder="Add any special notes about this booking..."
-        />
-      </div>
+      <ParentModalSection title="Special Notes">
+        <div>
+          <Label htmlFor="special-notes" className="text-sm font-medium text-gray-700 dark:text-gray-300">Additional Information</Label>
+          <textarea
+            id="special-notes"
+            value={specialNotes}
+            onChange={(e) => setSpecialNotes(e.target.value)}
+            className="mt-1 w-full min-h-[100px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:border-[#0F0276] dark:focus:border-blue-400 focus:ring-1 focus:ring-[#0F0276] dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            placeholder="Add any special notes about this booking..."
+          />
+        </div>
+      </ParentModalSection>
 
-      <div className="flex justify-end gap-3 mt-6">
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
         <ParentButton variant="secondary" onClick={onClose}>
           Cancel
         </ParentButton>
@@ -1604,42 +1606,43 @@ function ParentDashboard() {
         </ParentModal>
 
         {/* Edit Booking Modal */}
-        <Dialog open={editingBookingId !== null} onOpenChange={() => setEditingBookingId(null)}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-md md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Edit Booking Details</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                Update lesson focus areas and special notes
-              </DialogDescription>
-            </DialogHeader>
-
+        <ParentModal 
+          isOpen={editingBookingId !== null} 
+          onClose={() => setEditingBookingId(null)}
+          title="Edit Booking Details"
+          description="Update lesson focus areas, safety information, and special notes"
+          size="xl"
+        >
+          <div className="max-h-[60vh] sm:max-h-none overflow-y-auto px-1">
             {editingBookingId && (() => {
               const booking = bookings.find(b => b.id === editingBookingId);
               if (!booking) return null;
 
               return (
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-sm font-medium">Current Focus Areas</Label>
-                      <p className="text-sm text-gray-600">{formatFocusAreas((booking.focusAreas || []) as unknown as FocusAreaDisplay[])}</p>
+                <div className="space-y-6">
+                  <ParentModalSection title="Current Booking Information">
+                    <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                      <div>
+                        <span className="font-medium">Current Focus Areas:</span>
+                        <p className="mt-1">{formatFocusAreas((booking.focusAreas || []) as unknown as FocusAreaDisplay[])}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Lesson Details:</span>
+                        <p className="mt-1">
+                          {booking.athlete1Name}
+                          {booking.athlete2Name && ` & ${booking.athlete2Name}`} - 
+                          {booking.lessonType?.replace('-', ' ') || 'Unknown Lesson Type'} on {booking.preferredDate} at {booking.preferredTime}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-sm font-medium">Lesson Details</Label>
-                      <p className="text-sm text-gray-600">
-                        {booking.athlete1Name}
-                        {booking.athlete2Name && ` & ${booking.athlete2Name}`} - 
-                        {booking.lessonType?.replace('-', ' ') || 'Unknown Lesson Type'} on {booking.preferredDate} at {booking.preferredTime}
-                      </p>
-                    </div>
-                  </div>
+                  </ParentModalSection>
 
                   <EditBookingForm booking={booking} onClose={() => setEditingBookingId(null)} />
                 </div>
               );
             })()}
-          </DialogContent>
-        </Dialog>
+          </div>
+        </ParentModal>
 
         {/* Cancel Booking Dialog */}
         <AlertDialog open={cancelBookingId !== null} onOpenChange={() => setCancelBookingId(null)}>

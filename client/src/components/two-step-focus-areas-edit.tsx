@@ -110,14 +110,14 @@ export function TwoStepFocusAreas({
       <div className="space-y-4">
         <div>
           <Label className="text-base font-medium">Select Apparatus ({lessonDuration} lesson - up to {maxFocusAreas} focus areas)</Label>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Select which apparatus you'd like to focus on during your lesson.
           </p>
         </div>
 
         {warningMessage && (
-          <Alert className="border-orange-200 bg-orange-50">
-            <AlertDescription className="text-orange-800">
+          <Alert className="border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20">
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
               {warningMessage}
             </AlertDescription>
           </Alert>
@@ -125,11 +125,11 @@ export function TwoStepFocusAreas({
 
         {/* Current Selection Display */}
         {selectedFocusAreas.length > 0 && (
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">Current Focus Areas ({selectedFocusAreas.length}/{maxFocusAreas})</h4>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+            <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Current Focus Areas ({selectedFocusAreas.length}/{maxFocusAreas})</h4>
             <div className="flex flex-wrap gap-2">
               {selectedFocusAreas.map((area, index) => (
-                <Badge key={`${area.id}-${index}`} variant="default" className="bg-blue-600">
+                <Badge key={`${area.id}-${index}`} variant="default" className="bg-blue-600 dark:bg-blue-500">
                   {area.apparatusName}: {area.name}
                 </Badge>
               ))}
@@ -152,7 +152,7 @@ export function TwoStepFocusAreas({
             {apparatus.map((app) => (
               <Card 
                 key={app.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-orange-200"
+                className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-yellow-200 dark:hover:border-yellow-600 bg-white dark:bg-gray-800"
                 onClick={() => selectApparatus(app)}
               >
                 <CardHeader className="text-center">
@@ -185,15 +185,15 @@ export function TwoStepFocusAreas({
           <Label className="text-base font-medium">
             Select {selectedApparatus?.name} Focus Areas
           </Label>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Choose specific skills to work on ({selectedFocusAreas.length}/{maxFocusAreas} selected)
           </p>
         </div>
       </div>
 
       {warningMessage && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertDescription className="text-orange-800">
+        <Alert className="border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20">
+          <AlertDescription className="text-orange-800 dark:text-orange-200">
             {warningMessage}
           </AlertDescription>
         </Alert>
@@ -201,11 +201,11 @@ export function TwoStepFocusAreas({
 
       {/* Current Selection Display */}
       {selectedFocusAreas.length > 0 && (
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium mb-2">Current Focus Areas ({selectedFocusAreas.length}/{maxFocusAreas})</h4>
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+          <h4 className="font-medium mb-2 text-gray-900 dark:text-gray-100">Current Focus Areas ({selectedFocusAreas.length}/{maxFocusAreas})</h4>
           <div className="flex flex-wrap gap-2">
             {selectedFocusAreas.map((area, index) => (
-              <Badge key={`${area.id}-${index}`} variant="default" className="bg-blue-600">
+              <Badge key={`${area.id}-${index}`} variant="default" className="bg-blue-600 dark:bg-blue-500">
                 {area.apparatusName}: {area.name}
               </Badge>
             ))}
@@ -223,7 +223,7 @@ export function TwoStepFocusAreas({
         </div>
       ) : focusAreas.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-500">No focus areas available for {selectedApparatus?.name}</p>
+          <p className="text-gray-500 dark:text-gray-400">No focus areas available for {selectedApparatus?.name}</p>
           <Button 
             type="button"
             variant="outline" 
@@ -243,17 +243,17 @@ export function TwoStepFocusAreas({
                 key={focusArea.id} 
                 className={`flex items-center space-x-3 cursor-pointer p-3 rounded-lg border-2 transition-all ${
                   isSelected 
-                    ? 'border-orange-500 bg-orange-50' 
-                    : 'border-gray-200 hover:border-orange-200 hover:bg-orange-50'
+                    ? 'border-yellow-500 dark:border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-yellow-200 dark:hover:border-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/10 bg-white dark:bg-gray-800'
                 }`}
               >
                 <input
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleFocusArea(focusArea)}
-                  className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                  className="w-4 h-4 text-yellow-600 dark:text-yellow-500 rounded focus:ring-yellow-500 dark:focus:ring-yellow-400"
                 />
-                <span className="text-sm font-medium">{focusArea.name}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{focusArea.name}</span>
                 {focusArea.level && (
                   <Badge variant="outline" className="text-xs">
                     {focusArea.level}
@@ -275,7 +275,7 @@ export function TwoStepFocusAreas({
           Back to Apparatus
         </Button>
         
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
           {selectedFocusAreas.length} of {maxFocusAreas} selected
         </div>
       </div>
