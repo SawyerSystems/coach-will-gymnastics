@@ -3,7 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
+import { ParentModal, ParentModalSection, ParentModalGrid } from '@/components/parent-ui/ParentModal';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -24,20 +26,23 @@ interface Athlete {
 
 interface Waiver {
   id: number;
-  athlete_id: number;
-  parent_id: number;
-  athlete_name: string;
-  signer_name: string;
-  relationship_to_athlete: string;
+  athleteId: number;
+  parentId: number;
+  athleteName: string;
+  signerName: string;
+  relationshipToAthlete: string;
   signature: string;
-  emergency_contact_number: string;
-  understands_risks: boolean;
-  agrees_to_policies: boolean;
-  authorizes_emergency_care: boolean;
-  allows_photo_video: boolean;
-  confirms_authority: boolean;
-  signed_at: string;
-  created_at: string;
+  emergencyContactNumber: string;
+  understandsRisks: boolean;
+  agreesToPolicies: boolean;
+  authorizesEmergencyCare: boolean;
+  allowsPhotoVideo: boolean;
+  confirmsAuthority: boolean;
+  signedAt: string;
+  createdAt: string;
+  ipAddress?: string;
+  emailSentAt?: string;
+  pdfPath?: string;
 }
 
 interface AthleteWaiverStatus {
@@ -51,6 +56,8 @@ interface AthleteWaiverStatus {
 export function ParentWaiverManagement() {
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [showWaiverDialog, setShowWaiverDialog] = useState(false);
+  const [selectedWaiver, setSelectedWaiver] = useState<Waiver | null>(null);
+  const [showWaiverDetailsModal, setShowWaiverDetailsModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -99,6 +106,23 @@ export function ParentWaiverManagement() {
       title: "Waiver Signed Successfully",
       description: "The waiver has been completed and saved.",
     });
+  };
+
+  const handleViewWaiverDetails = async (waiver: Waiver) => {
+    try {
+      // Fetch full waiver details from the API
+      const response = await apiRequest('GET', `/api/waivers/${waiver.id}`);
+      const fullWaiverData = await response.json();
+      setSelectedWaiver(fullWaiverData);
+      setShowWaiverDetailsModal(true);
+    } catch (error) {
+      console.error('Error fetching waiver details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load waiver details. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const confirmCreateWaiver = () => {
@@ -250,8 +274,8 @@ export function ParentWaiverManagement() {
   
   // Recent activity (waivers signed in last 30 days)
   const recentWaivers = athletesWithWaivers.filter(status => {
-    if (!status.waiver?.signed_at) return false;
-    const signedDate = new Date(status.waiver.signed_at);
+    if (!status.waiver?.signedAt) return false;
+    const signedDate = new Date(status.waiver.signedAt);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return signedDate >= thirtyDaysAgo;
@@ -476,26 +500,26 @@ export function ParentWaiverManagement() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                             <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Signed by:</span>
-                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.signer_name}</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.signerName}</span>
                           </div>
                           <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                             <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Date signed:</span>
                             <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">
-                              {status.waiver?.signed_at ? new Date(status.waiver.signed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+                              {status.waiver?.signedAt ? new Date(status.waiver.signedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
                             </span>
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                             <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Relationship:</span>
-                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.relationship_to_athlete}</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.relationshipToAthlete}</span>
                           </div>
-                          {status.waiver?.emergency_contact_number && (
+                          {status.waiver?.emergencyContactNumber && (
                             <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                               <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Emergency Contact:</span>
                               <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B] flex items-center gap-2">
                                 <Phone className="w-3 h-3" />
-                                {status.waiver.emergency_contact_number}
+                                {status.waiver.emergencyContactNumber}
                               </span>
                             </div>
                           )}
@@ -515,6 +539,7 @@ export function ParentWaiverManagement() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          onClick={() => status.waiver && handleViewWaiverDetails(status.waiver)}
                           className="text-[#B8860B] border-[#B8860B]/50 dark:border-[#B8860B] hover:bg-amber-50 dark:hover:bg-[#B8860B]/20 flex-1"
                         >
                           <FileText className="w-4 h-4 mr-2" />
@@ -637,6 +662,205 @@ export function ParentWaiverManagement() {
           }}
         />
       )}
+
+      {/* Waiver Details Modal */}
+      {/* Waiver Details Modal */}
+      <ParentModal
+        isOpen={showWaiverDetailsModal}
+        onClose={() => {
+          setShowWaiverDetailsModal(false);
+          setSelectedWaiver(null);
+        }}
+        title={selectedWaiver ? `Waiver Details - ${selectedWaiver.athleteName}` : 'Waiver Details'}
+        description="Complete waiver information and details"
+        size="lg"
+      >
+        {selectedWaiver ? (
+          <>
+            {/* Basic Information */}
+            <ParentModalSection title="Basic Information">
+              <ParentModalGrid>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Athlete Name</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium">
+                      {selectedWaiver.athleteName}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Signer Name</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium">
+                      {selectedWaiver.signerName}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Relationship</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium">
+                      {selectedWaiver.relationshipToAthlete}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Emergency Contact</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      {selectedWaiver.emergencyContactNumber}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Signed Date</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium">
+                      {selectedWaiver.signedAt ? 
+                        new Date(selectedWaiver.signedAt).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Not signed'
+                      }
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Created Date</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium">
+                      {selectedWaiver.createdAt ? 
+                        new Date(selectedWaiver.createdAt).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Unknown'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </ParentModalGrid>
+            </ParentModalSection>
+
+            {/* Agreement Status */}
+            <ParentModalSection title="Agreement Status">
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="font-medium text-[#0F0276] dark:text-white">Understands Risks</span>
+                  <div className="flex items-center">
+                    {selectedWaiver.understandsRisks ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="font-medium text-[#0F0276] dark:text-white">Agrees to Policies</span>
+                  <div className="flex items-center">
+                    {selectedWaiver.agreesToPolicies ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="font-medium text-[#0F0276] dark:text-white">Authorizes Emergency Care</span>
+                  <div className="flex items-center">
+                    {selectedWaiver.authorizesEmergencyCare ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="font-medium text-[#0F0276] dark:text-white">Allows Photo/Video</span>
+                  <div className="flex items-center">
+                    {selectedWaiver.allowsPhotoVideo ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                  <span className="font-medium text-[#0F0276] dark:text-white">Confirms Signing Authority</span>
+                  <div className="flex items-center">
+                    {selectedWaiver.confirmsAuthority ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </ParentModalSection>
+
+            {/* Technical Information */}
+            <ParentModalSection title="Technical Information">
+              <ParentModalGrid>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">IP Address</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium font-mono text-sm">
+                      {selectedWaiver.ipAddress || 'Not recorded'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Email Sent</Label>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <span className="text-[#0F0276] dark:text-white font-medium">
+                      {selectedWaiver.emailSentAt ? 
+                        new Date(selectedWaiver.emailSentAt).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Not sent'
+                      }
+                    </span>
+                  </div>
+                </div>
+                {selectedWaiver.pdfPath && (
+                  <div className="space-y-2">
+                    <Label className="text-[#0F0276] dark:text-white">PDF Available</Label>
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Yes
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </ParentModalGrid>
+            </ParentModalSection>
+
+            {/* Digital Signature */}
+            {selectedWaiver.signature && (
+              <ParentModalSection title="Digital Signature">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border">
+                  <img 
+                    src={selectedWaiver.signature} 
+                    alt="Digital Signature" 
+                    className="max-h-24 mx-auto border border-gray-300 dark:border-gray-600 rounded"
+                  />
+                </div>
+              </ParentModalSection>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8">
+            <div className="text-[#0F0276] dark:text-white">Loading waiver details...</div>
+          </div>
+        )}
+      </ParentModal>
     </div>
   );
 }
