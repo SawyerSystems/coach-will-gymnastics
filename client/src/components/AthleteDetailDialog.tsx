@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "@/components/admin-ui/AdminModal";
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { calculateAge } from "@/lib/dateUtils";
@@ -256,22 +257,12 @@ export function AthleteDetailDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent 
-          className="max-w-3xl max-h-[90vh] overflow-y-auto"
-          aria-describedby="athlete-profile-description"
-        >
-          <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
-            <DialogTitle id="athlete-profile-title" className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
-              <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
-                <Star className="h-6 w-6 text-[#D8BD2A]" />
-              </div>
-              Athlete Profile
-            </DialogTitle>
-            <DialogDescription id="athlete-profile-description" className="text-slate-600">
-              Viewing profile for {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
-            </DialogDescription>
-          </DialogHeader>
+      <AdminModal 
+        isOpen={open} 
+        onClose={() => onOpenChange(false)}
+        title="Athlete Profile"
+        size="4xl"
+      >
           
           {/* Basic Info */}
           <Card className="rounded-xl border shadow-sm mb-6">
@@ -522,8 +513,7 @@ export function AthleteDetailDialog({
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+      </AdminModal>
 
       {/* Photo Enlargement Modal */}
       <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
