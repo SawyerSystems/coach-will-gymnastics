@@ -846,11 +846,11 @@ export function AthleteDetailDialog({
           </DialogHeader>
           {enlargedPhoto ? (
             <div className="space-y-4">
-              <div className="flex justify-center p-2 bg-slate-50 rounded-xl shadow-inner">
+              <div className="flex justify-center p-6 bg-transparent rounded-xl shadow-2xl border border-white/10 dark:border-slate-600/10">
                 <img
                   src={enlargedPhoto}
                   alt={`${athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Athlete'}'s enlarged photo`}
-                  className="max-w-full max-h-96 object-contain rounded-lg border-2 border-white shadow-lg"
+                  className="max-w-full max-h-96 object-contain rounded-lg shadow-2xl"
                 />
               </div>
               <div className="flex justify-center">
@@ -885,10 +885,10 @@ export function AthleteDetailDialog({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex justify-center p-8 bg-slate-50 rounded-xl shadow-inner">
+              <div className="flex justify-center p-8 bg-transparent rounded-xl shadow-2xl border border-white/10 dark:border-slate-600/10">
                 <div className="text-center">
-                  <User className="h-24 w-24 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-600 mb-4">No photo available</p>
+                  <User className="h-24 w-24 text-slate-300 dark:text-slate-500 mx-auto mb-4" />
+                  <p className="text-slate-600 dark:text-slate-300 mb-4">No photo available</p>
                 </div>
               </div>
               <div className="flex justify-center">
