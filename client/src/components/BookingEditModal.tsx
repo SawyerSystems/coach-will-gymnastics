@@ -1047,7 +1047,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                           // The form submission will use the selected status directly
                         }}
                       >
-                        <SelectTrigger className="bg-white border-amber-200 mt-1.5">
+                        <SelectTrigger className="bg-white border-amber-200 mt-1.5 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200">
                           <SelectValue placeholder="Select status (Developer Mode)" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1091,7 +1091,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     Payment Status
                   </Label>
                   <Select value={paymentStatus} onValueChange={setPaymentStatus}>
-                    <SelectTrigger className="bg-white border-gray-200 mt-1.5">
+                    <SelectTrigger className="bg-white border-gray-200 mt-1.5 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200">
                       <SelectValue placeholder="Select payment status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1112,7 +1112,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     Attendance Status
                   </Label>
                   <Select value={attendanceStatus} onValueChange={setAttendanceStatus}>
-                    <SelectTrigger className="bg-white border-gray-200 mt-1.5">
+                    <SelectTrigger className="bg-white border-gray-200 mt-1.5 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200">
                       <SelectValue placeholder="Select attendance status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1131,30 +1131,30 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     Paid Amount
                   </Label>
                   <div className="relative mt-1.5">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-blue-300">$</span>
                     <Input 
                       type="number" 
                       step="0.01" 
                       value={paidAmount} 
                       onChange={(e) => setPaidAmount(e.target.value)} 
                       placeholder="0.00"
-                      className="pl-8 bg-white border-gray-200"
+                      className="pl-8 bg-white border-gray-200 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200 dark:placeholder:text-blue-300"
                     />
                   </div>
                 </div>
               </div>
               
               <div className="pt-2">
-                <div className="bg-gradient-to-r from-white to-indigo-50 p-3 rounded-lg border border-indigo-100 shadow-sm">
-                  <Label className="text-sm font-medium text-indigo-700 flex items-center gap-1.5">
-                    <Bookmark className="h-4 w-4 text-indigo-600" />
+                <div className="bg-gradient-to-r from-white to-indigo-50 p-3 rounded-lg border border-indigo-100 shadow-sm dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
+                  <Label className="text-sm font-medium text-indigo-700 flex items-center gap-1.5 dark:text-blue-200">
+                    <Bookmark className="h-4 w-4 text-indigo-600 dark:text-blue-400" />
                     Lesson Type
                   </Label>
                   <Select 
                     value={selectedLessonTypeId?.toString()} 
                     onValueChange={handleLessonTypeChange}
                   >
-                    <SelectTrigger className="bg-white border-indigo-100 mt-1.5">
+                    <SelectTrigger className="bg-white border-indigo-100 mt-1.5 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200">
                       <SelectValue placeholder="Select lesson type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1282,7 +1282,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                           onChange={(e) => setTempFocusArea(e.target.value)} 
                           placeholder="Custom focus area"
                           disabled={focusAreas.length >= getMaxFocusAreas()}
-                          className="w-48 bg-white border-teal-100"
+                          className="w-48 bg-white border-teal-100 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200 dark:placeholder:text-blue-300"
                         />
                         <Button 
                           type="button" 
