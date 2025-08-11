@@ -199,7 +199,7 @@ export function AdminSidebar({
                   className={cn(
                     "w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-all duration-200 text-left font-medium",
                     activeTab === item.id ? (
-                      "bg-[#0F0276] text-white shadow-sm border border-[#0F0276]"
+                      "bg-[#0F0276] dark:bg-[#D8BD2A] text-white dark:text-[#0F0276] shadow-sm border border-[#0F0276] dark:border-[#D8BD2A]"
                     ) : (
                       "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                     )
@@ -269,7 +269,7 @@ export function AdminSidebar({
                       className={cn(
                         "w-full flex items-center justify-start gap-3 py-3 px-4 rounded-xl transition-colors duration-200 font-medium",
                         activeTab === item.id
-                          ? "bg-[#0F0276] text-white border border-[#0F0276]"
+                          ? "bg-[#0F0276] dark:bg-[#D8BD2A] text-white dark:text-[#0F0276] border border-[#0F0276] dark:border-[#D8BD2A]"
                           : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                       )}
                     >

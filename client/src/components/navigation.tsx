@@ -132,8 +132,8 @@ export const Navigation = memo(function Navigation() {
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <span
-                className={`text-[#0F0276] hover:text-[#E10B0B] transition-colors duration-200 font-semibold cursor-pointer athletic-title text-lg ${
-                  isActive(item.href) ? "text-[#E10B0B] font-bold" : ""
+                className={`text-[#0F0276] dark:text-[#D8BD2A] hover:text-[#E10B0B] transition-colors duration-200 font-semibold cursor-pointer athletic-title text-lg ${
+                  isActive(item.href) ? "text-[#E10B0B] dark:text-[#D8BD2A] font-bold" : ""
                 }`}
                 onMouseEnter={() => {
                   // Prefetch resources on hover for better UX
@@ -331,7 +331,7 @@ export const Navigation = memo(function Navigation() {
                     className={`block px-4 py-3 text-lg rounded-lg transition-colors duration-200 cursor-pointer min-h-[48px] flex items-center w-full ${
                       isActive(item.href)
                         ? "text-blue-600 font-semibold bg-blue-50 dark:text-[#D8BD2A] dark:bg-slate-800/60"
-                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-white dark:hover:text-[#D8BD2A] dark:hover:bg-slate-800/40"
+                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-[#D8BD2A] dark:hover:text-white dark:hover:bg-slate-800/40"
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
