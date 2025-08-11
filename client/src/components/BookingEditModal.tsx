@@ -1168,13 +1168,13 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                 </div>
               </div>
               
-              <div className="bg-gradient-to-r from-white to-teal-50 p-4 rounded-lg border border-teal-100 shadow-sm mt-4">
+              <div className="bg-gradient-to-r from-white to-teal-50 p-4 rounded-lg border border-teal-100 shadow-sm mt-4 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
                 <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium text-teal-700 flex items-center gap-1.5">
-                    <Target className="h-4 w-4 text-teal-600" />
+                  <Label className="text-sm font-medium text-teal-700 flex items-center gap-1.5 dark:text-blue-200">
+                    <Target className="h-4 w-4 text-teal-600 dark:text-blue-400" />
                     Focus Areas ({focusAreas.length}/{getMaxFocusAreas()})
                   </Label>
-                  <div className="text-xs flex items-center gap-1 text-teal-700 bg-teal-50 px-2 py-1 rounded-full">
+                  <div className="text-xs flex items-center gap-1 text-teal-700 bg-teal-50 px-2 py-1 rounded-full dark:text-blue-200 dark:bg-[#0F0276]/30">
                     <Filter className="h-3 w-3" />
                     <span>Level: {getAthleteExperienceLevels().join(', ')}</span>
                   </div>
@@ -1193,8 +1193,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         type="button"
                         variant={selectedApparatusId === app.id ? "default" : "outline"}
                         className={selectedApparatusId === app.id 
-                          ? "bg-blue-600 hover:bg-blue-700" 
-                          : "border-blue-200 hover:bg-blue-50 text-blue-700"}
+                          ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700" 
+                          : "border-blue-200 hover:bg-blue-50 text-blue-700 dark:border-[#2A4A9B] dark:hover:bg-[#0F0276]/20 dark:text-blue-200"}
                         onClick={() => setSelectedApparatusId(app.id)}
                       >
                         {app.name}
@@ -1204,8 +1204,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                       type="button"
                       variant={selectedApparatusId === null ? "default" : "outline"}
                       className={selectedApparatusId === null 
-                        ? "bg-purple-600 hover:bg-purple-700" 
-                        : "border-purple-200 hover:bg-purple-50 text-purple-700"}
+                        ? "bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700" 
+                        : "border-purple-200 hover:bg-purple-50 text-purple-700 dark:border-[#2A4A9B] dark:hover:bg-[#0F0276]/20 dark:text-purple-300"}
                       onClick={() => setSelectedApparatusId(null)}
                     >
                       All Apparatus
@@ -1222,7 +1222,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         Step 2: Select Focus Areas
                       </Label>
                       {selectedApparatusId && (
-                        <div className="text-xs flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-1 rounded-full">
+                        <div className="text-xs flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-1 rounded-full dark:text-blue-200 dark:bg-[#0F0276]/30">
                           <Filter className="h-3 w-3" />
                           <span>Filtered by: {apparatus.find(a => a.id === selectedApparatusId)?.name || 'Selected Apparatus'}</span>
                         </div>
@@ -1243,7 +1243,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                             }
                           }}
                         >
-                          <SelectTrigger className={`bg-white border-teal-100 ${isFocusAreasLoading ? 'opacity-50' : ''}`}>
+                          <SelectTrigger className={`bg-white border-teal-100 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200 ${isFocusAreasLoading ? 'opacity-50' : ''}`}>
                             <SelectValue placeholder={isFocusAreasLoading ? "Loading focus areas..." : (selectedApparatusId ? "Select focus area for selected apparatus" : "Select focus area")} />
                           </SelectTrigger>
                           <SelectContent>
@@ -1288,7 +1288,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                           type="button" 
                           onClick={addFocusArea}
                           disabled={focusAreas.length >= getMaxFocusAreas() || !tempFocusArea.trim()}
-                          className="bg-teal-600 hover:bg-teal-700"
+                          className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700"
                         >
                           Add
                         </Button>
@@ -1328,18 +1328,18 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         
                         // Set color based on level
                         if (level === 'beginner') {
-                          levelColor = 'bg-green-50 border-green-200 text-green-800';
+                          levelColor = 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/40 dark:border-green-700/40 dark:text-green-200';
                         } else if (level === 'advanced') {
-                          levelColor = 'bg-orange-50 border-orange-200 text-orange-800';
+                          levelColor = 'bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-900/40 dark:border-orange-700/40 dark:text-orange-200';
                         } else if (level === 'general') {
-                          levelColor = 'bg-blue-50 border-blue-200 text-blue-800';
+                          levelColor = 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/40 dark:border-blue-700/40 dark:text-blue-200';
                         }
                         
                         return (
                           <div key={index} className={`px-3 py-1.5 rounded-full flex items-center gap-1.5 border ${levelColor}`}>
                             <span>{area}</span>
                             {focusApparatus && (
-                              <span className="ml-1 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                              <span className="ml-1 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full dark:bg-blue-800/40 dark:text-blue-200">
                                 {focusApparatus}
                               </span>
                             )}
@@ -1351,7 +1351,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                               type="button" 
                               variant="ghost" 
                               size="icon" 
-                              className="h-5 w-5 rounded-full hover:bg-teal-100"
+                              className="h-5 w-5 rounded-full hover:bg-teal-100 dark:hover:bg-[#0F0276]/30"
                               onClick={() => removeFocusArea(index)}
                             >
                               <X className="h-3 w-3" />
