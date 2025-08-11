@@ -290,22 +290,22 @@ export function BookingDetailsModal({
           <div className="space-y-3">
             {booking.athletes && booking.athletes.length > 0 ? (
               booking.athletes.map((athlete: any, index: number) => (
-                <div key={athlete.id || index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
-                  <div className="font-medium flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-green-600" />
+                <div key={athlete.id || index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                  <div className="font-medium flex items-center gap-1.5 dark:text-blue-200">
+                    <User className="w-3.5 h-3.5 text-green-600 dark:text-blue-300" />
                     {athlete.firstName && athlete.lastName 
                       ? `${athlete.firstName} ${athlete.lastName}`
                       : athlete.name || 'Unnamed Athlete'}
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
-                    <Calendar className="w-3 h-3 text-gray-500" />
+                  <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5 dark:text-blue-200">
+                    <Calendar className="w-3 h-3 text-gray-500 dark:text-blue-400" />
                     Age: {calculateAge(athlete.dateOfBirth || '')} | 
-                    <Medal className="w-3 h-3 text-gray-500" />
+                    <Medal className="w-3 h-3 text-gray-500 dark:text-blue-400" />
                     Experience: {athlete.experience}
                   </div>
                   {athlete.allergies && (
-                    <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
+                    <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5 dark:text-red-400">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 mt-0.5" />
                       <span>Allergies: {athlete.allergies}</span>
                     </div>
                   )}
@@ -314,12 +314,12 @@ export function BookingDetailsModal({
             ) : (booking as any).athleteNames && (booking as any).athleteNames.length > 0 ? (
               // Fallback to athleteNames from upcoming sessions
               (booking as any).athleteNames.map((athleteName: string, index: number) => (
-                <div key={index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
-                  <div className="font-medium flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-green-600" />
+                <div key={index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                  <div className="font-medium flex items-center gap-1.5 dark:text-blue-200">
+                    <User className="w-3.5 h-3.5 text-green-600 dark:text-blue-300" />
                     {athleteName}
                   </div>
-                  <div className="text-xs sm:text-sm text-gray-500 mt-1.5">
+                  <div className="text-xs sm:text-sm text-gray-500 mt-1.5 dark:text-blue-300">
                     Limited athlete information available
                   </div>
                 </div>
@@ -328,40 +328,40 @@ export function BookingDetailsModal({
               // Fallback to legacy fields
               <>
                 {booking.athlete1Name && (
-                  <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
-                    <div className="font-medium flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-green-600" />
+                  <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                    <div className="font-medium flex items-center gap-1.5 dark:text-blue-200">
+                      <User className="w-3.5 h-3.5 text-green-600 dark:text-blue-300" />
                       {booking.athlete1Name}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3 text-gray-500" />
+                    <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5 dark:text-blue-200">
+                      <Calendar className="w-3 h-3 text-gray-500 dark:text-blue-400" />
                       Age: {calculateAge(booking.athlete1DateOfBirth || '')} | 
-                      <Medal className="w-3 h-3 text-gray-500" />
+                      <Medal className="w-3 h-3 text-gray-500 dark:text-blue-400" />
                       Experience: {booking.athlete1Experience}
                     </div>
                     {booking.athlete1Allergies && (
-                      <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
+                      <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5 dark:text-red-400">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 mt-0.5" />
                         <span>Allergies: {booking.athlete1Allergies}</span>
                       </div>
                     )}
                   </div>
                 )}
                 {booking.athlete2Name && (
-                  <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200">
-                    <div className="font-medium flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-green-600" />
+                  <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
+                    <div className="font-medium flex items-center gap-1.5 dark:text-blue-200">
+                      <User className="w-3.5 h-3.5 text-green-600 dark:text-blue-300" />
                       {booking.athlete2Name}
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3 text-gray-500" />
+                    <div className="text-xs sm:text-sm text-gray-600 mt-1.5 flex items-center gap-1.5 dark:text-blue-200">
+                      <Calendar className="w-3 h-3 text-gray-500 dark:text-blue-400" />
                       Age: {booking.athlete2DateOfBirth ? calculateAge(booking.athlete2DateOfBirth) : "N/A"} | 
-                      <Medal className="w-3 h-3 text-gray-500" />
+                      <Medal className="w-3 h-3 text-gray-500 dark:text-blue-400" />
                       Experience: {booking.athlete2Experience}
                     </div>
                     {booking.athlete2Allergies && (
-                      <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-500 mt-0.5" />
+                      <div className="text-xs sm:text-sm text-red-600 mt-1.5 flex items-start gap-1.5 dark:text-red-400">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-500 dark:text-red-400 mt-0.5" />
                         <span>Allergies: {booking.athlete2Allergies}</span>
                       </div>
                     )}
@@ -370,8 +370,8 @@ export function BookingDetailsModal({
               </>
             )}
             {(!booking.athletes || booking.athletes.length === 0) && !(booking as any).athleteNames && !booking.athlete1Name && (
-              <div className="text-center py-4 text-gray-500">
-                <Users className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+              <div className="text-center py-4 text-gray-500 dark:text-blue-300">
+                <Users className="w-8 h-8 mx-auto text-gray-400 dark:text-blue-400 mb-2" />
                 No athletes assigned
               </div>
             )}
@@ -407,11 +407,11 @@ export function BookingDetailsModal({
         >
           <AdminModalGrid cols={2}>
             <div>
-              <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2">
+              <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2 dark:text-red-400">
                 <User className="w-3.5 h-3.5" />
                 Drop-off Person
               </h5>
-              <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100">
+              <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
                 <AdminModalDetailRow label="Name" value={booking.dropoffPersonName || 'N/A'} />
                 <AdminModalDetailRow label="Relationship" value={booking.dropoffPersonRelationship || 'N/A'} />
                 <AdminModalDetailRow label="Phone" value={booking.dropoffPersonPhone || 'N/A'} />
@@ -419,11 +419,11 @@ export function BookingDetailsModal({
             </div>
             
             <div>
-              <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2">
+              <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2 dark:text-red-400">
                 <User className="w-3.5 h-3.5" />
                 Pick-up Person
               </h5>
-              <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100">
+              <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
                 <AdminModalDetailRow label="Name" value={booking.pickupPersonName || 'N/A'} />
                 <AdminModalDetailRow label="Relationship" value={booking.pickupPersonRelationship || 'N/A'} />
                 <AdminModalDetailRow label="Phone" value={booking.pickupPersonPhone || 'N/A'} />
@@ -433,11 +433,11 @@ export function BookingDetailsModal({
 
           {booking.altPickupPersonName && (
             <div className="mt-4">
-              <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2">
+              <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2 dark:text-red-400">
                 <Users className="w-3.5 h-3.5" />
                 Alternative Pick-up Person
               </h5>
-              <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100">
+              <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
                 <AdminModalDetailRow label="Name" value={booking.altPickupPersonName} />
                 <AdminModalDetailRow label="Relationship" value={booking.altPickupPersonRelationship || 'N/A'} />
                 <AdminModalDetailRow label="Phone" value={booking.altPickupPersonPhone || 'N/A'} />
@@ -453,7 +453,7 @@ export function BookingDetailsModal({
             icon={<FileText className="w-4 h-4" />}
             gradient="gray"
           >
-            <p className="text-sm bg-white p-3 rounded-lg border border-gray-100 text-gray-700 leading-relaxed">
+            <p className="text-sm bg-white p-3 rounded-lg border border-gray-100 text-gray-700 leading-relaxed dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40 dark:text-blue-200">
               {booking.adminNotes}
             </p>
           </AdminModalSection>
