@@ -802,46 +802,6 @@ export function ParentWaiverManagement() {
               </div>
             </ParentModalSection>
 
-            {/* Technical Information */}
-            <ParentModalSection title="Technical Information">
-              <ParentModalGrid>
-                <div className="space-y-2">
-                  <Label className="text-[#0F0276] dark:text-white">IP Address</Label>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                    <span className="text-[#0F0276] dark:text-white font-medium font-mono text-sm">
-                      {selectedWaiver.ipAddress || 'Not recorded'}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[#0F0276] dark:text-white">Email Sent</Label>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                    <span className="text-[#0F0276] dark:text-white font-medium">
-                      {selectedWaiver.emailSentAt ? 
-                        new Date(selectedWaiver.emailSentAt).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        }) : 'Not sent'
-                      }
-                    </span>
-                  </div>
-                </div>
-                {selectedWaiver.pdfPath && (
-                  <div className="space-y-2">
-                    <Label className="text-[#0F0276] dark:text-white">PDF Available</Label>
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        Yes
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </ParentModalGrid>
-            </ParentModalSection>
-
             {/* Digital Signature */}
             {selectedWaiver.signature && (
               <ParentModalSection title="Digital Signature">

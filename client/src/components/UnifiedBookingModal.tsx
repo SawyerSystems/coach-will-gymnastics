@@ -197,7 +197,7 @@ export function UnifiedBookingModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="w-full h-full max-w-full max-h-full sm:max-w-4xl sm:max-h-[90vh] overflow-y-auto p-0 [&>button]:hidden"
+        className="w-full h-full max-w-full max-h-full sm:max-w-5xl sm:max-h-[95vh] overflow-y-auto p-0 [&>button]:hidden rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-white/10 dark:bg-white/10"
         aria-describedby="booking-flow-description"
       >
         <VisuallyHidden>

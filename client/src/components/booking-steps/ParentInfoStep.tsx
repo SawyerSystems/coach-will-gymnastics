@@ -453,7 +453,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   // Edit mode or new information mode
   return (
     <div className="space-y-6 py-4">
-      <h2 className="text-2xl font-bold">Parent Information</h2>
+      <h2 className="text-2xl font-bold text-[#0F0276] dark:text-white">Parent Information</h2>
       
       <form onSubmit={(e) => {
         e.preventDefault();
@@ -472,9 +472,9 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
         }
       }}>
         <div className="space-y-6">
-          <Card>
+          <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#0F0276] dark:text-white">
                 <User className="h-5 w-5" /> 
                 Contact Information
               </CardTitle>
@@ -482,49 +482,53 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName" className="text-[#0F0276] dark:text-white font-medium">First Name</Label>
                   <Input
                     id="firstName"
                     placeholder="First Name"
                     value={parentInfo.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName" className="text-[#0F0276] dark:text-white font-medium">Last Name</Label>
                   <Input
                     id="lastName"
                     placeholder="Last Name"
                     value={parentInfo.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-[#0F0276] dark:text-white font-medium">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Email"
                     value={parentInfo.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone" className="text-[#0F0276] dark:text-white font-medium">Phone</Label>
                   <Input
                     id="phone"
                     placeholder="Phone"
                     value={parentInfo.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2 text-[#0F0276] dark:text-white">
                 <Contact className="h-5 w-5" />
                 Emergency Contact
               </CardTitle>
@@ -532,21 +536,23 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+                  <Label htmlFor="emergencyContactName" className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Name</Label>
                   <Input
                     id="emergencyContactName"
                     placeholder="Emergency Contact Name"
                     value={parentInfo.emergencyContactName}
                     onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+                  <Label htmlFor="emergencyContactPhone" className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Phone</Label>
                   <Input
                     id="emergencyContactPhone"
                     placeholder="Emergency Contact Phone"
                     value={parentInfo.emergencyContactPhone}
                     onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
                 </div>
               </div>
@@ -554,7 +560,11 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           </Card>
           
           <div className="flex justify-end">
-            <Button type="submit" disabled={!isValid}>
+            <Button 
+              type="submit" 
+              disabled={!isValid}
+              className="bg-gradient-to-r from-[#0F0276] to-blue-600 hover:from-[#0F0276]/90 hover:to-blue-600/90 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {isEditing 
                 ? (state.parentId ? "Save & Continue" : "Save Changes") 
                 : (state.parentId ? "Continue" : "Create Parent & Continue")}

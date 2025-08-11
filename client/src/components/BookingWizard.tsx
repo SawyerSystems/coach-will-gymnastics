@@ -275,43 +275,46 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
         // <BookingFlowDebugger />
         <></>
       )}
-      <div className="p-6 pb-4 relative">
+      <div className="p-6 pb-4 relative rounded-t-2xl bg-gradient-to-r from-[#0F0276]/10 to-blue-600/10 border-b border-slate-200/60 dark:border-white/10">
         <Button
           variant="ghost"
           size="sm"
-          className="absolute top-4 right-4 h-8 w-8 p-0"
+          className="absolute top-4 right-4 h-8 w-8 p-0 text-[#0F0276] hover:bg-[#0F0276]/10 dark:text-white dark:hover:bg-white/10"
           onClick={handleClose}
         >
           <X className="h-4 w-4" />
         </Button>
-        <h2 className="text-2xl font-semibold pr-12">{getStepTitle()}</h2>
-        <Progress value={progress} className="h-2 mt-4" />
+        <h2 className="text-2xl font-bold pr-12 text-[#0F0276] dark:text-white">{getStepTitle()}</h2>
+        <Progress 
+          value={progress} 
+          className="h-3 mt-4 bg-slate-200/60 dark:bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-[#0F0276] [&>div]:to-blue-600" 
+        />
       </div>
       
-      <div className="flex-1 overflow-y-auto px-6">
+      <div className="flex-1 overflow-y-auto px-6 py-4 bg-white/30 dark:bg-white/5">
         {renderStep()}
       </div>
       
       {getCurrentStepName() !== 'payment' && getCurrentStepName() !== 'adminPayment' && (
-        <div className="flex justify-between items-center p-6 pt-4 border-t">
+        <div className="flex justify-between items-center p-6 pt-4 border-t border-slate-200/60 dark:border-white/10 bg-gradient-to-r from-slate-50/60 to-white/60 dark:from-white/5 dark:to-white/10 rounded-b-2xl">
           <Button
             variant="outline"
             onClick={prevStep}
             disabled={state.currentStep === 0}
-            className="min-h-[48px]"
+            className="min-h-[48px] border-[#0F0276]/20 text-[#0F0276] hover:bg-[#0F0276]/10 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
           
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-[#0F0276]/70 dark:text-white/70 font-medium">
             Step {state.currentStep + 1} of {totalSteps}
           </span>
           
           <Button
             onClick={handleNextClick}
             disabled={isLastStep() || !isCurrentStepComplete()}
-            className="min-h-[48px]"
+            className="min-h-[48px] bg-gradient-to-r from-[#0F0276] to-blue-600 hover:from-[#0F0276]/90 hover:to-blue-600/90 text-white font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLastStep() ? 'Complete' : 'Next'}
             {!isLastStep() && <ChevronRight className="h-4 w-4 ml-2" />}

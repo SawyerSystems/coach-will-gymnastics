@@ -185,17 +185,17 @@ export function AthleteInfoFormStep() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Athlete Information</h3>
-        <p className="text-muted-foreground">
+        <h3 className="text-lg font-semibold mb-2 text-[#0F0276] dark:text-white">Athlete Information</h3>
+        <p className="text-[#0F0276]/70 dark:text-white/70">
           Tell us about your gymnast{state.lessonType.includes('semi-private') ? 's' : ''}
         </p>
       </div>
 
       {state.athleteInfo.map((athlete, index) => (
-        <Card key={index}>
+        <Card key={index} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">
+              <CardTitle className="text-base text-[#0F0276] dark:text-white">
                 Athlete {state.athleteInfo.length > 1 ? index + 1 : ''}
               </CardTitle>
               {state.athleteInfo.length > 1 && (
@@ -204,6 +204,7 @@ export function AthleteInfoFormStep() {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveAthlete(index)}
+                  className="text-[#0F0276] hover:bg-[#0F0276]/10 dark:text-white dark:hover:bg-white/10"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -213,11 +214,12 @@ export function AthleteInfoFormStep() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor={`firstName-${index}`}>First Name</Label>
+                <Label htmlFor={`firstName-${index}`} className="text-[#0F0276] dark:text-white font-medium">First Name</Label>
                 <Input
                   id={`firstName-${index}`}
                   value={athlete.firstName}
                   onChange={(e) => handleAthleteChange(index, 'firstName', e.target.value)}
+                  className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   required
                   className="min-h-[48px]"
                 />
