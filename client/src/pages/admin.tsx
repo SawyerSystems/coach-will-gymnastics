@@ -72,6 +72,7 @@ import {
     Search,
     Star,
     Trash2,
+    TrendingUp,
     User,
     UserCircle,
     Users,
@@ -1570,16 +1571,18 @@ export default function Admin() {
               </Suspense>
             </MainContentContainer>
           </TabsContent>
-          <TabsContent value="progress" role="tabpanel" id="progress-panel" aria-labelledby="progress-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight">Athlete Progress</AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent>
-                <p className="text-slate-600 dark:text-slate-200 mb-4">Track progress with filters and summary bars.</p>
-                <AthleteProgressPage />
-              </AdminCardContent>
-            </AdminCard>
+          <TabsContent value="progress" role="tabpanel" id="progress-panel" aria-labelledby="progress-tab" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <TrendingUp className="h-8 w-8 text-[#D8BD2A]" />
+                  Athlete Progress
+                </span>
+              }
+            >
+              <p className="text-slate-600 dark:text-slate-200 mb-4">Track progress with filters and summary bars.</p>
+              <AthleteProgressPage />
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="athletes" role="tabpanel" id="athletes-panel" aria-labelledby="athletes-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">

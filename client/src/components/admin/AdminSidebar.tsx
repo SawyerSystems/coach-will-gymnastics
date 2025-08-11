@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Settings,
   Star,
+  TrendingUp,
   User,
   Users,
   X
@@ -107,7 +108,7 @@ export function AdminSidebar({
     {
       id: 'progress',
       label: 'Progress',
-      icon: <BarChart className="h-5 w-5" />
+      icon: <TrendingUp className="h-5 w-5" />
     },
     {
       id: 'schedule',
