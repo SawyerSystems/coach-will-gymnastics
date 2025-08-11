@@ -265,111 +265,106 @@ export function AthleteDetailDialog({
       >
           
           {/* Basic Info */}
-          <Card className="rounded-xl border shadow-sm mb-6">
-            <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-              <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                <User className="h-5 w-5 text-blue-600" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="flex items-start gap-4">
-                  <div className="relative">
-                    <div className="relative w-24 h-24 group">
-                      {athleteData.photo ? (
-                        <img
-                          src={athleteData.photo}
-                          alt={`${athleteData.name || 'Athlete'}'s photo`}
-                          className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-blue-100 ring-offset-2"
-                          onClick={() => handlePhotoClick(athleteData.photo!)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handlePhotoClick(athleteData.photo!);
-                            }
-                          }}
-                          aria-label={`View ${athleteData.name || 'athlete'}'s photo in full size`}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center ring-2 ring-blue-100 ring-offset-2" aria-label="No photo available">
-                          <User className="h-12 w-12 text-blue-300" />
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handlePhotoUpload(e, athleteData.id)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={uploadingPhoto}
-                        aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
+          <AdminModalSection title="Basic Information" icon={<User className="h-5 w-5" />}>
+            <AdminModalGrid cols={2}>
+              <div className="flex items-start gap-4">
+                <div className="relative">
+                  <div className="relative w-24 h-24 group">
+                    {athleteData.photo ? (
+                      <img
+                        src={athleteData.photo}
+                        alt={`${athleteData.name || 'Athlete'}'s photo`}
+                        className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-blue-100 ring-offset-2 dark:ring-blue-800"
+                        onClick={() => handlePhotoClick(athleteData.photo!)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handlePhotoClick(athleteData.photo!);
+                          }
+                        }}
+                        aria-label={`View ${athleteData.name || 'athlete'}'s photo in full size`}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
-                      {uploadingPhoto && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
-                          <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
-                          <span className="sr-only">Uploading photo...</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-xl text-slate-800">
-                      {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
-                    </h3>
-                    <div className="mt-1 space-y-1">
-                      <p className="flex items-center text-slate-700">
-                        <Calendar className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span className="font-medium">Age:</span>
-                        <span className="ml-1">{athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old</span>
-                      </p>
-                      <p className="flex items-center text-slate-700">
-                        <Clock className="h-4 w-4 mr-1.5 text-blue-500" />
-                        <span className="font-medium">Born:</span>
-                        <span className="ml-1">{athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}</span>
-                      </p>
-                    </div>
-                    <p className="text-xs text-blue-600 font-medium mt-2 flex items-center">
-                      <span className="p-1 bg-blue-100 rounded-full mr-1">
-                        <Edit className="h-3 w-3" />
-                      </span>
-                      Click photo to enlarge or upload new
-                    </p>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-800/40 flex items-center justify-center ring-2 ring-blue-100 dark:ring-blue-800 ring-offset-2" aria-label="No photo available">
+                        <User className="h-12 w-12 text-blue-300 dark:text-blue-400" />
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload(e, athleteData.id)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingPhoto}
+                      aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
+                    />
+                    {uploadingPhoto && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
+                        <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span className="sr-only">Uploading photo...</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="bg-slate-50 p-4 rounded-lg" role="group" aria-label="Athlete details">
-                  <p className="flex items-center mb-2">
-                    <Dumbbell className="h-4 w-4 mr-2 text-indigo-500" />
-                    <span className="font-medium text-slate-700">Experience:</span>
-                    <span className="ml-1 capitalize">{athleteData.experience || 'Not specified'}</span>
+                <div className="flex-1">
+                  <h3 className="font-bold text-xl text-slate-800 dark:text-blue-200">
+                    {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
+                  </h3>
+                  <div className="mt-1 space-y-1">
+                    <AdminModalDetailRow 
+                      label="Age" 
+                      value={`${athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old`}
+                      icon={<Calendar className="h-4 w-4" />}
+                    />
+                    <AdminModalDetailRow 
+                      label="Born" 
+                      value={athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}
+                      icon={<Clock className="h-4 w-4" />}
+                    />
+                  </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300 font-medium mt-2 flex items-center">
+                    <span className="p-1 bg-blue-100 dark:bg-blue-800/40 rounded-full mr-1">
+                      <Edit className="h-3 w-3" />
+                    </span>
+                    Click photo to enlarge or upload new
                   </p>
-                  <p className="flex items-center mb-2">
-                    <User className="h-4 w-4 mr-2 text-indigo-500" />
-                    <span className="font-medium text-slate-700">Gender:</span>
-                    <span className="ml-1 capitalize">{athleteData.gender || 'Not specified'}</span>
-                  </p>
-                  <p className="flex items-center mb-2">
-                    <User className="h-4 w-4 mr-2 text-indigo-500" />
-                    <span className="font-medium text-slate-700">Gym Membership:</span>
-                    <span className="ml-1">{athleteData.isGymMember ? 'Member' : 'Not a member'}</span>
-                  </p>
-                  {athleteData.allergies && (
-                    <p className="flex items-start text-red-600 mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
-                      <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                      <span>
-                        <span className="font-medium">Allergies:</span>
-                        <span className="ml-1">{athleteData.allergies}</span>
-                      </span>
-                    </p>
-                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="bg-slate-50 dark:bg-[#0F0276]/20 p-4 rounded-lg border dark:border-[#2A4A9B]/40" role="group" aria-label="Athlete details">
+                <AdminModalDetailRow 
+                  label="Experience" 
+                  value={athleteData.experience || 'Not specified'}
+                  icon={<Dumbbell className="h-4 w-4" />}
+                  className="mb-2"
+                />
+                <AdminModalDetailRow 
+                  label="Gender" 
+                  value={athleteData.gender || 'Not specified'}
+                  icon={<User className="h-4 w-4" />}
+                  className="mb-2"
+                />
+                <AdminModalDetailRow 
+                  label="Gym Membership" 
+                  value={athleteData.isGymMember ? 'Member' : 'Not a member'}
+                  icon={<User className="h-4 w-4" />}
+                  className="mb-2"
+                />
+                {athleteData.allergies && (
+                  <div className="flex items-start text-red-600 dark:text-red-400 mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/40">
+                    <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <span className="font-medium">Allergies:</span>
+                      <span className="ml-1">{athleteData.allergies}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </AdminModalGrid>
+          </AdminModalSection>
 
           {/* Parent Info */}
           <ParentInfoDisplay 
