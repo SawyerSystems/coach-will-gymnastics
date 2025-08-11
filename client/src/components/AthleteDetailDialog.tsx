@@ -386,7 +386,7 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Parent Info */}
-          <AdminModalSection title="Parent Information" icon={<User className="h-5 w-5" />}>
+          <AdminModalSection title="Parent Information" icon={<User className="h-5 w-5" />} className="mt-6">
             {parentLoading ? (
               <div className="flex items-center gap-2 text-slate-500 dark:text-blue-300 py-4">
                 <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -457,7 +457,7 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Waiver Status */}
-          <AdminModalSection title="Waiver Status" icon={<ShieldMinus className="h-5 w-5" />}>
+          <AdminModalSection title="Waiver Status" icon={<ShieldMinus className="h-5 w-5" />} className="mt-6">
             {waiverLoading ? (
               <div className="flex items-center gap-2 text-slate-500 dark:text-blue-300 py-4">
                 <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -639,7 +639,9 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Bookings History */}
-          <BookingHistoryDisplay athleteId={athleteData.id} />
+          <div className="mt-6">
+            <BookingHistoryDisplay athleteId={athleteData.id} />
+          </div>
 
           {/* Skill Progress */}
           <AdminModalSection title="Skill Progress" className="mt-6">
