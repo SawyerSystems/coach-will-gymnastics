@@ -293,9 +293,10 @@ export function AthleteDetailDialog({
           
           {/* Basic Info */}
           <AdminModalSection title="Basic Information" icon={<User className="h-5 w-5" />}>
-            <AdminModalGrid cols={2}>
-              <div className="flex flex-col sm:flex-row items-start gap-4">
-                <div className="relative mx-auto sm:mx-0">
+            <div className="space-y-6">
+              {/* Photo and Name Section */}
+              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
+                <div className="relative">
                   <div className="relative w-24 h-24 group">
                     {athleteData.photo ? (
                       <img
@@ -336,31 +337,43 @@ export function AthleteDetailDialog({
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-300 font-medium mt-2 flex items-center justify-center sm:justify-start">
+                  <p className="text-xs text-blue-600 dark:text-blue-300 font-medium mt-2 flex items-center justify-center">
                     <span className="p-1 bg-blue-100 dark:bg-blue-800/40 rounded-full mr-1">
                       <Edit className="h-3 w-3" />
                     </span>
                     Click photo to enlarge or upload new
                   </p>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 text-center sm:text-left">
                   <h3 className="font-bold text-xl text-slate-800 dark:text-blue-200">
                     {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
                   </h3>
-                  <div className="mt-1 space-y-1">
-                    <AdminModalDetailRow 
-                      label="Age" 
-                      value={`${athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old`}
-                      icon={<Calendar className="h-4 w-4" />}
-                    />
-                    <AdminModalDetailRow 
-                      label="Born" 
-                      value={athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}
-                      icon={<Clock className="h-4 w-4" />}
-                    />
+                </div>
+              </div>
+              
+              {/* Age and Born Section - Full Width on Mobile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-white bg-opacity-70 p-4 rounded-lg dark:bg-[#0F0276]/40 dark:bg-opacity-60">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                    <span className="font-medium text-gray-700 dark:text-blue-200 text-sm">Age:</span>
+                  </div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-blue-100">
+                    {`${athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old`}
+                  </div>
+                </div>
+                <div className="bg-white bg-opacity-70 p-4 rounded-lg dark:bg-[#0F0276]/40 dark:bg-opacity-60">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="h-4 w-4 text-blue-600 dark:text-blue-300" />
+                    <span className="font-medium text-gray-700 dark:text-blue-200 text-sm">Born:</span>
+                  </div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-blue-100">
+                    {athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}
                   </div>
                 </div>
               </div>
+              
+              {/* Other Details Section */}
               <div className="bg-slate-50 dark:bg-[#0F0276]/20 p-4 rounded-lg border dark:border-[#2A4A9B]/40" role="group" aria-label="Athlete details">
                 <AdminModalDetailRow 
                   label="Experience" 
@@ -390,7 +403,7 @@ export function AthleteDetailDialog({
                   </div>
                 )}
               </div>
-            </AdminModalGrid>
+            </div>
           </AdminModalSection>
 
           {/* Parent Info */}
