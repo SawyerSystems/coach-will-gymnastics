@@ -1360,49 +1360,49 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         );
                       })}
                       {focusAreas.length === 0 && (
-                        <div className="text-gray-500 text-sm italic py-2">No focus areas added yet</div>
+                        <div className="text-gray-500 text-sm italic py-2 dark:text-blue-300">No focus areas added yet</div>
                       )}
                     </div>
                   </div>
                   
                   {/* Step 3: Custom Focus Area (Other) */}
-                  <div className="bg-white p-3 rounded-lg">
-                    <Label className="text-sm font-medium text-purple-700 flex items-center gap-1.5 mb-2">
-                      <Target className="h-4 w-4 text-purple-600" />
+                  <div className="bg-white p-3 rounded-lg dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40 border border-gray-200">
+                    <Label className="text-sm font-medium text-purple-700 flex items-center gap-1.5 mb-2 dark:text-blue-200">
+                      <Target className="h-4 w-4 text-purple-600 dark:text-blue-400" />
                       Step 3: Additional Custom Focus Area (Optional)
                     </Label>
                     <Textarea
                       value={focusAreaOther}
                       onChange={(e) => setFocusAreaOther(e.target.value)}
                       placeholder="Enter additional custom focus areas or specific skills not listed above"
-                      className="min-h-[80px] bg-white border-purple-100"
+                      className="min-h-[80px] bg-white border-purple-100 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200"
                     />
                   </div>
                 </div>
               </div>
               
-              <Card className="mt-4 border-blue-100 shadow-sm bg-gradient-to-r from-white to-blue-50">
+              <Card className="mt-4 border-blue-100 shadow-sm bg-gradient-to-r from-white to-blue-50 dark:border-[#2A4A9B]/40 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <div className="bg-blue-100 p-1.5 rounded-full">
-                        <Clock className="h-5 w-5 text-blue-600" />
+                      <div className="bg-blue-100 p-1.5 rounded-full dark:bg-[#0F0276]/60">
+                        <Clock className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                       </div>
-                      <span className="text-sm font-medium text-blue-800">Session Details</span>
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Session Details</span>
                     </div>
-                    <span className="text-lg font-bold bg-blue-50 px-3 py-1 rounded-full text-blue-700">${calculatePrice()}</span>
+                    <span className="text-lg font-bold bg-blue-50 px-3 py-1 rounded-full text-blue-700 dark:bg-[#0F0276]/60 dark:text-blue-200">${calculatePrice()}</span>
                   </div>
                   
                   <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg">
-                      <Clock className="h-4 w-4 text-blue-500" />
-                      <span className="font-medium text-gray-700">Duration:</span>
-                      <span className="ml-auto">{getLessonTypeDuration()}</span>
+                    <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg dark:bg-[#0F0276]/30 dark:border dark:border-[#2A4A9B]/30">
+                      <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                      <span className="font-medium text-gray-700 dark:text-blue-200">Duration:</span>
+                      <span className="ml-auto dark:text-blue-200">{getLessonTypeDuration()}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg">
-                      <Users className="h-4 w-4 text-blue-500" />
-                      <span className="font-medium text-gray-700">Capacity:</span>
-                      <span className="ml-auto">{getMaxAthletes()} Athlete{getMaxAthletes() > 1 ? 's' : ''}</span>
+                    <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg dark:bg-[#0F0276]/30 dark:border dark:border-[#2A4A9B]/30">
+                      <Users className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                      <span className="font-medium text-gray-700 dark:text-blue-200">Capacity:</span>
+                      <span className="ml-auto dark:text-blue-200">{getMaxAthletes()} Athlete{getMaxAthletes() > 1 ? 's' : ''}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1411,7 +1411,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
             
             <TabsContent value="athletes" className="space-y-4 pt-4">
               <div>
-                <Label>Parent</Label>
+                <Label className="dark:text-blue-200">Parent</Label>
                 <Select 
                   value={selectedParentId?.toString() || 'no-parent-selected'} 
                   onValueChange={(value) => {
@@ -1449,10 +1449,10 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                 </Select>
               </div>
               
-              <div className="bg-gradient-to-r from-white to-orange-50 p-4 rounded-lg border border-orange-100 shadow-sm mt-4">
+              <div className="bg-gradient-to-r from-white to-orange-50 p-4 rounded-lg border border-orange-100 shadow-sm mt-4 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
                 <div className="flex items-center justify-between mb-3">
-                  <Label className="text-sm font-medium text-orange-700 flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-orange-600" />
+                  <Label className="text-sm font-medium text-orange-700 flex items-center gap-1.5 dark:text-blue-200">
+                    <Users className="h-4 w-4 text-orange-600 dark:text-blue-400" />
                     Athletes ({Array.isArray(bookingAthletes) ? bookingAthletes.length : 0}/{getMaxAthletes()})
                   </Label>
                   <Button 
@@ -1461,13 +1461,13 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     size="sm"
                     onClick={addAthleteSlot}
                     disabled={Array.isArray(bookingAthletes) && bookingAthletes.length >= getMaxAthletes()}
-                    className="border-orange-200 hover:bg-orange-50 text-orange-700"
+                    className="border-orange-200 hover:bg-orange-50 text-orange-700 dark:border-[#2A4A9B]/40 dark:hover:bg-[#0F0276]/30 dark:text-blue-200"
                   >
                     Add Athlete
                   </Button>
                 </div>
                 
-                <div className="space-y-3 bg-white bg-opacity-70 p-3 rounded-lg">
+                <div className="space-y-3 bg-white bg-opacity-70 p-3 rounded-lg dark:bg-[#0F0276]/30 dark:border dark:border-[#2A4A9B]/30">
                 {Array.isArray(bookingAthletes) ? bookingAthletes.map((bookingAthlete, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <div className="flex-1">
@@ -1501,13 +1501,13 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                       type="button" 
                       variant="ghost" 
                       size="icon" 
-                      className="h-9 w-9"
+                      className="h-9 w-9 dark:hover:bg-[#0F0276]/40"
                       onClick={() => removeAthleteSlot(index)}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 dark:text-blue-300" />
                     </Button>
                   </div>
-                )) : <div className="p-4 text-center bg-gray-50 rounded-md text-gray-500 text-sm">
+                )) : <div className="p-4 text-center bg-gray-50 rounded-md text-gray-500 text-sm dark:bg-[#0F0276]/20 dark:text-blue-300">
                   No athletes added yet. Please select a parent and add athletes.
                 </div>}
                 </div>
@@ -1516,14 +1516,14 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
             
             <TabsContent value="safety" className="space-y-6 pt-4">
               {/* Drop-off Person Section */}
-              <div className="space-y-4 bg-gradient-to-r from-white to-blue-50 p-4 rounded-lg border border-blue-100">
-                <h4 className="font-medium text-blue-700 flex items-center gap-1.5">
-                  <User className="w-4 h-4" />
+              <div className="space-y-4 bg-gradient-to-r from-white to-blue-50 p-4 rounded-lg border border-blue-100 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
+                <h4 className="font-medium text-blue-700 flex items-center gap-1.5 dark:text-blue-200">
+                  <User className="w-4 h-4 dark:text-blue-400" />
                   Drop-off Person Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="dropoff-name" className="text-sm">Name*</Label>
+                    <Label htmlFor="dropoff-name" className="text-sm dark:text-blue-200">Name*</Label>
                     <Input
                       id="dropoff-name"
                       value={dropoffPersonName}
@@ -1533,7 +1533,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     />
                   </div>
                   <div>
-                    <Label htmlFor="dropoff-relationship" className="text-sm">Relationship to Athlete*</Label>
+                    <Label htmlFor="dropoff-relationship" className="text-sm dark:text-blue-200">Relationship to Athlete*</Label>
                     <Input
                       id="dropoff-relationship"
                       value={dropoffPersonRelationship}
@@ -1543,7 +1543,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor="dropoff-phone" className="text-sm">Phone Number*</Label>
+                    <Label htmlFor="dropoff-phone" className="text-sm dark:text-blue-200">Phone Number*</Label>
                     <Input
                       id="dropoff-phone"
                       value={dropoffPersonPhone}
@@ -1556,14 +1556,14 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
               </div>
               
               {/* Pick-up Person Section */}
-              <div className="space-y-4 bg-gradient-to-r from-white to-green-50 p-4 rounded-lg border border-green-100">
-                <h4 className="font-medium text-green-700 flex items-center gap-1.5">
-                  <User className="w-4 h-4" />
+              <div className="space-y-4 bg-gradient-to-r from-white to-green-50 p-4 rounded-lg border border-green-100 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
+                <h4 className="font-medium text-green-700 flex items-center gap-1.5 dark:text-blue-200">
+                  <User className="w-4 h-4 dark:text-blue-400" />
                   Pick-up Person Information
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="pickup-name" className="text-sm">Name*</Label>
+                    <Label htmlFor="pickup-name" className="text-sm dark:text-blue-200">Name*</Label>
                     <Input
                       id="pickup-name"
                       value={pickupPersonName}
@@ -1573,7 +1573,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     />
                   </div>
                   <div>
-                    <Label htmlFor="pickup-relationship" className="text-sm">Relationship to Athlete*</Label>
+                    <Label htmlFor="pickup-relationship" className="text-sm dark:text-blue-200">Relationship to Athlete*</Label>
                     <Input
                       id="pickup-relationship"
                       value={pickupPersonRelationship}
@@ -1583,7 +1583,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor="pickup-phone" className="text-sm">Phone Number*</Label>
+                    <Label htmlFor="pickup-phone" className="text-sm dark:text-blue-200">Phone Number*</Label>
                     <Input
                       id="pickup-phone"
                       value={pickupPersonPhone}
@@ -1596,14 +1596,14 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
               </div>
               
               {/* Alternative Pick-up Person Section */}
-              <div className="space-y-4 bg-gradient-to-r from-white to-purple-50 p-4 rounded-lg border border-purple-100">
-                <h4 className="font-medium text-purple-700 flex items-center gap-1.5">
-                  <Users className="w-4 h-4" />
+              <div className="space-y-4 bg-gradient-to-r from-white to-purple-50 p-4 rounded-lg border border-purple-100 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
+                <h4 className="font-medium text-purple-700 flex items-center gap-1.5 dark:text-blue-200">
+                  <Users className="w-4 h-4 dark:text-blue-400" />
                   Alternative Pick-up Person (Optional)
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="alt-pickup-name" className="text-sm">Name</Label>
+                    <Label htmlFor="alt-pickup-name" className="text-sm dark:text-blue-200">Name</Label>
                     <Input
                       id="alt-pickup-name"
                       value={altPickupPersonName}
@@ -1612,7 +1612,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     />
                   </div>
                   <div>
-                    <Label htmlFor="alt-pickup-relationship" className="text-sm">Relationship to Athlete</Label>
+                    <Label htmlFor="alt-pickup-relationship" className="text-sm dark:text-blue-200">Relationship to Athlete</Label>
                     <Input
                       id="alt-pickup-relationship"
                       value={altPickupPersonRelationship}
@@ -1621,7 +1621,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor="alt-pickup-phone" className="text-sm">Phone Number</Label>
+                    <Label htmlFor="alt-pickup-phone" className="text-sm dark:text-blue-200">Phone Number</Label>
                     <Input
                       id="alt-pickup-phone"
                       value={altPickupPersonPhone}
@@ -1634,30 +1634,30 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
             </TabsContent>
             
             <TabsContent value="notes" className="space-y-4 pt-4">
-              <div className="bg-gradient-to-r from-white to-purple-50 p-4 rounded-lg border border-purple-100 shadow-sm">
-                <Label htmlFor="admin-notes" className="text-sm font-medium text-purple-700 flex items-center gap-1.5 mb-2">
-                  <ClipboardList className="h-4 w-4 text-purple-600" />
+              <div className="bg-gradient-to-r from-white to-purple-50 p-4 rounded-lg border border-purple-100 shadow-sm dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
+                <Label htmlFor="admin-notes" className="text-sm font-medium text-purple-700 flex items-center gap-1.5 mb-2 dark:text-blue-200">
+                  <ClipboardList className="h-4 w-4 text-purple-600 dark:text-blue-400" />
                   Admin Notes
                 </Label>
                 <Textarea
                   id="admin-notes"
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="min-h-[100px] bg-white border-purple-100"
+                  className="min-h-[100px] bg-white border-purple-100 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200"
                   placeholder="Internal notes visible only to admin"
                 />
               </div>
               
-              <div className="bg-gradient-to-r from-white to-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm mt-4">
-                <Label htmlFor="special-requests" className="text-sm font-medium text-blue-700 flex items-center gap-1.5 mb-2">
-                  <MessageSquare className="h-4 w-4 text-blue-600" />
+              <div className="bg-gradient-to-r from-white to-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm mt-4 dark:bg-gradient-to-r dark:from-[#0F0276]/40 dark:to-[#0F0276]/20 dark:border-[#2A4A9B]/40">
+                <Label htmlFor="special-requests" className="text-sm font-medium text-blue-700 flex items-center gap-1.5 mb-2 dark:text-blue-200">
+                  <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   Special Requests
                 </Label>
                 <Textarea
                   id="special-requests"
                   value={specialRequests}
                   onChange={(e) => setSpecialRequests(e.target.value)}
-                  className="min-h-[100px] bg-white border-blue-100"
+                  className="min-h-[100px] bg-white border-blue-100 dark:bg-[#0F0276]/20 dark:border-[#2A4A9B]/40 dark:text-blue-200"
                   placeholder="Special requests from parents"
                 />
               </div>
