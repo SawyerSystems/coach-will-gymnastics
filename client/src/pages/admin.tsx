@@ -2463,19 +2463,19 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="schedule" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <Card className="rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-300 w-full">
-              <CardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
-                  <Calendar className="h-8 w-8 text-[#D8BD2A]" />
+          <TabsContent value="schedule" role="tabpanel" id="schedule-panel" aria-labelledby="schedule-tab" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <Clock className="h-8 w-8 text-[#D8BD2A]" />
                   Schedule & Availability
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
-                <div className="space-y-6">
-                  {/* Booking Cutoff System Overview */}
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
-                    <CardContent className="p-6">
+                </span>
+              }
+            >
+              <div className="space-y-6">
+                {/* Booking Cutoff System Overview */}
+                <AdminCard>
+                  <AdminCardContent className="p-6">
                       <h3 className="text-xl font-bold mb-3 text-blue-800 dark:text-white flex items-center gap-2">
                         🚀 Booking Cutoff System
                       </h3>
@@ -2483,18 +2483,18 @@ export default function Admin() {
                         The system automatically prevents scheduling conflicts by restricting lesson bookings based on your availability and lesson duration.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <Card className="rounded-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md">
-                          <CardContent className="p-4">
+                        <AdminCard>
+                          <AdminCardContent className="p-4">
                             <h4 className="font-bold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
                               📅 30-minute Lessons
                             </h4>
                             <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                               Quick Journey & Dual Quest lessons automatically cut off 30 minutes before your end time.
                             </p>
-                          </CardContent>
-                        </Card>
-                        <Card className="rounded-lg border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-md">
-                          <CardContent className="p-4">
+                          </AdminCardContent>
+                        </AdminCard>
+                        <AdminCard>
+                          <AdminCardContent className="p-4">
                             <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
                               ⏰ 60-minute Lessons
                             </h4>
@@ -2504,11 +2504,11 @@ export default function Admin() {
                             <p className="text-xs text-slate-500 mt-2">
                               Example: If you end at 3:30 PM, last 60-min lesson starts at 2:30 PM
                             </p>
-                          </CardContent>
-                        </Card>
+                          </AdminCardContent>
+                        </AdminCard>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </AdminCardContent>
+                  </AdminCard>
                   
                   <div className="space-y-6">
                     <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
@@ -2527,8 +2527,8 @@ export default function Admin() {
                       ].map((day) => {
                         const dayAvailability = availability.find(a => a.dayOfWeek === day.value);
                         return (
-                          <Card key={day.value} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300">
-                            <CardContent className="p-6">
+                          <AdminCard key={day.value}>
+                            <AdminCardContent className="p-6">
                               <div className="flex justify-between items-center">
                                 <h4 className="text-lg font-bold text-[#0F0276] dark:text-white">{day.label}</h4>
                               {dayAvailability ? (
@@ -2630,8 +2630,8 @@ export default function Admin() {
                                 </Dialog>
                               )}
                               </div>
-                            </CardContent>
-                          </Card>
+                            </AdminCardContent>
+                          </AdminCard>
                         );
                       })}
                     </div>
@@ -2727,8 +2727,8 @@ export default function Admin() {
                       {availabilityExceptions
                         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                         .map((exception) => (
-                          <Card key={exception.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
-                            <CardContent className="p-4">
+                          <AdminCard key={exception.id}>
+                            <AdminCardContent className="p-4">
                               <div className="flex justify-between items-center">
                                 <div className="space-y-1">
                                   <p className="font-bold text-lg text-red-800 dark:text-white">
@@ -2761,30 +2761,29 @@ export default function Admin() {
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
-                            </CardContent>
-                          </Card>
+                            </AdminCardContent>
+                          </AdminCard>
                         ))}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
-                  <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-2 sm:gap-3">
-                    <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
-                    Parent Communication
-                  </CardTitle>
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <MessageCircle className="h-8 w-8 text-[#D8BD2A]" />
+                  Parent Communication
                   <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-blue-200/50 text-blue-700 dark:from-blue-800 dark:to-blue-900 dark:text-blue-200 font-bold rounded-xl px-4 py-2 w-fit">
                     Frontend Only - Coming Soon
                   </Badge>
-                </div>
-              </AdminCardHeader>
-              <AdminCardContent className="p-4 sm:p-6 lg:p-8">
+                </span>
+              }
+            >
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Message List */}
                   <div className="lg:col-span-1">
@@ -2805,15 +2804,15 @@ export default function Admin() {
                         { id: 2, parent: "Mike Chen", athlete: "Lucas Chen", lastMessage: "Can we reschedule Friday's session?", time: "5h ago", unread: false },
                         { id: 3, parent: "Lisa Rodriguez", athlete: "Sofia Rodriguez", lastMessage: "Sofia loved the new routine!", time: "1d ago", unread: false },
                       ].map((thread) => (
-                        <Card 
-                          key={thread.id} 
+                        <AdminCard
+                          key={thread.id}
                           className={`rounded-xl cursor-pointer transition-all duration-300 border ${
                             thread.unread 
                               ? 'border-blue-300 bg-white/75 supports-[backdrop-filter]:bg-white/45 backdrop-blur-md shadow-lg hover:shadow-xl' 
                               : 'border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-md hover:shadow-lg'
                           }`}
                         >
-                          <CardContent className="p-4">
+                          <AdminCardContent className="p-4">
                             <div className="flex justify-between items-start gap-3">
                               <div className="flex-1 min-w-0">
                                 <p className="font-bold text-[#0F0276] dark:text-white truncate">{thread.parent}</p>
@@ -2827,16 +2826,16 @@ export default function Admin() {
                                 )}
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
+                          </AdminCardContent>
+                        </AdminCard>
                       ))}
                     </div>
                   </div>
 
                   {/* Message Thread */}
                   <div className="lg:col-span-2">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg h-fit">
-                      <CardHeader className="pb-4">
+                    <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg h-fit">
+                      <AdminCardHeader className="pb-4">
                         <div className="flex justify-between items-center">
                           <div>
                             <h3 className="text-lg font-bold text-[#0F0276] dark:text-white">Sarah Johnson</h3>
@@ -2859,9 +2858,9 @@ export default function Admin() {
                             </Button>
                           </div>
                         </div>
-                      </CardHeader>
+                      </AdminCardHeader>
                       
-                      <CardContent className="space-y-6">
+                      <AdminCardContent className="space-y-6">
                         <div className="space-y-4 max-h-96 overflow-y-auto px-2">
                           <div className="flex justify-start">
                               <div className="rounded-xl p-4 max-w-xs shadow-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md">
@@ -2908,20 +2907,20 @@ export default function Admin() {
                             </Button>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </AdminCardContent>
+                    </AdminCard>
                   </div>
                 </div>
 
                 {/* Email Testing Section */}
                 <div className="mt-8">
                   <h3 className="text-lg font-semibold mb-4">Email System Testing</h3>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">Test Email Templates</CardTitle>
+                  <AdminCard>
+                    <AdminCardHeader>
+                      <AdminCardTitle className="text-sm">Test Email Templates</AdminCardTitle>
                       <p className="text-sm text-gray-600 dark:text-slate-300">Send test emails to verify the system is working properly</p>
-                    </CardHeader>
-                    <CardContent>
+                    </AdminCardHeader>
+                    <AdminCardContent>
                       <form onSubmit={(e) => {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
@@ -2962,11 +2961,11 @@ export default function Admin() {
                           {testEmailMutation.isPending ? 'Sending...' : 'Send Test Email'}
                         </Button>
                       </form>
-                    </CardContent>
-                  </Card>
+                    </AdminCardContent>
+                  </AdminCard>
                 </div>
-              </AdminCardContent>
-            </AdminCard>
+              </div>
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
