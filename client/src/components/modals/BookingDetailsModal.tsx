@@ -170,7 +170,7 @@ export function BookingDetailsModal({
       {/* Show Edit button if onEdit is provided (from booking manager) */}
       {onEdit && (
         <AdminButton
-          variant="primary"
+          variant="secondary"
           onClick={() => onEdit(booking)}
           className="flex items-center gap-2"
         >

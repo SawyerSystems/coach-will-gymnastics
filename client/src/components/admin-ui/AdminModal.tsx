@@ -82,21 +82,21 @@ export interface AdminModalSectionProps extends React.HTMLAttributes<HTMLDivElem
 }
 
 const gradientClasses = {
-  blue: "bg-gradient-to-r from-white to-blue-50 border-blue-100",
-  purple: "bg-gradient-to-r from-white to-purple-50 border-purple-100", 
-  green: "bg-gradient-to-r from-white to-green-50 border-green-100",
-  amber: "bg-gradient-to-r from-white to-amber-50 border-amber-100",
-  red: "bg-gradient-to-r from-white to-red-50 border-red-100",
-  gray: "bg-gradient-to-r from-white to-gray-50 border-gray-200"
+  blue: "bg-gradient-to-r from-white to-blue-50 border-blue-100 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40",
+  purple: "bg-gradient-to-r from-white to-purple-50 border-purple-100 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40", 
+  green: "bg-gradient-to-r from-white to-green-50 border-green-100 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40",
+  amber: "bg-gradient-to-r from-white to-amber-50 border-amber-100 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40",
+  red: "bg-gradient-to-r from-white to-red-50 border-red-100 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40",
+  gray: "bg-gradient-to-r from-white to-gray-50 border-gray-200 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40"
 };
 
 const titleColorClasses = {
-  blue: "text-blue-800",
-  purple: "text-purple-800",
-  green: "text-green-800", 
-  amber: "text-amber-800",
-  red: "text-red-800",
-  gray: "text-gray-800"
+  blue: "text-blue-800 dark:text-blue-200",
+  purple: "text-purple-800 dark:text-blue-200",
+  green: "text-green-800 dark:text-blue-200", 
+  amber: "text-amber-800 dark:text-blue-200",
+  red: "text-red-800 dark:text-blue-200",
+  gray: "text-gray-800 dark:text-blue-200"
 };
 
 export function AdminModalSection({ 
@@ -140,12 +140,12 @@ export function AdminModalDetailRow({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg", className)}>
-      <span className="font-medium text-gray-700 flex items-center gap-1.5">
+    <div className={cn("flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg dark:bg-[#0F0276]/40 dark:bg-opacity-60", className)}>
+      <span className="font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200">
         {icon}
         {label}:
       </span>
-      <span className="text-gray-900 text-right">{value}</span>
+      <span className="text-gray-900 text-right dark:text-blue-100">{value}</span>
     </div>
   );
 }
