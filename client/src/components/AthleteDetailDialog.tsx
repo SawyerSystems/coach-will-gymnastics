@@ -294,8 +294,8 @@ export function AthleteDetailDialog({
           {/* Basic Info */}
           <AdminModalSection title="Basic Information" icon={<User className="h-5 w-5" />}>
             <AdminModalGrid cols={2}>
-              <div className="flex items-start gap-4">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row items-start gap-4">
+                <div className="relative mx-auto sm:mx-0">
                   <div className="relative w-24 h-24 group">
                     {athleteData.photo ? (
                       <img
@@ -336,6 +336,12 @@ export function AthleteDetailDialog({
                       </div>
                     )}
                   </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300 font-medium mt-2 flex items-center justify-center sm:justify-start">
+                    <span className="p-1 bg-blue-100 dark:bg-blue-800/40 rounded-full mr-1">
+                      <Edit className="h-3 w-3" />
+                    </span>
+                    Click photo to enlarge or upload new
+                  </p>
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-xl text-slate-800 dark:text-blue-200">
@@ -353,12 +359,6 @@ export function AthleteDetailDialog({
                       icon={<Clock className="h-4 w-4" />}
                     />
                   </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-300 font-medium mt-2 flex items-center">
-                    <span className="p-1 bg-blue-100 dark:bg-blue-800/40 rounded-full mr-1">
-                      <Edit className="h-3 w-3" />
-                    </span>
-                    Click photo to enlarge or upload new
-                  </p>
                 </div>
               </div>
               <div className="bg-slate-50 dark:bg-[#0F0276]/20 p-4 rounded-lg border dark:border-[#2A4A9B]/40" role="group" aria-label="Athlete details">
@@ -700,11 +700,12 @@ export function AthleteDetailDialog({
             onToggle={() => setIsShareLinksExpanded(!isShareLinksExpanded)}
           >
             <div className="space-y-3">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   disabled={creatingShare}
+                  className="w-full sm:w-auto"
                   onClick={async () => {
                     try {
                       const created = await createShareLink({ athleteId: athleteData.id });
@@ -727,28 +728,28 @@ export function AthleteDetailDialog({
                     const expired = l.expiresAt ? new Date(l.expiresAt as any).getTime() < Date.now() : false;
                     const linkUrl = `${window.location.origin}/progress/${l.token}`;
                     return (
-                      <div key={l.id} className="flex items-center justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1">
-                        <div className="min-w-0 mr-2">
-                          <div className="truncate text-sm">
+                      <div key={l.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 gap-3 sm:gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm break-all sm:truncate">
                             <a className="text-indigo-600 dark:text-indigo-400 hover:underline" href={linkUrl} target="_blank" rel="noopener noreferrer">
                               {linkUrl}
                             </a>
                           </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Created {new Date(l.createdAt as any).toLocaleString()} 
                             {l.expiresAt && ` (expires ${new Date(l.expiresAt as any).toLocaleString()})`} 
                             {expired && ' · expired'}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button size="sm" variant="secondary" onClick={async ()=>{ 
+                          <Button size="sm" variant="secondary" className="text-xs" onClick={async ()=>{ 
                             await navigator.clipboard.writeText(linkUrl); 
                             toast({ title: 'Copied', description: 'Link copied to clipboard.' }); 
                           }}>
                             Copy
                           </Button>
                           {!expired && (
-                            <Button size="sm" variant="outline" onClick={async ()=>{
+                            <Button size="sm" variant="outline" className="text-xs" onClick={async ()=>{
                               try {
                                 await revokeShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
                                 toast({ title: 'Revoked', description: 'Link expired.' });
@@ -756,10 +757,10 @@ export function AthleteDetailDialog({
                                 toast({ title: 'Error', description: e?.message || 'Failed to revoke link', variant: 'destructive' });
                               }
                             }}>
-                              <ShieldMinus className="h-4 w-4 mr-1"/>Revoke
+                              <ShieldMinus className="h-3 w-3 mr-1"/>Revoke
                             </Button>
                           )}
-                          <Button size="sm" variant="destructive" onClick={async ()=>{
+                          <Button size="sm" variant="destructive" className="text-xs p-2" onClick={async ()=>{
                             try {
                               await deleteShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
                               toast({ title: 'Deleted', description: 'Link removed.' });
@@ -767,7 +768,7 @@ export function AthleteDetailDialog({
                               toast({ title: 'Error', description: e?.message || 'Failed to delete link', variant: 'destructive' });
                             }
                           }}>
-                            <Trash2 className="h-4 w-4"/>
+                            <Trash2 className="h-3 w-3"/>
                           </Button>
                         </div>
                       </div>
@@ -780,19 +781,19 @@ export function AthleteDetailDialog({
 
           {/* Action Buttons */}
           {showActionButtons && (
-            <div className="flex justify-between pt-6 mt-2 border-t border-dashed border-slate-200" role="group" aria-label="Athlete actions">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:gap-0 pt-6 mt-2 border-t border-dashed border-slate-200" role="group" aria-label="Athlete actions">
               {onBookSession && (
-                <Button onClick={onBookSession} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all">
+                <Button onClick={onBookSession} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Book Session
                 </Button>
               )}
               {onEditAthlete && (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                    className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 w-full sm:w-auto"
                     disabled={creatingShare}
                     onClick={async () => {
                       try {
@@ -808,7 +809,7 @@ export function AthleteDetailDialog({
                     <LinkIcon className="h-4 w-4 mr-2" />
                     Share Progress
                   </Button>
-                  <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700">
+                  <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 w-full sm:w-auto">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Athlete
                   </Button>

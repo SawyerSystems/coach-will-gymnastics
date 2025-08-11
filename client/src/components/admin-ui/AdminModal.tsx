@@ -17,14 +17,14 @@ export interface AdminModalProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-sm",
-  md: "max-w-md", 
-  lg: "max-w-lg",
-  xl: "max-w-xl",
-  "2xl": "max-w-2xl",
-  "3xl": "max-w-3xl", 
-  "4xl": "max-w-4xl",
-  full: "max-w-full"
+  sm: "max-w-sm w-[90vw] sm:w-auto",
+  md: "max-w-md w-[90vw] sm:w-auto", 
+  lg: "max-w-lg w-[90vw] sm:w-auto",
+  xl: "max-w-xl w-[90vw] sm:w-auto",
+  "2xl": "max-w-2xl w-[90vw] sm:w-auto",
+  "3xl": "max-w-3xl w-[90vw] sm:w-auto", 
+  "4xl": "max-w-4xl w-[90vw] sm:w-auto",
+  full: "max-w-full w-[90vw] sm:w-auto"
 };
 
 export function AdminModal({ 
@@ -42,13 +42,14 @@ export function AdminModal({
       <DialogContent 
         className={cn(
           sizeClasses[size],
-          "max-h-[90vh] overflow-y-auto p-0 gap-0 bg-transparent border-none shadow-none",
+          "max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-0 gap-0 bg-transparent border-none shadow-none",
+          "m-2 sm:m-0", // Add margin on mobile for better spacing
           className
         )}
       >
         <AdminCard className="w-full">
-          <AdminCardHeader className="flex flex-row items-center justify-between pb-4">
-            <AdminCardTitle className="text-xl">{title}</AdminCardTitle>
+          <AdminCardHeader className="flex flex-row items-center justify-between pb-4 px-4 sm:px-6">
+            <AdminCardTitle className="text-lg sm:text-xl">{title}</AdminCardTitle>
             {showCloseButton && (
               <AdminButton
                 variant="ghost"
@@ -60,7 +61,7 @@ export function AdminModal({
               </AdminButton>
             )}
           </AdminCardHeader>
-          <AdminCardContent className="pt-0">
+          <AdminCardContent className="pt-0 px-4 sm:px-6">
             {children}
           </AdminCardContent>
           {footer && (
@@ -124,7 +125,7 @@ export function AdminModalSection({
     >
       <div 
         className={cn(
-          "font-semibold flex items-center gap-2 mb-3",
+          "font-semibold flex items-center gap-2 mb-3 text-sm sm:text-base",
           titleColorClasses[gradient],
           collapsible && "cursor-pointer hover:opacity-75 transition-opacity"
         )}
@@ -159,12 +160,12 @@ export function AdminModalDetailRow({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center justify-between bg-white bg-opacity-70 p-2 rounded-lg dark:bg-[#0F0276]/40 dark:bg-opacity-60", className)}>
-      <span className="font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200">
+    <div className={cn("flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg dark:bg-[#0F0276]/40 dark:bg-opacity-60 gap-1 sm:gap-0", className)}>
+      <span className="font-medium text-gray-700 flex items-center gap-1.5 dark:text-blue-200 text-sm sm:text-base">
         {icon}
         {label}:
       </span>
-      <span className="text-gray-900 text-right dark:text-blue-100">{value}</span>
+      <span className="text-gray-900 text-left sm:text-right dark:text-blue-100 text-sm sm:text-base break-words">{value}</span>
     </div>
   );
 }
@@ -180,12 +181,12 @@ export function AdminModalGrid({
 }) {
   const colClasses = {
     1: "grid-cols-1",
-    2: "grid-cols-1 md:grid-cols-2", 
-    3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+    2: "grid-cols-1 lg:grid-cols-2", 
+    3: "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
   };
 
   return (
-    <div className={cn("grid gap-4 sm:gap-6", colClasses[cols], className)}>
+    <div className={cn("grid gap-3 sm:gap-4 lg:gap-6", colClasses[cols], className)}>
       {children}
     </div>
   );
