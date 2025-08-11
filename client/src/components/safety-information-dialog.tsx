@@ -1,12 +1,4 @@
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -30,6 +22,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { ParentModal, ParentModalSection, ParentModalGrid } from "@/components/parent-ui/ParentModal";
+import { ParentButton } from "@/components/parent-ui/ParentButton";
 
 const relationshipOptions = [
   "Parent", 
@@ -137,30 +131,31 @@ export function SafetyInformationDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-xl md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-        <DialogHeader className="px-0 pt-0">
-          <DialogTitle className="text-xl md:text-2xl text-blue-900">Safety Information</DialogTitle>
-          <DialogDescription className="text-sm md:text-base text-gray-700">
-            Set who is authorized for pickup and dropoff at your gymnastics sessions.
-          </DialogDescription>
-        </DialogHeader>
-
+    <ParentModal 
+      isOpen={open} 
+      onClose={() => onOpenChange(false)}
+      title="Safety Information"
+      description="Set who is authorized for pickup and dropoff at your gymnastics sessions"
+      size="xl"
+    >
+      <div className="max-h-[60vh] sm:max-h-none overflow-y-auto px-1">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Dropoff Person */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800">Authorized Dropoff Person</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ParentModalSection title="Authorized Dropoff Person">
+              <ParentModalGrid>
                 <FormField
                   control={form.control}
                   name="dropoffPersonName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Full name" {...field} />
+                        <Input 
+                          placeholder="Full name" 
+                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -172,25 +167,30 @@ export function SafetyInformationDialog({
                   name="dropoffPersonPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                        <Input 
+                          type="tel" 
+                          placeholder="(555) 123-4567" 
+                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              </ParentModalGrid>
               
               <FormField
                 control={form.control}
                 name="dropoffPersonRelationship"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Relationship to Athlete</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
                           <SelectValue placeholder="Select relationship" />
                         </SelectTrigger>
                       </FormControl>
@@ -206,21 +206,23 @@ export function SafetyInformationDialog({
                   </FormItem>
                 )}
               />
-            </div>
+            </ParentModalSection>
 
             {/* Pickup Person */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800">Authorized Pickup Person</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ParentModalSection title="Authorized Pickup Person">
+              <ParentModalGrid>
                 <FormField
                   control={form.control}
                   name="pickupPersonName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Full name" {...field} />
+                        <Input 
+                          placeholder="Full name" 
+                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -232,25 +234,30 @@ export function SafetyInformationDialog({
                   name="pickupPersonPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="(555) 123-4567" {...field} />
+                        <Input 
+                          type="tel" 
+                          placeholder="(555) 123-4567" 
+                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              </ParentModalGrid>
               
               <FormField
                 control={form.control}
                 name="pickupPersonRelationship"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Relationship to Athlete</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
                           <SelectValue placeholder="Select relationship" />
                         </SelectTrigger>
                       </FormControl>
@@ -266,21 +273,24 @@ export function SafetyInformationDialog({
                   </FormItem>
                 )}
               />
-            </div>
+            </ParentModalSection>
 
             {/* Alternative Pickup Person */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-800">Alternative Pickup Person (Optional)</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ParentModalSection title="Alternative Pickup Person (Optional)">
+              <ParentModalGrid>
                 <FormField
                   control={form.control}
                   name="altPickupPersonName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Full name" {...field} value={field.value || ""} />
+                        <Input 
+                          placeholder="Full name (optional)" 
+                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          {...field} 
+                          value={field.value || ""} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -292,25 +302,31 @@ export function SafetyInformationDialog({
                   name="altPickupPersonPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="(555) 123-4567" {...field} value={field.value || ""} />
+                        <Input 
+                          type="tel" 
+                          placeholder="(555) 123-4567" 
+                          className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                          {...field} 
+                          value={field.value || ""} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              </ParentModalGrid>
               
               <FormField
                 control={form.control}
                 name="altPickupPersonRelationship"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Relationship to Athlete</FormLabel>
+                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
                           <SelectValue placeholder="Select relationship (optional)" />
                         </SelectTrigger>
                       </FormControl>
@@ -326,7 +342,7 @@ export function SafetyInformationDialog({
                   </FormItem>
                 )}
               />
-            </div>
+            </ParentModalSection>
 
             {/* Option to update current bookings */}
             {hasCurrentBookings && (
@@ -334,7 +350,7 @@ export function SafetyInformationDialog({
                 control={form.control}
                 name="updateCurrentBookings"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 bg-amber-50 p-4 rounded-md">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800 mt-6">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -342,8 +358,8 @@ export function SafetyInformationDialog({
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="font-medium text-amber-800">Update Current Bookings</FormLabel>
-                      <p className="text-sm text-amber-700">
+                      <FormLabel className="font-medium text-amber-800 dark:text-amber-200">Update Current Bookings</FormLabel>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
                         Apply these safety details to all your upcoming bookings
                       </p>
                     </div>
@@ -351,26 +367,25 @@ export function SafetyInformationDialog({
                 )}
               />
             )}
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isSubmitting ? "Saving..." : "Save Safety Information"}
-              </Button>
-            </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+        <ParentButton 
+          variant="secondary"
+          onClick={() => onOpenChange(false)}
+        >
+          Cancel
+        </ParentButton>
+        <ParentButton 
+          type="submit" 
+          disabled={isSubmitting}
+          onClick={form.handleSubmit(onSubmit)}
+        >
+          {isSubmitting ? "Saving..." : "Save Safety Information"}
+        </ParentButton>
+      </div>
+    </ParentModal>
   );
 }
