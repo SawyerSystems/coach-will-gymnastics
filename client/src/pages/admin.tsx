@@ -1733,18 +1733,17 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="payouts" role="tabpanel" id="payouts-panel" aria-labelledby="payouts-tab" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer 
+              heading={
+                <div className="flex items-center gap-2 sm:gap-3">
                   <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
                   Payouts Management
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="pt-0">
-                <AdminPayoutsTab />
-              </AdminCardContent>
-            </AdminCard>
+                </div>
+              }
+            >
+              <AdminPayoutsTab />
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
@@ -2968,18 +2967,17 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="payments" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer 
+              heading={
+                <div className="flex items-center gap-2 sm:gap-3">
                   <DollarSign className="h-8 w-8 text-[#D8BD2A]" />
                   Payment Management
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="pt-0">
-                <PaymentsTab />
-              </AdminCardContent>
-            </AdminCard>
+                </div>
+              }
+            >
+              <PaymentsTab />
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">

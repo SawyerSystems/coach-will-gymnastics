@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/dateUtils";
@@ -293,21 +294,16 @@ export function PaymentsTab() {
 
       {/* Filters and Actions */}
       <div className="space-y-8">
-        <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200/50 shadow-sm">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 mb-1">Payment Management</h2>
-            <p className="text-sm text-slate-600">Monitor transactions, sync with Stripe, and manage payment statuses</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <Button 
-              variant="outline" 
-              onClick={() => syncStripeMutation.mutate()}
-              disabled={syncStripeMutation.isPending}
-              className="w-full sm:w-auto border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${syncStripeMutation.isPending ? 'animate-spin' : ''}`} />
-              Sync with Stripe
-            </Button>
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={() => syncStripeMutation.mutate()}
+            disabled={syncStripeMutation.isPending}
+            className="w-full sm:w-auto border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncStripeMutation.isPending ? 'animate-spin' : ''}`} />
+            Sync with Stripe
+          </Button>
             <Button 
               variant="outline" 
               onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
@@ -316,12 +312,14 @@ export function PaymentsTab() {
               <ExternalLink className="h-4 w-4 mr-2" />
               Stripe Dashboard
             </Button>
-          </div>
         </div>
 
         {/* Enhanced Filters */}
-        <div className="bg-white rounded-xl border border-slate-200/50 p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Filter & Search</h3>
+        <AdminCard className="rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-md dark:border-white/10 dark:bg-white/10">
+          <AdminCardHeader>
+            <AdminCardTitle className="text-[#0F0276] dark:text-white">Filter & Search</AdminCardTitle>
+          </AdminCardHeader>
+          <AdminCardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="search" className="text-sm font-semibold text-slate-700">Search</Label>
@@ -380,11 +378,12 @@ export function PaymentsTab() {
               </Select>
             </div>
           </div>
-        </div>
+          </AdminCardContent>
+        </AdminCard>
 
         {/* Enhanced Tabs for different views */}
-        <Card className="rounded-xl border-0 bg-gradient-to-br from-white via-slate-50/30 to-blue-50/30 shadow-lg">
-          <CardContent className="p-3 sm:p-4 lg:p-6">
+        <AdminCard className="rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-md dark:border-white/10 dark:bg-white/10">
+          <AdminCardContent>
             <AdminContentTabs
               value={selectedTab}
               onValueChange={setSelectedTab}
@@ -392,19 +391,21 @@ export function PaymentsTab() {
                 {
                   value: "overview",
                   label: "All Transactions",
-                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600",
+                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
                 },
                 {
                   value: "pending",
                   label: "Pending Payments",
-                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600",
+                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
                 },
                 {
                   value: "completed",
                   label: "Completed",
-                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600",
+                  activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
                 },
               ]}
+              listClassName="bg-slate-100 text-[#0F0276] dark:bg-[#D8BD2A]/10 dark:text-white border-slate-200 dark:border-[#D8BD2A]/20 mb-4"
+              triggerClassName="gap-2"
             >
             <TabsContent value="overview">
               {/* Mobile card list */}
@@ -996,8 +997,8 @@ export function PaymentsTab() {
               </Table>
             </TabsContent>
           </AdminContentTabs>
-          </CardContent>
-        </Card>
+          </AdminCardContent>
+        </AdminCard>
       </div>
       {/* Booking Details Modal */}
       <Dialog open={detailsOpen} onOpenChange={(o) => { if (!o) { setDetailsOpen(false); setDetailsBooking(null); } }}>
