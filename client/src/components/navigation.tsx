@@ -14,6 +14,9 @@ import defaultLogoText from "@assets/CoachWillTumblesText.png";
 export const Navigation = memo(function Navigation() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => 
+    document?.documentElement?.classList?.contains('dark') || false
+  );
   
   // Use optimized auth hooks
   const { data: adminAuth } = useAuthStatus();
@@ -49,6 +52,20 @@ export const Navigation = memo(function Navigation() {
         break;
     }
   }, [prefetchBlogPosts, prefetchTips, prefetchStripeProducts]);
+
+  // Theme toggle function
+  const toggleTheme = useCallback(() => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+      window.localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      window.localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -146,26 +163,6 @@ export const Navigation = memo(function Navigation() {
             </Link>
           ))}
           <div className="flex items-center space-x-3">
-            {/* Theme toggle - integrated in nav so it never overlaps buttons */}
-            <button
-              onClick={() => {
-                const current = document.documentElement.classList.contains('dark');
-                if (current) {
-                  document.documentElement.classList.remove('dark');
-                  window.localStorage.setItem('theme', 'light');
-                } else {
-                  document.documentElement.classList.add('dark');
-                  window.localStorage.setItem('theme', 'dark');
-                }
-              }}
-              aria-label="Toggle theme"
-              className="glass-button rounded-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 hidden md:inline-flex items-center gap-2"
-            >
-              <span className="hidden xl:inline">Theme</span>
-              <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center">
-                <span className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-[#D8BD2A] transition-transform duration-200 will-change-transform" style={{ transform: document?.documentElement?.classList?.contains('dark') ? 'translateX(14px)' : 'translateX(0px)' }} />
-              </span>
-            </button>
             <Link href="/booking">
               <Button className="btn-athletic-red text-white px-6 py-3 rounded-lg font-bold hover:scale-105 transform transition-all duration-300 shadow-lg animate-glow">
                 BOOK NOW
@@ -222,6 +219,22 @@ export const Navigation = memo(function Navigation() {
                 <span className="hidden xl:inline">Dashboard</span>
               </Button>
             )}
+
+            {/* Enhanced Theme Toggle - Positioned after dashboard buttons */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="glass-button rounded-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 hidden md:inline-flex items-center gap-2"
+            >
+              <span className="hidden xl:inline">Theme</span>
+              <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center transition-colors duration-300">
+                <span 
+                  className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-all duration-300 ease-in-out will-change-transform ${
+                    isDarkMode ? 'bg-[#D8BD2A] translate-x-3' : 'bg-[#0F0276] translate-x-0'
+                  }`} 
+                />
+              </span>
+            </button>
           </div>
         </nav>
 
@@ -229,20 +242,18 @@ export const Navigation = memo(function Navigation() {
         <nav className="hidden md:flex lg:hidden items-center space-x-4">
           {/* Theme toggle for tablet */}
           <button
-            onClick={() => {
-              const current = document.documentElement.classList.contains('dark');
-              if (current) {
-                document.documentElement.classList.remove('dark');
-                window.localStorage.setItem('theme', 'light');
-              } else {
-                document.documentElement.classList.add('dark');
-                window.localStorage.setItem('theme', 'dark');
-              }
-            }}
+            onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="glass-button rounded-full px-2 py-2 text-sm text-slate-900 dark:text-slate-100"
+            className="glass-button rounded-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 inline-flex items-center gap-2"
           >
-            Theme
+            <span>Theme</span>
+            <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center transition-colors duration-300">
+              <span 
+                className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-all duration-300 ease-in-out will-change-transform ${
+                  isDarkMode ? 'bg-[#D8BD2A] translate-x-3' : 'bg-[#0F0276] translate-x-0'
+                }`} 
+              />
+            </span>
           </button>
           <Link href="/booking">
             <Button className="coach-will-gradient text-white px-4 py-2 rounded-full font-medium hover:scale-105 transform transition-all duration-200 shadow-lg">
@@ -308,22 +319,20 @@ export const Navigation = memo(function Navigation() {
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px] sm:w-[400px]">
             <nav className="flex flex-col space-y-4 mt-8">
-              {/* Theme toggle inside drawer */}
+              {/* Enhanced Theme toggle inside drawer */}
               <button
-                onClick={() => {
-                  const current = document.documentElement.classList.contains('dark');
-                  if (current) {
-                    document.documentElement.classList.remove('dark');
-                    window.localStorage.setItem('theme', 'light');
-                  } else {
-                    document.documentElement.classList.add('dark');
-                    window.localStorage.setItem('theme', 'dark');
-                  }
-                }}
+                onClick={toggleTheme}
                 aria-label="Toggle theme"
-                className="glass-button rounded-lg px-4 py-2 text-sm text-slate-900 dark:text-slate-100"
+                className="glass-button rounded-lg px-4 py-3 text-sm text-slate-900 dark:text-slate-100 flex items-center justify-between"
               >
-                Toggle Theme
+                <span>Toggle Theme</span>
+                <span className="w-8 h-5 rounded-full bg-white/40 dark:bg-black/40 relative inline-flex items-center transition-colors duration-300">
+                  <span 
+                    className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full transition-all duration-300 ease-in-out will-change-transform ${
+                      isDarkMode ? 'bg-[#D8BD2A] translate-x-3' : 'bg-[#0F0276] translate-x-0'
+                    }`} 
+                  />
+                </span>
               </button>
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href}>
