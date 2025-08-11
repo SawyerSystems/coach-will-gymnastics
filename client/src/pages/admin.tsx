@@ -147,6 +147,11 @@ export default function Admin() {
     reason: ""
   });
   
+  // Modal state for schedule modals
+  const [isSetHoursOpen, setIsSetHoursOpen] = useState(false);
+  const [isBlockTimeOpen, setIsBlockTimeOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<any>(null);
+  
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isAthleteViewOpen, setIsAthleteViewOpen] = useState(false);
   const [isAthleteEditOpen, setIsAthleteEditOpen] = useState(false);
@@ -2618,59 +2623,16 @@ export default function Admin() {
                                   </div>
                                 </div>
                               ) : (
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button 
-                                      size="sm"
-                                      className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                    >
-                                      Set Hours
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Set {day.label} Hours</DialogTitle>
-                                      <DialogDescription>
-                                        Set your available hours for {day.label}.
-                                      </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label>Start Time</Label>
-                                        <Input
-                                          type="time"
-                                          value={newAvailability.startTime}
-                                          onChange={(e) => setNewAvailability({
-                                            ...newAvailability,
-                                            startTime: e.target.value
-                                          })}
-                                        />
-                                      </div>
-                                      <div>
-                                        <Label>End Time</Label>
-                                        <Input
-                                          type="time"
-                                          value={newAvailability.endTime}
-                                          onChange={(e) => setNewAvailability({
-                                            ...newAvailability,
-                                            endTime: e.target.value
-                                          })}
-                                        />
-                                      </div>
-                                      <Button 
-                                        onClick={() => {
-                                          createAvailabilityMutation.mutate({
-                                            ...newAvailability,
-                                            dayOfWeek: day.value
-                                          });
-                                        }}
-                                        className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                      >
-                                        Save Hours
-                                      </Button>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
+                                <Button 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedDay(day);
+                                    setIsSetHoursOpen(true);
+                                  }}
+                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] dark:from-[#D8BD2A] dark:to-[#D8BD2A]/90 dark:hover:from-[#D8BD2A]/90 dark:hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-white dark:text-[#0F0276]"
+                                >
+                                  Set Hours
+                                </Button>
                               )}
                               </div>
                             </AdminCardContent>
@@ -2687,82 +2649,13 @@ export default function Admin() {
                         Availability Exceptions
                       </h3>
                       <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
-                            <CalendarX className="h-5 w-5 mr-2" />
-                            Block Time
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Block Time</DialogTitle>
-                            <DialogDescription>
-                              Block specific dates or times when you're not available
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Date</Label>
-                              <Input
-                                type="date"
-                                value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : newException.date}
-                                onChange={(e) => setNewException({
-                                  ...newException,
-                                  date: new Date(e.target.value)
-                                })}
-                              />
-                              {newException.date && (
-                                <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
-                                  Selected: {new Date(`${newException.date}T12:00:00Z`).toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                  })}
-                                </p>
-                              )}
-                            </div>
-                            <div>
-                              <Label>Start Time</Label>
-                              <Input
-                                type="time"
-                                value={newException.startTime}
-                                onChange={(e) => setNewException({
-                                  ...newException,
-                                  startTime: e.target.value
-                                })}
-                              />
-                            </div>
-                            <div>
-                              <Label>End Time</Label>
-                              <Input
-                                type="time"
-                                value={newException.endTime}
-                                onChange={(e) => setNewException({
-                                  ...newException,
-                                  endTime: e.target.value
-                                })}
-                              />
-                            </div>
-                            <div>
-                              <Label>Reason (optional)</Label>
-                              <Input
-                                value={newException.reason || ''}
-                                onChange={(e) => setNewException({
-                                  ...newException,
-                                  reason: e.target.value
-                                })}
-                                placeholder="e.g., Personal appointment, Holiday"
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => createExceptionMutation.mutate(newException)}
-                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                            >
-                              Block Time
-                            </Button>
-                          </div>
-                        </DialogContent>
+                        <Button 
+                          onClick={() => setIsBlockTimeOpen(true)}
+                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 dark:from-[#D8BD2A] dark:to-[#D8BD2A]/90 dark:hover:from-[#D8BD2A]/90 dark:hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-white dark:text-[#0F0276]"
+                        >
+                          <CalendarX className="h-5 w-5 mr-2 text-white dark:text-[#0F0276]" />
+                          Block Time
+                        </Button>
                       </Dialog>
                     </div>
                     
@@ -2783,7 +2676,7 @@ export default function Admin() {
                                     })}
                                   </p>
                                   <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-                                    <Clock className="h-4 w-4" />
+                                    <Clock className="h-4 w-4 text-red-600 dark:text-red-400" />
                                     <span className="font-medium">
                                       {exception.startTime} - {exception.endTime}
                                     </span>
@@ -2811,6 +2704,186 @@ export default function Admin() {
                   </div>
                 </div>
             </MainContentContainer>
+            
+            {/* Set Hours Modal */}
+            <AdminModal
+              isOpen={isSetHoursOpen}
+              onClose={() => setIsSetHoursOpen(false)}
+              title={selectedDay ? `Set ${selectedDay.label} Hours` : "Set Hours"}
+              size="2xl"
+              showCloseButton={false}
+              footer={
+                <div className="flex justify-end gap-3">
+                  <AdminButton 
+                    variant="secondary"
+                    onClick={() => setIsSetHoursOpen(false)}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </AdminButton>
+                  <button 
+                    onClick={() => {
+                      if (selectedDay) {
+                        createAvailabilityMutation.mutate({
+                          ...newAvailability,
+                          dayOfWeek: selectedDay.value
+                        });
+                        setIsSetHoursOpen(false);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl font-semibold transition-all duration-200 focus:outline-none bg-[#0F0276] dark:bg-[#D8BD2A] hover:bg-[#0F0276]/90 dark:hover:bg-[#D8BD2A]/90 text-white dark:text-[#0F0276] shadow-lg hover:shadow-xl"
+                  >
+                    <Save className="h-4 w-4 text-white dark:text-[#0F0276]" />
+                    Save Hours
+                  </button>
+                </div>
+              }
+            >
+              {selectedDay && (
+                <AdminModalSection
+                  title="Working Hours"
+                  icon={<Clock className="h-5 w-5 text-blue-600 dark:text-white" />}
+                  gradient="blue"
+                >
+                  <AdminModalGrid cols={2}>
+                    <div>
+                      <Label htmlFor="start-time" className="text-slate-700 dark:text-slate-300 font-medium">Start Time</Label>
+                      <Input
+                        id="start-time"
+                        type="time"
+                        value={newAvailability.startTime}
+                        onChange={(e) => setNewAvailability({
+                          ...newAvailability,
+                          startTime: e.target.value
+                        })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-time" className="text-slate-700 dark:text-slate-300 font-medium">End Time</Label>
+                      <Input
+                        id="end-time"
+                        type="time"
+                        value={newAvailability.endTime}
+                        onChange={(e) => setNewAvailability({
+                          ...newAvailability,
+                          endTime: e.target.value
+                        })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </AdminModalGrid>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-4">
+                    Set your available hours for {selectedDay.label}. These hours will be used for scheduling lessons.
+                  </p>
+                </AdminModalSection>
+              )}
+            </AdminModal>
+
+            {/* Block Time Modal */}
+            <AdminModal
+              isOpen={isBlockTimeOpen}
+              onClose={() => setIsBlockTimeOpen(false)}
+              title="Block Time"
+              size="2xl"
+              showCloseButton={false}
+              footer={
+                <div className="flex justify-end gap-3">
+                  <AdminButton 
+                    variant="secondary"
+                    onClick={() => setIsBlockTimeOpen(false)}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </AdminButton>
+                  <button 
+                    onClick={() => {
+                      createExceptionMutation.mutate(newException);
+                      setIsBlockTimeOpen(false);
+                    }}
+                    className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl font-semibold transition-all duration-200 focus:outline-none bg-red-500 dark:bg-[#D8BD2A] hover:bg-red-600 dark:hover:bg-[#D8BD2A]/90 text-white dark:text-[#0F0276] shadow-lg hover:shadow-xl"
+                  >
+                    <CalendarX className="h-4 w-4 text-white dark:text-[#0F0276]" />
+                    Block Time
+                  </button>
+                </div>
+              }
+            >
+              <AdminModalSection
+                title="Block Availability"
+                icon={<CalendarX className="h-5 w-5 text-red-600 dark:text-white" />}
+                gradient="red"
+              >
+                <AdminModalGrid cols={1}>
+                  <div>
+                    <Label htmlFor="block-date" className="text-slate-700 dark:text-slate-300 font-medium">Date</Label>
+                    <Input
+                      id="block-date"
+                      type="date"
+                      value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : newException.date}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        date: new Date(e.target.value)
+                      })}
+                      className="mt-1"
+                    />
+                    {newException.date && (
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mt-2">
+                        Selected: {new Date(`${newException.date}T12:00:00Z`).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </AdminModalGrid>
+                <AdminModalGrid cols={2} className="mt-4">
+                  <div>
+                    <Label htmlFor="block-start-time" className="text-slate-700 dark:text-slate-300 font-medium">Start Time</Label>
+                    <Input
+                      id="block-start-time"
+                      type="time"
+                      value={newException.startTime}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        startTime: e.target.value
+                      })}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="block-end-time" className="text-slate-700 dark:text-slate-300 font-medium">End Time</Label>
+                    <Input
+                      id="block-end-time"
+                      type="time"
+                      value={newException.endTime}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        endTime: e.target.value
+                      })}
+                      className="mt-1"
+                    />
+                  </div>
+                </AdminModalGrid>
+                <div className="mt-4">
+                  <Label htmlFor="block-reason" className="text-slate-700 dark:text-slate-300 font-medium">Reason (optional)</Label>
+                  <Input
+                    id="block-reason"
+                    value={newException.reason || ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      reason: e.target.value
+                    })}
+                    placeholder="e.g., Personal appointment, Holiday"
+                    className="mt-1"
+                  />
+                </div>
+              </AdminModalSection>
+            </AdminModal>
           </TabsContent>
 
           <TabsContent value="parentcomm" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
@@ -3186,7 +3259,7 @@ export default function Admin() {
                       <AdminModalDetailRow
                         label="Last Login"
                         value={`${new Date(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at).toLocaleDateString()} at ${new Date(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at).toLocaleTimeString()}`}
-                        icon={<Clock className="h-4 w-4" />}
+                        icon={<Clock className="h-4 w-4 text-slate-600 dark:text-slate-300" />}
                       />
                     )}
                   </div>
