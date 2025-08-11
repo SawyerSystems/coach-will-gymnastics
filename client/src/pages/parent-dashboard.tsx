@@ -20,18 +20,13 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, Parent, FocusArea } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Activity, AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle } from 'lucide-react';
+import { Activity, AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle, Zap } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 
 // Import new parent UI components
 import {
-  ParentMainContainer,
-  ParentContentContainer,
-  ParentPageHeader,
-  ParentPageTitle,
-  ParentPageSubtitle,
   ParentStatsGrid,
   ParentStatCard,
   ParentTabs,
@@ -44,6 +39,15 @@ import {
   ParentCardContent,
   ParentButton
 } from '@/components/parent-ui';
+
+// Import layout components directly
+import {
+  ParentMainContainer,
+  ParentContentContainer,
+  ParentPageHeader,
+  ParentPageTitle,
+  ParentPageSubtitle
+} from '@/components/parent-ui/ParentLayout';
 import { ParentMainContentContainer } from '@/components/parent-ui/ParentMainContentContainer';
 
 // Helper function to format focus areas for display
@@ -890,33 +894,80 @@ function ParentDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* Summary Statistics */}
-                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 xs:gap-4 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200/60 dark:from-purple-900/30 dark:to-blue-900/30 dark:border-purple-400/20">
-                      <div className="text-center p-2">
-                        <div className="text-xl xs:text-2xl font-bold text-blue-700 dark:text-blue-300">{pastBookings.length}</div>
-                        <div className="text-[10px] xs:text-xs sm:text-sm text-blue-600 dark:text-blue-400">Sessions Completed</div>
-                      </div>
-                      <div className="text-center p-2">
-                        <div className="text-xl xs:text-2xl font-bold text-purple-700 dark:text-purple-300">
-                          {pastBookings.reduce((total, booking) => {
+                    {/* Modern Adventure Log Metrics */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Progress Summary
+                      </h3>
+                      
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <ParentStatCard
+                          label="Sessions Completed"
+                          value={pastBookings.length}
+                          icon={<Trophy />}
+                          color="blue"
+                        />
+                        
+                        <ParentStatCard
+                          label="Skills Practiced"
+                          value={pastBookings.reduce((total, booking) => {
                             return total + (booking.focusAreas?.length || 0);
                           }, 0)}
-                        </div>
-                        <div className="text-[10px] xs:text-xs sm:text-sm text-purple-600">Skills Practiced</div>
-                      </div>
-                      <div className="text-center p-2 col-span-2 xs:col-span-1">
-                        <div className="text-xl xs:text-2xl font-bold text-green-700 flex items-center justify-center gap-1">
-                          {(() => {
+                          icon={<Target />}
+                          color="purple"
+                        />
+                        
+                        <ParentStatCard
+                          label="Adventure Level"
+                          value={`Level ${Math.floor(pastBookings.length / 3) + 1}`}
+                          icon={<Award />}
+                          color="orange"
+                        />
+                        
+                        <ParentStatCard
+                          label="Consistency"
+                          value={(() => {
                             const sessionsPerMonth = pastBookings.length / Math.max(1, 
                               Math.ceil((new Date().getTime() - new Date(Math.min(...pastBookings.map(b => b.createdAt ? new Date(b.createdAt).getTime() : Date.now()))).getTime()) / (1000 * 60 * 60 * 24 * 30))
                             );
-                            if (sessionsPerMonth >= 4) return <>🔥 Excellent</>;
-                            if (sessionsPerMonth >= 2) return <>⚡ Moderate</>;
-                            return <>💤 Low</>;
+                            if (sessionsPerMonth >= 4) return "Excellent 🔥";
+                            if (sessionsPerMonth >= 2) return "Good ⚡";
+                            return "Building 💪";
                           })()}
-                        </div>
-                        <div className="text-[10px] xs:text-xs sm:text-sm text-green-600">Consistency</div>
+                          icon={<TrendingUp />}
+                          color="green"
+                        />
                       </div>
+                      
+                      {/* Progress Bar */}
+                      <ParentCard className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-300 dark:border-yellow-700">
+                        <ParentCardContent className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
+                              <Zap className="w-4 h-4" />
+                              Progress to Next Level
+                            </span>
+                            <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
+                              Level {Math.floor(pastBookings.length / 3) + 1}
+                            </span>
+                          </div>
+                          <div className="w-full bg-yellow-200 dark:bg-yellow-800/30 rounded-full h-3 relative overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-yellow-400 to-orange-400 dark:from-yellow-500 dark:to-orange-500 h-3 rounded-full transition-all duration-500 relative"
+                              style={{ width: `${Math.min(((pastBookings.length % 3) / 3) * 100, 100)}%` }}
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                            </div>
+                          </div>
+                          <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-2 text-center">
+                            {pastBookings.length % 3 === 0 && pastBookings.length > 0 
+                              ? "🎉 Level Complete! Ready for the next challenge!"
+                              : `${3 - (pastBookings.length % 3)} more sessions to level up! 🎯`
+                            }
+                          </div>
+                        </ParentCardContent>
+                      </ParentCard>
                     </div>
 
                     {/* Adventure Log Entries */}
