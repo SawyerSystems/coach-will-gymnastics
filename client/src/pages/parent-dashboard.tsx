@@ -895,18 +895,19 @@ function ParentDashboard() {
                 ) : (
                   <div className="space-y-6">
                     {/* Modern Adventure Log Metrics */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <h3 className="text-base sm:text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
                         Progress Summary
                       </h3>
                       
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                         <ParentStatCard
                           label="Sessions Completed"
                           value={pastBookings.length}
                           icon={<Trophy />}
                           color="blue"
+                          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
                         />
                         
                         <ParentStatCard
@@ -916,6 +917,7 @@ function ParentDashboard() {
                           }, 0)}
                           icon={<Target />}
                           color="purple"
+                          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
                         />
                         
                         <ParentStatCard

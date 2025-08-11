@@ -84,16 +84,16 @@ export function ParentStatCard({
       )}
       {...props}
     >
-      <div className="pt-6 pb-6 px-6">
-        <div className="flex items-center gap-4">
-          <div className={cn("p-3 rounded-full", colors.iconBg)}>
-            <div className={cn("h-6 w-6", colors.iconColor)}>
+      <div className="pt-4 pb-4 px-4 sm:pt-6 sm:pb-6 sm:px-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className={cn("p-2 sm:p-3 rounded-full", colors.iconBg)}>
+            <div className={cn("h-5 w-5 sm:h-6 sm:w-6", colors.iconColor)}>
               {icon}
             </div>
           </div>
-          <div>
-            <p className={cn("text-sm font-medium", colors.labelColor)}>{label}</p>
-            <p className={cn("text-2xl font-bold", colors.valueColor)}>{value}</p>
+          <div className="flex-1 min-w-0">
+            <p className={cn("text-xs sm:text-sm font-medium truncate", colors.labelColor)}>{label}</p>
+            <p className={cn("text-xl sm:text-2xl font-bold", colors.valueColor)}>{value}</p>
           </div>
         </div>
       </div>
