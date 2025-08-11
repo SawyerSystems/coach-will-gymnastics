@@ -1743,18 +1743,19 @@ export default function Admin() {
             </AdminCard>
           </TabsContent>
 
-          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="parents" role="tabpanel" id="parents-panel" aria-labelledby="parents-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
                   <User className="h-8 w-8 text-[#D8BD2A]" />
                   Parents Management
                   <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
                     {parentsData?.parents?.length || 0} total
                   </Badge>
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="space-y-6 sm:space-y-8">
+                </span>
+              }
+            >
+              <div className="space-y-6 sm:space-y-8">
                 {/* Search bar */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                   <div className="relative flex-1 max-w-xl">
@@ -1808,7 +1809,7 @@ export default function Admin() {
                         return (
                           <Card 
                             key={parent.id} 
-                            className="group rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 hover:from-slate-50 hover:via-white hover:to-slate-50 dark:hover:bg-[#0F0276]/95 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                            className="group rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/10 hover:from-slate-50 hover:via-white hover:to-slate-50 dark:hover:bg-white/15 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                           >
                             <CardContent className="p-6">
                               <div className="flex justify-between items-start gap-4">
@@ -1951,8 +1952,8 @@ export default function Admin() {
                     )}
                   </div>
                 )}
-              </AdminCardContent>
-            </AdminCard>
+              </div>
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="upcoming" role="tabpanel" id="upcoming-panel" aria-labelledby="upcoming-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
