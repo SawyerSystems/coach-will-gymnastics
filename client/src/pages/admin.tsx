@@ -9,6 +9,7 @@ import { AdminLessonTypeManager } from "@/components/admin-lesson-type-manager";
 import { AdminSiteContentManager } from "@/components/admin-site-content-manager";
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
 import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
+import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import AthleteProgressPage from "@/components/admin/AthleteProgressPage";
 import { ContentSection, SectionBasedContentEditor } from "@/components/section-based-content-editor";
@@ -2980,116 +2981,26 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
+          <TabsContent value="analytics" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer 
+              heading={
+                <div className="flex items-center gap-2 sm:gap-3">
                   <BarChart className="h-8 w-8 text-[#D8BD2A]" />
                   Analytics Dashboard
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="space-y-4 sm:space-y-6 lg:space-y-8">
-                <div className="space-y-4 sm:space-y-6">
-                  {/* Key Metrics */}
-                  <AdminAnalyticsMetrics metrics={analyticsHeaderMetrics} columns={{ base: 2, sm: 3, lg: 4 }} />
-                  
-                  {/* Old inline average derivation now handled in useMemo(avgBookingValue) above; continue with rest of analytics UI */}
-                  
-                  {/* Continue existing content after the key metrics grid */}
-                  {/* The following code block begins where the old Avg Booking Value card started */}
-                  {/* Preserve the remainder of the analytics tab content below unchanged */}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Online Bookings</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-black text-[#0F0276] dark:text-white">
-                          {allBookings.length > 0
-                            ? Math.round((allBookings.filter(b => (b as any).bookingMethod === 'Website').length / allBookings.length) * 100)
-                            : 0}%
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Booked on website</p>
-                      </CardContent>
-                  </Card>
-
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold text-[#0F0276] dark:text-white">Admin Booked</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-black text-[#0F0276] dark:text-white">
-                          {allBookings.length > 0
-                            ? Math.round((allBookings.filter(b => (b as any).bookingMethod === 'Admin').length / allBookings.length) * 100)
-                            : 0}%
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-white/80 font-medium mt-1">Created by admin</p>
-                      </CardContent>
-                  </Card>
-                </div>
-
-                  {/* Date Range + Filters */}
-                  <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-[#D8BD2A]" />
-                        Filters
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold text-slate-700 dark:text-white">Start Date</Label>
-                          <Input
-                            type="date"
-                            value={analyticsDateRange.start}
-                            onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, start: e.target.value }))}
-                            className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold text-slate-700 dark:text-white">End Date</Label>
-                          <Input
-                            type="date"
-                            value={analyticsDateRange.end}
-                            onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, end: e.target.value }))}
-                            className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold text-slate-700 dark:text-white">Lesson Type</Label>
-                          <Select value={analyticsLessonType} onValueChange={setAnalyticsLessonType}>
-                            <SelectTrigger className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white">
-                              <SelectValue placeholder="All lesson types" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Lesson Types</SelectItem>
-                              {(lessonTypes || []).map((lt: any) => (
-                                <SelectItem key={lt.id} value={lt.name}>{lt.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            variant="outline"
-                            className="w-full bg-white dark:bg-[#0F0276] border-0 dark:border-[#2A4A9B] shadow-md hover:shadow-lg transition-all duration-200 rounded-lg dark:text-white"
-                            onClick={() => {
-                              setAnalyticsDateRange({ start: '', end: '' });
-                              setAnalyticsLessonType('all');
-                            }}
-                          >
-                            Reset Filters
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                </AdminCardContent>
-              </AdminCard>
-            </TabsContent>
+              }
+            >
+              <AdminAnalyticsTab
+                analyticsHeaderMetrics={analyticsHeaderMetrics}
+                allBookings={allBookings}
+                lessonTypes={lessonTypes}
+                analyticsDateRange={analyticsDateRange}
+                setAnalyticsDateRange={setAnalyticsDateRange}
+                analyticsLessonType={analyticsLessonType}
+                setAnalyticsLessonType={setAnalyticsLessonType}
+              />
+            </MainContentContainer>
+          </TabsContent>
 
           <TabsContent value="waivers" className="w-full max-w-full px-0 sm:px-2">
             <MainContentContainer 
