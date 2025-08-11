@@ -675,28 +675,32 @@ function ParentDashboard() {
         </div>
 
           <ParentTabs defaultValue="upcoming">
-          <ParentTabsList className="w-full grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 p-1 sm:p-2 h-auto mb-4 sm:mb-6 overflow-x-auto">
+          <ParentTabsList className="w-full grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-6 gap-1 sm:gap-2 p-1 sm:p-2 h-auto mb-4 sm:mb-6 overflow-x-auto">
             <ParentTabsTrigger value="upcoming" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
               <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="hidden xs:inline">Upcoming</span>
               <span className="xs:hidden">Next</span>
             </ParentTabsTrigger>
             <ParentTabsTrigger value="past" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <BookMarked className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="hidden xs:inline">Adventure Log</span>
               <span className="xs:hidden">Past</span>
             </ParentTabsTrigger>
             <ParentTabsTrigger value="athletes" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
-              <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Athletes</span>
             </ParentTabsTrigger>
             <ParentTabsTrigger value="waivers" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
-              <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <FileCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Waivers</span>
             </ParentTabsTrigger>
             <ParentTabsTrigger value="profile" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
-              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <UserCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Profile</span>
+            </ParentTabsTrigger>
+            <ParentTabsTrigger value="settings" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
+              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span>Settings</span>
             </ParentTabsTrigger>
           </ParentTabsList>
 
@@ -1394,6 +1398,124 @@ function ParentDashboard() {
               }
             >
               <ParentWaiverManagement />
+            </ParentMainContentContainer>
+          </ParentTabsContent>
+
+          <ParentTabsContent value="settings">
+            <ParentMainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <Settings className="h-8 w-8 text-[#D8BD2A]" />
+                  Settings & Preferences
+                </span>
+              }
+            >
+              <div className="space-y-6">
+                {/* Notification Settings */}
+                <ParentCard>
+                  <ParentCardHeader>
+                    <ParentCardTitle className="flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Notification Preferences
+                    </ParentCardTitle>
+                  </ParentCardHeader>
+                  <ParentCardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">Email Notifications</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Receive booking confirmations and updates via email
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">SMS Notifications</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Get text reminders for upcoming sessions
+                        </div>
+                      </div>
+                      <Switch />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">Session Reminders</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          24-hour reminders for upcoming sessions
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                  </ParentCardContent>
+                </ParentCard>
+
+                {/* Privacy & Security */}
+                <ParentCard>
+                  <ParentCardHeader>
+                    <ParentCardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Privacy & Security
+                    </ParentCardTitle>
+                  </ParentCardHeader>
+                  <ParentCardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">Share Progress Photos</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Allow coaches to share photos of your athlete's progress
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">Marketing Communications</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          Receive updates about new programs and events
+                        </div>
+                      </div>
+                      <Switch />
+                    </div>
+                  </ParentCardContent>
+                </ParentCard>
+
+                {/* Account Actions */}
+                <ParentCard>
+                  <ParentCardHeader>
+                    <ParentCardTitle className="flex items-center gap-2">
+                      <UserCircle className="h-5 w-5" />
+                      Account Actions
+                    </ParentCardTitle>
+                  </ParentCardHeader>
+                  <ParentCardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <ParentButton variant="outline" className="justify-start">
+                        <Download className="h-4 w-4 mr-2" />
+                        Export My Data
+                      </ParentButton>
+                      
+                      <ParentButton variant="outline" className="justify-start">
+                        <Mail className="h-4 w-4 mr-2" />
+                        Contact Support
+                      </ParentButton>
+                    </div>
+                    
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Need help or have questions? Our support team is here to assist you.
+                      </p>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <p>📧 Email: support@coachwilltumbles.com</p>
+                        <p>📞 Phone: (555) 123-4567</p>
+                      </div>
+                    </div>
+                  </ParentCardContent>
+                </ParentCard>
+              </div>
             </ParentMainContentContainer>
           </ParentTabsContent>
         </ParentTabs>
