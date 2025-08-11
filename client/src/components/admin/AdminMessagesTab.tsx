@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TabsContent } from "@/components/ui/tabs";
 import { AdminContentTabs } from "@/components/admin-ui/AdminContentTabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
+import { MainContentContainer } from "@/components/admin-ui/MainContentContainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Mail, MessageCircle, Inbox, Trash2 } from "lucide-react";
+import { Loader2, Mail, MessageCircle, Inbox, Trash2, Search } from "lucide-react";
 import { useState } from "react";
 
 export type SiteInquiry = {
@@ -22,6 +24,7 @@ export type SiteInquiry = {
 
 export default function AdminMessagesTab() {
   const [tab, setTab] = useState("inquiries");
+  const [searchTerm, setSearchTerm] = useState("");
   const qc = useQueryClient();
 
   const inquiries = useQuery<SiteInquiry[]>({
@@ -81,42 +84,72 @@ export default function AdminMessagesTab() {
       >
 
         <TabsContent value="sms">
-          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-            <CardHeader>
-              <CardTitle className="text-[#0F0276] dark:text-white">SMS Messages</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+            <AdminCardHeader>
+              <AdminCardTitle className="text-[#0F0276] dark:text-white">SMS Messages</AdminCardTitle>
+            </AdminCardHeader>
+            <AdminCardContent>
               <p className="text-sm text-slate-600 dark:text-white/80">SMS integration coming soon. This tab will show inbound/outbound texts.</p>
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
         </TabsContent>
 
         <TabsContent value="emails">
-          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-            <CardHeader>
-              <CardTitle className="text-[#0F0276] dark:text-white">Email Messages</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+            <AdminCardHeader>
+              <AdminCardTitle className="text-[#0F0276] dark:text-white">Email Messages</AdminCardTitle>
+            </AdminCardHeader>
+            <AdminCardContent>
               <p className="text-sm text-slate-600 dark:text-white/80">Email logs overview coming soon. We'll surface recent sends and failures.</p>
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
         </TabsContent>
 
         <TabsContent value="inquiries">
-          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-            <CardHeader>
-              <CardTitle className="text-[#0F0276] dark:text-white">Site Inquiries</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <MainContentContainer
+            heading={
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 w-full">
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <Inbox className="h-8 w-8 text-[#D8BD2A]" />
+                  Site Inquiries
+                  <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
+                    {inquiries.data?.length || 0} total
+                  </Badge>
+                </span>
+                <div className="relative max-w-md w-full sm:w-auto">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-300 h-5 w-5" />
+                  <Input
+                    placeholder="Search inquiries..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 dark:bg-white/10 dark:text-white dark:placeholder-white/70 focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] focus:bg-white dark:focus:bg-white/20 transition-all duration-200 text-base"
+                  />
+                </div>
+              </div>
+            }
+          >
+            <div className="space-y-6">
               {inquiries.isLoading ? (
                 <div className="flex items-center gap-2 text-slate-600 dark:text-white/80">
                   <Loader2 className="h-4 w-4 animate-spin" /> Loading inquiries…
                 </div>
               ) : (inquiries.data?.length ? (
                 <div className="space-y-3">
-                  {inquiries.data.map((inq) => (
-                    <Card key={inq.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <CardContent className="p-4">
+                  {inquiries.data
+                    .filter(inq => {
+                      if (!searchTerm) return true;
+                      const searchLower = searchTerm.toLowerCase();
+                      return (
+                        inq.name.toLowerCase().includes(searchLower) ||
+                        inq.email.toLowerCase().includes(searchLower) ||
+                        inq.message.toLowerCase().includes(searchLower) ||
+                        (inq.phone && inq.phone.toLowerCase().includes(searchLower)) ||
+                        (inq.athleteInfo && inq.athleteInfo.toLowerCase().includes(searchLower))
+                      );
+                    })
+                    .map((inq) => (
+                    <AdminCard key={inq.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+                      <AdminCardContent className="p-4">
                         {/* Header: name/date left, actions top-right on mobile */}
                         <div className="relative mb-24 sm:mb-3">
                           <div className="font-medium text-[#0F0276] dark:text-white pr-28 sm:pr-0">
@@ -146,15 +179,15 @@ export default function AdminMessagesTab() {
                           {inq.athleteInfo ? <div><span className="text-slate-500 dark:text-white/70">Athlete:</span> {inq.athleteInfo}</div> : null}
                           <div className="mt-2 whitespace-pre-wrap">{inq.message}</div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </AdminCardContent>
+                    </AdminCard>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-slate-600 dark:text-white/80">No inquiries yet. Messages sent via the Contact page will appear here.</p>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </MainContentContainer>
         </TabsContent>
       </AdminContentTabs>
     </div>

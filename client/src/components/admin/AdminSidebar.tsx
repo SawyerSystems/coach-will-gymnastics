@@ -113,7 +113,7 @@ export function AdminSidebar({
     {
       id: 'schedule',
       label: 'Schedule',
-      icon: <Calendar className="h-5 w-5" />
+      icon: <Clock className="h-5 w-5" />
     },
     {
       id: 'messages',
