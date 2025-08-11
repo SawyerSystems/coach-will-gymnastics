@@ -1822,7 +1822,8 @@ function ParentDashboard() {
                 </Label>
                 <Input
                   id="profile-first-name"
-                  defaultValue={bookings && bookings.length > 0 ? bookings[0].parentFirstName || '' : ''}
+                  defaultValue={parentInfo?.firstName || ''}
+                  placeholder="Enter your first name"
                   className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                 />
               </div>
@@ -1832,7 +1833,8 @@ function ParentDashboard() {
                 </Label>
                 <Input
                   id="profile-last-name"
-                  defaultValue={bookings && bookings.length > 0 ? bookings[0].parentLastName || '' : ''}
+                  defaultValue={parentInfo?.lastName || ''}
+                  placeholder="Enter your last name"
                   className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                 />
               </div>
@@ -1846,7 +1848,8 @@ function ParentDashboard() {
                 <Input
                   id="profile-email"
                   type="email"
-                  defaultValue={authStatus?.email || ''}
+                  defaultValue={parentInfo?.email || authStatus?.email || ''}
+                  placeholder="your.email@example.com"
                   className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                 />
               </div>
@@ -1858,9 +1861,9 @@ function ParentDashboard() {
                 <Input
                   id="profile-phone"
                   type="tel"
-                  defaultValue={bookings && bookings.length > 0 ? bookings[0].parentPhone || '' : ''}
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  defaultValue={parentInfo?.phone || ''}
                   placeholder="(555) 123-4567"
+                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                 />
               </div>
             </div>
@@ -1890,142 +1893,144 @@ function ParentDashboard() {
           description="Manage your emergency contact information for athlete safety"
           size="xl"
         >
-          <ParentModalSection title="Primary Emergency Contact">
-            <ParentModalGrid>
-              <div>
-                <Label htmlFor="emergency-1-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Contact Name
-                </Label>
-                <Input
-                  id="emergency-1-name"
-                  defaultValue={bookings && bookings.length > 0 ? bookings[0].emergencyContactName || '' : ''}
-                  placeholder="Full name"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
-                />
-              </div>
-              <div>
-                <Label htmlFor="emergency-1-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Phone Number
-                </Label>
-                <Input
-                  id="emergency-1-phone"
-                  type="tel"
-                  defaultValue={bookings && bookings.length > 0 ? bookings[0].emergencyContactPhone || '' : ''}
-                  placeholder="(555) 123-4567"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="emergency-1-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Relationship
-                </Label>
-                <Select defaultValue="parent">
-                  <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
-                    <SelectValue placeholder="Select relationship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="guardian">Guardian</SelectItem>
-                    <SelectItem value="grandparent">Grandparent</SelectItem>
-                    <SelectItem value="sibling">Sibling</SelectItem>
-                    <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
-                    <SelectItem value="family-friend">Family Friend</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </ParentModalGrid>
-          </ParentModalSection>
+          <div className="max-h-[60vh] sm:max-h-none overflow-y-auto px-1">
+            <ParentModalSection title="Primary Emergency Contact">
+              <ParentModalGrid>
+                <div>
+                  <Label htmlFor="emergency-1-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Contact Name
+                  </Label>
+                  <Input
+                    id="emergency-1-name"
+                    defaultValue={parentInfo?.emergencyContactName || ''}
+                    placeholder="Full name"
+                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emergency-1-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="emergency-1-phone"
+                    type="tel"
+                    defaultValue={parentInfo?.emergencyContactPhone || ''}
+                    placeholder="(555) 123-4567"
+                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="emergency-1-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Relationship
+                  </Label>
+                  <Select defaultValue="parent">
+                    <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="guardian">Guardian</SelectItem>
+                      <SelectItem value="grandparent">Grandparent</SelectItem>
+                      <SelectItem value="sibling">Sibling</SelectItem>
+                      <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
+                      <SelectItem value="family-friend">Family Friend</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </ParentModalGrid>
+            </ParentModalSection>
 
-          <ParentModalSection title="Secondary Emergency Contact">
-            <ParentModalGrid>
-              <div>
-                <Label htmlFor="emergency-2-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Contact Name
-                </Label>
-                <Input
-                  id="emergency-2-name"
-                  placeholder="Full name"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
-                />
-              </div>
-              <div>
-                <Label htmlFor="emergency-2-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Phone Number
-                </Label>
-                <Input
-                  id="emergency-2-phone"
-                  type="tel"
-                  placeholder="(555) 123-4567"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="emergency-2-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Relationship
-                </Label>
-                <Select>
-                  <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
-                    <SelectValue placeholder="Select relationship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="guardian">Guardian</SelectItem>
-                    <SelectItem value="grandparent">Grandparent</SelectItem>
-                    <SelectItem value="sibling">Sibling</SelectItem>
-                    <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
-                    <SelectItem value="family-friend">Family Friend</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </ParentModalGrid>
-          </ParentModalSection>
+            <ParentModalSection title="Secondary Emergency Contact">
+              <ParentModalGrid>
+                <div>
+                  <Label htmlFor="emergency-2-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Contact Name
+                  </Label>
+                  <Input
+                    id="emergency-2-name"
+                    placeholder="Full name"
+                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emergency-2-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="emergency-2-phone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="emergency-2-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Relationship
+                  </Label>
+                  <Select>
+                    <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="guardian">Guardian</SelectItem>
+                      <SelectItem value="grandparent">Grandparent</SelectItem>
+                      <SelectItem value="sibling">Sibling</SelectItem>
+                      <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
+                      <SelectItem value="family-friend">Family Friend</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </ParentModalGrid>
+            </ParentModalSection>
 
-          <ParentModalSection title="Additional Emergency Contact (Optional)">
-            <ParentModalGrid>
-              <div>
-                <Label htmlFor="emergency-3-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Contact Name
-                </Label>
-                <Input
-                  id="emergency-3-name"
-                  placeholder="Full name"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
-                />
-              </div>
-              <div>
-                <Label htmlFor="emergency-3-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Phone Number
-                </Label>
-                <Input
-                  id="emergency-3-phone"
-                  type="tel"
-                  placeholder="(555) 123-4567"
-                  className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="emergency-3-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Relationship
-                </Label>
-                <Select>
-                  <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
-                    <SelectValue placeholder="Select relationship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="guardian">Guardian</SelectItem>
-                    <SelectItem value="grandparent">Grandparent</SelectItem>
-                    <SelectItem value="sibling">Sibling</SelectItem>
-                    <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
-                    <SelectItem value="family-friend">Family Friend</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </ParentModalGrid>
-          </ParentModalSection>
+            <ParentModalSection title="Additional Emergency Contact (Optional)">
+              <ParentModalGrid>
+                <div>
+                  <Label htmlFor="emergency-3-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Contact Name
+                  </Label>
+                  <Input
+                    id="emergency-3-name"
+                    placeholder="Full name"
+                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="emergency-3-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Phone Number
+                  </Label>
+                  <Input
+                    id="emergency-3-phone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="emergency-3-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Relationship
+                  </Label>
+                  <Select>
+                    <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="guardian">Guardian</SelectItem>
+                      <SelectItem value="grandparent">Grandparent</SelectItem>
+                      <SelectItem value="sibling">Sibling</SelectItem>
+                      <SelectItem value="aunt-uncle">Aunt/Uncle</SelectItem>
+                      <SelectItem value="family-friend">Family Friend</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </ParentModalGrid>
+            </ParentModalSection>
+          </div>
 
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
             <ParentButton variant="secondary" onClick={() => setShowUpdateEmergencyContact(false)}>
