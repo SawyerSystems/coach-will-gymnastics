@@ -1,4 +1,3 @@
-import { AdminTabButtonsRow } from '@/components/admin-ui/AdminTabButtons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Clock, HelpCircle, Image, Mail, MapPin, Phone, Save, Star, Upload, Users, Video } from 'lucide-react';
+import { Clock, HelpCircle, Image, Mail, MapPin, Phone, Save, Star, Upload, Users, Video, FileText } from 'lucide-react';
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import TestimonialForm from './TestimonialForm';
+import { MainContentContainer } from '@/components/admin-ui/MainContentContainer';
 
 interface SiteContent {
   bannerVideo: string;
@@ -1287,44 +1287,61 @@ export function AdminSiteContentManager() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3">
-            <Upload className="h-8 w-8 text-[#D8BD2A]" />
-            Site Content Management
-          </h2>
-          <p className="text-slate-600 dark:text-white mt-1">Manage website content, media, and information</p>
-        </div>
-        <Button 
-          onClick={handleSave} 
-          disabled={saving} 
-          className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold shadow-lg hover:shadow-xl transition-all duration-200 border-0 rounded-xl px-6 py-3"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? 'Saving...' : 'Save All Changes'}
-        </Button>
-      </div>
-
+    <>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <AdminTabButtonsRow
-          items={[
-            { value: 'media', label: <><Video className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Media</span></> },
-            { value: 'about', label: <><Users className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">About</span></> },
-            { value: 'contact', label: <><MapPin className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Contact</span></> },
-            { value: 'hours', label: <><Clock className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Hours</span></> },
-            { value: 'programs', label: <><Upload className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Programs</span></> },
-            { value: 'testimonials', label: <><Star className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Reviews</span></> },
-            { value: 'faqs', label: <><HelpCircle className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">FAQs</span></> },
-            { value: 'emails', label: <><Mail className="h-4 w-4 mr-1 sm:mr-2" /><span className="hidden sm:inline">Emails</span></> },
-          ]}
-          listClassName="grid grid-cols-4 grid-rows-2 gap-3 p-3 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl w-full min-h-[120px]"
-          triggerClassName="font-semibold text-xs sm:text-sm text-center h-12 flex items-center justify-center"
-        />
+        <MainContentContainer
+          heading="Site Content Manager"
+          icon={<FileText className="h-8 w-8" />}
+          actions={
+            <Button 
+              onClick={handleSave} 
+              disabled={saving} 
+              className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold shadow-lg hover:shadow-xl transition-all duration-200 border-0 rounded-xl px-6 py-3"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Saving...' : 'Save All Changes'}
+            </Button>
+          }
+        >
+          <TabsList className="grid grid-cols-4 grid-rows-2 h-auto p-1 gap-1 bg-muted rounded-md text-muted-foreground w-full sm:inline-flex sm:h-10 sm:grid-cols-8 sm:grid-rows-1 sm:items-center sm:justify-center">
+            <TabsTrigger value="media" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <Video className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Media</span>
+            </TabsTrigger>
+            <TabsTrigger value="about" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <Users className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">About</span>
+            </TabsTrigger>
+            <TabsTrigger value="contact" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <MapPin className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Contact</span>
+            </TabsTrigger>
+            <TabsTrigger value="hours" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <Clock className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Hours</span>
+            </TabsTrigger>
+            <TabsTrigger value="programs" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <Upload className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Programs</span>
+            </TabsTrigger>
+            <TabsTrigger value="testimonials" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <Star className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Reviews</span>
+            </TabsTrigger>
+            <TabsTrigger value="faqs" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <HelpCircle className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">FAQs</span>
+            </TabsTrigger>
+            <TabsTrigger value="emails" className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 py-2 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm sm:px-3 sm:py-1.5 sm:text-sm">
+              <Mail className="h-3 w-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Emails</span>
+            </TabsTrigger>
+          </TabsList>
+        </MainContentContainer>
 
         {/* Media Tab */}
         <TabsContent value="media" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
+            <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-bold text-purple-800 dark:text-purple-200 flex items-center gap-3">
                 <Video className="h-6 w-6 text-purple-600 dark:text-purple-300" />
@@ -1937,7 +1954,7 @@ export function AdminSiteContentManager() {
       </Tabs>
 
       {/* Banner Video Preview Dialog */}
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Banner Video Preview</DialogTitle>
@@ -1971,6 +1988,6 @@ export function AdminSiteContentManager() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
