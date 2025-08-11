@@ -1539,19 +1539,17 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
-                  {/* Graduation cap icon inline to avoid additional import churn since lucide already imported many */}
-                  <span className="inline-flex items-center justify-center h-8 w-8 text-[#D8BD2A]">🎓</span>
+          <TabsContent value="lesson-types" role="tabpanel" id="lesson-types-panel" aria-labelledby="lesson-types-tab" className="w-full max-w-full px-0 sm:px-2 dark:text-white">
+            <MainContentContainer
+              heading={
+                <span className="inline-flex items-center gap-2 sm:gap-3">
+                  <Dumbbell className="h-8 w-8 text-[#D8BD2A]" />
                   Lesson Type Management
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="pt-0">
-                <AdminLessonTypeManager />
-              </AdminCardContent>
-            </AdminCard>
+                </span>
+              }
+            >
+              <AdminLessonTypeManager />
+            </MainContentContainer>
           </TabsContent>
 
           <TabsContent value="skills" role="tabpanel" id="skills-panel" aria-labelledby="skills-tab" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">

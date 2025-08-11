@@ -263,7 +263,7 @@ export function AdminLessonTypeManager() {
         {!showForm && (
           <AdminButton onClick={handleCreate} className="rounded-xl px-6 py-3">
             <Plus className="mr-2 h-4 w-4" />
-            Create Lesson Type
+            Create Lesson
           </AdminButton>
         )}
       </div>
@@ -416,8 +416,8 @@ export function AdminLessonTypeManager() {
 
       <div className="grid gap-4">
         {lessonTypes.map((lessonType) => (
-          <Card key={lessonType.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-            <CardContent className="pt-6">
+          <AdminCard key={lessonType.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
+            <AdminCardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -480,8 +480,8 @@ export function AdminLessonTypeManager() {
                   </AdminButton>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </AdminCardContent>
+          </AdminCard>
         ))}
       </div>
     </div>
