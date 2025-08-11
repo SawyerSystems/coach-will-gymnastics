@@ -16,7 +16,7 @@ import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Link as LinkIcon, Plus, Star, Trash2, ShieldMinus, User, Phone, Mail, CheckCircle, FileText, RefreshCw, AlertTriangle } from "lucide-react";
+import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Link as LinkIcon, Plus, Star, Trash2, ShieldMinus, User, Phone, Mail, CheckCircle, FileText, RefreshCw, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
 import { useCreateProgressShareLink, useDeleteProgressShareLink, useProgressShareLinks, useRevokeProgressShareLink } from "@/hooks/useAthleteProgress";
 import { useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
 import React, { useState } from "react";
@@ -118,6 +118,14 @@ export function AthleteDetailDialog({
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
   const [isPhotoEnlarged, setIsPhotoEnlarged] = useState(false);
+  
+  // Collapsible section states
+  const [isParentInfoExpanded, setIsParentInfoExpanded] = useState(false);
+  const [isWaiverStatusExpanded, setIsWaiverStatusExpanded] = useState(false);
+  const [isBookingHistoryExpanded, setIsBookingHistoryExpanded] = useState(false);
+  const [isSkillProgressExpanded, setIsSkillProgressExpanded] = useState(false);
+  const [isShareLinksExpanded, setIsShareLinksExpanded] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { mutateAsync: createShareLink, isPending: creatingShare } = useCreateProgressShareLink();
@@ -386,7 +394,14 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Parent Info */}
-          <AdminModalSection title="Parent Information" icon={<User className="h-5 w-5" />} className="mt-6">
+          <AdminModalSection 
+            title="Parent Information" 
+            icon={<User className="h-5 w-5" />} 
+            className="mt-6"
+            collapsible={true}
+            isExpanded={isParentInfoExpanded}
+            onToggle={() => setIsParentInfoExpanded(!isParentInfoExpanded)}
+          >
             {parentLoading ? (
               <div className="flex items-center gap-2 text-slate-500 dark:text-blue-300 py-4">
                 <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -457,7 +472,14 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Waiver Status */}
-          <AdminModalSection title="Waiver Status" icon={<ShieldMinus className="h-5 w-5" />} className="mt-6">
+          <AdminModalSection 
+            title="Waiver Status" 
+            icon={<ShieldMinus className="h-5 w-5" />} 
+            className="mt-6"
+            collapsible={true}
+            isExpanded={isWaiverStatusExpanded}
+            onToggle={() => setIsWaiverStatusExpanded(!isWaiverStatusExpanded)}
+          >
             {waiverLoading ? (
               <div className="flex items-center gap-2 text-slate-500 dark:text-blue-300 py-4">
                 <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
@@ -639,16 +661,44 @@ export function AthleteDetailDialog({
           </AdminModalSection>
 
           {/* Bookings History */}
-          <div className="mt-6">
-            <BookingHistoryDisplay athleteId={athleteData.id} />
+          <div className="mt-6 p-3 sm:p-4 rounded-xl border shadow-sm bg-gradient-to-r from-white to-blue-50 border-blue-100 dark:from-[#0F0276]/20 dark:to-[#0F0276]/30 dark:border-[#2A4A9B]/40">
+            <div 
+              className="font-semibold flex items-center gap-2 mb-3 text-blue-800 dark:text-blue-200 cursor-pointer hover:opacity-75 transition-opacity"
+              onClick={() => setIsBookingHistoryExpanded(!isBookingHistoryExpanded)}
+            >
+              <Calendar className="h-5 w-5" />
+              Booking History
+              <div className="ml-auto">
+                {isBookingHistoryExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </div>
+            </div>
+            {isBookingHistoryExpanded && (
+              <BookingHistoryDisplay athleteId={athleteData.id} />
+            )}
           </div>
 
           {/* Skill Progress */}
-          <AdminModalSection title="Skill Progress" className="mt-6">
+          <AdminModalSection 
+            title="Skill Progress" 
+            className="mt-6"
+            collapsible={true}
+            isExpanded={isSkillProgressExpanded}
+            onToggle={() => setIsSkillProgressExpanded(!isSkillProgressExpanded)}
+          >
             <AthleteProgressPanel athleteId={athleteData.id} />
           </AdminModalSection>
           
-          <AdminModalSection title="Share Progress Links" className="mt-6">
+          <AdminModalSection 
+            title="Share Progress Links" 
+            className="mt-6"
+            collapsible={true}
+            isExpanded={isShareLinksExpanded}
+            onToggle={() => setIsShareLinksExpanded(!isShareLinksExpanded)}
+          >
             <div className="space-y-3">
               <div className="flex gap-2">
                 <Button

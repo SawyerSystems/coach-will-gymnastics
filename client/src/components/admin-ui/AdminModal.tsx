@@ -2,7 +2,7 @@ import * as React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "./AdminCard";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { AdminButton } from "./AdminButton";
 
 export interface AdminModalProps {
@@ -79,6 +79,9 @@ export interface AdminModalSectionProps extends React.HTMLAttributes<HTMLDivElem
   icon?: React.ReactNode;
   gradient?: "blue" | "purple" | "green" | "amber" | "red" | "gray";
   children: React.ReactNode;
+  collapsible?: boolean;
+  isExpanded?: boolean;
+  onToggle?: () => void;
 }
 
 const gradientClasses = {
@@ -105,6 +108,9 @@ export function AdminModalSection({
   gradient = "blue", 
   children, 
   className,
+  collapsible = false,
+  isExpanded = true,
+  onToggle,
   ...props 
 }: AdminModalSectionProps) {
   return (
@@ -116,14 +122,27 @@ export function AdminModalSection({
       )}
       {...props}
     >
-      <h4 className={cn(
-        "font-semibold flex items-center gap-2 mb-3",
-        titleColorClasses[gradient]
-      )}>
+      <div 
+        className={cn(
+          "font-semibold flex items-center gap-2 mb-3",
+          titleColorClasses[gradient],
+          collapsible && "cursor-pointer hover:opacity-75 transition-opacity"
+        )}
+        onClick={collapsible ? onToggle : undefined}
+      >
         {icon}
         {title}
-      </h4>
-      {children}
+        {collapsible && (
+          <div className="ml-auto">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        )}
+      </div>
+      {(!collapsible || isExpanded) && children}
     </div>
   );
 }
