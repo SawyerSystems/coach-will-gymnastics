@@ -6,13 +6,10 @@ import { TwoStepFocusAreas } from '@/components/two-step-focus-areas-edit';
 import { AddAthleteModal } from '@/components/AddAthleteModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UnifiedBookingModal } from '@/components/UnifiedBookingModal';
 import { UpdatedWaiverModal } from '@/components/updated-waiver-modal';
 import { toast } from '@/hooks/use-toast';
@@ -27,6 +24,26 @@ import { AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Cl
 import { Switch } from '@/components/ui/switch';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+
+// Import new parent UI components
+import {
+  ParentMainContainer,
+  ParentContentContainer,
+  ParentPageHeader,
+  ParentPageTitle,
+  ParentPageSubtitle,
+  ParentStatsGrid,
+  ParentStatCard,
+  ParentTabs,
+  ParentTabsList,
+  ParentTabsTrigger,
+  ParentTabsContent,
+  ParentCard,
+  ParentCardHeader,
+  ParentCardTitle,
+  ParentCardContent,
+  ParentButton
+} from '@/components/parent-ui';
 
 // Helper function to format focus areas for display
 type FocusAreaDisplay = FocusArea | { name: string; apparatusName?: string } | string;
@@ -120,12 +137,12 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
       </div>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <ParentButton variant="secondary" onClick={onCancel}>
           Cancel
-        </Button>
-        <Button type="submit" disabled={!selectedDate || !selectedTime}>
+        </ParentButton>
+        <ParentButton type="submit" disabled={!selectedDate || !selectedTime}>
           Reschedule
-        </Button>
+        </ParentButton>
       </div>
     </form>
   );
@@ -593,64 +610,41 @@ function ParentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50/20 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-blue-800 dark:text-white mb-2">Parent Portal</h1>
-          <p className="text-blue-600/80 dark:text-blue-400">Manage your athletes, sessions and waivers</p>
-        </div>
+    <ParentMainContainer>
+      <ParentContentContainer>
+        <ParentPageHeader>
+          <ParentPageTitle>Parent Portal</ParentPageTitle>
+          <ParentPageSubtitle>Manage your athletes, sessions and waivers</ParentPageSubtitle>
+        </ParentPageHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
-                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Athletes</p>
-                  <p className="text-2xl font-bold text-blue-800 dark:text-white">{athletes.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-green-100 dark:bg-green-900/50 p-3 rounded-full">
-                  <Calendar className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Upcoming Sessions</p>
-                  <p className="text-2xl font-bold text-green-800 dark:text-white">{upcomingBookings.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50 dark:from-gray-800 dark:to-gray-700 overflow-hidden">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-purple-100 dark:bg-purple-900/50 p-3 rounded-full">
-                  <BookMarked className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Total Bookings</p>
-                  <p className="text-2xl font-bold text-purple-800 dark:text-white">{bookings.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ParentStatsGrid>
+          <ParentStatCard
+            icon={<Users className="h-6 w-6" />}
+            label="Total Athletes"
+            value={athletes.length}
+            color="blue"
+          />
+          <ParentStatCard
+            icon={<Calendar className="h-6 w-6" />}
+            label="Upcoming Sessions"
+            value={upcomingBookings.length}
+            color="green"
+          />
+          <ParentStatCard
+            icon={<BookMarked className="h-6 w-6" />}
+            label="Total Bookings"
+            value={bookings.length}
+            color="purple"
+          />
+        </ParentStatsGrid>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
           <div>
             <h2 className="text-2xl font-bold text-blue-800 dark:text-white">Booking Management</h2>
-            <p className="text-blue-600/80 dark:text-blue-400 text-sm">Schedule and manage your coaching sessions</p>
+            <p className="text-blue-600/80 dark:text-purple-300 text-sm">Schedule and manage your coaching sessions</p>
           </div>
           <div className="flex gap-2">
-            <Button 
+            <ParentButton 
               onClick={() => {
                 console.log('🎯 PARENT DASHBOARD: Book New Session clicked!', {
                   hasParentInfo: !!parentInfo,
@@ -660,44 +654,40 @@ function ParentDashboard() {
                 setSelectedAthleteForBooking(null); // Clear any pre-selection
                 setShowBookingModal(true);
               }}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-xs px-2 py-1.5 min-h-[36px] md:text-sm md:px-3 md:py-2 md:min-h-[40px] shadow-sm"
+              variant="primary"
+              size="md"
             >
-              <PlusCircle className="h-4 w-4 mr-1" />
+              <PlusCircle className="h-4 w-4" />
               Book New Session
-            </Button>
+            </ParentButton>
           </div>
         </div>
 
-        <Tabs defaultValue="upcoming" className="space-y-4 sm:space-y-6 w-full">
-          <TabsList className="w-full grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50 p-1 sm:p-2 rounded-lg h-auto mb-4 sm:mb-6 shadow-sm overflow-x-auto">
-            <TabsTrigger 
-              value="upcoming" 
-              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
-            >
+        <ParentTabs defaultValue="upcoming">
+          <ParentTabsList className="w-full grid grid-cols-2 xs:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 p-1 sm:p-2 h-auto mb-4 sm:mb-6 overflow-x-auto">
+            <ParentTabsTrigger value="upcoming" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
               <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="hidden xs:inline">Upcoming</span>
               <span className="xs:hidden">Next</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="past" 
-              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
-            >
+            </ParentTabsTrigger>
+            <ParentTabsTrigger value="past" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
               <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="hidden xs:inline">Adventure Log</span>
               <span className="xs:hidden">Past</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="athletes" 
-              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
-            >
+            </ParentTabsTrigger>
+            <ParentTabsTrigger value="athletes" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
               <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Athletes</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="waivers" 
-              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200"
-            >
+            </ParentTabsTrigger>
+            <ParentTabsTrigger value="waivers" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
               <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span>Waivers</span>
+            </ParentTabsTrigger>
+            <ParentTabsTrigger value="profile" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
+              <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span>Profile</span>
+            </ParentTabsTrigger>
+          </ParentTabsList>
               <span>Waivers</span>
             </TabsTrigger>
             <TabsTrigger 
@@ -710,27 +700,27 @@ function ParentDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upcoming" className="space-y-4">
-            <Card className="overflow-hidden border-0 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 py-4">
-                <CardTitle className="text-white flex items-center gap-2">
+          <ParentTabsContent value="upcoming">
+            <ParentCard>
+              <ParentCardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 py-4 rounded-t-2xl">
+                <ParentCardTitle className="text-white flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
                   Upcoming Sessions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+                </ParentCardTitle>
+              </ParentCardHeader>
+              <ParentCardContent>
                 {upcomingBookings.length === 0 ? (
                   <div className="text-center py-10">
                     <div className="text-5xl mb-4">🗓️</div>
-                    <p className="text-gray-500 text-lg mb-1">No upcoming sessions</p>
-                    <p className="text-gray-400 text-sm">Book a new session to see it here!</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-1">No upcoming sessions</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">Book a new session to see it here!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {upcomingBookings.map((booking) => (
                       <div 
                         key={booking.id} 
-                        className="border rounded-xl p-3 sm:p-4 bg-gradient-to-r from-white to-blue-50 hover:shadow-md transition-all duration-200"
+                        className="border border-slate-200/60 rounded-xl p-3 sm:p-4 bg-gradient-to-r from-white to-blue-50/50 hover:shadow-md transition-all duration-200 dark:border-purple-400/20 dark:from-purple-900/20 dark:to-blue-900/20"
                       >
                         <div className="flex flex-col xs:flex-row justify-between gap-4">
                           <div className="space-y-3">
@@ -906,33 +896,33 @@ function ParentDashboard() {
                             {/* Actions */}
                             {booking.status !== 'cancelled' && (
                               <div className="flex xs:flex-col gap-2 mt-auto">
-                                <Button
+                                <ParentButton
                                   size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs text-blue-600 hover:text-blue-700 px-2"
+                                  variant="iconBlue"
+                                  className="h-7 text-xs px-2"
                                   onClick={() => handleReschedule(booking.id)}
                                 >
                                   <Calendar className="h-3 w-3 mr-1" />
                                   Reschedule
-                                </Button>
-                                <Button
+                                </ParentButton>
+                                <ParentButton
                                   size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs text-green-600 hover:text-green-700 px-2"
+                                  variant="iconGreen"
+                                  className="h-7 text-xs px-2"
                                   onClick={() => handleEditBooking(booking.id)}
                                 >
                                   <Edit className="h-3 w-3 mr-1" />
                                   Edit
-                                </Button>
-                                <Button
+                                </ParentButton>
+                                <ParentButton
                                   size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs text-red-600 hover:text-red-700 px-2"
+                                  variant="iconRed"
+                                  className="h-7 text-xs px-2"
                                   onClick={() => setCancelBookingId(booking.id)}
                                 >
                                   <X className="h-3 w-3 mr-1" />
                                   Cancel
-                                </Button>
+                                </ParentButton>
                               </div>
                             )}
                           </div>
@@ -941,36 +931,36 @@ function ParentDashboard() {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </ParentCardContent>
+            </ParentCard>
+          </ParentTabsContent>
 
-          <TabsContent value="past" className="space-y-4">
-            <Card className="overflow-hidden border-0 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-purple-500 to-blue-600 py-4">
-                <CardTitle className="text-white flex items-center gap-2">
+          <ParentTabsContent value="past">
+            <ParentCard>
+              <ParentCardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 py-4 rounded-t-2xl">
+                <ParentCardTitle className="text-white flex items-center gap-2">
                   <BookMarked className="h-5 w-5" />
                   Adventure Log
                   <span className="text-xs xs:text-sm font-normal text-white/80 hidden xs:inline">Progress & Growth Tracking</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+                </ParentCardTitle>
+              </ParentCardHeader>
+              <ParentCardContent>
                 {pastBookings.length === 0 ? (
                   <div className="text-center py-10">
                     <div className="text-5xl mb-4">🎯</div>
-                    <p className="text-gray-500 text-lg mb-1">No adventures completed yet!</p>
-                    <p className="text-gray-400 text-sm">Complete your first session to start tracking progress</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-1">No adventures completed yet!</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">Complete your first session to start tracking progress</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* Summary Statistics */}
-                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 xs:gap-4 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 xs:gap-4 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200/60 dark:from-purple-900/30 dark:to-blue-900/30 dark:border-purple-400/20">
                       <div className="text-center p-2">
-                        <div className="text-xl xs:text-2xl font-bold text-blue-700">{pastBookings.length}</div>
-                        <div className="text-[10px] xs:text-xs sm:text-sm text-blue-600">Sessions Completed</div>
+                        <div className="text-xl xs:text-2xl font-bold text-blue-700 dark:text-blue-300">{pastBookings.length}</div>
+                        <div className="text-[10px] xs:text-xs sm:text-sm text-blue-600 dark:text-blue-400">Sessions Completed</div>
                       </div>
                       <div className="text-center p-2">
-                        <div className="text-xl xs:text-2xl font-bold text-purple-700">
+                        <div className="text-xl xs:text-2xl font-bold text-purple-700 dark:text-purple-300">
                           {pastBookings.reduce((total, booking) => {
                             return total + (booking.focusAreas?.length || 0);
                           }, 0)}
@@ -1134,55 +1124,55 @@ function ParentDashboard() {
                               description: "PDF export will be available in the next update.",
                             });
                           }}
-                          className="flex items-center gap-2 text-xs h-8 xs:h-9"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Export PDF
-                        </Button>
-                      </div>
+                        className="flex items-center gap-2 text-xs h-8 xs:h-9"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Export PDF
+                      </ParentButton>
                     </div>
                   </div>
+                </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </ParentCardContent>
+            </ParentCard>
+          </ParentTabsContent>
 
-          <TabsContent value="athletes" className="space-y-4">
-            <Card className="overflow-hidden border-0 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-green-600 py-4">
-                <CardTitle className="text-white flex items-center gap-2">
+          <ParentTabsContent value="athletes">
+            <ParentCard>
+              <ParentCardHeader className="bg-gradient-to-r from-blue-600 to-green-600 py-4 rounded-t-2xl">
+                <ParentCardTitle className="text-white flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Your Athletes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+                </ParentCardTitle>
+              </ParentCardHeader>
+              <ParentCardContent>
                 {athletes.length === 0 ? (
                   <div className="text-center py-10">
                     <div className="text-5xl mb-4">👤</div>
-                    <p className="text-gray-500 text-lg mb-1">No athletes registered</p>
-                    <p className="text-gray-400 text-sm">Add athletes to get started with bookings</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-1">No athletes registered</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-sm">Add athletes to get started with bookings</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 xs:gap-4">
                     {athletes.map((athlete) => (
-                      <div key={athlete.id} className="border rounded-xl p-3 xs:p-4 bg-gradient-to-r from-white to-blue-50 hover:shadow-md transition-all duration-200">
+                      <div key={athlete.id} className="border border-slate-200/60 rounded-xl p-3 xs:p-4 bg-gradient-to-r from-white to-blue-50/50 hover:shadow-md transition-all duration-200 dark:border-purple-400/20 dark:from-purple-900/20 dark:to-blue-900/20">
                         <div className="flex justify-between items-start mb-2 xs:mb-3">
                           <div className="flex items-center gap-2">
-                            <div className="bg-blue-100 p-1.5 rounded-full">
-                              <User className="w-3.5 h-3.5 text-blue-600" />
+                            <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-full">
+                              <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <h3 className="font-semibold text-sm xs:text-base sm:text-lg">{athlete.name}</h3>
+                            <h3 className="font-semibold text-sm xs:text-base sm:text-lg text-blue-900 dark:text-white">{athlete.name}</h3>
                           </div>
-                          <Button
+                          <ParentButton
                             size="sm"
-                            variant="outline"
-                            className="h-7 text-xs px-2 text-blue-600 hover:text-blue-700"
+                            variant="secondary"
+                            className="h-7 text-xs px-2"
                             onClick={() => setEditingAthleteId(athlete.id)}
                           >
                             <Eye className="h-3 w-3 mr-1" />
                             <span className="hidden xs:inline">View Details</span>
                             <span className="xs:hidden">View</span>
-                          </Button>
+                          </ParentButton>
                         </div>
                         
                         <div className="space-y-2 mt-3">
@@ -1218,69 +1208,69 @@ function ParentDashboard() {
                 )}
                 
                 <div className="mt-6 flex justify-center">
-                  <Button 
-                    className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-md transition-all duration-200 flex items-center gap-2"
+                  <ParentButton 
+                    variant="success"
                     onClick={() => setShowAddAthleteModal(true)}
                   >
                     <PlusCircle className="h-4 w-4" />
                     Add New Athlete
-                  </Button>
+                  </ParentButton>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </ParentCardContent>
+            </ParentCard>
+          </ParentTabsContent>
 
-          <TabsContent value="my-info" className="space-y-4">
-            <Card className="overflow-hidden border-0 shadow-md">
-              <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-600 py-4">
-                <CardTitle className="text-white flex items-center gap-2">
+          <ParentTabsContent value="profile">
+            <ParentCard>
+              <ParentCardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-t-2xl">
+                <ParentCardTitle className="text-white flex items-center gap-2">
                   <UserCircle className="h-5 w-5" />
                   My Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 space-y-6">
+                </ParentCardTitle>
+              </ParentCardHeader>
+              <ParentCardContent className="space-y-6">
                 {authStatus?.email && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     {/* Personal Information */}
-                    <div className="bg-gradient-to-r from-white to-purple-50 p-3 sm:p-4 rounded-xl border border-purple-100 shadow-sm hover:shadow-md transition-all">
-                      <h4 className="font-medium text-base sm:text-lg text-purple-800 flex items-center gap-2 mb-3 sm:mb-4">
+                    <div className="bg-gradient-to-r from-white to-purple-50/50 p-3 sm:p-4 rounded-xl border border-purple-100/60 shadow-sm hover:shadow-md transition-all dark:from-purple-900/20 dark:to-purple-800/20 dark:border-purple-400/20">
+                      <h4 className="font-medium text-base sm:text-lg text-purple-800 dark:text-purple-300 flex items-center gap-2 mb-3 sm:mb-4">
                         <User className="w-4 h-4" />
                         Personal Information
                       </h4>
                       <div className="space-y-2 sm:space-y-3">
-                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
-                          <label className="text-xs sm:text-sm font-medium text-gray-700">First Name</label>
-                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.firstName || 'Not provided'}</p>
+                        <div className="bg-white/70 dark:bg-purple-900/30 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
+                          <p className="text-sm sm:text-base text-gray-900 dark:text-white">{parentInfo?.firstName || 'Not provided'}</p>
                         </div>
-                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
-                          <label className="text-xs sm:text-sm font-medium text-gray-700">Last Name</label>
-                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.lastName || 'Not provided'}</p>
+                        <div className="bg-white/70 dark:bg-purple-900/30 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
+                          <p className="text-sm sm:text-base text-gray-900 dark:text-white">{parentInfo?.lastName || 'Not provided'}</p>
                         </div>
-                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
-                          <label className="text-xs sm:text-sm font-medium text-gray-700">Email</label>
-                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.email || authStatus.email}</p>
+                        <div className="bg-white/70 dark:bg-purple-900/30 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                          <p className="text-sm sm:text-base text-gray-900 dark:text-white">{parentInfo?.email || authStatus.email}</p>
                         </div>
-                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
-                          <label className="text-xs sm:text-sm font-medium text-gray-700">Phone</label>
-                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.phone || 'Not provided'}</p>
+                        <div className="bg-white/70 dark:bg-purple-900/30 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
+                          <p className="text-sm sm:text-base text-gray-900 dark:text-white">{parentInfo?.phone || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Emergency Contact */}
-                    <div className="bg-gradient-to-r from-white to-red-50 p-3 sm:p-4 rounded-xl border border-red-100 shadow-sm hover:shadow-md transition-all">
-                      <h4 className="font-medium text-base sm:text-lg text-red-800 flex items-center gap-2 mb-3 sm:mb-4">
+                    <div className="bg-gradient-to-r from-white to-red-50/50 p-3 sm:p-4 rounded-xl border border-red-100/60 shadow-sm hover:shadow-md transition-all dark:from-red-900/20 dark:to-red-800/20 dark:border-red-400/20">
+                      <h4 className="font-medium text-base sm:text-lg text-red-800 dark:text-red-300 flex items-center gap-2 mb-3 sm:mb-4">
                         <AlertCircle className="w-4 h-4" />
                         Emergency Contact
                       </h4>
                       <div className="space-y-2 sm:space-y-3">
-                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
-                          <label className="text-xs sm:text-sm font-medium text-gray-700">Emergency Contact Name</label>
-                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.emergencyContactName || 'Not provided'}</p>
+                        <div className="bg-white/70 dark:bg-red-900/30 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Contact Name</label>
+                          <p className="text-sm sm:text-base text-gray-900 dark:text-white">{parentInfo?.emergencyContactName || 'Not provided'}</p>
                         </div>
-                        <div className="bg-white bg-opacity-70 p-2 sm:p-3 rounded-lg">
-                          <label className="text-xs sm:text-sm font-medium text-gray-700">Emergency Contact Phone</label>
-                          <p className="text-sm sm:text-base text-gray-900">{parentInfo?.emergencyContactPhone || 'Not provided'}</p>
+                        <div className="bg-white/70 dark:bg-red-900/30 p-2 sm:p-3 rounded-lg">
+                          <label className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Contact Phone</label>
+                          <p className="text-sm sm:text-base text-gray-900 dark:text-white">{parentInfo?.emergencyContactPhone || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
@@ -1288,33 +1278,33 @@ function ParentDashboard() {
                 )}
 
                 {/* Account Actions */}
-                <div className="border-t pt-4 sm:pt-6">
-                  <h4 className="font-medium text-base sm:text-lg text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-gray-700" />
+                <div className="border-t border-slate-200/60 dark:border-purple-400/20 pt-4 sm:pt-6">
+                  <h4 className="font-medium text-base sm:text-lg text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                     Account Actions
                   </h4>
                   <div className="grid grid-cols-1 xs:grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
-                    <Button 
+                    <ParentButton 
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => setShowUpdateProfile(true)}
-                      className="h-9 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+                      className="h-9 text-xs sm:text-sm"
                     >
                       <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                       Update Profile
-                    </Button>
-                    <Button 
+                    </ParentButton>
+                    <ParentButton 
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => setShowSafetyInfo(true)}
-                      className="h-9 text-xs sm:text-sm bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 flex items-center gap-1 sm:gap-2"
+                      className="h-9 text-xs sm:text-sm bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/50"
                     >
                       <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                       Safety Info
-                    </Button>
-                    <Button 
+                    </ParentButton>
+                    <ParentButton 
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => {
                         const newEmail = prompt("Enter your new email address:", authStatus?.email || '');
                         if (newEmail && newEmail.includes('@')) {
@@ -1325,97 +1315,93 @@ function ParentDashboard() {
                           // TODO: Implement email change verification flow
                         }
                       }}
-                      className="h-9 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+                      className="h-9 text-xs sm:text-sm"
                     >
                       <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
                       Change Email
-                    </Button>
-                    <Button 
+                    </ParentButton>
+                    <ParentButton 
                       size="sm"
-                      variant="outline"
+                      variant="secondary"
                       onClick={() => setShowUpdateEmergencyContact(true)}
-                      className="h-9 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
+                      className="h-9 text-xs sm:text-sm"
                     >
                       <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                       Update Emergency Contact
-                    </Button>
+                    </ParentButton>
                   </div>
                 </div>
 
                 {/* Game-Style Statistics Dashboard */}
                 <div className="border-t pt-4 sm:pt-6">
-                  <h4 className="font-medium text-base sm:text-lg text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+                  <h4 className="font-medium text-base sm:text-lg text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-yellow-500" />
                     Adventure Progress
-                    <span className="text-sm font-normal text-gray-500">🎮</span>
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">🎮</span>
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-blue-300 hover:shadow-md transition-all">
-                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                        <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
-                      </div>
-                      <div className="text-xl sm:text-2xl font-bold text-blue-700">{bookings.length}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-blue-600">Total Quests</div>
-                    </div>
-                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-green-100 to-green-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-green-300 hover:shadow-md transition-all">
-                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
-                      </div>
-                      <div className="text-xl sm:text-2xl font-bold text-green-700">{athletes.length}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-green-600">Active Heroes</div>
-                    </div>
-                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-orange-300 hover:shadow-md transition-all">
-                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                        <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
-                      </div>
-                      <div className="text-xl sm:text-2xl font-bold text-orange-700">{upcomingBookings.length}</div>
-                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-orange-600">Next Adventures</div>
-                    </div>
-                    <div className="relative text-center p-2 sm:p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg sm:rounded-xl shadow-sm border-2 border-purple-300 hover:shadow-md transition-all">
-                      <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                        <Trophy className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
-                      </div>
-                      <div className="text-xl sm:text-2xl font-bold text-purple-700">
-                        {bookings.filter(b => b.status === 'completed').length}
-                      </div>
-                      <div className="text-[10px] sm:text-xs md:text-sm font-medium text-purple-600">Victories</div>
-                    </div>
+                    <ParentStatCard
+                      title="Total Quests"
+                      value={bookings.length}
+                      icon={Star}
+                      color="blue"
+                    />
+                    <ParentStatCard
+                      title="Active Heroes"
+                      value={athletes.length}
+                      icon={Users}
+                      color="green"
+                    />
+                    <ParentStatCard
+                      title="Next Adventures"
+                      value={upcomingBookings.length}
+                      icon={Calendar}
+                      color="orange"
+                    />
+                    <ParentStatCard
+                      title="Victories"
+                      value={bookings.filter(b => b.status === 'completed').length}
+                      icon={Trophy}
+                      color="purple"
+                    />
                   </div>
 
                   {/* Experience Bar */}
-                  <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg border border-yellow-300">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs sm:text-sm font-bold text-yellow-800 flex items-center gap-1">
-                        <Award className="w-3.5 h-3.5 text-yellow-600" />
-                        Adventure Level
-                      </span>
-                      <span className="text-xs sm:text-sm font-bold text-yellow-700">Level {Math.floor(bookings.filter(b => b.status === 'completed').length / 3) + 1}</span>
-                    </div>
-                    <div className="w-full bg-yellow-200 rounded-full h-2 sm:h-3 relative overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-yellow-400 to-orange-400 h-2 sm:h-3 rounded-full transition-all duration-500 relative"
-                        style={{ width: `${Math.min(((bookings.filter(b => b.status === 'completed').length % 3) / 3) * 100, 100)}%` }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                  <ParentCard className="mt-4 sm:mt-6 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-yellow-300 dark:border-yellow-700">
+                    <ParentCardContent className="p-3 sm:p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs sm:text-sm font-bold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />
+                          Adventure Level
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-yellow-700 dark:text-yellow-400">Level {Math.floor(bookings.filter(b => b.status === 'completed').length / 3) + 1}</span>
                       </div>
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-yellow-700 mt-1 text-center">
-                      {3 - (bookings.filter(b => b.status === 'completed').length % 3)} more sessions to level up! 🎯
-                    </div>
-                  </div>
+                      <div className="w-full bg-yellow-200 dark:bg-yellow-800/30 rounded-full h-2 sm:h-3 relative overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-yellow-400 to-orange-400 dark:from-yellow-500 dark:to-orange-500 h-2 sm:h-3 rounded-full transition-all duration-500 relative"
+                          style={{ width: `${Math.min(((bookings.filter(b => b.status === 'completed').length % 3) / 3) * 100, 100)}%` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-yellow-700 dark:text-yellow-400 mt-1 text-center">
+                        {3 - (bookings.filter(b => b.status === 'completed').length % 3)} more sessions to level up! 🎯
+                      </div>
+                    </ParentCardContent>
+                  </ParentCard>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </ParentCardContent>
+            </ParentCard>
+          </ParentTabsContent>
 
-          <TabsContent value="waivers">
-            <Card>
-              <CardContent className="pt-6">
+          <ParentTabsContent value="waivers">
+            <ParentCard>
+              <ParentCardContent className="pt-6">
                 <ParentWaiverManagement />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </ParentCardContent>
+            </ParentCard>
+          </ParentTabsContent>
+        </ParentTabs>
 
         {/* Athlete Detail Modal */}
         <ParentAthleteDetailDialog
