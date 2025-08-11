@@ -96,59 +96,66 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <p className="text-sm text-gray-600">
-          Reschedule lesson for {booking.athlete1Name}
-          {booking.athlete2Name && ` & ${booking.athlete2Name}`}
-        </p>
-        <p className="text-sm text-gray-600">
-          Current: {booking.preferredDate} at {booking.preferredTime}
-        </p>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <ParentModalSection title="Current Session Details">
+        <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+          <p>
+            <span className="font-medium">Athletes:</span> {booking.athlete1Name}
+            {booking.athlete2Name && ` & ${booking.athlete2Name}`}
+          </p>
+          <p>
+            <span className="font-medium">Current Date:</span> {booking.preferredDate} at {booking.preferredTime}
+          </p>
+        </div>
+      </ParentModalSection>
 
-      <div>
-        <Label htmlFor="reschedule-date">New Date</Label>
-        <Input
-          id="reschedule-date"
-          type="date"
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value);
-            setSelectedTime(''); // Reset time when date changes
-          }}
-          min={new Date().toISOString().split('T')[0]}
-          required
-        />
-      </div>
+      <ParentModalSection title="New Session Details">
+        <ParentModalGrid>
+          <div>
+            <Label htmlFor="reschedule-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">New Date</Label>
+            <Input
+              id="reschedule-date"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setSelectedTime(''); // Reset time when date changes
+              }}
+              min={new Date().toISOString().split('T')[0]}
+              required
+              className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
+            />
+          </div>
 
-      <div>
-        <Label htmlFor="reschedule-time">New Time</Label>
-        <Select
-          value={selectedTime}
-          onValueChange={setSelectedTime}
-          disabled={!selectedDate || slotsLoading}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={slotsLoading ? "Loading times..." : "Select a time"} />
-          </SelectTrigger>
-          <SelectContent>
-            {availableSlots.length > 0 ? (
-              availableSlots.map((slot) => (
-                <SelectItem key={slot} value={slot}>
-                  {slot}
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="no-slots" disabled>
-                No available times for this date
-              </SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+          <div>
+            <Label htmlFor="reschedule-time" className="text-sm font-medium text-gray-700 dark:text-gray-300">New Time</Label>
+            <Select
+              value={selectedTime}
+              onValueChange={setSelectedTime}
+              disabled={!selectedDate || slotsLoading}
+            >
+              <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                <SelectValue placeholder={slotsLoading ? "Loading times..." : "Select a time"} />
+              </SelectTrigger>
+              <SelectContent>
+                {availableSlots.length > 0 ? (
+                  availableSlots.map((slot) => (
+                    <SelectItem key={slot} value={slot}>
+                      {slot}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-slots" disabled>
+                    No available times for this date
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        </ParentModalGrid>
+      </ParentModalSection>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
         <ParentButton variant="secondary" onClick={onCancel}>
           Cancel
         </ParentButton>
@@ -1573,15 +1580,14 @@ function ParentDashboard() {
         />
 
         {/* Reschedule Booking Modal */}
-        <Dialog open={reschedulingBookingId !== null} onOpenChange={() => setReschedulingBookingId(null)}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-lg md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Reschedule Booking</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                Choose a new date and time for your lesson
-              </DialogDescription>
-            </DialogHeader>
-
+        <ParentModal 
+          isOpen={reschedulingBookingId !== null} 
+          onClose={() => setReschedulingBookingId(null)}
+          title="Reschedule Booking"
+          description="Choose a new date and time for your lesson"
+          size="lg"
+        >
+          <div className="max-h-[60vh] sm:max-h-none overflow-y-auto px-1">
             {reschedulingBookingId && (() => {
               const booking = bookings.find(b => b.id === reschedulingBookingId);
               if (!booking) return null;
@@ -1594,8 +1600,8 @@ function ParentDashboard() {
                 });
               }} onCancel={() => setReschedulingBookingId(null)} />;
             })()}
-          </DialogContent>
-        </Dialog>
+          </div>
+        </ParentModal>
 
         {/* Edit Booking Modal */}
         <Dialog open={editingBookingId !== null} onOpenChange={() => setEditingBookingId(null)}>
