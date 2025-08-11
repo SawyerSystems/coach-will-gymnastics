@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { Separator } from "@/components/ui/separator";
 import { useApparatusList, useCreateSkill, useDeleteSkill, useSkills, useUpdateSkill, useSkillRelations, useSaveSkillRelations, type Skill } from "@/hooks/useSkills";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -224,25 +225,25 @@ export default function AdminSkillsManager() {
 
   if (!auth?.loggedIn) {
     return (
-      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-        <CardHeader>
-          <CardTitle className="text-[#0F0276] dark:text-white">Skills</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <AdminCard>
+        <AdminCardHeader>
+          <AdminCardTitle>Skills</AdminCardTitle>
+        </AdminCardHeader>
+        <AdminCardContent className="space-y-3">
           <div className="text-sm text-slate-600 dark:text-white/80">Admin login required to view and edit skills.</div>
           <Button onClick={() => setLocation("/admin-login")}>Go to Admin Login</Button>
-        </CardContent>
-      </Card>
+        </AdminCardContent>
+      </AdminCard>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-        <CardHeader>
-          <CardTitle className="text-lg font-black tracking-tight text-[#0F0276] dark:text-white">Filters</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <AdminCard>
+        <AdminCardHeader>
+          <AdminCardTitle>Filters</AdminCardTitle>
+        </AdminCardHeader>
+        <AdminCardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label className="text-[#0F0276] dark:text-white">Apparatus</Label>
             <Select
@@ -291,13 +292,13 @@ export default function AdminSkillsManager() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </AdminCardContent>
+      </AdminCard>
 
-      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-        <CardHeader>
+      <AdminCard>
+        <AdminCardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-lg font-black tracking-tight text-[#0F0276] dark:text-white">Skills</CardTitle>
+            <AdminCardTitle>Skills</AdminCardTitle>
             <Button
               onClick={() => setIsCreateOpen(v => !v)}
               className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]"
@@ -305,8 +306,8 @@ export default function AdminSkillsManager() {
               {isCreateOpen ? 'Close' : 'New Skill'}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
+        </AdminCardHeader>
+        <AdminCardContent>
           <div className="space-y-4">
             {isCreateOpen ? <CreateForm /> : null}
             {isLoading ? (
@@ -705,8 +706,8 @@ export default function AdminSkillsManager() {
             )}
             
           </div>
-        </CardContent>
-      </Card>
+        </AdminCardContent>
+      </AdminCard>
     </div>
   );
 }
