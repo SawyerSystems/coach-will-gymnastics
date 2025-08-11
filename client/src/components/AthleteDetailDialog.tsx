@@ -318,18 +318,22 @@ export function AthleteDetailDialog({
                         }}
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-800/40 flex items-center justify-center ring-2 ring-blue-100 dark:ring-blue-800 ring-offset-2" aria-label="No photo available">
+                      <div 
+                        className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-800/40 flex items-center justify-center ring-2 ring-blue-100 dark:ring-blue-800 ring-offset-2 cursor-pointer hover:opacity-80 transition-opacity" 
+                        aria-label="No photo available - click to upload"
+                        onClick={() => setIsPhotoEnlarged(true)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setIsPhotoEnlarged(true);
+                          }
+                        }}
+                      >
                         <User className="h-12 w-12 text-blue-300 dark:text-blue-400" />
                       </div>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handlePhotoUpload(e, athleteData.id)}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      disabled={uploadingPhoto}
-                      aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
-                    />
                     {uploadingPhoto && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center" aria-live="polite">
                         <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full"></div>
@@ -341,7 +345,7 @@ export function AthleteDetailDialog({
                     <span className="p-1 bg-blue-100 dark:bg-blue-800/40 rounded-full mr-1">
                       <Edit className="h-3 w-3" />
                     </span>
-                    Click photo to enlarge or upload new
+                    Click photo to enlarge and upload
                   </p>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -840,13 +844,82 @@ export function AthleteDetailDialog({
               Athlete Photo
             </DialogTitle>
           </DialogHeader>
-          {enlargedPhoto && (
-            <div className="flex justify-center p-2 bg-slate-50 rounded-xl shadow-inner">
-              <img
-                src={enlargedPhoto}
-                alt={`${athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Athlete'}'s enlarged photo`}
-                className="max-w-full max-h-96 object-contain rounded-lg border-2 border-white shadow-lg"
-              />
+          {enlargedPhoto ? (
+            <div className="space-y-4">
+              <div className="flex justify-center p-2 bg-slate-50 rounded-xl shadow-inner">
+                <img
+                  src={enlargedPhoto}
+                  alt={`${athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Athlete'}'s enlarged photo`}
+                  className="max-w-full max-h-96 object-contain rounded-lg border-2 border-white shadow-lg"
+                />
+              </div>
+              <div className="flex justify-center">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                    disabled={uploadingPhoto}
+                  >
+                    {uploadingPhoto ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Upload New Photo
+                      </>
+                    )}
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(e, athleteData.id)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploadingPhoto}
+                    aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-center p-8 bg-slate-50 rounded-xl shadow-inner">
+                <div className="text-center">
+                  <User className="h-24 w-24 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-600 mb-4">No photo available</p>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                    disabled={uploadingPhoto}
+                  >
+                    {uploadingPhoto ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Upload Photo
+                      </>
+                    )}
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(e, athleteData.id)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploadingPhoto}
+                    aria-label={`Upload new photo for ${athleteData.name || 'athlete'}`}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>
