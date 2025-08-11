@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ParentModal, ParentModalSection, ParentModalGrid } from "@/components/parent-ui/ParentModal";
+import { ParentFormInput, ParentFormTextarea, ParentFormSelectTrigger, Select, SelectContent, SelectItem, SelectValue } from "@/components/parent-ui/ParentFormComponents";
 import { useGenders } from "@/hooks/useGenders";
 import { useCreateAthlete } from "@/hooks/use-athlete";
 import { useToast } from "@/hooks/use-toast";
@@ -132,147 +130,157 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-lg md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-green-50 md:bg-white">
-        <DialogHeader className="px-0 pt-0">
-          <DialogTitle className="text-xl md:text-2xl text-blue-900">Add New Athlete</DialogTitle>
-          <DialogDescription className="text-sm md:text-base text-gray-700">
-            Enter the athlete's information to add them to your account
-          </DialogDescription>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
+    <ParentModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add New Athlete"
+      description="Enter the athlete's information to add them to your account"
+      size="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <ParentModalSection title="Basic Information">
+          <ParentModalGrid>
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
+              <Label htmlFor="firstName" className="text-[#0F0276] dark:text-white">First Name</Label>
+              <ParentFormInput
                 id="firstName"
                 value={formData.firstName}
                 onChange={(e) => handleChange('firstName', e.target.value)}
                 required
-                className="min-h-[48px]"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
+              <Label htmlFor="lastName" className="text-[#0F0276] dark:text-white">Last Name</Label>
+              <ParentFormInput
                 id="lastName"
                 value={formData.lastName}
                 onChange={(e) => handleChange('lastName', e.target.value)}
                 required
-                className="min-h-[48px]"
               />
             </div>
-          </div>
+          </ParentModalGrid>
+        </ParentModalSection>
 
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
-            <Select 
-              value={formData.gender} 
-              onValueChange={(value) => handleChange('gender', value)}
-            >
-              <SelectTrigger className="min-h-[48px]">
-                <SelectValue placeholder="Select gender" />
-              </SelectTrigger>
-              <SelectContent>
-                {genderOptions.map((gender: string) => (
-                  <SelectItem key={gender} value={gender}>
-                    {gender}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <ParentModalSection title="Personal Details">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="gender" className="text-[#0F0276] dark:text-white">Gender</Label>
+              <Select 
+                value={formData.gender} 
+                onValueChange={(value) => handleChange('gender', value)}
+              >
+                <ParentFormSelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </ParentFormSelectTrigger>
+                <SelectContent>
+                  {genderOptions.map((gender: string) => (
+                    <SelectItem key={gender} value={gender}>
+                      {gender}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="dateOfBirth">Date of Birth</Label>
-            <Input
-              id="dateOfBirth"
-              type="date"
-              value={formData.dateOfBirth}
-              onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-              required
-              className={`min-h-[48px] ${ageError ? 'border-red-500' : ''}`}
-            />
-            {ageError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {ageError}
-                </AlertDescription>
-              </Alert>
-            )}
-            <p className="text-sm text-muted-foreground">
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth" className="text-[#0F0276] dark:text-white">Date of Birth</Label>
+              <ParentFormInput
+                id="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                required
+                className={ageError ? 'border-red-500' : ''}
+              />
+              {ageError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {ageError}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </div>
+        </ParentModalSection>
+
+        <ParentModalSection title="Experience & Membership">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="isGymMember" className="text-[#0F0276] dark:text-white">Already in Gym Classes?</Label>
+              <div className="flex items-center justify-between rounded-md border p-3 border-gray-300 dark:border-[#B8860B]">
+                <div>
+                  <p className="font-medium text-[#0F0276] dark:text-white">Gym Member</p>
+                  <p className="text-sm text-[#0F0276]/60 dark:text-white/60">Toggle on if this athlete is already enrolled in gym classes.</p>
+                </div>
+                <Switch
+                  id="isGymMember"
+                  checked={formData.isGymMember}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isGymMember: checked })}
+                  aria-label="Already in Gym Classes?"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[#0F0276] dark:text-white">Experience Level</Label>
+              <RadioGroup
+                value={formData.experience}
+                onValueChange={(value) => handleChange('experience', value as "beginner" | "intermediate" | "advanced")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="beginner" id="beginner" />
+                  <Label htmlFor="beginner" className="text-[#0F0276] dark:text-white">Beginner - New to gymnastics</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="intermediate" id="intermediate" />
+                  <Label htmlFor="intermediate" className="text-[#0F0276] dark:text-white">Intermediate - Some gymnastics experience</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="advanced" id="advanced" />
+                  <Label htmlFor="advanced" className="text-[#0F0276] dark:text-white">Advanced - Significant gymnastics experience</Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
+        </ParentModalSection>
+
+        <ParentModalSection title="Additional Information">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="allergies" className="text-[#0F0276] dark:text-white">Allergies or Medical Conditions (Optional)</Label>
+              <ParentFormTextarea
+                id="allergies"
+                value={formData.allergies}
+                onChange={(e) => handleChange('allergies', e.target.value)}
+                placeholder="Please list any allergies or medical conditions we should be aware of"
+                rows={3}
+              />
+            </div>
+            <p className="text-sm text-[#0F0276]/60 dark:text-white/60">
               Athletes must be at least 6 years old to participate in lessons.
             </p>
           </div>
+        </ParentModalSection>
 
-          <div className="space-y-2">
-            <Label htmlFor="isGymMember">Already in Gym Classes?</Label>
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <p className="font-medium">Gym Member</p>
-                <p className="text-sm text-muted-foreground">Toggle on if this athlete is already enrolled in gym classes.</p>
-              </div>
-              <Switch
-                id="isGymMember"
-                checked={formData.isGymMember}
-                onCheckedChange={(checked) => setFormData({ ...formData, isGymMember: checked })}
-                aria-label="Already in Gym Classes?"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="allergies">Allergies or Medical Conditions (Optional)</Label>
-            <Textarea
-              id="allergies"
-              value={formData.allergies}
-              onChange={(e) => handleChange('allergies', e.target.value)}
-              placeholder="Please list any allergies or medical conditions we should be aware of"
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Experience Level</Label>
-            <RadioGroup
-              value={formData.experience}
-              onValueChange={(value) => handleChange('experience', value as "beginner" | "intermediate" | "advanced")}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="beginner" id="beginner" />
-                <Label htmlFor="beginner">Beginner (New to gymnastics)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="intermediate" id="intermediate" />
-                <Label htmlFor="intermediate">Intermediate (1-2 years experience)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="advanced" id="advanced" />
-                <Label htmlFor="advanced">Advanced (3+ years experience)</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !!ageError}
-              className="min-h-[48px]"
-            >
-              {isSubmitting ? "Creating..." : "Create Athlete"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="flex justify-end gap-3 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            className="text-[#0F0276] border-[#0F0276]/50 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/50 dark:hover:bg-white/20"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !!ageError}
+            className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#B8860B] dark:hover:bg-[#B8860B]/90 dark:text-[#0F0276]"
+          >
+            {isSubmitting ? "Creating..." : "Create Athlete"}
+          </Button>
+        </div>
+      </form>
+    </ParentModal>
   );
 }

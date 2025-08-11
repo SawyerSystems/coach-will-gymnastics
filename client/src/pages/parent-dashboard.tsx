@@ -1133,6 +1133,7 @@ function ParentDashboard() {
                                 </div>
                               </div>
                             </div>
+                          </div>
                           </ParentCardContent>
                         </ParentCard>
                       ))}
