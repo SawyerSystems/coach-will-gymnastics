@@ -433,12 +433,12 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
       </div>
 
       <div className="flex justify-end gap-3 mt-6">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <ParentButton variant="secondary" onClick={onClose}>
           Cancel
-        </Button>
-        <Button type="submit" disabled={updateBookingMutation.isPending}>
+        </ParentButton>
+        <ParentButton type="submit" disabled={updateBookingMutation.isPending}>
           {updateBookingMutation.isPending ? 'Updating...' : 'Update Booking'}
-        </Button>
+        </ParentButton>
       </div>
     </form>
   );
@@ -610,12 +610,13 @@ function ParentDashboard() {
   }
 
   return (
-    <ParentMainContainer>
-      <ParentContentContainer>
-        <ParentPageHeader>
-          <ParentPageTitle>Parent Portal</ParentPageTitle>
-          <ParentPageSubtitle>Manage your athletes, sessions and waivers</ParentPageSubtitle>
-        </ParentPageHeader>
+    <>
+      <ParentMainContainer>
+        <ParentContentContainer>
+          <ParentPageHeader>
+            <ParentPageTitle>Parent Portal</ParentPageTitle>
+            <ParentPageSubtitle>Manage your athletes, sessions and waivers</ParentPageSubtitle>
+          </ParentPageHeader>
 
         <ParentStatsGrid>
           <ParentStatCard
@@ -687,18 +688,11 @@ function ParentDashboard() {
               <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Profile</span>
             </ParentTabsTrigger>
-          </ParentTabsList>
+            <ParentTabsTrigger value="waivers" className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm">
+              <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Waivers</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="my-info" 
-              className="min-h-[40px] sm:min-h-[48px] text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-md sm:rounded-lg transition-all duration-200 col-span-2 xs:col-span-1"
-            >
-              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-              <span className="hidden xs:inline">My Info</span>
-              <span className="xs:hidden">Profile</span>
-            </TabsTrigger>
-          </TabsList>
+            </ParentTabsTrigger>
+          </ParentTabsList>
 
           <ParentTabsContent value="upcoming">
             <ParentCard>
@@ -1114,8 +1108,8 @@ function ParentDashboard() {
                           </h4>
                           <p className="text-[10px] xs:text-xs text-gray-500">Download a complete progress report for your records</p>
                         </div>
-                        <Button 
-                          variant="outline"
+                        <ParentButton 
+                          variant="secondary"
                           size="sm"
                           onClick={() => {
                             // TODO: Implement PDF export
@@ -1341,27 +1335,27 @@ function ParentDashboard() {
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
                     <ParentStatCard
-                      title="Total Quests"
+                      label="Total Quests"
                       value={bookings.length}
-                      icon={Star}
+                      icon={<Star />}
                       color="blue"
                     />
                     <ParentStatCard
-                      title="Active Heroes"
+                      label="Active Heroes"
                       value={athletes.length}
-                      icon={Users}
+                      icon={<Users />}
                       color="green"
                     />
                     <ParentStatCard
-                      title="Next Adventures"
+                      label="Next Adventures"
                       value={upcomingBookings.length}
-                      icon={Calendar}
+                      icon={<Calendar />}
                       color="orange"
                     />
                     <ParentStatCard
-                      title="Victories"
+                      label="Victories"
                       value={bookings.filter(b => b.status === 'completed').length}
-                      icon={Trophy}
+                      icon={<Trophy />}
                       color="purple"
                     />
                   </div>
@@ -1402,9 +1396,12 @@ function ParentDashboard() {
             </ParentCard>
           </ParentTabsContent>
         </ParentTabs>
+      </ParentContentContainer>
+    </ParentMainContainer>
 
-        {/* Athlete Detail Modal */}
-        <ParentAthleteDetailDialog
+    {/* Modals */}
+    {/* Athlete Detail Modal */}
+    <ParentAthleteDetailDialog
           open={editingAthleteId !== null}
           onOpenChange={(open) => setEditingAthleteId(open ? editingAthleteId : null)}
           athlete={editingAthleteId ? athletes.find(a => a.id === editingAthleteId) || null : null}
@@ -1639,13 +1636,13 @@ function ParentDashboard() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button variant="outline" onClick={() => {
+                  <ParentButton variant="secondary" onClick={() => {
                     setEditingAthleteInfo(null);
                     setEditingAthleteGender('');
                   }}>
                     Cancel
-                  </Button>
-                  <Button onClick={async () => {
+                  </ParentButton>
+                  <ParentButton onClick={async () => {
                     try {
                       const firstName = (document.getElementById('athlete-firstName') as HTMLInputElement)?.value;
                       const lastName = (document.getElementById('athlete-lastName') as HTMLInputElement)?.value;
@@ -1687,7 +1684,7 @@ function ParentDashboard() {
                     }
                   }}>
                     Save Changes
-                  </Button>
+                  </ParentButton>
                 </div>
               </div>
             )}
@@ -1745,10 +1742,10 @@ function ParentDashboard() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={() => setShowUpdateProfile(false)}>
+                <ParentButton variant="secondary" onClick={() => setShowUpdateProfile(false)}>
                   Cancel
-                </Button>
-                <Button onClick={() => {
+                </ParentButton>
+                <ParentButton onClick={() => {
                   toast({
                     title: "Profile Updated",
                     description: "Your profile information has been updated successfully.",
@@ -1756,7 +1753,7 @@ function ParentDashboard() {
                   setShowUpdateProfile(false);
                 }}>
                   Save Changes
-                </Button>
+                </ParentButton>
               </div>
             </div>
           </DialogContent>
@@ -1899,10 +1896,10 @@ function ParentDashboard() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setShowUpdateEmergencyContact(false)}>
+                <ParentButton variant="secondary" onClick={() => setShowUpdateEmergencyContact(false)}>
                   Cancel
-                </Button>
-                <Button onClick={() => {
+                </ParentButton>
+                <ParentButton onClick={() => {
                   toast({
                     title: "Emergency Contacts Updated",
                     description: "Your emergency contact information has been updated successfully.",
@@ -1910,7 +1907,7 @@ function ParentDashboard() {
                   setShowUpdateEmergencyContact(false);
                 }}>
                   Save Contacts
-                </Button>
+                </ParentButton>
               </div>
             </div>
           </DialogContent>
@@ -1951,15 +1948,14 @@ function ParentDashboard() {
           onClose={() => setShowAddAthleteModal(false)}
         />
 
-        {/* Safety Information Dialog */}
-        <SafetyInformationDialog
-          open={showSafetyInfo}
-          onOpenChange={setShowSafetyInfo}
-          parentInfo={parentInfo || undefined}
-          hasCurrentBookings={upcomingBookings.length > 0}
-        />
-      </div>
-    </div>
+    {/* Safety Information Dialog */}
+    <SafetyInformationDialog
+      open={showSafetyInfo}
+      onOpenChange={setShowSafetyInfo}
+      parentInfo={parentInfo || undefined}
+      hasCurrentBookings={upcomingBookings.length > 0}
+    />
+    </>
   );
 }
 

@@ -45,7 +45,7 @@ export function ParentTabsTrigger({ className, value, ...props }: ParentTabsTrig
   );
 }
 
-export function ParentTabsContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function ParentTabsContent({ className, ...props }: React.ComponentProps<typeof TabsContent>) {
   return (
     <TabsContent
       className={cn(
