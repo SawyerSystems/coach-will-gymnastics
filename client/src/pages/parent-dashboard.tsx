@@ -112,8 +112,8 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
       <ParentModalSection title="New Session Details">
         <ParentModalGrid>
           <div>
-            <Label htmlFor="reschedule-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">New Date</Label>
-            <Input
+            <Label htmlFor="reschedule-date" className="text-sm font-medium text-gray-700 dark:text-white">New Date</Label>
+            <ParentFormInput
               id="reschedule-date"
               type="date"
               value={selectedDate}
@@ -123,20 +123,19 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
               }}
               min={new Date().toISOString().split('T')[0]}
               required
-              className="mt-1 dark:text-yellow-200"
             />
           </div>
 
           <div>
-            <Label htmlFor="reschedule-time" className="text-sm font-medium text-gray-700 dark:text-gray-300">New Time</Label>
+            <Label htmlFor="reschedule-time" className="text-sm font-medium text-gray-700 dark:text-white">New Time</Label>
             <Select
               value={selectedTime}
               onValueChange={setSelectedTime}
               disabled={!selectedDate || slotsLoading}
             >
-              <SelectTrigger className="mt-1 dark:text-yellow-200">
+              <ParentFormSelect>
                 <SelectValue placeholder={slotsLoading ? "Loading times..." : "Select a time"} />
-              </SelectTrigger>
+              </ParentFormSelect>
               <SelectContent>
                 {availableSlots.length > 0 ? (
                   availableSlots.map((slot) => (
@@ -326,34 +325,31 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
             <h4 className="font-medium text-gray-900 dark:text-gray-100">Drop-off Person Information</h4>
             <ParentModalGrid>
               <div>
-                <Label htmlFor="dropoff-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name*</Label>
-                <Input
+                <Label htmlFor="dropoff-name" className="text-sm font-medium text-gray-700 dark:text-white">Name*</Label>
+                <ParentFormInput
                   id="dropoff-name"
                   value={dropoffPersonName}
                   onChange={(e) => setDropoffPersonName(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="Full name"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="dropoff-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete*</Label>
-                <Input
+                <Label htmlFor="dropoff-relationship" className="text-sm font-medium text-gray-700 dark:text-white">Relationship to Athlete*</Label>
+                <ParentFormInput
                   id="dropoff-relationship"
                   value={dropoffPersonRelationship}
                   onChange={(e) => setDropoffPersonRelationship(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="Parent, Guardian, etc."
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="dropoff-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number*</Label>
-                <Input
+                <Label htmlFor="dropoff-phone" className="text-sm font-medium text-gray-700 dark:text-white">Phone Number*</Label>
+                <ParentFormInput
                   id="dropoff-phone"
                   value={dropoffPersonPhone}
                   onChange={(e) => setDropoffPersonPhone(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="(555) 123-4567"
                   required
                 />
@@ -366,34 +362,31 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
             <h4 className="font-medium text-gray-900 dark:text-gray-100">Pick-up Person Information</h4>
             <ParentModalGrid>
               <div>
-                <Label htmlFor="pickup-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name*</Label>
-                <Input
+                <Label htmlFor="pickup-name" className="text-sm font-medium text-gray-700 dark:text-white">Name*</Label>
+                <ParentFormInput
                   id="pickup-name"
                   value={pickupPersonName}
                   onChange={(e) => setPickupPersonName(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="Full name"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="pickup-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete*</Label>
-                <Input
+                <Label htmlFor="pickup-relationship" className="text-sm font-medium text-gray-700 dark:text-white">Relationship to Athlete*</Label>
+                <ParentFormInput
                   id="pickup-relationship"
                   value={pickupPersonRelationship}
                   onChange={(e) => setPickupPersonRelationship(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="Parent, Guardian, etc."
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="pickup-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number*</Label>
-                <Input
+                <Label htmlFor="pickup-phone" className="text-sm font-medium text-gray-700 dark:text-white">Phone Number*</Label>
+                <ParentFormInput
                   id="pickup-phone"
                   value={pickupPersonPhone}
                   onChange={(e) => setPickupPersonPhone(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="(555) 123-4567"
                   required
                 />
@@ -406,32 +399,29 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
             <h4 className="font-medium text-gray-900 dark:text-gray-100">Alternative Pick-up Person (Optional)</h4>
             <ParentModalGrid>
               <div>
-                <Label htmlFor="alt-pickup-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</Label>
-                <Input
+                <Label htmlFor="alt-pickup-name" className="text-sm font-medium text-gray-700 dark:text-white">Name</Label>
+                <ParentFormInput
                   id="alt-pickup-name"
                   value={altPickupPersonName}
                   onChange={(e) => setAltPickupPersonName(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="Full name"
                 />
               </div>
               <div>
-                <Label htmlFor="alt-pickup-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">Relationship to Athlete</Label>
-                <Input
+                <Label htmlFor="alt-pickup-relationship" className="text-sm font-medium text-gray-700 dark:text-white">Relationship to Athlete</Label>
+                <ParentFormInput
                   id="alt-pickup-relationship"
                   value={altPickupPersonRelationship}
                   onChange={(e) => setAltPickupPersonRelationship(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="Relative, Friend, etc."
                 />
               </div>
               <div>
-                <Label htmlFor="alt-pickup-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</Label>
-                <Input
+                <Label htmlFor="alt-pickup-phone" className="text-sm font-medium text-gray-700 dark:text-white">Phone Number</Label>
+                <ParentFormInput
                   id="alt-pickup-phone"
                   value={altPickupPersonPhone}
                   onChange={(e) => setAltPickupPersonPhone(e.target.value)}
-                  className="mt-1 dark:text-yellow-200"
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -442,12 +432,11 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
       
       <ParentModalSection title="Special Notes">
         <div>
-          <Label htmlFor="special-notes" className="text-sm font-medium text-gray-700 dark:text-gray-300">Additional Information</Label>
-          <textarea
+          <Label htmlFor="special-notes" className="text-sm font-medium text-gray-700 dark:text-white">Additional Information</Label>
+          <ParentFormTextarea
             id="special-notes"
             value={specialNotes}
             onChange={(e) => setSpecialNotes(e.target.value)}
-            className="mt-1 w-full min-h-[100px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:border-[#0F0276] dark:focus:border-blue-400 focus:ring-1 focus:ring-[#0F0276] dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             placeholder="Add any special notes about this booking..."
           />
         </div>
@@ -464,6 +453,30 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
     </form>
   );
 }
+
+// Unified Form Input Components for Parent Dashboard
+const ParentFormInput = ({ className = "", ...props }: React.ComponentProps<typeof Input>) => (
+  <Input
+    className={`mt-1 bg-[#1a237e] text-[#B8860B] border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] placeholder:text-[#B8860B]/60 ${className}`}
+    {...props}
+  />
+);
+
+const ParentFormTextarea = ({ className = "", ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea
+    className={`mt-1 w-full min-h-[100px] bg-[#1a237e] text-[#B8860B] border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] placeholder:text-[#B8860B]/60 rounded-md border px-3 py-2 ${className}`}
+    {...props}
+  />
+);
+
+const ParentFormSelect = ({ className = "", children, ...props }: React.ComponentProps<typeof SelectTrigger>) => (
+  <SelectTrigger
+    className={`mt-1 bg-[#1a237e] text-[#B8860B] border-[#B8860B] focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] ${className}`}
+    {...props}
+  >
+    {children}
+  </SelectTrigger>
+);
 
 function ParentDashboard() {
   const [, setLocation] = useLocation();
@@ -635,8 +648,8 @@ function ParentDashboard() {
       <ParentMainContainer>
         <ParentContentContainer>
           <ParentPageHeader>
-            <ParentPageTitle>Parent Portal</ParentPageTitle>
-            <ParentPageSubtitle>Manage your athletes, sessions and waivers</ParentPageSubtitle>
+            <ParentPageTitle className="text-[#B8860B]">Parent Portal</ParentPageTitle>
+            <ParentPageSubtitle className="text-[#B8860B]/80">Manage your athletes, sessions and waivers</ParentPageSubtitle>
           </ParentPageHeader>
 
           {/* Statistics Overview Section */}
@@ -667,8 +680,8 @@ function ParentDashboard() {
           <section className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
               <div>
-                <h2 className="text-2xl font-bold text-[#0F0276] dark:text-white">Booking Management</h2>
-                <p className="text-[#0F0276]/80 dark:text-white/70 text-sm">Schedule and manage your coaching sessions</p>
+                <h2 className="text-2xl font-bold text-[#0F0276] dark:text-[#B8860B]">Booking Management</h2>
+                <p className="text-[#0F0276]/80 dark:text-[#B8860B]/70 text-sm">Schedule and manage yourcoaching sessions</p>
               </div>
               <div className="flex gap-2">
                 <ParentButton 
@@ -1422,8 +1435,8 @@ function ParentDashboard() {
                   <ParentCardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium">Email Notifications</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm font-medium text-gray-900 dark:text-[#D8BD2A]">Email Notifications</div>
+                        <div className="text-sm text-gray-500 dark:text-white">
                           Receive booking confirmations and updates via email
                         </div>
                       </div>
@@ -1432,8 +1445,8 @@ function ParentDashboard() {
                     
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium">SMS Notifications</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm font-medium text-gray-900 dark:text-[#D8BD2A]">SMS Notifications</div>
+                        <div className="text-sm text-gray-500 dark:text-white">
                           Get text reminders for upcoming sessions
                         </div>
                       </div>
@@ -1442,8 +1455,8 @@ function ParentDashboard() {
                     
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium">Session Reminders</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm font-medium text-gray-900 dark:text-[#D8BD2A]">Session Reminders</div>
+                        <div className="text-sm text-gray-500 dark:text-white">
                           24-hour reminders for upcoming sessions
                         </div>
                       </div>
@@ -1463,18 +1476,8 @@ function ParentDashboard() {
                   <ParentCardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium">Share Progress Photos</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Allow coaches to share photos of your athlete's progress
-                        </div>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-medium">Marketing Communications</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm font-medium text-gray-900 dark:text-[#D8BD2A]">Marketing Communications</div>
+                        <div className="text-sm text-gray-500 dark:text-white">
                           Receive updates about new programs and events
                         </div>
                       </div>
@@ -1506,11 +1509,11 @@ function ParentDashboard() {
                     
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        Need help or have questions? Our support team is here to assist you.
+                        Need help or have questions? Coach Will is here to assist you.
                       </p>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        <p>📧 Email: support@coachwilltumbles.com</p>
-                        <p>📞 Phone: (555) 123-4567</p>
+                        <p>📧 Email: will@coachwilltumbles.com</p>
+                        <p>📞 Phone: (585) 755-8122</p>
                       </div>
                     </div>
                   </ParentCardContent>
@@ -1683,7 +1686,7 @@ function ParentDashboard() {
               <div className="space-y-4 px-0 pb-0">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="athlete-firstName">First Name</Label>
+                    <Label htmlFor="athlete-firstName" className="text-sm font-medium text-gray-700 dark:text-white">First Name</Label>
                     <Input
                       id="athlete-firstName"
                       defaultValue={editingAthleteInfo.firstName || editingAthleteInfo.name.split(' ')[0]}
@@ -1691,7 +1694,7 @@ function ParentDashboard() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="athlete-lastName">Last Name</Label>
+                    <Label htmlFor="athlete-lastName" className="text-sm font-medium text-gray-700 dark:text-white">Last Name</Label>
                     <Input
                       id="athlete-lastName"
                       defaultValue={editingAthleteInfo.lastName || editingAthleteInfo.name.split(' ').slice(1).join(' ')}
@@ -1701,7 +1704,7 @@ function ParentDashboard() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="athlete-gymmember">Already in Gym Classes?</Label>
+                  <Label htmlFor="athlete-gymmember" className="text-sm font-medium text-gray-700 dark:text-white">Already in Gym Classes?</Label>
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <div>
                       <p className="font-medium">Gym Member</p>
@@ -1716,7 +1719,7 @@ function ParentDashboard() {
                 </div>
 
                 <div>
-                  <Label htmlFor="athlete-dob">Date of Birth</Label>
+                  <Label htmlFor="athlete-dob" className="text-sm font-medium text-gray-700 dark:text-white">Date of Birth</Label>
                   <Input
                     id="athlete-dob"
                     type="date"
@@ -1735,7 +1738,7 @@ function ParentDashboard() {
                 </div>
 
                 <div>
-                  <Label htmlFor="athlete-allergies">Allergies & Medical Notes</Label>
+                  <Label htmlFor="athlete-allergies" className="text-sm font-medium text-gray-700 dark:text-white">Allergies & Medical Notes</Label>
                   <Input
                     id="athlete-allergies"
                     defaultValue={editingAthleteInfo.allergies || ''}
@@ -1745,11 +1748,11 @@ function ParentDashboard() {
                 </div>
 
                 <div>
-                  <Label htmlFor="athlete-experience">Experience Level</Label>
+                  <Label htmlFor="athlete-experience" className="text-sm font-medium text-gray-700 dark:text-white">Experience Level</Label>
                   <Select defaultValue={editingAthleteInfo.experience}>
-                    <SelectTrigger className="mt-1">
+                    <ParentFormSelect>
                       <SelectValue placeholder="Select experience level" />
-                    </SelectTrigger>
+                    </ParentFormSelect>
                     <SelectContent>
                       <SelectItem value="beginner">Beginner</SelectItem>
                       <SelectItem value="intermediate">Intermediate</SelectItem>
@@ -1826,53 +1829,49 @@ function ParentDashboard() {
           <ParentModalSection>
             <ParentModalGrid>
               <div>
-                <Label htmlFor="profile-first-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Label htmlFor="profile-first-name" className="text-sm font-medium text-gray-700 dark:text-white">
                   First Name
                 </Label>
-                <Input
+                <ParentFormInput
                   id="profile-first-name"
                   defaultValue={parentInfo?.firstName || ''}
                   placeholder="Enter your first name"
-                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
               <div>
-                <Label htmlFor="profile-last-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Label htmlFor="profile-last-name" className="text-sm font-medium text-gray-700 dark:text-white">
                   Last Name
                 </Label>
-                <Input
+                <ParentFormInput
                   id="profile-last-name"
                   defaultValue={parentInfo?.lastName || ''}
                   placeholder="Enter your last name"
-                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
             </ParentModalGrid>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="profile-email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Label htmlFor="profile-email" className="text-sm font-medium text-gray-700 dark:text-white">
                   Email Address
                 </Label>
-                <Input
+                <ParentFormInput
                   id="profile-email"
                   type="email"
                   defaultValue={parentInfo?.email || authStatus?.email || ''}
                   placeholder="your.email@example.com"
-                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
 
               <div>
-                <Label htmlFor="profile-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Label htmlFor="profile-phone" className="text-sm font-medium text-gray-700 dark:text-white">
                   Phone Number
                 </Label>
-                <Input
+                <ParentFormInput
                   id="profile-phone"
                   type="tel"
                   defaultValue={parentInfo?.phone || ''}
                   placeholder="(555) 123-4567"
-                  className="mt-1 dark:text-yellow-200"
                 />
               </div>
             </div>
@@ -1906,36 +1905,34 @@ function ParentDashboard() {
             <ParentModalSection title="Primary Emergency Contact">
               <ParentModalGrid>
                 <div>
-                  <Label htmlFor="emergency-1-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-1-name" className="text-sm font-medium text-gray-700 dark:text-white">
                     Contact Name
                   </Label>
-                  <Input
+                  <ParentFormInput
                     id="emergency-1-name"
                     defaultValue={parentInfo?.emergencyContactName || ''}
                     placeholder="Full name"
-                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="emergency-1-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-1-phone" className="text-sm font-medium text-gray-700 dark:text-white">
                     Phone Number
                   </Label>
-                  <Input
+                  <ParentFormInput
                     id="emergency-1-phone"
                     type="tel"
                     defaultValue={parentInfo?.emergencyContactPhone || ''}
                     placeholder="(555) 123-4567"
-                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label htmlFor="emergency-1-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-1-relationship" className="text-sm font-medium text-gray-700 dark:text-white">
                     Relationship
                   </Label>
                   <Select defaultValue="parent">
-                    <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                    <ParentFormSelect>
                       <SelectValue placeholder="Select relationship" />
-                    </SelectTrigger>
+                    </ParentFormSelect>
                     <SelectContent>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="guardian">Guardian</SelectItem>
@@ -1953,34 +1950,32 @@ function ParentDashboard() {
             <ParentModalSection title="Secondary Emergency Contact">
               <ParentModalGrid>
                 <div>
-                  <Label htmlFor="emergency-2-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-2-name" className="text-sm font-medium text-gray-700 dark:text-white">
                     Contact Name
                   </Label>
-                  <Input
+                  <ParentFormInput
                     id="emergency-2-name"
                     placeholder="Full name"
-                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="emergency-2-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-2-phone" className="text-sm font-medium text-gray-700 dark:text-white">
                     Phone Number
                   </Label>
-                  <Input
+                  <ParentFormInput
                     id="emergency-2-phone"
                     type="tel"
                     placeholder="(555) 123-4567"
-                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label htmlFor="emergency-2-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-2-relationship" className="text-sm font-medium text-gray-700 dark:text-white">
                     Relationship
                   </Label>
                   <Select>
-                    <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                    <ParentFormSelect>
                       <SelectValue placeholder="Select relationship" />
-                    </SelectTrigger>
+                    </ParentFormSelect>
                     <SelectContent>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="guardian">Guardian</SelectItem>
@@ -1998,34 +1993,32 @@ function ParentDashboard() {
             <ParentModalSection title="Additional Emergency Contact (Optional)">
               <ParentModalGrid>
                 <div>
-                  <Label htmlFor="emergency-3-name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-3-name" className="text-sm font-medium text-gray-700 dark:text-white">
                     Contact Name
                   </Label>
-                  <Input
+                  <ParentFormInput
                     id="emergency-3-name"
                     placeholder="Full name"
-                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="emergency-3-phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-3-phone" className="text-sm font-medium text-gray-700 dark:text-white">
                     Phone Number
                   </Label>
-                  <Input
+                  <ParentFormInput
                     id="emergency-3-phone"
                     type="tel"
                     placeholder="(555) 123-4567"
-                    className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label htmlFor="emergency-3-relationship" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Label htmlFor="emergency-3-relationship" className="text-sm font-medium text-gray-700 dark:text-white">
                     Relationship
                   </Label>
                   <Select>
-                    <SelectTrigger className="mt-1 border-gray-300 dark:border-gray-600 focus:border-[#0F0276] dark:focus:border-blue-400">
+                    <ParentFormSelect>
                       <SelectValue placeholder="Select relationship" />
-                    </SelectTrigger>
+                    </ParentFormSelect>
                     <SelectContent>
                       <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="guardian">Guardian</SelectItem>
