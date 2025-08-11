@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, DollarSign, Filter, RefreshCw, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { Download, DollarSign, Filter, RefreshCw, Calendar as CalendarIcon, Plus, Trash2, Users, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { AdminAnalyticsMetrics, type MetricCard } from '@/components/admin-ui/AdminAnalyticsMetrics';
 import { apiRequest } from '@/lib/queryClient';
 import { useBackfillPayouts, useDeletePayoutRun, useGeneratePayoutRun, useLockPayoutRun, usePayoutRuns, useClearPayouts } from '@/hooks/useAdminPayouts';
 import { usePayoutRates, useCreatePayoutRate, useRetirePayoutRate } from '@/hooks/usePayoutRates';
@@ -96,6 +97,34 @@ export default function AdminPayoutsTab() {
 		await Promise.all([refetchSummary(), refetchList()]);
 		toast({ title: 'Refreshed', description: 'Payout data reloaded.' });
 	};
+
+	// Metrics for AdminAnalyticsMetrics component
+	const metrics: MetricCard[] = useMemo(() => [
+		{
+			key: 'total-sessions',
+			label: 'Total Sessions',
+			value: loadingSummary ? '—' : (summary?.totalSessions ?? 0).toLocaleString(),
+			hint: 'Coaching sessions in period',
+			icon: <BarChart3 className="h-4 w-4" />,
+			color: 'blue'
+		},
+		{
+			key: 'total-owed',
+			label: 'Total Owed',
+			value: loadingSummary ? '—' : formatCents(summary?.totalOwedCents ?? 0),
+			hint: 'Amount owed to gym',
+			icon: <DollarSign className="h-4 w-4" />,
+			color: 'green'
+		},
+		{
+			key: 'unique-athletes',
+			label: 'Unique Athletes',
+			value: loadingSummary ? '—' : (summary?.uniqueAthletes ?? 0).toLocaleString(),
+			hint: 'Individual athletes coached',
+			icon: <Users className="h-4 w-4" />,
+			color: 'indigo'
+		}
+	], [summary, loadingSummary]);
 
 	const onExportCsv = async () => {
 		try {
@@ -258,27 +287,12 @@ export default function AdminPayoutsTab() {
 				</CardContent>
 			</Card>
 
-			{/* KPIs: horizontal on mobile */}
-			<div className="grid grid-cols-3 gap-3 sm:gap-4">
-				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-					<CardContent className="p-4">
-						<div className="text-sm text-slate-600 dark:text-white/80">Total Sessions</div>
-						<div className="text-2xl font-bold text-[#0F0276] dark:text-white">{loadingSummary ? '—' : summary?.totalSessions ?? 0}</div>
-					</CardContent>
-				</Card>
-				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-					<CardContent className="p-4">
-						<div className="text-sm text-slate-600 dark:text-white/80">Total Owed</div>
-						<div className="text-2xl font-bold text-[#0F0276] dark:text-white">{loadingSummary ? '—' : formatCents(summary?.totalOwedCents ?? 0)}</div>
-					</CardContent>
-				</Card>
-				<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-					<CardContent className="p-4">
-						<div className="text-sm text-slate-600 dark:text-white/80">Unique Athletes</div>
-						<div className="text-2xl font-bold text-[#0F0276] dark:text-white">{loadingSummary ? '—' : summary?.uniqueAthletes ?? 0}</div>
-					</CardContent>
-				</Card>
-			</div>
+			{/* Payout Analytics Metrics */}
+			<AdminAnalyticsMetrics 
+				metrics={metrics}
+				columns={{ base: 1, sm: 2, lg: 3 }}
+				className="mb-6"
+			/>
 
 			{/* Table */}
 			<Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
