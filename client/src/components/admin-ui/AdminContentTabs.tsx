@@ -38,7 +38,6 @@ export function AdminContentTabs({
 }: AdminContentTabsProps) {
   const baseListClass = cn(
     "relative z-10 pointer-events-auto",
-    "bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200/50",
     "p-0.5 sm:p-1 rounded-lg sm:rounded-xl shadow-sm",
     // Match Settings tab behavior: take full width, no horizontal scroll, allow wrap
     "w-full sm:w-auto overflow-visible flex flex-wrap",

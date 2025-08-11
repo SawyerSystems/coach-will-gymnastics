@@ -3064,7 +3064,7 @@ export default function Admin() {
                         <div className="flex items-end">
                           <Button
                             variant="outline"
-                            className="w-full bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg"
+                            className="w-full bg-white dark:bg-[#0F0276] border-0 dark:border-[#2A4A9B] shadow-md hover:shadow-lg transition-all duration-200 rounded-lg dark:text-white"
                             onClick={() => {
                               setAnalyticsDateRange({ start: '', end: '' });
                               setAnalyticsLessonType('all');

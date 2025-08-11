@@ -1290,7 +1290,7 @@ export function AdminSiteContentManager() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 bg-gradient-to-r from-[#0F0276]/5 to-[#D8BD2A]/5 rounded-xl border border-slate-200/50">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] tracking-tight flex items-center gap-3">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3">
             <Upload className="h-8 w-8 text-[#D8BD2A]" />
             Site Content Management
           </h2>
