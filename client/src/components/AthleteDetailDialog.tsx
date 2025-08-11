@@ -295,8 +295,8 @@ export function AthleteDetailDialog({
           <AdminModalSection title="Basic Information" icon={<User className="h-5 w-5" />}>
             <div className="space-y-6">
               {/* Photo and Name Section */}
-              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
-                <div className="relative">
+              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 w-full">
+                <div className="relative flex flex-col items-center">
                   <div className="relative w-24 h-24 group">
                     {athleteData.photo ? (
                       <img
