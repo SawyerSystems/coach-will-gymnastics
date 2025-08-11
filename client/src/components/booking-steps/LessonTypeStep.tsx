@@ -30,8 +30,8 @@ export function LessonTypeStep() {
             <Card 
               key={lt.id}
               className={cn(
-                "cursor-pointer transition-all hover:shadow-lg bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[#0F0276] dark:border-[#0F0276]/30",
-                isSelected ? "ring-2 ring-[#D8BD2A] border-[#D8BD2A] bg-white/80 dark:bg-[#0F0276] dark:ring-[#D8BD2A]" : "hover:border-[#0F0276]/30 hover:bg-white/70 dark:hover:bg-[#0F0276]/80"
+                "cursor-pointer transition-all hover:shadow-lg bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)]",
+                isSelected ? "ring-2 ring-[#D8BD2A] border-[#D8BD2A] bg-white/80 dark:bg-[rgba(0,0,102,0.2)] dark:ring-[#D8BD2A]" : "hover:border-[#0F0276]/30 hover:bg-white/70 dark:hover:bg-[rgba(0,0,102,0.15)]"
               )}
               onClick={() => handleLessonSelect(lt.name.toLowerCase().replace(/\s+/g, '-'))}
             >
@@ -81,7 +81,7 @@ export function LessonTypeStep() {
         })}
       </div>
 
-      <div className="bg-gradient-to-r from-[#0F0276]/10 to-blue-600/10 border border-[#0F0276]/20 p-4 rounded-lg backdrop-blur-sm dark:bg-[#0F0276] dark:border-[#0F0276]/30">
+      <div className="bg-gradient-to-r from-[#0F0276]/10 to-blue-600/10 border border-[#0F0276]/20 p-4 rounded-lg backdrop-blur-sm dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)]">
         <h3 className="font-semibold text-[#0F0276] dark:text-[#D8BD2A] mb-2">What's Included in Every Lesson:</h3>
         <ul className="text-sm text-[#0F0276]/80 dark:text-[#D8BD2A] space-y-1">
           <li className="flex items-center gap-2">

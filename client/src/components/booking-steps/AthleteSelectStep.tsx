@@ -277,7 +277,7 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
       {/* Display guidance message if athletes exist but none selected */}
       {athletes.length > 0 && state.selectedAthletes.length === 0 && (
         <div className="bg-gradient-to-r from-[#D8BD2A]/10 to-yellow-500/10 border border-[#D8BD2A]/30 p-4 rounded-lg backdrop-blur-sm dark:bg-[#D8BD2A] dark:border-[#D8BD2A]/30">
-          <p className="text-sm text-[#0F0276] dark:text-[#0F0276] font-medium">
+          <p className="text-sm text-[#0F0276] dark:text-[rgba(0,0,102,1)] font-medium">
             <strong>Please select</strong> an athlete from the list above to continue.
           </p>
         </div>

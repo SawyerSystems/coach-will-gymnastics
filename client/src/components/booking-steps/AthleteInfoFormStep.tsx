@@ -192,7 +192,7 @@ export function AthleteInfoFormStep() {
       </div>
 
       {state.athleteInfo.map((athlete, index) => (
-        <Card key={index} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+        <Card key={index} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-blue-900/50 dark:border-white/20">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base text-[#0F0276] dark:text-white">

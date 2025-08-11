@@ -55,7 +55,7 @@ export function WaiverStep() {
   if (waiverLoading && athleteName) {
     return (
       <div className="space-y-6 py-4">
-        <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[#0F0276] dark:border-[#0F0276]/30 p-6 rounded-lg text-center">
+        <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)] p-6 rounded-lg text-center">
           <div className="animate-spin h-8 w-8 border-2 border-[#0F0276] border-t-transparent rounded-full mx-auto mb-3 dark:border-[#D8BD2A]"></div>
           <h3 className="text-lg font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Checking Waiver Status</h3>
           <p className="text-sm text-[#0F0276]/70 dark:text-white mt-2">
@@ -69,7 +69,7 @@ export function WaiverStep() {
   if (state.waiverStatus.signed) {
     return (
       <div className="space-y-6 py-4">
-        <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[#0F0276] dark:border-[#0F0276]/30 p-6 rounded-lg text-center">
+        <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)] p-6 rounded-lg text-center">
           <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Waiver Already Signed</h3>
           <p className="text-sm text-[#0F0276]/70 dark:text-white mt-2">
@@ -113,7 +113,7 @@ export function WaiverStep() {
         </p>
       </div>
 
-      <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[#0F0276] dark:border-[#0F0276]/30 p-6 rounded-lg text-center">
+      <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)] p-6 rounded-lg text-center">
         <FileText className="h-12 w-12 text-[#D8BD2A] mx-auto mb-3" />
         <h3 className="text-lg font-semibold text-[#0F0276] dark:text-[#D8BD2A] mb-2">
           CoachWillTumbles.com Waiver Adventure Agreement
@@ -130,7 +130,7 @@ export function WaiverStep() {
         </Button>
       </div>
 
-      <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[#0F0276] dark:border-[#0F0276]/30 p-4 rounded-lg">
+      <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)] p-4 rounded-lg">
         <p className="text-sm text-[#0F0276] dark:text-white">
           <strong>Important:</strong> This waiver must be signed by a parent or legal guardian. 
           By accepting, you confirm you have the legal authority to sign on behalf of the athlete.

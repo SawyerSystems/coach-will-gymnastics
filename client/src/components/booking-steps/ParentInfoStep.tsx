@@ -402,27 +402,27 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           <CardContent>
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-6 text-sm">
               <div>
-                <dt className="font-semibold text-gray-500">First Name</dt>
+                <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">First Name</dt>
                 <dd>{parentInfo.firstName}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-gray-500">Last Name</dt>
+                <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Last Name</dt>
                 <dd>{parentInfo.lastName}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-gray-500">Email</dt>
+                <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Email</dt>
                 <dd>{parentInfo.email}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-gray-500">Phone</dt>
+                <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Phone</dt>
                 <dd>{parentInfo.phone}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-gray-500">Emergency Contact</dt>
+                <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Emergency Contact</dt>
                 <dd>{parentInfo.emergencyContactName}</dd>
               </div>
               <div>
-                <dt className="font-semibold text-gray-500">Emergency Phone</dt>
+                <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Emergency Phone</dt>
                 <dd>{parentInfo.emergencyContactPhone}</dd>
               </div>
             </dl>
@@ -482,7 +482,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-[#0F0276] dark:text-white font-medium">First Name</Label>
+                  <Label htmlFor="firstName" className="text-[#0F0276] dark:text-[#D8BD2A] font-medium">First Name</Label>
                   <Input
                     id="firstName"
                     placeholder="First Name"
@@ -492,7 +492,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-[#0F0276] dark:text-white font-medium">Last Name</Label>
+                  <Label htmlFor="lastName" className="text-[#0F0276] dark:text-[#D8BD2A] font-medium">Last Name</Label>
                   <Input
                     id="lastName"
                     placeholder="Last Name"
@@ -502,7 +502,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[#0F0276] dark:text-white font-medium">Email</Label>
+                  <Label htmlFor="email" className="text-[#0F0276] dark:text-[#D8BD2A] font-medium">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -513,7 +513,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-[#0F0276] dark:text-white font-medium">Phone</Label>
+                  <Label htmlFor="phone" className="text-[#0F0276] dark:text-[#D8BD2A] font-medium">Phone</Label>
                   <Input
                     id="phone"
                     placeholder="Phone"
@@ -536,7 +536,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyContactName" className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Name</Label>
+                  <Label htmlFor="emergencyContactName" className="text-[#0F0276] dark:text-[#D8BD2A] font-medium">Emergency Contact Name</Label>
                   <Input
                     id="emergencyContactName"
                     placeholder="Emergency Contact Name"
@@ -546,7 +546,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyContactPhone" className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Phone</Label>
+                  <Label htmlFor="emergencyContactPhone" className="text-[#0F0276] dark:text-[#D8BD2A] font-medium">Emergency Contact Phone</Label>
                   <Input
                     id="emergencyContactPhone"
                     placeholder="Emergency Contact Phone"

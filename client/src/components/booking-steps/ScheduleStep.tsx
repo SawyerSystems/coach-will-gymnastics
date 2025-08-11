@@ -133,7 +133,7 @@ export function ScheduleStep() {
                 Loading available times...
               </div>
             ) : availableTimes.length === 0 ? (
-              <Card className="mt-2 bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+              <Card className="mt-2 bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)]">
                 <CardContent className="text-center py-8 text-[#0F0276]/70 dark:text-white/70">
                   No available times for this date. Please select another date.
                 </CardContent>
@@ -148,10 +148,10 @@ export function ScheduleStep() {
                   <Card 
                     key={time}
                     className={cn(
-                      "cursor-pointer transition-all bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20",
+                      "cursor-pointer transition-all bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)]",
                       state.selectedTimeSlot?.time === time
-                        ? "ring-2 ring-[#D8BD2A] border-[#D8BD2A] bg-white/80 dark:bg-[#0F0276] dark:ring-[#D8BD2A] dark:border-[#D8BD2A]"
-                        : "hover:border-[#0F0276]/30 hover:bg-white/70 dark:hover:bg-white/15"
+                        ? "ring-2 ring-[#D8BD2A] border-[#D8BD2A] bg-white/80 dark:bg-[rgba(0,0,102,0.2)] dark:ring-[#D8BD2A] dark:border-[#D8BD2A]"
+                        : "hover:border-[#0F0276]/30 hover:bg-white/70 dark:hover:bg-[rgba(0,0,102,0.15)]"
                     )}
                     onClick={() => handleTimeSelect(time)}
                   >

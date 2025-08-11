@@ -220,7 +220,7 @@ export function SafetyStep() {
         </Alert>
       )}
 
-      <Card className="border-[#0F0276]/30 bg-[#0F0276] dark:bg-[#0F0276] dark:border-[#0F0276]/30">
+      <Card className="border-[#0F0276]/30 bg-[rgba(0,0,102,0.1)] dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-500 dark:text-red-400">
             <Shield className="h-5 w-5" />
@@ -491,7 +491,7 @@ export function SafetyStep() {
         </Card>
       )}
 
-      <Card className="border-[#0F0276]/30 bg-[#0F0276] dark:bg-[#0F0276] dark:border-[#0F0276]/30">
+      <Card className="border-[#0F0276]/30 bg-[rgba(0,0,102,0.1)] dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-yellow-400 dark:text-yellow-400">
             <AlertTriangle className="h-5 w-5" />
