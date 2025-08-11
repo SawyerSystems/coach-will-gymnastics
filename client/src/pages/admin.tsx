@@ -3119,11 +3119,13 @@ export default function Admin() {
                       value={(selectedParentDetails.createdAt || selectedParentDetails.created_at) ? new Date(selectedParentDetails.createdAt || selectedParentDetails.created_at).toLocaleDateString() : 'Unknown'}
                       icon={<CalendarDays className="h-4 w-4" />}
                     />
-                    <AdminModalDetailRow
-                      label="Last Login"
-                      value={selectedParentDetails.lastLoginAt ? `${new Date(selectedParentDetails.lastLoginAt).toLocaleDateString()} at ${new Date(selectedParentDetails.lastLoginAt).toLocaleTimeString()}` : 'Never logged in'}
-                      icon={<Clock className="h-4 w-4" />}
-                    />
+                    {(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at) && (
+                      <AdminModalDetailRow
+                        label="Last Login"
+                        value={`${new Date(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at).toLocaleDateString()} at ${new Date(selectedParentDetails.lastLoginAt || selectedParentDetails.last_login_at).toLocaleTimeString()}`}
+                        icon={<Clock className="h-4 w-4" />}
+                      />
+                    )}
                   </div>
                 </AdminModalGrid>
               </AdminModalSection>
