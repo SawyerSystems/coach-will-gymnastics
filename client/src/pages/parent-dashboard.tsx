@@ -1221,6 +1221,66 @@ function ParentDashboard() {
                 </span>
               }
             >
+                {/* Game-Style Statistics Dashboard - Moved to Top */}
+                {authStatus?.email && (
+                  <div className="mb-6">
+                    <h4 className="font-medium text-base sm:text-lg text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
+                      <Trophy className="w-4 h-4 text-yellow-500" />
+                      Adventure Progress
+                      <span className="text-sm font-normal text-gray-500 dark:text-gray-400">🎮</span>
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+                      <ParentStatCard
+                        label="Total Quests"
+                        value={bookings.length}
+                        icon={<Star />}
+                        color="blue"
+                      />
+                      <ParentStatCard
+                        label="Active Heroes"
+                        value={athletes.length}
+                        icon={<Users />}
+                        color="green"
+                      />
+                      <ParentStatCard
+                        label="Next Adventures"
+                        value={upcomingBookings.length}
+                        icon={<Calendar />}
+                        color="orange"
+                      />
+                      <ParentStatCard
+                        label="Victories"
+                        value={bookings.filter(b => b.status === 'completed').length}
+                        icon={<Trophy />}
+                        color="purple"
+                      />
+                    </div>
+
+                    {/* Experience Bar */}
+                    <ParentCard className="mt-4 sm:mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
+                      <ParentCardContent className="p-3 sm:p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs sm:text-sm font-bold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
+                            <Award className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />
+                            Adventure Level
+                          </span>
+                          <span className="text-xs sm:text-sm font-bold text-yellow-700 dark:text-yellow-400">Level {Math.floor(bookings.filter(b => b.status === 'completed').length / 3) + 1}</span>
+                        </div>
+                        <div className="w-full bg-yellow-200 dark:bg-yellow-800/30 rounded-full h-2 sm:h-3 relative overflow-hidden">
+                          <div 
+                            className="bg-yellow-400 dark:bg-yellow-500 h-2 sm:h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(((bookings.filter(b => b.status === 'completed').length % 3) / 3) * 100, 100)}%` }}
+                          >
+                          </div>
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-yellow-700 dark:text-yellow-400 mt-1 text-center">
+                          {3 - (bookings.filter(b => b.status === 'completed').length % 3)} more sessions to level up! 🎯
+                        </div>
+                      </ParentCardContent>
+                    </ParentCard>
+                  </div>
+                )}
+
                 {authStatus?.email && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     {/* Personal Information */}
@@ -1299,24 +1359,6 @@ function ParentDashboard() {
                         <ParentButton 
                           size="sm"
                           variant="secondary"
-                          onClick={() => {
-                            const newEmail = prompt("Enter your new email address:", authStatus?.email || '');
-                            if (newEmail && newEmail.includes('@')) {
-                              toast({
-                                title: "Email Change Request",
-                                description: `Email change request submitted for ${newEmail}. Verification email will be sent.`,
-                              });
-                              // TODO: Implement email change verification flow
-                            }
-                          }}
-                          className="h-9 text-xs sm:text-sm"
-                        >
-                          <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Change Email
-                        </ParentButton>
-                        <ParentButton 
-                          size="sm"
-                          variant="secondary"
                           onClick={() => setShowUpdateEmergencyContact(true)}
                           className="h-9 text-xs sm:text-sm"
                         >
@@ -1324,64 +1366,6 @@ function ParentDashboard() {
                           Update Emergency Contact
                         </ParentButton>
                       </div>
-                    </div>
-
-                    {/* Game-Style Statistics Dashboard */}
-                    <div className="border-t pt-4 sm:pt-6">
-                      <h4 className="font-medium text-base sm:text-lg text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-yellow-500" />
-                        Adventure Progress
-                        <span className="text-sm font-normal text-gray-500 dark:text-gray-400">🎮</span>
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-                        <ParentStatCard
-                          label="Total Quests"
-                          value={bookings.length}
-                          icon={<Star />}
-                          color="blue"
-                        />
-                        <ParentStatCard
-                          label="Active Heroes"
-                          value={athletes.length}
-                          icon={<Users />}
-                          color="green"
-                        />
-                        <ParentStatCard
-                          label="Next Adventures"
-                          value={upcomingBookings.length}
-                          icon={<Calendar />}
-                          color="orange"
-                        />
-                        <ParentStatCard
-                          label="Victories"
-                          value={bookings.filter(b => b.status === 'completed').length}
-                          icon={<Trophy />}
-                          color="purple"
-                        />
-                      </div>
-
-                      {/* Experience Bar */}
-                      <ParentCard className="mt-4 sm:mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
-                        <ParentCardContent className="p-3 sm:p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs sm:text-sm font-bold text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
-                              <Award className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />
-                              Adventure Level
-                            </span>
-                            <span className="text-xs sm:text-sm font-bold text-yellow-700 dark:text-yellow-400">Level {Math.floor(bookings.filter(b => b.status === 'completed').length / 3) + 1}</span>
-                          </div>
-                          <div className="w-full bg-yellow-200 dark:bg-yellow-800/30 rounded-full h-2 sm:h-3 relative overflow-hidden">
-                            <div 
-                              className="bg-yellow-400 dark:bg-yellow-500 h-2 sm:h-3 rounded-full transition-all duration-500"
-                              style={{ width: `${Math.min(((bookings.filter(b => b.status === 'completed').length % 3) / 3) * 100, 100)}%` }}
-                            >
-                            </div>
-                          </div>
-                          <div className="text-[10px] sm:text-xs text-yellow-700 dark:text-yellow-400 mt-1 text-center">
-                            {3 - (bookings.filter(b => b.status === 'completed').length % 3)} more sessions to level up! 🎯
-                          </div>
-                        </ParentCardContent>
-                      </ParentCard>
                     </div>
                   </div>
                 )}
