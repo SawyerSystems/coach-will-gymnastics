@@ -637,19 +637,15 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 				onClose={() => setOpen(false)}
 				title="Create Manual Invoice"
 				size="3xl"
+				className="[&_.absolute.right-4.top-4]:hidden"
 				footer={
 					<div className="flex items-center justify-between w-full">
 						<p className="text-xs text-slate-600 dark:text-slate-400">
 							All currency values should be entered in dollars (will be converted to cents).
 						</p>
-						<div className="flex gap-2">
-							<AdminButton variant="secondary" onClick={() => setOpen(false)}>
-								Cancel
-							</AdminButton>
-							<AdminButton onClick={onSubmit}>
-								Generate PDF
-							</AdminButton>
-						</div>
+						<AdminButton onClick={onSubmit}>
+							Generate PDF
+						</AdminButton>
 					</div>
 				}
 			>
