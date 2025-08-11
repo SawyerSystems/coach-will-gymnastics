@@ -648,8 +648,8 @@ function ParentDashboard() {
       <ParentMainContainer>
         <ParentContentContainer>
           <ParentPageHeader>
-            <ParentPageTitle className="text-[#B8860B]">Parent Portal</ParentPageTitle>
-            <ParentPageSubtitle className="text-[#B8860B]/80">Manage your athletes, sessions and waivers</ParentPageSubtitle>
+            <ParentPageTitle className="text-[#0F0276] dark:text-[#B8860B]">Parent Portal</ParentPageTitle>
+            <ParentPageSubtitle className="text-[#0F0276]/80 dark:text-[#B8860B]/80">Manage your athletes, sessions and waivers</ParentPageSubtitle>
           </ParentPageHeader>
 
           {/* Statistics Overview Section */}
@@ -696,6 +696,7 @@ function ParentDashboard() {
               }}
               variant="primary"
               size="md"
+              className="dark:!bg-gradient-to-r dark:!from-[#B8860B] dark:!to-[#B8860B]/90 dark:!hover:from-[#A0751F] dark:!hover:to-[#A0751F]/90 dark:!border-[#B8860B] dark:!text-[#0F0276]"
             >
               <PlusCircle className="h-4 w-4" />
               Book New Session
