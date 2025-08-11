@@ -42,6 +42,8 @@ export function AdminContentTabs({
     // Match Settings tab behavior: take full width, no horizontal scroll, allow wrap
     "w-full sm:w-auto overflow-visible flex flex-wrap",
     "gap-1",
+    // Dark mode background styling
+    "bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-600/40",
     listClassName
   );
 
@@ -51,6 +53,9 @@ export function AdminContentTabs({
     "transition-all duration-200",
     // Allow wrapping and prevent forced minimum width so grid/rows can form
     "flex-1 sm:flex-none min-w-0",
+    // Dark mode styling for inactive and active states
+    "text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white",
+    "hover:bg-slate-200/50 dark:hover:bg-slate-700/50",
     "data-[state=active]:shadow-md data-[state=active]:text-white",
     "relative inline-flex items-center gap-2 justify-center",
     triggerClassName
@@ -81,7 +86,7 @@ export function AdminContentTabs({
               {item.icon}
               <span className="truncate">{item.label}</span>
               {item.badge != null && item.badge !== "" && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded-full">
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 dark:bg-black/20 rounded-full">
                   {item.badge}
                 </span>
               )}
