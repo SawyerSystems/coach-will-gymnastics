@@ -1842,13 +1842,13 @@ export default function Admin() {
                                   </div>
 
                                   <div className="flex items-center gap-6 text-sm">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 rounded-lg">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#D8BD2A]/10 to-[#D8BD2A]/20 dark:from-[#D8BD2A]/15 dark:to-[#D8BD2A]/25 rounded-lg border border-[#D8BD2A]/20 dark:border-[#D8BD2A]/30">
                                       <Users className="h-4 w-4 text-[#0F0276] dark:text-white" />
                                       <span className="font-semibold text-[#0F0276] dark:text-white">
                                         {athleteCount} athlete{athleteCount !== 1 ? 's' : ''}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/30 rounded-lg border border-blue-100/50 dark:border-blue-700/30">
                                       <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-300" />
                                       <span className="font-semibold text-blue-700 dark:text-blue-300">
                                         {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
@@ -3071,6 +3071,29 @@ export default function Admin() {
           title="Parent Details"
           size="4xl"
           showCloseButton={false}
+          footer={
+            <div className="flex justify-end gap-3">
+              <AdminButton
+                variant="secondary"
+                onClick={() => setViewingParent(null)}
+                className="flex items-center gap-2"
+              >
+                Close
+              </AdminButton>
+              <AdminButton
+                onClick={() => {
+                  if (selectedParentDetails) {
+                    setEditingParent(selectedParentDetails);
+                    setIsParentEditOpen(true);
+                  }
+                }}
+                className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+              >
+                <Edit className="h-4 w-4" />
+                Edit Parent
+              </AdminButton>
+            </div>
+          }
         >
           {viewingParent && selectedParentDetails && (
             <>
@@ -3298,7 +3321,7 @@ export default function Admin() {
                     ))}
                     
                     {selectedParentDetails.bookings.length > 10 && (
-                      <div className="flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-2 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center justify-center bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mt-2 border border-blue-200 dark:border-blue-700/30">
                         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
                         <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
                           Showing 10 most recent bookings of {selectedParentDetails.bookings.length} total
@@ -3667,140 +3690,122 @@ export default function Admin() {
         </Dialog>
 
         {/* Parent Edit Modal */}
-        <Dialog open={isParentEditOpen} onOpenChange={setIsParentEditOpen}>
-          <DialogContent 
-            className="max-w-2xl"
-            // Adding explicit ARIA attributes to prevent accessibility issues
-            aria-labelledby="edit-parent-title"
-            aria-describedby="edit-parent-description"
-          >
-            <DialogHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
-              <DialogTitle id="edit-parent-title" className="text-2xl font-bold text-indigo-800 flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <User className="h-6 w-6 text-indigo-600" />
+        <AdminModal
+          isOpen={isParentEditOpen} 
+          onClose={() => setIsParentEditOpen(false)}
+          title="Edit Parent Information"
+          size="3xl"
+          showCloseButton={false}
+          footer={
+            <div className="flex justify-end gap-3">
+              <AdminButton 
+                variant="secondary" 
+                onClick={() => setIsParentEditOpen(false)}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </AdminButton>
+              <AdminButton 
+                onClick={() => {
+                  // TODO: Implement save functionality
+                  console.log('Save parent changes');
+                  setIsParentEditOpen(false);
+                }}
+                className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+              >
+                <Save className="h-4 w-4" />
+                Save Changes
+              </AdminButton>
+            </div>
+          }
+        >
+          {editingParent && (
+            <>
+              {/* Contact Information */}
+              <AdminModalSection
+                title="Contact Information"
+                icon={<User className="h-5 w-5" />}
+                gradient="blue"
+              >
+                <AdminModalGrid cols={2}>
+                  <div>
+                    <Label htmlFor="parent-first-name" className="text-slate-700 dark:text-slate-300 font-medium">First Name</Label>
+                    <Input 
+                      id="parent-first-name"
+                      defaultValue={editingParent.first_name}
+                      placeholder="First Name"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="parent-last-name" className="text-slate-700 dark:text-slate-300 font-medium">Last Name</Label>
+                    <Input 
+                      id="parent-last-name"
+                      defaultValue={editingParent.last_name}
+                      placeholder="Last Name"
+                      className="mt-1"
+                    />
+                  </div>
+                </AdminModalGrid>
+                <div>
+                  <Label htmlFor="parent-email" className="text-slate-700 dark:text-slate-300 font-medium">Email</Label>
+                  <Input 
+                    id="parent-email"
+                    type="email"
+                    defaultValue={editingParent.email}
+                    placeholder="Email"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center">
+                    <span className="p-1 bg-blue-100 dark:bg-blue-900 rounded-full mr-1">
+                      <Mail className="h-3 w-3" />
+                    </span>
+                    Used for account access and communication
+                  </p>
                 </div>
-                Edit Parent Information
-              </DialogTitle>
-              <DialogDescription id="edit-parent-description" className="text-slate-600">
-                Update the parent's information below.
-              </DialogDescription>
-            </DialogHeader>
-            {editingParent && (
-              <div className="space-y-6">
-                {/* Contact Info Card */}
-                <Card className="rounded-xl border shadow-sm mb-6">
-                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-                    <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                      <User className="h-5 w-5 text-blue-600" />
-                      Contact Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="parent-first-name" className="text-slate-700 font-medium">First Name</Label>
-                        <Input 
-                          id="parent-first-name"
-                          defaultValue={editingParent.first_name}
-                          placeholder="First Name"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="parent-last-name" className="text-slate-700 font-medium">Last Name</Label>
-                        <Input 
-                          id="parent-last-name"
-                          defaultValue={editingParent.last_name}
-                          placeholder="Last Name"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="parent-email" className="text-slate-700 font-medium">Email</Label>
-                      <Input 
-                        id="parent-email"
-                        type="email"
-                        defaultValue={editingParent.email}
-                        placeholder="Email"
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-blue-600 mt-2 flex items-center">
-                        <span className="p-1 bg-blue-100 rounded-full mr-1">
-                          <Mail className="h-3 w-3" />
-                        </span>
-                        Used for account access and communication
-                      </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="parent-phone" className="text-slate-700 font-medium">Phone</Label>
-                      <Input 
-                        id="parent-phone"
-                        defaultValue={editingParent.phone}
-                        placeholder="Phone Number"
-                        className="mt-1"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Emergency Contact Card */}
-                <Card className="rounded-xl border shadow-sm mb-6">
-                  <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-xl">
-                    <CardTitle className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-red-600" />
-                      Emergency Contact
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="emergency-name" className="text-slate-700 font-medium">Contact Name</Label>
-                        <Input 
-                          id="emergency-name"
-                          defaultValue={editingParent?.emergencyContactName || editingParent?.emergency_contact_name || ''}
-                          placeholder="Emergency Contact Name"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="emergency-phone" className="text-slate-700 font-medium">Contact Phone</Label>
-                        <Input 
-                          id="emergency-phone"
-                          defaultValue={editingParent?.emergencyContactPhone || editingParent?.emergency_contact_phone || ''}
-                          placeholder="Emergency Contact Phone"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-dashed border-slate-200">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsParentEditOpen(false)}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-800"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      // TODO: Implement save functionality
-                      console.log('Save parent changes');
-                      setIsParentEditOpen(false);
-                    }}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </Button>
+                <div>
+                  <Label htmlFor="parent-phone" className="text-slate-700 dark:text-slate-300 font-medium">Phone</Label>
+                  <Input 
+                    id="parent-phone"
+                    defaultValue={editingParent.phone}
+                    placeholder="Phone Number"
+                    className="mt-1"
+                  />
                 </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+              </AdminModalSection>
+
+              {/* Emergency Contact */}
+              <AdminModalSection
+                title="Emergency Contact"
+                icon={<AlertCircle className="h-5 w-5" />}
+                gradient="red"
+                className="mt-6"
+              >
+                <AdminModalGrid cols={2}>
+                  <div>
+                    <Label htmlFor="emergency-name" className="text-slate-700 dark:text-slate-300 font-medium">Contact Name</Label>
+                    <Input 
+                      id="emergency-name"
+                      defaultValue={editingParent?.emergencyContactName || editingParent?.emergency_contact_name || ''}
+                      placeholder="Emergency Contact Name"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="emergency-phone" className="text-slate-700 dark:text-slate-300 font-medium">Contact Phone</Label>
+                    <Input 
+                      id="emergency-phone"
+                      defaultValue={editingParent?.emergencyContactPhone || editingParent?.emergency_contact_phone || ''}
+                      placeholder="Emergency Contact Phone"
+                      className="mt-1"
+                    />
+                  </div>
+                </AdminModalGrid>
+              </AdminModalSection>
+            </>
+          )}
+        </AdminModal>
 
         {/* Unified Booking Modal for Admin Flows */}
         <UnifiedBookingModal
