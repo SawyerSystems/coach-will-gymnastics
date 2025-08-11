@@ -1294,7 +1294,7 @@ export function AdminSiteContentManager() {
             <Upload className="h-8 w-8 text-[#D8BD2A]" />
             Site Content Management
           </h2>
-          <p className="text-slate-600 mt-1">Manage website content, media, and information</p>
+          <p className="text-slate-600 dark:text-white mt-1">Manage website content, media, and information</p>
         </div>
         <Button 
           onClick={handleSave} 
@@ -1554,10 +1554,10 @@ export function AdminSiteContentManager() {
           </Card>
 
           {/* Equipment Images Card */}
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-orange-50 via-orange-25 to-orange-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-orange-800 flex items-center gap-3">
-                <Image className="h-6 w-6 text-orange-600" />
+              <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                <Image className="h-6 w-6 text-[#D8BD2A]" />
                 Training Equipment Images
               </CardTitle>
             </CardHeader>
@@ -1681,10 +1681,10 @@ export function AdminSiteContentManager() {
 
         {/* Programs Tab */}
         <TabsContent value="programs" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-teal-50 via-teal-25 to-teal-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-teal-800 flex items-center gap-3">
-                <Video className="h-6 w-6 text-teal-600" />
+              <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                <Video className="h-6 w-6 text-[#D8BD2A]" />
                 Apparatus & Equipment
               </CardTitle>
             </CardHeader>
@@ -1753,10 +1753,10 @@ export function AdminSiteContentManager() {
 
         {/* Testimonials Tab */}
         <TabsContent value="testimonials" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-pink-50 via-pink-25 to-pink-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-pink-800 flex items-center gap-3">
-                <Star className="h-6 w-6 text-pink-600" />
+              <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                <Star className="h-6 w-6 text-[#D8BD2A]" />
                 Parent Testimonials
               </CardTitle>
             </CardHeader>
@@ -1795,10 +1795,10 @@ export function AdminSiteContentManager() {
 
         {/* Emails Tab */}
         <TabsContent value="emails" className="mt-6 space-y-6 p-6">
-          <Card className="rounded-xl border-0 bg-gradient-to-br from-cyan-50 via-cyan-25 to-cyan-50/30 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold text-cyan-800 flex items-center gap-3">
-                <Mail className="h-6 w-6 text-cyan-600" />
+              <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                <Mail className="h-6 w-6 text-[#D8BD2A]" />
                 Email Template Management
               </CardTitle>
             </CardHeader>

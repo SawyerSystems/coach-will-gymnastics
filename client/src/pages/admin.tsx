@@ -3119,18 +3119,24 @@ export default function Admin() {
               </AdminCardHeader>
               <AdminCardContent className="p-4 sm:p-6 lg:p-8">
                 <Tabs defaultValue="developer" className="w-full">
-                  {/* Tab controls with isolation */}
-                  <div className="mb-12 pb-4 border-b border-slate-200/30">
-                    <AdminTabButtonsRow
-                      items={[
-                        { value: 'developer', label: 'Developer' },
-                        { value: 'general', label: 'General' },
-                        { value: 'site-content', label: 'Site Content' },
-                        { value: 'backup', label: 'Backup' },
-                      ]}
-                      listClassName="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl w-full min-h-[60px]"
-                      triggerClassName="font-semibold text-sm text-center h-12 flex items-center justify-center"
-                    />
+                  {/* Tab controls with layered design */}
+                  <div className="mb-12 pb-4 border-b border-slate-200/30 relative">
+                    {/* Background container */}
+                    <div className="absolute inset-0 top-0 left-0 right-0 h-[84px] bg-gradient-to-r from-slate-100 to-slate-200/50 dark:from-yellow-600/80 dark:to-yellow-500/70 rounded-xl"></div>
+                    
+                    {/* Tab buttons on top */}
+                    <div className="relative z-10 pt-3">
+                      <AdminTabButtonsRow
+                        items={[
+                          { value: 'developer', label: 'Developer' },
+                          { value: 'general', label: 'General' },
+                          { value: 'site-content', label: 'Site Content' },
+                          { value: 'backup', label: 'Backup' },
+                        ]}
+                        listClassName="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 w-full min-h-[60px] bg-transparent"
+                        triggerClassName="font-semibold text-sm text-center h-12 flex items-center justify-center dark:bg-slate-800/60 dark:text-yellow-100 dark:border-yellow-700/30 shadow-lg"
+                      />
+                    </div>
                   </div>
                   
                   <TabsContent value="developer" className="space-y-6">{/* Clean separation with container above */}
