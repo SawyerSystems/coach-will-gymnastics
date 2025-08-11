@@ -2087,76 +2087,96 @@ export default function Admin() {
                       </Dialog>
                     </div>
                     
-                    {/* Edit Blog Post Dialog */}
-                    <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
-                      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Blog Post</DialogTitle>
-                          <DialogDescription>
-                            Edit the details of your blog post below.
-                          </DialogDescription>
-                        </DialogHeader>
-                        {editingPost && (
-                          <form onSubmit={(e) => {
-                            e.preventDefault();
-                            const content = sectionsToContent(editingPostSections);
-                            updateBlogPostMutation.mutate({ ...editingPost, content });
-                          }}>
-                            <div className="space-y-4">
-                              <div>
-                                <Label htmlFor="edit-blog-title">Title</Label>
-                                <Input
-                                  id="edit-blog-title"
-                                  value={editingPost.title}
-                                  onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="edit-blog-excerpt">Excerpt</Label>
-                                <Textarea
-                                  id="edit-blog-excerpt"
-                                  value={editingPost.excerpt}
-                                  onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                                  rows={3}
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="edit-blog-category">Category</Label>
-                                <Input
-                                  id="edit-blog-category"
-                                  value={editingPost.category || ''}
-                                  onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
-                                />
-                              </div>
-                              <div>
-                                <Label>Content</Label>
-                                <SectionBasedContentEditor
-                                  sections={editingPostSections}
-                                  onChange={setEditingPostSections}
-                                />
-                              </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  type="submit"
-                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                >
-                                  Save Changes
-                                </Button>
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={() => setEditingPost(null)}
-                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          </form>
-                        )}
-                      </DialogContent>
-                    </Dialog>
+                    {/* Edit Blog Post Modal */}
+                    <AdminModal
+                      isOpen={!!editingPost}
+                      onClose={() => setEditingPost(null)}
+                      title="Edit Blog Post"
+                      size="4xl"
+                      showCloseButton={false}
+                      footer={
+                        <div className="flex justify-end gap-3">
+                          <AdminButton 
+                            variant="secondary"
+                            onClick={() => setEditingPost(null)}
+                            className="flex items-center gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                            Cancel
+                          </AdminButton>
+                          <AdminButton 
+                            type="submit"
+                            form="edit-blog-form"
+                            className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+                          >
+                            <Save className="h-4 w-4" />
+                            Save Changes
+                          </AdminButton>
+                        </div>
+                      }
+                    >
+                      {editingPost && (
+                        <>
+                          {/* Blog Details */}
+                          <AdminModalSection
+                            title="Blog Post Details"
+                            icon={<FileText className="h-5 w-5" />}
+                            gradient="blue"
+                          >
+                            <form id="edit-blog-form" onSubmit={(e) => {
+                              e.preventDefault();
+                              const content = sectionsToContent(editingPostSections);
+                              updateBlogPostMutation.mutate({ ...editingPost, content });
+                            }}>
+                              <AdminModalGrid cols={1}>
+                                <div>
+                                  <Label htmlFor="edit-blog-title" className="text-slate-700 dark:text-slate-300 font-medium">Title</Label>
+                                  <Input
+                                    id="edit-blog-title"
+                                    value={editingPost.title}
+                                    onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                                    required
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-blog-excerpt" className="text-slate-700 dark:text-slate-300 font-medium">Excerpt</Label>
+                                  <Textarea
+                                    id="edit-blog-excerpt"
+                                    value={editingPost.excerpt}
+                                    onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                                    rows={3}
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-blog-category" className="text-slate-700 dark:text-slate-300 font-medium">Category</Label>
+                                  <Input
+                                    id="edit-blog-category"
+                                    value={editingPost.category || ''}
+                                    onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                                    className="mt-1"
+                                  />
+                                </div>
+                              </AdminModalGrid>
+                            </form>
+                          </AdminModalSection>
+
+                          {/* Content Editor */}
+                          <AdminModalSection
+                            title="Content"
+                            icon={<Edit className="h-5 w-5" />}
+                            gradient="green"
+                            className="mt-6"
+                          >
+                            <SectionBasedContentEditor
+                              sections={editingPostSections}
+                              onChange={setEditingPostSections}
+                            />
+                          </AdminModalSection>
+                        </>
+                      )}
+                    </AdminModal>
                     
                     <div className="grid grid-cols-1 gap-6">
                       {blogPosts.map((post) => (
@@ -2308,103 +2328,122 @@ export default function Admin() {
                       </Dialog>
                     </div>
                     
-                    {/* Edit Tip Dialog */}
-                    <Dialog open={!!editingTip} onOpenChange={() => setEditingTip(null)}>
-                      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Tip</DialogTitle>
-                          <DialogDescription>
-                            Edit the tip details below.
-                          </DialogDescription>
-                        </DialogHeader>
-                        {editingTip && (
-                          <form onSubmit={(e) => {
-                            e.preventDefault();
-                            const content = sectionsToContent(editingTipSections);
-                            updateTipMutation.mutate({ ...editingTip, content });
-                          }}>
-                            <div className="space-y-4">
-                              <div>
-                                <Label htmlFor="edit-tip-title">Title</Label>
-                                <Input
-                                  id="edit-tip-title"
-                                  value={editingTip.title}
-                                  onChange={(e) => setEditingTip({ ...editingTip, title: e.target.value })}
-                                  required
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="edit-tip-category">Category</Label>
-                                <Select
-                                  value={editingTip.category}
-                                  onValueChange={(value) => setEditingTip({ ...editingTip, category: value })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="vault">Vault</SelectItem>
-                                    <SelectItem value="bars">Bars</SelectItem>
-                                    <SelectItem value="beam">Beam</SelectItem>
-                                    <SelectItem value="floor">Floor</SelectItem>
-                                    <SelectItem value="drills">Drills</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label htmlFor="edit-tip-difficulty">Difficulty</Label>
-                                <Select
-                                  value={editingTip.difficulty}
-                                  onValueChange={(value) => setEditingTip({ ...editingTip, difficulty: value })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="beginner">Beginner</SelectItem>
-                                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                                    <SelectItem value="advanced">Advanced</SelectItem>
-                                    <SelectItem value="elite">Elite</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label htmlFor="edit-tip-video">Video URL (optional)</Label>
-                                <Input
-                                  id="edit-tip-video"
-                                  value={editingTip.videoUrl || ''}
-                                  onChange={(e) => setEditingTip({ ...editingTip, videoUrl: e.target.value })}
-                                  placeholder="YouTube or Vimeo URL"
-                                />
-                              </div>
-                              <div>
-                                <Label>Content</Label>
-                                <SectionBasedContentEditor
-                                  sections={editingTipSections}
-                                  onChange={setEditingTipSections}
-                                />
-                              </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  type="submit"
-                                  className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                >
-                                  Save Changes
-                                </Button>
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={() => setEditingTip(null)}
-                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          </form>
-                        )}
-                      </DialogContent>
-                    </Dialog>
+                    {/* Edit Tip Modal */}
+                    <AdminModal
+                      isOpen={!!editingTip}
+                      onClose={() => setEditingTip(null)}
+                      title="Edit Tip"
+                      size="4xl"
+                      showCloseButton={false}
+                      footer={
+                        <div className="flex justify-end gap-3">
+                          <AdminButton 
+                            variant="secondary"
+                            onClick={() => setEditingTip(null)}
+                            className="flex items-center gap-2"
+                          >
+                            <X className="h-4 w-4" />
+                            Cancel
+                          </AdminButton>
+                          <AdminButton 
+                            type="submit"
+                            form="edit-tip-form"
+                            className="flex items-center gap-2 bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+                          >
+                            <Save className="h-4 w-4" />
+                            Save Changes
+                          </AdminButton>
+                        </div>
+                      }
+                    >
+                      {editingTip && (
+                        <>
+                          {/* Tip Details */}
+                          <AdminModalSection
+                            title="Tip Details"
+                            icon={<Star className="h-5 w-5" />}
+                            gradient="amber"
+                          >
+                            <form id="edit-tip-form" onSubmit={(e) => {
+                              e.preventDefault();
+                              const content = sectionsToContent(editingTipSections);
+                              updateTipMutation.mutate({ ...editingTip, content });
+                            }}>
+                              <AdminModalGrid cols={2}>
+                                <div>
+                                  <Label htmlFor="edit-tip-title" className="text-slate-700 dark:text-slate-300 font-medium">Title</Label>
+                                  <Input
+                                    id="edit-tip-title"
+                                    value={editingTip.title}
+                                    onChange={(e) => setEditingTip({ ...editingTip, title: e.target.value })}
+                                    required
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-tip-video" className="text-slate-700 dark:text-slate-300 font-medium">Video URL (optional)</Label>
+                                  <Input
+                                    id="edit-tip-video"
+                                    value={editingTip.videoUrl || ''}
+                                    onChange={(e) => setEditingTip({ ...editingTip, videoUrl: e.target.value })}
+                                    placeholder="YouTube or Vimeo URL"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-tip-category" className="text-slate-700 dark:text-slate-300 font-medium">Category</Label>
+                                  <Select
+                                    value={editingTip.category}
+                                    onValueChange={(value) => setEditingTip({ ...editingTip, category: value })}
+                                  >
+                                    <SelectTrigger className="mt-1">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="vault">Vault</SelectItem>
+                                      <SelectItem value="bars">Bars</SelectItem>
+                                      <SelectItem value="beam">Beam</SelectItem>
+                                      <SelectItem value="floor">Floor</SelectItem>
+                                      <SelectItem value="drills">Drills</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label htmlFor="edit-tip-difficulty" className="text-slate-700 dark:text-slate-300 font-medium">Difficulty</Label>
+                                  <Select
+                                    value={editingTip.difficulty}
+                                    onValueChange={(value) => setEditingTip({ ...editingTip, difficulty: value })}
+                                  >
+                                    <SelectTrigger className="mt-1">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="beginner">Beginner</SelectItem>
+                                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                                      <SelectItem value="advanced">Advanced</SelectItem>
+                                      <SelectItem value="elite">Elite</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </AdminModalGrid>
+                            </form>
+                          </AdminModalSection>
+
+                          {/* Content Editor */}
+                          <AdminModalSection
+                            title="Content"
+                            icon={<Edit className="h-5 w-5" />}
+                            gradient="green"
+                            className="mt-6"
+                          >
+                            <SectionBasedContentEditor
+                              sections={editingTipSections}
+                              onChange={setEditingTipSections}
+                            />
+                          </AdminModalSection>
+                        </>
+                      )}
+                    </AdminModal>
                     
                     <div className="grid grid-cols-1 gap-6">
                       {tips.map((tip) => (

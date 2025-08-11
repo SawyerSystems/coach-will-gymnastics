@@ -105,18 +105,18 @@ export function SectionBasedContentEditor({ sections, onChange }: SectionBasedCo
       </div>
 
       {sections.map((section, index) => (
-        <Card key={section.id} className="overflow-hidden">
-          <CardHeader className="py-3 px-4 bg-gray-50 border-b">
+        <Card key={section.id} className="overflow-hidden dark:bg-slate-800/50 dark:border-slate-600">
+          <CardHeader className="py-3 px-4 bg-gray-50 dark:bg-slate-700/50 border-b dark:border-slate-600">
             <div className="flex items-center justify-between">
               <button
                 type="button"
-                className="flex items-center gap-2 text-sm font-medium hover:text-primary"
+                className="flex items-center gap-2 text-sm font-medium hover:text-primary dark:text-slate-200 dark:hover:text-[#D8BD2A]"
                 onClick={() => toggleExpanded(section.id)}
               >
                 {getSectionIcon(section.type)}
                 <span className="capitalize">{section.type} Section</span>
                 {!expandedSections.has(section.id) && section.content && (
-                  <span className="text-gray-500 font-normal text-xs ml-2">
+                  <span className="text-gray-500 dark:text-slate-400 font-normal text-xs ml-2">
                     ({section.content.substring(0, 50)}...)
                   </span>
                 )}
@@ -156,13 +156,13 @@ export function SectionBasedContentEditor({ sections, onChange }: SectionBasedCo
             <CardContent className="p-4">
               {section.type === 'text' && (
                 <div>
-                  <Label htmlFor={`content-${section.id}`}>Content</Label>
+                  <Label htmlFor={`content-${section.id}`} className="text-slate-700 dark:text-slate-300">Content</Label>
                   <Textarea
                     id={`content-${section.id}`}
                     value={section.content}
                     onChange={(e) => updateSection(section.id, { content: e.target.value })}
                     rows={5}
-                    className="font-mono"
+                    className="font-mono mt-1"
                     placeholder="Enter your text content here..."
                   />
                 </div>
@@ -171,21 +171,23 @@ export function SectionBasedContentEditor({ sections, onChange }: SectionBasedCo
               {section.type === 'image' && (
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor={`image-url-${section.id}`}>Image URL</Label>
+                    <Label htmlFor={`image-url-${section.id}`} className="text-slate-700 dark:text-slate-300">Image URL</Label>
                     <Input
                       id={`image-url-${section.id}`}
                       value={section.content}
                       onChange={(e) => updateSection(section.id, { content: e.target.value })}
                       placeholder="https://example.com/image.jpg"
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor={`image-caption-${section.id}`}>Caption (optional)</Label>
+                    <Label htmlFor={`image-caption-${section.id}`} className="text-slate-700 dark:text-slate-300">Caption (optional)</Label>
                     <Input
                       id={`image-caption-${section.id}`}
                       value={section.caption || ''}
                       onChange={(e) => updateSection(section.id, { caption: e.target.value })}
                       placeholder="Image caption..."
+                      className="mt-1"
                     />
                   </div>
                   {section.content && (
@@ -206,25 +208,27 @@ export function SectionBasedContentEditor({ sections, onChange }: SectionBasedCo
               {section.type === 'video' && (
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor={`video-url-${section.id}`}>Video URL</Label>
+                    <Label htmlFor={`video-url-${section.id}`} className="text-slate-700 dark:text-slate-300">Video URL</Label>
                     <Input
                       id={`video-url-${section.id}`}
                       value={section.content}
                       onChange={(e) => updateSection(section.id, { content: e.target.value })}
                       placeholder="YouTube or Vimeo URL"
+                      className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor={`video-caption-${section.id}`}>Caption (optional)</Label>
+                    <Label htmlFor={`video-caption-${section.id}`} className="text-slate-700 dark:text-slate-300">Caption (optional)</Label>
                     <Input
                       id={`video-caption-${section.id}`}
                       value={section.caption || ''}
                       onChange={(e) => updateSection(section.id, { caption: e.target.value })}
                       placeholder="Video caption..."
+                      className="mt-1"
                     />
                   </div>
                   {section.content && (
-                    <div className="mt-2 text-sm text-gray-600">
+                    <div className="mt-2 text-sm text-gray-600 dark:text-slate-400">
                       Video preview: {section.content}
                     </div>
                   )}
