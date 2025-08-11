@@ -9,6 +9,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Calendar, CheckCircle, FileText, FileX, Phone, Shield, User, Clock, TrendingUp, Activity, Download, Camera } from 'lucide-react';
 import { useState } from 'react';
+import { ParentStatCard } from '@/components/parent-ui/ParentStats';
 
 interface Athlete {
   id: number;
@@ -290,97 +291,37 @@ export function ParentWaiverManagement() {
 
       {/* Enhanced Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Signed Waivers Card */}
-        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-amber-50 via-yellow-100 to-amber-100 dark:from-amber-900/20 dark:via-yellow-900/30 dark:to-amber-800/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="bg-[#B8860B] p-2 rounded-lg shadow-md">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-[#B8860B] dark:text-[#B8860B]">{signedWaivers}</p>
-                    <p className="text-sm font-semibold text-amber-700 dark:text-[#B8860B]">Signed Waivers</p>
-                  </div>
-                </div>
-                <div className="text-xs text-amber-600 dark:text-[#B8860B] flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  All requirements met
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pending Waivers Card */}
-        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="bg-orange-500 p-2 rounded-lg shadow-md">
-                    <AlertCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-orange-700">{pendingWaivers}</p>
-                    <p className="text-sm font-semibold text-orange-600">Pending Waivers</p>
-                  </div>
-                </div>
-                <div className="text-xs text-orange-600 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {pendingWaivers > 0 ? 'Action required' : 'Up to date'}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total Athletes Card */}
-        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="bg-blue-500 p-2 rounded-lg shadow-md">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-blue-700">{totalAthletes}</p>
-                    <p className="text-sm font-semibold text-blue-600">Total Athletes</p>
-                  </div>
-                </div>
-                <div className="text-xs text-blue-600 flex items-center gap-1">
-                  <Activity className="w-3 h-3" />
-                  Active participants
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity Card */}
-        <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-purple-50 via-purple-100 to-indigo-50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="bg-purple-500 p-2 rounded-lg shadow-md">
-                    <Calendar className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-purple-700">{recentWaivers}</p>
-                    <p className="text-sm font-semibold text-purple-600">Recent (30d)</p>
-                  </div>
-                </div>
-                <div className="text-xs text-purple-600 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Latest activity
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ParentStatCard
+          label="Signed Waivers"
+          value={signedWaivers}
+          icon={<CheckCircle />}
+          color="blue"
+          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
+        />
+        
+        <ParentStatCard
+          label="Pending Waivers"
+          value={pendingWaivers}
+          icon={<AlertCircle />}
+          color="orange"
+          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
+        />
+        
+        <ParentStatCard
+          label="Total Athletes"
+          value={totalAthletes}
+          icon={<User />}
+          color="purple"
+          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
+        />
+        
+        <ParentStatCard
+          label="Recent (30d)"
+          value={recentWaivers}
+          icon={<Calendar />}
+          color="green"
+          className="[&_p:first-child]:sm:text-sm [&_p:first-child]:text-xs"
+        />
       </div>
 
       {/* Pending Waivers Section */}

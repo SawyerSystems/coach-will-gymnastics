@@ -991,7 +991,7 @@ function ParentDashboard() {
                       </h3>
                       
                       {pastBookings.map((booking) => (
-                        <div key={booking.id} className="border rounded-xl p-3 xs:p-4 sm:p-6 bg-gradient-to-r from-white to-blue-50 hover:shadow-md transition-all duration-200">
+                        <div key={booking.id} className="border rounded-xl p-3 xs:p-4 sm:p-6 bg-gradient-to-r from-white to-blue-50 dark:from-gray-800 dark:to-gray-700 hover:shadow-md transition-all duration-200 dark:border-purple-400/20">
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                             {/* Left Column - Session Info */}
                             <div className="space-y-3 sm:space-y-4">
@@ -999,8 +999,8 @@ function ParentDashboard() {
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="flex items-center gap-2 mb-1 xs:mb-2">
-                                    <div className="bg-blue-100 p-1 rounded-full">
-                                      <User className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600" />
+                                    <div className="bg-blue-100 dark:bg-blue-900/50 p-1 rounded-full">
+                                      <User className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <span className="font-medium text-sm xs:text-base sm:text-lg text-[#B8860B]">
                                       {booking.athletes && booking.athletes.length > 0 ? (
@@ -1013,7 +1013,7 @@ function ParentDashboard() {
                                       )}
                                     </span>
                                   </div>
-                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600">
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
                                     <div className="flex items-center gap-1">
                                       <Calendar className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
                                       {booking.preferredDate ? format(new Date(`${booking.preferredDate}T12:00:00Z`), 'MMM d, yyyy') : 'Date TBD'}
@@ -1030,7 +1030,7 @@ function ParentDashboard() {
                                 </div>
                                 <Badge 
                                   variant="outline"
-                                  className="bg-green-50 text-green-700 border-green-200 text-[10px] xs:text-xs h-auto py-0.5"
+                                  className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700 text-[10px] xs:text-xs h-auto py-0.5"
                                 >
                                   ✅ Completed
                                 </Badge>
@@ -1039,8 +1039,8 @@ function ParentDashboard() {
                               {/* Focus Areas */}
                               {booking.focusAreas && booking.focusAreas.length > 0 && (
                                 <div>
-                                  <h4 className="font-medium text-xs xs:text-sm text-gray-700 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
-                                    <Target className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600" />
+                                  <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                    <Target className="w-3 h-3 xs:w-4 xs:h-4 text-blue-600 dark:text-blue-400" />
                                     Skills Practiced
                                   </h4>
                                   <div className="flex flex-wrap gap-1 xs:gap-2">
@@ -1048,7 +1048,7 @@ function ParentDashboard() {
                                       <Badge 
                                         key={index}
                                         variant="secondary"
-                                        className="bg-blue-100 text-blue-800 border-blue-200 text-[10px] xs:text-xs h-auto py-0.5"
+                                        className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-[10px] xs:text-xs h-auto py-0.5"
                                       >
                     {typeof area === 'string' ? area : ('name' in area ? area.name : 'Unknown')}
                                       </Badge>
@@ -1062,12 +1062,12 @@ function ParentDashboard() {
                             <div className="space-y-3 sm:space-y-4">
                               {/* Progress Note */}
                               <div>
-                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
-                                  <TrendingUp className="w-3 h-3 xs:w-4 xs:h-4 text-green-600" />
+                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                  <TrendingUp className="w-3 h-3 xs:w-4 xs:h-4 text-green-600 dark:text-green-400" />
                                   Progress Note
                                 </h4>
-                                <div className="bg-white rounded-lg p-2 xs:p-3 sm:p-4 border border-gray-200">
-                                  <p className="text-xs xs:text-sm text-gray-700 leading-relaxed">
+                                <div className="bg-white dark:bg-gray-800 rounded-lg p-2 xs:p-3 sm:p-4 border border-gray-200 dark:border-gray-600">
+                                  <p className="text-xs xs:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                                     {booking.progressNote || 
                                      booking.adminNotes || 
                                      "Great session! The athlete showed excellent focus and made steady progress in their skills. Keep up the fantastic work! 🌟"}
@@ -1077,12 +1077,12 @@ function ParentDashboard() {
 
                               {/* Coach Recommendation (placeholder) */}
                               <div>
-                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
-                                  <Lightbulb className="w-3 h-3 xs:w-4 xs:h-4 text-amber-600" />
+                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                  <Lightbulb className="w-3 h-3 xs:w-4 xs:h-4 text-amber-600 dark:text-amber-400" />
                                   Coach Recommendation
                                 </h4>
-                                <div className="bg-amber-50 rounded-lg p-2 xs:p-3 border border-amber-200">
-                                  <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800">
+                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 xs:p-3 border border-amber-200 dark:border-amber-700">
+                                  <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800 dark:text-amber-300">
                                     {(() => {
                                       if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Tumbling'))) {
                                         return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
