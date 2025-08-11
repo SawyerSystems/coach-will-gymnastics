@@ -10,6 +10,7 @@ import { AdminSiteContentManager } from "@/components/admin-site-content-manager
 import { AdminWaiverManagement } from "@/components/admin-waiver-management";
 import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
 import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
+import AdminSettingsTab from "@/components/admin/AdminSettingsTab";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import AthleteProgressPage from "@/components/admin/AthleteProgressPage";
 import { ContentSection, SectionBasedContentEditor } from "@/components/section-based-content-editor";
@@ -72,6 +73,7 @@ import {
     RefreshCw,
     Save,
     Search,
+    Settings,
     Star,
     Trash2,
     TrendingUp,
@@ -3028,327 +3030,24 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
-          <TabsContent value="settings" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
-            <AdminCard className="w-full">
-              <AdminCardHeader className="pb-3 sm:pb-4 lg:pb-6">
-                <AdminCardTitle className="text-xl sm:text-2xl lg:text-3xl tracking-tight flex items-center gap-2 sm:gap-3">
-                  <AlertCircle className="h-8 w-8 text-[#D8BD2A]" />
+          <TabsContent value="settings" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer 
+              heading={
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Settings className="h-8 w-8 text-[#D8BD2A]" />
                   Settings
-                </AdminCardTitle>
-              </AdminCardHeader>
-              <AdminCardContent className="p-4 sm:p-6 lg:p-8">
-                <Tabs defaultValue="developer" className="w-full">
-                  {/* Tab controls with layered design */}
-                  <div className="mb-12 pb-4 border-b border-slate-200/30 relative">
-                    {/* Background container */}
-                    <div className="absolute inset-0 top-0 left-0 right-0 h-[84px] bg-gradient-to-r from-slate-100 to-slate-200/50 dark:from-yellow-600/80 dark:to-yellow-500/70 rounded-xl"></div>
-                    
-                    {/* Tab buttons on top */}
-                    <div className="relative z-10 pt-3">
-                      <AdminTabButtonsRow
-                        items={[
-                          { value: 'developer', label: 'Developer' },
-                          { value: 'general', label: 'General' },
-                          { value: 'site-content', label: 'Site Content' },
-                          { value: 'backup', label: 'Backup' },
-                        ]}
-                        listClassName="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 w-full min-h-[60px] bg-transparent"
-                        triggerClassName="font-semibold text-sm text-center h-12 flex items-center justify-center dark:bg-slate-800/60 dark:text-yellow-100 dark:border-yellow-700/30 shadow-lg"
-                      />
-                    </div>
-                  </div>
-                  
-                  <TabsContent value="developer" className="space-y-6">{/* Clean separation with container above */}
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                          <h3 className="text-lg font-bold text-yellow-800 dark:text-white">Developer Tools</h3>
-                        </div>
-                        <p className="text-sm text-yellow-700 dark:text-slate-300 leading-relaxed">
-                          These tools are for testing and development purposes only. Use with caution as they can alter or delete data.
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Data Management */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-red-800 dark:text-white flex items-center gap-3">
-                            <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
-                            Data Management
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Clear Test Data</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Remove all parents, athletes, bookings, and auth codes from the database.
-                            </p>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="destructive" size="sm">
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Clear All Test Data
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Confirm Data Deletion</DialogTitle>
-                                  <DialogDescription>
-                                    <span>This action will permanently delete ALL:</span>
-                                    <ul className="list-disc list-inside mt-2 space-y-1">
-                                      <li>Parent profiles</li>
-                                      <li>Athlete profiles</li>
-                                      <li>Booking records</li>
-                                      <li>Authentication codes</li>
-                                    </ul>
-                                    This action cannot be undone.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex justify-end space-x-2">
-                                  <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    onClick={handleClearTestData}
-                                    disabled={clearDataMutation.isPending}
-                                  >
-                                    {clearDataMutation.isPending ? (
-                                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                    )}
-                                    Delete All Data
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Test Data Generation */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-blue-800 dark:text-white flex items-center gap-3">
-                            <Plus className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                            Test Data Generation
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Generate Sample Bookings</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Create realistic sample bookings for testing purposes.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleGenerateTestBookings}
-                              disabled={generateBookingsMutation.isPending}
-                            >
-                              {generateBookingsMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <Plus className="h-4 w-4 mr-2" />
-                              )}
-                              Generate 5 Sample Bookings
-                            </Button>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label>Create Test Parent Account</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Create a test parent account for authentication testing.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleCreateTestParent}
-                              disabled={createParentMutation.isPending}
-                            >
-                              {createParentMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <User className="h-4 w-4 mr-2" />
-                              )}
-                              Create Test Parent
-                            </Button>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Delete User Accounts</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Delete all user accounts created during booking process.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setIsDeleteUsersConfirmOpen(true)}
-                              disabled={deleteUserAccountsMutation.isPending}
-                              className="border-red-500 text-red-600 hover:bg-red-50"
-                            >
-                              {deleteUserAccountsMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <Trash2 className="h-4 w-4 mr-2" />
-                              )}
-                              Delete User Accounts
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Payment Testing */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-green-800 dark:text-white flex items-center gap-3">
-                            <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
-                            Payment Testing
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Simulate Payment Success</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Mark reservation-paid bookings as session-paid for testing.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleSimulatePaymentSuccess}
-                              disabled={paymentSimulationMutation.isPending}
-                            >
-                              {paymentSimulationMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                              )}
-                              Simulate Payment Success
-                            </Button>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label>Reset Payment Status</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Reset all bookings to reservation-paid status.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleResetPaymentStatus}
-                              disabled={paymentResetMutation.isPending}
-                            >
-                              {paymentResetMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <X className="h-4 w-4 mr-2" />
-                              )}
-                              Reset Payment Status
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* System Status */}
-                      <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
-                        <CardHeader className="pb-4">
-                          <CardTitle className="text-lg font-bold text-purple-800 dark:text-white flex items-center gap-3">
-                            <BarChart className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                            System Status
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Run System Health Check</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Test all system components and API endpoints.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleSystemHealthCheck}
-                              disabled={healthCheckMutation.isPending}
-                            >
-                              {healthCheckMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                              )}
-                              Run Health Check
-                            </Button>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label>Database Connection Test</Label>
-                            <p className="text-sm text-gray-600 dark:text-slate-300">
-                              Verify Supabase database connectivity and permissions.
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleDatabaseTest}
-                              disabled={databaseTestMutation.isPending}
-                            >
-                              {databaseTestMutation.isPending ? (
-                                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                              )}
-                              Test Database
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="general" className="space-y-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
-                          <AlertCircle className="h-6 w-6 text-[#D8BD2A]" />
-                          General Settings
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-6">
-                        <p className="text-gray-600 dark:text-slate-300 dark:text-gray-300">General application settings will be implemented here.</p>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="site-content" className="space-y-6">
-                    <MainContentContainer
-                      heading={
-                        <span className="inline-flex items-center gap-2 sm:gap-3">
-                          <MessageSquare className="h-6 w-6 text-[#D8BD2A]" />
-                          Site Content Management
-                        </span>
-                      }
-                    >
-                      <AdminSiteContentManager />
-                    </MainContentContainer>
-                  </TabsContent>
-                  
-                  <TabsContent value="backup" className="space-y-6">
-                    <Card className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
-                          <RefreshCw className="h-6 w-6 text-[#D8BD2A]" />
-                          Backup & Restore
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-6">
-                        <p className="text-gray-600 dark:text-slate-300 dark:text-gray-300">Data backup and restore functionality will be implemented here.</p>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </AdminCardContent>
-            </AdminCard>
+                </div>
+              }
+            >
+              <AdminSettingsTab
+                isDeleteConfirmOpen={isDeleteConfirmOpen}
+                setIsDeleteConfirmOpen={setIsDeleteConfirmOpen}
+                clearDataMutation={clearDataMutation}
+                handleClearTestData={handleClearTestData}
+                handleGenerateTestBookings={handleGenerateTestBookings}
+                generateBookingsMutation={generateBookingsMutation}
+              />
+            </MainContentContainer>
           </TabsContent>
         </Tabs>
         
