@@ -3106,7 +3106,7 @@ export default function Admin() {
             </AdminCard>
           </TabsContent>
 
-          <TabsContent value="messages" className="w-full max-w-full px-0 sm:px-2 dark:bg-[#0F0276] dark:text-white">
+          <TabsContent value="messages" className="w-full max-w-full px-0 sm:px-2">
             <MainContentContainer 
               heading={
                 <div className="flex items-center gap-2 sm:gap-3">

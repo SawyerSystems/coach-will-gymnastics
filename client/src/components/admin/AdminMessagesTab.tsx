@@ -106,88 +106,88 @@ export default function AdminMessagesTab() {
         </TabsContent>
 
         <TabsContent value="inquiries">
-          <MainContentContainer
-            heading={
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 w-full">
-                <span className="inline-flex items-center gap-2 sm:gap-3">
-                  <Inbox className="h-8 w-8 text-[#D8BD2A]" />
-                  Site Inquiries
-                  <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
-                    {inquiries.data?.length || 0} total
-                  </Badge>
-                </span>
-                <div className="relative max-w-md w-full sm:w-auto">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-300 h-5 w-5" />
-                  <Input
-                    placeholder="Search inquiries..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 dark:bg-white/10 dark:text-white dark:placeholder-white/70 focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] focus:bg-white dark:focus:bg-white/20 transition-all duration-200 text-base"
-                  />
+          <div className="space-y-6">
+            <AdminCard className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+              <AdminCardHeader>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 w-full">
+                  <AdminCardTitle className="inline-flex items-center gap-2 sm:gap-3 text-[#0F0276] dark:text-white">
+                    <Inbox className="h-8 w-8 text-[#D8BD2A]" />
+                    Site Inquiries
+                    <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
+                      {inquiries.data?.length || 0} total
+                    </Badge>
+                  </AdminCardTitle>
+                  <div className="relative max-w-md w-full sm:w-auto">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-300 h-5 w-5" />
+                    <Input
+                      placeholder="Search inquiries..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-12 pr-4 py-3 rounded-xl border-0 bg-slate-50/80 dark:bg-white/10 dark:text-white dark:placeholder-white/70 focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] focus:bg-white dark:focus:bg-white/20 transition-all duration-200 text-base"
+                    />
+                  </div>
                 </div>
+              </AdminCardHeader>
+            </AdminCard>
+
+            {inquiries.isLoading ? (
+              <div className="flex items-center gap-2 text-slate-600 dark:text-white/80">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading inquiries…
               </div>
-            }
-          >
-            <div className="space-y-6">
-              {inquiries.isLoading ? (
-                <div className="flex items-center gap-2 text-slate-600 dark:text-white/80">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading inquiries…
-                </div>
-              ) : (inquiries.data?.length ? (
-                <div className="space-y-3">
-                  {inquiries.data
-                    .filter(inq => {
-                      if (!searchTerm) return true;
-                      const searchLower = searchTerm.toLowerCase();
-                      return (
-                        inq.name.toLowerCase().includes(searchLower) ||
-                        inq.email.toLowerCase().includes(searchLower) ||
-                        inq.message.toLowerCase().includes(searchLower) ||
-                        (inq.phone && inq.phone.toLowerCase().includes(searchLower)) ||
-                        (inq.athleteInfo && inq.athleteInfo.toLowerCase().includes(searchLower))
-                      );
-                    })
-                    .map((inq) => (
-                    <AdminCard key={inq.id} className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-                      <AdminCardContent className="p-4">
-                        {/* Header: name/date left, actions top-right on mobile */}
-                        <div className="relative mb-24 sm:mb-3">
-                          <div className="font-medium text-[#0F0276] dark:text-white pr-28 sm:pr-0">
-                            {inq.name} <span className="text-slate-500 dark:text-white/70">•</span>{" "}
-                            <span className="text-slate-600 dark:text-white/80 text-sm">{new Date(inq.createdAt).toLocaleString()}</span>
-                          </div>
-                          <div className="absolute right-2 top-2 flex flex-col items-end gap-2 sm:static sm:flex-row sm:items-center">
-                            <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'} className="uppercase">
-                              {inq.status}
-                            </Badge>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}
-                              className="w-auto"
-                            >
-                              Mark {inq.status === 'new' ? 'Open' : inq.status === 'open' ? 'Closed' : 'Archived'}
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)} className="w-auto">
-                              <Trash2 className="h-4 w-4 mr-1" /> Delete
-                            </Button>
-                          </div>
+            ) : (inquiries.data?.length ? (
+              <div className="space-y-3">
+                {inquiries.data
+                  .filter(inq => {
+                    if (!searchTerm) return true;
+                    const searchLower = searchTerm.toLowerCase();
+                    return (
+                      inq.name.toLowerCase().includes(searchLower) ||
+                      inq.email.toLowerCase().includes(searchLower) ||
+                      inq.message.toLowerCase().includes(searchLower) ||
+                      (inq.phone && inq.phone.toLowerCase().includes(searchLower)) ||
+                      (inq.athleteInfo && inq.athleteInfo.toLowerCase().includes(searchLower))
+                    );
+                  })
+                  .map((inq) => (
+                  <AdminCard key={inq.id} className="rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] dark:border-white/10 dark:bg-white/10">
+                    <AdminCardContent className="p-6">
+                      {/* Header: name/date left, actions top-right on mobile */}
+                      <div className="relative mb-24 sm:mb-3">
+                        <div className="font-medium text-[#0F0276] dark:text-white pr-28 sm:pr-0">
+                          {inq.name} <span className="text-slate-500 dark:text-white/70">•</span>{" "}
+                          <span className="text-slate-600 dark:text-white/80 text-sm">{new Date(inq.createdAt).toLocaleString()}</span>
                         </div>
-                        <div className="text-sm text-slate-700 dark:text-white/90">
-                          <div><span className="text-slate-500 dark:text-white/70">Email:</span> {inq.email}</div>
-                          {inq.phone ? <div><span className="text-slate-500 dark:text-white/70">Phone:</span> {inq.phone}</div> : null}
-                          {inq.athleteInfo ? <div><span className="text-slate-500 dark:text-white/70">Athlete:</span> {inq.athleteInfo}</div> : null}
-                          <div className="mt-2 whitespace-pre-wrap">{inq.message}</div>
+                        <div className="absolute right-2 top-2 flex flex-col items-end gap-2 sm:static sm:flex-row sm:items-center">
+                          <Badge variant={inq.status === 'new' ? 'default' : inq.status === 'open' ? 'secondary' : 'outline'} className="uppercase">
+                            {inq.status}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateStatus.mutate({ id: inq.id, status: inq.status === 'new' ? 'open' : inq.status === 'open' ? 'closed' : 'archived' })}
+                            className="w-auto"
+                          >
+                            Mark {inq.status === 'new' ? 'Open' : inq.status === 'open' ? 'Closed' : 'Archived'}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => deleteInquiry.mutate(inq.id)} className="w-auto">
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                          </Button>
                         </div>
-                      </AdminCardContent>
-                    </AdminCard>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-600 dark:text-white/80">No inquiries yet. Messages sent via the Contact page will appear here.</p>
-              ))}
-            </div>
-          </MainContentContainer>
+                      </div>
+                      <div className="text-sm text-slate-700 dark:text-white/90">
+                        <div><span className="text-slate-500 dark:text-white/70">Email:</span> {inq.email}</div>
+                        {inq.phone ? <div><span className="text-slate-500 dark:text-white/70">Phone:</span> {inq.phone}</div> : null}
+                        {inq.athleteInfo ? <div><span className="text-slate-500 dark:text-white/70">Athlete:</span> {inq.athleteInfo}</div> : null}
+                        <div className="mt-2 whitespace-pre-wrap">{inq.message}</div>
+                      </div>
+                    </AdminCardContent>
+                  </AdminCard>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-600 dark:text-white/80">No inquiries yet. Messages sent via the Contact page will appear here.</p>
+            ))}
+          </div>
         </TabsContent>
       </AdminContentTabs>
     </div>
