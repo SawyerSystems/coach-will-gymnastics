@@ -2,7 +2,6 @@ import { BookingHistoryDisplay } from "@/components/BookingHistoryDisplay";
 import { AthleteProgressPanel } from "@/components/admin/AthleteProgressPanel";
 import { ParentInfoDisplay } from "@/components/ParentInfoDisplay";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Dialog,
     DialogContent,
@@ -11,14 +10,15 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "@/components/admin-ui/AdminModal";
-import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
+import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { useToast } from "@/hooks/use-toast";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Link as LinkIcon, Plus, Star, Trash2, ShieldMinus, User } from "lucide-react";
+import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Link as LinkIcon, Plus, Star, Trash2, ShieldMinus, User, Phone, Mail, CheckCircle, FileText, RefreshCw, AlertTriangle } from "lucide-react";
 import { useCreateProgressShareLink, useDeleteProgressShareLink, useProgressShareLinks, useRevokeProgressShareLink } from "@/hooks/useAthleteProgress";
+import { useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
 import React, { useState } from "react";
 
 interface AthleteDetailDialogProps {
@@ -124,6 +124,24 @@ export function AthleteDetailDialog({
   const { data: shareLinks = [] } = useProgressShareLinks(athleteData?.id);
   const deleteShareLink = useDeleteProgressShareLink();
   const revokeShareLink = useRevokeProgressShareLink();
+  
+  // Parent details query
+  const { data: parentDetails, isLoading: parentLoading } = useQuery({
+    queryKey: [`/api/athletes/${athleteData?.id}/parent-details`],
+    queryFn: async () => {
+      if (!athleteData?.id) throw new Error('No athlete ID');
+      const response = await apiRequest('GET', `/api/athletes/${athleteData.id}/parent-details`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch parent details');
+      }
+      return response.json();
+    },
+    enabled: !!athleteData?.id,
+    retry: 1,
+  });
+
+  // Waiver status query  
+  const { data: waiverStatus, isLoading: waiverLoading, refetch: refetchWaiver } = useAthleteWaiverStatus(athleteData?.id || 0);
   
   // Determine a target booking for sending a waiver email
   const selectTargetBookingId = (): number | null => {
@@ -369,111 +387,344 @@ export function AthleteDetailDialog({
 
           {/* Parent Info */}
           <AdminModalSection title="Parent Information" icon={<User className="h-5 w-5" />}>
-            <ParentInfoDisplay 
-              athleteId={athleteData.id}
-              parentInfo={parentInfo}
-            />
+            {parentLoading ? (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-blue-300 py-4">
+                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <span>Loading parent information...</span>
+              </div>
+            ) : parentDetails || parentInfo ? (
+              <AdminModalGrid cols={2}>
+                <div>
+                  <AdminModalDetailRow 
+                    label="Name" 
+                    value={`${(parentDetails || parentInfo)?.firstName || ''} ${(parentDetails || parentInfo)?.lastName || ''}`.trim() || 'Unknown'}
+                    icon={<User className="h-4 w-4" />}
+                  />
+                  <AdminModalDetailRow 
+                    label="Email" 
+                    value={(parentDetails || parentInfo)?.email || 'Not provided'}
+                    icon={<Mail className="h-4 w-4" />}
+                  />
+                  <AdminModalDetailRow 
+                    label="Phone" 
+                    value={(parentDetails || parentInfo)?.phone || 'Not provided'}
+                    icon={<Phone className="h-4 w-4" />}
+                  />
+                </div>
+                <div className="bg-slate-50 dark:bg-[#0F0276]/20 p-4 rounded-lg border dark:border-[#2A4A9B]/40">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {(parentDetails || parentInfo)?.isVerified ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {(parentDetails || parentInfo)?.isVerified ? 'Verified' : 'Unverified'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">Children:</span>
+                        <span className="ml-1">{parentDetails?.totalChildren || 1}</span>
+                      </div>
+                      <div>
+                        <span className="text-green-600 dark:text-green-400 font-medium">Bookings:</span>
+                        <span className="ml-1">{parentDetails?.totalBookings || bookings.length}</span>
+                      </div>
+                      <div>
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">Active:</span>
+                        <span className="ml-1">{parentDetails?.activeBookings || 0}</span>
+                      </div>
+                      <div>
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">Since:</span>
+                        <span className="ml-1">{parentDetails?.createdAt ? new Date(parentDetails.createdAt).toLocaleDateString() : 'Unknown'}</span>
+                      </div>
+                    </div>
+                    {parentDetails?.lastLoginAt && (
+                      <div className="text-xs text-slate-600 dark:text-blue-300 mt-2">
+                        Last Login: {new Date(parentDetails.lastLoginAt).toLocaleDateString()} at {new Date(parentDetails.lastLoginAt).toLocaleTimeString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </AdminModalGrid>
+            ) : (
+              <div className="text-slate-500 dark:text-blue-300 py-4">
+                No parent information available
+              </div>
+            )}
           </AdminModalSection>
 
           {/* Waiver Status */}
           <AdminModalSection title="Waiver Status" icon={<ShieldMinus className="h-5 w-5" />}>
-            <WaiverStatusDisplay 
-              athleteId={athleteData.id}
-              athleteName={athleteData.name || 'Unknown Athlete'}
-              onResendWaiver={() => {
-                const bookingId = selectTargetBookingId();
-                if (!bookingId) {
-                  toast({ title: 'No Booking Found', description: 'No related booking to send a waiver for.', variant: 'destructive' });
-                  return;
-                }
-                sendWaiverEmail.mutate(bookingId);
-              }}
-            />
+            {waiverLoading ? (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-blue-300 py-4">
+                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <span>Checking waiver status...</span>
+              </div>
+            ) : waiverStatus ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {waiverStatus.waiverSigned ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-red-500" />
+                    )}
+                    <span className="font-medium text-lg">
+                      {waiverStatus.waiverSigned ? 'Waiver Signed' : 'Waiver Not Signed'}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => refetchWaiver()}
+                    className="p-1 hover:bg-slate-100 dark:hover:bg-[#0F0276]/30 rounded"
+                    title="Refresh waiver status"
+                  >
+                    <RefreshCw className="h-4 w-4 text-slate-500 dark:text-blue-400" />
+                  </button>
+                </div>
+
+                {waiverStatus.waiverSigned ? (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg border border-green-200 dark:border-green-800/40">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-green-100 dark:bg-green-800/40 rounded-full">
+                          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-green-800 dark:text-green-200">Waiver Completed</h3>
+                          <p className="text-sm text-green-600 dark:text-green-400">All safety agreements have been signed</p>
+                        </div>
+                      </div>
+                      
+                      <AdminModalGrid cols={2}>
+                        <div>
+                          <AdminModalDetailRow 
+                            label="Signed by" 
+                            value={waiverStatus.waiverSignatureName || 'Unknown'}
+                            icon={<User className="h-4 w-4" />}
+                          />
+                          <AdminModalDetailRow 
+                            label="Relationship" 
+                            value={waiverStatus.waiverAgreements?.relationship || 'Parent/Guardian'}
+                            icon={<User className="h-4 w-4" />}
+                          />
+                        </div>
+                        <div>
+                          <AdminModalDetailRow 
+                            label="Date Signed" 
+                            value={waiverStatus.waiverSignedAt ? new Date(waiverStatus.waiverSignedAt).toLocaleDateString() : 'Unknown'}
+                            icon={<Calendar className="h-4 w-4" />}
+                          />
+                          <AdminModalDetailRow 
+                            label="Time" 
+                            value={waiverStatus.waiverSignedAt ? new Date(waiverStatus.waiverSignedAt).toLocaleTimeString() : 'Unknown'}
+                            icon={<Clock className="h-4 w-4" />}
+                          />
+                        </div>
+                      </AdminModalGrid>
+                    </div>
+
+                    {waiverStatus.waiverAgreements && (
+                      <div className="bg-slate-50 dark:bg-[#0F0276]/20 p-4 rounded-lg border dark:border-[#2A4A9B]/40">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-blue-400" />
+                          <h4 className="font-medium text-slate-800 dark:text-blue-200">Agreement Details</h4>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span className="text-slate-700 dark:text-blue-300">Understands gymnastics risks</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span className="text-slate-700 dark:text-blue-300">Agrees to gym policies</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span className="text-slate-700 dark:text-blue-300">Authorizes emergency medical care</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span className="text-slate-700 dark:text-blue-300">Allows photos/videos for promotion</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span className="text-slate-700 dark:text-blue-300">Confirms authority to sign</span>
+                          </div>
+                        </div>
+                        {waiverStatus.latestWaiverId && (
+                          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-[#2A4A9B]/40">
+                            <div className="text-xs text-slate-500 dark:text-blue-400">
+                              Waiver ID: <span className="font-mono">{waiverStatus.latestWaiverId}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg border border-red-200 dark:border-red-800/40">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-red-100 dark:bg-red-800/40 rounded-full">
+                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-red-800 dark:text-red-200">Waiver Required</h3>
+                        <p className="text-sm text-red-600 dark:text-red-400">Safety agreement must be completed before sessions</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white dark:bg-[#0F0276]/30 p-4 rounded-lg border border-red-200 dark:border-red-800/40 mb-4">
+                      <h4 className="font-medium text-slate-800 dark:text-blue-200 mb-3">Required Safety Agreements:</h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-3 h-3 border border-slate-400 dark:border-blue-400 rounded-sm flex-shrink-0"></div>
+                          <span className="text-slate-700 dark:text-blue-300">Acknowledgment of gymnastics risks</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-3 h-3 border border-slate-400 dark:border-blue-400 rounded-sm flex-shrink-0"></div>
+                          <span className="text-slate-700 dark:text-blue-300">Agreement to facility policies</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-3 h-3 border border-slate-400 dark:border-blue-400 rounded-sm flex-shrink-0"></div>
+                          <span className="text-slate-700 dark:text-blue-300">Emergency medical care authorization</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-3 h-3 border border-slate-400 dark:border-blue-400 rounded-sm flex-shrink-0"></div>
+                          <span className="text-slate-700 dark:text-blue-300">Photo/video consent for promotion</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-3 h-3 border border-slate-400 dark:border-blue-400 rounded-sm flex-shrink-0"></div>
+                          <span className="text-slate-700 dark:text-blue-300">Confirmation of signing authority</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {mode === 'admin' && (
+                      <AdminButton 
+                        onClick={() => {
+                          const bookingId = selectTargetBookingId();
+                          if (!bookingId) {
+                            toast({ title: 'No Booking Found', description: 'No related booking to send a waiver for.', variant: 'destructive' });
+                            return;
+                          }
+                          sendWaiverEmail.mutate(bookingId);
+                        }}
+                        className="w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white border-red-600 dark:border-red-700"
+                        disabled={sendWaiverEmail.isPending}
+                      >
+                        {sendWaiverEmail.isPending ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Sending Waiver Email...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="h-4 w-4 mr-2" />
+                            Send Waiver Email to Parent
+                          </>
+                        )}
+                      </AdminButton>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-slate-500 dark:text-blue-300 py-4">
+                No waiver information available
+              </div>
+            )}
           </AdminModalSection>
 
           {/* Bookings History */}
           <BookingHistoryDisplay athleteId={athleteData.id} />
 
           {/* Skill Progress */}
-          <div className="mt-6">
-            <Card className="rounded-xl border shadow-sm mb-6">
-              <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-t-xl">
-                <CardTitle className="text-lg font-semibold text-amber-800 flex items-center gap-2">
-                  Skill Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <AthleteProgressPanel athleteId={athleteData.id} />
-              </CardContent>
-            </Card>
-            <Card className="rounded-xl border shadow-sm">
-              <CardHeader className="pb-2 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-t-xl">
-                <CardTitle className="text-lg font-semibold text-indigo-800 flex items-center gap-2">
-                  <LinkIcon className="h-5 w-5" /> Share Progress Links
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-3">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={creatingShare}
-                    onClick={async () => {
-                      try {
-                        const created = await createShareLink({ athleteId: athleteData.id });
-                        const url = `${window.location.origin}/progress/${created.token}`;
-                        await navigator.clipboard.writeText(url);
-                        toast({ title: 'Share Link Copied', description: 'Progress link copied to clipboard.' });
-                      } catch (e: any) {
-                        toast({ title: 'Failed to create link', description: e?.message || 'Please try again.', variant: 'destructive' });
-                      }
-                    }}
-                  >
-                    <LinkIcon className="h-4 w-4 mr-2" /> Create & Copy Link
-                  </Button>
-                </div>
-                {shareLinks.length === 0 ? (
-                  <div className="text-sm text-slate-600">No links yet.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {shareLinks.map((l) => {
-                      const expired = l.expiresAt ? new Date(l.expiresAt as any).getTime() < Date.now() : false;
-                      const linkUrl = `${window.location.origin}/progress/${l.token}`;
-                      return (
-                        <div key={l.id} className="flex items-center justify-between rounded border px-2 py-1">
-                          <div className="min-w-0 mr-2">
-                            <div className="truncate text-sm"><a className="text-indigo-600 hover:underline" href={linkUrl} target="_blank" rel="noopener noreferrer">{linkUrl}</a></div>
-                            <div className="text-xs text-slate-500">Created {new Date(l.createdAt as any).toLocaleString()} {l.expiresAt && `(expires ${new Date(l.expiresAt as any).toLocaleString()})`} {expired && '· expired'}</div>
+          <AdminModalSection title="Skill Progress" className="mt-6">
+            <AthleteProgressPanel athleteId={athleteData.id} />
+          </AdminModalSection>
+          
+          <AdminModalSection title="Share Progress Links" className="mt-6">
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={creatingShare}
+                  onClick={async () => {
+                    try {
+                      const created = await createShareLink({ athleteId: athleteData.id });
+                      const url = `${window.location.origin}/progress/${created.token}`;
+                      await navigator.clipboard.writeText(url);
+                      toast({ title: 'Share Link Copied', description: 'Progress link copied to clipboard.' });
+                    } catch (e: any) {
+                      toast({ title: 'Failed to create link', description: e?.message || 'Please try again.', variant: 'destructive' });
+                    }
+                  }}
+                >
+                  <LinkIcon className="h-4 w-4 mr-2" /> Create & Copy Link
+                </Button>
+              </div>
+              {shareLinks.length === 0 ? (
+                <div className="text-sm text-slate-600 dark:text-slate-400">No links yet.</div>
+              ) : (
+                <div className="space-y-2">
+                  {shareLinks.map((l) => {
+                    const expired = l.expiresAt ? new Date(l.expiresAt as any).getTime() < Date.now() : false;
+                    const linkUrl = `${window.location.origin}/progress/${l.token}`;
+                    return (
+                      <div key={l.id} className="flex items-center justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1">
+                        <div className="min-w-0 mr-2">
+                          <div className="truncate text-sm">
+                            <a className="text-indigo-600 dark:text-indigo-400 hover:underline" href={linkUrl} target="_blank" rel="noopener noreferrer">
+                              {linkUrl}
+                            </a>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Button size="sm" variant="secondary" onClick={async ()=>{ await navigator.clipboard.writeText(linkUrl); toast({ title: 'Copied', description: 'Link copied to clipboard.' }); }}>Copy</Button>
-                            {!expired && (
-                              <Button size="sm" variant="outline" onClick={async ()=>{
-                                try {
-                                  await revokeShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
-                                  toast({ title: 'Revoked', description: 'Link expired.' });
-                                } catch (e:any) {
-                                  toast({ title: 'Error', description: e?.message || 'Failed to revoke link', variant: 'destructive' });
-                                }
-                              }}><ShieldMinus className="h-4 w-4 mr-1"/>Revoke</Button>
-                            )}
-                            <Button size="sm" variant="destructive" onClick={async ()=>{
-                              try {
-                                await deleteShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
-                                toast({ title: 'Deleted', description: 'Link removed.' });
-                              } catch (e:any) {
-                                toast({ title: 'Error', description: e?.message || 'Failed to delete link', variant: 'destructive' });
-                              }
-                            }}><Trash2 className="h-4 w-4"/></Button>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Created {new Date(l.createdAt as any).toLocaleString()} 
+                            {l.expiresAt && ` (expires ${new Date(l.expiresAt as any).toLocaleString()})`} 
+                            {expired && ' · expired'}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Button size="sm" variant="secondary" onClick={async ()=>{ 
+                            await navigator.clipboard.writeText(linkUrl); 
+                            toast({ title: 'Copied', description: 'Link copied to clipboard.' }); 
+                          }}>
+                            Copy
+                          </Button>
+                          {!expired && (
+                            <Button size="sm" variant="outline" onClick={async ()=>{
+                              try {
+                                await revokeShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
+                                toast({ title: 'Revoked', description: 'Link expired.' });
+                              } catch (e:any) {
+                                toast({ title: 'Error', description: e?.message || 'Failed to revoke link', variant: 'destructive' });
+                              }
+                            }}>
+                              <ShieldMinus className="h-4 w-4 mr-1"/>Revoke
+                            </Button>
+                          )}
+                          <Button size="sm" variant="destructive" onClick={async ()=>{
+                            try {
+                              await deleteShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
+                              toast({ title: 'Deleted', description: 'Link removed.' });
+                            } catch (e:any) {
+                              toast({ title: 'Error', description: e?.message || 'Failed to delete link', variant: 'destructive' });
+                            }
+                          }}>
+                            <Trash2 className="h-4 w-4"/>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </AdminModalSection>
 
           {/* Action Buttons */}
           {showActionButtons && (
