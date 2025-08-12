@@ -281,10 +281,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { key: 'mastered', label: 'Mastered', count: stats.mastered, color: 'bg-green-500', bgColor: 'bg-green-50 dark:bg-green-900/20', textColor: 'text-green-700 dark:text-green-300' },
-                      { key: 'consistent', label: 'Consistent', count: stats.consistent, color: 'bg-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-900/20', textColor: 'text-purple-700 dark:text-purple-300' },
                       { key: 'prepping', label: 'Prepping', count: stats.prepping, color: 'bg-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-900/20', textColor: 'text-blue-700 dark:text-blue-300' },
                       { key: 'learning', label: 'Learning', count: stats.learning, color: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-900/20', textColor: 'text-amber-700 dark:text-amber-300' },
+                      { key: 'consistent', label: 'Consistent', count: stats.consistent, color: 'bg-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-900/20', textColor: 'text-purple-700 dark:text-purple-300' },
+                      { key: 'mastered', label: 'Mastered', count: stats.mastered, color: 'bg-green-500', bgColor: 'bg-green-50 dark:bg-green-900/20', textColor: 'text-green-700 dark:text-green-300' },
                     ].map(({ key, label, count, color, bgColor, textColor }) => (
                       <div key={key} className={`rounded-lg p-4 ${bgColor}`}>
                         <div className="flex items-center justify-between">
@@ -333,10 +333,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                   </div>
                   <div className="space-y-2">
                     {([
-                      ['mastered','Mastered','text-green-700 dark:text-green-300','bg-green-500'],
-                      ['consistent','Consistent','text-purple-700 dark:text-purple-300','bg-purple-500'],
                       ['prepping','Prepping','text-blue-700 dark:text-blue-300','bg-blue-500'],
-                      ['learning','Learning','text-amber-700 dark:text-amber-300','bg-amber-500']
+                      ['learning','Learning','text-amber-700 dark:text-amber-300','bg-amber-500'],
+                      ['consistent','Consistent','text-purple-700 dark:text-purple-300','bg-purple-500'],
+                      ['mastered','Mastered','text-green-700 dark:text-green-300','bg-green-500']
                     ] as const).map(([key, label, textColor, barColor]) => {
                       const count = levelStats.counts[key] || 0;
                       const pct = levelStats.total ? Math.round((count / levelStats.total) * 100) : 0;
@@ -485,10 +485,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       </CardHeader>
                       <CardContent className="space-y-3">
                         {[
-                          { key: 'mastered', label: 'Mastered', count: categoryStats.mastered, color: 'bg-green-500', textColor: 'text-green-700 dark:text-green-300' },
-                          { key: 'consistent', label: 'Consistent', count: categoryStats.consistent, color: 'bg-purple-500', textColor: 'text-purple-700 dark:text-purple-300' },
                           { key: 'prepping', label: 'Prepping', count: categoryStats.prepping, color: 'bg-blue-500', textColor: 'text-blue-700 dark:text-blue-300' },
                           { key: 'learning', label: 'Learning', count: categoryStats.learning, color: 'bg-amber-500', textColor: 'text-amber-700 dark:text-amber-300' },
+                          { key: 'consistent', label: 'Consistent', count: categoryStats.consistent, color: 'bg-purple-500', textColor: 'text-purple-700 dark:text-purple-300' },
+                          { key: 'mastered', label: 'Mastered', count: categoryStats.mastered, color: 'bg-green-500', textColor: 'text-green-700 dark:text-green-300' },
                         ].map(({ key, label, count, color, textColor }) => {
                           const percentage = categoryStats.total > 0 ? Math.round((count / categoryStats.total) * 100) : 0;
                           return (
