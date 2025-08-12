@@ -809,9 +809,9 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
               activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
             },
           ]}
-          // Tab list should sit above, have its own height, and not block below
-          listClassName="relative z-10 mb-16 sm:mb-4 p-1 rounded-xl grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:gap-2 pointer-events-auto shadow-sm"
-          triggerClassName="rounded-lg font-semibold transition-all duration-200 px-3 sm:px-6 py-2 text-sm sm:text-base w-full sm:w-auto min-w-0 border-2 data-[state=inactive]:border-[#D8BD2A] data-[state=inactive]:bg-white data-[state=inactive]:text-[#D8BD2A]"
+          // Use the same styling as Messages tab
+          listClassName="bg-slate-100 text-[#0F0276] dark:bg-[#D8BD2A]/10 dark:text-white border-slate-200 dark:border-[#D8BD2A]/20 mb-4"
+          triggerClassName="gap-2"
         >
           <TabsContent value="active">
             {/* CONTENT: push it down and ensure it’s clickable */}
