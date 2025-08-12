@@ -60,6 +60,8 @@ export default function AdminSkillsManager() {
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [newVideoDescription, setNewVideoDescription] = useState('');
+  const [videoUploadMode, setVideoUploadMode] = useState<'url' | 'upload'>('url');
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
 
   // Simple focus management helpers
   const handleInputFocus = (input: HTMLInputElement) => {
@@ -110,27 +112,71 @@ export default function AdminSkillsManager() {
   }, [skills]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  // Handle adding new video
-  const handleAddVideo = () => {
-    if (!newVideoTitle || !newVideoUrl) return;
+  // Handle file upload
+  const handleFileUpload = async (file: File): Promise<string> => {
+    // For now, we'll create a local URL. In a real implementation, 
+    // you would upload to your storage service (e.g., Supabase Storage, AWS S3, etc.)
+    const formData = new FormData();
+    formData.append('file', file);
     
-    const newVideo: VideoReference = {
-      id: `temp-${Date.now()}`,
-      type: newVideoUrl.startsWith('http') ? 'url' : 'upload',
-      url: newVideoUrl,
-      title: newVideoTitle,
-      description: newVideoDescription || undefined,
-      uploadedAt: new Date().toISOString(),
-    };
+    try {
+      // This would be your actual upload endpoint
+      // const response = await fetch('/api/upload-video', {
+      //   method: 'POST',
+      //   body: formData,
+      // });
+      // const { url } = await response.json();
+      // return url;
+      
+      // For now, return a placeholder URL with file info
+      return `${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+    } catch (error) {
+      console.error('File upload failed:', error);
+      throw new Error('Failed to upload video file');
+    }
+  };
 
-    updateDraft({ 
-      referenceVideos: [...draft.referenceVideos, newVideo] 
-    });
+  // Handle adding new video
+  const handleAddVideo = async () => {
+    if (!newVideoTitle) return;
+    if (videoUploadMode === 'url' && !newVideoUrl) return;
+    if (videoUploadMode === 'upload' && !selectedVideoFile) return;
 
-    // Clear form
-    setNewVideoTitle('');
-    setNewVideoUrl('');
-    setNewVideoDescription('');
+    try {
+      let videoUrl = newVideoUrl;
+      let fileSize: number | undefined;
+      let mimeType: string | undefined;
+
+      if (videoUploadMode === 'upload' && selectedVideoFile) {
+        videoUrl = await handleFileUpload(selectedVideoFile);
+        fileSize = selectedVideoFile.size;
+        mimeType = selectedVideoFile.type;
+      }
+      
+      const newVideo: VideoReference = {
+        id: `temp-${Date.now()}`,
+        type: videoUploadMode,
+        url: videoUrl,
+        title: newVideoTitle,
+        description: newVideoDescription || undefined,
+        uploadedAt: new Date().toISOString(),
+        fileSize,
+        mimeType,
+      };
+
+      updateDraft({ 
+        referenceVideos: [...draft.referenceVideos, newVideo] 
+      });
+
+      // Clear form
+      setNewVideoTitle('');
+      setNewVideoUrl('');
+      setNewVideoDescription('');
+      setSelectedVideoFile(null);
+    } catch (error) {
+      console.error('Failed to add video:', error);
+      // You might want to show a toast notification here
+    }
   };
 
   const onCreate = async () => {
@@ -169,6 +215,8 @@ export default function AdminSkillsManager() {
     setNewVideoTitle('');
     setNewVideoUrl('');
     setNewVideoDescription('');
+    setSelectedVideoFile(null);
+    setVideoUploadMode('url');
   };
 
   // Simple form component - no complex memoization needed
@@ -509,7 +557,33 @@ export default function AdminSkillsManager() {
             )}
             
             {/* Add New Video */}
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {/* Mode Toggle */}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={videoUploadMode === 'url' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setVideoUploadMode('url');
+                    setSelectedVideoFile(null);
+                  }}
+                  className="text-xs"
+                >
+                  URL Link
+                </Button>
+                <Button
+                  size="sm"
+                  variant={videoUploadMode === 'upload' ? 'default' : 'outline'}
+                  onClick={() => {
+                    setVideoUploadMode('upload');
+                    setNewVideoUrl('');
+                  }}
+                  className="text-xs"
+                >
+                  Upload File
+                </Button>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <Input
                   placeholder="Video title"
@@ -517,12 +591,35 @@ export default function AdminSkillsManager() {
                   onChange={(e) => setNewVideoTitle(e.target.value)}
                   className="text-sm"
                 />
-                <Input
-                  placeholder="Video URL or file upload"
-                  value={newVideoUrl}
-                  onChange={(e) => setNewVideoUrl(e.target.value)}
-                  className="text-sm"
-                />
+                {videoUploadMode === 'url' ? (
+                  <Input
+                    placeholder="Video URL (e.g., YouTube, Vimeo)"
+                    value={newVideoUrl}
+                    onChange={(e) => setNewVideoUrl(e.target.value)}
+                    className="text-sm"
+                  />
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        setSelectedVideoFile(file || null);
+                      }}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <div className="border border-slate-200 rounded-md px-3 py-2 text-sm bg-white dark:bg-[#0F0276]/50 dark:border-[#2A4A9B]/40 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#0F0276]/70 transition-colors">
+                      {selectedVideoFile ? (
+                        <span className="text-slate-700 dark:text-white">
+                          {selectedVideoFile.name} ({(selectedVideoFile.size / 1024 / 1024).toFixed(2)}MB)
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 dark:text-white/60">Choose video file...</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               <Input
                 placeholder="Description (optional)"
@@ -535,7 +632,7 @@ export default function AdminSkillsManager() {
                   size="sm"
                   variant="outline"
                   onClick={handleAddVideo}
-                  disabled={!newVideoTitle || !newVideoUrl}
+                  disabled={!newVideoTitle || (videoUploadMode === 'url' ? !newVideoUrl : !selectedVideoFile)}
                   className="text-sm"
                 >
                   Add Video
@@ -547,6 +644,7 @@ export default function AdminSkillsManager() {
                     setNewVideoTitle('');
                     setNewVideoUrl('');
                     setNewVideoDescription('');
+                    setSelectedVideoFile(null);
                   }}
                   className="text-sm"
                 >
@@ -989,6 +1087,8 @@ export default function AdminSkillsManager() {
                                           setNewVideoTitle('');
                                           setNewVideoUrl('');
                                           setNewVideoDescription('');
+                                          setSelectedVideoFile(null);
+                                          setVideoUploadMode('url');
                                         }}
                                         className="border-slate-200/60 bg-white/80 backdrop-blur-sm text-[#0F0276] hover:bg-white/90 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/50 dark:text-white dark:hover:bg-[#0F0276]/70"
                                       >
@@ -1113,7 +1213,33 @@ export default function AdminSkillsManager() {
                                           )}
                                           
                                           {/* Add New Video */}
-                                          <div className="space-y-2">
+                                          <div className="space-y-3">
+                                            {/* Mode Toggle */}
+                                            <div className="flex gap-2">
+                                              <Button
+                                                size="sm"
+                                                variant={videoUploadMode === 'url' ? 'default' : 'outline'}
+                                                onClick={() => {
+                                                  setVideoUploadMode('url');
+                                                  setSelectedVideoFile(null);
+                                                }}
+                                                className="text-xs"
+                                              >
+                                                URL Link
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant={videoUploadMode === 'upload' ? 'default' : 'outline'}
+                                                onClick={() => {
+                                                  setVideoUploadMode('upload');
+                                                  setNewVideoUrl('');
+                                                }}
+                                                className="text-xs"
+                                              >
+                                                Upload File
+                                              </Button>
+                                            </div>
+                                            
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                               <Input
                                                 placeholder="Video title"
@@ -1121,12 +1247,35 @@ export default function AdminSkillsManager() {
                                                 onChange={(e) => setNewVideoTitle(e.target.value)}
                                                 className="text-sm"
                                               />
-                                              <Input
-                                                placeholder="Video URL or file upload"
-                                                value={newVideoUrl}
-                                                onChange={(e) => setNewVideoUrl(e.target.value)}
-                                                className="text-sm"
-                                              />
+                                              {videoUploadMode === 'url' ? (
+                                                <Input
+                                                  placeholder="Video URL (e.g., YouTube, Vimeo)"
+                                                  value={newVideoUrl}
+                                                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                                                  className="text-sm"
+                                                />
+                                              ) : (
+                                                <div className="relative">
+                                                  <input
+                                                    type="file"
+                                                    accept="video/*"
+                                                    onChange={(e) => {
+                                                      const file = e.target.files?.[0];
+                                                      setSelectedVideoFile(file || null);
+                                                    }}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                  />
+                                                  <div className="border border-slate-200 rounded-md px-3 py-2 text-sm bg-white dark:bg-[#0F0276]/50 dark:border-[#2A4A9B]/40 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#0F0276]/70 transition-colors">
+                                                    {selectedVideoFile ? (
+                                                      <span className="text-slate-700 dark:text-white">
+                                                        {selectedVideoFile.name} ({(selectedVideoFile.size / 1024 / 1024).toFixed(2)}MB)
+                                                      </span>
+                                                    ) : (
+                                                      <span className="text-slate-500 dark:text-white/60">Choose video file...</span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
                                             </div>
                                             <Input
                                               placeholder="Description (optional)"
@@ -1138,24 +1287,43 @@ export default function AdminSkillsManager() {
                                               <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => {
-                                                  if (newVideoTitle && newVideoUrl) {
+                                                onClick={async () => {
+                                                  if (!newVideoTitle) return;
+                                                  if (videoUploadMode === 'url' && !newVideoUrl) return;
+                                                  if (videoUploadMode === 'upload' && !selectedVideoFile) return;
+
+                                                  try {
+                                                    let videoUrl = newVideoUrl;
+                                                    let fileSize: number | undefined;
+                                                    let mimeType: string | undefined;
+
+                                                    if (videoUploadMode === 'upload' && selectedVideoFile) {
+                                                      videoUrl = await handleFileUpload(selectedVideoFile);
+                                                      fileSize = selectedVideoFile.size;
+                                                      mimeType = selectedVideoFile.type;
+                                                    }
+
                                                     const newVideo: VideoReference = {
                                                       id: Math.random().toString(36).substr(2, 9),
-                                                      type: 'url', // For now, default to URL. Will enhance with upload detection later
-                                                      url: newVideoUrl,
+                                                      type: videoUploadMode,
+                                                      url: videoUrl,
                                                       title: newVideoTitle,
                                                       description: newVideoDescription || undefined,
-                                                      uploadedAt: new Date().toISOString()
+                                                      uploadedAt: new Date().toISOString(),
+                                                      fileSize,
+                                                      mimeType,
                                                     };
                                                     const currentVideos = (editDraft.referenceVideos as VideoReference[] || []);
                                                     setEditDraft(d => ({ ...d, referenceVideos: [...currentVideos, newVideo] }));
                                                     setNewVideoTitle('');
                                                     setNewVideoUrl('');
                                                     setNewVideoDescription('');
+                                                    setSelectedVideoFile(null);
+                                                  } catch (error) {
+                                                    console.error('Failed to add video:', error);
                                                   }
                                                 }}
-                                                disabled={!newVideoTitle || !newVideoUrl}
+                                                disabled={!newVideoTitle || (videoUploadMode === 'url' ? !newVideoUrl : !selectedVideoFile)}
                                                 className="text-sm"
                                               >
                                                 Add Video
@@ -1167,6 +1335,7 @@ export default function AdminSkillsManager() {
                                                   setNewVideoTitle('');
                                                   setNewVideoUrl('');
                                                   setNewVideoDescription('');
+                                                  setSelectedVideoFile(null);
                                                 }}
                                                 className="text-sm"
                                               >
