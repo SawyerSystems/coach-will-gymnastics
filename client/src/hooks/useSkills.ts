@@ -24,8 +24,6 @@ export type Skill = {
   referenceVideos?: VideoReference[] | null;
 };
 
-export { VideoReference };
-
 export type SkillRelations = { prerequisiteIds: number[]; componentIds: number[] };
 
 export function useApparatusList() {

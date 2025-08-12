@@ -974,7 +974,22 @@ export default function AdminSkillsManager() {
                                       <Button 
                                         size="sm" 
                                         variant="outline" 
-                                        onClick={() => { setEditingId(s.id); setEditDraft({ name: s.name || '', category: s.category || '', level: s.level || 'beginner', displayOrder: s.displayOrder ?? undefined, apparatusId: s.apparatusId ?? undefined, description: s.description || '' }); }}
+                                        onClick={() => { 
+                                          setEditingId(s.id); 
+                                          setEditDraft({ 
+                                            name: s.name || '', 
+                                            category: s.category || '', 
+                                            level: s.level || 'beginner', 
+                                            displayOrder: s.displayOrder ?? undefined, 
+                                            apparatusId: s.apparatusId ?? undefined, 
+                                            description: s.description || '',
+                                            referenceVideos: s.referenceVideos || []
+                                          });
+                                          // Clear video form state
+                                          setNewVideoTitle('');
+                                          setNewVideoUrl('');
+                                          setNewVideoDescription('');
+                                        }}
                                         className="border-slate-200/60 bg-white/80 backdrop-blur-sm text-[#0F0276] hover:bg-white/90 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/50 dark:text-white dark:hover:bg-[#0F0276]/70"
                                       >
                                         Edit
@@ -1064,6 +1079,103 @@ export default function AdminSkillsManager() {
                                           className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50"
                                         />
                                       </div>
+                                      
+                                      {/* Reference Videos Section for Editing */}
+                                      <div className="sm:col-span-2 lg:col-span-3 space-y-3">
+                                        <Label className="text-[#0F0276] dark:text-white font-medium">Reference Videos (optional)</Label>
+                                        <div className="border border-slate-200/60 rounded-lg p-3 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
+                                          {/* Existing Videos */}
+                                          {(editDraft.referenceVideos as VideoReference[] || []).length > 0 && (
+                                            <div className="space-y-2 mb-3">
+                                              {(editDraft.referenceVideos as VideoReference[] || []).map((video, index) => (
+                                                <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-[#0F0276]/50 rounded border">
+                                                  <div className="flex-1">
+                                                    <div className="font-medium text-sm text-[#0F0276] dark:text-white">{video.title}</div>
+                                                    <div className="text-xs text-slate-600 dark:text-white/70">{video.type === 'url' ? 'URL' : 'Upload'}: {video.url}</div>
+                                                    {video.description && (
+                                                      <div className="text-xs text-slate-500 dark:text-white/60">{video.description}</div>
+                                                    )}
+                                                  </div>
+                                                  <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => {
+                                                      const updated = (editDraft.referenceVideos as VideoReference[] || []).filter((_, i) => i !== index);
+                                                      setEditDraft(d => ({ ...d, referenceVideos: updated }));
+                                                    }}
+                                                    className="h-6 w-6 p-0"
+                                                  >
+                                                    ×
+                                                  </Button>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                          
+                                          {/* Add New Video */}
+                                          <div className="space-y-2">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                              <Input
+                                                placeholder="Video title"
+                                                value={newVideoTitle}
+                                                onChange={(e) => setNewVideoTitle(e.target.value)}
+                                                className="text-sm"
+                                              />
+                                              <Input
+                                                placeholder="Video URL or file upload"
+                                                value={newVideoUrl}
+                                                onChange={(e) => setNewVideoUrl(e.target.value)}
+                                                className="text-sm"
+                                              />
+                                            </div>
+                                            <Input
+                                              placeholder="Description (optional)"
+                                              value={newVideoDescription}
+                                              onChange={(e) => setNewVideoDescription(e.target.value)}
+                                              className="text-sm"
+                                            />
+                                            <div className="flex gap-2">
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                  if (newVideoTitle && newVideoUrl) {
+                                                    const newVideo: VideoReference = {
+                                                      id: Math.random().toString(36).substr(2, 9),
+                                                      type: 'url', // For now, default to URL. Will enhance with upload detection later
+                                                      url: newVideoUrl,
+                                                      title: newVideoTitle,
+                                                      description: newVideoDescription || undefined,
+                                                      uploadedAt: new Date().toISOString()
+                                                    };
+                                                    const currentVideos = (editDraft.referenceVideos as VideoReference[] || []);
+                                                    setEditDraft(d => ({ ...d, referenceVideos: [...currentVideos, newVideo] }));
+                                                    setNewVideoTitle('');
+                                                    setNewVideoUrl('');
+                                                    setNewVideoDescription('');
+                                                  }
+                                                }}
+                                                disabled={!newVideoTitle || !newVideoUrl}
+                                                className="text-sm"
+                                              >
+                                                Add Video
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                  setNewVideoTitle('');
+                                                  setNewVideoUrl('');
+                                                  setNewVideoDescription('');
+                                                }}
+                                                className="text-sm"
+                                              >
+                                                Clear
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 ) : (
@@ -1081,6 +1193,33 @@ export default function AdminSkillsManager() {
                                         <div className="text-xs text-slate-500 dark:text-white/60 font-medium mb-1">Description</div>
                                         <div className="text-slate-700 dark:text-white break-words">{s.description || '—'}</div>
                                       </div>
+                                      {/* Reference Videos Display */}
+                                      {s.referenceVideos && s.referenceVideos.length > 0 && (
+                                        <div className="sm:col-span-2 lg:col-span-3">
+                                          <div className="text-xs text-slate-500 dark:text-white/60 font-medium mb-2">Reference Videos</div>
+                                          <div className="space-y-2">
+                                            {s.referenceVideos.map((video, index) => (
+                                              <div key={index} className="flex items-center gap-3 p-2 bg-white/50 dark:bg-[#0F0276]/50 rounded border border-slate-200/40 dark:border-[#2A4A9B]/40">
+                                                <div className="flex-1">
+                                                  <div className="font-medium text-sm text-[#0F0276] dark:text-white">{video.title}</div>
+                                                  <div className="text-xs text-slate-600 dark:text-white/70 break-all">{video.url}</div>
+                                                  {video.description && (
+                                                    <div className="text-xs text-slate-500 dark:text-white/60">{video.description}</div>
+                                                  )}
+                                                </div>
+                                                <a 
+                                                  href={video.url} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/70 transition-colors"
+                                                >
+                                                  View
+                                                </a>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 )}
