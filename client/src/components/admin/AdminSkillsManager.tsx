@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useApparatusList, useCreateSkill, useDeleteSkill, useSkills, useUpdateSkill, useSkillRelations, useSaveSkillRelations, type Skill, type VideoReference } from "@/hooks/useSkills";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { Play, Download } from "lucide-react";
 
 const LEVELS = ["beginner", "intermediate", "advanced", "elite"] as const;
 
@@ -63,6 +66,45 @@ export default function AdminSkillsManager() {
   const [videoUploadMode, setVideoUploadMode] = useState<'url' | 'upload'>('url');
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
 
+  // Video modal state
+  const [openVideo, setOpenVideo] = useState<{ url: string; title?: string } | null>(null);
+
+  // Video utility function
+  const isDirectVideoUrl = useCallback((url?: string | null) => {
+    if (!url) return false;
+    
+    console.log('Checking video URL:', url);
+    
+    // Check if it's a placeholder filename (contains file size info)
+    const isPlaceholder = /\.(mp4|webm|m4v|mov|ogg|ogv|avi|mkv|3gp|flv)\s*\([^)]+MB\)/i.test(url);
+    if (isPlaceholder) {
+      console.log('Detected placeholder filename:', url);
+      return false; // Treat placeholders as external (non-playable)
+    }
+    
+    // Check for Supabase storage URLs (direct video files)
+    if (url.includes('supabase.co/storage/') && /\.(mp4|webm|m4v|mov|ogg|ogv|avi|mkv|3gp|flv)(\?|$)/i.test(url)) {
+      console.log('Detected Supabase storage video URL:', url);
+      return true;
+    }
+    
+    // Check for direct video file extensions
+    const videoExtensions = /\.(mp4|webm|m4v|mov|ogg|ogv|avi|mkv|3gp|flv)($|\s|\?)/i;
+    
+    try {
+      const u = new URL(url);
+      const path = u.pathname.toLowerCase();
+      const isDirect = videoExtensions.test(path);
+      console.log('URL parsed, path:', path, 'isDirect:', isDirect);
+      return isDirect;
+    } catch {
+      // If URL parsing fails, check the string directly (could be just a filename)
+      const isDirect = videoExtensions.test(url.toLowerCase());
+      console.log('URL parsing failed, checking string directly:', url, 'isDirect:', isDirect);
+      return isDirect;
+    }
+  }, []);
+
   // Simple focus management helpers
   const handleInputFocus = (input: HTMLInputElement) => {
     maintainFocus.current = true;
@@ -114,25 +156,34 @@ export default function AdminSkillsManager() {
 
   // Handle file upload
   const handleFileUpload = async (file: File): Promise<string> => {
-    // For now, we'll create a local URL. In a real implementation, 
-    // you would upload to your storage service (e.g., Supabase Storage, AWS S3, etc.)
     const formData = new FormData();
     formData.append('file', file);
     
     try {
-      // This would be your actual upload endpoint
-      // const response = await fetch('/api/upload-video', {
-      //   method: 'POST',
-      //   body: formData,
-      // });
-      // const { url } = await response.json();
-      // return url;
+      console.log('Uploading file:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
       
-      // For now, return a placeholder URL with file info
-      return `${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+      const response = await fetch('/api/admin/media', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed:', response.status, errorText);
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Upload successful:', data);
+      
+      if (!data.url) {
+        throw new Error('No URL returned from upload');
+      }
+      
+      return data.url;
     } catch (error) {
       console.error('File upload failed:', error);
-      throw new Error('Failed to upload video file');
+      throw new Error(`Failed to upload video file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -530,29 +581,103 @@ export default function AdminSkillsManager() {
           <div className="border border-slate-200/60 rounded-lg p-3 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
             {/* Existing Videos */}
             {draft.referenceVideos.length > 0 && (
-              <div className="space-y-2 mb-3">
-                {draft.referenceVideos.map((video, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-[#0F0276]/50 rounded border">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-[#0F0276] dark:text-white">{video.title}</div>
-                      <div className="text-xs text-slate-600 dark:text-white/70">{video.type === 'url' ? 'URL' : 'Upload'}: {video.url}</div>
-                      {video.description && (
-                        <div className="text-xs text-slate-500 dark:text-white/60">{video.description}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                {draft.referenceVideos.map((video, index) => {
+                  const direct = isDirectVideoUrl(video.url);
+                  return (
+                    <div key={index} className="relative group bg-white/50 dark:bg-[#0F0276]/50 rounded-lg border border-slate-200/60 dark:border-[#2A4A9B]/40 overflow-hidden">
+                      {direct ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Video clicked:', video.url, video.title);
+                            if (video.url) {
+                              setOpenVideo({ url: video.url, title: video.title || undefined });
+                            }
+                          }}
+                          className="w-full text-left"
+                        >
+                          <AspectRatio ratio={16/9} className="overflow-hidden">
+                            <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
+                              <video
+                                className="absolute inset-0 h-full w-full object-cover opacity-90"
+                                src={video.url || undefined}
+                                muted
+                                playsInline
+                                preload="metadata"
+                                onLoadedMetadata={(e) => {
+                                  const vid = e.currentTarget as HTMLVideoElement;
+                                  try {
+                                    vid.currentTime = 0;
+                                    vid.pause();
+                                  } catch (err) {
+                                    console.log('Video metadata load error:', err);
+                                  }
+                                }}
+                                onError={(e) => {
+                                  console.log('Video load error:', e.currentTarget.src);
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="rounded-full bg-[#0F0276]/90 p-3 shadow-md group-hover:scale-110 group-hover:bg-[#0F0276] transition-transform">
+                                  <Play className="h-4 w-4 text-white" fill="white" />
+                                </div>
+                              </div>
+                            </div>
+                          </AspectRatio>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('External video clicked:', video.url, video.title);
+                            if (video.url) {
+                              setOpenVideo({ url: video.url, title: video.title || undefined });
+                            }
+                          }}
+                          className="w-full aspect-video bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                        >
+                          <div className="text-center">
+                            <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                              🎥
+                            </div>
+                            <div className="text-xs text-slate-600 dark:text-white/70">External Video</div>
+                          </div>
+                        </button>
                       )}
+                      
+                      {/* Video Info */}
+                      <div className="p-3">
+                        <div className="font-medium text-sm text-[#0F0276] dark:text-white mb-1 line-clamp-2">{video.title}</div>
+                        {video.description && (
+                          <div className="text-xs text-slate-500 dark:text-white/60 line-clamp-2 mb-2">{video.description}</div>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-slate-600 dark:text-white/70">
+                            {video.type === 'url' ? 'URL' : 'Upload'}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const updated = draft.referenceVideos.filter((_, i) => i !== index);
+                              updateDraft({ referenceVideos: updated });
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => {
-                        const updated = draft.referenceVideos.filter((_, i) => i !== index);
-                        updateDraft({ referenceVideos: updated });
-                      }}
-                      className="h-6 w-6 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             
@@ -856,6 +981,41 @@ export default function AdminSkillsManager() {
                 <SelectItem value="name">Name</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </AdminCardContent>
+      </AdminCard>
+
+      {/* Test Video Modal Button */}
+      <AdminCard>
+        <AdminCardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => {
+                console.log('Test video modal clicked');
+                setOpenVideo({ 
+                  url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                  title: 'Test Video - Big Buck Bunny'
+                });
+              }}
+              className="bg-[#0F0276] hover:bg-[#0F0276]/90"
+            >
+              🎥 Test Video Modal
+            </Button>
+            <Button 
+              onClick={() => {
+                console.log('Test external video modal clicked');
+                setOpenVideo({ 
+                  url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                  title: 'Test External Video - YouTube'
+                });
+              }}
+              variant="outline"
+            >
+              🔗 Test External Video
+            </Button>
+            <span className="text-sm text-slate-600 dark:text-white/70">
+              Test buttons to verify video modal functionality
+            </span>
           </div>
         </AdminCardContent>
       </AdminCard>
@@ -1186,29 +1346,87 @@ export default function AdminSkillsManager() {
                                         <div className="border border-slate-200/60 rounded-lg p-3 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
                                           {/* Existing Videos */}
                                           {(editDraft.referenceVideos as VideoReference[] || []).length > 0 && (
-                                            <div className="space-y-2 mb-3">
-                                              {(editDraft.referenceVideos as VideoReference[] || []).map((video, index) => (
-                                                <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-[#0F0276]/50 rounded border">
-                                                  <div className="flex-1">
-                                                    <div className="font-medium text-sm text-[#0F0276] dark:text-white">{video.title}</div>
-                                                    <div className="text-xs text-slate-600 dark:text-white/70">{video.type === 'url' ? 'URL' : 'Upload'}: {video.url}</div>
-                                                    {video.description && (
-                                                      <div className="text-xs text-slate-500 dark:text-white/60">{video.description}</div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                                              {(editDraft.referenceVideos as VideoReference[] || []).map((video, index) => {
+                                                const direct = isDirectVideoUrl(video.url);
+                                                return (
+                                                  <div key={index} className="relative group bg-white/50 dark:bg-[#0F0276]/50 rounded-lg border border-slate-200/60 dark:border-[#2A4A9B]/40 overflow-hidden">
+                                                    {direct ? (
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.preventDefault();
+                                                          e.stopPropagation();
+                                                          console.log('Edit form video clicked:', video.url, video.title);
+                                                          if (video.url) {
+                                                            setOpenVideo({ url: video.url, title: video.title || undefined });
+                                                          }
+                                                        }}
+                                                        className="w-full text-left"
+                                                      >
+                                                        <AspectRatio ratio={16/9} className="overflow-hidden">
+                                                          <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
+                                                            <video
+                                                              className="absolute inset-0 h-full w-full object-cover opacity-90"
+                                                              src={video.url || undefined}
+                                                              muted
+                                                              playsInline
+                                                              preload="metadata"
+                                                              onLoadedMetadata={(e) => {
+                                                                const vid = e.currentTarget as HTMLVideoElement;
+                                                                try {
+                                                                  vid.currentTime = 0;
+                                                                  vid.pause();
+                                                                } catch {}
+                                                              }}
+                                                            />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                              <div className="rounded-full bg-[#0F0276]/90 p-3 shadow-md group-hover:scale-110 group-hover:bg-[#0F0276] transition-transform">
+                                                                <Play className="h-4 w-4 text-white" fill="white" />
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        </AspectRatio>
+                                                      </button>
+                                                    ) : (
+                                                      <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
+                                                        <div className="text-center">
+                                                          <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                                                            🎥
+                                                          </div>
+                                                          <div className="text-xs text-slate-600 dark:text-white/70">External Video</div>
+                                                        </div>
+                                                      </div>
                                                     )}
+                                                    
+                                                    {/* Video Info */}
+                                                    <div className="p-3">
+                                                      <div className="font-medium text-sm text-[#0F0276] dark:text-white mb-1 line-clamp-2">{video.title}</div>
+                                                      {video.description && (
+                                                        <div className="text-xs text-slate-500 dark:text-white/60 line-clamp-2 mb-2">{video.description}</div>
+                                                      )}
+                                                      <div className="flex items-center justify-between">
+                                                        <div className="text-xs text-slate-600 dark:text-white/70">
+                                                          {video.type === 'url' ? 'URL' : 'Upload'}
+                                                        </div>
+                                                        <Button
+                                                          size="sm"
+                                                          variant="destructive"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const updated = (editDraft.referenceVideos as VideoReference[] || []).filter((_, i) => i !== index);
+                                                            setEditDraft(d => ({ ...d, referenceVideos: updated }));
+                                                          }}
+                                                          className="h-6 w-6 p-0"
+                                                        >
+                                                          ×
+                                                        </Button>
+                                                      </div>
+                                                    </div>
                                                   </div>
-                                                  <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => {
-                                                      const updated = (editDraft.referenceVideos as VideoReference[] || []).filter((_, i) => i !== index);
-                                                      setEditDraft(d => ({ ...d, referenceVideos: updated }));
-                                                    }}
-                                                    className="h-6 w-6 p-0"
-                                                  >
-                                                    ×
-                                                  </Button>
-                                                </div>
-                                              ))}
+                                                );
+                                              })}
                                             </div>
                                           )}
                                           
@@ -1366,26 +1584,93 @@ export default function AdminSkillsManager() {
                                       {s.referenceVideos && s.referenceVideos.length > 0 && (
                                         <div className="sm:col-span-2 lg:col-span-3">
                                           <div className="text-xs text-slate-500 dark:text-white/60 font-medium mb-2">Reference Videos</div>
-                                          <div className="space-y-2">
-                                            {s.referenceVideos.map((video, index) => (
-                                              <div key={index} className="flex items-center gap-3 p-2 bg-white/50 dark:bg-[#0F0276]/50 rounded border border-slate-200/40 dark:border-[#2A4A9B]/40">
-                                                <div className="flex-1">
-                                                  <div className="font-medium text-sm text-[#0F0276] dark:text-white">{video.title}</div>
-                                                  <div className="text-xs text-slate-600 dark:text-white/70 break-all">{video.url}</div>
-                                                  {video.description && (
-                                                    <div className="text-xs text-slate-500 dark:text-white/60">{video.description}</div>
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {s.referenceVideos.map((video, index) => {
+                                              const direct = isDirectVideoUrl(video.url);
+                                              return (
+                                                <div key={index} className="relative group bg-white/50 dark:bg-[#0F0276]/50 rounded-lg border border-slate-200/60 dark:border-[#2A4A9B]/40 overflow-hidden">
+                                                  {direct ? (
+                                                    <button
+                                                      type="button"
+                                                      onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        console.log('Skills details video clicked:', video.url, video.title);
+                                                        if (video.url) {
+                                                          setOpenVideo({ url: video.url, title: video.title || undefined });
+                                                        }
+                                                      }}
+                                                      className="w-full text-left"
+                                                    >
+                                                      <AspectRatio ratio={16/9} className="overflow-hidden">
+                                                        <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
+                                                          <video
+                                                            className="absolute inset-0 h-full w-full object-cover opacity-90"
+                                                            src={video.url || undefined}
+                                                            muted
+                                                            playsInline
+                                                            preload="metadata"
+                                                            onLoadedMetadata={(e) => {
+                                                              const vid = e.currentTarget as HTMLVideoElement;
+                                                              try {
+                                                                vid.currentTime = 0;
+                                                                vid.pause();
+                                                              } catch {}
+                                                            }}
+                                                          />
+                                                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                          <div className="absolute inset-0 flex items-center justify-center">
+                                                            <div className="rounded-full bg-[#0F0276]/90 p-3 shadow-md group-hover:scale-110 group-hover:bg-[#0F0276] transition-transform">
+                                                              <Play className="h-4 w-4 text-white" fill="white" />
+                                                            </div>
+                                                          </div>
+                                                        </div>
+                                                      </AspectRatio>
+                                                    </button>
+                                                  ) : (
+                                                    <div className="aspect-video bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
+                                                      <div className="text-center">
+                                                        <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                                                          {video.url.includes('MB)') ? '📁' : '🎥'}
+                                                        </div>
+                                                        <div className="text-xs text-slate-600 dark:text-white/70">
+                                                          {video.url.includes('MB)') ? 'Uploaded File' : 'External Video'}
+                                                        </div>
+                                                      </div>
+                                                    </div>
                                                   )}
+                                                  
+                                                  {/* Video Info */}
+                                                  <div className="p-3">
+                                                    <div className="font-medium text-sm text-[#0F0276] dark:text-white mb-1 line-clamp-2">{video.title}</div>
+                                                    {video.description && (
+                                                      <div className="text-xs text-slate-500 dark:text-white/60 line-clamp-2 mb-2">{video.description}</div>
+                                                    )}
+                                                    <div className="flex items-center justify-between">
+                                                      <div className="text-xs text-slate-600 dark:text-white/70">
+                                                        {video.type === 'url' ? 'URL' : 'Upload'}
+                                                      </div>
+                                                      {!direct && (
+                                                        video.url.includes('MB)') ? (
+                                                          <div className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2 py-1 rounded">
+                                                            Upload Pending
+                                                          </div>
+                                                        ) : (
+                                                          <a 
+                                                            href={video.url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/70 transition-colors"
+                                                          >
+                                                            View
+                                                          </a>
+                                                        )
+                                                      )}
+                                                    </div>
+                                                  </div>
                                                 </div>
-                                                <a 
-                                                  href={video.url} 
-                                                  target="_blank" 
-                                                  rel="noopener noreferrer"
-                                                  className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/70 transition-colors"
-                                                >
-                                                  View
-                                                </a>
-                                              </div>
-                                            ))}
+                                              );
+                                            })}
                                           </div>
                                         </div>
                                       )}
@@ -1559,6 +1844,67 @@ export default function AdminSkillsManager() {
           </div>
         </AdminCardContent>
       </AdminCard>
+
+      {/* Video Modal */}
+      <Dialog open={!!openVideo} onOpenChange={(o) => !o && setOpenVideo(null)}>
+        <DialogContent className="max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-slate-200/60 dark:border-white/20">
+          <DialogHeader>
+            <DialogTitle className="text-[#0F0276] dark:text-white flex items-center gap-2">
+              <Play className="h-5 w-5 text-[#D8BD2A]" />
+              {openVideo?.title || 'Skill Reference Video'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {openVideo?.url && (
+              <div className="w-full">
+                <AspectRatio ratio={16/9}>
+                  {isDirectVideoUrl(openVideo.url) ? (
+                    <video
+                      className="h-full w-full rounded-lg border border-slate-200/60 dark:border-white/20 bg-black shadow-xl"
+                      src={openVideo.url}
+                      controls
+                      playsInline
+                      autoPlay
+                      onError={(e) => {
+                        console.log('Modal video error:', e.currentTarget.src);
+                      }}
+                    />
+                  ) : (
+                    <div className="h-full w-full rounded-lg border border-slate-200/60 dark:border-white/20 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 shadow-xl flex items-center justify-center">
+                      <div className="text-center p-8">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                          🎥
+                        </div>
+                        <h3 className="text-lg font-medium text-slate-800 dark:text-white mb-2">External Video</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">This video is hosted externally</p>
+                        <a 
+                          href={openVideo.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#0F0276] text-white rounded-lg hover:bg-[#0F0276]/90 transition-colors"
+                        >
+                          <Play className="h-4 w-4" />
+                          Open Video
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </AspectRatio>
+              </div>
+            )}
+            <div className="flex items-center justify-end gap-2">
+              {openVideo?.url && (
+                <a href={openVideo.url} download target="_blank" rel="noreferrer">
+                  <Button variant="outline" size="sm" className="text-[#0F0276] dark:text-white border-slate-200/60 dark:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Video
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
