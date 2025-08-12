@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft, User } from 'lucide-react';
 
 type ProgressVideo = {
   id: number;
@@ -32,6 +34,8 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
+  const [showEditAthlete, setShowEditAthlete] = React.useState(false);
+  const [selectedSkillForTest, setSelectedSkillForTest] = React.useState<any>(null);
 
   const isDirectVideoUrl = React.useCallback((url?: string | null) => {
     if (!url) return false;
@@ -159,7 +163,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                   size="sm" 
                   variant="outline" 
                   className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                  onClick={() => window.location.href = `/admin/athletes/${data.athlete.id}`}
+                  onClick={() => setShowEditAthlete(true)}
                 >
                   <Settings className="h-4 w-4 mr-1" />
                   Edit Athlete
@@ -168,7 +172,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                   size="sm" 
                   variant="outline" 
                   className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                  onClick={() => window.location.href = `/admin/skills/test/${data.athlete.id}`}
+                  onClick={() => {
+                    // For now, show an alert. In the future, this could open a skill selection modal
+                    alert(`Test Skills feature - Navigate to Admin > Athletes > ${data.athlete.name} > Skills tab for skill testing functionality.`);
+                  }}
                 >
                   <Target className="h-4 w-4 mr-1" />
                   Test Skills
@@ -762,6 +769,100 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Athlete Modal */}
+      {isAdmin && (
+        <Dialog open={showEditAthlete} onOpenChange={setShowEditAthlete}>
+          <DialogContent className="max-w-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-slate-200/60 dark:border-white/20">
+            <DialogHeader>
+              <DialogTitle className="text-[#0F0276] dark:text-white flex items-center gap-2">
+                <Settings className="h-5 w-5 text-[#D8BD2A]" />
+                Edit Athlete: {data.athlete.name || `${data.athlete.firstName || ''} ${data.athlete.lastName || ''}`.trim()}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-300 mb-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="font-medium">Quick Edit Access</span>
+                </div>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                  For comprehensive athlete editing, use the main admin dashboard. This provides quick access to common functions.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      window.location.href = '/admin';
+                      // You could add a URL parameter to auto-select this athlete
+                    }}
+                    className="border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                  >
+                    <User className="h-4 w-4 mr-1" />
+                    Go to Athletes Tab
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      alert(`Athlete ID: ${data.athlete.id}\nUse this ID to quickly find the athlete in the admin dashboard.`);
+                    }}
+                    className="border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Show Athlete ID
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Quick Info Display */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Current Name</Label>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">
+                    {data.athlete.name || `${data.athlete.firstName || ''} ${data.athlete.lastName || ''}`.trim() || 'No name set'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Date of Birth</Label>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">
+                    {data.athlete.dateOfBirth || 'Not set'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Experience Level</Label>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">
+                    {data.athlete.experience || 'Not set'}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[#0F0276] dark:text-white">Total Skills</Label>
+                  <div className="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">
+                    {data.skills.length} skills tracked
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <Button variant="outline" onClick={() => setShowEditAthlete(false)}>
+                  Close
+                </Button>
+                <Button 
+                  onClick={() => {
+                    window.location.href = '/admin';
+                    // Close modal
+                    setShowEditAthlete(false);
+                  }}
+                  className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+                >
+                  Go to Admin Dashboard
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
