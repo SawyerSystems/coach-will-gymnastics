@@ -60,6 +60,88 @@ export default function Contact() {
     queryFn: () => apiRequest('GET', '/api/site-content').then(res => res.json())
   });
 
+  // Fetch admin schedule availability for real hours display
+  const { data: availability } = useQuery({
+    queryKey: ['/api/availability'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/availability');
+      if (!res.ok) return [];
+      return res.json();
+    }
+  });
+
+  // Helpers to normalize times and build weekly hours
+  const toHHMM = (time: string) => {
+    if (!time) return '';
+    const parts = time.split(':');
+    if (parts.length >= 2) return `${parts[0].padStart(2, '0')}:${parts[1]}`;
+    return time;
+  };
+  const from12hToHHMM = (time: string) => {
+    if (!time) return '';
+    const m = time.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+    if (!m) return time;
+    let h = parseInt(m[1], 10);
+    const mm = m[2] ?? '00';
+    const ap = m[3].toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${mm}`;
+  };
+  const buildHoursFromAvailability = () => {
+    if (!Array.isArray(availability) || availability.length === 0) return null as any;
+    const byDay: Record<number, { starts: string[]; ends: string[]; anyAvailable: boolean }> = {};
+    for (let i = 0; i < 7; i++) byDay[i] = { starts: [], ends: [], anyAvailable: false };
+    for (const slot of availability as Array<any>) {
+      const dow: number = slot.dayOfWeek ?? slot.day_of_week;
+      if (dow == null) continue;
+      const start = toHHMM(String(slot.startTime ?? slot.start_time ?? ''));
+      const end = toHHMM(String(slot.endTime ?? slot.end_time ?? ''));
+      const isAvail = (slot.isAvailable ?? slot.is_available ?? true) === true;
+      if (!start || !end) continue;
+      byDay[dow].starts.push(start);
+      byDay[dow].ends.push(end);
+      if (isAvail) byDay[dow].anyAvailable = true;
+    }
+    const dayNames: Record<number, string> = { 0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday' };
+    const result: Record<string, { available: boolean; start: string; end: string }> = {};
+    for (let i = 0; i < 7; i++) {
+      const name = dayNames[i];
+      const starts = byDay[i].starts.sort();
+      const ends = byDay[i].ends.sort();
+      const available = byDay[i].anyAvailable && starts.length > 0 && ends.length > 0;
+      result[name] = {
+        available,
+        start: available ? starts[0] : '',
+        end: available ? ends[ends.length - 1] : ''
+      };
+    }
+    return result;
+  };
+  const buildHoursFromSiteContent = () => {
+    const scHours = siteContent?.hours;
+    if (!scHours) return null as any;
+    const src: any = scHours.hours ?? scHours;
+    const result: Record<string, { available: boolean; start: string; end: string }> = {};
+    for (const day of orderedDays) {
+      const lower = day.toLowerCase();
+      const entry = src[day] || src[lower];
+      if (entry) {
+        const rawStart = String(entry.start ?? '');
+        const rawEnd = String(entry.end ?? '');
+        const start = toHHMM(from12hToHHMM(rawStart));
+        const end = toHHMM(from12hToHHMM(rawEnd));
+        result[day] = { available: Boolean(entry.available) && !!start && !!end, start, end };
+      } else {
+        result[day] = { available: false, start: '', end: '' };
+      }
+    }
+    return result;
+  };
+
+  const normalizedHours: Record<string, { available: boolean; start: string; end: string }> =
+    buildHoursFromAvailability() || buildHoursFromSiteContent() || {};
+
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -289,36 +371,24 @@ export default function Contact() {
                       <div>
                         <p className="font-medium text-slate-900 dark:text-slate-100">Hours</p>
                         <div className="text-slate-700 dark:text-slate-300">
-                          {siteContent?.hours?.hours ? (
-                            orderedDays.map((day) => {
-                              const hours = siteContent.hours.hours[day];
-                              
-                              // Format time from 24-hour to 12-hour
-                              const formatTime = (timeStr: string) => {
-                                if (!timeStr) return '';
-                                const [hourStr, minutes] = timeStr.split(':');
-                                const hour = parseInt(hourStr);
-                                const ampm = hour >= 12 ? 'PM' : 'AM';
-                                const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                                return `${displayHour}:${minutes} ${ampm}`;
-                              };
-                              
-                              return (
-                                <div key={day}>
-                                  {day}: {hours?.available && hours.start && hours.end 
-                                    ? `${formatTime(hours.start)} - ${formatTime(hours.end)}` 
-                                    : 'Ask about availability'}
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <>
-                              Mon/Wed/Fri: 9:00 AM – 4:00 PM<br />
-                              Tue/Thu: 9:00 AM – 3:30 PM<br />
-                              Sat: 10:00 AM – 2:00 PM<br />
-                              Sun: Ask about availability
-                            </>
-                          )}
+                          {orderedDays.map((day) => {
+                            const hours = normalizedHours[day];
+                            const formatTime = (timeStr: string) => {
+                              if (!timeStr) return '';
+                              const [h, m] = timeStr.split(':');
+                              const hour = parseInt(h, 10);
+                              const ampm = hour >= 12 ? 'PM' : 'AM';
+                              const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                              return `${displayHour}:${m} ${ampm}`;
+                            };
+                            return (
+                              <div key={day}>
+                                {day}: {hours?.available && hours.start && hours.end
+                                  ? `${formatTime(hours.start)} - ${formatTime(hours.end)}`
+                                  : 'Ask about availability'}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
