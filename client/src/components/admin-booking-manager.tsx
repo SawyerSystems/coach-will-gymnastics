@@ -1203,7 +1203,8 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               setSelectedBookingForDetails(booking);
                             }}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
                           </Button>
                           <Button
                             variant="outline"

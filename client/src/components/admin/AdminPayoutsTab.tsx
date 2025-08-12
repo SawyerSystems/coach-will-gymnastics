@@ -15,6 +15,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useBackfillPayouts, useDeletePayoutRun, useGeneratePayoutRun, useLockPayoutRun, usePayoutRuns, useClearPayouts } from '@/hooks/useAdminPayouts';
 import { usePayoutRates, useCreatePayoutRate, useRetirePayoutRate } from '@/hooks/usePayoutRates';
 import { Switch } from '@/components/ui/switch';
+// Removed booking details modal and related imports; not used in payouts tab
 
 type MembershipFilter = 'all' | 'member' | 'non-member';
 type AttendanceFilter = 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'manual';
@@ -93,6 +94,7 @@ export default function AdminPayoutsTab() {
 			return res.json();
 		},
 	});
+	// Removed booking details modal state and loader; not needed in payouts tab
 
 	const onRefresh = async () => {
 		await Promise.all([refetchSummary(), refetchList()]);
@@ -336,9 +338,9 @@ export default function AdminPayoutsTab() {
 									})
 								)}
 							</tbody>
-							<tfoot className="bg-[#0F0276]/10 dark:bg-slate-800/50 border-t border-slate-200/60 dark:border-slate-600/60">
+			    <tfoot className="bg-[#0F0276]/10 dark:bg-slate-800/50 border-t border-slate-200/60 dark:border-slate-600/60">
 								<tr>
-									<td className="px-4 py-3 font-semibold text-[#0F0276] dark:text-white" colSpan={4}>Totals (visible)</td>
+				    <td className="px-4 py-3 font-semibold text-[#0F0276] dark:text-white" colSpan={4}>Totals (visible)</td>
 									<td className="px-4 py-3 text-right font-bold text-[#0F0276] dark:text-white">{formatCents(totals.all)}</td>
 									<td className="px-4 py-3 text-right text-[#0F0276]/80 dark:text-white/80">
 										<span className="mr-2">Members: {formatCents(totals.members)}</span>
