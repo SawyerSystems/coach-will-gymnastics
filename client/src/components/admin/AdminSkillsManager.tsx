@@ -6,11 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useApparatusList, useCreateSkill, useDeleteSkill, useSkills, useUpdateSkill, useSkillRelations, useSaveSkillRelations, type Skill } from "@/hooks/useSkills";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import { StableTextInput, StableSelect, StableCheckbox } from "./StableFormFields";
 
 const LEVELS = ["beginner", "intermediate", "advanced", "elite"] as const;
 
@@ -36,18 +36,47 @@ export default function AdminSkillsManager() {
   const deleteSkill = useDeleteSkill();
   const qc = useQueryClient();
 
-  // Separate state variables for form inputs to prevent unmounting
-  const [nameText, setNameText] = useState<string>("");
-  const [categoryText, setCategoryText] = useState<string>("");
-  const [descriptionText, setDescriptionText] = useState<string>("");
-  const [displayOrderText, setDisplayOrderText] = useState<string>("");
-  const [levelValue, setLevelValue] = useState<string>("beginner");
-  const [apparatusId, setApparatusId] = useState<number | undefined>(undefined);
-  const [isConnectedCombo, setIsConnectedCombo] = useState<boolean>(false);
-  const [prerequisiteIds, setPrerequisiteIds] = useState<number[]>([]);
-  const [componentIds, setComponentIds] = useState<number[]>([]);
+  // Simple form state object - much cleaner than separate variables
+  const [draft, setDraft] = useState({
+    name: "",
+    category: "",
+    description: "",
+    displayOrder: "",
+    level: "beginner" as const,
+    apparatusId: undefined as number | undefined,
+    isConnectedCombo: false,
+    prerequisiteIds: [] as number[],
+    componentIds: [] as number[],
+  });
+
+  // Refs to maintain focus through re-renders
+  const focusedInputRef = useRef<HTMLInputElement | null>(null);
+  const maintainFocus = useRef<boolean>(false);
 
   const [selectedSkillId, setSelectedSkillId] = useState<number | undefined>(undefined);
+
+  // Simple focus management helpers
+  const handleInputFocus = (input: HTMLInputElement) => {
+    maintainFocus.current = true;
+    focusedInputRef.current = input;
+  };
+
+  const handleInputBlur = () => {
+    maintainFocus.current = false;
+    focusedInputRef.current = null;
+  };
+
+  // Restore focus after re-renders if needed
+  React.useEffect(() => {
+    if (maintainFocus.current && focusedInputRef.current) {
+      focusedInputRef.current.focus();
+    }
+  });
+
+  // Simple form update helper
+  const updateDraft = (updates: Partial<typeof draft>) => {
+    setDraft(prev => ({ ...prev, ...updates }));
+  };
   const [editingId, setEditingId] = useState<number | undefined>(undefined);
   const [editDraft, setEditDraft] = useState<Partial<Skill>>({});
   const { data: relations } = useSkillRelations(selectedSkillId);
@@ -68,409 +97,288 @@ export default function AdminSkillsManager() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const onCreate = async () => {
-    if (!nameText) return;
-    // Build skill data from separate state variables
+    if (!draft.name) return;
     const skillData = {
-      name: nameText,
-      category: categoryText || undefined,
-      description: descriptionText || undefined,
-      level: levelValue,
-      apparatusId: apparatusId,
-      displayOrder: displayOrderText === "" ? undefined : Number(displayOrderText),
-      isConnectedCombo: isConnectedCombo,
-      prerequisiteIds: prerequisiteIds,
-      componentIds: componentIds
+      name: draft.name,
+      category: draft.category || undefined,
+      description: draft.description || undefined,
+      level: draft.level,
+      apparatusId: draft.apparatusId,
+      displayOrder: draft.displayOrder === "" ? undefined : Number(draft.displayOrder),
+      isConnectedCombo: draft.isConnectedCombo,
+      prerequisiteIds: draft.prerequisiteIds,
+      componentIds: draft.componentIds
     };
     await createSkill.mutateAsync(skillData);
-    // Reset all form fields
-    setNameText("");
-    setCategoryText("");
-    setDescriptionText("");
-    setDisplayOrderText("");
-    setLevelValue("beginner");
-    setApparatusId(undefined);
-    setIsConnectedCombo(false);
-    setPrerequisiteIds([]);
-    setComponentIds([]);
+    handleClearForm();
   };
 
-  // Define the change handlers with useCallback to ensure they don't change between renders
-  const handleNameChange = useCallback((value: string) => {
-    setNameText(value);
-  }, []);
-
-  const handleCategoryChange = useCallback((value: string) => {
-    setCategoryText(value);
-  }, []);
-
-  const handleDescriptionChange = useCallback((value: string) => {
-    setDescriptionText(value);
-  }, []);
-
-  const handleDisplayOrderChange = useCallback((value: string) => {
-    setDisplayOrderText(value);
-  }, []);
-
-  const handleLevelChange = useCallback((value: string) => {
-    setLevelValue(value);
-  }, []);
-
-  const handleConnectedComboChange = useCallback((checked: boolean) => {
-    setIsConnectedCombo(checked);
-  }, []);
-
-  const handleApparatusChange = useCallback((value: string) => {
-    const newApparatusId = value ? Number(value) : undefined;
-    // If apparatus changes, clear prerequisites and components that don't belong to the new apparatus
-    if (newApparatusId !== apparatusId) {
-      const filteredSkills = skills.filter(s => s.apparatusId === newApparatusId);
-      const validSkillIds = new Set(filteredSkills.map(s => s.id));
-      const filteredPrerequisiteIds = prerequisiteIds.filter(id => validSkillIds.has(id));
-      const filteredComponentIds = componentIds.filter(id => validSkillIds.has(id));
-      
-      setApparatusId(newApparatusId);
-      setPrerequisiteIds(filteredPrerequisiteIds);
-      setComponentIds(filteredComponentIds);
-    } else {
-      setApparatusId(newApparatusId);
-    }
-  }, [apparatusId, skills, prerequisiteIds, componentIds]);
-
-  const handlePrerequisiteChange = useCallback((skillId: number, checked: boolean) => {
-    const scrollPosition = prerequisiteScrollRef.current?.scrollTop || 0;
-    const set = new Set(prerequisiteIds);
-    if (checked) set.add(skillId); else set.delete(skillId);
-    setPrerequisiteIds(Array.from(set));
-    // Restore scroll position after state update
-    setTimeout(() => {
-      if (prerequisiteScrollRef.current) {
-        prerequisiteScrollRef.current.scrollTop = scrollPosition;
-      }
-    }, 0);
-  }, [prerequisiteIds]);
-
-  const handleComponentAdd = useCallback((value: string) => {
-    setComponentIds(prev => [...prev, Number(value)]);
-  }, []);
-
-  const handleClearForm = useCallback(() => {
-    setNameText("");
-    setCategoryText("");
-    setDescriptionText("");
-    setDisplayOrderText("");
-    setLevelValue("beginner");
-    setApparatusId(undefined);
-    setIsConnectedCombo(false);
-    setPrerequisiteIds([]);
-    setComponentIds([]);
-  }, []);
-
-  const handleMoveComponentUp = useCallback((idx: number) => {
-    setComponentIds(prev => {
-      const arr = [...prev];
-      if (idx > 0) [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
-      return arr;
+  // Clear form helper
+  const handleClearForm = () => {
+    setDraft({
+      name: "",
+      category: "",
+      description: "",
+      displayOrder: "",
+      level: "beginner" as const,
+      apparatusId: undefined,
+      isConnectedCombo: false,
+      prerequisiteIds: [],
+      componentIds: [],
     });
-  }, []);
-
-  const handleMoveComponentDown = useCallback((idx: number) => {
-    setComponentIds(prev => {
-      const arr = [...prev];
-      if (idx < arr.length - 1) [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
-      return arr;
-    });
-  }, []);
-
-  const handleRemoveComponent = useCallback((idx: number) => {
-    setComponentIds(prev => prev.filter((_, i) => i !== idx));
-  }, []);
-
-  // Memoize the apparatus options to prevent unnecessary re-renders
-  const apparatusOptions = useMemo(() => {
-    return apparatus.map(a => ({ value: String(a.id), label: a.name }));
-  }, [apparatus]);
-
-  // Memoize the level options
-  const levelOptions = useMemo(() => {
-    return LEVELS.map(l => ({ value: l, label: l }));
-  }, []);
-
-  // Custom equality function for SkillForm
-  const skillFormPropsAreEqual = (prevProps: any, nextProps: any) => {
-    // Only re-render when specific input values change
-    return (
-      prevProps.nameText === nextProps.nameText &&
-      prevProps.categoryText === nextProps.categoryText &&
-      prevProps.descriptionText === nextProps.descriptionText &&
-      prevProps.displayOrderText === nextProps.displayOrderText &&
-      prevProps.levelValue === nextProps.levelValue &&
-      prevProps.apparatusId === nextProps.apparatusId &&
-      prevProps.isConnectedCombo === nextProps.isConnectedCombo &&
-      prevProps.isCreating === nextProps.isCreating &&
-      JSON.stringify(prevProps.prerequisiteIds) === JSON.stringify(nextProps.prerequisiteIds) &&
-      JSON.stringify(prevProps.componentIds) === JSON.stringify(nextProps.componentIds)
-    );
   };
 
-  // Define the SkillForm component that will be memoized
-  const SkillForm = React.memo(({
-    nameText,
-    onNameChange,
-    categoryText,
-    onCategoryChange,
-    descriptionText,
-    onDescriptionChange,
-    displayOrderText,
-    onDisplayOrderChange,
-    levelValue,
-    onLevelChange,
-    apparatusId,
-    onApparatusChange,
-    isConnectedCombo,
-    onConnectedComboChange,
-    prerequisiteIds,
-    onPrerequisiteChange,
-    componentIds,
-    onComponentAdd,
-    onMoveComponentUp,
-    onMoveComponentDown,
-    onRemoveComponent,
-    uniqueCategories,
-    apparatus,
-    skills,
-    onSubmit,
-    onClear,
-    onCancel,
-    isCreating
-  }) => {
-    const prerequisiteScrollRef = useRef<HTMLDivElement>(null);
-    
-    // Memoize the apparatus options to prevent unnecessary re-renders
-    const apparatusOptions = useMemo(() => {
-      return apparatus.map(a => ({ value: String(a.id), label: a.name }));
-    }, [apparatus]);
-
-    // Memoize the level options
-    const levelOptions = useMemo(() => {
-      return LEVELS.map(l => ({ value: l, label: l }));
-    }, []);
-    
-    return (
-      <div className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md p-4 shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <StableTextInput
-            label="Name"
-            value={nameText}
-            onChange={onNameChange}
+  // Simple form component - no complex memoization needed
+  const renderCreateForm = () => (
+    <div className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md p-4 shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Name</Label>
+          <Input
+            value={draft.name}
+            onChange={(e) => updateDraft({ name: e.target.value })}
+            onFocus={(e) => handleInputFocus(e.target)}
+            onBlur={handleInputBlur}
+            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
-          
-          <StableSelect
-            label="Apparatus"
-            value={apparatusId ? String(apparatusId) : ""}
-            onValueChange={onApparatusChange}
-            options={apparatusOptions}
-            placeholder="Select apparatus"
-          />
-          
-          <StableSelect
-            label="Level"
-            value={levelValue}
-            onValueChange={onLevelChange}
-            options={levelOptions}
-          />
-          
-          <StableTextInput
-            label="Category"
-            value={categoryText}
-            onChange={onCategoryChange}
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Apparatus</Label>
+          <Select
+            value={draft.apparatusId ? String(draft.apparatusId) : ""}
+            onValueChange={(value) => {
+              const newApparatusId = value ? Number(value) : undefined;
+              // If apparatus changes, clear prerequisites and components that don't belong to the new apparatus
+              if (newApparatusId !== draft.apparatusId) {
+                const filteredSkills = skills.filter(s => s.apparatusId === newApparatusId);
+                const validSkillIds = new Set(filteredSkills.map(s => s.id));
+                const filteredPrerequisiteIds = draft.prerequisiteIds.filter(id => validSkillIds.has(id));
+                const filteredComponentIds = draft.componentIds.filter(id => validSkillIds.has(id));
+                
+                updateDraft({ 
+                  apparatusId: newApparatusId,
+                  prerequisiteIds: filteredPrerequisiteIds,
+                  componentIds: filteredComponentIds
+                });
+              } else {
+                updateDraft({ apparatusId: newApparatusId });
+              }
+            }}
+          >
+            <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm">
+              <SelectValue placeholder="Select apparatus" />
+            </SelectTrigger>
+            <SelectContent>
+              {apparatus.map(a => (
+                <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Level</Label>
+          <Select
+            value={draft.level}
+            onValueChange={(value) => updateDraft({ level: value as typeof draft.level })}
+          >
+            <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LEVELS.map(level => (
+                <SelectItem key={level} value={level}>{level}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Category</Label>
+          <Input
+            value={draft.category}
+            onChange={(e) => updateDraft({ category: e.target.value })}
+            onFocus={(e) => handleInputFocus(e.target)}
+            onBlur={handleInputBlur}
             placeholder="Select or type category"
             list="categories-list"
+            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
           <datalist id="categories-list">
             {uniqueCategories.map(category => (
               <option key={category} value={category} />
             ))}
           </datalist>
-          
-          <div className="md:col-span-2">
-            <StableTextInput
-              label="Description"
-              value={descriptionText}
-              onChange={onDescriptionChange}
-            />
-          </div>
-          
-          <StableTextInput
-            label="Display Order"
-            value={displayOrderText}
-            onChange={onDisplayOrderChange}
-            placeholder="e.g. 10, 20, 30..."
+        </div>
+        
+        <div className="md:col-span-2 space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Description</Label>
+          <Input
+            value={draft.description}
+            onChange={(e) => updateDraft({ description: e.target.value })}
+            onFocus={(e) => handleInputFocus(e.target)}
+            onBlur={handleInputBlur}
+            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Display Order</Label>
+          <Input
             type="number"
+            value={draft.displayOrder}
+            onChange={(e) => updateDraft({ displayOrder: e.target.value })}
+            onFocus={(e) => handleInputFocus(e.target)}
+            onBlur={handleInputBlur}
+            placeholder="e.g. 10, 20, 30..."
+            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
-          
-          <StableCheckbox
-            label="Connected Combo"
-            checked={isConnectedCombo}
-            onChange={onConnectedComboChange}
-          />
-          
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <Label className="text-[#0F0276] dark:text-white font-medium">Prerequisites (optional)</Label>
-              <div 
-                ref={prerequisiteScrollRef}
-                className="border border-slate-200/60 rounded-lg p-3 max-h-40 overflow-auto space-y-2 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30"
-              >
-                {apparatusId ? (
-                  skills.filter(s => s.apparatusId === apparatusId).map(s => (
-                    <label key={s.id} className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white/50 dark:hover:bg-[#0F0276]/50 transition-colors duration-200">
-                      <input
-                        type="checkbox"
-                        checked={prerequisiteIds.includes(s.id)}
-                        onChange={(e) => {
-                          const scrollPosition = prerequisiteScrollRef.current?.scrollTop || 0;
-                          onPrerequisiteChange(s.id, e.target.checked);
-                          // Restore scroll position after state update
-                          setTimeout(() => {
-                            if (prerequisiteScrollRef.current) {
-                              prerequisiteScrollRef.current.scrollTop = scrollPosition;
-                            }
-                          }, 0);
-                        }}
-                        className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
-                      />
-                      <span className="text-slate-700 dark:text-white">{s.name || `Skill #${s.id}`}</span>
-                    </label>
-                  ))
-                ) : (
-                  <div className="text-center py-4 text-slate-500 dark:text-white/60 text-sm">
-                    Select an apparatus first to see available prerequisites
-                  </div>
-                )}
-              </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Connected Combo</Label>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="connected-combo"
+              checked={draft.isConnectedCombo}
+              onCheckedChange={(checked) => updateDraft({ isConnectedCombo: !!checked })}
+            />
+            <Label htmlFor="connected-combo" className="text-sm text-slate-600 dark:text-white/80">
+              This skill is part of a connected combination
+            </Label>
+          </div>
+        </div>
+        
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <Label className="text-[#0F0276] dark:text-white font-medium">Prerequisites (optional)</Label>
+            <div className="border border-slate-200/60 rounded-lg p-3 max-h-40 overflow-auto space-y-2 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
+              {draft.apparatusId ? (
+                skills.filter(s => s.apparatusId === draft.apparatusId).map(s => (
+                  <label key={s.id} className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white/50 dark:hover:bg-[#0F0276]/50 transition-colors duration-200">
+                    <input
+                      type="checkbox"
+                      checked={draft.prerequisiteIds.includes(s.id)}
+                      onChange={(e) => {
+                        const newIds = e.target.checked
+                          ? [...draft.prerequisiteIds, s.id]
+                          : draft.prerequisiteIds.filter(id => id !== s.id);
+                        updateDraft({ prerequisiteIds: newIds });
+                      }}
+                      className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
+                    />
+                    <span className="text-slate-700 dark:text-white">{s.name || `Skill #${s.id}`}</span>
+                  </label>
+                ))
+              ) : (
+                <div className="text-center py-4 text-slate-500 dark:text-white/60 text-sm">
+                  Select an apparatus first to see available prerequisites
+                </div>
+              )}
             </div>
+          </div>
+          <div className="space-y-3">
+            <Label className="text-[#0F0276] dark:text-white font-medium">Connected Components (optional)</Label>
             <div className="space-y-3">
-              <Label className="text-[#0F0276] dark:text-white font-medium">Connected Components (optional)</Label>
-              <div className="space-y-3">
-                {componentIds.map((id, idx) => (
-                  <div key={`${id}-${idx}`} className="flex items-center gap-3 p-3 rounded-lg bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm border border-slate-200/40 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
-                    <span className="text-xs w-6 h-6 flex items-center justify-center rounded-full bg-[#D8BD2A]/20 text-[#0F0276] dark:text-white font-medium">{idx + 1}</span>
-                    <span className="flex-1 text-sm text-slate-700 dark:text-white">{skills.find(sk => sk.id === id)?.name || `Skill #${id}`}</span>
-                    <div className="flex gap-1">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => onMoveComponentUp(idx)} 
-                        className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50"
-                      >
-                        ↑
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => onMoveComponentDown(idx)} 
-                        className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50"
-                      >
-                        ↓
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => onRemoveComponent(idx)} 
-                        className="h-7 w-7 p-0"
-                      >
-                        ×
-                      </Button>
-                    </div>
+              {draft.componentIds.map((id, idx) => (
+                <div key={`${id}-${idx}`} className="flex items-center gap-3 p-3 rounded-lg bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm border border-slate-200/40 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
+                  <span className="text-xs w-6 h-6 flex items-center justify-center rounded-full bg-[#D8BD2A]/20 text-[#0F0276] dark:text-white font-medium">{idx + 1}</span>
+                  <span className="flex-1 text-sm text-slate-700 dark:text-white">{skills.find(sk => sk.id === id)?.name || `Skill #${id}`}</span>
+                  <div className="flex gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => {
+                        const newIds = [...draft.componentIds];
+                        if (idx > 0) {
+                          [newIds[idx], newIds[idx - 1]] = [newIds[idx - 1], newIds[idx]];
+                          updateDraft({ componentIds: newIds });
+                        }
+                      }} 
+                      className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50"
+                    >
+                      ↑
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => {
+                        const newIds = [...draft.componentIds];
+                        if (idx < newIds.length - 1) {
+                          [newIds[idx], newIds[idx + 1]] = [newIds[idx + 1], newIds[idx]];
+                          updateDraft({ componentIds: newIds });
+                        }
+                      }} 
+                      className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50"
+                    >
+                      ↓
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive" 
+                      onClick={() => {
+                        const newIds = draft.componentIds.filter((_, i) => i !== idx);
+                        updateDraft({ componentIds: newIds });
+                      }} 
+                      className="h-7 w-7 p-0"
+                    >
+                      ×
+                    </Button>
                   </div>
-                ))}
-                {apparatusId ? (
-                  <Select onValueChange={onComponentAdd}>
-                    <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50 hover:bg-white/90 dark:hover:bg-[#0F0276]/70 transition-colors duration-200">
-                      <SelectValue placeholder="Add component skill" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {skills.filter(sk => sk.apparatusId === apparatusId && !componentIds.includes(sk.id)).map(sk => (
-                        <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div className="text-center py-3 text-slate-500 dark:text-white/60 text-sm border border-dashed border-slate-300 dark:border-[#2A4A9B]/40 rounded-lg">
-                    Select an apparatus first to add component skills
-                  </div>
-                )}
-              </div>
+                </div>
+              ))}
+              {draft.apparatusId ? (
+                <Select onValueChange={(value) => {
+                  const id = Number(value);
+                  if (!draft.componentIds.includes(id)) {
+                    updateDraft({ componentIds: [...draft.componentIds, id] });
+                  }
+                }}>
+                  <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50 hover:bg-white/90 dark:hover:bg-[#0F0276]/70 transition-colors duration-200">
+                    <SelectValue placeholder="Add component skill" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {skills.filter(sk => sk.apparatusId === draft.apparatusId && !draft.componentIds.includes(sk.id)).map(sk => (
+                      <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-center py-3 text-slate-500 dark:text-white/60 text-sm border border-dashed border-slate-300 dark:border-[#2A4A9B]/40 rounded-lg">
+                  Select an apparatus first to add component skills
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className="flex gap-3 pt-4">
-          <Button 
-            onClick={onSubmit} 
-            disabled={isCreating || !nameText}
-            className="bg-gradient-to-r from-[#0F0276] to-[#2A4A9B] hover:from-[#0F0276]/90 hover:to-[#2A4A9B]/90 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform-gpu hover:scale-[1.02]"
-          >
-            {isCreating ? 'Creating...' : 'Add Skill'}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClear}
-            className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200"
-          >
-            Clear
-          </Button>
-          <Button 
-            variant="ghost" 
-            onClick={onCancel}
-            className="text-[#0F0276]"
-          >
-            Cancel
-          </Button>
-        </div>
-        <Separator className="my-2" />
       </div>
-    );
-  }, skillFormPropsAreEqual);
-  
-  SkillForm.displayName = "SkillForm";
-
-  // Define the CreateForm that renders the SkillForm
-  const CreateForm = React.memo(() => {
-    return (
-      <SkillForm
-        nameText={nameText}
-        onNameChange={handleNameChange}
-        categoryText={categoryText}
-        onCategoryChange={handleCategoryChange}
-        descriptionText={descriptionText}
-        onDescriptionChange={handleDescriptionChange}
-        displayOrderText={displayOrderText}
-        onDisplayOrderChange={handleDisplayOrderChange}
-        levelValue={levelValue}
-        onLevelChange={handleLevelChange}
-        apparatusId={apparatusId}
-        onApparatusChange={handleApparatusChange}
-        isConnectedCombo={isConnectedCombo}
-        onConnectedComboChange={handleConnectedComboChange}
-        prerequisiteIds={prerequisiteIds}
-        onPrerequisiteChange={handlePrerequisiteChange}
-        componentIds={componentIds}
-        onComponentAdd={handleComponentAdd}
-        onMoveComponentUp={handleMoveComponentUp}
-        onMoveComponentDown={handleMoveComponentDown}
-        onRemoveComponent={handleRemoveComponent}
-        uniqueCategories={uniqueCategories}
-        apparatus={apparatus}
-        skills={skills}
-        onSubmit={onCreate}
-        onClear={handleClearForm}
-        onCancel={() => setIsCreateOpen(false)}
-        isCreating={createSkill.isPending}
-      />
-    );
-  }, () => true); // Always return true to prevent re-renders since all props are stable
-
-  CreateForm.displayName = "CreateForm";
+      <div className="flex gap-3 pt-4">
+        <Button 
+          onClick={onCreate} 
+          disabled={createSkill.isPending || !draft.name}
+          className="bg-gradient-to-r from-[#0F0276] to-[#2A4A9B] hover:from-[#0F0276]/90 hover:to-[#2A4A9B]/90 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform-gpu hover:scale-[1.02]"
+        >
+          {createSkill.isPending ? 'Creating...' : 'Add Skill'}
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={handleClearForm}
+          className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200"
+        >
+          Clear
+        </Button>
+        <Button 
+          variant="ghost" 
+          onClick={() => setIsCreateOpen(false)}
+          className="text-[#0F0276]"
+        >
+          Cancel
+        </Button>
+      </div>
+      <Separator className="my-2" />
+    </div>
+  );
 
   const filteredSkills = useMemo(() => skills, [skills]);
 
@@ -663,7 +571,7 @@ export default function AdminSkillsManager() {
         </AdminCardHeader>
         <AdminCardContent>
           <div className="space-y-4">
-            {isCreateOpen ? <CreateForm /> : null}
+            {isCreateOpen ? renderCreateForm() : null}
             {isLoading ? (
               <div>Loading…</div>
             ) : error ? (
