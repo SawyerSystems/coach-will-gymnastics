@@ -76,7 +76,25 @@ export default function AdminSkillsManager() {
           </div>
           <div className="space-y-2">
             <Label className="text-[#0F0276] dark:text-white">Apparatus</Label>
-            <Select value={draft.apparatusId ? String(draft.apparatusId) : ""} onValueChange={v => setDraft(d => ({ ...d, apparatusId: v ? Number(v) : undefined }))}>
+            <Select value={draft.apparatusId ? String(draft.apparatusId) : ""} onValueChange={v => {
+              const newApparatusId = v ? Number(v) : undefined;
+              // If apparatus changes, clear prerequisites and components that don't belong to the new apparatus
+              if (newApparatusId !== draft.apparatusId) {
+                const filteredSkills = skills.filter(s => s.apparatusId === newApparatusId);
+                const validSkillIds = new Set(filteredSkills.map(s => s.id));
+                const filteredPrerequisiteIds = (draft.prerequisiteIds || []).filter(id => validSkillIds.has(id));
+                const filteredComponentIds = (draft.componentIds || []).filter(id => validSkillIds.has(id));
+                
+                setDraft(d => ({ 
+                  ...d, 
+                  apparatusId: newApparatusId,
+                  prerequisiteIds: filteredPrerequisiteIds,
+                  componentIds: filteredComponentIds
+                }));
+              } else {
+                setDraft(d => ({ ...d, apparatusId: newApparatusId }));
+              }
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select apparatus" />
               </SelectTrigger>
@@ -104,21 +122,27 @@ export default function AdminSkillsManager() {
             <div className="space-y-3">
               <Label className="text-[#0F0276] dark:text-white font-medium">Prerequisites (optional)</Label>
               <div className="border border-slate-200/60 rounded-lg p-3 max-h-40 overflow-auto space-y-2 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
-                {skills.map(s => (
-                  <label key={s.id} className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white/50 dark:hover:bg-[#0F0276]/50 transition-colors duration-200">
-                    <input
-                      type="checkbox"
-                      checked={(draft.prerequisiteIds || []).includes(s.id)}
-                      onChange={(e) => setDraft(d => {
-                        const set = new Set(d.prerequisiteIds || []);
-                        if (e.target.checked) set.add(s.id); else set.delete(s.id);
-                        return { ...d, prerequisiteIds: Array.from(set) };
-                      })}
-                      className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
-                    />
-                    <span className="text-slate-700 dark:text-white">{s.name || `Skill #${s.id}`}</span>
-                  </label>
-                ))}
+                {draft.apparatusId ? (
+                  skills.filter(s => s.apparatusId === draft.apparatusId).map(s => (
+                    <label key={s.id} className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white/50 dark:hover:bg-[#0F0276]/50 transition-colors duration-200">
+                      <input
+                        type="checkbox"
+                        checked={(draft.prerequisiteIds || []).includes(s.id)}
+                        onChange={(e) => setDraft(d => {
+                          const set = new Set(d.prerequisiteIds || []);
+                          if (e.target.checked) set.add(s.id); else set.delete(s.id);
+                          return { ...d, prerequisiteIds: Array.from(set) };
+                        })}
+                        className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
+                      />
+                      <span className="text-slate-700 dark:text-white">{s.name || `Skill #${s.id}`}</span>
+                    </label>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-slate-500 dark:text-white/60 text-sm">
+                    Select an apparatus first to see available prerequisites
+                  </div>
+                )}
               </div>
             </div>
             <div className="space-y-3">
@@ -149,16 +173,22 @@ export default function AdminSkillsManager() {
                     </div>
                   </div>
                 ))}
-                <Select onValueChange={(v) => setDraft(d => ({ ...d, componentIds: [...(d.componentIds || []), Number(v)] }))}>
-                  <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50 hover:bg-white/90 dark:hover:bg-[#0F0276]/70 transition-colors duration-200">
-                    <SelectValue placeholder="Add component skill" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {skills.map(sk => (
-                      <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {draft.apparatusId ? (
+                  <Select onValueChange={(v) => setDraft(d => ({ ...d, componentIds: [...(d.componentIds || []), Number(v)] }))}>
+                    <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50 hover:bg-white/90 dark:hover:bg-[#0F0276]/70 transition-colors duration-200">
+                      <SelectValue placeholder="Add component skill" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {skills.filter(sk => sk.apparatusId === draft.apparatusId && !draft.componentIds?.includes(sk.id)).map(sk => (
+                        <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="text-center py-3 text-slate-500 dark:text-white/60 text-sm border border-dashed border-slate-300 dark:border-[#2A4A9B]/40 rounded-lg">
+                    Select an apparatus first to add component skills
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -606,21 +636,27 @@ export default function AdminSkillsManager() {
                                 Prerequisites
                               </div>
                               <div className="max-h-64 overflow-auto space-y-2">
-                                {skills.map(sk => (
-                                  <label key={sk.id} className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-white/40 dark:hover:bg-[#0F0276]/40 transition-colors duration-200">
-                                    <input
-                                      type="checkbox"
-                                      checked={!!relations?.prerequisiteIds?.includes(sk.id)}
-                                      onChange={(e) => {
-                                        const current = new Set(relations?.prerequisiteIds || []);
-                                        if (e.target.checked) current.add(sk.id); else current.delete(sk.id);
-                                        saveRelations.mutate({ skillId: s.id, relations: { prerequisiteIds: Array.from(current), componentIds: relations?.componentIds || [] } });
-                                      }}
-                                      className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
-                                    />
-                                    <span className="text-slate-700 dark:text-white">{sk.name || `Skill #${sk.id}`}</span>
-                                  </label>
-                                ))}
+                                {s.apparatusId ? (
+                                  skills.filter(sk => sk.apparatusId === s.apparatusId).map(sk => (
+                                    <label key={sk.id} className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-white/40 dark:hover:bg-[#0F0276]/40 transition-colors duration-200">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!relations?.prerequisiteIds?.includes(sk.id)}
+                                        onChange={(e) => {
+                                          const current = new Set(relations?.prerequisiteIds || []);
+                                          if (e.target.checked) current.add(sk.id); else current.delete(sk.id);
+                                          saveRelations.mutate({ skillId: s.id, relations: { prerequisiteIds: Array.from(current), componentIds: relations?.componentIds || [] } });
+                                        }}
+                                        className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
+                                      />
+                                      <span className="text-slate-700 dark:text-white">{sk.name || `Skill #${sk.id}`}</span>
+                                    </label>
+                                  ))
+                                ) : (
+                                  <div className="text-center py-4 text-slate-500 dark:text-white/60 text-sm">
+                                    No apparatus assigned to this skill
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <div className="rounded-lg border border-slate-200/40 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm p-4 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
@@ -669,21 +705,27 @@ export default function AdminSkillsManager() {
                                   );
                                 })}
                                 <div className="flex items-center gap-2">
-                                  <Select onValueChange={(v) => {
-                                    const id = Number(v);
-                                    if (!Number.isFinite(id)) return;
-                                    const arr = [...(relations?.componentIds || []), id];
-                                    saveRelations.mutate({ skillId: s.id, relations: { prerequisiteIds: relations?.prerequisiteIds || [], componentIds: arr } });
-                                  }}>
-                                    <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50">
-                                      <SelectValue placeholder="Add component skill" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {skills.map(sk => (
-                                        <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  {s.apparatusId ? (
+                                    <Select onValueChange={(v) => {
+                                      const id = Number(v);
+                                      if (!Number.isFinite(id)) return;
+                                      const arr = [...(relations?.componentIds || []), id];
+                                      saveRelations.mutate({ skillId: s.id, relations: { prerequisiteIds: relations?.prerequisiteIds || [], componentIds: arr } });
+                                    }}>
+                                      <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50">
+                                        <SelectValue placeholder="Add component skill" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {skills.filter(sk => sk.apparatusId === s.apparatusId && !relations?.componentIds?.includes(sk.id)).map(sk => (
+                                          <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <div className="text-center py-2 text-slate-500 dark:text-white/60 text-sm flex-1 border border-dashed border-slate-300 dark:border-[#2A4A9B]/40 rounded-lg">
+                                      No apparatus assigned to this skill
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
