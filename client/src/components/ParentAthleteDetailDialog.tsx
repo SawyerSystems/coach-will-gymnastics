@@ -113,21 +113,21 @@ export function ParentAthleteDetailDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-2xl max-h-[90vh] overflow-y-auto" 
+          className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700" 
           aria-describedby="parent-athlete-profile-description"
         >
           <DialogHeader>
-            <DialogTitle id="parent-athlete-profile-title">
+            <DialogTitle id="parent-athlete-profile-title" className="text-gray-900 dark:text-white">
               Athlete Profile
             </DialogTitle>
-            <DialogDescription id="parent-athlete-profile-description">
+            <DialogDescription id="parent-athlete-profile-description" className="text-gray-600 dark:text-gray-300">
               Viewing profile for {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
             </DialogDescription>
           </DialogHeader>
           
           {/* Basic Info */}
-          <div className="border rounded-lg p-6 space-y-4" role="region" aria-labelledby="basic-info-heading">
-            <h3 id="basic-info-heading" className="font-semibold text-lg mb-4">Basic Information</h3>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4 bg-white dark:bg-gray-800" role="region" aria-labelledby="basic-info-heading">
+            <h3 id="basic-info-heading" className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Basic Information</h3>
             
             <div className="flex flex-col md:flex-row gap-6">
               {/* Photo Section - Read Only */}
@@ -137,7 +137,7 @@ export function ParentAthleteDetailDialog({
                     <img
                       src={athleteData.photo}
                       alt={`${athleteData.name || 'Athlete'}'s photo`}
-                      className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-gray-200"
+                      className="w-24 h-24 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 border-gray-200 dark:border-gray-600"
                       onClick={() => handlePhotoClick(athleteData.photo!)}
                       role="button"
                       tabIndex={0}
@@ -153,16 +153,16 @@ export function ParentAthleteDetailDialog({
                       }}
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300" aria-label="No photo available">
-                      <User className="h-10 w-10 text-gray-400" />
+                    <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600" aria-label="No photo available">
+                      <User className="h-10 w-10 text-gray-400 dark:text-gray-500" />
                     </div>
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                     {athleteData.photo ? 'Click to enlarge' : 'No photo available'}
                   </p>
-                  <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded border">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-200 dark:border-blue-700">
                     Photo updates available through the admin team
                   </p>
                 </div>
@@ -171,51 +171,51 @@ export function ParentAthleteDetailDialog({
               {/* Athlete Details */}
               <div className="flex-1 space-y-3" role="group" aria-label="Athlete details">
                 <div>
-                  <h4 className="font-semibold text-xl text-gray-900">
+                  <h4 className="font-semibold text-xl text-gray-900 dark:text-white">
                     {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
                   </h4>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="font-medium text-gray-600">Age:</span>
-                    <span className="ml-2 text-gray-900">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Age:</span>
+                    <span className="ml-2 text-gray-900 dark:text-gray-100">
                       {athleteData.dateOfBirth ? calculateAge(athleteData.dateOfBirth) : 'Unknown'} years old
                     </span>
                   </div>
                   
                   <div>
-                    <span className="font-medium text-gray-600">Date of Birth:</span>
-                    <span className="ml-2 text-gray-900">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Date of Birth:</span>
+                    <span className="ml-2 text-gray-900 dark:text-gray-100">
                       {athleteData.dateOfBirth ? new Date(`${athleteData.dateOfBirth}T12:00:00Z`).toLocaleDateString() : 'Unknown'}
                     </span>
                   </div>
                   
                   <div>
-                    <span className="font-medium text-gray-600">Experience Level:</span>
-                    <span className="ml-2 text-gray-900 capitalize">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Experience Level:</span>
+                    <span className="ml-2 text-gray-900 dark:text-gray-100 capitalize">
                       {athleteData.experience || 'Not specified'}
                     </span>
                   </div>
                   
                   <div>
-                    <span className="font-medium text-gray-600">Gender:</span>
-                    <span className="ml-2 text-gray-900">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Gender:</span>
+                    <span className="ml-2 text-gray-900 dark:text-gray-100">
                       {athleteData.gender || 'Not specified'}
                     </span>
                   </div>
 
                   <div>
-                    <span className="font-medium text-gray-600">Gym Membership:</span>
-                    <span className="ml-2 text-gray-900">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">Gym Membership:</span>
+                    <span className="ml-2 text-gray-900 dark:text-gray-100">
                       {athleteData.isGymMember ? 'Member' : 'Not a member'}
                     </span>
                   </div>
                 </div>
 
                 {athleteData.allergies && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
-                    <p className="text-sm text-red-800">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3 mt-4">
+                    <p className="text-sm text-red-800 dark:text-red-200">
                       <span className="font-medium">⚠️ Allergies/Medical Notes:</span>
                       <span className="ml-2">{athleteData.allergies}</span>
                     </p>
@@ -226,8 +226,8 @@ export function ParentAthleteDetailDialog({
           </div>
 
           {/* Waiver Status */}
-          <div className="border rounded-lg p-4" role="region" aria-labelledby="waiver-status-heading">
-            <h3 id="waiver-status-heading" className="font-semibold text-lg mb-3">Waiver Status</h3>
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800" role="region" aria-labelledby="waiver-status-heading">
+            <h3 id="waiver-status-heading" className="font-semibold text-lg mb-3 text-gray-900 dark:text-white">Waiver Status</h3>
             <WaiverStatusDisplay 
               athleteId={athleteData.id}
               athleteName={athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
@@ -235,7 +235,7 @@ export function ParentAthleteDetailDialog({
             
             {/* Sign Waiver Button - Show only if waiver is not signed */}
             {!hasWaiver && (
-              <div className="mt-4 pt-3 border-t">
+              <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
                 <Button 
                   onClick={() => {
                     // Ensure parent info is loaded before opening waiver modal
@@ -248,14 +248,14 @@ export function ParentAthleteDetailDialog({
                       });
                     }
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white w-full"
                   size="lg"
                   disabled={isLoadingParentInfo}
                 >
                   <FileCheck className="h-4 w-4 mr-2" />
                   {isLoadingParentInfo ? 'Loading...' : 'Sign Waiver Now'}
                 </Button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                   Complete the waiver to enable booking sessions for this athlete
                 </p>
               </div>
@@ -264,11 +264,11 @@ export function ParentAthleteDetailDialog({
 
           {/* Action Buttons */}
           {showActionButtons && (
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t" role="group" aria-label="Athlete actions">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-600" role="group" aria-label="Athlete actions">
               {onBookSession && (
                 <Button 
                   onClick={onBookSession} 
-                  className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                  className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white flex-1"
                   size="lg"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -279,7 +279,7 @@ export function ParentAthleteDetailDialog({
                 <Button 
                   onClick={onEditAthlete} 
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                   size="lg"
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -309,12 +309,12 @@ export function ParentAthleteDetailDialog({
       {/* Photo Enlargement Modal */}
       <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
         <DialogContent 
-          className="max-w-2xl"
+          className="max-w-2xl bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
           aria-describedby="athlete-photo-description"
         >
           <DialogHeader>
-            <DialogTitle>Athlete Photo</DialogTitle>
-            <DialogDescription id="athlete-photo-description">
+            <DialogTitle className="text-gray-900 dark:text-white">Athlete Photo</DialogTitle>
+            <DialogDescription id="athlete-photo-description" className="text-gray-600 dark:text-gray-300">
               Enlarged view of {athleteData.name || 'athlete'}'s photo
             </DialogDescription>
           </DialogHeader>
