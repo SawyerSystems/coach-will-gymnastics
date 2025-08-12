@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { useApparatusList, useCreateSkill, useDeleteSkill, useSkills, useUpdateS
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { StableTextInput, StableSelect, StableCheckbox } from "./StableFormFields";
 
 const LEVELS = ["beginner", "intermediate", "advanced", "elite"] as const;
 
@@ -27,15 +28,25 @@ export default function AdminSkillsManager() {
   const { data: apparatus = [], isLoading: isAppLoading } = useApparatusList();
   const { data: skills = [], isLoading, error } = useSkills(filters);
   const [sortWithin, setSortWithin] = useState<'display' | 'name'>('display');
-  const [dragging, setDragging] = useState<{ groupId: number; index: number } | null>(null);
-  const [dragOver, setDragOver] = useState<{ groupId: number; index: number } | null>(null);
+  const [dragging, setDragging] = useState<{ groupId: number; levelId: string; index: number } | null>(null);
+  const [dragOver, setDragOver] = useState<{ groupId: number; levelId: string; index: number } | null>(null);
 
   const createSkill = useCreateSkill();
   const updateSkill = useUpdateSkill();
   const deleteSkill = useDeleteSkill();
   const qc = useQueryClient();
 
-  const [draft, setDraft] = useState<Partial<Skill> & { prerequisiteIds?: number[]; componentIds?: number[]; isConnectedCombo?: boolean }>({ level: "beginner", prerequisiteIds: [], componentIds: [], isConnectedCombo: false });
+  // Separate state variables for form inputs to prevent unmounting
+  const [nameText, setNameText] = useState<string>("");
+  const [categoryText, setCategoryText] = useState<string>("");
+  const [descriptionText, setDescriptionText] = useState<string>("");
+  const [displayOrderText, setDisplayOrderText] = useState<string>("");
+  const [levelValue, setLevelValue] = useState<string>("beginner");
+  const [apparatusId, setApparatusId] = useState<number | undefined>(undefined);
+  const [isConnectedCombo, setIsConnectedCombo] = useState<boolean>(false);
+  const [prerequisiteIds, setPrerequisiteIds] = useState<number[]>([]);
+  const [componentIds, setComponentIds] = useState<number[]>([]);
+
   const [selectedSkillId, setSelectedSkillId] = useState<number | undefined>(undefined);
   const [editingId, setEditingId] = useState<number | undefined>(undefined);
   const [editDraft, setEditDraft] = useState<Partial<Skill>>({});
@@ -43,96 +54,289 @@ export default function AdminSkillsManager() {
   const saveRelations = useSaveSkillRelations();
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+  const prerequisiteScrollRef = useRef<HTMLDivElement>(null);
+
+  // Get unique categories from existing skills
+  const uniqueCategories = useMemo(() => {
+    const categories = skills
+      .map(skill => skill.category)
+      .filter((category): category is string => Boolean(category))
+      .filter((category, index, arr) => arr.indexOf(category) === index)
+      .sort();
+    return categories;
+  }, [skills]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const onCreate = async () => {
-    if (!draft.name) return;
-    await createSkill.mutateAsync(draft);
-    setDraft({ level: draft.level || "beginner", prerequisiteIds: [], componentIds: [], isConnectedCombo: false });
+    if (!nameText) return;
+    // Build skill data from separate state variables
+    const skillData = {
+      name: nameText,
+      category: categoryText || undefined,
+      description: descriptionText || undefined,
+      level: levelValue,
+      apparatusId: apparatusId,
+      displayOrder: displayOrderText === "" ? undefined : Number(displayOrderText),
+      isConnectedCombo: isConnectedCombo,
+      prerequisiteIds: prerequisiteIds,
+      componentIds: componentIds
+    };
+    await createSkill.mutateAsync(skillData);
+    // Reset all form fields
+    setNameText("");
+    setCategoryText("");
+    setDescriptionText("");
+    setDisplayOrderText("");
+    setLevelValue("beginner");
+    setApparatusId(undefined);
+    setIsConnectedCombo(false);
+    setPrerequisiteIds([]);
+    setComponentIds([]);
   };
 
-  function CreateForm() {
+  // Define the change handlers with useCallback to ensure they don't change between renders
+  const handleNameChange = useCallback((value: string) => {
+    setNameText(value);
+  }, []);
+
+  const handleCategoryChange = useCallback((value: string) => {
+    setCategoryText(value);
+  }, []);
+
+  const handleDescriptionChange = useCallback((value: string) => {
+    setDescriptionText(value);
+  }, []);
+
+  const handleDisplayOrderChange = useCallback((value: string) => {
+    setDisplayOrderText(value);
+  }, []);
+
+  const handleLevelChange = useCallback((value: string) => {
+    setLevelValue(value);
+  }, []);
+
+  const handleConnectedComboChange = useCallback((checked: boolean) => {
+    setIsConnectedCombo(checked);
+  }, []);
+
+  const handleApparatusChange = useCallback((value: string) => {
+    const newApparatusId = value ? Number(value) : undefined;
+    // If apparatus changes, clear prerequisites and components that don't belong to the new apparatus
+    if (newApparatusId !== apparatusId) {
+      const filteredSkills = skills.filter(s => s.apparatusId === newApparatusId);
+      const validSkillIds = new Set(filteredSkills.map(s => s.id));
+      const filteredPrerequisiteIds = prerequisiteIds.filter(id => validSkillIds.has(id));
+      const filteredComponentIds = componentIds.filter(id => validSkillIds.has(id));
+      
+      setApparatusId(newApparatusId);
+      setPrerequisiteIds(filteredPrerequisiteIds);
+      setComponentIds(filteredComponentIds);
+    } else {
+      setApparatusId(newApparatusId);
+    }
+  }, [apparatusId, skills, prerequisiteIds, componentIds]);
+
+  const handlePrerequisiteChange = useCallback((skillId: number, checked: boolean) => {
+    const scrollPosition = prerequisiteScrollRef.current?.scrollTop || 0;
+    const set = new Set(prerequisiteIds);
+    if (checked) set.add(skillId); else set.delete(skillId);
+    setPrerequisiteIds(Array.from(set));
+    // Restore scroll position after state update
+    setTimeout(() => {
+      if (prerequisiteScrollRef.current) {
+        prerequisiteScrollRef.current.scrollTop = scrollPosition;
+      }
+    }, 0);
+  }, [prerequisiteIds]);
+
+  const handleComponentAdd = useCallback((value: string) => {
+    setComponentIds(prev => [...prev, Number(value)]);
+  }, []);
+
+  const handleClearForm = useCallback(() => {
+    setNameText("");
+    setCategoryText("");
+    setDescriptionText("");
+    setDisplayOrderText("");
+    setLevelValue("beginner");
+    setApparatusId(undefined);
+    setIsConnectedCombo(false);
+    setPrerequisiteIds([]);
+    setComponentIds([]);
+  }, []);
+
+  const handleMoveComponentUp = useCallback((idx: number) => {
+    setComponentIds(prev => {
+      const arr = [...prev];
+      if (idx > 0) [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+      return arr;
+    });
+  }, []);
+
+  const handleMoveComponentDown = useCallback((idx: number) => {
+    setComponentIds(prev => {
+      const arr = [...prev];
+      if (idx < arr.length - 1) [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+      return arr;
+    });
+  }, []);
+
+  const handleRemoveComponent = useCallback((idx: number) => {
+    setComponentIds(prev => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  // Memoize the apparatus options to prevent unnecessary re-renders
+  const apparatusOptions = useMemo(() => {
+    return apparatus.map(a => ({ value: String(a.id), label: a.name }));
+  }, [apparatus]);
+
+  // Memoize the level options
+  const levelOptions = useMemo(() => {
+    return LEVELS.map(l => ({ value: l, label: l }));
+  }, []);
+
+  // Custom equality function for SkillForm
+  const skillFormPropsAreEqual = (prevProps: any, nextProps: any) => {
+    // Only re-render when specific input values change
+    return (
+      prevProps.nameText === nextProps.nameText &&
+      prevProps.categoryText === nextProps.categoryText &&
+      prevProps.descriptionText === nextProps.descriptionText &&
+      prevProps.displayOrderText === nextProps.displayOrderText &&
+      prevProps.levelValue === nextProps.levelValue &&
+      prevProps.apparatusId === nextProps.apparatusId &&
+      prevProps.isConnectedCombo === nextProps.isConnectedCombo &&
+      prevProps.isCreating === nextProps.isCreating &&
+      JSON.stringify(prevProps.prerequisiteIds) === JSON.stringify(nextProps.prerequisiteIds) &&
+      JSON.stringify(prevProps.componentIds) === JSON.stringify(nextProps.componentIds)
+    );
+  };
+
+  // Define the SkillForm component that will be memoized
+  const SkillForm = React.memo(({
+    nameText,
+    onNameChange,
+    categoryText,
+    onCategoryChange,
+    descriptionText,
+    onDescriptionChange,
+    displayOrderText,
+    onDisplayOrderChange,
+    levelValue,
+    onLevelChange,
+    apparatusId,
+    onApparatusChange,
+    isConnectedCombo,
+    onConnectedComboChange,
+    prerequisiteIds,
+    onPrerequisiteChange,
+    componentIds,
+    onComponentAdd,
+    onMoveComponentUp,
+    onMoveComponentDown,
+    onRemoveComponent,
+    uniqueCategories,
+    apparatus,
+    skills,
+    onSubmit,
+    onClear,
+    onCancel,
+    isCreating
+  }) => {
+    const prerequisiteScrollRef = useRef<HTMLDivElement>(null);
+    
+    // Memoize the apparatus options to prevent unnecessary re-renders
+    const apparatusOptions = useMemo(() => {
+      return apparatus.map(a => ({ value: String(a.id), label: a.name }));
+    }, [apparatus]);
+
+    // Memoize the level options
+    const levelOptions = useMemo(() => {
+      return LEVELS.map(l => ({ value: l, label: l }));
+    }, []);
+    
     return (
       <div className="rounded-xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md p-4 shadow-lg dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Name</Label>
-            <Input value={draft.name || ""} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} />
+          <StableTextInput
+            label="Name"
+            value={nameText}
+            onChange={onNameChange}
+          />
+          
+          <StableSelect
+            label="Apparatus"
+            value={apparatusId ? String(apparatusId) : ""}
+            onValueChange={onApparatusChange}
+            options={apparatusOptions}
+            placeholder="Select apparatus"
+          />
+          
+          <StableSelect
+            label="Level"
+            value={levelValue}
+            onValueChange={onLevelChange}
+            options={levelOptions}
+          />
+          
+          <StableTextInput
+            label="Category"
+            value={categoryText}
+            onChange={onCategoryChange}
+            placeholder="Select or type category"
+            list="categories-list"
+          />
+          <datalist id="categories-list">
+            {uniqueCategories.map(category => (
+              <option key={category} value={category} />
+            ))}
+          </datalist>
+          
+          <div className="md:col-span-2">
+            <StableTextInput
+              label="Description"
+              value={descriptionText}
+              onChange={onDescriptionChange}
+            />
           </div>
-          <div className="space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Category</Label>
-            <Input value={draft.category || ""} onChange={e => setDraft(d => ({ ...d, category: e.target.value }))} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Level</Label>
-            <Select value={draft.level || "beginner"} onValueChange={v => setDraft(d => ({ ...d, level: v }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LEVELS.map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Apparatus</Label>
-            <Select value={draft.apparatusId ? String(draft.apparatusId) : ""} onValueChange={v => {
-              const newApparatusId = v ? Number(v) : undefined;
-              // If apparatus changes, clear prerequisites and components that don't belong to the new apparatus
-              if (newApparatusId !== draft.apparatusId) {
-                const filteredSkills = skills.filter(s => s.apparatusId === newApparatusId);
-                const validSkillIds = new Set(filteredSkills.map(s => s.id));
-                const filteredPrerequisiteIds = (draft.prerequisiteIds || []).filter(id => validSkillIds.has(id));
-                const filteredComponentIds = (draft.componentIds || []).filter(id => validSkillIds.has(id));
-                
-                setDraft(d => ({ 
-                  ...d, 
-                  apparatusId: newApparatusId,
-                  prerequisiteIds: filteredPrerequisiteIds,
-                  componentIds: filteredComponentIds
-                }));
-              } else {
-                setDraft(d => ({ ...d, apparatusId: newApparatusId }));
-              }
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select apparatus" />
-              </SelectTrigger>
-              <SelectContent>
-                {apparatus.map(a => (<SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="md:col-span-2 space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Description</Label>
-            <Input value={draft.description || ""} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Display Order</Label>
-            <Input type="number" value={draft.displayOrder ?? ""} onChange={e => setDraft(d => ({ ...d, displayOrder: e.target.value === "" ? undefined : Number(e.target.value) }))} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[#0F0276] dark:text-white">Connected Combo</Label>
-            <div className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={!!draft.isConnectedCombo} onChange={e => setDraft(d => ({ ...d, isConnectedCombo: e.target.checked }))} />
-              <span className="text-slate-700 dark:text-white/90">Mark this as a connected combo</span>
-            </div>
-          </div>
+          
+          <StableTextInput
+            label="Display Order"
+            value={displayOrderText}
+            onChange={onDisplayOrderChange}
+            placeholder="e.g. 10, 20, 30..."
+            type="number"
+          />
+          
+          <StableCheckbox
+            label="Connected Combo"
+            checked={isConnectedCombo}
+            onChange={onConnectedComboChange}
+          />
+          
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <Label className="text-[#0F0276] dark:text-white font-medium">Prerequisites (optional)</Label>
-              <div className="border border-slate-200/60 rounded-lg p-3 max-h-40 overflow-auto space-y-2 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
-                {draft.apparatusId ? (
-                  skills.filter(s => s.apparatusId === draft.apparatusId).map(s => (
+              <div 
+                ref={prerequisiteScrollRef}
+                className="border border-slate-200/60 rounded-lg p-3 max-h-40 overflow-auto space-y-2 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30"
+              >
+                {apparatusId ? (
+                  skills.filter(s => s.apparatusId === apparatusId).map(s => (
                     <label key={s.id} className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white/50 dark:hover:bg-[#0F0276]/50 transition-colors duration-200">
                       <input
                         type="checkbox"
-                        checked={(draft.prerequisiteIds || []).includes(s.id)}
-                        onChange={(e) => setDraft(d => {
-                          const set = new Set(d.prerequisiteIds || []);
-                          if (e.target.checked) set.add(s.id); else set.delete(s.id);
-                          return { ...d, prerequisiteIds: Array.from(set) };
-                        })}
+                        checked={prerequisiteIds.includes(s.id)}
+                        onChange={(e) => {
+                          const scrollPosition = prerequisiteScrollRef.current?.scrollTop || 0;
+                          onPrerequisiteChange(s.id, e.target.checked);
+                          // Restore scroll position after state update
+                          setTimeout(() => {
+                            if (prerequisiteScrollRef.current) {
+                              prerequisiteScrollRef.current.scrollTop = scrollPosition;
+                            }
+                          }, 0);
+                        }}
                         className="rounded border-slate-300 text-[#0F0276] focus:ring-[#0F0276] focus:ring-offset-0"
                       />
                       <span className="text-slate-700 dark:text-white">{s.name || `Skill #${s.id}`}</span>
@@ -148,38 +352,45 @@ export default function AdminSkillsManager() {
             <div className="space-y-3">
               <Label className="text-[#0F0276] dark:text-white font-medium">Connected Components (optional)</Label>
               <div className="space-y-3">
-                {(draft.componentIds || []).map((id, idx) => (
+                {componentIds.map((id, idx) => (
                   <div key={`${id}-${idx}`} className="flex items-center gap-3 p-3 rounded-lg bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm border border-slate-200/40 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
                     <span className="text-xs w-6 h-6 flex items-center justify-center rounded-full bg-[#D8BD2A]/20 text-[#0F0276] dark:text-white font-medium">{idx + 1}</span>
                     <span className="flex-1 text-sm text-slate-700 dark:text-white">{skills.find(sk => sk.id === id)?.name || `Skill #${id}`}</span>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="outline" onClick={() => setDraft(d => {
-                        const arr = [...(d.componentIds || [])];
-                        if (idx > 0) [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
-                        return { ...d, componentIds: arr };
-                      })} className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => onMoveComponentUp(idx)} 
+                        className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50"
+                      >
                         ↑
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setDraft(d => {
-                        const arr = [...(d.componentIds || [])];
-                        if (idx < arr.length - 1) [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
-                        return { ...d, componentIds: arr };
-                      })} className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => onMoveComponentDown(idx)} 
+                        className="h-7 w-7 p-0 border-slate-300 dark:border-[#2A4A9B]/40 hover:bg-white/50 dark:hover:bg-[#0F0276]/50"
+                      >
                         ↓
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => setDraft(d => ({ ...d, componentIds: (d.componentIds || []).filter((_, i) => i !== idx) }))} className="h-7 w-7 p-0">
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => onRemoveComponent(idx)} 
+                        className="h-7 w-7 p-0"
+                      >
                         ×
                       </Button>
                     </div>
                   </div>
                 ))}
-                {draft.apparatusId ? (
-                  <Select onValueChange={(v) => setDraft(d => ({ ...d, componentIds: [...(d.componentIds || []), Number(v)] }))}>
+                {apparatusId ? (
+                  <Select onValueChange={onComponentAdd}>
                     <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/50 hover:bg-white/90 dark:hover:bg-[#0F0276]/70 transition-colors duration-200">
                       <SelectValue placeholder="Add component skill" />
                     </SelectTrigger>
                     <SelectContent>
-                      {skills.filter(sk => sk.apparatusId === draft.apparatusId && !draft.componentIds?.includes(sk.id)).map(sk => (
+                      {skills.filter(sk => sk.apparatusId === apparatusId && !componentIds.includes(sk.id)).map(sk => (
                         <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
                       ))}
                     </SelectContent>
@@ -195,22 +406,22 @@ export default function AdminSkillsManager() {
         </div>
         <div className="flex gap-3 pt-4">
           <Button 
-            onClick={onCreate} 
-            disabled={createSkill.isPending || !draft.name}
+            onClick={onSubmit} 
+            disabled={isCreating || !nameText}
             className="bg-gradient-to-r from-[#0F0276] to-[#2A4A9B] hover:from-[#0F0276]/90 hover:to-[#2A4A9B]/90 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform-gpu hover:scale-[1.02]"
           >
-            {createSkill.isPending ? 'Creating...' : 'Add Skill'}
+            {isCreating ? 'Creating...' : 'Add Skill'}
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => setDraft({ level: "beginner" })}
+            onClick={onClear}
             className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200"
           >
             Clear
           </Button>
           <Button 
             variant="ghost" 
-            onClick={() => setIsCreateOpen(false)}
+            onClick={onCancel}
             className="text-[#0F0276]"
           >
             Cancel
@@ -219,19 +430,65 @@ export default function AdminSkillsManager() {
         <Separator className="my-2" />
       </div>
     );
-  }
+  }, skillFormPropsAreEqual);
+  
+  SkillForm.displayName = "SkillForm";
+
+  // Define the CreateForm that renders the SkillForm
+  const CreateForm = React.memo(() => {
+    return (
+      <SkillForm
+        nameText={nameText}
+        onNameChange={handleNameChange}
+        categoryText={categoryText}
+        onCategoryChange={handleCategoryChange}
+        descriptionText={descriptionText}
+        onDescriptionChange={handleDescriptionChange}
+        displayOrderText={displayOrderText}
+        onDisplayOrderChange={handleDisplayOrderChange}
+        levelValue={levelValue}
+        onLevelChange={handleLevelChange}
+        apparatusId={apparatusId}
+        onApparatusChange={handleApparatusChange}
+        isConnectedCombo={isConnectedCombo}
+        onConnectedComboChange={handleConnectedComboChange}
+        prerequisiteIds={prerequisiteIds}
+        onPrerequisiteChange={handlePrerequisiteChange}
+        componentIds={componentIds}
+        onComponentAdd={handleComponentAdd}
+        onMoveComponentUp={handleMoveComponentUp}
+        onMoveComponentDown={handleMoveComponentDown}
+        onRemoveComponent={handleRemoveComponent}
+        uniqueCategories={uniqueCategories}
+        apparatus={apparatus}
+        skills={skills}
+        onSubmit={onCreate}
+        onClear={handleClearForm}
+        onCancel={() => setIsCreateOpen(false)}
+        isCreating={createSkill.isPending}
+      />
+    );
+  }, () => true); // Always return true to prevent re-renders since all props are stable
+
+  CreateForm.displayName = "CreateForm";
 
   const filteredSkills = useMemo(() => skills, [skills]);
 
   const groups = useMemo(() => {
-    const byApp: Record<number, Skill[]> = {};
+    const byApp: Record<number, Record<string, Skill[]>> = {};
+    const levelOrder = ['beginner', 'intermediate', 'advanced', 'elite'];
+    
     filteredSkills.forEach(s => {
       const aid = s.apparatusId ?? -1;
-      byApp[aid] = byApp[aid] || [];
-      byApp[aid].push(s);
+      const level = s.level || 'beginner';
+      byApp[aid] = byApp[aid] || {};
+      byApp[aid][level] = byApp[aid][level] || [];
+      byApp[aid][level].push(s);
     });
+    
     const sortedApparatus = [...apparatus].sort((a, b) => a.name.localeCompare(b.name));
-    const unknownGroupSkills = byApp[-1] || [];
+    const unknownGroupSkills = byApp[-1] || {};
+    
     const makeSorted = (arr: Skill[]) => {
       if (sortWithin === 'name') return [...arr].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       // default: by displayOrder then name
@@ -242,14 +499,81 @@ export default function AdminSkillsManager() {
         return (a.name || '').localeCompare(b.name || '');
       });
     };
-    const result: { apparatusId: number; apparatusName: string; items: Skill[] }[] = [];
+    
+    const result: { 
+      apparatusId: number; 
+      apparatusName: string; 
+      levelGroups: { level: string; levelDisplayName: string; items: Skill[] }[] 
+    }[] = [];
+    
     sortedApparatus.forEach(a => {
-      const items = byApp[a.id] ? makeSorted(byApp[a.id]) : [];
-      if (items.length) result.push({ apparatusId: a.id, apparatusName: a.name, items });
+      const skillsByLevel = byApp[a.id] || {};
+      const levelGroups: { level: string; levelDisplayName: string; items: Skill[] }[] = [];
+      
+      // Add levels in order, only if they have skills
+      levelOrder.forEach(level => {
+        if (skillsByLevel[level] && skillsByLevel[level].length > 0) {
+          levelGroups.push({
+            level,
+            levelDisplayName: level.charAt(0).toUpperCase() + level.slice(1),
+            items: makeSorted(skillsByLevel[level])
+          });
+        }
+      });
+      
+      // Add any other levels not in the standard order
+      Object.keys(skillsByLevel).forEach(level => {
+        if (!levelOrder.includes(level) && skillsByLevel[level].length > 0) {
+          levelGroups.push({
+            level,
+            levelDisplayName: level.charAt(0).toUpperCase() + level.slice(1),
+            items: makeSorted(skillsByLevel[level])
+          });
+        }
+      });
+      
+      if (levelGroups.length > 0) {
+        result.push({ 
+          apparatusId: a.id, 
+          apparatusName: a.name, 
+          levelGroups 
+        });
+      }
     });
-    if (unknownGroupSkills.length) {
-      result.push({ apparatusId: -1, apparatusName: 'Unassigned', items: makeSorted(unknownGroupSkills) });
+    
+    // Handle unassigned skills
+    if (Object.keys(unknownGroupSkills).length > 0) {
+      const levelGroups: { level: string; levelDisplayName: string; items: Skill[] }[] = [];
+      
+      levelOrder.forEach(level => {
+        if (unknownGroupSkills[level] && unknownGroupSkills[level].length > 0) {
+          levelGroups.push({
+            level,
+            levelDisplayName: level.charAt(0).toUpperCase() + level.slice(1),
+            items: makeSorted(unknownGroupSkills[level])
+          });
+        }
+      });
+      
+      Object.keys(unknownGroupSkills).forEach(level => {
+        if (!levelOrder.includes(level) && unknownGroupSkills[level].length > 0) {
+          levelGroups.push({
+            level,
+            levelDisplayName: level.charAt(0).toUpperCase() + level.slice(1),
+            items: makeSorted(unknownGroupSkills[level])
+          });
+        }
+      });
+      
+      if (levelGroups.length > 0) {
+        result.push({ 
+          apparatusId: -1, 
+          apparatusName: 'Unassigned', 
+          levelGroups 
+        });
+      }
     }
+    
     return result;
   }, [filteredSkills, apparatus, sortWithin]);
 
@@ -368,7 +692,7 @@ export default function AdminSkillsManager() {
                           {group.apparatusName}
                         </div>
                         <div className="text-xs text-slate-600 dark:text-white/70 mt-0.5">
-                          {group.items.length} skill{group.items.length !== 1 ? 's' : ''}
+                          {group.levelGroups.reduce((total, lg) => total + lg.items.length, 0)} skill{group.levelGroups.reduce((total, lg) => total + lg.items.length, 0) !== 1 ? 's' : ''} across {group.levelGroups.length} level{group.levelGroups.length !== 1 ? 's' : ''}
                         </div>
                       </div>
                       <div className="text-xs text-slate-500 dark:text-white/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -376,28 +700,50 @@ export default function AdminSkillsManager() {
                       </div>
                     </button>
                     {!collapsedGroups.has(group.apparatusId) && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {group.items.map((s, idx) => (
+                      <div className="space-y-6">
+                        {group.levelGroups.map(levelGroup => (
+                          <div key={`${group.apparatusId}-${levelGroup.level}`} className="space-y-3">
+                            <div className="flex items-center gap-3 px-4">
+                              <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/10">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#0F0276] dark:text-white">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold text-[#0F0276] dark:text-white">
+                                  {levelGroup.levelDisplayName}
+                                </div>
+                                <div className="text-xs text-slate-600 dark:text-white/70">
+                                  {levelGroup.items.length} skill{levelGroup.items.length !== 1 ? 's' : ''}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
+                              {levelGroup.items.map((s, idx) => (
                         <Card
                           key={s.id}
                           draggable
                           onDragStart={(e) => {
-                            setDragging({ groupId: group.apparatusId, index: idx });
+                            setDragging({ groupId: group.apparatusId, levelId: levelGroup.level, index: idx });
                             e.dataTransfer.effectAllowed = 'move';
                           }}
                           onDragOver={(e) => {
                             e.preventDefault();
-                            if (dragging && dragging.groupId === group.apparatusId) {
-                              setDragOver({ groupId: group.apparatusId, index: idx });
+                            if (dragging && dragging.groupId === group.apparatusId && dragging.levelId === levelGroup.level) {
+                              setDragOver({ groupId: group.apparatusId, levelId: levelGroup.level, index: idx });
                             }
                           }}
                           onDrop={(e) => {
                             e.preventDefault();
-                            if (!dragging || dragging.groupId !== group.apparatusId) { setDragging(null); setDragOver(null); return; }
+                            if (!dragging || dragging.groupId !== group.apparatusId || dragging.levelId !== levelGroup.level) { 
+                              setDragging(null); 
+                              setDragOver(null); 
+                              return; 
+                            }
                             const from = dragging.index;
                             const to = idx;
                             if (from === to) { setDragging(null); setDragOver(null); return; }
-                            const arr = [...group.items];
+                            const arr = [...levelGroup.items];
                             const moved = arr.splice(from, 1)[0];
                             arr.splice(to, 0, moved);
                             // Persist new display order in 10s
@@ -412,7 +758,7 @@ export default function AdminSkillsManager() {
                             // Invalidate to reflect new order
                             qc.invalidateQueries({ queryKey: ["/api/admin/skills"], exact: false });
                           }}
-                          className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.index === idx ? 'ring-2 ring-[#D8BD2A] shadow-xl' : ''} ${expandedIds.has(s.id) ? 'col-span-2 md:col-span-4' : ''} rounded-xl border border-slate-200/60 bg-white/80 supports-[backdrop-filter]:bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/80 overflow-hidden group cursor-pointer`}
+                          className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.levelId === levelGroup.level && dragOver.index === idx ? 'ring-2 ring-[#D8BD2A] shadow-xl' : ''} ${expandedIds.has(s.id) ? 'col-span-2 md:col-span-4' : ''} rounded-xl border border-slate-200/60 bg-white/80 supports-[backdrop-filter]:bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/80 overflow-hidden group cursor-pointer`}
                         >
                           <CardContent className="p-0 overflow-hidden">
                             {(!expandedIds.has(s.id)) ? (
@@ -736,8 +1082,11 @@ export default function AdminSkillsManager() {
                             )}
                           </CardContent>
                         </Card>
-                      ))}
-                    </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 ))}
