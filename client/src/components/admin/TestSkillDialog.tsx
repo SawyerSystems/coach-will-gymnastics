@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useAddAthleteSkillVideo, useAthleteSkillVideos, useUpsertAthleteSkill, useUploadMedia, useDeleteAthleteSkillVideo } from "@/hooks/useAthleteProgress";
 import type { InsertAthleteSkill, Skill } from "@shared/schema";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, FileVideo, Link, Upload, Video, Trash2, Target } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -74,113 +77,222 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-slate-200/60 dark:border-white/20">
         <DialogHeader>
-          <DialogTitle>Test Skill: {skill.name}</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-[#0F0276] dark:text-white flex items-center gap-2">
+            <Target className="h-5 w-5 text-[#D8BD2A]" />
+            Test Skill: {skill.name}
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label>Status</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {[
-                { key: "working", label: "Working" },
-                { key: "learning", label: "Learning" },
-                { key: "consistent", label: "Consistent" },
-                { key: "mastered", label: "Mastered" },
-              ].map((opt) => (
-                <Button
-                  key={opt.key}
-                  type="button"
-                  variant={status === opt.key ? "default" : "outline"}
-                  onMouseDown={(e) => {
-                    // Avoid moving focus to the button on click and immediately focus notes
-                    e.preventDefault();
-                    notesRef.current?.focus();
-                  }}
-                  onClick={() => {
-                    setStatus(opt.key);
-                    // After selecting status, focus notes so the next keystroke goes into the textarea
-                    requestAnimationFrame(() => notesRef.current?.focus());
-                  }}
-                  onKeyDown={(e) => {
-                    // Avoid space/enter toggling status again and stealing focus
-                    if (e.key === ' ' || e.key === 'Enter') {
+        
+        <div className="space-y-6">
+          {/* Skill Info Card */}
+          <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white">Skill Information</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex flex-wrap gap-2">
+                {skill.category && (
+                  <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    {skill.category}
+                  </Badge>
+                )}
+                {skill.level && (
+                  <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                    Level {skill.level}
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status Selection */}
+          <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white">Assessment Status</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: "learning", label: "Learning", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" },
+                  { key: "working", label: "Working", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+                  { key: "consistent", label: "Consistent", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
+                  { key: "mastered", label: "Mastered", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
+                ].map((opt) => (
+                  <Button
+                    key={opt.key}
+                    type="button"
+                    variant={status === opt.key ? "default" : "outline"}
+                    className={status === opt.key ? "bg-[#0F0276] hover:bg-[#0F0276]/90 text-white" : "border-slate-200/60 dark:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"}
+                    onMouseDown={(e) => {
                       e.preventDefault();
-                      e.stopPropagation();
-                      (e.currentTarget as HTMLButtonElement).blur();
+                      notesRef.current?.focus();
+                    }}
+                    onClick={() => {
+                      setStatus(opt.key);
                       requestAnimationFrame(() => notesRef.current?.focus());
-                    }
-                  }}
-                >
-                  {opt.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="notes">Coach Notes</Label>
-            <Textarea
-              id="notes"
-              ref={notesRef}
-              autoFocus
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Observations, next steps, drills..."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="videoUrl">Video URL (optional)</Label>
-              <Input id="videoUrl" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://..." />
-            </div>
-            <div>
-              <Label htmlFor="videoTitle">Video Title</Label>
-              <Input id="videoTitle" value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="e.g. First consistent reps" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="videoFile">Or Upload Video</Label>
-              <Input id="videoFile" type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} />
-            </div>
-            <div>
-              <Label htmlFor="recordedAt">Recorded Date</Label>
-              <Input id="recordedAt" type="date" value={recordedAt} onChange={(e) => setRecordedAt(e.target.value)} />
-            </div>
-          </div>
-
-          {!!videos.length && (
-            <div>
-              <Label>Previous Clips</Label>
-              <ul className="mt-2 space-y-2 text-sm">
-                {videos.map((v) => (
-                  <li key={v.id} className="p-2 rounded border flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-medium">{v.title || "Untitled Clip"}</div>
-                      <div className="text-xs text-slate-500">{v.recordedAt ? new Date(v.recordedAt as any).toLocaleDateString() : ''}</div>
-                      <a className="text-blue-600 underline break-all" href={v.url ?? undefined} target="_blank" rel="noreferrer">
-                        {v.url}
-                      </a>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => delVideo.mutate({ id: v.id, athleteSkillId: v.athleteSkillId ?? undefined })}
-                    >
-                      Delete
-                    </Button>
-                  </li>
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        (e.currentTarget as HTMLButtonElement).blur();
+                        requestAnimationFrame(() => notesRef.current?.focus());
+                      }
+                    }}
+                  >
+                    {opt.label}
+                  </Button>
                 ))}
-              </ul>
-            </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white">Coach Notes</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Textarea
+                ref={notesRef}
+                autoFocus
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Observations, next steps, drills to work on..."
+                className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40 min-h-[100px]"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Video Upload */}
+          <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white flex items-center gap-2">
+                <Video className="h-4 w-4 text-[#D8BD2A]" />
+                Link Progress Video (Optional)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl" className="text-[#0F0276] dark:text-white font-medium">Video URL</Label>
+                  <Input 
+                    id="videoUrl" 
+                    value={videoUrl} 
+                    onChange={(e) => setVideoUrl(e.target.value)} 
+                    placeholder="https://..."
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="videoTitle" className="text-[#0F0276] dark:text-white font-medium">Video Title</Label>
+                  <Input 
+                    id="videoTitle" 
+                    value={videoTitle} 
+                    onChange={(e) => setVideoTitle(e.target.value)} 
+                    placeholder="e.g. First consistent reps"
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoFile" className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Or Upload Video File
+                  </Label>
+                  <Input 
+                    id="videoFile" 
+                    type="file" 
+                    accept="video/*" 
+                    onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recordedAt" className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Recorded Date
+                  </Label>
+                  <Input 
+                    id="recordedAt" 
+                    type="date" 
+                    value={recordedAt} 
+                    onChange={(e) => setRecordedAt(e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Previous Videos */}
+          {!!videos.length && (
+            <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white flex items-center gap-2">
+                  <FileVideo className="h-4 w-4 text-[#D8BD2A]" />
+                  Previous Video Clips ({videos.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  {videos.map((video) => (
+                    <div key={video.id} className="p-3 rounded-lg border border-slate-200/60 dark:border-white/20 bg-white/50 dark:bg-white/5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-[#0F0276] dark:text-white text-sm">
+                            {video.title || "Untitled Clip"}
+                          </div>
+                          {video.recordedAt && (
+                            <div className="text-xs text-[#0F0276]/70 dark:text-white/70 mt-1">
+                              {new Date(video.recordedAt as any).toLocaleDateString()}
+                            </div>
+                          )}
+                          <a 
+                            className="text-blue-600 dark:text-blue-400 hover:underline text-xs break-all mt-1 inline-block" 
+                            href={video.url ?? undefined} 
+                            target="_blank" 
+                            rel="noreferrer"
+                          >
+                            {video.url}
+                          </a>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => delVideo.mutate({ id: video.id, athleteSkillId: video.athleteSkillId ?? undefined })}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={upsert.isPending || addVideo.isPending || uploadMedia.isPending}>Save</Button>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="border-slate-200/60 dark:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={upsert.isPending || addVideo.isPending || uploadMedia.isPending}
+              className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+            >
+              {upsert.isPending || addVideo.isPending || uploadMedia.isPending ? "Saving..." : "Save Assessment"}
+            </Button>
           </div>
         </div>
       </DialogContent>
