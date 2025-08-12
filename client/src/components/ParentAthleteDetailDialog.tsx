@@ -15,8 +15,9 @@ import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete } from "@shared/schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, FileCheck, Plus, User, ExternalLink } from "lucide-react";
+import { Edit, FileCheck, Plus, User, ExternalLink, BarChart3 } from "lucide-react";
 import React, { useState } from "react";
+import { useLocation } from "wouter";
 
 interface ParentAthleteDetailDialogProps {
   open: boolean;
@@ -40,6 +41,7 @@ export function ParentAthleteDetailDialog({
   const [isWaiverModalOpen, setIsWaiverModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Fetch complete athlete details to ensure we have all the data
   const { data: completeAthleteData } = useQuery<Athlete>({
@@ -215,6 +217,21 @@ export function ParentAthleteDetailDialog({
                       {athleteData.isGymMember ? 'Member' : 'Not a member'}
                     </span>
                   </div>
+                </div>
+
+                {/* View Progress Button */}
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <Button
+                    onClick={() => {
+                      setLocation(`/progress/athlete/${athleteData.id}`);
+                      onOpenChange(false); // Close the modal
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white w-full"
+                    size="sm"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    View Progress
+                  </Button>
                 </div>
 
                 {athleteData.allergies && (
