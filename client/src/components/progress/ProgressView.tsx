@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3 } from 'lucide-react';
+import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft } from 'lucide-react';
 
 type ProgressVideo = {
   id: number;
@@ -27,7 +27,7 @@ export interface ProgressData {
   skills: ProgressSkill[];
 }
 
-export default function ProgressView({ data }: { data: any }) {
+export default function ProgressView({ data, isAdmin = false }: { data: any; isAdmin?: boolean }) {
   const [openVideo, setOpenVideo] = React.useState<{ url: string; title?: string } | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
@@ -141,6 +141,52 @@ export default function ProgressView({ data }: { data: any }) {
           </div>
         </div>
       </header>
+
+      {/* Admin Toolbar */}
+      {isAdmin && (
+        <div className="bg-orange-500/90 backdrop-blur-sm border-b border-orange-600/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-white" />
+                <span className="text-white font-medium">Admin View</span>
+                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                  Enhanced Controls
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                  onClick={() => window.location.href = `/admin/athletes/${data.athlete.id}`}
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  Edit Athlete
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                  onClick={() => window.location.href = `/admin/skills/test/${data.athlete.id}`}
+                >
+                  <Target className="h-4 w-4 mr-1" />
+                  Test Skills
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+                  onClick={() => window.location.href = '/admin'}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Admin Dashboard
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <Tabs defaultValue="overview" className="space-y-6">

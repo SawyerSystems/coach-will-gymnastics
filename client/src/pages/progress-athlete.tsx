@@ -1,10 +1,10 @@
 import React from 'react';
 import { useParams } from 'wouter';
 import { useProgressByAthlete } from '@/hooks/useAthleteProgress';
-import { useParentAuthStatus } from '@/hooks/optimized-queries';
+import { useParentAuthStatus, useAuthStatus } from '@/hooks/optimized-queries';
 import ProgressView from '@/components/progress/ProgressView';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowLeft, Lock, User } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Lock, User, Settings, Shield } from 'lucide-react';
 
 // Reuse the same public UI but fetch by athleteId via session-auth
 export default function ProgressAthletePage() {
@@ -12,12 +12,24 @@ export default function ProgressAthletePage() {
   const athleteId = params?.athleteId ? Number(params.athleteId) : undefined;
   const { data, isLoading } = useProgressByAthlete(athleteId);
   const { data: parentAuth } = useParentAuthStatus();
+  const { data: adminAuth } = useAuthStatus() as { data: { loggedIn?: boolean; adminId?: number; email?: string } | undefined };
+
+  const isAdmin = adminAuth?.loggedIn || false;
+  const isParent = parentAuth?.loggedIn || false;
 
   const handleParentDashboardClick = () => {
     if (parentAuth?.loggedIn) {
       window.location.href = '/parent';
     } else {
       window.location.href = '/parent/login';
+    }
+  };
+
+  const handleAdminDashboardClick = () => {
+    if (adminAuth?.loggedIn) {
+      window.location.href = '/admin';
+    } else {
+      window.location.href = '/admin-login';
     }
   };
 
@@ -104,18 +116,28 @@ export default function ProgressAthletePage() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
-            <Button 
-              onClick={handleParentDashboardClick}
-              className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
-            >
-              <User className="h-4 w-4 mr-2" />
-              {parentAuth?.loggedIn ? 'Parent Dashboard' : 'Parent Login'}
-            </Button>
+            {isAdmin ? (
+              <Button 
+                onClick={handleAdminDashboardClick}
+                className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                {adminAuth?.loggedIn ? 'Admin Dashboard' : 'Admin Login'}
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleParentDashboardClick}
+                className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+              >
+                <User className="h-4 w-4 mr-2" />
+                {parentAuth?.loggedIn ? 'Parent Dashboard' : 'Parent Login'}
+              </Button>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  return <ProgressView data={data as any} />;
+  return <ProgressView data={data as any} isAdmin={isAdmin} />;
 }
