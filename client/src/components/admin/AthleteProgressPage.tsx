@@ -118,26 +118,32 @@ export default function AthleteProgressPage() {
   }, [visibleSkills, apparatusById]);
 
   const perApparatusLevel = useMemo(() => {
-    const map = new Map<number, Map<string, { total: number; mastered: number; consistent: number }>>();
+    const map = new Map<number, Map<string, { total: number; mastered: number; consistent: number; working: number; learning: number }>>();
     visibleSkills.forEach(as => {
       const ap = as.skill?.apparatusId; if (!ap) return;
       const lvl = (as.skill?.level || 'Unknown').toString();
       if (!map.has(ap)) map.set(ap, new Map());
       const inner = map.get(ap)!;
-      if (!inner.has(lvl)) inner.set(lvl, { total: 0, mastered: 0, consistent: 0 });
+      if (!inner.has(lvl)) inner.set(lvl, { total: 0, mastered: 0, consistent: 0, working: 0, learning: 0 });
       const s = inner.get(lvl)!;
       s.total += 1;
       const st = (as.status || '').toString().toLowerCase();
       if (st === 'mastered') s.mastered += 1;
-      if (st === 'consistent' || st === 'mastered') s.consistent += 1;
+      if (st === 'consistent') s.consistent += 1;
+      if (st === 'working') s.working += 1;
+      if (st === 'learning') s.learning += 1;
     });
     return Array.from(map.entries()).map(([ap, inner]) => ({
       apparatusId: ap,
       levels: Array.from(inner.entries()).map(([lvl, s]) => ({
         level: lvl,
         total: s.total,
+        mastered: s.mastered,
+        consistent: s.consistent,
+        working: s.working,
+        learning: s.learning,
         masteredPct: s.total ? Math.round((s.mastered / s.total) * 100) : 0,
-        consistentPct: s.total ? Math.round((s.consistent / s.total) * 100) : 0,
+        consistentPct: s.total ? Math.round(((s.consistent + s.mastered) / s.total) * 100) : 0,
       })).sort((a, b) => a.level.localeCompare(b.level))
     })).sort((a, b) => (apparatusById.get(a.apparatusId)?.name || '').localeCompare(apparatusById.get(b.apparatusId)?.name || ''));
   }, [visibleSkills, apparatusById]);
@@ -221,10 +227,24 @@ export default function AthleteProgressPage() {
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Consistent or Mastered</span>
-                    <span className="text-slate-600">{overall.consistentPct}%</span>
+                    <span>Consistent</span>
+                    <span className="text-slate-600">{Math.round((overall.counts["consistent"] || 0) / Math.max(overall.total, 1) * 100)}%</span>
                   </div>
-                  <Progress value={overall.consistentPct} />
+                  <Progress value={Math.round((overall.counts["consistent"] || 0) / Math.max(overall.total, 1) * 100)} />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span>Working</span>
+                    <span className="text-slate-600">{Math.round((overall.counts["working"] || 0) / Math.max(overall.total, 1) * 100)}%</span>
+                  </div>
+                  <Progress value={Math.round((overall.counts["working"] || 0) / Math.max(overall.total, 1) * 100)} />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span>Learning</span>
+                    <span className="text-slate-600">{Math.round((overall.counts["learning"] || 0) / Math.max(overall.total, 1) * 100)}%</span>
+                  </div>
+                  <Progress value={Math.round((overall.counts["learning"] || 0) / Math.max(overall.total, 1) * 100)} />
                 </div>
                 <div className="text-xs text-slate-600 mt-1">
                   Total skills: {overall.total} · Mastered: {overall.counts["mastered"] || 0} · Consistent: {overall.counts["consistent"] || 0} · Learning: {overall.counts["learning"] || 0} · Working: {overall.counts["working"] || 0}
@@ -246,10 +266,20 @@ export default function AthleteProgressPage() {
                   </div>
                   <Progress value={row.masteredPct} />
                   <div className="flex items-center justify-between text-sm mb-1 mt-3">
-                    <span className="text-slate-700 dark:text-white/90">Consistent or Mastered</span>
-                    <span className="text-slate-600 dark:text-white/80">{row.consistentPct}%</span>
+                    <span className="text-slate-700 dark:text-white/90">Consistent</span>
+                    <span className="text-slate-600 dark:text-white/80">{Math.round((row.counts["consistent"] || 0) / Math.max(row.total, 1) * 100)}%</span>
                   </div>
-                  <Progress value={row.consistentPct} />
+                  <Progress value={Math.round((row.counts["consistent"] || 0) / Math.max(row.total, 1) * 100)} />
+                  <div className="flex items-center justify-between text-sm mb-1 mt-3">
+                    <span className="text-slate-700 dark:text-white/90">Working</span>
+                    <span className="text-slate-600 dark:text-white/80">{Math.round((row.counts["working"] || 0) / Math.max(row.total, 1) * 100)}%</span>
+                  </div>
+                  <Progress value={Math.round((row.counts["working"] || 0) / Math.max(row.total, 1) * 100)} />
+                  <div className="flex items-center justify-between text-sm mb-1 mt-3">
+                    <span className="text-slate-700 dark:text-white/90">Learning</span>
+                    <span className="text-slate-600 dark:text-white/80">{Math.round((row.counts["learning"] || 0) / Math.max(row.total, 1) * 100)}%</span>
+                  </div>
+                  <Progress value={Math.round((row.counts["learning"] || 0) / Math.max(row.total, 1) * 100)} />
                   <div className="text-xs text-slate-600 mt-1">
                     Total: {row.total} · M: {row.counts["mastered"] || 0} · C: {row.counts["consistent"] || 0} · L: {row.counts["learning"] || 0} · W: {row.counts["working"] || 0}
                   </div>
@@ -278,8 +308,12 @@ export default function AthleteProgressPage() {
                             <div className="text-sm mb-1 text-[#0F0276] dark:text-white">Level {l.level}</div>
                             <div className="flex items-center justify-between text-xs mb-1"><span className="text-slate-700 dark:text-white/90">Mastered</span><span className="text-slate-600 dark:text-white/80">{l.masteredPct}%</span></div>
                             <Progress value={l.masteredPct} />
-                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Consistent or Mastered</span><span>{l.consistentPct}%</span></div>
-                            <Progress value={l.consistentPct} />
+                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Consistent</span><span>{Math.round((l.consistent / Math.max(l.total, 1)) * 100)}%</span></div>
+                            <Progress value={Math.round((l.consistent / Math.max(l.total, 1)) * 100)} />
+                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Working</span><span>{Math.round((l.working / Math.max(l.total, 1)) * 100)}%</span></div>
+                            <Progress value={Math.round((l.working / Math.max(l.total, 1)) * 100)} />
+                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Learning</span><span>{Math.round((l.learning / Math.max(l.total, 1)) * 100)}%</span></div>
+                            <Progress value={Math.round((l.learning / Math.max(l.total, 1)) * 100)} />
                             <div className="text-[11px] text-slate-600 mt-1">Total: {l.total} {l.masteredPct === 100 ? '· Completed' : ''}</div>
                           </div>
                         ))}
