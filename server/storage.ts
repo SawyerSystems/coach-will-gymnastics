@@ -2788,7 +2788,7 @@ export class SupabaseStorage implements IStorage {
       last_name: insertAthlete.lastName,
       parent_id: insertAthlete.parentId,
       date_of_birth: insertAthlete.dateOfBirth,
-      // gender: insertAthlete.gender || null, // Temporarily disabled until column is added
+      gender: insertAthlete.gender || null,
       allergies: insertAthlete.allergies,
       experience: insertAthlete.experience,
   photo: insertAthlete.photo || null,
