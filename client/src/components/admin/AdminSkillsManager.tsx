@@ -462,6 +462,18 @@ export default function AdminSkillsManager() {
 
   const filteredSkills = useMemo(() => skills, [skills]);
 
+  // Define makeSorted at component level so it's accessible everywhere
+  const makeSorted = useCallback((arr: Skill[]) => {
+    if (sortWithin === 'name') return [...arr].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    // default: by displayOrder then name
+    return [...arr].sort((a, b) => {
+      const ao = a.displayOrder ?? 1_000_000;
+      const bo = b.displayOrder ?? 1_000_000;
+      if (ao !== bo) return ao - bo;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [sortWithin]);
+
   const groups = useMemo(() => {
     const byApp: Record<number, Record<string, Skill[]>> = {};
     const levelOrder = ['beginner', 'intermediate', 'advanced', 'elite'];
@@ -476,17 +488,6 @@ export default function AdminSkillsManager() {
     
     const sortedApparatus = [...apparatus].sort((a, b) => a.name.localeCompare(b.name));
     const unknownGroupSkills = byApp[-1] || {};
-    
-    const makeSorted = (arr: Skill[]) => {
-      if (sortWithin === 'name') return [...arr].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      // default: by displayOrder then name
-      return [...arr].sort((a, b) => {
-        const ao = a.displayOrder ?? 1_000_000;
-        const bo = b.displayOrder ?? 1_000_000;
-        if (ao !== bo) return ao - bo;
-        return (a.name || '').localeCompare(b.name || '');
-      });
-    };
     
     const result: { 
       apparatusId: number; 
@@ -563,7 +564,7 @@ export default function AdminSkillsManager() {
     }
     
     return result;
-  }, [filteredSkills, apparatus, sortWithin]);
+  }, [filteredSkills, apparatus, sortWithin, makeSorted]);
 
   if (!auth?.loggedIn) {
     return (
@@ -971,7 +972,21 @@ export default function AdminSkillsManager() {
                               </div>
                               <div className="max-h-64 overflow-auto space-y-2">
                                 {s.apparatusId ? (
-                                  skills.filter(sk => sk.apparatusId === s.apparatusId).map(sk => (
+                                  skills
+                                    .filter(sk => sk.apparatusId === s.apparatusId)
+                                    .sort((a, b) => {
+                                      // Sort by experience level first  
+                                      const levelOrder = ['beginner', 'intermediate', 'advanced', 'elite'];
+                                      const aLevel = levelOrder.indexOf(a.level || 'beginner');
+                                      const bLevel = levelOrder.indexOf(b.level || 'beginner');
+                                      if (aLevel !== bLevel) return aLevel - bLevel;
+                                      // Then by displayOrder, then by name
+                                      const ao = a.displayOrder ?? 1_000_000;
+                                      const bo = b.displayOrder ?? 1_000_000;
+                                      if (ao !== bo) return ao - bo;
+                                      return (a.name || '').localeCompare(b.name || '');
+                                    })
+                                    .map(sk => (
                                     <label key={sk.id} className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-white/40 dark:hover:bg-[#0F0276]/40 transition-colors duration-200">
                                       <input
                                         type="checkbox"
@@ -1050,7 +1065,21 @@ export default function AdminSkillsManager() {
                                         <SelectValue placeholder="Add component skill" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {skills.filter(sk => sk.apparatusId === s.apparatusId && !relations?.componentIds?.includes(sk.id)).map(sk => (
+                                        {skills
+                                          .filter(sk => sk.apparatusId === s.apparatusId && !relations?.componentIds?.includes(sk.id))
+                                          .sort((a, b) => {
+                                            // Sort by experience level first  
+                                            const levelOrder = ['beginner', 'intermediate', 'advanced', 'elite'];
+                                            const aLevel = levelOrder.indexOf(a.level || 'beginner');
+                                            const bLevel = levelOrder.indexOf(b.level || 'beginner');
+                                            if (aLevel !== bLevel) return aLevel - bLevel;
+                                            // Then by displayOrder, then by name
+                                            const ao = a.displayOrder ?? 1_000_000;
+                                            const bo = b.displayOrder ?? 1_000_000;
+                                            if (ao !== bo) return ao - bo;
+                                            return (a.name || '').localeCompare(b.name || '');
+                                          })
+                                          .map(sk => (
                                           <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
                                         ))}
                                       </SelectContent>
