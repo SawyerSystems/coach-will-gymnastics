@@ -134,8 +134,31 @@ export function useProgressByToken(token?: string) {
   });
 }
 
+export function useProgressByAthlete(athleteId?: number) {
+  const key = athleteId ? `/api/progress/athlete/${athleteId}` : undefined;
+  return useQuery<{
+    athlete: any;
+    skills: { athleteSkill: AthleteSkillWithMeta; skill?: Skill | null; videos: AthleteSkillVideo[] }[];
+    link: ProgressShareLink | null;
+  }>({
+    queryKey: [key || ""],
+    queryFn: async () => {
+      const res = await apiRequest("GET", key!);
+      return res.json();
+    },
+    enabled: !!athleteId,
+  });
+}
+
 export function useProgressShareLinks(athleteId?: number) {
-  const key = athleteId ? `/api/admin/progress-share-links?athleteId=${athleteId}` : undefined;
+  // Use the parent endpoint if in parent portal, otherwise use admin endpoint
+  const isParentPortal = window.location.pathname.startsWith('/parent');
+  const key = athleteId 
+    ? isParentPortal 
+      ? `/api/parent/athletes/${athleteId}/progress-share-links` 
+      : `/api/admin/progress-share-links?athleteId=${athleteId}` 
+    : undefined;
+  
   return useQuery<ProgressShareLink[]>({
     queryKey: [key || ""],
     queryFn: async () => {
@@ -174,5 +197,18 @@ export function useRevokeProgressShareLink() {
         ]});
       }
     },
+  });
+}
+
+// Parent-specific hook for getting progress share links
+export function useParentProgressShareLinks(athleteId?: number) {
+  const key = athleteId ? `/api/parent/athletes/${athleteId}/progress-share-links` : undefined;
+  return useQuery<ProgressShareLink[]>({
+    queryKey: [key || ""],
+    queryFn: async () => {
+      const res = await apiRequest("GET", key!);
+      return res.json();
+    },
+    enabled: !!athleteId,
   });
 }

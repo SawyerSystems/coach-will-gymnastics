@@ -804,6 +804,17 @@ export class PersistentMemStorage implements IStorage {
     return [];
   }
 
+  // Session-authorized progress by athlete (legacy storage)
+  async getProgressByAthleteId(athleteId: number): Promise<{
+    athlete: Athlete | null;
+    skills: Array<{ athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[] }>;
+    link: any;
+  } | null> {
+    const athlete = this.athletes.get(athleteId) || null;
+    // We don't persist skills/videos here; return empty arrays for legacy path
+    return { athlete, skills: [], link: null };
+  }
+
   async getParentArchivedWaivers(parentId: number): Promise<any[]> {
     return [];
   }

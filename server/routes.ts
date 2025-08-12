@@ -586,6 +586,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to load progress' });
     }
   });
+
+  // Session-authorized progress page (shared for admin and parents)
+  app.get('/api/progress/athlete/:athleteId', async (req, res) => {
+    try {
+      const athleteId = Number(req.params.athleteId);
+      if (!Number.isFinite(athleteId)) return res.status(400).json({ error: 'Invalid athlete ID' });
+
+      // Admins can view any athlete
+      if (req.session.adminId) {
+        const data = await storage.getProgressByAthleteId(athleteId);
+        if (!data?.athlete) return res.status(404).json({ error: 'Not found' });
+        return res.json(data);
+      }
+
+      // Parents can view only their athlete
+      if (req.session.parentId) {
+        const parentAthletes = await storage.getParentAthletes(req.session.parentId);
+        const owns = parentAthletes.some(a => a.id === athleteId);
+        if (!owns) return res.status(403).json({ error: 'Access denied' });
+        const data = await storage.getProgressByAthleteId(athleteId);
+        if (!data?.athlete) return res.status(404).json({ error: 'Not found' });
+        return res.json(data);
+      }
+
+      return res.status(401).json({ error: 'Authentication required' });
+    } catch (err) {
+      console.error('[ROUTES][PROGRESS][BY-ATHLETE] error:', err);
+      res.status(500).json({ error: 'Failed to load progress' });
+    }
+  });
+
+  // Get progress share links for parent's athletes
+  app.get('/api/parent/athletes/:athleteId/progress-share-links', isParentAuthenticated, async (req, res) => {
+    try {
+      const athleteId = Number(req.params.athleteId);
+      if (!athleteId) return res.status(400).json({ error: 'Invalid athlete ID' });
+
+      // Verify the athlete belongs to the authenticated parent
+      const parentAthletes = await storage.getParentAthletes(req.session.parentId!);
+      const athleteExists = parentAthletes.find(a => a.id === athleteId);
+      
+      if (!athleteExists) {
+        return res.status(403).json({ error: 'Athlete not found or access denied' });
+      }
+
+      const shareLinks = await storage.listProgressShareLinks(athleteId);
+      res.json(shareLinks);
+    } catch (err) {
+      console.error('[ROUTES][PARENT][PROGRESS-SHARE] list error:', err);
+      res.status(500).json({ error: 'Failed to list progress share links' });
+    }
+  });
   
   // Parent dashboard routes
   app.get('/api/parent/bookings', isParentAuthenticated, async (req, res) => {

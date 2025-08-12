@@ -10,11 +10,12 @@ import { UpdatedWaiverModal } from "@/components/updated-waiver-modal";
 import { WaiverStatusDisplay } from "@/components/WaiverStatusDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
+import { useParentProgressShareLinks } from "@/hooks/useAthleteProgress";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete } from "@shared/schema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, FileCheck, Plus, User } from "lucide-react";
+import { Edit, FileCheck, Plus, User, ExternalLink } from "lucide-react";
 import React, { useState } from "react";
 
 interface ParentAthleteDetailDialogProps {
@@ -54,6 +55,9 @@ export function ParentAthleteDetailDialog({
 
   // Fetch waiver status for the athlete
   const { data: waiverStatus } = useAthleteWaiverStatus(athlete?.id || 0);
+
+  // Fetch progress share links for the athlete
+  const { data: progressShareLinks = [] } = useParentProgressShareLinks(athlete?.id);
 
   // Fetch parent information for waiver pre-filling
   const { 
@@ -261,6 +265,42 @@ export function ParentAthleteDetailDialog({
               </div>
             )}
           </div>
+
+          {/* Progress Share Link */}
+          {progressShareLinks.length > 0 && (
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800" role="region" aria-labelledby="progress-link-heading">
+              <h3 id="progress-link-heading" className="font-semibold text-lg mb-3 text-gray-900 dark:text-white">Public Progress Page</h3>
+              <div className="space-y-3">
+                {progressShareLinks
+                  .filter(link => link.expiresAt && new Date(link.expiresAt) > new Date()) // Only show non-expired links
+                  .map(link => (
+                    <div key={link.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <div className="flex-1">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                          A public progress page is available for {athleteData.name || 'this athlete'}
+                        </p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          Expires: {link.expiresAt ? new Date(link.expiresAt).toLocaleDateString() : 'Never'}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => window.open(`/progress/${link.token}`, '_blank')}
+                        className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white ml-3"
+                        size="sm"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Progress Page
+                      </Button>
+                    </div>
+                  ))}
+                {progressShareLinks.filter(link => link.expiresAt && new Date(link.expiresAt) > new Date()).length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No active public progress page available. Contact your coach to generate one.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           {showActionButtons && (

@@ -187,6 +187,19 @@ export interface IStorage {
     }>;
     link: ProgressShareLink | null;
   } | null>;
+  /**
+   * Session-authorized progress fetch for a given athlete.
+   * Returns the same shape as getProgressByToken but without link metadata.
+   */
+  getProgressByAthleteId(athleteId: number): Promise<{
+    athlete: Athlete | null;
+    skills: Array<{
+      athleteSkill: AthleteSkill;
+      skill?: Skill | null;
+      videos: AthleteSkillVideo[];
+    }>;
+    link: ProgressShareLink | null;
+  } | null>;
 
   // Archived Waivers
   getAllArchivedWaivers(): Promise<ArchivedWaiver[]>;
@@ -283,6 +296,20 @@ export class MemStorage implements IStorage {
   async getAllArchivedBookings(): Promise<any[]> {
     // Not implemented in MemStorage
     return [];
+  }
+
+  // Session-authorized progress by athlete (stub for MemStorage)
+  async getProgressByAthleteId(athleteId: number): Promise<{
+    athlete: Athlete | null;
+    skills: Array<{ athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[] }>;
+    link: ProgressShareLink | null;
+  } | null> {
+    const athlete = (this.athletes && this.athletes.get(athleteId)) || null;
+    return {
+      athlete,
+      skills: [],
+      link: null,
+    };
   }
   
   // Get all lesson types (stub)
@@ -2090,9 +2117,11 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink> {
+    const crypto = require('crypto');
+    
     const payload: any = {
       athlete_id: (input as any).athleteId,
-      token: (input as any).token,
+      token: (input as any).token || crypto.randomBytes(16).toString('hex'),
       expires_at: (input as any).expiresAt ?? null,
     };
     const { data, error } = await supabaseAdmin.from('progress_share_links').insert(payload).select('*').single();
@@ -2201,6 +2230,54 @@ export class SupabaseStorage implements IStorage {
         expiresAt: link.expires_at,
         createdAt: link.created_at,
       }
+    };
+  }
+
+  async getProgressByAthleteId(athleteId: number): Promise<{
+    athlete: Athlete | null;
+    skills: { athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[] }[];
+    link: ProgressShareLink | null;
+  } | null> {
+    // Fetch athlete
+    const { data: athleteRow, error: athleteErr } = await supabaseAdmin
+      .from('athletes')
+      .select('*')
+      .eq('id', athleteId)
+      .maybeSingle();
+    if (athleteErr) {
+      console.error('[STORAGE][PROGRESS][BY-ATHLETE] athlete fetch error:', athleteErr);
+      return null;
+    }
+    const athlete: Athlete | null = athleteRow ? {
+      id: athleteRow.id,
+      parentId: athleteRow.parent_id,
+      name: athleteRow.name,
+      firstName: athleteRow.first_name,
+      lastName: athleteRow.last_name,
+      allergies: athleteRow.allergies,
+      experience: athleteRow.experience,
+      photo: athleteRow.photo,
+      createdAt: athleteRow.created_at,
+      updatedAt: athleteRow.updated_at,
+      dateOfBirth: athleteRow.date_of_birth,
+      gender: athleteRow.gender,
+      isGymMember: athleteRow.is_gym_member ?? false,
+      latestWaiverId: athleteRow.latest_waiver_id,
+      waiverStatus: athleteRow.waiver_status || 'pending',
+      waiverSigned: athleteRow.waiver_signed || false,
+    } : null;
+
+    // Gather skills and videos
+    const rows = await this.getAthleteSkills(athleteId);
+    const withVideos: any[] = [];
+    for (const row of rows) {
+      const videos = await this.listAthleteSkillVideos(row.id);
+      withVideos.push({ athleteSkill: row, skill: row.skill ?? null, videos });
+    }
+    return {
+      athlete,
+      skills: withVideos,
+      link: null,
     };
   }
   // Helper function to log queries

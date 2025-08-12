@@ -16,8 +16,7 @@ import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Booking, Parent } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Link as LinkIcon, Plus, Star, Trash2, ShieldMinus, User, Phone, Mail, CheckCircle, FileText, RefreshCw, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
-import { useCreateProgressShareLink, useDeleteProgressShareLink, useProgressShareLinks, useRevokeProgressShareLink } from "@/hooks/useAthleteProgress";
+import { AlertCircle, Calendar, Clock, Dumbbell, Edit, Plus, Star, User, Phone, Mail, CheckCircle, FileText, RefreshCw, AlertTriangle, ChevronUp, ChevronDown } from "lucide-react";
 import { useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
 import React, { useState } from "react";
 
@@ -124,14 +123,9 @@ export function AthleteDetailDialog({
   const [isWaiverStatusExpanded, setIsWaiverStatusExpanded] = useState(false);
   const [isBookingHistoryExpanded, setIsBookingHistoryExpanded] = useState(false);
   const [isSkillProgressExpanded, setIsSkillProgressExpanded] = useState(false);
-  const [isShareLinksExpanded, setIsShareLinksExpanded] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { mutateAsync: createShareLink, isPending: creatingShare } = useCreateProgressShareLink();
-  const { data: shareLinks = [] } = useProgressShareLinks(athleteData?.id);
-  const deleteShareLink = useDeleteProgressShareLink();
-  const revokeShareLink = useRevokeProgressShareLink();
   
   // Parent details query
   const { data: parentDetails, isLoading: parentLoading } = useQuery({
@@ -352,6 +346,17 @@ export function AthleteDetailDialog({
                   <h3 className="font-bold text-xl text-slate-800 dark:text-blue-200">
                     {athleteData.name || `${athleteData.firstName || ''} ${athleteData.lastName || ''}`.trim() || 'Unknown Athlete'}
                   </h3>
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                      onClick={() => window.open(`/progress/athlete/${athleteData.id}`, '_blank')}
+                    >
+                      <Star className="h-4 w-4 mr-2" />
+                      View Progress
+                    </Button>
+                  </div>
                 </div>
               </div>
               
@@ -491,7 +496,7 @@ export function AthleteDetailDialog({
           {/* Waiver Status */}
           <AdminModalSection 
             title="Waiver Status" 
-            icon={<ShieldMinus className="h-5 w-5" />} 
+            icon={<FileText className="h-5 w-5" />} 
             className="mt-6"
             collapsible={true}
             isExpanded={isWaiverStatusExpanded}
@@ -708,93 +713,6 @@ export function AthleteDetailDialog({
           >
             <AthleteProgressPanel athleteId={athleteData.id} />
           </AdminModalSection>
-          
-          <AdminModalSection 
-            title="Share Progress Links" 
-            className="mt-6"
-            collapsible={true}
-            isExpanded={isShareLinksExpanded}
-            onToggle={() => setIsShareLinksExpanded(!isShareLinksExpanded)}
-          >
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={creatingShare}
-                  className="w-full sm:w-auto"
-                  onClick={async () => {
-                    try {
-                      const created = await createShareLink({ athleteId: athleteData.id });
-                      const url = `${window.location.origin}/progress/${created.token}`;
-                      await navigator.clipboard.writeText(url);
-                      toast({ title: 'Share Link Copied', description: 'Progress link copied to clipboard.' });
-                    } catch (e: any) {
-                      toast({ title: 'Failed to create link', description: e?.message || 'Please try again.', variant: 'destructive' });
-                    }
-                  }}
-                >
-                  <LinkIcon className="h-4 w-4 mr-2" /> Create & Copy Link
-                </Button>
-              </div>
-              {shareLinks.length === 0 ? (
-                <div className="text-sm text-slate-600 dark:text-slate-400">No links yet.</div>
-              ) : (
-                <div className="space-y-2">
-                  {shareLinks.map((l) => {
-                    const expired = l.expiresAt ? new Date(l.expiresAt as any).getTime() < Date.now() : false;
-                    const linkUrl = `${window.location.origin}/progress/${l.token}`;
-                    return (
-                      <div key={l.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 gap-3 sm:gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm break-all sm:truncate">
-                            <a className="text-indigo-600 dark:text-indigo-400 hover:underline" href={linkUrl} target="_blank" rel="noopener noreferrer">
-                              {linkUrl}
-                            </a>
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            Created {new Date(l.createdAt as any).toLocaleString()} 
-                            {l.expiresAt && ` (expires ${new Date(l.expiresAt as any).toLocaleString()})`} 
-                            {expired && ' · expired'}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button size="sm" variant="secondary" className="text-xs" onClick={async ()=>{ 
-                            await navigator.clipboard.writeText(linkUrl); 
-                            toast({ title: 'Copied', description: 'Link copied to clipboard.' }); 
-                          }}>
-                            Copy
-                          </Button>
-                          {!expired && (
-                            <Button size="sm" variant="outline" className="text-xs" onClick={async ()=>{
-                              try {
-                                await revokeShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
-                                toast({ title: 'Revoked', description: 'Link expired.' });
-                              } catch (e:any) {
-                                toast({ title: 'Error', description: e?.message || 'Failed to revoke link', variant: 'destructive' });
-                              }
-                            }}>
-                              <ShieldMinus className="h-3 w-3 mr-1"/>Revoke
-                            </Button>
-                          )}
-                          <Button size="sm" variant="destructive" className="text-xs p-2" onClick={async ()=>{
-                            try {
-                              await deleteShareLink.mutateAsync({ id: l.id, athleteId: athleteData.id });
-                              toast({ title: 'Deleted', description: 'Link removed.' });
-                            } catch (e:any) {
-                              toast({ title: 'Error', description: e?.message || 'Failed to delete link', variant: 'destructive' });
-                            }
-                          }}>
-                            <Trash2 className="h-3 w-3"/>
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </AdminModalSection>
 
           {/* Action Buttons */}
           {showActionButtons && (
@@ -806,31 +724,10 @@ export function AthleteDetailDialog({
                 </Button>
               )}
               {onEditAthlete && (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800 w-full sm:w-auto"
-                    disabled={creatingShare}
-                    onClick={async () => {
-                      try {
-                        const link = await createShareLink({ athleteId: athleteData.id });
-                        const url = `${window.location.origin}/progress/${link.token}`;
-                        await navigator.clipboard.writeText(url);
-                        toast({ title: 'Share Link Copied', description: 'Progress link copied to clipboard.' });
-                      } catch (e: any) {
-                        toast({ title: 'Failed to create link', description: e?.message || 'Please try again.', variant: 'destructive' });
-                      }
-                    }}
-                  >
-                    <LinkIcon className="h-4 w-4 mr-2" />
-                    Share Progress
-                  </Button>
-                  <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 w-full sm:w-auto">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Athlete
-                  </Button>
-                </div>
+                <Button onClick={onEditAthlete} variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 w-full sm:w-auto">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Athlete
+                </Button>
               )}
             </div>
           )}
