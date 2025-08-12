@@ -139,7 +139,7 @@ export default function AdminSkillsManager() {
             onChange={(e) => updateDraft({ name: e.target.value })}
             onFocus={(e) => handleInputFocus(e.target)}
             onBlur={handleInputBlur}
-            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
+            className="focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
         </div>
         
@@ -166,7 +166,7 @@ export default function AdminSkillsManager() {
               }
             }}
           >
-            <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm">
+            <SelectTrigger>
               <SelectValue placeholder="Select apparatus" />
             </SelectTrigger>
             <SelectContent>
@@ -183,7 +183,7 @@ export default function AdminSkillsManager() {
             value={draft.level}
             onValueChange={(value) => updateDraft({ level: value as typeof draft.level })}
           >
-            <SelectTrigger className="border-slate-200/60 bg-white/80 backdrop-blur-sm">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -203,7 +203,7 @@ export default function AdminSkillsManager() {
             onBlur={handleInputBlur}
             placeholder="Select or type category"
             list="categories-list"
-            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
+            className="focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
           <datalist id="categories-list">
             {uniqueCategories.map(category => (
@@ -219,7 +219,7 @@ export default function AdminSkillsManager() {
             onChange={(e) => updateDraft({ description: e.target.value })}
             onFocus={(e) => handleInputFocus(e.target)}
             onBlur={handleInputBlur}
-            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
+            className="focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
         </div>
         
@@ -232,7 +232,7 @@ export default function AdminSkillsManager() {
             onFocus={(e) => handleInputFocus(e.target)}
             onBlur={handleInputBlur}
             placeholder="e.g. 10, 20, 30..."
-            className="border-slate-200/60 bg-white/80 backdrop-blur-sm focus:border-[#0F0276] focus:ring-[#0F0276]"
+            className="focus:border-[#0F0276] focus:ring-[#0F0276]"
           />
         </div>
         
@@ -357,7 +357,7 @@ export default function AdminSkillsManager() {
         <Button 
           onClick={onCreate} 
           disabled={createSkill.isPending || !draft.name}
-          className="bg-gradient-to-r from-[#0F0276] to-[#2A4A9B] hover:from-[#0F0276]/90 hover:to-[#2A4A9B]/90 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform-gpu hover:scale-[1.02]"
+          className="bg-gradient-to-r from-[#D8BD2A] to-[#B8A626] hover:from-[#D8BD2A]/90 hover:to-[#B8A626]/90 text-[#0F0276] font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform-gpu hover:scale-[1.02]"
         >
           {createSkill.isPending ? 'Creating...' : 'Add Skill'}
         </Button>
