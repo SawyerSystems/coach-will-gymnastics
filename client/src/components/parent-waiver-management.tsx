@@ -64,7 +64,54 @@ export function ParentWaiverManagement() {
   // Fetch waiver status for all parent's athletes
   const { data: waiverStatus, isLoading } = useQuery<AthleteWaiverStatus[]>({
     queryKey: ['/api/parent/waivers'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // force immediate freshness so changes show up
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      // Fetch raw data
+      const res = await apiRequest('GET', '/api/parent/waivers');
+      const data = await res.json();
+
+      // Normalize waiver fields to camelCase regardless of server response shape
+      const normalized = (data as any[]).map((item) => {
+        const w = item?.waiver;
+        const builtFromTopLevel = !w || (!w.signerName && !w.signer_name && (item.signer_name || item.relationship_to_athlete || item.signed_at || item.latest_waiver_id));
+
+        // Build a waiver object from top-level fields if nested waiver is missing/incomplete
+        const waiver = builtFromTopLevel
+          ? {
+              ...(w || {}),
+              id: w?.id ?? item.latest_waiver_id ?? w?.waiver_id ?? null,
+              athlete_id: w?.athlete_id ?? item.id ?? w?.athleteId ?? null,
+              signerName: (w?.signerName ?? item.signer_name ?? w?.signer_name ?? ''),
+              relationshipToAthlete: (w?.relationshipToAthlete ?? item.relationship_to_athlete ?? w?.relationship_to_athlete ?? ''),
+              signedAt: (w?.signedAt ?? item.signed_at ?? w?.signed_at ?? null),
+              signature_id: w?.signature_id ?? item.signature_id ?? null,
+              signature_data: w?.signature_data ?? item.signature_data ?? null,
+              created_at: w?.created_at ?? item.created_at ?? null,
+            }
+          : {
+              ...w,
+              signerName: w.signerName ?? w.signer_name ?? w.signer ?? '',
+              relationshipToAthlete: w.relationshipToAthlete ?? w.relationship_to_athlete ?? w.relationship ?? '',
+              signedAt: w.signedAt ?? w.signed_at ?? w.signed_at_utc ?? null,
+            };
+
+        const result = {
+          ...item,
+          waiver: waiver ?? null,
+        };
+
+        // Lightweight debug in dev only
+        if (import.meta.env.DEV && !result.waiver?.signerName && (item.signer_name || item.relationship_to_athlete || item.signed_at)) {
+          console.debug('[Waivers] Normalized entry missing signerName despite top-level fields', { item, result });
+        }
+
+        return result;
+      });
+
+      return normalized as AthleteWaiverStatus[];
+    },
   });
 
   // Fetch parent information for waiver pre-filling
@@ -500,7 +547,7 @@ export function ParentWaiverManagement() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                             <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Signed by:</span>
-                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.signerName}</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.signerName || 'N/A'}</span>
                           </div>
                           <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                             <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Date signed:</span>
@@ -512,7 +559,7 @@ export function ParentWaiverManagement() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">
                             <span className="text-sm font-medium text-amber-700 dark:text-[#B8860B]">Relationship:</span>
-                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.relationshipToAthlete}</span>
+                            <span className="text-sm font-semibold text-amber-800 dark:text-[#B8860B]">{status.waiver?.relationshipToAthlete || 'N/A'}</span>
                           </div>
                           {status.waiver?.emergencyContactNumber && (
                             <div className="flex justify-between items-center py-2 px-3 bg-amber-50 dark:bg-[#B8860B]/20 rounded-lg">

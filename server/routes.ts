@@ -8784,7 +8784,7 @@ setTimeout(async () => {
 
       // Use supabaseAdmin to query athletes_with_waiver_status view directly
       // This bypasses RLS and provides accurate waiver status information
-      const { data: athleteWaiverData, error } = await supabaseAdmin
+  const { data: athleteWaiverData, error } = await supabaseAdmin
         .from('athletes_with_waiver_status')
         .select('*')
         .eq('parent_id', parentId);
@@ -8794,18 +8794,70 @@ setTimeout(async () => {
         return res.status(500).json({ error: 'Failed to fetch athlete waiver data' });
       }
 
-      // Transform the data to match the expected format
+      // Batch fetch full waiver details for latest_waiver_id values
+      const waiverIds = Array.from(new Set((athleteWaiverData || [])
+        .map((row: any) => row.latest_waiver_id)
+        .filter((id: any) => !!id)));
+
+      let waiverMap = new Map<number, any>();
+      if (waiverIds.length > 0) {
+        const { data: waivers, error: wErr } = await supabaseAdmin
+          .from('waivers')
+          .select('id, athlete_id, parent_id, relationship_to_athlete, signed_at, signature, created_at')
+          .in('id', waiverIds);
+        if (wErr) {
+          console.error('Error fetching waiver rows:', wErr);
+        } else if (waivers) {
+          waiverMap = new Map(waivers.map(w => [w.id, w]));
+        }
+      }
+
+      // Batch fetch parent names for signerName (since waivers table has parent_id, not signer_name)
+      let parentNameMap = new Map<number, string>();
+      if (waiverMap.size > 0) {
+        const parentIds = Array.from(new Set(Array.from(waiverMap.values()).map((w: any) => w.parent_id).filter(Boolean)));
+        if (parentIds.length > 0) {
+          const { data: parents, error: pErr } = await supabaseAdmin
+            .from('parents')
+            .select('id, first_name, last_name')
+            .in('id', parentIds);
+          if (pErr) {
+            console.error('Error fetching parents for signer names:', pErr);
+          } else if (parents) {
+            parents.forEach((p: any) => {
+              const full = [p.first_name, p.last_name].filter(Boolean).join(' ').trim();
+              parentNameMap.set(p.id, full || `Parent #${p.id}`);
+            });
+          }
+        }
+      }
+
+      // Transform the data to match the expected format (camelCase for nested waiver)
       const athleteWaiverStatus = athleteWaiverData.map((athleteData: any) => {
-        const hasWaiver = athleteData.computed_waiver_status === 'signed' || athleteData.athlete_waiver_status === 'signed';
-        
-        // Debug to check available fields in the response
-        console.log("Waiver fields available:", {
-          id: athleteData.latest_waiver_id,
-          signer_name: athleteData.waiver_signer_name,
-          relationship_to_athlete: athleteData.waiver_relationship_to_athlete,
-          signed_at: athleteData.waiver_signed_at
+        const hasWaiver = athleteData.computed_waiver_status === 'signed' || athleteData.athlete_waiver_status === 'signed' || athleteData.waiver_status === 'signed';
+
+        const waiverRow = athleteData.latest_waiver_id ? waiverMap.get(athleteData.latest_waiver_id) : null;
+
+        // Minimal debug of field presence
+        console.log("Waiver fields (view/table):", {
+          latest_waiver_id: athleteData.latest_waiver_id,
+          view_waiver_signed_at: athleteData.waiver_signed_at,
+          waiver_row_signed_at: waiverRow?.signed_at,
+          waiver_row_parent_id: waiverRow?.parent_id,
+          waiver_row_relationship: waiverRow?.relationship_to_athlete,
         });
-        
+
+        const waiver = athleteData.latest_waiver_id ? {
+          id: athleteData.latest_waiver_id,
+          athlete_id: athleteData.id,
+          signedAt: waiverRow?.signed_at ?? athleteData.waiver_signed_at ?? null,
+          signature_id: athleteData.waiver_signature_id ?? null,
+          signature_data: athleteData.waiver_signature_data ?? waiverRow?.signature ?? null,
+          signerName: (waiverRow?.parent_id ? parentNameMap.get(waiverRow.parent_id) : null) ?? null,
+          relationshipToAthlete: waiverRow?.relationship_to_athlete ?? null,
+          created_at: athleteData.waiver_created_at ?? waiverRow?.created_at ?? null,
+        } : null;
+
         return {
           athlete: {
             id: athleteData.id,
@@ -8819,16 +8871,7 @@ setTimeout(async () => {
             created_at: athleteData.created_at,
             updated_at: athleteData.updated_at
           },
-          waiver: athleteData.latest_waiver_id ? {
-            id: athleteData.latest_waiver_id,
-            athlete_id: athleteData.id,
-            signed_at: athleteData.waiver_signed_at,
-            signature_id: athleteData.waiver_signature_id,
-            signature_data: athleteData.waiver_signature_data,
-            signer_name: athleteData.waiver_signer_name,
-            relationship_to_athlete: athleteData.waiver_relationship_to_athlete,
-            created_at: athleteData.waiver_created_at
-          } : null,
+          waiver,
           hasWaiver: hasWaiver,
           waiverSigned: hasWaiver,
           needsWaiver: !hasWaiver

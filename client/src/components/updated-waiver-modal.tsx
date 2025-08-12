@@ -109,9 +109,10 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
       const isRealDevice = 'ontouchstart' in window && window.screen.width <= 768;
       
       if (isMobile && isRealDevice) {
-        // Lock orientation to landscape on mobile devices
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('landscape').catch(() => {
+        // Lock orientation to landscape on mobile devices (defensive for TS/dom variations)
+        const orientation: any = (screen as any)?.orientation;
+        if (orientation?.lock && typeof orientation.lock === 'function') {
+          orientation.lock('landscape').catch(() => {
             // Silent fail if orientation lock is not supported
           });
         }
@@ -932,8 +933,11 @@ export function UpdatedWaiverModal({ isOpen, onClose, onWaiverSigned, bookingDat
                       // Ensure canvas is properly initialized
                       if (signatureRef.current) {
                         const canvas = signatureRef.current.getCanvas();
-                        if (canvas && canvas.getContext) {
-                          // Canvas is ready
+                        if (canvas && typeof canvas.getContext === 'function') {
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            // Canvas is ready
+                          }
                         }
                       }
                     }}
