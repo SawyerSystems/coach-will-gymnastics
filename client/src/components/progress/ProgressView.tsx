@@ -157,8 +157,24 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
     <div className="min-h-screen bg-gradient-to-b from-[#EEF2FF] to-white dark:from-[#0B163F] dark:to-[#0B163F]">
       <header className="bg-[#0F0276] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="grid gap-4">
-            {/* Stats Overview in Header */}
+          <div className="flex flex-col gap-6">
+            {/* Athlete Name & Experience */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                  {a?.name || `${a?.firstName || ''} ${a?.lastName || ''}`.trim() || 'Athlete Progress'}
+                </h1>
+                {a?.experience && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-blue-200 text-sm font-medium">Experience Level:</span>
+                    <span className="bg-[#D8BD2A] text-[#0F0276] px-2 py-1 rounded text-xs font-semibold uppercase tracking-wide">
+                      {String(a.experience).charAt(0).toUpperCase() + String(a.experience).slice(1)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Stats Overview */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-[#D8BD2A]">{stats.totalSkills}</div>

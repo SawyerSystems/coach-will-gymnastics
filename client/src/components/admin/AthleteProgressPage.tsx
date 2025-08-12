@@ -73,13 +73,11 @@ export default function AthleteProgressPage() {
   // Summary computations
   const overall = useMemo(() => {
     const total = visibleSkills.length;
-    const counts: Record<string, number> = {};
-    SKILL_STATUSES.forEach((s) => (counts[s] = 0));
+    const counts: Record<string, number> = { prepping: 0, learning: 0, consistent: 0, mastered: 0 };
     visibleSkills.forEach((as) => {
-      if (as.status && typeof as.status === "string") {
-        const key = as.status.toLowerCase();
-        counts[key] = (counts[key] || 0) + 1;
-      }
+      const raw = (as.status || '').toString().toLowerCase();
+      const key = raw === 'working' ? 'prepping' : raw;
+      if (key in counts) counts[key] += 1;
     });
     const mastered = counts["mastered"] || 0;
     const consistent = counts["consistent"] || 0;
@@ -96,7 +94,8 @@ export default function AthleteProgressPage() {
       if (!groups.has(apId)) groups.set(apId, { total: 0, counts: {}, masteredPct: 0, consistentPct: 0 } as any);
       const g: any = groups.get(apId)!;
       g.total += 1;
-      const key = (as.status || "").toString().toLowerCase();
+      const raw = (as.status || '').toString().toLowerCase();
+      const key = raw === 'working' ? 'prepping' : raw;
       g.counts[key] = (g.counts[key] || 0) + 1;
     });
     // compute percentages
@@ -127,10 +126,11 @@ export default function AthleteProgressPage() {
           if (!inner.has(lvl)) inner.set(lvl, { total: 0, mastered: 0, consistent: 0, prepping: 0, learning: 0 });
       const s = inner.get(lvl)!;
       s.total += 1;
-      const st = (as.status || '').toString().toLowerCase();
+      const raw = (as.status || '').toString().toLowerCase();
+      const st = raw === 'working' ? 'prepping' : raw;
       if (st === 'mastered') s.mastered += 1;
       if (st === 'consistent') s.consistent += 1;
-          if (st === 'working' || st === 'prepping') s.prepping += 1;
+      if (st === 'prepping') s.prepping += 1;
       if (st === 'learning') s.learning += 1;
     });
     return Array.from(map.entries()).map(([ap, inner]) => ({
@@ -218,36 +218,22 @@ export default function AthleteProgressPage() {
             </AdminCardHeader>
             <AdminCardContent>
               <div className="grid gap-4">
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Mastered</span>
-                    <span className="text-slate-600">{overall.masteredPct}%</span>
+                {([
+                  ['prepping','Prepping'],
+                  ['learning','Learning'],
+                  ['consistent','Consistent'],
+                  ['mastered','Mastered']
+                ] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span>{label}</span>
+                      <span className="text-slate-600">{Math.round(((overall.counts[key] || 0) / Math.max(overall.total, 1)) * 100)}%</span>
+                    </div>
+                    <Progress value={Math.round(((overall.counts[key] || 0) / Math.max(overall.total, 1)) * 100)} />
                   </div>
-                  <Progress value={overall.masteredPct} />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Consistent</span>
-                    <span className="text-slate-600">{Math.round((overall.counts["consistent"] || 0) / Math.max(overall.total, 1) * 100)}%</span>
-                  </div>
-                  <Progress value={Math.round((overall.counts["consistent"] || 0) / Math.max(overall.total, 1) * 100)} />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                      <span>Prepping</span>
-                      <span className="text-slate-600">{Math.round(((overall.counts["prepping"] || 0)) / Math.max(overall.total, 1) * 100)}%</span>
-                  </div>
-                    <Progress value={Math.round(((overall.counts["prepping"] || 0)) / Math.max(overall.total, 1) * 100)} />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Learning</span>
-                    <span className="text-slate-600">{Math.round((overall.counts["learning"] || 0) / Math.max(overall.total, 1) * 100)}%</span>
-                  </div>
-                  <Progress value={Math.round((overall.counts["learning"] || 0) / Math.max(overall.total, 1) * 100)} />
-                </div>
+                ))}
                 <div className="text-xs text-slate-600 mt-1">
-                      Total skills: {overall.total} · Mastered: {overall.counts["mastered"] || 0} · Consistent: {overall.counts["consistent"] || 0} · Learning: {overall.counts["learning"] || 0} · Prepping: {(overall.counts["prepping"] || 0)}
+                  Total skills: {overall.total} · Prepping: {overall.counts["prepping"] || 0} · Learning: {overall.counts["learning"] || 0} · Consistent: {overall.counts["consistent"] || 0} · Mastered: {overall.counts["mastered"] || 0}
                 </div>
               </div>
             </AdminCardContent>
