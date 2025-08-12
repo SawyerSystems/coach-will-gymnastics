@@ -1,6 +1,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
+export type VideoReference = {
+  id?: string;
+  type: 'url' | 'upload';
+  url: string;
+  title: string;
+  description?: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
+};
+
 export type Apparatus = { id: number; name: string };
 export type Skill = {
   id: number;
@@ -10,7 +21,10 @@ export type Skill = {
   description?: string | null;
   displayOrder?: number | null;
   apparatusId?: number | null;
+  referenceVideos?: VideoReference[] | null;
 };
+
+export { VideoReference };
 
 export type SkillRelations = { prerequisiteIds: number[]; componentIds: number[] };
 

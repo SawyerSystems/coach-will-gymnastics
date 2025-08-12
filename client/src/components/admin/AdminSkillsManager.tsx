@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useApparatusList, useCreateSkill, useDeleteSkill, useSkills, useUpdateSkill, useSkillRelations, useSaveSkillRelations, type Skill } from "@/hooks/useSkills";
+import { useApparatusList, useCreateSkill, useDeleteSkill, useSkills, useUpdateSkill, useSkillRelations, useSaveSkillRelations, type Skill, type VideoReference } from "@/hooks/useSkills";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -47,6 +47,7 @@ export default function AdminSkillsManager() {
     isConnectedCombo: false,
     prerequisiteIds: [] as number[],
     componentIds: [] as number[],
+    referenceVideos: [] as VideoReference[],
   });
 
   // Refs to maintain focus through re-renders
@@ -54,6 +55,11 @@ export default function AdminSkillsManager() {
   const maintainFocus = useRef<boolean>(false);
 
   const [selectedSkillId, setSelectedSkillId] = useState<number | undefined>(undefined);
+
+  // Video form state
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoUrl, setNewVideoUrl] = useState('');
+  const [newVideoDescription, setNewVideoDescription] = useState('');
 
   // Simple focus management helpers
   const handleInputFocus = (input: HTMLInputElement) => {
@@ -104,6 +110,29 @@ export default function AdminSkillsManager() {
   }, [skills]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  // Handle adding new video
+  const handleAddVideo = () => {
+    if (!newVideoTitle || !newVideoUrl) return;
+    
+    const newVideo: VideoReference = {
+      id: `temp-${Date.now()}`,
+      type: newVideoUrl.startsWith('http') ? 'url' : 'upload',
+      url: newVideoUrl,
+      title: newVideoTitle,
+      description: newVideoDescription || undefined,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    updateDraft({ 
+      referenceVideos: [...draft.referenceVideos, newVideo] 
+    });
+
+    // Clear form
+    setNewVideoTitle('');
+    setNewVideoUrl('');
+    setNewVideoDescription('');
+  };
+
   const onCreate = async () => {
     if (!draft.name) return;
     const skillData = {
@@ -115,7 +144,8 @@ export default function AdminSkillsManager() {
       displayOrder: draft.displayOrder === "" ? undefined : Number(draft.displayOrder),
       isConnectedCombo: draft.isConnectedCombo,
       prerequisiteIds: draft.prerequisiteIds,
-      componentIds: draft.componentIds
+      componentIds: draft.componentIds,
+      referenceVideos: draft.referenceVideos
     };
     await createSkill.mutateAsync(skillData);
     handleClearForm();
@@ -133,7 +163,12 @@ export default function AdminSkillsManager() {
       isConnectedCombo: false,
       prerequisiteIds: [],
       componentIds: [],
+      referenceVideos: [],
     });
+    // Clear video form fields too
+    setNewVideoTitle('');
+    setNewVideoUrl('');
+    setNewVideoDescription('');
   };
 
   // Simple form component - no complex memoization needed
@@ -437,6 +472,87 @@ export default function AdminSkillsManager() {
                   Select an apparatus first to add component skills
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Reference Videos Section */}
+        <div className="md:col-span-2 space-y-3">
+          <Label className="text-[#0F0276] dark:text-white font-medium">Reference Videos (optional)</Label>
+          <div className="border border-slate-200/60 rounded-lg p-3 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
+            {/* Existing Videos */}
+            {draft.referenceVideos.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {draft.referenceVideos.map((video, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-[#0F0276]/50 rounded border">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-[#0F0276] dark:text-white">{video.title}</div>
+                      <div className="text-xs text-slate-600 dark:text-white/70">{video.type === 'url' ? 'URL' : 'Upload'}: {video.url}</div>
+                      {video.description && (
+                        <div className="text-xs text-slate-500 dark:text-white/60">{video.description}</div>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        const updated = draft.referenceVideos.filter((_, i) => i !== index);
+                        updateDraft({ referenceVideos: updated });
+                      }}
+                      className="h-6 w-6 p-0"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Add New Video */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Input
+                  placeholder="Video title"
+                  value={newVideoTitle}
+                  onChange={(e) => setNewVideoTitle(e.target.value)}
+                  className="text-sm"
+                />
+                <Input
+                  placeholder="Video URL or file upload"
+                  value={newVideoUrl}
+                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              <Input
+                placeholder="Description (optional)"
+                value={newVideoDescription}
+                onChange={(e) => setNewVideoDescription(e.target.value)}
+                className="text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddVideo}
+                  disabled={!newVideoTitle || !newVideoUrl}
+                  className="text-sm"
+                >
+                  Add Video
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setNewVideoTitle('');
+                    setNewVideoUrl('');
+                    setNewVideoDescription('');
+                  }}
+                  className="text-sm"
+                >
+                  Clear
+                </Button>
+              </div>
             </div>
           </div>
         </div>

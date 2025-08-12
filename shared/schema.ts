@@ -329,6 +329,7 @@ export const skills = pgTable("skills", {
   createdAt: timestamp("created_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
   apparatusId: integer("apparatus_id").references(() => apparatus.id),
+  referenceVideos: json("reference_videos").$type<VideoReference[]>().default([]),
 });
 
 export const athleteSkills = pgTable("athlete_skills", {
@@ -762,6 +763,18 @@ export type InsertParentPasswordResetToken = typeof parentPasswordResetTokens.$i
 // Lesson types
 export type LessonType = typeof lessonTypes.$inferSelect;
 export type InsertLessonType = typeof lessonTypes.$inferInsert;
+
+// Video reference type for skills
+export type VideoReference = {
+  id?: string;
+  type: 'url' | 'upload';
+  url: string;
+  title: string;
+  description?: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
+};
 
 // Skills-related types
 export type Skill = typeof skills.$inferSelect;

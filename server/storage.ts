@@ -1828,6 +1828,7 @@ export class SupabaseStorage implements IStorage {
       apparatusId: row.apparatus_id,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      referenceVideos: row.reference_videos || [],
     }));
   }
 
@@ -1839,6 +1840,7 @@ export class SupabaseStorage implements IStorage {
       description: input.description ?? null,
       display_order: (input as any).displayOrder ?? null,
       apparatus_id: input.apparatusId ?? null,
+      reference_videos: (input as any).referenceVideos ?? [],
     };
     const { data, error } = await supabaseAdmin.from('skills').insert(insert).select('*').single();
     if (error) throw error;
@@ -1852,6 +1854,7 @@ export class SupabaseStorage implements IStorage {
       apparatusId: data.apparatus_id,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      referenceVideos: data.reference_videos || [],
     };
   }
 
@@ -1864,6 +1867,7 @@ export class SupabaseStorage implements IStorage {
   if ('displayOrder' in (input as any)) patch.display_order = (input as any).displayOrder;
     if ('apparatusId' in (input as any)) patch.apparatus_id = (input as any).apparatusId;
   if ('isConnectedCombo' in (input as any)) patch.is_connected_combo = (input as any).isConnectedCombo;
+    if ('referenceVideos' in (input as any)) patch.reference_videos = (input as any).referenceVideos;
     if (Object.keys(patch).length === 0) return this.listSkills().then(r => r.find(s => s.id === id));
     let { data, error } = await supabaseAdmin.from('skills').update(patch).eq('id', id).select('*').single();
     if (error) {
@@ -1891,6 +1895,7 @@ export class SupabaseStorage implements IStorage {
       apparatusId: data.apparatus_id,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      referenceVideos: data.reference_videos || [],
     };
   }
 
@@ -1991,7 +1996,7 @@ export class SupabaseStorage implements IStorage {
   async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> {
     const { data, error } = await supabaseAdmin
       .from('athlete_skills')
-      .select('*, skills:skill_id ( id, name, category, level, description, display_order, apparatus_id, created_at, updated_at )')
+      .select('*, skills:skill_id ( id, name, category, level, description, display_order, apparatus_id, created_at, updated_at, reference_videos )')
       .eq('athlete_id', athleteId)
       .order('created_at', { ascending: true });
     if (error) {
@@ -2019,6 +2024,7 @@ export class SupabaseStorage implements IStorage {
         apparatusId: row.skills.apparatus_id,
         createdAt: row.skills.created_at,
         updatedAt: row.skills.updated_at,
+        referenceVideos: row.skills.reference_videos || [],
       } : null,
     }));
   }
