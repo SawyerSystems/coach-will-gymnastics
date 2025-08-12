@@ -1044,10 +1044,10 @@ function ParentDashboard() {
 
                     {/* Adventure Log Entries */}
                     <div className="space-y-4">
-                      <h3 className="text-base xs:text-lg font-semibold text-white flex items-center gap-2">
+                      <h3 className="text-base xs:text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
                         Adventure History
-                        <span className="text-xs font-normal text-white">({pastBookings.length} completed)</span>
+                        <span className="text-xs font-normal text-[#0F0276] dark:text-white">({pastBookings.length} completed)</span>
                       </h3>
                       
                       {pastBookings.map((booking) => (
@@ -1241,15 +1241,15 @@ function ParentDashboard() {
                         
                         <div className="space-y-2 mt-3">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-white" />
-                            <p className="text-xs xs:text-sm text-white">
+                            <Calendar className="w-3.5 h-3.5 text-[#0F0276] dark:text-white" />
+                            <p className="text-xs xs:text-sm text-[#0F0276] dark:text-white">
                               Born: {athlete.dateOfBirth ? format(new Date(`${athlete.dateOfBirth}T12:00:00Z`), 'MMM d, yyyy') : 'Unknown'}
                             </p>
                           </div>
                           
                           <div className="flex items-center gap-1.5">
-                            <Medal className="w-3.5 h-3.5 text-white" />
-                            <p className="text-xs xs:text-sm text-white">
+                            <Medal className="w-3.5 h-3.5 text-[#0F0276] dark:text-white" />
+                            <p className="text-xs xs:text-sm text-[#0F0276] dark:text-white">
                               Experience: {athlete.experience}
                             </p>
                           </div>
@@ -1258,10 +1258,10 @@ function ParentDashboard() {
                             <div className="flex items-start gap-1.5">
                               <AlertCircle className="w-3.5 h-3.5 text-orange-500 mt-0.5" />
                               <div>
-                                <p className="text-xs xs:text-sm font-medium text-white">
+                                <p className="text-xs xs:text-sm font-medium text-[#0F0276] dark:text-white">
                                   Allergies:
                                 </p>
-                                <p className="text-[10px] xs:text-xs text-white">{athlete.allergies}</p>
+                                <p className="text-[10px] xs:text-xs text-[#0F0276] dark:text-white">{athlete.allergies}</p>
                               </div>
                             </div>
                           )}
