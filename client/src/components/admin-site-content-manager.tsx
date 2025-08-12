@@ -1280,7 +1280,7 @@ export function AdminSiteContentManager() {
           </Button>
         </div>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin w-8 h-8" />
         </div>
       </div>
     );

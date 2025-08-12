@@ -8,7 +8,7 @@ import { useFocusAreas } from "@/hooks/useFocusAreas";
 import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertCircle, CreditCard, Info, Loader2 } from "lucide-react";
+import { AlertCircle, CreditCard, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
@@ -359,12 +359,12 @@ export function PaymentStep() {
       >
         {createBooking.isPending || isProcessing ? (
           <>
-            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="h-5 w-5 mr-2 animate-spin" />
             Processing...
           </>
         ) : areFocusAreasLoading ? (
           <>
-            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="h-5 w-5 mr-2 animate-spin" />
             Loading Focus Areas...
           </>
         ) : (

@@ -774,7 +774,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
-            <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin w-6 h-6" />
           </div>
         </CardContent>
       </Card>
@@ -1406,7 +1406,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
           
           {loadingArchived ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+              <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin w-6 h-6" />
             </div>
           ) : (
             <>

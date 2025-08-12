@@ -398,7 +398,7 @@ export function ParentSelectionStep() {
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin h-8 w-8 mx-auto" />
             <p className="text-muted-foreground mt-2">Loading parents...</p>
           </div>
         )}

@@ -10,15 +10,57 @@ export interface MetricCard {
   color?: "blue" | "green" | "orange" | "slate" | "indigo" | "red" | "amber";
 }
 
-const colorMap: Record<NonNullable<MetricCard["color"]>, { wrapper: string; title: string; iconBg: string; value: string; hint: string }> = {
-  blue:   { wrapper: "from-blue-50 via-blue-25 to-blue-50/30",   title: "text-blue-800",   iconBg: "bg-blue-100",   value: "text-blue-900",   hint: "text-blue-600" },
-  green:  { wrapper: "from-green-50 via-green-25 to-green-50/30", title: "text-green-800",  iconBg: "bg-green-100",  value: "text-green-900",  hint: "text-green-600" },
-  orange: { wrapper: "from-orange-50 via-orange-25 to-orange-50/30", title: "text-orange-800", iconBg: "bg-orange-100", value: "text-orange-900", hint: "text-orange-600" },
-  slate:  { wrapper: "from-slate-50 via-slate-25 to-slate-50/30", title: "text-slate-800",  iconBg: "bg-slate-100",  value: "text-slate-900",  hint: "text-slate-600" },
-  indigo: { wrapper: "from-indigo-50 via-indigo-25 to-indigo-50/30", title: "text-indigo-800", iconBg: "bg-indigo-100", value: "text-indigo-900", hint: "text-indigo-700" },
-  red:    { wrapper: "from-red-50 via-red-25 to-red-50/30",     title: "text-red-800",    iconBg: "bg-red-100",    value: "text-red-900",    hint: "text-red-600" },
-  amber:  { wrapper: "from-amber-50 via-amber-25 to-amber-50/30", title: "text-amber-800",  iconBg: "bg-amber-100",  value: "text-amber-900",  hint: "text-amber-700" },
-};
+    const colorMap = {
+      blue: {
+        wrapper: 'bg-blue-50 border-blue-200',
+        title: 'text-blue-600 font-medium',
+        iconColor: 'text-blue-600',
+        value: 'text-2xl font-bold text-blue-700',
+        hint: 'text-blue-500 text-xs'
+      },
+      green: {
+        wrapper: 'bg-green-50 border-green-200',
+        title: 'text-green-600 font-medium',
+        iconColor: 'text-green-600',
+        value: 'text-2xl font-bold text-green-700',
+        hint: 'text-green-500 text-xs'
+      },
+      orange: {
+        wrapper: 'bg-orange-50 border-orange-200',
+        title: 'text-orange-600 font-medium',
+        iconColor: 'text-orange-600',
+        value: 'text-2xl font-bold text-orange-700',
+        hint: 'text-orange-500 text-xs'
+      },
+      slate: {
+        wrapper: 'bg-slate-50 border-slate-200',
+        title: 'text-slate-600 font-medium',
+        iconColor: 'text-slate-600',
+        value: 'text-2xl font-bold text-slate-700',
+        hint: 'text-slate-500 text-xs'
+      },
+      indigo: {
+        wrapper: 'bg-indigo-50 border-indigo-200',
+        title: 'text-indigo-600 font-medium',
+        iconColor: 'text-indigo-600',
+        value: 'text-2xl font-bold text-indigo-700',
+        hint: 'text-indigo-500 text-xs'
+      },
+      red: {
+        wrapper: 'bg-red-50 border-red-200',
+        title: 'text-red-600 font-medium',
+        iconColor: 'text-red-600',
+        value: 'text-2xl font-bold text-red-700',
+        hint: 'text-red-500 text-xs'
+      },
+      amber: {
+        wrapper: 'bg-amber-50 border-amber-200',
+        title: 'text-amber-600 font-medium',
+        iconColor: 'text-amber-600',
+        value: 'text-2xl font-bold text-amber-700',
+        hint: 'text-amber-500 text-xs'
+      }
+    } as const;
 
 export interface AdminAnalyticsMetricsProps extends React.HTMLAttributes<HTMLDivElement> {
   metrics: MetricCard[];
@@ -40,7 +82,7 @@ export function AdminAnalyticsMetrics({ metrics, columns, className, ...props }:
               <div>
                 <div className={cn("text-sm font-semibold", c.title)}>{m.label}</div>
               </div>
-              {m.icon && <div className={cn("p-2 rounded-lg", c.iconBg)}>{m.icon}</div>}
+              {m.icon && <div className={cn(c.iconColor)}>{m.icon}</div>}
             </div>
             <div className="px-4 sm:px-5 pb-4 sm:pb-5">
               <div className={cn("text-3xl font-black", c.value)}>{m.value}</div>

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, CheckCircle, Loader2, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -54,7 +54,7 @@ export default function VerifyEmail() {
         <CardHeader className="text-center">
           {loading ? (
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+              <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="h-6 w-6 animate-spin" />
             </div>
           ) : success ? (
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">

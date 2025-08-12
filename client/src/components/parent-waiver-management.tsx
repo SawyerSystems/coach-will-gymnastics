@@ -468,7 +468,7 @@ export function ParentWaiverManagement() {
                         >
                           {isLoadingParentInfo ? (
                             <div className="flex items-center gap-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                              <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin h-4 w-4" />
                               Loading...
                             </div>
                           ) : (

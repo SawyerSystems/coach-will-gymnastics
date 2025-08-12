@@ -11,7 +11,7 @@ import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 
-import { AlertCircle, CheckCircle, CreditCard, DollarSign, FileText, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, CreditCard, DollarSign, FileText } from "lucide-react";
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 
@@ -441,7 +441,7 @@ export function AdminPaymentStep() {
         >
           {isProcessing || createAdminBooking.isPending || isSubmittingRef.current ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="h-4 w-4 mr-2 animate-spin" />
               Creating Booking...
             </>
           ) : !state.adminPaymentMethod ? (

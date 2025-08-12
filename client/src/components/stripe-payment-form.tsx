@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
 
 interface StripePaymentFormProps {
   onSuccess: () => void;
@@ -71,7 +70,7 @@ export function StripePaymentForm({ onSuccess, onError, amount }: StripePaymentF
       >
         {isProcessing ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="mr-2 h-4 w-4 animate-spin" />
             Processing...
           </>
         ) : (

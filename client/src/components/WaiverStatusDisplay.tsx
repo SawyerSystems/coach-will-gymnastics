@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
-import { AlertCircle, CheckCircle, FileText, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle, FileText, RefreshCw } from "lucide-react";
 
 interface WaiverStatusDisplayProps {
   athleteId: string | number;
@@ -24,7 +24,7 @@ export function WaiverStatusDisplay({ athleteId, athleteName, onResendWaiver }: 
         </CardHeader>
         <CardContent className="pt-4">
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="h-4 w-4 animate-spin" />
             <span>Checking waiver status...</span>
           </div>
         </CardContent>

@@ -186,7 +186,7 @@ export function AthleteSelectStep({ skipIfNotSemi = false }: AthleteSelectStepPr
       <div className="space-y-3">
         {isLoadingAthletes ? (
           <Card className="p-8 text-center">
-            <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin h-8 w-8 mx-auto mb-4" />
             <p className="text-gray-500">Loading athletes...</p>
           </Card>
         ) : athletes.length === 0 ? (

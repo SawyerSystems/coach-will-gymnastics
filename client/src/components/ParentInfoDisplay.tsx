@@ -51,7 +51,7 @@ export function ParentInfoDisplay({ athleteId, parentInfo: fallbackParentInfo }:
         </CardHeader>
         <CardContent className="pt-4">
           <div className="flex items-center justify-center py-4">
-            <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin w-5 h-5" />
             <span className="ml-2 text-gray-600">Loading parent information...</span>
           </div>
         </CardContent>
