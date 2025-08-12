@@ -8885,6 +8885,64 @@ setTimeout(async () => {
     }
   });
 
+  // Download waiver PDF for parent (parent portal endpoint)
+  app.get("/api/parent/waivers/:id/pdf", isParentAuthenticated, async (req, res) => {
+    try {
+      const parentId = req.session.parentId;
+      const waiverId = parseInt(req.params.id);
+      
+      if (!parentId) {
+        return res.status(401).json({ error: 'Parent authentication required' });
+      }
+
+      if (isNaN(waiverId)) {
+        return res.status(400).json({ error: "Invalid waiver ID" });
+      }
+
+      // Get the waiver and verify it belongs to the authenticated parent
+      const waiver = await storage.getWaiver(waiverId);
+      if (!waiver) {
+        console.warn('[PDF][DOWNLOAD] Waiver not found for id:', waiverId);
+        return res.status(404).json({ error: "Waiver not found" });
+      }
+
+      // Verify the waiver belongs to the authenticated parent
+      if (waiver.parentId !== parentId) {
+        console.warn('[PDF][DOWNLOAD] Access denied - waiver does not belong to parent:', { waiverId, parentId, waiverParentId: waiver.parentId });
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (!waiver.pdfPath) {
+        console.warn('[PDF][DOWNLOAD] No pdfPath on waiver', { id: waiverId, waiverPdfPath: waiver.pdfPath });
+        return res.status(404).json({ error: "PDF not available" });
+      }
+
+      const fs = await import('fs/promises');
+      const path = waiver.pdfPath;
+      try {
+        // Check existence explicitly to improve diagnostics
+        await fs.access(path);
+      } catch (accessErr) {
+        console.warn('[PDF][DOWNLOAD] File does not exist at path:', path, accessErr);
+        return res.status(404).json({ error: "PDF file not found" });
+      }
+
+      try {
+        const pdfBuffer = await fs.readFile(path);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${waiver.athleteName}_waiver.pdf"`);
+        res.send(pdfBuffer);
+      } catch (fileError) {
+        console.error('[PDF][DOWNLOAD] Failed to read file at path:', path, fileError);
+        return res.status(500).json({ error: "Failed to read PDF file" });
+      }
+      
+    } catch (error: any) {
+      console.error("Error downloading waiver PDF:", error);
+      res.status(500).json({ error: "Failed to download waiver PDF" });
+    }
+  });
+
   // Create waiver for athlete (parent portal endpoint)
   app.post("/api/parent/athletes/:athleteId/create-waiver", isParentAuthenticated, async (req, res) => {
     try {

@@ -181,25 +181,31 @@ export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer>
     }
   };
   
-  // Title
-  yPosition = addText('CoachWillTumbles.com', margin, yPosition, helveticaBold, 18, rgb(0.8, 0.2, 0.2));
-  yPosition = addText('Waiver & Adventure Agreement', margin, yPosition - 5, helveticaBold, 16, rgb(0.8, 0.2, 0.2));
-  yPosition -= 20;
-  
-  // Brand logo (top-right)
+  // Header: title on the left, logo on the top-right
+  let titleX = margin;
+  let headerBlockHeight = 0;
   try {
     const logoPathCandidates = [
+      // Repo root assets
       path.join(process.cwd(), 'attached_assets', 'CWT_Circle_LogoSPIN.png'),
       path.join(process.cwd(), 'attached_assets', 'CoachWillTumblesText.png'),
+      // When cwd differs, resolve relative to compiled server files
+      path.resolve(__dirname, '../../attached_assets/CWT_Circle_LogoSPIN.png'),
+      path.resolve(__dirname, '../../attached_assets/CoachWillTumblesText.png'),
+      // Fallback to client/public where the web app serves the same asset
+      path.join(process.cwd(), 'client', 'public', 'CWT_Circle_LogoSPIN.png'),
+      path.resolve(__dirname, '../../client/public/CWT_Circle_LogoSPIN.png'),
     ];
     let logoBytes: Buffer | null = null;
+    let logoPathUsed: string | null = null;
     for (const p of logoPathCandidates) {
       try {
         logoBytes = await fs.readFile(p);
+        logoPathUsed = p;
         break;
       } catch { /* try next */ }
     }
-    if (logoBytes) {
+  if (logoBytes) {
       // Try PNG first; if it fails, try JPG
       let logoImage: any = null;
       try {
@@ -210,13 +216,20 @@ export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer>
         } catch { /* ignore */ }
       }
       if (logoImage) {
-        const targetWidth = 80; // px
-        const scale = targetWidth / logoImage.width;
-        const drawWidth = targetWidth;
-        const drawHeight = logoImage.height * scale;
+        // Target height for a compact header logo (slightly larger for visibility)
+        const targetHeight = 42;
+        const scale = targetHeight / logoImage.height;
+        const drawHeight = targetHeight;
+        const drawWidth = logoImage.width * scale;
+        // Position at top-right of the page, inside margins
         const x = width - margin - drawWidth;
-        const y = height - margin - drawHeight + 10;
+        const y = height - margin - drawHeight + 6;
         page.drawImage(logoImage, { x, y, width: drawWidth, height: drawHeight });
+        // Keep title at left margin; header height should fit tallest element
+        headerBlockHeight = Math.max(headerBlockHeight, drawHeight);
+        if (logoPathUsed) {
+          console.log('[PDF] Embedded logo from:', logoPathUsed);
+        }
       } else {
         console.warn('[PDF] Logo image could not be embedded (unsupported format)');
       }
@@ -226,6 +239,25 @@ export async function generateWaiverPDF(waiverData: WaiverData): Promise<Buffer>
   } catch (logoErr) {
     console.warn('[PDF] Failed to embed logo:', logoErr);
   }
+
+  // Title text at the left
+  const titleTopY = height - margin - 2;
+  page.drawText('CoachWillTumbles.com', {
+    x: titleX,
+    y: titleTopY,
+    size: 18,
+    font: helveticaBold,
+    color: rgb(0.8, 0.2, 0.2),
+  });
+  page.drawText('Waiver & Adventure Agreement', {
+    x: titleX,
+    y: titleTopY - 20,
+    size: 16,
+    font: helveticaBold,
+    color: rgb(0.8, 0.2, 0.2),
+  });
+  headerBlockHeight = Math.max(headerBlockHeight, 38);
+  yPosition = height - margin - headerBlockHeight - 20;
   
   // Date - format to local date string for better readability
   const signedDate = coerceDate(waiverData.signedAt);

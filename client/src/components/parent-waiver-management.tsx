@@ -172,6 +172,35 @@ export function ParentWaiverManagement() {
     }
   };
 
+  // Download PDF function: use public admin endpoint to avoid auth/CORS issues
+  const handleDownloadPDF = async (waiverId: number, athleteName: string) => {
+    try {
+      const apiBaseUrl = import.meta.env.MODE === 'development' ? 'http://localhost:5001' : '';
+      const finalUrl = `${apiBaseUrl}/api/waivers/${waiverId}/pdf`;
+
+      // Use an anchor to trigger a download; cookies will be sent automatically
+      const a = document.createElement('a');
+      a.href = finalUrl;
+      a.download = `${athleteName}_waiver.pdf`;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: "Your waiver PDF is downloading.",
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Download Failed",
+        description: "Could not download waiver PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const confirmCreateWaiver = () => {
     setShowWaiverDialog(false);
     if (selectedAthlete) {
@@ -578,6 +607,7 @@ export function ParentWaiverManagement() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          onClick={() => status.waiver && handleDownloadPDF(status.waiver.id, status.athlete.name)}
                           className="text-[#B8860B] border-[#B8860B]/50 dark:border-[#B8860B] hover:bg-amber-50 dark:hover:bg-[#B8860B]/20 flex-1"
                         >
                           <Download className="w-4 h-4 mr-2" />

@@ -427,21 +427,14 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
               </div>
             </dl>
 
-            <div className="flex justify-between mt-6">
+            <div className="flex justify-end mt-6">
               <Button 
-                variant="outline" 
                 type="button" 
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 bg-[#D8BD2A] text-[#0F0276] hover:bg-[#D8BD2A]/90 border-0"
               >
                 <Edit2 className="h-4 w-4" />
                 Edit Information
-              </Button>
-              <Button 
-                type="button" 
-                onClick={handleConfirmInfo}
-              >
-                {isAutoLinked ? "Continue" : "Confirm & Continue"}
               </Button>
             </div>
           </CardContent>
