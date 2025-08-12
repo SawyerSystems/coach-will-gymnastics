@@ -7,6 +7,7 @@ import { TwoStepFocusAreas } from '@/components/two-step-focus-areas-edit';
 import { AddAthleteModal } from '@/components/AddAthleteModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1710,112 +1711,128 @@ function ParentDashboard() {
         </AlertDialog>
 
         {/* Edit Athlete Modal */}
-        <Dialog open={editingAthleteInfo !== null} onOpenChange={() => {
-          setEditingAthleteInfo(null);
-          setEditingAthleteGender('');
-          setEditingAthleteIsGymMember(false);
-        }}>
-          <DialogContent className="w-full h-full max-w-full max-h-full p-4 md:max-w-md md:max-h-[90vh] md:h-auto md:w-auto md:p-6 overflow-y-auto rounded-none md:rounded-lg border-0 md:border bg-gradient-to-br from-blue-50 to-orange-50 md:bg-white">
-            <DialogHeader className="px-0 pt-0">
-              <DialogTitle className="text-xl md:text-2xl text-blue-900">Edit Athlete Information</DialogTitle>
-              <DialogDescription className="text-sm md:text-base text-gray-700">
-                Update athlete details and preferences
-              </DialogDescription>
-            </DialogHeader>
-
-  {editingAthleteInfo && (
-              <div className="space-y-4 px-0 pb-0">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="athlete-firstName" className="text-sm font-medium text-gray-700 dark:text-white">First Name</Label>
-                    <Input
+        <ParentModal
+          isOpen={editingAthleteInfo !== null}
+          onClose={() => {
+            setEditingAthleteInfo(null);
+            setEditingAthleteGender('');
+            setEditingAthleteIsGymMember(false);
+          }}
+          title="Edit Athlete Information"
+          description="Update athlete details and preferences"
+          size="lg"
+        >
+          {editingAthleteInfo && (
+            <div className="space-y-6">
+              <ParentModalSection title="Basic Information">
+                <ParentModalGrid>
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-firstName" className="text-[#0F0276] dark:text-white">First Name</Label>
+                    <ParentFormInput
                       id="athlete-firstName"
                       defaultValue={editingAthleteInfo.firstName || editingAthleteInfo.name.split(' ')[0]}
-                      className="mt-1"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="athlete-lastName" className="text-sm font-medium text-gray-700 dark:text-white">Last Name</Label>
-                    <Input
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-lastName" className="text-[#0F0276] dark:text-white">Last Name</Label>
+                    <ParentFormInput
                       id="athlete-lastName"
                       defaultValue={editingAthleteInfo.lastName || editingAthleteInfo.name.split(' ').slice(1).join(' ')}
-                      className="mt-1"
+                    />
+                  </div>
+                </ParentModalGrid>
+              </ParentModalSection>
+
+              <ParentModalSection title="Personal Details">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-dob" className="text-[#0F0276] dark:text-white">Date of Birth</Label>
+                    <ParentFormInput
+                      id="athlete-dob"
+                      type="date"
+                      defaultValue={editingAthleteInfo.dateOfBirth}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-gender" className="text-[#0F0276] dark:text-white">Gender</Label>
+                    <GenderSelect
+                      value={editingAthleteGender}
+                      onValueChange={setEditingAthleteGender}
+                      id="athlete-gender"
+                      name="gender"
                     />
                   </div>
                 </div>
+              </ParentModalSection>
 
-                <div className="space-y-2">
-                  <Label htmlFor="athlete-gymmember" className="text-sm font-medium text-gray-700 dark:text-white">Already in Gym Classes?</Label>
-                  <div className="flex items-center justify-between rounded-md border p-3">
-                    <div>
-                      <p className="font-medium">Gym Member</p>
-                      <p className="text-sm text-muted-foreground">Toggle on if this athlete is already enrolled in gym classes.</p>
+              <ParentModalSection title="Experience & Membership">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-gymmember" className="text-[#0F0276] dark:text-white">Already in Gym Classes?</Label>
+                    <div className="flex items-center justify-between rounded-md border p-3 border-gray-300 dark:border-[#B8860B]">
+                      <div>
+                        <p className="font-medium text-[#0F0276] dark:text-white">Gym Member</p>
+                        <p className="text-sm text-[#0F0276]/60 dark:text-white/60">Toggle on if this athlete is already enrolled in gym classes.</p>
+                      </div>
+                      <Switch
+                        id="athlete-gymmember"
+                        checked={editingAthleteIsGymMember}
+                        onCheckedChange={setEditingAthleteIsGymMember}
+                      />
                     </div>
-                    <Switch
-                      id="athlete-gymmember"
-                      checked={editingAthleteIsGymMember}
-                      onCheckedChange={setEditingAthleteIsGymMember}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-experience" className="text-[#0F0276] dark:text-white">Experience Level</Label>
+                    <Select defaultValue={editingAthleteInfo.experience}>
+                      <ParentFormSelectTrigger>
+                        <SelectValue placeholder="Select experience level" />
+                      </ParentFormSelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="advanced">Advanced</SelectItem>
+                        <SelectItem value="elite">Elite</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </ParentModalSection>
+
+              <ParentModalSection title="Additional Information">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="athlete-allergies" className="text-[#0F0276] dark:text-white">Allergies & Medical Notes</Label>
+                    <ParentFormTextarea
+                      id="athlete-allergies"
+                      defaultValue={editingAthleteInfo.allergies || ''}
+                      placeholder="Enter any allergies or medical notes..."
+                      rows={3}
                     />
                   </div>
                 </div>
+              </ParentModalSection>
 
-                <div>
-                  <Label htmlFor="athlete-dob" className="text-sm font-medium text-gray-700 dark:text-white">Date of Birth</Label>
-                  <Input
-                    id="athlete-dob"
-                    type="date"
-                    defaultValue={editingAthleteInfo.dateOfBirth}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <GenderSelect
-                    value={editingAthleteGender}
-                    onValueChange={setEditingAthleteGender}
-                    id="athlete-gender"
-                    name="gender"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="athlete-allergies" className="text-sm font-medium text-gray-700 dark:text-white">Allergies & Medical Notes</Label>
-                  <Input
-                    id="athlete-allergies"
-                    defaultValue={editingAthleteInfo.allergies || ''}
-                    placeholder="Enter any allergies or medical notes..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="athlete-experience" className="text-sm font-medium text-gray-700 dark:text-white">Experience Level</Label>
-                  <Select defaultValue={editingAthleteInfo.experience}>
-                    <ParentFormSelectTrigger>
-                      <SelectValue placeholder="Select experience level" />
-                    </ParentFormSelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                      <SelectItem value="elite">Elite</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <ParentButton variant="secondary" onClick={() => {
+              <div className="flex justify-end gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
                     setEditingAthleteInfo(null);
                     setEditingAthleteGender('');
-                  }}>
-                    Cancel
-                  </ParentButton>
-                  <ParentButton onClick={async () => {
+                  }}
+                  className="text-[#0F0276] border-[#0F0276]/50 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/50 dark:hover:bg-white/20"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={async () => {
                     try {
                       const firstName = (document.getElementById('athlete-firstName') as HTMLInputElement)?.value;
                       const lastName = (document.getElementById('athlete-lastName') as HTMLInputElement)?.value;
                       const dateOfBirth = (document.getElementById('athlete-dob') as HTMLInputElement)?.value;
-                      const allergies = (document.getElementById('athlete-allergies') as HTMLInputElement)?.value;
+                      const allergies = (document.getElementById('athlete-allergies') as HTMLTextAreaElement)?.value;
                       const gender = editingAthleteGender;
                       const experienceSelect = document.querySelector('[name="experience"]') as HTMLSelectElement;
                       const experience = experienceSelect?.value;
@@ -1850,14 +1867,15 @@ function ParentDashboard() {
                         variant: "destructive"
                       });
                     }
-                  }}>
-                    Save Changes
-                  </ParentButton>
-                </div>
+                  }}
+                  className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#B8860B] dark:hover:bg-[#B8860B]/90 dark:text-[#0F0276]"
+                >
+                  Save Changes
+                </Button>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+            </div>
+          )}
+        </ParentModal>
 
         {/* Update Profile Modal */}
         <ParentModal 
@@ -2124,7 +2142,6 @@ function ParentDashboard() {
         <AddAthleteModal
           isOpen={showAddAthleteModal}
           onClose={() => setShowAddAthleteModal(false)}
-          onAthleteCreated={handleAthleteCreated}
         />
 
     {/* Safety Information Dialog */}
