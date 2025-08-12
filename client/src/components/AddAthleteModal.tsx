@@ -8,7 +8,7 @@ import { useGenders } from "@/hooks/useGenders";
 import { useCreateAthlete } from "@/hooks/use-athlete";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useCallback, useEffect, useRef, memo } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -17,7 +17,7 @@ interface AddAthleteModalProps {
   onClose: () => void;
 }
 
-export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
+export const AddAthleteModal = memo(function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
   const { genderOptions } = useGenders();
   const { toast } = useToast();
   const createAthleteMutation = useCreateAthlete();
@@ -25,19 +25,40 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ageError, setAgeError] = useState<string | null>(null);
   
-  // Form state
-  const [formData, setFormData] = useState({
+  // Refs for form inputs to manage focus
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  
+  // Form state - initialize with empty values
+  const [formData, setFormData] = useState(() => ({
     firstName: "",
     lastName: "",
     dateOfBirth: "",
     gender: "",
     allergies: "",
-  experience: "beginner" as "beginner" | "intermediate" | "advanced",
-  isGymMember: false,
-  });
+    experience: "beginner" as "beginner" | "intermediate" | "advanced",
+    isGymMember: false,
+  }));
+
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        firstName: "",
+        lastName: "",
+        dateOfBirth: "",
+        gender: "",
+        allergies: "",
+        experience: "beginner",
+        isGymMember: false,
+      });
+      setAgeError(null);
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
   
   // Function to calculate age and validate minimum age requirement
-  const validateAge = (dateOfBirth: string) => {
+  const validateAge = useCallback((dateOfBirth: string) => {
     if (!dateOfBirth) {
       setAgeError(null);
       return true;
@@ -59,20 +80,63 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
       setAgeError(null);
       return true;
     }
-  };
+  }, []);
+
+  const handleSwitchChange = useCallback((checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      isGymMember: checked
+    }));
+  }, []);
+
+  // Individual field handlers to prevent inline function creation
+  const handleFirstNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      firstName: value
+    }));
+  }, []);
+
+  const handleLastNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      lastName: value
+    }));
+  }, []);
+
+  const handleDateOfBirthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      dateOfBirth: value
+    }));
+    validateAge(value);
+  }, [validateAge]);
+
+  const handleAllergiesChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      allergies: e.target.value
+    }));
+  }, []);
+
+  const handleGenderChange = useCallback((value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      gender: value
+    }));
+  }, []);
+
+  const handleExperienceChange = useCallback((value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      experience: value as "beginner" | "intermediate" | "advanced"
+    }));
+  }, []);
   
-  const handleChange = (field: string, value: string) => {
-    setFormData({
-      ...formData,
-      [field]: value
-    });
-    
-    if (field === 'dateOfBirth') {
-      validateAge(value);
-    }
-  };
-  
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = useCallback(async (e: FormEvent) => {
     e.preventDefault();
     
     if (ageError) {
@@ -106,28 +170,27 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
         isGymMember: formData.isGymMember,
       });
       
-      // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        dateOfBirth: "",
-        gender: "",
-        allergies: "",
-  experience: "beginner",
-  isGymMember: false,
-      });
-      
       // Refresh athletes list
       queryClient.invalidateQueries({ queryKey: ['/api/parent/athletes'] });
       
-      // Close modal
+      // Close modal (form will be reset by useEffect)
       onClose();
+      
+      toast({
+        title: "Success",
+        description: "Athlete created successfully!",
+      });
     } catch (error) {
       console.error("Error creating athlete:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create athlete. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData, ageError, createAthleteMutation, queryClient, onClose, toast]);
   
   return (
     <ParentModal
@@ -143,19 +206,29 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
             <div className="space-y-2">
               <Label htmlFor="firstName" className="text-[#0F0276] dark:text-white">First Name</Label>
               <ParentFormInput
+                key="firstName"
+                ref={firstNameRef}
                 id="firstName"
-                value={formData.firstName}
-                onChange={(e) => handleChange('firstName', e.target.value)}
+                name="firstName"
+                type="text"
+                value={formData.firstName || ""}
+                onChange={handleFirstNameChange}
                 required
+                autoComplete="given-name"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName" className="text-[#0F0276] dark:text-white">Last Name</Label>
               <ParentFormInput
+                key="lastName"
+                ref={lastNameRef}
                 id="lastName"
-                value={formData.lastName}
-                onChange={(e) => handleChange('lastName', e.target.value)}
+                name="lastName"
+                type="text"
+                value={formData.lastName || ""}
+                onChange={handleLastNameChange}
                 required
+                autoComplete="family-name"
               />
             </div>
           </ParentModalGrid>
@@ -167,7 +240,7 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
               <Label htmlFor="gender" className="text-[#0F0276] dark:text-white">Gender</Label>
               <Select 
                 value={formData.gender} 
-                onValueChange={(value) => handleChange('gender', value)}
+                onValueChange={handleGenderChange}
               >
                 <ParentFormSelectTrigger>
                   <SelectValue placeholder="Select gender" />
@@ -185,11 +258,14 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
             <div className="space-y-2">
               <Label htmlFor="dateOfBirth" className="text-[#0F0276] dark:text-white">Date of Birth</Label>
               <ParentFormInput
+                key="dateOfBirth"
                 id="dateOfBirth"
+                name="dateOfBirth"
                 type="date"
                 value={formData.dateOfBirth}
-                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+                onChange={handleDateOfBirthChange}
                 required
+                autoComplete="bday"
                 className={ageError ? 'border-red-500' : ''}
               />
               {ageError && (
@@ -216,7 +292,7 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
                 <Switch
                   id="isGymMember"
                   checked={formData.isGymMember}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isGymMember: checked })}
+                  onCheckedChange={handleSwitchChange}
                   aria-label="Already in Gym Classes?"
                 />
               </div>
@@ -226,7 +302,7 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
               <Label className="text-[#0F0276] dark:text-white">Experience Level</Label>
               <RadioGroup
                 value={formData.experience}
-                onValueChange={(value) => handleChange('experience', value as "beginner" | "intermediate" | "advanced")}
+                onValueChange={handleExperienceChange}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="beginner" id="beginner" />
@@ -250,9 +326,10 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
             <div className="space-y-2">
               <Label htmlFor="allergies" className="text-[#0F0276] dark:text-white">Allergies or Medical Conditions (Optional)</Label>
               <ParentFormTextarea
+                key="allergies"
                 id="allergies"
                 value={formData.allergies}
-                onChange={(e) => handleChange('allergies', e.target.value)}
+                onChange={handleAllergiesChange}
                 placeholder="Please list any allergies or medical conditions we should be aware of"
                 rows={3}
               />
@@ -283,4 +360,4 @@ export function AddAthleteModal({ isOpen, onClose }: AddAthleteModalProps) {
       </form>
     </ParentModal>
   );
-}
+});
