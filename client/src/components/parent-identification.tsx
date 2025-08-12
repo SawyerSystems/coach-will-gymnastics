@@ -62,39 +62,39 @@ export function ParentIdentification({ onParentIdentified, onNewParent }: Parent
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Coach Will Tumbles!</h2>
-          <p className="text-gray-600 dark:text-gray-300">Are you a new or returning parent?</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Coach Will Tumbles!</h2>
+          <p className="text-gray-600">Are you a new or returning parent?</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card 
-            className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300 dark:hover:border-[#0F0276] glass-surface"
+            className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300"
             onClick={() => setParentType('returning')}
           >
             <CardHeader className="text-center">
-              <Users className="w-12 h-12 text-blue-600 dark:text-[#D8BD2A] mx-auto mb-2" />
-              <CardTitle className="text-lg text-gray-900 dark:text-white">Returning Parent</CardTitle>
+              <Users className="w-12 h-12 text-blue-600 mx-auto mb-2" />
+              <CardTitle className="text-lg">Returning Parent</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+              <p className="text-sm text-gray-600 text-center">
                 I've booked with Coach Will before and want to use my existing information
               </p>
             </CardContent>
           </Card>
           
           <Card 
-            className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-green-300 dark:hover:border-[#0F0276] glass-surface"
+            className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-green-300"
             onClick={() => {
               setParentType('new');
               onNewParent();
             }}
           >
             <CardHeader className="text-center">
-              <UserPlus className="w-12 h-12 text-green-600 dark:text-[#D8BD2A] mx-auto mb-2" />
-              <CardTitle className="text-lg text-gray-900 dark:text-white">New Parent</CardTitle>
+              <UserPlus className="w-12 h-12 text-green-600 mx-auto mb-2" />
+              <CardTitle className="text-lg">New Parent</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+              <p className="text-sm text-gray-600 text-center">
                 This is my first time booking with Coach Will
               </p>
             </CardContent>

@@ -273,7 +273,6 @@ export class ModernSupabaseStorage {
       updatedAt: new Date(data.updated_at),
       parentId: data.parent_id || null,
       lessonTypeId: data.lesson_type_id || null,
-      waiverId: data.waiver_id || null,
       lessonType: data.lesson_type,
       preferredDate: data.preferred_date,
       preferredTime: data.preferred_time,

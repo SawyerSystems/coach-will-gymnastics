@@ -749,7 +749,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           parentId: booking.parent_id,
           lessonTypeId: booking.lesson_type_id,
           lessonType: booking.lesson_types?.name || 'Unknown Lesson Type',
-          waiverId: booking.waiver_id,
           bookingMethod: booking.booking_method || 'online',
           reservationFeePaid: booking.reservation_fee_paid || false,
           paidAmount: booking.paid_amount || 0,
@@ -8711,7 +8710,7 @@ setTimeout(async () => {
       }
 
       // Validate required fields
-  const { firstName, lastName, dateOfBirth, gender, allergies, experience, isGymMember } = req.body;
+      const { firstName, lastName, dateOfBirth, gender, allergies, experience, isGymMember, waiverData } = req.body;
       
       if (!firstName || !lastName || !dateOfBirth || !experience) {
         return res.status(400).json({ 
@@ -8733,6 +8732,40 @@ setTimeout(async () => {
       };
       
       const athlete = await storage.createAthlete(athleteData);
+      
+      // If waiver data is provided, create the waiver
+      if (waiverData && athlete.id) {
+        try {
+          const waiver = await storage.createWaiver({
+            athleteId: athlete.id,
+            parentId: parentId,
+            signature: waiverData.signature,
+            relationshipToAthlete: waiverData.relationshipToAthlete || 'Parent/Guardian',
+            emergencyContactNumber: waiverData.emergencyContactNumber,
+            understandsRisks: waiverData.understandsRisks || false,
+            agreesToPolicies: waiverData.agreesToPolicies || false,
+            authorizesEmergencyCare: waiverData.authorizesEmergencyCare || false,
+            allowsPhotoVideo: waiverData.allowsPhotoVideo !== false, // Default to true
+            confirmsAuthority: waiverData.confirmsAuthority || false,
+            ipAddress: req.ip,
+            userAgent: waiverData.userAgent || req.get('User-Agent'),
+            signedAt: waiverData.signedAt ? new Date(waiverData.signedAt) : new Date(),
+          });
+          
+          // Update athlete's waiver status
+          await storage.updateAthlete(athlete.id, {
+            latestWaiverId: waiver.id,
+            waiverStatus: 'signed',
+            waiverSigned: true
+          });
+          
+          console.log(`✅ Created waiver ${waiver.id} for athlete ${athlete.id}`);
+        } catch (waiverError) {
+          console.error("Error creating waiver for athlete:", waiverError);
+          // Don't fail the athlete creation if waiver fails
+        }
+      }
+      
       res.status(201).json(athlete);
     } catch (error: any) {
       console.error("Error creating athlete:", error);

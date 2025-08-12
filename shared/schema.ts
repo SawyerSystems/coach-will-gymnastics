@@ -158,7 +158,6 @@ export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
   parentId: integer("parent_id").references(() => parents.id),
   lessonTypeId: integer("lesson_type_id").references(() => lessonTypes.id),
-  waiverId: integer("waiver_id"),
   preferredDate: date("preferred_date"),
   preferredTime: time("preferred_time"),
   status: text("status").notNull().default("pending"),
@@ -463,7 +462,6 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
   // Foreign key IDs (required)
   parentId: z.number().positive("Parent ID is required"),
   lessonTypeId: z.number().positive("Lesson type ID is required"),
-  waiverId: z.number().positive().nullable().optional(),
   
   // Core booking details
   preferredDate: z.coerce.date(),
@@ -852,10 +850,6 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   lessonType: one(lessonTypes, {
     fields: [bookings.lessonTypeId],
     references: [lessonTypes.id],
-  }),
-  waiver: one(waivers, {
-    fields: [bookings.waiverId],
-    references: [waivers.id],
   }),
   athletes: many(bookingAthletes),
   apparatus: many(bookingApparatus),

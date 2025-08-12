@@ -818,7 +818,6 @@ With the right setup and approach, home practice can accelerate your child's gym
   const booking: Booking = { 
       ...insertBooking,
       id,
-      waiverId: insertBooking.waiverId ?? null,  // Ensure waiverId is properly set
       createdAt: new Date(),
       updatedAt: new Date(),
       status: BookingStatusEnum.PENDING,
@@ -2889,7 +2888,6 @@ export class SupabaseStorage implements IStorage {
     const dbBooking: any = {
       parent_id: insertBooking.parentId,
       lesson_type_id: insertBooking.lessonTypeId,
-      waiver_id: insertBooking.waiverId,
       preferred_date: insertBooking.preferredDate,
       preferred_time: insertBooking.preferredTime,
       status: insertBooking.status || 'pending',
@@ -3069,7 +3067,6 @@ export class SupabaseStorage implements IStorage {
       parentId: data.parent_id,
   // athleteId removed in new schema; use booking_athletes relation instead
       lessonTypeId: data.lesson_type_id,
-      waiverId: data.waiver_id,
       // Legacy fields for backward compatibility - these will be empty/undefined for normalized bookings
       athlete1Name: '',
       athlete1DateOfBirth: '',
@@ -5550,11 +5547,7 @@ export class SupabaseStorage implements IStorage {
     }
 
     // Get waiver data
-    let waiver = undefined;
-    if (booking.waiverId) {
-      waiver = await this.getWaiver(booking.waiverId);
-    }
-
+    // Waivers are now tied to athletes, not bookings
     // Get related apparatus
     const { data: apparatusData } = await supabaseAdmin
       .from('booking_apparatus')
@@ -5613,7 +5606,6 @@ export class SupabaseStorage implements IStorage {
   sessionConfirmationEmailSentAt: (booking as any).sessionConfirmationEmailSentAt ?? null,
       parent,
       lessonType,
-      waiver,
       apparatus: apparatusData?.map(item => ({ id: (item.apparatus as any).id, name: (item.apparatus as any).name })) || [],
       focusAreas: focusAreasData?.map(item => (item.focus_areas as any).name) || [],
       sideQuests: sideQuestsData?.map(item => ({ id: (item.side_quests as any).id, name: (item.side_quests as any).name })) || [],

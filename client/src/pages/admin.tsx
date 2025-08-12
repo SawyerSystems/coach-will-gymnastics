@@ -729,7 +729,7 @@ export default function Admin() {
             phone: booking.parent?.phone || booking.parentPhone || '',
             emergencyContactName: booking.parent?.emergencyContactName || booking.emergencyContactName || '',
             emergencyContactPhone: booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || '',
-            waiverSigned: booking.waiverId ? true : false,
+            waiverSigned: false, // TODO: Check athlete waiver status
             waiverSignedAt: null // Waiver timestamp not available in this context
           });
         }
@@ -746,7 +746,7 @@ export default function Admin() {
             phone: booking.parent?.phone || booking.parentPhone || '',
             emergencyContactName: booking.parent?.emergencyContactName || booking.emergencyContactName || '',
             emergencyContactPhone: booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || '',
-            waiverSigned: booking.waiverId ? true : false,
+            waiverSigned: false, // TODO: Check athlete waiver status
             waiverSignedAt: null // Waiver timestamp not available in this context
           });
         }

@@ -10,6 +10,18 @@ export interface CreateAthletePayload {
   allergies?: string;
   experience: 'beginner' | 'intermediate' | 'advanced' | 'elite';
   isGymMember?: boolean;
+  waiverData?: {
+    signature: string;
+    relationshipToAthlete: string;
+    emergencyContactNumber: string;
+    understandsRisks: boolean;
+    agreesToPolicies: boolean;
+    authorizesEmergencyCare: boolean;
+    allowsPhotoVideo: boolean;
+    confirmsAuthority: boolean;
+    signedAt: string;
+    userAgent: string;
+  };
 }
 
 export function useCreateAthlete() {

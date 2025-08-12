@@ -22,7 +22,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Activity, AlertCircle, Award, BookMarked, Calendar, CheckCircle, CheckCircle2, Clock, Download, Edit, Eye, FileCheck, FileText, FileX, HelpCircle, Lightbulb, Mail, MapPin, Medal, PlusCircle, Settings, Shield, Star, Target, TrendingUp, Trophy, User, UserCircle, Users, X, XCircle, Zap } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useLocation } from 'wouter';
 
 // Import new parent UI components
@@ -473,6 +473,27 @@ function ParentDashboard() {
   const [showUpdateEmergencyContact, setShowUpdateEmergencyContact] = useState(false);
   const [showWaiverModal, setShowWaiverModal] = useState(false);
   const [selectedAthleteForWaiver, setSelectedAthleteForWaiver] = useState<any>(null);
+
+  // Add callback to handle athlete creation and open waiver modal
+  const handleAthleteCreated = useCallback((newAthlete: any) => {
+    // Handle both camelCase and snake_case field names from API
+    const firstName = newAthlete.firstName || newAthlete.first_name || '';
+    const lastName = newAthlete.lastName || newAthlete.last_name || '';
+    const athleteName = newAthlete.name || `${firstName} ${lastName}`.trim();
+    
+    // Ensure the athlete object has the expected properties for the waiver modal
+    const athleteForWaiver = {
+      ...newAthlete,
+      name: athleteName,
+      firstName: firstName,
+      lastName: lastName,
+    };
+    
+    // Set the athlete for waiver and open the waiver modal
+    setSelectedAthleteForWaiver(athleteForWaiver);
+    setShowAddAthleteModal(false);
+    setShowWaiverModal(true);
+  }, []);
 
   // Hook for waiver status - moved to top level to fix Rules of Hooks violation
   const { data: waiverStatus, isLoading: waiverLoading, error: waiverError } = useAthleteWaiverStatus(
@@ -2103,6 +2124,7 @@ function ParentDashboard() {
         <AddAthleteModal
           isOpen={showAddAthleteModal}
           onClose={() => setShowAddAthleteModal(false)}
+          onAthleteCreated={handleAthleteCreated}
         />
 
     {/* Safety Information Dialog */}

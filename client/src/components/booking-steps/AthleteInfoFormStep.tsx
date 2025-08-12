@@ -10,16 +10,19 @@ import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useGenders } from "@/hooks/useGenders";
 import { useCreateAthlete } from "@/hooks/use-athlete";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, PlusCircle, Trash2 } from "lucide-react";
+import { AlertCircle, PlusCircle, Trash2, Shield } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BOOKING_FLOWS } from "@/contexts/BookingFlowContext";
+import { AthleteWaiver } from "@/components/AthleteWaiver";
 
 export function AthleteInfoFormStep() {
   const { state, updateState, prevStep } = useBookingFlow();
   const { genderOptions } = useGenders();
   const [ageErrors, setAgeErrors] = useState<{ [key: number]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showWaiverFor, setShowWaiverFor] = useState<number | null>(null);
+  const [athleteWaivers, setAthleteWaivers] = useState<{ [key: number]: any }>({});
   const createAthleteMutation = useCreateAthlete();
   const { toast } = useToast();
 
@@ -75,6 +78,11 @@ export function AthleteInfoFormStep() {
   const handleRemoveAthlete = (index: number) => {
     const updated = state.athleteInfo.filter((_, i) => i !== index);
     updateState({ athleteInfo: updated });
+    
+    // Remove any waiver data for this athlete
+    const updatedWaivers = { ...athleteWaivers };
+    delete updatedWaivers[index];
+    setAthleteWaivers(updatedWaivers);
   };
 
   const handleAthleteChange = (index: number, field: string, value: string) => {
@@ -86,6 +94,33 @@ export function AthleteInfoFormStep() {
     if (field === 'dateOfBirth') {
       validateAge(value, index);
     }
+  };
+
+  const handleWaiverSigned = (athleteIndex: number, waiverData: any) => {
+    setAthleteWaivers(prev => ({ ...prev, [athleteIndex]: waiverData }));
+    setShowWaiverFor(null);
+    toast({
+      title: "Waiver Signed",
+      description: `Safety waiver for ${state.athleteInfo[athleteIndex].firstName} ${state.athleteInfo[athleteIndex].lastName} has been completed.`,
+    });
+  };
+
+  const handleSkipWaiver = (athleteIndex: number) => {
+    setShowWaiverFor(null);
+    toast({
+      title: "Waiver Skipped",
+      description: "You can sign the waiver later in the booking process.",
+      variant: "default",
+    });
+  };
+
+  const getParentName = () => {
+    if (state.parentInfo) {
+      return `${state.parentInfo.firstName} ${state.parentInfo.lastName}`;
+    }
+    return parentData?.firstName && parentData?.lastName 
+      ? `${parentData.firstName} ${parentData.lastName}`
+      : 'Parent/Guardian';
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -113,7 +148,9 @@ export function AthleteInfoFormStep() {
     setIsSubmitting(true);
     
     try {
-      for (const athlete of state.athleteInfo) {
+      for (let i = 0; i < state.athleteInfo.length; i++) {
+        const athlete = state.athleteInfo[i];
+        
         if (!athlete.firstName || !athlete.lastName || !athlete.dateOfBirth || !athlete.experience) {
           toast({
             title: "Missing Information",
@@ -124,14 +161,22 @@ export function AthleteInfoFormStep() {
           return;
         }
         
-        await createAthleteMutation.mutateAsync({
+        // Prepare athlete data with optional waiver
+        const athletePayload: any = {
           firstName: athlete.firstName,
           lastName: athlete.lastName,
           dateOfBirth: athlete.dateOfBirth,
           gender: (athlete as any).gender || undefined,
           allergies: athlete.allergies,
           experience: athlete.experience,
-        });
+        };
+
+        // Include waiver data if available
+        if (athleteWaivers[i]) {
+          athletePayload.waiverData = athleteWaivers[i];
+        }
+        
+        await createAthleteMutation.mutateAsync(athletePayload);
       }
       
       // Show toast to guide user that they need to select the athlete
@@ -145,6 +190,9 @@ export function AthleteInfoFormStep() {
         athleteInfo: [],
         selectedAthletes: [] // Clear selected athletes to force user to explicitly choose
       });
+      
+      // Clear waiver data
+      setAthleteWaivers({});
       
       // Go back to athlete selection step
       if (state.flowType === 'parent-portal') {
@@ -308,9 +356,63 @@ export function AthleteInfoFormStep() {
                 </div>
               </RadioGroup>
             </div>
+
+            {/* Waiver Section */}
+            <div className="space-y-3 pt-4 border-t border-slate-200/60 dark:border-white/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-[#0F0276] dark:text-[#D8BD2A]" />
+                  <Label className="text-[#0F0276] dark:text-white font-medium">Safety Waiver</Label>
+                </div>
+                {athleteWaivers[index] && (
+                  <span className="text-sm text-green-600 font-medium">✓ Signed</span>
+                )}
+              </div>
+              
+              {!athleteWaivers[index] ? (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
+                  <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                    A safety waiver is required for all gymnastics activities. You can sign it now or later in the booking process.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowWaiverFor(index)}
+                    className="w-full"
+                    disabled={!athlete.firstName || !athlete.lastName || !athlete.dateOfBirth}
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Sign Waiver Now
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    ✓ Safety waiver signed by {athleteWaivers[index].signature}
+                  </p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       ))}
+
+      {/* Waiver Modal */}
+      {showWaiverFor !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <AthleteWaiver
+                athleteData={state.athleteInfo[showWaiverFor]}
+                parentName={getParentName()}
+                onWaiverSigned={(waiverData) => handleWaiverSigned(showWaiverFor, waiverData)}
+                onSkip={() => handleSkipWaiver(showWaiverFor)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {state.lessonType.includes('semi-private') && state.athleteInfo.length < maxAthletes && (
         <Button 
