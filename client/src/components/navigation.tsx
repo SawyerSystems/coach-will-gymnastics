@@ -130,8 +130,8 @@ export const Navigation = memo(function Navigation() {
           </div>
         </Link>
 
-        {/* Desktop Navigation - Hide on smaller screens to prevent tablet horizontal scrolling */}
-  <nav className="hidden lg:flex items-center space-x-6">
+    {/* Desktop Navigation - Hide on smaller screens to prevent tablet horizontal scrolling */}
+  <nav className="hidden lg:flex items-center space-x-6 ml-8 xl:ml-16">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <span
@@ -213,8 +213,8 @@ export const Navigation = memo(function Navigation() {
           </div>
         </nav>
 
-        {/* Tablet Navigation - Simplified for medium screens */}
-        <nav className="hidden md:flex lg:hidden items-center space-x-4">
+  {/* Tablet Navigation - Simplified for medium screens */}
+  <nav className="hidden md:flex lg:hidden items-center space-x-4 ml-4 md:ml-6">
           {/* Theme toggle for tablet */}
           <ThemeToggle />
           <Link href="/booking">
