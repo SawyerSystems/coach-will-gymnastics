@@ -281,10 +281,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                 <CardContent>
                   <div className="space-y-4">
                     {[
+                      { key: 'mastered', label: 'Mastered', count: stats.mastered, color: 'bg-green-500', bgColor: 'bg-green-50 dark:bg-green-900/20', textColor: 'text-green-700 dark:text-green-300' },
+                      { key: 'consistent', label: 'Consistent', count: stats.consistent, color: 'bg-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-900/20', textColor: 'text-purple-700 dark:text-purple-300' },
                       { key: 'prepping', label: 'Prepping', count: stats.prepping, color: 'bg-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-900/20', textColor: 'text-blue-700 dark:text-blue-300' },
                       { key: 'learning', label: 'Learning', count: stats.learning, color: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-900/20', textColor: 'text-amber-700 dark:text-amber-300' },
-                      { key: 'consistent', label: 'Consistent', count: stats.consistent, color: 'bg-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-900/20', textColor: 'text-purple-700 dark:text-purple-300' },
-                      { key: 'mastered', label: 'Mastered', count: stats.mastered, color: 'bg-green-500', bgColor: 'bg-green-50 dark:bg-green-900/20', textColor: 'text-green-700 dark:text-green-300' },
                     ].map(({ key, label, count, color, bgColor, textColor }) => (
                       <div key={key} className={`rounded-lg p-4 ${bgColor}`}>
                         <div className="flex items-center justify-between">
@@ -335,8 +335,8 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                     {([
                       ['mastered','Mastered','text-green-700 dark:text-green-300','bg-green-500'],
                       ['consistent','Consistent','text-purple-700 dark:text-purple-300','bg-purple-500'],
-                      ['learning','Learning','text-amber-700 dark:text-amber-300','bg-amber-500'],
-                      ['prepping','Prepping','text-blue-700 dark:text-blue-300','bg-blue-500']
+                      ['prepping','Prepping','text-blue-700 dark:text-blue-300','bg-blue-500'],
+                      ['learning','Learning','text-amber-700 dark:text-amber-300','bg-amber-500']
                     ] as const).map(([key, label, textColor, barColor]) => {
                       const count = levelStats.counts[key] || 0;
                       const pct = levelStats.total ? Math.round((count / levelStats.total) * 100) : 0;
@@ -443,6 +443,74 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Apparatus Breakdown */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                <Target className="h-5 w-5 text-[#D8BD2A]" />
+                Apparatus Breakdown
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categories.map((category) => {
+                  const categorySkills = data.skills.filter((skill: ProgressSkill) => 
+                    skill.skill?.category?.toLowerCase() === category
+                  );
+                  
+                  const categoryStats = {
+                    mastered: 0,
+                    consistent: 0,
+                    prepping: 0,
+                    learning: 0,
+                    total: categorySkills.length
+                  };
+                  
+                  categorySkills.forEach((skill: ProgressSkill) => {
+                    const raw = skill.athleteSkill?.status?.toLowerCase();
+                    const status = raw === 'working' ? 'prepping' : raw;
+                    if (status && status in categoryStats) {
+                      categoryStats[status as keyof typeof categoryStats]++;
+                    }
+                  });
+
+                  return (
+                    <Card key={category} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 shadow-lg">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg font-semibold text-[#0F0276] dark:text-white uppercase tracking-wide">
+                          {category.replace(/[_-]/g, ' ')}
+                        </CardTitle>
+                        <CardDescription className="text-[#0F0276]/70 dark:text-white/70">
+                          Total: {categoryStats.total} • M: {categoryStats.mastered} • C: {categoryStats.consistent} • L: {categoryStats.learning} • P: {categoryStats.prepping}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {[
+                          { key: 'mastered', label: 'Mastered', count: categoryStats.mastered, color: 'bg-green-500', textColor: 'text-green-700 dark:text-green-300' },
+                          { key: 'consistent', label: 'Consistent', count: categoryStats.consistent, color: 'bg-purple-500', textColor: 'text-purple-700 dark:text-purple-300' },
+                          { key: 'prepping', label: 'Prepping', count: categoryStats.prepping, color: 'bg-blue-500', textColor: 'text-blue-700 dark:text-blue-300' },
+                          { key: 'learning', label: 'Learning', count: categoryStats.learning, color: 'bg-amber-500', textColor: 'text-amber-700 dark:text-amber-300' },
+                        ].map(({ key, label, count, color, textColor }) => {
+                          const percentage = categoryStats.total > 0 ? Math.round((count / categoryStats.total) * 100) : 0;
+                          return (
+                            <div key={key} className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className={`font-medium ${textColor}`}>{label}</span>
+                                <span className={`${textColor}`}>{percentage}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full ${color}`}
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           </TabsContent>
           {/* Skills Tab */}
