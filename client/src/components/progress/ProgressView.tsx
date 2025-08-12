@@ -10,6 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft, User } from 'lucide-react';
+import AddAthleteSkillDialog from '@/components/admin/AddAthleteSkillDialog';
+import { TestSkillDialog } from '@/components/admin/TestSkillDialog';
+import type { Skill as SharedSkill } from '@shared/schema';
 
 type ProgressVideo = {
   id: number;
@@ -36,6 +39,8 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
   const [showEditAthlete, setShowEditAthlete] = React.useState(false);
   const [selectedSkillForTest, setSelectedSkillForTest] = React.useState<any>(null);
+  const [showAddSkillDialog, setShowAddSkillDialog] = React.useState(false);
+  const [testingSkill, setTestingSkill] = React.useState<{ skill: SharedSkill; athleteSkillId?: number; status?: string | null; notes?: string | null } | null>(null);
 
   const isDirectVideoUrl = React.useCallback((url?: string | null) => {
     if (!url) return false;
@@ -166,16 +171,13 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                   onClick={() => setShowEditAthlete(true)}
                 >
                   <Settings className="h-4 w-4 mr-1" />
-                  Edit Athlete
+                  View Athlete
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                  onClick={() => {
-                    // For now, show an alert. In the future, this could open a skill selection modal
-                    alert(`Test Skills feature - Navigate to Admin > Athletes > ${data.athlete.name} > Skills tab for skill testing functionality.`);
-                  }}
+                  onClick={() => setShowAddSkillDialog(true)}
                 >
                   <Target className="h-4 w-4 mr-1" />
                   Test Skills
@@ -862,6 +864,33 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Add/Test Skill Dialog */}
+      {showAddSkillDialog && (
+        <AddAthleteSkillDialog
+          open={showAddSkillDialog}
+          onOpenChange={(open) => {
+            if (!open) setShowAddSkillDialog(false);
+          }}
+          athleteId={data.athlete.id}
+          onPickSkill={(skill) => {
+            // Close the add skill dialog and open the test skill dialog
+            setShowAddSkillDialog(false);
+            setTimeout(() => setTestingSkill({ skill: skill as unknown as SharedSkill }), 250);
+          }}
+        />
+      )}
+
+      {/* Test Skill Dialog */}
+      {testingSkill && (
+        <TestSkillDialog
+          open={!!testingSkill}
+          onOpenChange={(open) => !open && setTestingSkill(null)}
+          athleteId={data.athlete.id}
+          skill={testingSkill.skill}
+          existing={{ athleteSkillId: testingSkill.athleteSkillId, status: testingSkill.status, notes: testingSkill.notes }}
+        />
       )}
     </div>
   );
