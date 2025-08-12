@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useCallback } from "react";
+import React, { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,6 +84,14 @@ export default function AdminSkillsManager() {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
   const prerequisiteScrollRef = useRef<HTMLDivElement>(null);
+
+  // Force clear dragging state when in edit mode
+  useEffect(() => {
+    if (selectedSkillId) {
+      setDragging(null);
+      setDragOver(null);
+    }
+  }, [selectedSkillId]);
 
   // Get unique categories from existing skills
   const uniqueCategories = useMemo(() => {
@@ -711,18 +719,24 @@ export default function AdminSkillsManager() {
                               {levelGroup.items.map((s, idx) => (
                         <Card
                           key={s.id}
-                          draggable
-                          onDragStart={(e) => {
+                          draggable={selectedSkillId ? false : true}
+                          onDragStart={selectedSkillId ? (e) => {
+                            e.preventDefault();
+                            return false;
+                          } : (e) => {
+                            if (selectedSkillId) return;
                             setDragging({ groupId: group.apparatusId, levelId: levelGroup.level, index: idx });
                             e.dataTransfer.effectAllowed = 'move';
                           }}
-                          onDragOver={(e) => {
+                          onDragOver={!selectedSkillId ? (e) => {
+                            if (selectedSkillId) return;
                             e.preventDefault();
                             if (dragging && dragging.groupId === group.apparatusId && dragging.levelId === levelGroup.level) {
                               setDragOver({ groupId: group.apparatusId, levelId: levelGroup.level, index: idx });
                             }
-                          }}
-                          onDrop={(e) => {
+                          } : undefined}
+                          onDrop={!selectedSkillId ? (e) => {
+                            if (selectedSkillId) return;
                             e.preventDefault();
                             if (!dragging || dragging.groupId !== group.apparatusId || dragging.levelId !== levelGroup.level) { 
                               setDragging(null); 
@@ -746,8 +760,8 @@ export default function AdminSkillsManager() {
                             setDragOver(null);
                             // Invalidate to reflect new order
                             qc.invalidateQueries({ queryKey: ["/api/admin/skills"], exact: false });
-                          }}
-                          className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.levelId === levelGroup.level && dragOver.index === idx ? 'ring-2 ring-[#D8BD2A] shadow-xl' : ''} ${expandedIds.has(s.id) ? 'col-span-2 md:col-span-4' : ''} rounded-xl border border-slate-200/60 bg-white/80 supports-[backdrop-filter]:bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/80 overflow-hidden group cursor-pointer`}
+                          } : undefined}
+                          className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.levelId === levelGroup.level && dragOver.index === idx && !selectedSkillId ? 'ring-2 ring-[#D8BD2A] shadow-xl' : ''} ${expandedIds.has(s.id) ? 'col-span-2 md:col-span-4' : ''} rounded-xl border border-slate-200/60 bg-white/80 supports-[backdrop-filter]:bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/80 overflow-hidden group ${selectedSkillId ? 'cursor-default' : 'cursor-pointer'}`}
                         >
                           <CardContent className="p-0 overflow-hidden">
                             {(!expandedIds.has(s.id)) ? (
@@ -853,7 +867,12 @@ export default function AdminSkillsManager() {
                                     <Button 
                                       size="sm" 
                                       variant={selectedSkillId === s.id ? 'secondary' : 'outline'} 
-                                      onClick={(e) => { e.stopPropagation?.(); setSelectedSkillId(prev => prev === s.id ? undefined : s.id); }}
+                                      onClick={(e) => { 
+                                        e.stopPropagation?.(); 
+                                        setDragging(null);
+                                        setDragOver(null);
+                                        setSelectedSkillId(prev => prev === s.id ? undefined : s.id); 
+                                      }}
                                       className={selectedSkillId === s.id ? 
                                         "bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] hover:from-[#D8BD2A]/30 hover:to-[#D8BD2A]/40 dark:text-white border-[#D8BD2A]/40" : 
                                         "border-slate-200/60 bg-white/80 backdrop-blur-sm text-[#0F0276] hover:bg-white/90 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/50 dark:text-white dark:hover:bg-[#0F0276]/70"}
