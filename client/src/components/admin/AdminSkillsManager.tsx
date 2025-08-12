@@ -254,8 +254,47 @@ export default function AdminSkillsManager() {
           <div className="space-y-3">
             <Label className="text-[#0F0276] dark:text-white font-medium">Prerequisites (optional)</Label>
             <div className="border border-slate-200/60 rounded-lg p-3 max-h-40 overflow-auto space-y-2 bg-white/60 supports-[backdrop-filter]:bg-white/30 backdrop-blur-sm dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30">
-              {draft.apparatusId ? (
-                skills.filter(s => s.apparatusId === draft.apparatusId).map(s => (
+              {draft.apparatusId ? (() => {
+                // Apply the same sorting logic as the main skill list
+                const levelOrder = ['beginner', 'intermediate', 'advanced', 'elite'];
+                const apparatusSkills = skills.filter(s => s.apparatusId === draft.apparatusId);
+                
+                // Group by level
+                const byLevel: Record<string, Skill[]> = {};
+                apparatusSkills.forEach(s => {
+                  const level = s.level || 'beginner';
+                  byLevel[level] = byLevel[level] || [];
+                  byLevel[level].push(s);
+                });
+                
+                // Sort within each level using the same logic as main list
+                const makeSorted = (arr: Skill[]) => {
+                  if (sortWithin === 'name') return [...arr].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                  // default: by displayOrder then name
+                  return [...arr].sort((a, b) => {
+                    const ao = a.displayOrder ?? 1_000_000;
+                    const bo = b.displayOrder ?? 1_000_000;
+                    if (ao !== bo) return ao - bo;
+                    return (a.name || '').localeCompare(b.name || '');
+                  });
+                };
+                
+                // Create sorted flat array following level order
+                const sortedSkills: Skill[] = [];
+                levelOrder.forEach(level => {
+                  if (byLevel[level]) {
+                    sortedSkills.push(...makeSorted(byLevel[level]));
+                  }
+                });
+                
+                // Add any skills with non-standard levels at the end
+                Object.keys(byLevel).forEach(level => {
+                  if (!levelOrder.includes(level)) {
+                    sortedSkills.push(...makeSorted(byLevel[level]));
+                  }
+                });
+                
+                return sortedSkills.map(s => (
                   <label key={s.id} className="flex items-center gap-3 text-sm p-2 rounded-md hover:bg-white/50 dark:hover:bg-[#0F0276]/50 transition-colors duration-200">
                     <input
                       type="checkbox"
@@ -270,8 +309,8 @@ export default function AdminSkillsManager() {
                     />
                     <span className="text-slate-700 dark:text-white">{s.name || `Skill #${s.id}`}</span>
                   </label>
-                ))
-              ) : (
+                ));
+              })() : (
                 <div className="text-center py-4 text-slate-500 dark:text-white/60 text-sm">
                   Select an apparatus first to see available prerequisites
                 </div>
@@ -339,9 +378,50 @@ export default function AdminSkillsManager() {
                     <SelectValue placeholder="Add component skill" />
                   </SelectTrigger>
                   <SelectContent>
-                    {skills.filter(sk => sk.apparatusId === draft.apparatusId && !draft.componentIds.includes(sk.id)).map(sk => (
-                      <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
-                    ))}
+                    {(() => {
+                      // Apply the same sorting logic as the main skill list for consistency
+                      const levelOrder = ['beginner', 'intermediate', 'advanced', 'elite'];
+                      const availableSkills = skills.filter(sk => sk.apparatusId === draft.apparatusId && !draft.componentIds.includes(sk.id));
+                      
+                      // Group by level
+                      const byLevel: Record<string, Skill[]> = {};
+                      availableSkills.forEach(s => {
+                        const level = s.level || 'beginner';
+                        byLevel[level] = byLevel[level] || [];
+                        byLevel[level].push(s);
+                      });
+                      
+                      // Sort within each level using the same logic as main list
+                      const makeSorted = (arr: Skill[]) => {
+                        if (sortWithin === 'name') return [...arr].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                        // default: by displayOrder then name
+                        return [...arr].sort((a, b) => {
+                          const ao = a.displayOrder ?? 1_000_000;
+                          const bo = b.displayOrder ?? 1_000_000;
+                          if (ao !== bo) return ao - bo;
+                          return (a.name || '').localeCompare(b.name || '');
+                        });
+                      };
+                      
+                      // Create sorted flat array following level order
+                      const sortedSkills: Skill[] = [];
+                      levelOrder.forEach(level => {
+                        if (byLevel[level]) {
+                          sortedSkills.push(...makeSorted(byLevel[level]));
+                        }
+                      });
+                      
+                      // Add any skills with non-standard levels at the end
+                      Object.keys(byLevel).forEach(level => {
+                        if (!levelOrder.includes(level)) {
+                          sortedSkills.push(...makeSorted(byLevel[level]));
+                        }
+                      });
+                      
+                      return sortedSkills.map(sk => (
+                        <SelectItem key={sk.id} value={String(sk.id)}>{sk.name || `Skill #${sk.id}`}</SelectItem>
+                      ));
+                    })()}
                   </SelectContent>
                 </Select>
               ) : (
