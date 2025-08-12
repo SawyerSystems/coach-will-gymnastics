@@ -9,6 +9,7 @@ import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from '@/
 import { AdminSiteContentManager } from '@/components/admin-site-content-manager';
 import { MainContentContainer } from '@/components/admin-ui/MainContentContainer';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import AdminProgressSettings from '@/components/admin/AdminProgressSettings';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   AlertCircle, 
@@ -93,6 +94,12 @@ export default function AdminSettingsTab({
             value: 'site-content',
             label: 'Site Content',
             icon: <FileText className="h-4 w-4" />,
+            activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
+          },
+          {
+            value: 'progress',
+            label: 'Progress',
+            icon: <Database className="h-4 w-4" />,
             activeGradient: "data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/80 data-[state=active]:text-[#0F0276]",
           },
           {
@@ -386,6 +393,10 @@ export default function AdminSettingsTab({
 
         <TabsContent value="site-content" className="space-y-6">
           <AdminSiteContentManager />
+        </TabsContent>
+        
+        <TabsContent value="progress" className="space-y-6">
+          <AdminProgressSettings />
         </TabsContent>
         
         <TabsContent value="backup" className="space-y-6">

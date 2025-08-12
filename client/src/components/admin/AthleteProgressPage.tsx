@@ -118,19 +118,19 @@ export default function AthleteProgressPage() {
   }, [visibleSkills, apparatusById]);
 
   const perApparatusLevel = useMemo(() => {
-    const map = new Map<number, Map<string, { total: number; mastered: number; consistent: number; working: number; learning: number }>>();
+    const map = new Map<number, Map<string, { total: number; mastered: number; consistent: number; prepping: number; learning: number }>>();
     visibleSkills.forEach(as => {
       const ap = as.skill?.apparatusId; if (!ap) return;
       const lvl = (as.skill?.level || 'Unknown').toString();
       if (!map.has(ap)) map.set(ap, new Map());
-      const inner = map.get(ap)!;
-      if (!inner.has(lvl)) inner.set(lvl, { total: 0, mastered: 0, consistent: 0, working: 0, learning: 0 });
+          const inner = map.get(ap)!;
+          if (!inner.has(lvl)) inner.set(lvl, { total: 0, mastered: 0, consistent: 0, prepping: 0, learning: 0 });
       const s = inner.get(lvl)!;
       s.total += 1;
       const st = (as.status || '').toString().toLowerCase();
       if (st === 'mastered') s.mastered += 1;
       if (st === 'consistent') s.consistent += 1;
-      if (st === 'working') s.working += 1;
+          if (st === 'working' || st === 'prepping') s.prepping += 1;
       if (st === 'learning') s.learning += 1;
     });
     return Array.from(map.entries()).map(([ap, inner]) => ({
@@ -140,7 +140,7 @@ export default function AthleteProgressPage() {
         total: s.total,
         mastered: s.mastered,
         consistent: s.consistent,
-        working: s.working,
+            prepping: s.prepping,
         learning: s.learning,
         masteredPct: s.total ? Math.round((s.mastered / s.total) * 100) : 0,
         consistentPct: s.total ? Math.round(((s.consistent + s.mastered) / s.total) * 100) : 0,
@@ -234,10 +234,10 @@ export default function AthleteProgressPage() {
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Working</span>
-                    <span className="text-slate-600">{Math.round((overall.counts["working"] || 0) / Math.max(overall.total, 1) * 100)}%</span>
+                      <span>Prepping</span>
+                      <span className="text-slate-600">{Math.round(((overall.counts["prepping"] || 0)) / Math.max(overall.total, 1) * 100)}%</span>
                   </div>
-                  <Progress value={Math.round((overall.counts["working"] || 0) / Math.max(overall.total, 1) * 100)} />
+                    <Progress value={Math.round(((overall.counts["prepping"] || 0)) / Math.max(overall.total, 1) * 100)} />
                 </div>
                 <div>
                   <div className="flex items-center justify-between text-sm mb-1">
@@ -247,7 +247,7 @@ export default function AthleteProgressPage() {
                   <Progress value={Math.round((overall.counts["learning"] || 0) / Math.max(overall.total, 1) * 100)} />
                 </div>
                 <div className="text-xs text-slate-600 mt-1">
-                  Total skills: {overall.total} · Mastered: {overall.counts["mastered"] || 0} · Consistent: {overall.counts["consistent"] || 0} · Learning: {overall.counts["learning"] || 0} · Working: {overall.counts["working"] || 0}
+                      Total skills: {overall.total} · Mastered: {overall.counts["mastered"] || 0} · Consistent: {overall.counts["consistent"] || 0} · Learning: {overall.counts["learning"] || 0} · Prepping: {(overall.counts["prepping"] || 0)}
                 </div>
               </div>
             </AdminCardContent>
@@ -271,17 +271,17 @@ export default function AthleteProgressPage() {
                   </div>
                   <Progress value={Math.round((row.counts["consistent"] || 0) / Math.max(row.total, 1) * 100)} />
                   <div className="flex items-center justify-between text-sm mb-1 mt-3">
-                    <span className="text-slate-700 dark:text-white/90">Working</span>
-                    <span className="text-slate-600 dark:text-white/80">{Math.round((row.counts["working"] || 0) / Math.max(row.total, 1) * 100)}%</span>
+                      <span className="text-slate-700 dark:text-white/90">Prepping</span>
+                      <span className="text-slate-600 dark:text-white/80">{Math.round(((row.counts["prepping"] || 0)) / Math.max(row.total, 1) * 100)}%</span>
                   </div>
-                  <Progress value={Math.round((row.counts["working"] || 0) / Math.max(row.total, 1) * 100)} />
+                    <Progress value={Math.round(((row.counts["prepping"] || 0)) / Math.max(row.total, 1) * 100)} />
                   <div className="flex items-center justify-between text-sm mb-1 mt-3">
                     <span className="text-slate-700 dark:text-white/90">Learning</span>
                     <span className="text-slate-600 dark:text-white/80">{Math.round((row.counts["learning"] || 0) / Math.max(row.total, 1) * 100)}%</span>
                   </div>
                   <Progress value={Math.round((row.counts["learning"] || 0) / Math.max(row.total, 1) * 100)} />
                   <div className="text-xs text-slate-600 mt-1">
-                    Total: {row.total} · M: {row.counts["mastered"] || 0} · C: {row.counts["consistent"] || 0} · L: {row.counts["learning"] || 0} · W: {row.counts["working"] || 0}
+                      Total: {row.total} · M: {row.counts["mastered"] || 0} · C: {row.counts["consistent"] || 0} · L: {row.counts["learning"] || 0} · P: {(row.counts["prepping"] || 0)}
                   </div>
                 </AdminCardContent>
               </AdminCard>
@@ -310,8 +310,8 @@ export default function AthleteProgressPage() {
                             <Progress value={l.masteredPct} />
                             <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Consistent</span><span>{Math.round((l.consistent / Math.max(l.total, 1)) * 100)}%</span></div>
                             <Progress value={Math.round((l.consistent / Math.max(l.total, 1)) * 100)} />
-                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Working</span><span>{Math.round((l.working / Math.max(l.total, 1)) * 100)}%</span></div>
-                            <Progress value={Math.round((l.working / Math.max(l.total, 1)) * 100)} />
+                            <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Prepping</span><span>{Math.round((((l as any).prepping || 0) / Math.max(l.total, 1)) * 100)}%</span></div>
+                            <Progress value={Math.round((((l as any).prepping || 0) / Math.max(l.total, 1)) * 100)} />
                             <div className="flex items-center justify-between text-xs mb-1 mt-2"><span>Learning</span><span>{Math.round((l.learning / Math.max(l.total, 1)) * 100)}%</span></div>
                             <Progress value={Math.round((l.learning / Math.max(l.total, 1)) * 100)} />
                             <div className="text-[11px] text-slate-600 mt-1">Total: {l.total} {l.masteredPct === 100 ? '· Completed' : ''}</div>

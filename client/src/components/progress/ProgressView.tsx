@@ -1,4 +1,6 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft, User } from 'lucide-react';
 import AddAthleteSkillDialog from '@/components/admin/AddAthleteSkillDialog';
 import { TestSkillDialog } from '@/components/admin/TestSkillDialog';
@@ -32,6 +35,17 @@ export interface ProgressData {
   skills: ProgressSkill[];
 }
 
+type ProgressStats = {
+  mastered: number;
+  consistent: number;
+  learning: number;
+  prepping: number;
+  totalSkills: number;
+  skillsWithVideos: number;
+  totalVideos: number;
+  progressPercentage: number;
+};
+
 export default function ProgressView({ data, isAdmin = false }: { data: any; isAdmin?: boolean }) {
   const [openVideo, setOpenVideo] = React.useState<{ url: string; title?: string } | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -41,6 +55,9 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   const [selectedSkillForTest, setSelectedSkillForTest] = React.useState<any>(null);
   const [showAddSkillDialog, setShowAddSkillDialog] = React.useState(false);
   const [testingSkill, setTestingSkill] = React.useState<{ skill: SharedSkill; athleteSkillId?: number; status?: string | null; notes?: string | null } | null>(null);
+
+  // Typed helpers
+  const isMastered = React.useCallback((s: ProgressSkill) => s.athleteSkill?.status?.toLowerCase() === 'mastered', []);
 
   const isDirectVideoUrl = React.useCallback((url?: string | null) => {
     if (!url) return false;
@@ -54,23 +71,11 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   }, []);
 
   const a = data.athlete;
-
-  // Filter skills based on search and filters
-  const filteredSkills = React.useMemo(() => {
-    return (data.skills as ProgressSkill[]).filter((skill) => {
-      const matchesSearch = !searchTerm || 
-        skill.skill?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        skill.skill?.category?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || 
-        skill.athleteSkill?.status?.toLowerCase() === statusFilter;
-      
-      const matchesCategory = categoryFilter === 'all' || 
-        skill.skill?.category?.toLowerCase() === categoryFilter;
-
-      return matchesSearch && matchesStatus && matchesCategory;
-    });
-  }, [data.skills, searchTerm, statusFilter, categoryFilter]);
+  // Load site content to get progress settings
+  const { data: siteContent } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: () => apiRequest('GET', '/api/site-content').then(res => res.json())
+  });
 
   // Get unique categories for filter
   const categories = React.useMemo(() => {
@@ -84,16 +89,17 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   }, [data.skills]);
 
   // Calculate statistics
-  const stats = React.useMemo(() => {
+  const stats = React.useMemo<ProgressStats>(() => {
     const statusCounts = {
       mastered: 0,
       consistent: 0,
-      working: 0,
+      prepping: 0,
       learning: 0
-    };
-    
+    } as Record<string, number>;
+
     data.skills.forEach((skill: ProgressSkill) => {
-      const status = skill.athleteSkill?.status?.toLowerCase();
+      const raw = skill.athleteSkill?.status?.toLowerCase();
+      const status = raw === 'working' ? 'prepping' : raw;
       if (status && status in statusCounts) {
         statusCounts[status as keyof typeof statusCounts]++;
       }
@@ -104,7 +110,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
     const totalVideos = data.skills.reduce((acc: number, s: ProgressSkill) => acc + s.videos.length, 0);
 
     return {
-      ...statusCounts,
+      mastered: statusCounts.mastered || 0,
+      consistent: statusCounts.consistent || 0,
+      learning: statusCounts.learning || 0,
+      prepping: statusCounts.prepping || 0,
       totalSkills,
       skillsWithVideos,
       totalVideos,
@@ -112,22 +121,43 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
     };
   }, [data.skills]);
 
+  // Current-level stats and thresholds
+  const levelStats = React.useMemo(() => {
+    const level = String(a?.experience || '').toLowerCase();
+    const counts = { mastered: 0, consistent: 0, learning: 0, prepping: 0 } as Record<string, number>;
+    let total = 0;
+    (data.skills as any[]).forEach((s) => {
+      const skillLevel = String(s.skill?.level || '').toLowerCase();
+      if (!level || !skillLevel || skillLevel !== level) return;
+      total += 1;
+      const raw = String(s.athleteSkill?.status || '').toLowerCase();
+      const st = raw === 'working' ? 'prepping' : raw;
+      if (st in counts) counts[st] += 1;
+    });
+    const required = siteContent?.about?.progressSettings?.requiredMasteredPerLevel?.[level] ?? null;
+    return { level, total, counts, required };
+  }, [a?.experience, data.skills, siteContent]);
+
+  // Filtered skills per search/status/category
+  const filteredSkills = React.useMemo<ProgressSkill[]>(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return data.skills.filter((s: ProgressSkill) => {
+      const name = (s.skill?.name || '').toLowerCase();
+      const category = (s.skill?.category || '').toLowerCase();
+      const raw = (s.athleteSkill?.status || '').toLowerCase();
+      const status = raw === 'working' ? 'prepping' : raw;
+      if (term && !(name.includes(term) || category.includes(term))) return false;
+      if (categoryFilter !== 'all' && category !== categoryFilter) return false;
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
+      return true;
+    });
+  }, [data.skills, searchTerm, categoryFilter, statusFilter]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Modern Header */}
-      <header className="bg-gradient-to-r from-[#0F0276] via-[#1a0b8e] to-[#0F0276] text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            <div className="flex flex-col space-y-3">
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                {a?.name || `${a?.firstName || ''} ${a?.lastName || ''}`.trim()}
-              </h1>
-              <p className="text-blue-100 flex items-center gap-2 text-lg">
-                <Trophy className="h-5 w-5 text-[#D8BD2A]" />
-                <span>Skills Progress Dashboard</span>
-              </p>
-            </div>
-            
+    <div className="min-h-screen bg-gradient-to-b from-[#EEF2FF] to-white dark:from-[#0B163F] dark:to-[#0B163F]">
+      <header className="bg-[#0F0276] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="grid gap-4">
             {/* Stats Overview in Header */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
@@ -235,10 +265,10 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { key: 'mastered', label: 'Mastered', count: stats.mastered, color: 'bg-green-500', bgColor: 'bg-green-50 dark:bg-green-900/20', textColor: 'text-green-700 dark:text-green-300' },
-                      { key: 'consistent', label: 'Consistent', count: stats.consistent, color: 'bg-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-900/20', textColor: 'text-purple-700 dark:text-purple-300' },
-                      { key: 'working', label: 'Working', count: stats.working, color: 'bg-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-900/20', textColor: 'text-blue-700 dark:text-blue-300' },
+                      { key: 'prepping', label: 'Prepping', count: stats.prepping, color: 'bg-blue-500', bgColor: 'bg-blue-50 dark:bg-blue-900/20', textColor: 'text-blue-700 dark:text-blue-300' },
                       { key: 'learning', label: 'Learning', count: stats.learning, color: 'bg-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-900/20', textColor: 'text-amber-700 dark:text-amber-300' },
+                      { key: 'consistent', label: 'Consistent', count: stats.consistent, color: 'bg-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-900/20', textColor: 'text-purple-700 dark:text-purple-300' },
+                      { key: 'mastered', label: 'Mastered', count: stats.mastered, color: 'bg-green-500', bgColor: 'bg-green-50 dark:bg-green-900/20', textColor: 'text-green-700 dark:text-green-300' },
                     ].map(({ key, label, count, color, bgColor, textColor }) => (
                       <div key={key} className={`rounded-lg p-4 ${bgColor}`}>
                         <div className="flex items-center justify-between">
@@ -251,7 +281,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                         {stats.totalSkills > 0 && (
                           <div className="mt-2">
                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div 
+                              <div
                                 className={`h-2 rounded-full ${color}`}
                                 style={{ width: `${(count / stats.totalSkills) * 100}%` }}
                               ></div>
@@ -261,6 +291,57 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Current Level Progress */}
+              <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2 text-[#0F0276] dark:text-white">
+                    <Target className="h-5 w-5 text-[#D8BD2A]" />
+                    Current Level Progress
+                  </CardTitle>
+                  <CardDescription className="text-[#0F0276]/70 dark:text-white/70">
+                    {levelStats.level ? `Level: ${levelStats.level.charAt(0).toUpperCase() + levelStats.level.slice(1)}` : 'No level set'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-sm text-slate-700 dark:text-slate-200">
+                    Total skills in level: <span className="font-semibold">{levelStats.total}</span>
+                    {typeof levelStats.required === 'number' && (
+                      <>
+                        <span className="mx-2">•</span>
+                        Required to advance: <span className="font-semibold">{levelStats.required}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {([
+                      ['mastered','Mastered','text-green-700 dark:text-green-300','bg-green-500'],
+                      ['consistent','Consistent','text-purple-700 dark:text-purple-300','bg-purple-500'],
+                      ['learning','Learning','text-amber-700 dark:text-amber-300','bg-amber-500'],
+                      ['prepping','Prepping','text-blue-700 dark:text-blue-300','bg-blue-500']
+                    ] as const).map(([key, label, textColor, barColor]) => {
+                      const count = levelStats.counts[key] || 0;
+                      const pct = levelStats.total ? Math.round((count / levelStats.total) * 100) : 0;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className={`font-medium ${textColor}`}>{label}</span>
+                            <span className={`${textColor}`}>{count}/{levelStats.total} ({pct}%)</span>
+                          </div>
+                          <div className="h-2 w-full bg-white/50 rounded">
+                            <div className={`h-2 ${barColor} rounded`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {typeof levelStats.required === 'number' && (
+                    <div className="pt-2 text-xs text-slate-600 dark:text-slate-300">
+                      Mastered {levelStats.counts.mastered || 0} / {Math.max(levelStats.required, 0)} required to advance
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -277,7 +358,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {filteredSkills.filter(s => s.athleteSkill?.status?.toLowerCase() === 'mastered').slice(0, 5).map((skill) => (
+                    {filteredSkills.filter(isMastered).slice(0, 5).map((skill: ProgressSkill) => (
                       <div key={skill.athleteSkill.id} className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center">
                           <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -293,7 +374,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                         </div>
                       </div>
                     ))}
-                    {filteredSkills.filter(s => s.athleteSkill?.status?.toLowerCase() === 'mastered').length === 0 && (
+                    {filteredSkills.filter(isMastered).length === 0 && (
                       <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                         <Trophy className="h-12 w-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                         <p className="text-sm">No mastered skills yet</p>
@@ -383,7 +464,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                         <SelectItem value="all">All Statuses</SelectItem>
                         <SelectItem value="mastered">Mastered</SelectItem>
                         <SelectItem value="consistent">Consistent</SelectItem>
-                        <SelectItem value="working">Working</SelectItem>
+                        <SelectItem value="prepping">Prepping</SelectItem>
                         <SelectItem value="learning">Learning</SelectItem>
                       </SelectContent>
                     </Select>
@@ -411,7 +492,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
 
             {/* Skills Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredSkills.map((skill) => (
+              {filteredSkills.map((skill: ProgressSkill) => (
                 <Card key={skill.athleteSkill.id} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
                   <CardHeader className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/50 dark:to-slate-700/50 pb-3">
                     <div className="flex justify-between items-start">
@@ -424,11 +505,11 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                             ? 'bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300' 
                             : skill.athleteSkill.status.toLowerCase() === 'consistent' 
                             ? 'bg-purple-100 text-purple-800 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300'
-                            : skill.athleteSkill.status.toLowerCase() === 'working' 
+                            : (skill.athleteSkill.status.toLowerCase() === 'working' || skill.athleteSkill.status.toLowerCase() === 'prepping') 
                             ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300'
                             : 'bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300'
                         }>
-                          {skill.athleteSkill.status}
+                          {skill.athleteSkill.status.toLowerCase() === 'working' ? 'Prepping' : skill.athleteSkill.status}
                         </Badge>
                       )}
                     </div>
@@ -471,7 +552,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          {skill.videos.map((video) => {
+                          {skill.videos.map((video: ProgressVideo) => {
                             const direct = isDirectVideoUrl(video.url);
                             return (
                               <div key={video.id} className="group">
@@ -568,13 +649,16 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
           {/* Videos Tab */}
           <TabsContent value="videos" className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {data.skills.flatMap((skill: ProgressSkill) => 
-                skill.videos.map((video) => ({
-                  ...video,
-                  skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
-                  skillStatus: skill.athleteSkill.status
-                }))
-              ).map((video: any) => {
+              {(() => {
+                type VideoListItem = ProgressVideo & { skillName: string; skillStatus?: string | null };
+                const videos: VideoListItem[] = data.skills.flatMap((skill: ProgressSkill) =>
+                  skill.videos.map((video: ProgressVideo) => ({
+                    ...video,
+                    skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
+                    skillStatus: skill.athleteSkill.status
+                  }))
+                );
+                return videos.map((video: VideoListItem) => {
                 const direct = isDirectVideoUrl(video.url);
                 return (
                   <Card key={video.id} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 overflow-hidden group hover:shadow-lg transition-shadow">
@@ -636,11 +720,11 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
                               : video.skillStatus.toLowerCase() === 'consistent' 
                               ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                              : video.skillStatus.toLowerCase() === 'working' 
+                              : (video.skillStatus.toLowerCase() === 'working' || video.skillStatus.toLowerCase() === 'prepping') 
                               ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                               : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
                           }`}>
-                            {video.skillStatus}
+                            {video.skillStatus.toLowerCase() === 'working' ? 'Prepping' : video.skillStatus}
                           </Badge>
                         )}
                         {video.recordedAt && (
@@ -653,7 +737,8 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                     </CardContent>
                   </Card>
                 );
-              })}
+              });
+              })()}
             </div>
             
             {stats.totalVideos === 0 && (
@@ -670,7 +755,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
           {/* Achievements Tab */}
           <TabsContent value="achievements" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSkills.filter(s => s.athleteSkill?.status?.toLowerCase() === 'mastered').map((skill) => (
+              {filteredSkills.filter(isMastered).map((skill: ProgressSkill) => (
                 <Card key={skill.athleteSkill.id} className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-700/30 shadow-lg">
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-3">
@@ -722,7 +807,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
               ))}
             </div>
             
-            {filteredSkills.filter(s => s.athleteSkill?.status?.toLowerCase() === 'mastered').length === 0 && (
+            {filteredSkills.filter(isMastered).length === 0 && (
               <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
                 <CardContent className="text-center py-12">
                   <Trophy className="h-12 w-12 mx-auto mb-4 text-slate-300 dark:text-slate-600" />

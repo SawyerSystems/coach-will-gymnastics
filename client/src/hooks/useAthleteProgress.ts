@@ -5,7 +5,7 @@ import type { AthleteSkill, AthleteSkillVideo, InsertAthleteSkill, ProgressShare
 export type AthleteSkillWithMeta = AthleteSkill & { skill?: Skill | null };
 
 export const SKILL_STATUSES = [
-  "working",
+  "prepping",
   "learning",
   "consistent",
   "mastered",

@@ -19,7 +19,7 @@ interface Props {
 }
 
 export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing }: Props) {
-  const [status, setStatus] = useState(existing?.status || "working");
+  const [status, setStatus] = useState((existing?.status?.toLowerCase?.() === 'working' ? 'prepping' : existing?.status) || "prepping");
   const [notes, setNotes] = useState(existing?.notes || "");
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
@@ -113,10 +113,10 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
               <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white">Assessment Status</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
                 {[
                   { key: "learning", label: "Learning", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" },
-                  { key: "working", label: "Working", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+          { key: "prepping", label: "Prepping", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
                   { key: "consistent", label: "Consistent", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" },
                   { key: "mastered", label: "Mastered", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
                 ].map((opt) => (

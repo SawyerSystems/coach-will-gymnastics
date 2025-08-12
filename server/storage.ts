@@ -2040,7 +2040,7 @@ export class SupabaseStorage implements IStorage {
     const payload: any = {
       athlete_id: (input as any).athleteId,
       skill_id: (input as any).skillId,
-      status: (input as any).status ?? null,
+  status: ((input as any).status === 'working' ? 'prepping' : (input as any).status) ?? null,
       notes: (input as any).notes ?? null,
       unlock_date: (input as any).unlockDate ?? null,
       first_tested_at: (input as any).firstTestedAt ?? null,
@@ -2058,7 +2058,7 @@ export class SupabaseStorage implements IStorage {
       if (ins.error) throw ins.error;
       data = ins.data;
     }
-    return {
+    const result: AthleteSkill = {
       id: data.id,
       athleteId: data.athlete_id,
       skillId: data.skill_id,
@@ -2070,6 +2070,43 @@ export class SupabaseStorage implements IStorage {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
+
+    // Auto-upgrade experience level if mastered threshold reached
+    try {
+      const athleteId = (input as any).athleteId as number;
+      const athlete = await this.getAthlete(athleteId);
+      if (athlete && result.status === 'mastered') {
+        // Load settings from site content
+        const site = await this.getSiteContent();
+        const requiredMap = (site?.about?.progressSettings?.requiredMasteredPerLevel) as Record<string, number> | undefined;
+        const levelOrder: Array<'beginner'|'intermediate'|'advanced'|'elite'> = ['beginner','intermediate','advanced','elite'];
+        const currentLevel = (athlete as any).experience as 'beginner'|'intermediate'|'advanced'|'elite' | undefined;
+        if (currentLevel && requiredMap && typeof requiredMap[currentLevel] === 'number') {
+          const required = requiredMap[currentLevel] ?? Infinity;
+          if (Number.isFinite(required) && required > 0) {
+            // Count mastered skills in current level
+            const all = await this.getAthleteSkills(athleteId);
+            const masteredCount = all.filter(row => {
+              const st = String(row.status || '').toLowerCase();
+              const lvl = (row.skill as any)?.level;
+              return (st === 'mastered') && (lvl === currentLevel);
+            }).length;
+
+            if (masteredCount >= required) {
+              const idx = levelOrder.indexOf(currentLevel);
+              const next = idx >= 0 && idx < levelOrder.length - 1 ? levelOrder[idx + 1] : undefined;
+              if (next) {
+                await this.updateAthlete(athleteId, { experience: next as any });
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[STORAGE] Auto-upgrade experience check failed:', e);
+    }
+
+    return result;
   }
 
   async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> {
