@@ -28,6 +28,7 @@ import {
     Youtube
 } from "lucide-react";
 import { useState } from "react";
+import SEOHead from "@/components/SEOHead";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -182,6 +183,37 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title="Contact Coach Will Tumbles — Oceanside Gymnastics Coach"
+        description="Get in touch to schedule private gymnastics, tumbling, or cheer stunt lessons in Oceanside, CA. Located at Oceanside Gymnastics."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/contact` : 'https://www.coachwilltumbles.com/contact'}
+        robots="index,follow"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": ["LocalBusiness", "SportsActivityLocation"],
+            "name": "Coach Will Tumbles",
+            "telephone": "(585) 755-8122",
+            "email": "Will@coachwilltumbles.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "1935 Ave. del Oro #A",
+              "addressLocality": "Oceanside",
+              "addressRegion": "CA",
+              "postalCode": "92056",
+              "addressCountry": "US"
+            }
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com' },
+              { "@type": "ListItem", "position": 2, "name": "Contact", "item": typeof window !== 'undefined' ? `${window.location.origin}/contact` : 'https://www.coachwilltumbles.com/contact' }
+            ]
+          }
+        ]}
+      />
       {/* Hero Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4 text-center">

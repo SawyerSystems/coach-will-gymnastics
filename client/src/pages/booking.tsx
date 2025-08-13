@@ -11,6 +11,7 @@ import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, CheckCircle, Clock, Mail, MapPin, Phone, User, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import SEOHead from "@/components/SEOHead";
 
 export default function Booking() {
   const [showParentModal, setShowParentModal] = useState(false);
@@ -145,6 +146,31 @@ export default function Booking() {
           <p className="text-xl text-slate-700 dark:text-slate-300 max-w-3xl mx-auto mb-8">
             Every athlete begins somewhere. Whether it's their first handstand or they're chasing a new tumbling pass, we'll build a personalized plan that helps them grow with confidence.
           </p>
+          <SEOHead
+            title="Book Private Gymnastics & Tumbling Lessons in Oceanside, CA"
+            description="Reserve 1:1 or semi-private gymnastics, tumbling, and cheer stunt sessions with Coach Will in Oceanside, CA. Flexible scheduling and safe, supportive coaching."
+            canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/booking` : 'https://www.coachwilltumbles.com/booking'}
+            robots="index,follow"
+            structuredData={[
+              {
+                "@context": "https://schema.org",
+                "@type": "Service",
+                "name": "Private Gymnastics Lessons",
+                "areaServed": { "@type": "City", "name": "Oceanside" },
+                "provider": { "@type": "LocalBusiness", "name": "Coach Will Tumbles" },
+                "serviceType": ["Gymnastics", "Tumbling", "Cheer Stunt"],
+                "offers": { "@type": "Offer", "priceCurrency": "USD" }
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  { "@type": "ListItem", "position": 1, "name": "Home", "item": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com' },
+                  { "@type": "ListItem", "position": 2, "name": "Booking", "item": typeof window !== 'undefined' ? `${window.location.origin}/booking` : 'https://www.coachwilltumbles.com/booking' }
+                ]
+              }
+            ]}
+          />
           <Button 
             size="lg"
             className="gym-gradient-blue text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-200 shadow-lg"

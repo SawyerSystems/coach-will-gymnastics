@@ -1,4 +1,5 @@
 import * as React from "react";
+import SEOHead from "@/components/SEOHead";
 import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
@@ -133,6 +134,65 @@ export default function Home() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title="Coach Will Tumbles | Private Gymnastics & Tumbling Lessons in Oceanside, CA"
+        description="Book private gymnastics, tumbling, and cheer stunt lessons in Oceanside, CA. Personalized coaching for kids and teens by Coach Will Tumbles."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://www.coachwilltumbles.com/'}
+        robots="index,follow"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "url": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com',
+            "name": "Coach Will Tumbles",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": `${typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com'}/search?q={search_term_string}`,
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": ["LocalBusiness", "SportsActivityLocation"],
+            "name": "Coach Will Tumbles",
+            "image": `${typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com'}/icons/icon-512.png`,
+            "telephone": "(585) 755-8122",
+            "email": "Will@coachwilltumbles.com",
+            "priceRange": "$$",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "1935 Ave. del Oro #A",
+              "addressLocality": "Oceanside",
+              "addressRegion": "CA",
+              "postalCode": "92056",
+              "addressCountry": "US"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 33.2206,
+              "longitude": -117.3089
+            },
+            "sameAs": [
+              "https://www.facebook.com/", 
+              "https://www.instagram.com/",
+              "https://www.youtube.com/"
+            ],
+            "openingHoursSpecification": Object.entries((siteContent?.hours || {})).map(([day, hours]: any) => ({
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": day,
+              "opens": hours?.start || '09:00',
+              "closes": hours?.end || '17:00'
+            }))
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com' }
+            ]
+          }
+        ]}
+      />
 
       {/* Hero Section with Video Banner */}
       <section className="relative overflow-hidden min-h-screen flex items-center">
