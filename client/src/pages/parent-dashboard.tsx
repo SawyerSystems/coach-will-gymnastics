@@ -85,6 +85,28 @@ const formatTime = (time: string | null) => {
   return `${displayHour}:${m} ${period}`;
 };
 
+// Helper function to format payment status for display
+const formatPaymentStatus = (paymentStatus: string) => {
+  switch (paymentStatus) {
+    case 'unpaid':
+      return 'No Payment';
+    case 'reservation-failed':
+      return 'Failed';
+    case 'reservation-pending':
+      return 'Pending';
+    case 'reservation-refunded':
+      return 'Refunded';
+    case 'reservation-paid':
+      return 'Res. Paid';
+    case 'session-paid':
+      return 'Paid';
+    case 'session-refunded':
+      return 'Fully Refunded';
+    default:
+      return paymentStatus || 'Unknown';
+  }
+};
+
 // RescheduleForm component
 function RescheduleForm({ booking, onSubmit, onCancel }: { 
   booking: Booking; 
@@ -854,6 +876,7 @@ function ParentDashboard() {
                                   {booking.paymentStatus === 'reservation-pending' && <Clock className="w-4 h-4 text-yellow-600" />}
                                   {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-4 h-4 text-green-600" />}
                                   {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-4 h-4 text-red-600" />}
+                                  {(booking.paymentStatus === 'reservation-refunded' || booking.paymentStatus === 'session-refunded') && <XCircle className="w-4 h-4 text-blue-600" />}
                                   {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-4 h-4 text-orange-600" />}
                                   
                                   <Badge 
@@ -863,16 +886,13 @@ function ParentDashboard() {
                                       booking.paymentStatus === 'reservation-paid' ? 'border-green-300 text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400' :
                                       booking.paymentStatus === 'reservation-pending' ? 'border-yellow-300 text-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400' :
                                       booking.paymentStatus === 'reservation-failed' ? 'border-red-300 text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-400' :
+                                      booking.paymentStatus === 'reservation-refunded' ? 'border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400' :
+                                      booking.paymentStatus === 'session-refunded' ? 'border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400' :
                                       booking.paymentStatus === 'unpaid' ? 'border-orange-300 text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-400' :
                                       'border-gray-300 text-gray-700 bg-gray-50 dark:bg-gray-900/20 dark:text-gray-400'
                                     }`}
                                   >
-                                    {booking.paymentStatus === 'session-paid' ? 'Full Payment ✓' : 
-                                    booking.paymentStatus === 'reservation-paid' ? 'Paid ✓' :
-                                    booking.paymentStatus === 'reservation-pending' ? 'Payment Pending' :
-                                    booking.paymentStatus === 'reservation-failed' ? 'Payment Failed' :
-                                    booking.paymentStatus === 'unpaid' ? 'Unpaid' :
-                                    booking.paymentStatus || 'Unknown'}
+                                    {formatPaymentStatus(booking.paymentStatus)}
                                   </Badge>
                                 </div>
 
