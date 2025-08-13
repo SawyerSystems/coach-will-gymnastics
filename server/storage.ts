@@ -4146,8 +4146,7 @@ export class SupabaseStorage implements IStorage {
         excerpt: insertPost.excerpt,
         category: insertPost.category,
         sections: insertPost.sections ?? null,
-        image_url: insertPost.imageUrl ?? null,
-        updated_at: new Date().toISOString()
+        image_url: insertPost.imageUrl ?? null
       })
       .eq('id', id)
       .select()

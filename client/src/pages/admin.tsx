@@ -2120,7 +2120,16 @@ export default function Admin() {
                           <form onSubmit={(e) => {
                             e.preventDefault();
                             const content = sectionsToContent(editingPostSections);
-                            updateBlogPostMutation.mutate({ ...editingPost, content });
+                            updateBlogPostMutation.mutate({ 
+                              ...editingPost, 
+                              content,
+                              // Convert ContentSection to the schema format
+                              sections: editingPostSections.map(section => ({
+                                title: section.caption || '', // Use caption or empty string
+                                content: section.content,
+                                imageUrl: section.type === 'image' ? section.content : undefined
+                              }))
+                            });
                           }}>
                             <div className="space-y-4">
                               <div>
