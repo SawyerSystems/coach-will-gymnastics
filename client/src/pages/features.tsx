@@ -159,7 +159,8 @@ export default function FeaturesPage() {
     headline: "Track Real Progress, Not Just Attendance",
     sub: "Book in minutes. Get videos and coach notes after.",
     imageAlt: "Phone mockup showing a clean parent portal with progress videos and badges",
-    image: "https://images.unsplash.com/photo-1551281044-8d8d0d8d0d8d?q=80&w=1600&auto=format&fit=crop",
+    // Use a known-good image URL instead of an invalid placeholder so the hero always renders
+    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop",
   };
 
   const chapters = [
@@ -286,6 +287,19 @@ export default function FeaturesPage() {
             transform: `translateY(${parallaxOffset * 0.3}px)`,
           }}
         />
+        
+        {/* Logo background element */}
+        <div 
+          className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-20 dark:opacity-25"
+          style={{ transform: `translateY(${parallaxOffset * 0.03}px)` }}
+        >
+          <img
+            src="/CWT_Circle_LogoSPIN.png"
+            alt="Coach Will Tumbles Logo"
+            className="object-contain animate-spin w-[900px] h-[900px] md:w-[1200px] md:h-[1200px] lg:w-[1500px] lg:h-[1500px]"
+            style={{ animationDuration: '45s' }}
+          />
+        </div>
         
         {/* Animated floating orbs */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
