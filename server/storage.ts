@@ -4118,8 +4118,13 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabaseAdmin
       .from('blog_posts')
       .insert({
-        ...insertPost,
-        image_url: insertPost.imageUrl ?? null
+        title: insertPost.title,
+        content: insertPost.content,
+        excerpt: insertPost.excerpt,
+        category: insertPost.category,
+        sections: insertPost.sections ?? null,
+        image_url: insertPost.imageUrl ?? null,
+        published_at: new Date().toISOString()
       })
       .select()
       .single();
@@ -4136,8 +4141,13 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabaseAdmin
       .from('blog_posts')
       .update({
-        ...insertPost,
-        image_url: insertPost.imageUrl ?? null
+        title: insertPost.title,
+        content: insertPost.content,
+        excerpt: insertPost.excerpt,
+        category: insertPost.category,
+        sections: insertPost.sections ?? null,
+        image_url: insertPost.imageUrl ?? null,
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()
@@ -4260,9 +4270,13 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabaseAdmin
       .from('tips')
       .insert({
-        ...insertTip,
+        title: insertTip.title,
+        content: insertTip.content,
+        sections: insertTip.sections ?? null,
+        category: insertTip.category,
+        difficulty: insertTip.difficulty,
         video_url: insertTip.videoUrl ?? null,
-        sections: insertTip.sections ?? null
+        published_at: new Date().toISOString()
       })
       .select()
       .single();
@@ -4279,9 +4293,13 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabaseAdmin
       .from('tips')
       .update({
-        ...insertTip,
+        title: insertTip.title,
+        content: insertTip.content,
+        sections: insertTip.sections ?? null,
+        category: insertTip.category,
+        difficulty: insertTip.difficulty,
         video_url: insertTip.videoUrl ?? null,
-        sections: insertTip.sections ?? null
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()

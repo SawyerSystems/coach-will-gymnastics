@@ -416,7 +416,7 @@ export default function Admin() {
 
   const updateBlogPostMutation = useMutation({
     mutationFn: async (post: BlogPost) => {
-      const response = await apiRequest("PUT", `/api/blog-posts/${post.id}`, post);
+      const response = await apiRequest("PATCH", `/api/blog-posts/${post.id}`, post);
       return response.json();
     },
     onSuccess: () => {
@@ -452,7 +452,7 @@ export default function Admin() {
 
   const updateTipMutation = useMutation({
     mutationFn: async (tip: Tip) => {
-      const response = await apiRequest("PUT", `/api/tips/${tip.id}`, tip);
+      const response = await apiRequest("PATCH", `/api/tips/${tip.id}`, tip);
       return response.json();
     },
     onSuccess: () => {
