@@ -1313,15 +1313,7 @@ export default function Admin() {
           } else {
             source = 'unresolved(0)';
           }
-          return (
-            <div className="flex h-screen bg-gray-100">
-              <SEOHead
-                title="Admin Dashboard — Coach Will Tumbles"
-                description="Admin dashboard."
-                canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/admin` : 'https://www.coachwilltumbles.com/admin'}
-                robots="noindex,follow"
-                structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
-              />
+          return {
             lessonTypeId: ltId,
             lessonTypeName: typeof ltObj === 'string' ? ltObj : (ltObj?.name || undefined),
             bookingAmount,
@@ -1357,6 +1349,13 @@ export default function Admin() {
   // RENDER
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title="Admin Dashboard — Coach Will Tumbles"
+        description="Admin dashboard."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/admin` : 'https://www.coachwilltumbles.com/admin'}
+        robots="noindex,follow"
+        structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
+      />
       {/* Mobile Hamburger Menu */}
       {!isSidebarOpen && (
         <button 
