@@ -615,11 +615,37 @@ function ParentDashboard() {
            b.status !== 'completed';
     
     return isUpcoming;
+  }).sort((a, b) => {
+    // Sort by date (soonest first), then by time if same date
+    if (!a.preferredDate || !b.preferredDate) return 0;
+    
+    const dateComparison = a.preferredDate.localeCompare(b.preferredDate);
+    if (dateComparison !== 0) return dateComparison;
+    
+    // If same date, sort by time (earliest first)
+    if (a.preferredTime && b.preferredTime) {
+      return a.preferredTime.localeCompare(b.preferredTime);
+    }
+    
+    return 0;
   });
 
   const pastBookings = bookings.filter(b => {
     // Adventure Log should only show completed sessions
     return b.attendanceStatus === 'completed';
+  }).sort((a, b) => {
+    // Sort past bookings by date (most recent first), then by time if same date
+    if (!a.preferredDate || !b.preferredDate) return 0;
+    
+    const dateComparison = b.preferredDate.localeCompare(a.preferredDate); // Reverse order for past bookings
+    if (dateComparison !== 0) return dateComparison;
+    
+    // If same date, sort by time (latest first for past bookings)
+    if (a.preferredTime && b.preferredTime) {
+      return b.preferredTime.localeCompare(a.preferredTime);
+    }
+    
+    return 0;
   });
 
   // Reschedule booking mutation
