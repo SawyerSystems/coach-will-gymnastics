@@ -117,14 +117,9 @@ export default function ParentRegister() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="parent@example.com" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="email" placeholder="parent@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,14 +130,9 @@ export default function ParentRegister() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Create a password" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="Create a password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,14 +143,9 @@ export default function ParentRegister() {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">First Name</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="text" 
-                        placeholder="First Name" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="text" placeholder="First Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -171,14 +156,9 @@ export default function ParentRegister() {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Last Name</FormLabel>
+                    <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="text" 
-                        placeholder="Last Name" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="text" placeholder="Last Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,14 +169,9 @@ export default function ParentRegister() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Phone</FormLabel>
+                    <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="tel" 
-                        placeholder="Phone Number" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="tel" placeholder="Phone Number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -207,14 +182,9 @@ export default function ParentRegister() {
                 name="emergencyContactName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Name</FormLabel>
+                    <FormLabel>Emergency Contact Name</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="text" 
-                        placeholder="Emergency Contact Name" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="text" placeholder="Emergency Contact Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -225,14 +195,9 @@ export default function ParentRegister() {
                 name="emergencyContactPhone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Phone</FormLabel>
+                    <FormLabel>Emergency Contact Phone</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="tel" 
-                        placeholder="Emergency Contact Phone" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="tel" placeholder="Emergency Contact Phone" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

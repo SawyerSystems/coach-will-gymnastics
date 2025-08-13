@@ -140,12 +140,11 @@ export default function ForgotPassword() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Email Address</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
                         placeholder="parent@example.com"
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
                         {...field} 
                       />
                     </FormControl>

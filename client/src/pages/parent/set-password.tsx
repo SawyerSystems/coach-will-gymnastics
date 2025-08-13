@@ -158,14 +158,9 @@ export default function SetPasswordPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Enter your password" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="Enter your password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,14 +171,9 @@ export default function SetPasswordPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Confirm Password</FormLabel>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="Confirm your password" 
-                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="Confirm your password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
