@@ -4298,8 +4298,7 @@ export class SupabaseStorage implements IStorage {
         sections: insertTip.sections ?? null,
         category: insertTip.category,
         difficulty: insertTip.difficulty,
-        video_url: insertTip.videoUrl ?? null,
-        updated_at: new Date().toISOString()
+        video_url: insertTip.videoUrl ?? null
       })
       .eq('id', id)
       .select()

@@ -2316,6 +2316,12 @@ export default function Admin() {
                                 createTipMutation.mutate({
                                   ...newTip,
                                   content,
+                                  // Convert ContentSection to the schema format
+                                  sections: newTipSections.map(section => ({
+                                    title: section.type,
+                                    content: section.content,
+                                    imageUrl: section.type === 'image' ? section.content : undefined
+                                  })),
                                   videoUrl: newTip.videoUrl || null
                                 });
                               }}
@@ -2341,7 +2347,16 @@ export default function Admin() {
                           <form onSubmit={(e) => {
                             e.preventDefault();
                             const content = sectionsToContent(editingTipSections);
-                            updateTipMutation.mutate({ ...editingTip, content });
+                            updateTipMutation.mutate({ 
+                              ...editingTip, 
+                              content,
+                              // Convert ContentSection to the schema format
+                              sections: editingTipSections.map(section => ({
+                                title: section.type,
+                                content: section.content,
+                                imageUrl: section.type === 'image' ? section.content : undefined
+                              }))
+                            });
                           }}>
                             <div className="space-y-4">
                               <div>
