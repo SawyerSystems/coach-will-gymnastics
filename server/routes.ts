@@ -11,7 +11,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -3325,6 +3325,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error('[STATUS SYNC] Error checking waiver reminders:', error);
       }
+    },
+
+    async triggerSafetyInformationReminders() {
+      try {
+        const bookings = await storage.getAllBookings();
+        const now = new Date();
+
+        for (const booking of bookings) {
+          try {
+            // Only consider active, paid, non-cancelled upcoming sessions with a date
+            if (!booking.preferredDate) continue;
+            if (booking.attendanceStatus === AttendanceStatusEnum.CANCELLED) continue;
+            if (booking.paymentStatus !== PaymentStatusEnum.RESERVATION_PAID && booking.paymentStatus !== PaymentStatusEnum.SESSION_PAID) continue;
+
+            // Check if safety information is incomplete
+            const hasMissingSafetyInfo = (
+              booking.dropoffPersonName === 'Not Specified' ||
+              booking.pickupPersonName === 'Not Specified' ||
+              booking.dropoffPersonRelationship === 'Other' ||
+              booking.pickupPersonRelationship === 'Other' ||
+              !booking.dropoffPersonPhone || 
+              !booking.pickupPersonPhone ||
+              booking.dropoffPersonPhone.trim() === '' ||
+              booking.pickupPersonPhone.trim() === ''
+            );
+
+            if (!hasMissingSafetyInfo) continue;
+
+            // Compute hours until session (approximate; date-only if time missing)
+            const sessionDate = new Date(booking.preferredDate);
+            const sessionTime = (booking.preferredTime || '00:00').split(':');
+            if (sessionTime.length >= 2 && !isNaN(Number(sessionTime[0])) && !isNaN(Number(sessionTime[1]))) {
+              sessionDate.setHours(Number(sessionTime[0]), Number(sessionTime[1]), 0, 0);
+            }
+            const hoursUntil = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+            // Build safety information link and idempotency markers on booking.adminNotes
+            const safetyLink = `${getBaseUrl()}/parent/login?redirect=dashboard&booking_id=${booking.id}`;
+            const notes = booking.adminNotes || '';
+
+            // Get the first athlete's name for the email
+            const firstAthleteName = booking.athlete1Name || 'your athlete';
+
+            // 24-hour window: 20–28 hours before
+            if (hoursUntil <= 28 && hoursUntil >= 20) {
+              if (!notes.includes('SAFETY_INFO_REMINDER_24H_SENT')) {
+                const toEmail = booking.parentEmail;
+                const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+                if (toEmail) {
+                  await sendSafetyInformationReminder(toEmail, parentName, firstAthleteName, safetyLink);
+                  const updatedNotes = notes
+                    ? `${notes}\n\nSAFETY_INFO_REMINDER_24H_SENT - ${new Date().toISOString()}`
+                    : `SAFETY_INFO_REMINDER_24H_SENT - ${new Date().toISOString()}`;
+                  await storage.updateBooking(booking.id, { adminNotes: updatedNotes });
+                  console.log(`[SAFETY INFO REMINDER] Sent 24h reminder for booking ${booking.id} to ${toEmail}`);
+                } else {
+                  console.warn(`[SAFETY INFO REMINDER] Skipped 24h reminder - no parent email for booking ${booking.id}`);
+                }
+              }
+            }
+
+            // 2-hour window: 1.5–2.5 hours before
+            if (hoursUntil <= 2.5 && hoursUntil >= 1.5) {
+              if (!notes.includes('SAFETY_INFO_REMINDER_2H_SENT')) {
+                const toEmail = booking.parentEmail;
+                const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+                if (toEmail) {
+                  await sendSafetyInformationReminder(toEmail, parentName, firstAthleteName, safetyLink);
+                  const updatedNotes = (booking.adminNotes || '')
+                    ? `${(booking.adminNotes || '')}\n\nSAFETY_INFO_REMINDER_2H_SENT - ${new Date().toISOString()}`
+                    : `SAFETY_INFO_REMINDER_2H_SENT - ${new Date().toISOString()}`;
+                  await storage.updateBooking(booking.id, { adminNotes: updatedNotes });
+                  console.log(`[SAFETY INFO REMINDER] Sent 2h reminder for booking ${booking.id} to ${toEmail}`);
+                } else {
+                  console.warn(`[SAFETY INFO REMINDER] Skipped 2h reminder - no parent email for booking ${booking.id}`);
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`[SAFETY INFO REMINDER] Error processing booking ${booking.id}:`, err);
+          }
+        }
+      } catch (error) {
+        console.error('[STATUS SYNC] Error checking safety information reminders:', error);
+      }
     }
   };
 
@@ -3337,6 +3422,7 @@ setInterval(async () => {
       await StatusSyncService.syncBookingStatuses(booking.id);
     }
     await StatusSyncService.triggerWaiverReminders();
+    await StatusSyncService.triggerSafetyInformationReminders();
     console.log('[STATUS SYNC] Periodic sync completed');
   } catch (error) {
     console.error('[STATUS SYNC] Periodic sync error:', error);
@@ -3349,6 +3435,7 @@ setInterval(async () => {
     console.log('[DAILY SYNC] Running daily email checks...');
     await StatusSyncService.triggerSessionReminders();
     await StatusSyncService.triggerBirthdayEmails();
+    await StatusSyncService.triggerSafetyInformationReminders();
     console.log('[DAILY SYNC] Daily email checks completed');
   } catch (error) {
     console.error('[DAILY SYNC] Daily sync error:', error);
@@ -3361,6 +3448,7 @@ setTimeout(async () => {
     console.log('[STARTUP] Running initial daily sync...');
     await StatusSyncService.triggerSessionReminders();
     await StatusSyncService.triggerBirthdayEmails();
+    await StatusSyncService.triggerSafetyInformationReminders();
     console.log('[STARTUP] Initial daily sync completed');
   } catch (error) {
     console.error('[STARTUP] Initial daily sync error:', error);

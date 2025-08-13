@@ -573,6 +573,20 @@ export async function sendSafetyInformationLink(
   });
 }
 
+// Helper function to send safety information reminder
+export async function sendSafetyInformationReminder(
+  to: string,
+  parentName: string,
+  athleteName: string,
+  loginLink: string
+) {
+  return sendEmail({
+    type: 'safety-information',
+    to,
+    data: { parentName, athleteName, loginLink }
+  });
+}
+
 // Helper function to send signed waiver confirmation
 export async function sendSignedWaiverConfirmation(
   to: string,
