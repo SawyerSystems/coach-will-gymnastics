@@ -1590,6 +1590,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Check for existing parent with same email
+      const existingParent = await storage.getParentByEmail(parentData.email);
+      if (existingParent) {
+        console.log(`❌ [PARENT-CREATE] Parent with email ${parentData.email} already exists (ID: ${existingParent.id})`);
+        return res.status(409).json({ 
+          error: "A parent with this email address already exists",
+          existingParentId: existingParent.id
+        });
+      }
+
       // Ensure emergency contact fields have defaults
       const processedData = {
         ...parentData,

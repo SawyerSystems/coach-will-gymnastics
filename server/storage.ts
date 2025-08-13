@@ -2424,6 +2424,12 @@ export class SupabaseStorage implements IStorage {
 
     if (error) {
       console.error('Error creating parent:', error);
+      
+      // Handle duplicate email error specifically
+      if (error.code === '23505' && error.message.includes('email')) {
+        throw new Error(`A parent with email ${insertParent.email} already exists`);
+      }
+      
       throw error;
     }
 
