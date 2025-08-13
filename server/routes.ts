@@ -6686,7 +6686,7 @@ setTimeout(async () => {
       const file = req.file;
       const fileExtension = file.originalname.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
-      const filePath = `site-media/${fileName}`;
+      const filePath = `skill-reference/${fileName}`;
 
       // Log upload attempt details
       console.log("Media upload attempt:", {

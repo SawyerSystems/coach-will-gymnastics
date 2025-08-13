@@ -6549,8 +6549,8 @@ export class SupabaseStorage implements IStorage {
     try {
       // Generate a unique file name to avoid collisions
       const uniqueFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const bucketName = 'media';
-      const filePath = `uploads/${uniqueFileName}`;
+      const bucketName = 'site-media';
+      const filePath = `athlete-skills/${uniqueFileName}`;
 
       // Upload file to Supabase Storage
       const { error } = await supabaseAdmin.storage
