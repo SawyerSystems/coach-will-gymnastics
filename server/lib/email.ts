@@ -318,12 +318,21 @@ export async function sendSessionConfirmationIfNeeded(bookingId: number, storage
 
 // Helper function to send session cancellation email (idempotent, fetches all needed data)
 export async function sendSessionCancellationIfNeeded(bookingId: number, storage: EmailStorage, rescheduleLink?: string) {
+  console.log(`🚨 [SESSION-CANCELLATION-DEBUG] Function called for booking ${bookingId}`);
   try {
     const booking = await storage.getBookingWithRelations(bookingId);
     if (!booking) {
       console.warn(`[SESSION-CANCELLATION] Booking ${bookingId} not found`);
       return false;
     }
+
+    console.log(`🔍 [SESSION-CANCELLATION-DEBUG] Booking found:`, {
+      id: booking.id,
+      preferredDate: booking.preferredDate,
+      preferredTime: booking.preferredTime,
+      lessonType: booking.lessonType,
+      athletes: booking.athletes
+    });
 
     // Get parent info (from relations or fallback to booking fields)
     const parentEmail = booking.parent?.email || booking.parentEmail;
@@ -337,9 +346,18 @@ export async function sendSessionCancellationIfNeeded(bookingId: number, storage
     // Use provided reschedule link or build default one
     const finalRescheduleLink = rescheduleLink || '/booking';
     
+    // Extract session information
+    const sessionData = {
+      sessionDate: booking.preferredDate,
+      sessionTime: booking.preferredTime,
+      athleteNames: booking.athletes?.map((athlete: any) => athlete.firstName || athlete.name) || [],
+      lessonType: booking.lessonType?.name
+    };
+    
+    console.log(`📧 [SESSION-CANCELLATION-DEBUG] Session data being sent:`, JSON.stringify(sessionData, null, 2));
     console.log(`[SESSION-CANCELLATION] Sending cancellation email for booking ${bookingId} to ${parentEmail}`);
     try {
-      await sendSessionCancellation(parentEmail, parentName, finalRescheduleLink);
+      await sendSessionCancellation(parentEmail, parentName, finalRescheduleLink, sessionData);
       console.log(`[SESSION-CANCELLATION] ✅ Sent cancellation email for booking ${bookingId}`);
       return true;
     } catch (sendErr) {
@@ -396,12 +414,22 @@ export async function sendSessionReminder(
 export async function sendSessionCancellation(
   to: string,
   parentName: string,
-  rescheduleLink: string
+  rescheduleLink: string,
+  sessionData?: {
+    sessionDate?: string;
+    sessionTime?: string;
+    athleteNames?: string[];
+    lessonType?: string;
+  }
 ) {
   return sendEmail({
     type: 'session-cancelled',
     to,
-    data: { parentName, rescheduleLink }
+    data: { 
+      parentName, 
+      rescheduleLink,
+      ...sessionData
+    }
   });
 }
 
