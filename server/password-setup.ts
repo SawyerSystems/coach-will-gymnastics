@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import { body, validationResult } from 'express-validator';
-import { sendPasswordSetupEmail } from './lib/email';
+import { sendPasswordSetupEmail, sendPasswordResetEmail } from './lib/email';
 import { storage } from './storage';
 
 export const passwordSetupRouter = Router();
@@ -59,6 +59,60 @@ passwordSetupRouter.post('/send-password-setup', [
   } catch (error) {
     console.error('Error sending password setup email:', error);
     res.status(500).json({ error: 'Failed to send password setup email' });
+  }
+});
+
+// POST /api/parent-auth/forgot-password
+passwordSetupRouter.post('/forgot-password', [
+  body('email').isEmail().normalizeEmail(),
+], async (req: Request, res: Response) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { email } = req.body;
+    
+    // Get parent from database by email
+    const parent = await storage.getParentByEmail(email);
+    
+    if (!parent) {
+      // Don't reveal whether the email exists or not for security
+      return res.json({ 
+        success: true, 
+        message: 'If an account with that email exists, a password reset link has been sent.' 
+      });
+    }
+
+    // Delete any existing password reset tokens for this parent
+    await storage.deletePasswordResetTokensByParentId(parent.id);
+    
+    // Generate a reset token
+    const resetToken = generateResetToken();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+    
+    // Store the reset token
+    await storage.createPasswordResetToken({
+      parentId: parent.id,
+      token: resetToken,
+      expiresAt,
+    });
+
+    // Send the password reset email
+    await sendPasswordResetEmail(
+      parent.email,
+      parent.firstName,
+      resetToken
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'If an account with that email exists, a password reset link has been sent.' 
+    });
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    res.status(500).json({ error: 'Failed to send password reset email' });
   }
 });
 

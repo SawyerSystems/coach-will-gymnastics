@@ -8,6 +8,7 @@ import { NewTipOrBlog } from '../../emails/NewTipOrBlog';
 import { ParentAuthorization } from '../../emails/ParentAuthorization';
 import { ParentWelcome } from '../../emails/ParentWelcome';
 import { PasswordSetupEmail } from '../../emails/PasswordSetupEmail';
+import { PasswordResetEmail } from '../../emails/PasswordResetEmail';
 import { RescheduleConfirmation } from '../../emails/RescheduleConfirmation';
 import { ReservationPaymentLink } from '../../emails/ReservationPaymentLink';
 import { SafetyInformationLink } from '../../emails/SafetyInformationLink';
@@ -38,6 +39,10 @@ export const emailTemplates = {
   'password-setup': {
     subject: '🔐 Set Up Your Password — Coach Will Tumbles',
     component: PasswordSetupEmail
+  },
+  'password-reset': {
+    subject: '🔒 Reset Your Password — Coach Will Tumbles',
+    component: PasswordResetEmail
   },
   'session-confirmation': { 
     subject: '✅ Session Confirmed! — Coach Will Tumbles', 
@@ -679,6 +684,26 @@ export async function sendPasswordSetupEmail(
   
   return sendEmail({
     type: 'password-setup',
+    to,
+    data: {
+      firstName,
+      resetToken,
+      resetUrl,
+    },
+  });
+}
+
+// Helper function to send password reset email to existing parents
+export async function sendPasswordResetEmail(
+  to: string,
+  firstName: string,
+  resetToken: string,
+) {
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetUrl = `${baseUrl}/parent/set-password?token=${resetToken}`;
+  
+  return sendEmail({
+    type: 'password-reset',
     to,
     data: {
       firstName,

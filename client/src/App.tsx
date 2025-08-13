@@ -85,6 +85,7 @@ function Router() {
           <Route path="/progress/:token" component={ProgressShare} />
           <Route path="/progress/athlete/:athleteId" component={ProgressAthlete} />
           <Route path="/parent/login" component={ParentLogin} />
+          <Route path="/parent/forgot-password" component={lazy(() => import("@/pages/parent/forgot-password"))} />
           <Route path="/parent/confirm-booking" component={lazy(() => import("@/pages/parent/confirm-booking"))} />
           <Route path="/parent/set-password" component={lazy(() => import("@/pages/parent/set-password"))} />
           <Route path="/parent-register" component={ParentRegister} />

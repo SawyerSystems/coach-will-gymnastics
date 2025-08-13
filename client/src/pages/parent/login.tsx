@@ -150,6 +150,16 @@ export default function ParentLogin() {
                   'Sign In'
                 )}
               </Button>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground hover:text-primary underline"
+                  onClick={() => setLocation('/parent/forgot-password')}
+                >
+                  Forgot your password?
+                </button>
+              </div>
             </form>
           </Form>
           
