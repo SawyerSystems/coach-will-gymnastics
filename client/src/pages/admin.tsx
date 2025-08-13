@@ -52,12 +52,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     AlertCircle,
     BarChart,
-    Calendar,
-    CalendarDays,
-    CalendarX,
+  Calendar,
+  CalendarDays,
+  CalendarX,
     CheckCircle,
-    ChevronLeft,
-    ChevronRight,
+  ChevronLeft,
+  ChevronRight,
     Clock,
     DollarSign,
     Dumbbell,
@@ -2525,6 +2525,123 @@ export default function Admin() {
                   
                     {/* Enhanced Schedule Manager */}
                     <EnhancedScheduleManager />
+
+                    {/* Availability Exceptions (date-specific blocks) */}
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                          <CalendarX className="h-7 w-7 text-[#D8BD2A]" />
+                          Availability Exceptions
+                        </h3>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                              <CalendarX className="h-5 w-5 mr-2" />
+                              Block Time
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Block Time</DialogTitle>
+                              <DialogDescription>
+                                Block specific dates or times when you're not available
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label>Date</Label>
+                                <Input
+                                  type="date"
+                                  value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
+                                  onChange={(e) => setNewException({
+                                    ...newException,
+                                    date: new Date(e.target.value)
+                                  })}
+                                />
+                              </div>
+                              <div>
+                                <Label>Start Time (optional)</Label>
+                                <Input
+                                  type="time"
+                                  value={newException.startTime || ''}
+                                  onChange={(e) => setNewException({
+                                    ...newException,
+                                    startTime: e.target.value
+                                  })}
+                                />
+                              </div>
+                              <div>
+                                <Label>End Time (optional)</Label>
+                                <Input
+                                  type="time"
+                                  value={newException.endTime || ''}
+                                  onChange={(e) => setNewException({
+                                    ...newException,
+                                    endTime: e.target.value
+                                  })}
+                                />
+                              </div>
+                              <div>
+                                <Label>Reason (optional)</Label>
+                                <Input
+                                  value={newException.reason || ''}
+                                  onChange={(e) => setNewException({
+                                    ...newException,
+                                    reason: e.target.value || undefined
+                                  })}
+                                  placeholder="e.g., Vacation, Sick day, etc."
+                                />
+                              </div>
+                              <Button onClick={() => createExceptionMutation.mutate(newException)} className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
+                                Block Time
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {availabilityExceptions?.map((exception) => (
+                            <AdminCard key={exception.id}>
+                              <AdminCardContent className="p-6">
+                                <div className="flex justify-between items-center">
+                                  <div className="space-y-1">
+                                    <div className="text-sm font-bold text-red-700 dark:text-red-400">
+                                      Blocked: {exception.date}
+                                    </div>
+                                    <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                      {exception.startTime && exception.endTime ? (
+                                        <>
+                                          <Clock className="h-3 w-3" />
+                                          {exception.startTime} - {exception.endTime}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CalendarX className="h-3 w-3" />
+                                          All Day
+                                        </>
+                                      )}
+                                      {exception.reason && (
+                                        <>
+                                          <span className="text-red-400">•</span>
+                                          <span className="font-medium">{exception.reason}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => deleteExceptionMutation.mutate(exception.id)}
+                                    className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </AdminCardContent>
+                            </AdminCard>
+                          ))}
+                      </div>
+                    </div>
                 </div>
             </MainContentContainer>
           </TabsContent>
