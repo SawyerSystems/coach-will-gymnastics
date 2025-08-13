@@ -612,7 +612,8 @@ function ParentDashboard() {
     
     const isUpcoming = bookingDate >= today && 
            b.status !== 'cancelled' &&
-           b.status !== 'completed';
+           b.status !== 'completed' &&
+           b.attendanceStatus !== 'cancelled';
     
     return isUpcoming;
   }).sort((a, b) => {
@@ -631,8 +632,8 @@ function ParentDashboard() {
   });
 
   const pastBookings = bookings.filter(b => {
-    // Adventure Log should only show completed sessions
-    return b.attendanceStatus === 'completed';
+    // Adventure Log should show completed sessions and cancelled bookings
+    return b.attendanceStatus === 'completed' || b.status === 'cancelled' || b.attendanceStatus === 'cancelled';
   }).sort((a, b) => {
     // Sort past bookings by date (most recent first), then by time if same date
     if (!a.preferredDate || !b.preferredDate) return 0;
@@ -1189,44 +1190,64 @@ function ParentDashboard() {
 
                             {/* Right Column - Progress & Notes */}
                             <div className="space-y-3 sm:space-y-4">
-                              {/* Progress Note */}
-                              <div>
-                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
-                                  <TrendingUp className="w-3 h-3 xs:w-4 xs:h-4 text-green-600 dark:text-green-400" />
-                                  Progress Note
-                                </h4>
-                                <div className="bg-white dark:bg-gray-800 rounded-lg p-2 xs:p-3 sm:p-4 border border-gray-200 dark:border-gray-600">
-                                  <p className="text-xs xs:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                                    {booking.progressNote || 
-                                     booking.adminNotes || 
-                                     "Great session! The athlete showed excellent focus and made steady progress in their skills. Keep up the fantastic work! 🌟"}
-                                  </p>
-                                </div>
-                              </div>
+                              {/* Only show progress notes and recommendations for completed sessions, not cancelled ones */}
+                              {booking.attendanceStatus === 'completed' && (
+                                <>
+                                  {/* Progress Note */}
+                                  <div>
+                                    <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                      <TrendingUp className="w-3 h-3 xs:w-4 xs:h-4 text-green-600 dark:text-green-400" />
+                                      Progress Note
+                                    </h4>
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-2 xs:p-3 sm:p-4 border border-gray-200 dark:border-gray-600">
+                                      <p className="text-xs xs:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                        {booking.progressNote || 
+                                         booking.adminNotes || 
+                                         "Great session! The athlete showed excellent focus and made steady progress in their skills. Keep up the fantastic work! 🌟"}
+                                      </p>
+                                    </div>
+                                  </div>
 
-                              {/* Coach Recommendation (placeholder) */}
-                              <div>
-                                <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
-                                  <Lightbulb className="w-3 h-3 xs:w-4 xs:h-4 text-amber-600 dark:text-amber-400" />
-                                  Coach Recommendation
-                                </h4>
-                                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 xs:p-3 border border-amber-200 dark:border-amber-700">
-                                  <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800 dark:text-amber-300">
-                                    {(() => {
-                                      if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Tumbling'))) {
-                                        return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
-                                      }
-                                      if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Beam'))) {
-                                        return "Great balance work! Practice walking on lines at home to improve beam skills.";
-                                      }
-                                      if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Flexibility'))) {
-                                        return "Keep up the daily stretching routine. Consistency is key for flexibility gains!";
-                                      }
-                                      return "Excellent progress! Continue practicing basic movements and building strength at home.";
-                                    })()}
-                                  </p>
+                                  {/* Coach Recommendation (placeholder) */}
+                                  <div>
+                                    <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                      <Lightbulb className="w-3 h-3 xs:w-4 xs:h-4 text-amber-600 dark:text-amber-400" />
+                                      Coach Recommendation
+                                    </h4>
+                                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 xs:p-3 border border-amber-200 dark:border-amber-700">
+                                      <p className="text-[10px] xs:text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+                                        {(() => {
+                                          if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Tumbling'))) {
+                                            return "Continue working on tumbling fundamentals. Practice at home with forward rolls on soft surfaces!";
+                                          }
+                                          if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Beam'))) {
+                                            return "Great balance work! Practice walking on lines at home to improve beam skills.";
+                                          }
+                                          if (booking.focusAreas?.some((area: any) => typeof area === 'object' && typeof area.name === 'string' && area.name.includes('Flexibility'))) {
+                                            return "Keep up the daily stretching routine. Consistency is key for flexibility gains!";
+                                          }
+                                          return "Excellent progress! Continue practicing basic movements and building strength at home.";
+                                        })()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                              
+                              {/* Show cancellation info for cancelled bookings */}
+                              {(booking.status === 'cancelled' || booking.attendanceStatus === 'cancelled') && (
+                                <div>
+                                  <h4 className="font-medium text-xs xs:text-sm text-gray-700 dark:text-gray-300 mb-1 xs:mb-2 flex items-center gap-1 xs:gap-2">
+                                    <XCircle className="w-3 h-3 xs:w-4 xs:h-4 text-red-600 dark:text-red-400" />
+                                    Booking Status
+                                  </h4>
+                                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-2 xs:p-3 border border-red-200 dark:border-red-700">
+                                    <p className="text-xs xs:text-sm text-red-800 dark:text-red-300">
+                                      This booking was cancelled.
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
                           </div>
                           </ParentCardContent>
