@@ -75,6 +75,16 @@ const formatFocusAreas = (focusAreas: FocusAreaDisplay[]): string => {
   }).join(', ');
 };
 
+// Helper function to format time from 24-hour to 12-hour format
+const formatTime = (time: string | null) => {
+  if (!time) return '';
+  const [h, m] = time.split(':');
+  const hour = parseInt(h, 10);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${displayHour}:${m} ${period}`;
+};
+
 // RescheduleForm component
 function RescheduleForm({ booking, onSubmit, onCancel }: { 
   booking: Booking; 
@@ -105,7 +115,7 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
             {booking.athlete2Name && <span className="text-[#B8860B]"> & {booking.athlete2Name}</span>}
           </p>
           <p>
-            <span className="font-medium">Current Date:</span> {booking.preferredDate} at {booking.preferredTime}
+            <span className="font-medium">Current Date:</span> {booking.preferredDate} at {formatTime(booking.preferredTime)}
           </p>
         </div>
       </ParentModalSection>
@@ -141,7 +151,7 @@ function RescheduleForm({ booking, onSubmit, onCancel }: {
                 {availableSlots.length > 0 ? (
                   availableSlots.map((slot) => (
                     <SelectItem key={slot} value={slot}>
-                      {slot}
+                      {formatTime(slot)}
                     </SelectItem>
                   ))
                 ) : (
@@ -816,7 +826,7 @@ function ParentDashboard() {
                                   <div>
                                     <p className="text-sm text-slate-600 dark:text-slate-300">Session Time</p>
                                     <p className="font-semibold text-[#0F0276] dark:text-white">
-                                      {booking.preferredTime}
+                                      {formatTime(booking.preferredTime)}
                                     </p>
                                   </div>
                                 </div>
@@ -1093,7 +1103,7 @@ function ParentDashboard() {
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <Clock className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
-                                      {booking.preferredTime || 'Time TBD'}
+                                      {formatTime(booking.preferredTime) || 'Time TBD'}
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <User className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
@@ -1685,7 +1695,7 @@ function ParentDashboard() {
                         <p className="mt-1">
                           <span className="text-[#B8860B]">{booking.athlete1Name}</span>
                           {booking.athlete2Name && <span className="text-[#B8860B]"> & {booking.athlete2Name}</span>} - 
-                          {booking.lessonType?.replace('-', ' ') || 'Unknown Lesson Type'} on {booking.preferredDate} at {booking.preferredTime}
+                          {booking.lessonType?.replace('-', ' ') || 'Unknown Lesson Type'} on {booking.preferredDate} at {formatTime(booking.preferredTime)}
                         </p>
                       </div>
                     </div>
