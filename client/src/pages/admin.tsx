@@ -237,7 +237,11 @@ export default function Admin() {
 
   const { data: parents = [] } = useQuery<Parent[]>({
     queryKey: ['/api/parents'],
-    queryFn: () => apiRequest('GET', '/api/parents').then(res => res.json()),
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/parents?limit=1000').then(res => res.json());
+      // Handle paginated response format: {parents: [...], pagination: {...}}
+      return response.parents || [];
+    },
     enabled: !!authStatus?.loggedIn,
   });
 

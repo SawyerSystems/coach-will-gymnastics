@@ -1602,14 +1602,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const parent = await storage.createParent(processedData);
       
-      // Send welcome email to manually created parent
+      // Send password setup email for admin-created parents
       if (parent.email) {
         try {
-          const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
-          await sendParentWelcomeEmail(parent.email, parent.firstName || 'Gymnastics Parent', loginLink);
-          console.log(`Welcome email sent to manually created parent ${parent.email}`);
+          // Delete any existing password reset tokens for this parent
+          await storage.deletePasswordResetTokensByParentId(parent.id);
+          
+          // Generate a reset token
+          const resetToken = crypto.randomBytes(32).toString('hex');
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+          
+          // Store the reset token
+          await storage.createPasswordResetToken({
+            parentId: parent.id,
+            token: resetToken,
+            expiresAt,
+          });
+
+          // Send password setup email instead of welcome email
+          await sendPasswordSetupEmail(parent.email, parent.firstName || 'Gymnastics Parent', resetToken);
+          console.log(`Password setup email sent to admin-created parent ${parent.email}`);
         } catch (emailError) {
-          console.error(`Failed to send welcome email to ${parent.email}:`, emailError);
+          console.error(`Failed to send password setup email to ${parent.email}:`, emailError);
           // Continue with parent creation even if email fails
         }
       }
@@ -8723,6 +8737,47 @@ setTimeout(async () => {
 
 
   // Create a new athlete (parent portal endpoint)
+  // Admin endpoint for creating athletes (works even when parent has no password)
+  app.post("/api/admin/athletes", isAdminAuthenticated, async (req, res) => {
+    try {
+      // Validate required fields
+      const { firstName, lastName, dateOfBirth, gender, allergies, experience, isGymMember, parentId } = req.body;
+      
+      if (!firstName || !lastName || !dateOfBirth || !experience || !parentId) {
+        return res.status(400).json({ 
+          error: "Missing required fields", 
+          details: "First name, last name, date of birth, experience level, and parent ID are required"
+        });
+      }
+
+      // Verify the parent exists
+      const parent = await storage.getParentById(parseInt(parentId));
+      if (!parent) {
+        return res.status(404).json({ error: "Parent not found" });
+      }
+      
+      // Create athlete with specified parentId
+      const athleteData = {
+        firstName,
+        lastName,
+        dateOfBirth,
+        gender: gender || null,
+        allergies: allergies || null,
+        experience,
+        parentId: parseInt(parentId),
+        isGymMember: typeof isGymMember === 'boolean' ? isGymMember : undefined
+      };
+      
+      const athlete = await storage.createAthlete(athleteData);
+      
+      console.log(`✅ Admin created athlete ${athlete.id} for parent ${parentId}`);
+      res.status(201).json(athlete);
+    } catch (error: any) {
+      console.error("Error creating athlete (admin):", error);
+      res.status(500).json({ error: "Failed to create athlete" });
+    }
+  });
+
   app.post("/api/parent/athletes", isParentAuthenticated, async (req, res) => {
     try {
       const parentId = req.session.parentId;

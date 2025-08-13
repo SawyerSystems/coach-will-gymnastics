@@ -10,6 +10,7 @@ export interface CreateAthletePayload {
   allergies?: string;
   experience: 'beginner' | 'intermediate' | 'advanced' | 'elite';
   isGymMember?: boolean;
+  parentId?: number; // Required for admin context
   waiverData?: {
     signature: string;
     relationshipToAthlete: string;
@@ -24,13 +25,14 @@ export interface CreateAthletePayload {
   };
 }
 
-export function useCreateAthlete() {
+export function useCreateAthlete(context: 'admin' | 'parent' = 'parent') {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (athlete: CreateAthletePayload) => {
-      const response = await apiRequest("POST", "/api/parent/athletes", athlete);
+      const endpoint = context === 'admin' ? "/api/admin/athletes" : "/api/parent/athletes";
+      const response = await apiRequest("POST", endpoint, athlete);
       return response.json();
     },
     onSuccess: (data, variables) => {

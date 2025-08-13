@@ -23,7 +23,10 @@ export function AthleteInfoFormStep() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWaiverFor, setShowWaiverFor] = useState<number | null>(null);
   const [athleteWaivers, setAthleteWaivers] = useState<{ [key: number]: any }>({});
-  const createAthleteMutation = useCreateAthlete();
+  
+  // Use admin context for admin flows, parent context otherwise
+  const isAdminFlow = state.flowType.includes('admin');
+  const createAthleteMutation = useCreateAthlete(isAdminFlow ? 'admin' : 'parent');
   const { toast } = useToast();
 
   // Get parent ID for the query invalidation
@@ -173,8 +176,13 @@ export function AthleteInfoFormStep() {
           experience: athlete.experience,
         };
 
+        // For admin flows, include parentId from booking state
+        if (isAdminFlow && state.parentId) {
+          athletePayload.parentId = state.parentId;
+        }
+
         // Include waiver data if available (only for non-admin flows)
-        if (athleteWaivers[i] && !state.flowType.includes('admin')) {
+        if (athleteWaivers[i] && !isAdminFlow) {
           athletePayload.waiverData = athleteWaivers[i];
         }
         
