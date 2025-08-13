@@ -3792,6 +3792,21 @@ export class SupabaseStorage implements IStorage {
 
     console.log(`[STORAGE] Successfully updated booking attendance status to "${attendanceStatus}" for ID ${id}`);
 
+    // If lesson cancelled, auto-set booking status to cancelled
+    if (attendanceStatus === AttendanceStatusEnum.CANCELLED) {
+      try {
+        console.log('[STORAGE] Auto-updating booking status to cancelled due to attendance cancellation', { id });
+        await supabaseAdmin
+          .from('bookings')
+          .update({ status: BookingStatusEnum.CANCELLED })
+          .eq('id', id);
+        // Reflect in local object for return mapping
+        (booking as any).status = BookingStatusEnum.CANCELLED;
+      } catch (e) {
+        console.error('[STORAGE] Failed to auto-update booking status to cancelled:', e);
+      }
+    }
+
     // If lesson completed, auto-set payment_status to session-paid (unless refunded)
     if (attendanceStatus === AttendanceStatusEnum.COMPLETED) {
       try {
