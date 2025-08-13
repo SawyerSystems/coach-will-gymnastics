@@ -23,7 +23,7 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
   const [notes, setNotes] = useState(existing?.notes || "");
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [recordedAt, setRecordedAt] = useState<string>(new Date().toISOString().slice(0, 10));
   const notesRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -48,21 +48,32 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
     const saved = await upsert.mutateAsync(payload);
 
     // Handle optional video attachment: file upload takes precedence, then URL
-    let finalUrl = videoUrl.trim();
-    if (videoFile) {
-      const url = await uploadMedia.mutateAsync(videoFile);
-      finalUrl = url;
-    }
-    if (finalUrl) {
-      await addVideo.mutateAsync({
-        athleteSkillId: saved.id,
-        url: finalUrl,
-        title: videoTitle || null,
-        recordedAt: recordedAt ? new Date(recordedAt).toISOString() : new Date().toISOString(),
-      });
-      setVideoUrl("");
+    // Batch upload selected files first (if any)
+    if (videoFiles.length > 0) {
+      for (const file of videoFiles) {
+        const url = await uploadMedia.mutateAsync(file);
+        await addVideo.mutateAsync({
+          athleteSkillId: saved.id,
+          url,
+          title: videoTitle || null,
+          recordedAt: recordedAt ? new Date(recordedAt).toISOString() : new Date().toISOString(),
+        });
+      }
+      setVideoFiles([]);
       setVideoTitle("");
-      setVideoFile(null);
+      setVideoUrl("");
+    } else {
+      let finalUrl = videoUrl.trim();
+      if (finalUrl) {
+        await addVideo.mutateAsync({
+          athleteSkillId: saved.id,
+          url: finalUrl,
+          title: videoTitle || null,
+          recordedAt: recordedAt ? new Date(recordedAt).toISOString() : new Date().toISOString(),
+        });
+        setVideoUrl("");
+        setVideoTitle("");
+      }
     }
 
     onOpenChange(false);
@@ -202,15 +213,21 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
                 <div className="space-y-2">
                   <Label htmlFor="videoFile" className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">
                     <Upload className="h-4 w-4" />
-                    Or Upload Video File
+                    Or Upload Video File(s)
                   </Label>
                   <Input 
                     id="videoFile" 
                     type="file" 
                     accept="video/*" 
-                    onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                    multiple
+                    onChange={(e) => setVideoFiles(e.target.files ? Array.from(e.target.files) : [])}
                     className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
                   />
+                  {!!videoFiles.length && (
+                    <div className="text-xs text-[#0F0276]/70 dark:text-white/70 mt-1">
+                      Selected: {videoFiles.length} file{videoFiles.length !== 1 ? 's' : ''}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="recordedAt" className="text-[#0F0276] dark:text-white font-medium flex items-center gap-2">

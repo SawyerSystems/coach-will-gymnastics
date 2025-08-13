@@ -732,6 +732,150 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
 
           {/* Videos Tab */}
           <TabsContent value="videos" className="space-y-6">
+            {/* Grouped by Day */}
+            {(() => {
+              type VideoListItem = ProgressVideo & { skillName: string; skillStatus?: string | null };
+              // Flatten all videos across skills
+              const allVideos: VideoListItem[] = (data.skills as ProgressSkill[]).flatMap((skill) =>
+                (skill.videos || []).map((video) => ({
+                  ...video,
+                  skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
+                  skillStatus: skill.athleteSkill?.status || null,
+                }))
+              );
+
+              if (!allVideos.length) return null;
+
+              // Normalize to YYYY-MM-DD for grouping
+              const toDay = (v: ProgressVideo) => {
+                const d = (v.recordedAt as any) || (v as any).createdAt || null;
+                try {
+                  return d ? new Date(d).toISOString().slice(0, 10) : 'Unknown Date';
+                } catch {
+                  return 'Unknown Date';
+                }
+              };
+
+              const groups = new Map<string, VideoListItem[]>();
+              for (const v of allVideos) {
+                const key = toDay(v);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key)!.push(v);
+              }
+
+              // Sort groups by date desc, with Unknown at bottom
+              const sortedDays = Array.from(groups.keys()).sort((a, b) => {
+                if (a === 'Unknown Date') return 1;
+                if (b === 'Unknown Date') return -1;
+                return a < b ? 1 : a > b ? -1 : 0;
+              });
+
+              return (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-[#D8BD2A]" />
+                      Videos by Day
+                    </h3>
+                    <div className="text-sm text-[#0F0276]/70 dark:text-white/70">
+                      {allVideos.length} clip{allVideos.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+
+                  {sortedDays.map((day) => {
+                    const items = groups.get(day)!;
+                    // Sort within day by recordedAt asc then id asc for a time-sequence feel
+                    items.sort((a, b) => {
+                      const ad = a.recordedAt ? new Date(a.recordedAt as any).getTime() : 0;
+                      const bd = b.recordedAt ? new Date(b.recordedAt as any).getTime() : 0;
+                      if (ad !== bd) return ad - bd;
+                      return (a.id || 0) - (b.id || 0);
+                    });
+                    const pretty = day === 'Unknown Date' ? 'Unknown Date' : new Date(day + 'T00:00:00').toLocaleDateString();
+                    return (
+                      <Card key={day} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 shadow-lg">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                              <Calendar className="h-5 w-5 text-[#D8BD2A]" />
+                              {pretty}
+                            </CardTitle>
+                            <CardDescription className="text-[#0F0276]/70 dark:text-white/70">
+                              {items.length} clip{items.length !== 1 ? 's' : ''}
+                            </CardDescription>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="relative">
+                            <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+                              {items.map((video) => {
+                                const direct = isDirectVideoUrl(video.url);
+                                return (
+                                  <div key={`${day}-${video.id}`} className="min-w-[260px] max-w-[260px] snap-start">
+                                    {direct ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => video.url && setOpenVideo({ url: video.url, title: video.title || undefined })}
+                                        className="w-full text-left"
+                                      >
+                                        <AspectRatio ratio={16/9} className="overflow-hidden rounded-md shadow-sm">
+                                          <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
+                                            <video
+                                              className="absolute inset-0 h-full w-full object-cover"
+                                              src={video.url || undefined}
+                                              muted
+                                              playsInline
+                                              preload="none"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                              <div className="rounded-full bg-[#0F0276]/90 p-3 shadow-md hover:scale-110 hover:bg-[#0F0276] transition-transform">
+                                                <Play className="h-4 w-4 text-white" fill="white" />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </AspectRatio>
+                                        <div className="mt-2 space-y-1">
+                                          <div className="text-xs font-medium truncate text-[#0F0276] dark:text-white" title={video.title || video.url || ''}>
+                                            {video.title || 'Untitled Video'}
+                                          </div>
+                                          <div className="text-[10px] text-[#0F0276]/70 dark:text-white/70 truncate">
+                                            {video.skillName}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    ) : (
+                                      <div className="p-3 border border-slate-200/60 dark:border-white/20 rounded-md bg-white/50 dark:bg-white/5">
+                                        <a
+                                          className="text-[#0F0276] hover:text-[#0F0276]/80 dark:text-white dark:hover:text-white/80 font-medium text-sm flex items-center gap-1"
+                                          href={video.url || undefined}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                        >
+                                          <Play className="h-3 w-3" />
+                                          {video.title || 'External Video'}
+                                        </a>
+                                        {video.recordedAt && (
+                                          <div className="flex items-center text-[10px] text-[#0F0276]/70 dark:text-white/70 mt-1">
+                                            <Calendar className="h-3 w-3 mr-1" />
+                                            {new Date(video.recordedAt as any).toLocaleDateString()}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {(() => {
                 type VideoListItem = ProgressVideo & { skillName: string; skillStatus?: string | null };
