@@ -124,19 +124,19 @@ export default function TipDetail() {
 
             <CardContent>
               <div className="prose prose-lg max-w-none">
-                {/* Main content intro */}
-                <p className="mb-8 leading-relaxed text-slate-800 dark:text-slate-200 text-lg">
-                  {tip.content}
-                </p>
-                
                 {/* Sections */}
                 {tip.sections && tip.sections.length > 0 ? (
                   <div className="space-y-8">
-                    {tip.sections.map((section, index) => (
+                    {tip.sections
+                      .filter(section => section.title !== 'TEXT') // Filter out TEXT sections
+                      .map((section, index) => (
                       <div key={index} className="border-l-4 border-purple-400 pl-6">
-                        <h3 className="text-xl font-semibold mb-4 text-purple-700 dark:text-purple-300">
-                          {section.title}
-                        </h3>
+                        {/* Only show section title if it's not 'TEXT' */}
+                        {section.title !== 'TEXT' && (
+                          <h3 className="text-xl font-semibold mb-4 text-purple-700 dark:text-purple-300">
+                            {section.title}
+                          </h3>
+                        )}
                         
                         {section.imageUrl && (
                           <div className="mb-4">
@@ -172,11 +172,11 @@ export default function TipDetail() {
                   </div>
                 ) : (
                   // Fallback to original content display if no sections
-          <div>
+                  <div className="leading-relaxed text-slate-800 dark:text-slate-200">
                     {tip.content ? tip.content.split('\n').map((paragraph, index) => {
                       if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
                         return (
-              <h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-purple-800 dark:text-purple-300">
+                          <h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-purple-800 dark:text-purple-300">
                             {paragraph.slice(2, -2)}
                           </h3>
                         );
@@ -190,13 +190,13 @@ export default function TipDetail() {
                         return <br key={index} />;
                       } else {
                         return (
-              <p key={index} className="mb-4 leading-relaxed">
+                          <p key={index} className="mb-4 leading-relaxed">
                             {paragraph}
                           </p>
                         );
                       }
                     }) : (
-            <p className="text-slate-500 dark:text-slate-400 italic">Content not available.</p>
+                      <p className="text-slate-500 dark:text-slate-400 italic">Content not available.</p>
                     )}
                   </div>
                 )}

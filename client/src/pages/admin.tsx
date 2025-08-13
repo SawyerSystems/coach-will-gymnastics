@@ -2318,7 +2318,7 @@ export default function Admin() {
                                   content,
                                   // Convert ContentSection to the schema format
                                   sections: newTipSections.map(section => ({
-                                    title: section.type,
+                                    title: section.caption || '', // Use caption or empty string instead of 'text'
                                     content: section.content,
                                     imageUrl: section.type === 'image' ? section.content : undefined
                                   })),
@@ -2352,7 +2352,7 @@ export default function Admin() {
                               content,
                               // Convert ContentSection to the schema format
                               sections: editingTipSections.map(section => ({
-                                title: section.type,
+                                title: section.caption || '', // Use caption or empty string instead of 'text'
                                 content: section.content,
                                 imageUrl: section.type === 'image' ? section.content : undefined
                               }))
