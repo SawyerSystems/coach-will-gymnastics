@@ -17,9 +17,11 @@ jobs:
       - run: npm ci
       - run: npm run check
       - name: Build
-        run: npm run build
         env:
-          SITE_URL: https://www.coachwilltumbles.com
+          SITE_URL: "https://www.coachwilltumbles.com"
+        run: npm run build
+      - name: JSON-LD smoke test
+        run: npm run seo:jsonld
       - name: Lint SEO metadata
         run: npm run seo:lint
       - name: Validate robots/sitemap

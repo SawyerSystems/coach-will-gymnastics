@@ -223,7 +223,7 @@ Use the template below per route. Add as many routes as needed.
 ### Contact
 - route: /contact
 - title: Contact Coach Will Tumbles | Oceanside Gymnastics
-- metaDescription: Call (585) 755-8122 or email Will@coachwilltumbles.com. Located at 1935 Ave. del Oro #A, Oceanside, CA 92056.
+- metaDescription: Call (585) 755-8122 or email Will@coachwilltumbles.com to ask questions or plan training. Visit 1935 Ave. del Oro #A, Oceanside, CA 92056. Were here to help.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/contact
 - schema:
@@ -233,7 +233,7 @@ Use the template below per route. Add as many routes as needed.
 ### Blog Index
 - route: /blog
 - title: Training Blog | Gymnastics, Tumbling, Cheer Tips
-- metaDescription: Training tips and updates from Coach Will Tumbles: skill progressions, safety, drills, and parent guides.
+- metaDescription: Practical training tips from Coach Will Tumblesskill progressions, safety habits, drills, and parent guides to support confident gymnastics, tumbling, and cheer.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/blog
 - schema:
@@ -252,7 +252,7 @@ Use the template below per route. Add as many routes as needed.
 ### Tips Index
 - route: /tips
 - title: How-To Tips | Tumbling & Gymnastics Tutorials
-- metaDescription: Step-by-step how-to guides: progressions for cartwheels, back handsprings, aerials, and more.
+- metaDescription: Step-by-step how-to guides from Coach Will Tumblesclear progressions for cartwheels, back handsprings, aerials, and moresafety notes and coaching cues included.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/tips
 - schema:
@@ -270,7 +270,7 @@ Use the template below per route. Add as many routes as needed.
 ### About
 - route: /about
 - title: About Coach Will Tumbles | Private Coach in Oceanside
-- metaDescription: Experienced kids gymnastics and tumbling coach in Oceanside, CA. Safe progressions, positive mindset, real results.
+- metaDescription: Meet Coach Will Tumblesan experienced kids gymnastics and tumbling coach in Oceanside, CA. Safe progressions, positive mindset, and real results for young athletes.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/about
 - schema:
