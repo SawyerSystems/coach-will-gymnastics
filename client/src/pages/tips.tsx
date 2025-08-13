@@ -11,6 +11,7 @@ import { Search, Play, BookOpen, Award, Filter, ArrowRight } from "lucide-react"
 import type { Tip } from "@shared/schema";
 import { CTASection } from "@/components/cta-section";
 import { Footer } from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 
 export default function Tips() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +47,29 @@ export default function Tips() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title="Gymnastics Tips, Drills, and How-Tos | Coach Will Tumbles"
+        description="Browse training tips and drills for floor, bars, beam, and vault. Parent-friendly guidance to build strength, skill, and confidence."
+        canonicalUrl="https://www.coachwilltumbles.com/tips"
+        robots="index,follow"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.coachwilltumbles.com/" },
+              { "@type": "ListItem", position: 2, name: "Tips", item: "https://www.coachwilltumbles.com/tips" }
+            ]
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "Gymnastics Tips",
+            description: "A curated collection of gymnastics training tips and drills.",
+            url: "https://www.coachwilltumbles.com/tips"
+          }
+        ]}
+      />
       {/* Hero Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-br from-teal-50 via-blue-50 to-purple-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4 text-center">

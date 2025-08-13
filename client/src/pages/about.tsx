@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { Award, CheckCircle, Heart, Star, Users } from "lucide-react";
 import { Link } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function About() {
   // Fetch dynamic site content
@@ -55,6 +56,30 @@ export default function About() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title="About Coach Will | Private Gymnastics Coaching in Oceanside, CA"
+        description={aboutData.bio}
+        canonicalUrl="https://www.coachwilltumbles.com/about"
+        robots="index,follow"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.coachwilltumbles.com/" },
+              { "@type": "ListItem", position: 2, name: "About", item: "https://www.coachwilltumbles.com/about" }
+            ]
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: "Coach Will Tumbles",
+            url: "https://www.coachwilltumbles.com/about",
+            image: aboutData.photo || undefined,
+            description: aboutData.bio
+          }
+        ]}
+      />
       {/* Hero Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4">

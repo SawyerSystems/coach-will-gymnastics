@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import type { BlogPost } from "@shared/schema";
 import { getDateField } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
+import SEOHead from "@/components/SEOHead";
 
 export default function BlogPostPage() {
   const { id } = useParams();
@@ -72,6 +73,24 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title={`${post.title} | Coach Will Tumbles`}
+        description={post.excerpt || post.title}
+        canonicalUrl={`https://www.coachwilltumbles.com/blog/${post.id}`}
+        robots="index,follow"
+        og={{ 'og:image': post.imageUrl || '', 'og:type': 'article' }}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          description: post.excerpt || post.title,
+          image: post.imageUrl || undefined,
+          datePublished: getDateField(post, ['published_at', 'publishedAt']).toISOString(),
+          author: { "@type": "Person", name: "Coach Will" },
+          publisher: { "@type": "Organization", name: "Coach Will Tumbles" },
+          mainEntityOfPage: `https://www.coachwilltumbles.com/blog/${post.id}`
+        }}
+      />
       {/* Header */}
       <div className="bg-white dark:bg-slate-900/30 border-b border-slate-200 dark:border-slate-700">
         <div className="container mx-auto px-4 py-4">

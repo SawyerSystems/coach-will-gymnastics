@@ -19,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpDown, Calendar, CheckCircle, Filter, Mail, Search, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function Blog() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -147,6 +148,29 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
+      <SEOHead
+        title="Gymnastics Tips & Stories | Coach Will Tumbles Blog"
+        description="Training tips, stories, and parent-friendly guides to help young athletes grow with confidence at Coach Will Tumbles."
+        canonicalUrl="https://www.coachwilltumbles.com/blog"
+        robots="index,follow"
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.coachwilltumbles.com/" },
+              { "@type": "ListItem", position: 2, name: "Blog", item: "https://www.coachwilltumbles.com/blog" }
+            ]
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Blog",
+            name: "Coach Will Tumbles Blog",
+            url: "https://www.coachwilltumbles.com/blog",
+            description: "Gymnastics tips, stories, and guides for parents and athletes."
+          }
+        ]}
+      />
       {/* Hero Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-slate-800/40 dark:via-slate-900/30 dark:to-slate-900/50">
         <div className="container mx-auto px-4 text-center">

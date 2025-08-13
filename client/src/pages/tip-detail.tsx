@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { Link, useParams } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function TipDetail() {
   const { id } = useParams();
@@ -75,6 +76,20 @@ export default function TipDetail() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black py-20">
+      <SEOHead
+        title={`${tip.title} | Gymnastics Tip | Coach Will Tumbles`}
+        description={(tip.sections?.[0]?.content || tip.content || '').slice(0, 160)}
+        canonicalUrl={`https://www.coachwilltumbles.com/tips/${tip.id}`}
+        robots="index,follow"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": tip.sections && tip.sections.length > 0 ? "HowTo" : "Article",
+          name: tip.title,
+          description: (tip.sections?.[0]?.content || tip.content || '').slice(0, 200),
+          url: `https://www.coachwilltumbles.com/tips/${tip.id}`,
+          step: (tip.sections || []).map((s: any, i: number) => ({ "@type": "HowToStep", position: i + 1, name: s.title, text: s.content }))
+        }}
+      />
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Back Button */}
