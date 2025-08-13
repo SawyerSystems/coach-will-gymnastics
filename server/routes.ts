@@ -4322,6 +4322,52 @@ setTimeout(async () => {
           console.error(`[ADMIN-BOOKING] Failed to send confirmation email:`, emailError);
           // Don't fail the booking creation if email sending fails
         }
+
+        // Check if safety information is incomplete and send safety information email
+        const hasMissingSafetyInfo = (
+          booking.dropoffPersonName === 'Not Specified' ||
+          booking.pickupPersonName === 'Not Specified' ||
+          booking.dropoffPersonRelationship === 'Other' ||
+          booking.pickupPersonRelationship === 'Other' ||
+          !booking.dropoffPersonPhone || 
+          !booking.pickupPersonPhone ||
+          booking.dropoffPersonPhone.trim() === '' ||
+          booking.pickupPersonPhone.trim() === ''
+        );
+
+        if (hasMissingSafetyInfo) {
+          console.log(`[ADMIN-BOOKING] Detected incomplete safety information for booking ${booking.id}, sending safety information email`);
+          
+          // Get the first athlete's name for the email
+          const firstAthleteName = bookingData.athleteInfo?.firstName || 
+                                 bookingData.selectedAthletes?.[0]?.firstName || 
+                                 'your athlete';
+          
+          const parentLoginLink = `${baseUrl}/parent/login?redirect=dashboard&booking_id=${booking.id}`;
+          
+          try {
+            await sendSafetyInformationLink(
+              parent.email,
+              parent.firstName || 'Parent',
+              firstAthleteName,
+              parentLoginLink
+            );
+            console.log(`[ADMIN-BOOKING] Successfully sent safety information email to ${parent.email} for booking ${booking.id}`);
+            
+            // Add note to booking that safety info email was sent
+            const updatedNotes = booking.adminNotes ? 
+              `${booking.adminNotes}\n\nSAFETY_INFO_EMAIL_SENT - ${new Date().toISOString()}` : 
+              `SAFETY_INFO_EMAIL_SENT - ${new Date().toISOString()}`;
+            
+            await storage.updateBooking(booking.id, { adminNotes: updatedNotes });
+            
+          } catch (emailError) {
+            console.error(`[ADMIN-BOOKING] Failed to send safety information email:`, emailError);
+            // Don't fail the booking creation if email sending fails
+          }
+        } else {
+          console.log(`[ADMIN-BOOKING] Safety information appears complete for booking ${booking.id}, no additional email needed`);
+        }
       } else {
         console.warn(`[ADMIN-BOOKING] Cannot send confirmation email - missing parent email (parentId: ${parent?.id})`);
       }
