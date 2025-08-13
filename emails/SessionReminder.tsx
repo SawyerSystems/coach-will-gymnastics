@@ -1,12 +1,16 @@
 import React from 'react';
 import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
-import { CTAButton } from './components/CTAButton';
 import { theme } from './components/theme';
+import { EmailFooter } from './components/EmailFooter';
+
+export const SUBJECT = 'Friendly reminder: Session tomorrow';
+export const PREHEADER = 'Quick prep tips and details inside — see you soon!';
 
 export function SessionReminder({ athleteName, sessionDate, sessionTime, manageLink }: { athleteName: string; sessionDate: string; sessionTime: string; manageLink?: string }) {
   return (
-    <EmailLayout title="⏰ Session Reminder">
+  <EmailLayout title="⏰ Session Reminder" preheader={PREHEADER}>
+
       <Text style={{ color: theme.colors.text }}>
         Quick heads‑up — {athleteName} has a session on <strong>{sessionDate}</strong> at <strong>{sessionTime}</strong>.
       </Text>
@@ -17,12 +21,27 @@ export function SessionReminder({ athleteName, sessionDate, sessionTime, manageL
       </ul>
       {manageLink ? (
         <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
-          <CTAButton href={manageLink} color="primary">View Your Booking</CTAButton>
+          <a
+            href={manageLink}
+            style={{
+              display: 'inline-block',
+              backgroundColor: theme.colors.primary,
+              color: '#FFFFFF',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              textDecoration: 'none',
+              fontSize: '16px',
+            }}
+          >
+            View Your Booking
+          </a>
         </div>
       ) : null}
       <Text style={{ color: theme.colors.muted }}>
         I'm excited for a great session — see you soon!
       </Text>
+
+      <EmailFooter />
     </EmailLayout>
   );
 }

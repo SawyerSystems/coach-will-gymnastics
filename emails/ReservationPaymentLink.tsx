@@ -1,8 +1,11 @@
 import React from "react";
 import { Section, Text, Hr } from "@react-email/components";
 import { EmailLayout } from "./components/EmailLayout";
-import { CTAButton } from "./components/CTAButton";
+import { EmailFooter } from './components/EmailFooter';
 import { theme } from "./components/theme";
+
+export const SUBJECT = 'Complete your reservation payment';
+export const PREHEADER = 'Secure your spot — finish payment now to confirm your session.';
 
 interface ReservationPaymentLinkProps {
   parentName: string;
@@ -24,14 +27,15 @@ export function ReservationPaymentLink({
   paymentLink
 }: ReservationPaymentLinkProps) {
   return (
-    <EmailLayout title="Complete Your Reservation">
+    <EmailLayout title="Complete Your Reservation" preheader={PREHEADER}>
+
       {/* Greeting */}
       <Section>
         <Text style={{ fontSize: '18px', fontWeight: 700, color: theme.colors.text, marginBottom: theme.spacing.md }}>
           Hi {parentName}! 🎯
         </Text>
         <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight, marginBottom: theme.spacing.lg }}>
-          Fantastic news! We’ve reserved a spot for <strong>{athleteName}</strong> — here are the details:
+          Fantastic news! I’ve reserved a spot for <strong>{athleteName}</strong> — here are the details:
         </Text>
       </Section>
 
@@ -49,9 +53,20 @@ export function ReservationPaymentLink({
 
       {/* CTA */}
       <Section style={{ textAlign: 'center', marginBottom: theme.spacing.lg }}>
-        <CTAButton href={paymentLink} color="coral">
+        <a
+          href={paymentLink}
+          style={{
+            display: 'inline-block',
+            backgroundColor: theme.colors.primary,
+            color: '#FFFFFF',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none',
+            fontSize: '16px',
+          }}
+        >
           Complete Reservation Payment
-        </CTAButton>
+        </a>
       </Section>
 
       {/* Supporting Info */}
@@ -62,16 +77,9 @@ export function ReservationPaymentLink({
           • Receive waiver and safety information emails<br />
           • Get ready for an amazing gymnastics adventure!
         </Text>
-        <Hr style={{ borderColor: theme.colors.border, margin: `${theme.spacing.lg} 0` }} />
-        <Text style={{ fontSize: '14px', color: theme.colors.muted, lineHeight: theme.font.lineHeight }}>
-          Questions? Reply to this email or text Coach Will.
-          <br /><br />
-          We can’t wait to see {athleteName} shine!
-          <br /><br />
-          Coach Will<br />
-          CoachWillTumbles.com
-        </Text>
       </Section>
+
+      <EmailFooter />
     </EmailLayout>
   );
 }

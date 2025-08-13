@@ -2,15 +2,20 @@ import React from 'react';
 import { Section, Text, Hr } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { theme } from './components/theme';
+import { EmailFooter } from './components/EmailFooter';
+
+export const SUBJECT = 'Waiver complete — you’re all set ✅';
+export const PREHEADER = 'Thanks! Your waiver is on file. Quick tips and the PDF are inside.';
 
 export function SignedWaiverConfirmation({ parentName, athleteName, logoUrl }: { parentName: string; athleteName: string; logoUrl?: string }) {
   return (
-    <EmailLayout logoUrl={logoUrl} title="🏆 Adventure Waiver Complete!">
+  <EmailLayout logoUrl={logoUrl} title="🏆 Adventure Waiver Complete!" preheader={PREHEADER}>
+
       <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
-        Hey {parentName},
+        Hi {parentName},
       </Text>
       <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
-        Perfect! {athleteName}'s waiver is now complete and securely stored in our system. You're all set for the gymnastics adventure ahead!
+        Perfect! {athleteName}'s waiver is now complete and securely stored in my system. You're all set for the gymnastics adventure ahead!
       </Text>
 
       <Section style={{ backgroundColor: '#F3F4F6', padding: theme.spacing.lg, borderRadius: theme.radius.md, margin: '20px 0' }}>
@@ -31,18 +36,24 @@ export function SignedWaiverConfirmation({ parentName, athleteName, logoUrl }: {
         • Remember: every expert was once a beginner 🌟
       </Text>
 
-      <Hr style={{ margin: '30px 0', borderColor: theme.colors.border }} />
+      <Section style={{ textAlign: 'center', margin: '30px 0' }}>
+        <a
+          href="https://coachwilltumbles.com/waiver"
+          style={{
+            display: 'inline-block',
+            backgroundColor: theme.colors.primary,
+            color: '#FFFFFF',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none',
+            fontSize: '16px',
+          }}
+        >
+          View Waiver
+        </a>
+      </Section>
 
-      <Text style={{ fontSize: '14px', color: theme.colors.muted, lineHeight: '1.4' }}>
-        Questions? Reply to this email or text Coach Will directly. Looking forward to an amazing training journey with {athleteName}!
-      </Text>
-
-      <Text style={{ fontSize: '14px', color: theme.colors.muted, marginTop: '20px' }}>
-        Coach Will<br/>
-        CoachWillTumbles.com<br/>
-        📧 will@coachwilltumbles.com<br/>
-        📱 Text: (585) 755-8122
-      </Text>
+      <EmailFooter />
     </EmailLayout>
   );
 }

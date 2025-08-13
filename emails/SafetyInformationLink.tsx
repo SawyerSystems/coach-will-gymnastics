@@ -1,7 +1,7 @@
 import React from 'react';
 import { Section, Text, Hr } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
-import { CTAButton } from './components/CTAButton';
+import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
 
 interface SafetyInformationLinkProps {
@@ -11,9 +11,13 @@ interface SafetyInformationLinkProps {
   logoUrl?: string;
 }
 
+export const SUBJECT = 'Set your safety authorization';
+export const PREHEADER = 'Add who can pick up and drop off — this keeps your athlete safe.';
+
 export function SafetyInformationLink({ parentName, athleteName, loginLink, logoUrl }: SafetyInformationLinkProps) {
   return (
-    <EmailLayout logoUrl={logoUrl} title="Important: Safety Authorization Required 🛡️">
+  <EmailLayout title="Important: Safety Authorization Required 🛡️" preheader={PREHEADER}>
+
       <Section>
         <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
           Hi {parentName}! As part of keeping {athleteName} safe during their gymnastics sessions, we need you to specify who is authorized for pickup and drop-off.
@@ -40,7 +44,20 @@ export function SafetyInformationLink({ parentName, athleteName, loginLink, logo
       </Section>
 
       <Section style={{ textAlign: 'center', marginBottom: theme.spacing.lg }}>
-        <CTAButton href={loginLink}>Set Safety Authorization</CTAButton>
+        <a
+          href={loginLink}
+          style={{
+            display: 'inline-block',
+            backgroundColor: theme.colors.primary,
+            color: '#FFFFFF',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none',
+            fontSize: '16px',
+          }}
+        >
+          Set Safety Authorization
+        </a>
       </Section>
 
       <Section>
@@ -51,16 +68,9 @@ export function SafetyInformationLink({ parentName, athleteName, loginLink, logo
           • Save authorized pickup/drop-off contacts<br />
           • Receive confirmation when complete
         </Text>
-        <Hr style={{ borderColor: theme.colors.border, margin: `${theme.spacing.lg} 0` }} />
-        <Text style={{ fontSize: '14px', color: theme.colors.muted, lineHeight: theme.font.lineHeight }}>
-          Questions about safety procedures? Reply to this email or text Coach Will.
-          <br /><br />
-          Thank you for helping us keep {athleteName} safe!
-          <br /><br />
-          Coach Will<br />
-          CoachWillTumbles.com
-        </Text>
       </Section>
+
+      <EmailFooter />
     </EmailLayout>
   );
 }

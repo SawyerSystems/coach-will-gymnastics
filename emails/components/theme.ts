@@ -1,16 +1,24 @@
 export const theme = {
   colors: {
-    primary: '#6366F1', // Indigo 500
-    primaryDark: '#4F46E5',
-    accent: '#10B981', // Emerald 500
+    // Brand palette
+    brand: {
+      gold: '#F59E0B', // Amber 500
+      blue: '#1E3A8A', // Blue 900
+      red: '#DC2626',  // Red 600
+    },
+    // Semantic tokens mapped to brand
+    primary: '#1E3A8A', // brand.blue
+    primaryDark: '#172554',
+    accent: '#F59E0B', // brand.gold
     coral: '#E76F51',
-    danger: '#EF4444',
+    danger: '#DC2626', // brand.red
     info: '#0EA5E9',
     text: '#333333',
     muted: '#666666',
     bg: '#FFFFFF',
     surface: '#F8FAFC',
     border: '#E5E7EB',
+    link: '#1D4ED8',
   },
   spacing: {
     xs: '8px',

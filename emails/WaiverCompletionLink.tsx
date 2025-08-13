@@ -1,9 +1,11 @@
 import React from 'react';
-import { Section, Text, Hr } from '@react-email/components';
+import { Section, Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
-import { CTAButton } from './components/CTAButton';
+import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
 
+export const SUBJECT = 'Please complete your waiver';
+export const PREHEADER = 'Required before the first session — it only takes a minute.';
 interface WaiverCompletionLinkProps {
   parentName: string;
   athleteName: string;
@@ -13,13 +15,14 @@ interface WaiverCompletionLinkProps {
 
 export function WaiverCompletionLink({ parentName, athleteName, loginLink, logoUrl }: WaiverCompletionLinkProps) {
   return (
-    <EmailLayout logoUrl={logoUrl} title={`Complete ${athleteName}'s Waiver Form 📋`}>
+    <EmailLayout logoUrl={logoUrl} title="📝 Complete Your Waiver" preheader={PREHEADER}>
+
       <Section>
         <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
           Hi {parentName}! Welcome to the CoachWillTumbles family!
         </Text>
         <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
-          Before {athleteName} can begin their gymnastics adventure, we need you to complete their digital waiver and adventure agreement. This ensures everyone's safety and sets clear expectations for the training experience.
+          Before {athleteName} can begin their gymnastics adventure, I need you to complete their digital waiver and adventure agreement. This ensures everyone's safety and sets clear expectations for the training experience.
         </Text>
       </Section>
 
@@ -31,7 +34,20 @@ export function WaiverCompletionLink({ parentName, athleteName, loginLink, logoU
       </Section>
 
       <Section style={{ textAlign: 'center', marginBottom: theme.spacing.lg }}>
-        <CTAButton href={loginLink}>Complete Waiver Form</CTAButton>
+        <a
+          href={loginLink}
+          style={{
+            display: 'inline-block',
+            backgroundColor: theme.colors.primary,
+            color: '#FFFFFF',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none',
+            fontSize: '16px',
+          }}
+        >
+          Complete Waiver Form
+        </a>
       </Section>
 
       <Section>
@@ -42,16 +58,9 @@ export function WaiverCompletionLink({ parentName, athleteName, loginLink, logoU
           • Electronic signature capability<br />
           • Automatic confirmation email when complete
         </Text>
-        <Hr style={{ borderColor: theme.colors.border, margin: `${theme.spacing.lg} 0` }} />
-        <Text style={{ fontSize: '14px', color: theme.colors.muted, lineHeight: theme.font.lineHeight }}>
-          Need help with the waiver? Reply to this email or text Coach Will.
-          <br /><br />
-          Thanks for taking care of this important step!
-          <br /><br />
-          Coach Will<br />
-          CoachWillTumbles.com
-        </Text>
       </Section>
-    </EmailLayout>
+
+      <EmailFooter />
+  </EmailLayout>
   );
 }

@@ -2,6 +2,10 @@ import React from 'react';
 import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { theme } from './components/theme';
+import { EmailFooter } from './components/EmailFooter';
+
+export const SUBJECT = 'New contact form submission';
+export const PREHEADER = 'A parent just reached out — details inside.';
 
 export function ContactMessage({
   name,
@@ -19,7 +23,8 @@ export function ContactMessage({
   logoUrl?: string;
 }) {
   return (
-    <EmailLayout logoUrl={logoUrl} title="📬 New Contact Form Message">
+    <EmailLayout title="📬 New Contact Form Message" preheader={PREHEADER}>
+
       <Text style={{ color: theme.colors.text }}>
         You received a new contact submission from CoachWillTumbles.com.
       </Text>
@@ -50,6 +55,8 @@ export function ContactMessage({
       <Text style={{ color: theme.colors.muted, marginTop: theme.spacing.lg }}>
         Reply directly to the sender's email above to continue the conversation.
       </Text>
+
+      <EmailFooter />
     </EmailLayout>
   );
 }

@@ -1,6 +1,6 @@
-import { Html, Head, Preview, Link, Text } from '@react-email/components';
+import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
-import { CTAButton } from './components/CTAButton';
+import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
 
 interface EmailVerificationProps {
@@ -9,18 +9,32 @@ interface EmailVerificationProps {
   logoUrl?: string;
 }
 
+export const SUBJECT = 'Verify your email to continue';
+export const PREHEADER = 'Tap the button to verify your address and secure your account.';
+
 export function EmailVerification({ firstName = 'Gymnastics Parent', verificationUrl = 'https://example.com/verify', logoUrl }: EmailVerificationProps) {
   return (
-    <Html>
-      <Head />
-      <Preview>Verify your email address for Coach Will Tumbles</Preview>
-      <EmailLayout logoUrl={logoUrl} title="Verify Your Email Address">
+      <EmailLayout logoUrl={logoUrl} title="Verify Your Email Address" preheader={PREHEADER}>
+
         <Text style={{ color: theme.colors.text }}>Hi {firstName},</Text>
         <Text style={{ color: theme.colors.text }}>
           Thank you for registering with Coach Will Tumbles! Please verify your email address to complete your account setup and ensure you receive important updates about your sessions.
         </Text>
         <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
-          <CTAButton href={verificationUrl}>Verify My Email</CTAButton>
+          <a
+            href={verificationUrl}
+            style={{
+              display: 'inline-block',
+              backgroundColor: theme.colors.primary,
+              color: '#FFFFFF',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              textDecoration: 'none',
+              fontSize: '16px',
+            }}
+          >
+            Verify My Email
+          </a>
         </div>
         <Text style={{ color: theme.colors.text }}>
           If the button above doesn't work, copy and paste this URL into your browser:
@@ -28,14 +42,9 @@ export function EmailVerification({ firstName = 'Gymnastics Parent', verificatio
         <Text style={{ backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '4px', fontSize: '14px', wordBreak: 'break-all', color: theme.colors.text }}>
           {verificationUrl}
         </Text>
-        <Text style={{ fontSize: '12px', color: theme.colors.muted, textAlign: 'center' }}>
-          © {new Date().getFullYear()} Coach Will Tumbles. All rights reserved.{' '}
-          <Link href="https://coachwilltumbles.com" style={{ color: theme.colors.primary, textDecoration: 'underline' }}>
-            coachwilltumbles.com
-          </Link>
-        </Text>
+
+        <EmailFooter />
       </EmailLayout>
-    </Html>
   );
 }
 

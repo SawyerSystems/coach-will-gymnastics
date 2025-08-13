@@ -1,8 +1,11 @@
 import React from 'react';
 import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
-import { CTAButton } from './components/CTAButton';
+import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
+
+export const SUBJECT = 'Your session is booked ✅';
+export const PREHEADER = 'Date, time, and quick prep tips inside — manage your booking anytime.';
 
 export function SessionConfirmation({
   parentName,
@@ -20,9 +23,10 @@ export function SessionConfirmation({
   logoUrl?: string;
 }) {
   return (
-    <EmailLayout logoUrl={logoUrl} title="✅ Session Confirmed!">
+    <EmailLayout logoUrl={logoUrl} title="✅ Session Confirmed!" preheader={PREHEADER}>
+
       <Text style={{ color: theme.colors.text }}>
-        Hey {parentName}, big news — {athleteName}'s session is officially booked for <strong>{sessionDate}</strong> at <strong>{sessionTime}</strong>.
+        Hi {parentName}, big news — {athleteName}'s session is officially booked for <strong>{sessionDate}</strong> at <strong>{sessionTime}</strong>.
       </Text>
       <Text style={{ color: theme.colors.text }}>
         Here’s how to get the most out of their training:
@@ -34,12 +38,28 @@ export function SessionConfirmation({
       </ul>
       {manageLink ? (
         <div style={{ textAlign: 'center', margin: `${theme.spacing.lg} 0` }}>
-          <CTAButton href={manageLink} color="accent">View / Manage Your Booking</CTAButton>
+          <a
+            href={manageLink}
+            style={{
+              display: 'inline-block',
+              backgroundColor: theme.colors.primary,
+              color: '#FFFFFF',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              textDecoration: 'none',
+              fontSize: '16px',
+            }}
+          >
+            View / Manage Your Booking
+          </a>
         </div>
       ) : null}
+
       <Text style={{ color: theme.colors.muted }}>
         I can’t wait to see {athleteName} shine! If plans change, you can reschedule anytime.
       </Text>
+
+      <EmailFooter />
     </EmailLayout>
   );
 }
