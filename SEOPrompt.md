@@ -202,8 +202,8 @@ Use the template below per route. Add as many routes as needed.
 
 ### Home
 - route: /
-- title: 
-- metaDescription: 
+- title: Private Gymnastics & Tumbling Lessons | Oceanside, CA
+- metaDescription: Book private gymnastics, tumbling, and cheer stunt lessons in Oceanside, CA. Personalized 1-on-1 coaching for kids and teens. Safe, fun, and progress-driven.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/
 - schema:
@@ -212,8 +212,8 @@ Use the template below per route. Add as many routes as needed.
 
 ### Booking
 - route: /booking
-- title: 
-- metaDescription: 
+- title: Book Private Gymnastics & Tumbling Lessons | Oceanside
+- metaDescription: View availability and book 30 or 60-minute private or semi-private sessions with Coach Will Tumbles in Oceanside, CA. Secure checkout.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/booking
 - schema:
@@ -222,8 +222,8 @@ Use the template below per route. Add as many routes as needed.
 
 ### Contact
 - route: /contact
-- title: 
-- metaDescription: 
+- title: Contact Coach Will Tumbles | Oceanside Gymnastics
+- metaDescription: Call (585) 755-8122 or email Will@coachwilltumbles.com. Located at 1935 Ave. del Oro #A, Oceanside, CA 92056.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/contact
 - schema:
@@ -232,8 +232,8 @@ Use the template below per route. Add as many routes as needed.
 
 ### Blog Index
 - route: /blog
-- title: 
-- metaDescription: 
+- title: Training Blog | Gymnastics, Tumbling, Cheer Tips
+- metaDescription: Training tips and updates from Coach Will Tumbles: skill progressions, safety, drills, and parent guides.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/blog
 - schema:
@@ -241,8 +241,8 @@ Use the template below per route. Add as many routes as needed.
 
 ### Blog Post
 - route: /blog/:id
-- title: (pattern)
-- metaDescription: (pattern)
+- title: {post.title} | Coach Will Tumbles Blog
+- metaDescription: Read about {post.topic}: coaching insights, drills, and safety tips from Coach Will Tumbles. Published {date}.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/blog/{slug}
 - schema:
@@ -251,8 +251,8 @@ Use the template below per route. Add as many routes as needed.
 
 ### Tips Index
 - route: /tips
-- title: 
-- metaDescription: 
+- title: How-To Tips | Tumbling & Gymnastics Tutorials
+- metaDescription: Step-by-step how-to guides: progressions for cartwheels, back handsprings, aerials, and more.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/tips
 - schema:
@@ -260,12 +260,21 @@ Use the template below per route. Add as many routes as needed.
 
 ### Tips Detail
 - route: /tips/:id
-- title: (pattern)
-- metaDescription: (pattern)
+- title: {tip.title} — How To | Step-by-Step Guide
+- metaDescription: Learn {tip.skill} with clear steps, safety notes, and coaching cues from Coach Will Tumbles.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/tips/{slug}
 - schema:
   - types: [Article, HowTo, BreadcrumbList]
+
+### About
+- route: /about
+- title: About Coach Will Tumbles | Private Coach in Oceanside
+- metaDescription: Experienced kids gymnastics and tumbling coach in Oceanside, CA. Safe progressions, positive mindset, real results.
+- robots: index,follow
+- canonical: https://www.coachwilltumbles.com/about
+- schema:
+  - types: [WebPage, BreadcrumbList]
 
 ### Progress Share (public tokens)
 - route: /progress/:token
