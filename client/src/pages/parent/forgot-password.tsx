@@ -87,7 +87,7 @@ export default function ForgotPassword() {
             <div className="space-y-3">
               <Button 
                 onClick={() => setLocation('/parent/login')}
-                className="w-full"
+                className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Login
@@ -98,7 +98,7 @@ export default function ForgotPassword() {
                   setEmailSent(false);
                   form.reset();
                 }}
-                className="w-full"
+                className="w-full border-[#0F0276] text-[#0F0276] hover:bg-[#0F0276] hover:text-white dark:border-[#D8BD2A] dark:text-[#D8BD2A] dark:hover:bg-[#D8BD2A] dark:hover:text-[#0F0276] font-medium transition-colors"
               >
                 <Mail className="mr-2 h-4 w-4" />
                 Send Another Email
@@ -111,24 +111,24 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
       <SEOHead 
         title="Forgot Password"
         description="Reset your password to regain access to your parent portal"
       />
-      <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm shadow-xl border-0 dark:bg-gray-900/80">
+      <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="text-center pb-4">
-          <div className="flex justify-center mb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center">
             <img 
               src="/CWT_Circle_LogoSPIN.png" 
               alt="Coach Will Tumbles" 
               className="h-16 w-16"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+          <CardTitle className="text-2xl font-bold text-[#0F0276] dark:text-white">
             Forgot Your Password?
           </CardTitle>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <p className="text-slate-600 dark:text-white/80 mt-2">
             No worries! Enter your email address and we'll send you a link to reset your password.
           </p>
         </CardHeader>
@@ -140,11 +140,12 @@ export default function ForgotPassword() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Email Address</FormLabel>
                     <FormControl>
                       <Input 
                         type="email" 
                         placeholder="parent@example.com"
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
                         {...field} 
                       />
                     </FormControl>
@@ -154,7 +155,7 @@ export default function ForgotPassword() {
               />
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                 disabled={forgotPasswordMutation.isPending}
               >
                 {forgotPasswordMutation.isPending ? (
@@ -179,7 +180,7 @@ export default function ForgotPassword() {
           <div className="mt-6 text-center">
             <Button 
               variant="ghost" 
-              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              className="text-[#0F0276] hover:text-[#0F0276]/80 dark:text-[#D8BD2A] dark:hover:text-[#D8BD2A]/80 font-medium transition-colors"
               onClick={() => setLocation('/parent/login')}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />

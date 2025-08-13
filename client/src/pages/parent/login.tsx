@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Lock, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'wouter';
@@ -77,7 +77,7 @@ export default function ParentLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 p-4">
+    <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
       <SEOHead
         title="Parent Login — Coach Will Tumbles"
         description="Parent login portal."
@@ -85,14 +85,18 @@ export default function ParentLogin() {
         robots="noindex,follow"
         structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
       />
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-            <Lock className="h-6 w-6 text-purple-600" />
+      <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+            <img 
+              src="/CWT_Circle_LogoSPIN.png" 
+              alt="Coach Will Tumbles" 
+              className="h-16 w-16"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">Parent Login</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Sign in to access your parent dashboard
+          <CardTitle className="text-2xl font-bold text-[#0F0276] dark:text-white">Parent Portal</CardTitle>
+          <p className="text-sm text-slate-600 dark:text-white/80">
+            Sign in to manage your gymnast's journey
           </p>
         </CardHeader>
         <CardContent>
@@ -134,7 +138,7 @@ export default function ParentLogin() {
               />
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276] font-semibold transition-all duration-200"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? (
@@ -154,7 +158,7 @@ export default function ParentLogin() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-sm text-muted-foreground hover:text-primary underline"
+                  className="text-sm text-slate-600 dark:text-white/70 hover:text-[#0F0276] dark:hover:text-[#D8BD2A] underline transition-colors"
                   onClick={() => setLocation('/parent/forgot-password')}
                 >
                   Forgot your password?
@@ -169,7 +173,7 @@ export default function ParentLogin() {
             </p>
             <Button 
               variant="outline" 
-              className="w-full"
+              className="w-full border-slate-200 bg-white/50 text-[#0F0276] hover:bg-slate-50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white dark:hover:bg-[#0F0276]/30 transition-all duration-200"
               onClick={() => setLocation('/parent-register')}
             >
               <UserPlus className="mr-2 h-4 w-4" />

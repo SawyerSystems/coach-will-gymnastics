@@ -4,7 +4,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, CheckCircle, Lock } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
@@ -81,7 +81,7 @@ export default function SetPasswordPage() {
 
   if (tokenError) {
     return (
-      <div className="container max-w-md py-10">
+      <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
         <SEOHead
           title="Set Password — Coach Will Tumbles"
           description="Set your account password."
@@ -89,16 +89,19 @@ export default function SetPasswordPage() {
           robots="noindex,follow"
           structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
         />
-        <Card>
+        <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
-            <CardTitle className="mt-4">Invalid Token</CardTitle>
-            <CardDescription>
+            <CardTitle className="mt-4 text-[#0F0276] dark:text-white">Invalid Token</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-300">
               {tokenError}
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button onClick={() => setLocation('/parent/login')} className="w-full">
+            <Button 
+              onClick={() => setLocation('/parent/login')} 
+              className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
               Go to Login Page
             </Button>
           </CardFooter>
@@ -109,17 +112,20 @@ export default function SetPasswordPage() {
 
   if (success) {
     return (
-      <div className="container max-w-md py-10">
-        <Card>
+      <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
+        <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="text-center">
             <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-            <CardTitle className="mt-4">Password Set Successfully</CardTitle>
-            <CardDescription>
+            <CardTitle className="mt-4 text-[#0F0276] dark:text-white">Password Set Successfully</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-300">
               Your password has been set. You can now log in to your account.
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button onClick={handleLogin} className="w-full">
+            <Button 
+              onClick={handleLogin} 
+              className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
               Go to Login Page
             </Button>
           </CardFooter>
@@ -129,16 +135,18 @@ export default function SetPasswordPage() {
   }
 
   return (
-    <div className="container max-w-md py-10">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-center mb-4">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
+    <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
+      <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+            <img 
+              src="/CWT_Circle_LogoSPIN.png" 
+              alt="Coach Will Tumbles" 
+              className="h-16 w-16"
+            />
           </div>
-          <CardTitle className="text-center">Set Your Password</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl font-bold text-[#0F0276] dark:text-white">Set Your Password</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-300">
             Create a password for your Coach Will Tumbles account
           </CardDescription>
         </CardHeader>
@@ -150,9 +158,14 @@ export default function SetPasswordPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Enter your password" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="Enter your password" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,9 +176,14 @@ export default function SetPasswordPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Confirm Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Confirm your password" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="Confirm your password" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -181,7 +199,7 @@ export default function SetPasswordPage() {
               
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors" 
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (

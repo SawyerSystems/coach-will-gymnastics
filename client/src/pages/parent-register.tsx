@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'wouter';
@@ -87,7 +87,7 @@ export default function ParentRegister() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 p-4">
+    <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
       <SEOHead
         title="Parent Registration — Coach Will Tumbles"
         description="Create your parent account to book lessons."
@@ -95,13 +95,17 @@ export default function ParentRegister() {
         robots="noindex,follow"
         structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
       />
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-            <UserPlus className="h-6 w-6 text-purple-600" />
+      <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+            <img 
+              src="/CWT_Circle_LogoSPIN.png" 
+              alt="Coach Will Tumbles" 
+              className="h-16 w-16"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold">Parent Registration</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <CardTitle className="text-2xl font-bold text-[#0F0276] dark:text-white">Parent Registration</CardTitle>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Create your parent account to book lessons
           </p>
         </CardHeader>
@@ -113,9 +117,14 @@ export default function ParentRegister() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="parent@example.com" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder="parent@example.com" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -126,9 +135,14 @@ export default function ParentRegister() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Create a password" {...field} />
+                      <Input 
+                        type="password" 
+                        placeholder="Create a password" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,9 +153,14 @@ export default function ParentRegister() {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">First Name</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="First Name" {...field} />
+                      <Input 
+                        type="text" 
+                        placeholder="First Name" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -152,9 +171,14 @@ export default function ParentRegister() {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Last Name</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="Last Name" {...field} />
+                      <Input 
+                        type="text" 
+                        placeholder="Last Name" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,9 +189,14 @@ export default function ParentRegister() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="Phone Number" {...field} />
+                      <Input 
+                        type="tel" 
+                        placeholder="Phone Number" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -178,9 +207,14 @@ export default function ParentRegister() {
                 name="emergencyContactName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Emergency Contact Name</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Name</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="Emergency Contact Name" {...field} />
+                      <Input 
+                        type="text" 
+                        placeholder="Emergency Contact Name" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -191,9 +225,14 @@ export default function ParentRegister() {
                 name="emergencyContactPhone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Emergency Contact Phone</FormLabel>
+                    <FormLabel className="text-[#0F0276] dark:text-white font-medium">Emergency Contact Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="Emergency Contact Phone" {...field} />
+                      <Input 
+                        type="tel" 
+                        placeholder="Emergency Contact Phone" 
+                        className="border-slate-200 bg-white/50 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/20 dark:text-white focus:border-[#0F0276] dark:focus:border-[#D8BD2A]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -201,7 +240,7 @@ export default function ParentRegister() {
               />
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending ? (
@@ -219,6 +258,16 @@ export default function ParentRegister() {
               </Button>
             </form>
           </Form>
+          
+          <div className="mt-6 text-center">
+            <Button 
+              variant="ghost" 
+              className="text-[#0F0276] hover:text-[#0F0276]/80 dark:text-[#D8BD2A] dark:hover:text-[#D8BD2A]/80 font-medium transition-colors"
+              onClick={() => setLocation('/parent/login')}
+            >
+              Back to Login
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
