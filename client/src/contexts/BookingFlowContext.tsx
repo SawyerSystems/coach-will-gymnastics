@@ -105,12 +105,11 @@ export const BOOKING_FLOWS = {
   ],
   'admin-new-athlete': [
     'lessonType',
-    'athleteInfoForm',
-    'parentSelection', // New step: Choose new or existing parent
+    'parentSelection', // Move parent selection first
+    'parentInfoForm', // Parent creation/selection step
+    'athleteInfoForm', // Then create athlete under selected parent
     'focusAreas',
     'schedule',
-    'parentInfoForm',
-    'safety',
     'adminPayment',
   ],
   'admin-existing-athlete': [

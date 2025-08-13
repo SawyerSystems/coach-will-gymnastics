@@ -40,7 +40,7 @@ export function AdminSidebar({
   onCollapseChange
 }: AdminSidebarProps) {
   // State to track if sidebar is collapsed (only for desktop)
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   // State to track if we're on desktop (to always show sidebar regardless of isOpen prop)
   const [isDesktop, setIsDesktop] = useState(false);
   
@@ -158,8 +158,8 @@ export function AdminSidebar({
         )}
       >
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
-          {!effectivelyCollapsed && (
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+          {!effectivelyCollapsed ? (
             <div className="flex items-center space-x-2">
               <div className="h-9 w-9">
                 <img 
@@ -170,9 +170,22 @@ export function AdminSidebar({
               </div>
               <h2 className="font-bold text-[#0F0276] dark:text-[#D8BD2A]">ADVENTURE HQ</h2>
             </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="h-9 w-9">
+                <img 
+                  src="/CWT_Circle_LogoSPIN.png" 
+                  alt="Coach Will Tumbles Circle Logo" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
           )}
-          
-          <div className="flex items-center">
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 py-4 overflow-y-auto">
+          <div className="px-3 mb-2">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -181,15 +194,11 @@ export function AdminSidebar({
                 setIsCollapsed(newCollapsedState);
                 onCollapseChange?.(newCollapsedState);
               }} 
-              className="rounded-full p-1.5 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+              className="w-full flex items-center justify-center rounded-xl p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60"
             >
               {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </Button>
           </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 py-4 overflow-y-auto">
           <ul className="space-y-1 px-3">
             {navItems.map((item) => (
                             <li key={item.id}>

@@ -148,6 +148,8 @@ export function AthleteInfoFormStep() {
     setIsSubmitting(true);
     
     try {
+      const createdAthletes = [];
+      
       for (let i = 0; i < state.athleteInfo.length; i++) {
         const athlete = state.athleteInfo[i];
         
@@ -171,34 +173,53 @@ export function AthleteInfoFormStep() {
           experience: athlete.experience,
         };
 
-        // Include waiver data if available
-        if (athleteWaivers[i]) {
+        // Include waiver data if available (only for non-admin flows)
+        if (athleteWaivers[i] && !state.flowType.includes('admin')) {
           athletePayload.waiverData = athleteWaivers[i];
         }
         
-        await createAthleteMutation.mutateAsync(athletePayload);
+        const createdAthlete = await createAthleteMutation.mutateAsync(athletePayload);
+        createdAthletes.push(createdAthlete);
       }
       
       // Show toast to guide user that they need to select the athlete
       toast({
         title: "Athlete Created Successfully",
-        description: "Now please select the athlete from your list to continue.",
+        description: state.flowType.includes('admin') 
+          ? "Athlete has been created and will be automatically selected."
+          : "Now please select the athlete from your list to continue.",
       });
       
-      // Clear the athlete info and selected athletes after successful creation
-      updateState({ 
-        athleteInfo: [],
-        selectedAthletes: [] // Clear selected athletes to force user to explicitly choose
-      });
+      // For admin flows, automatically select the newly created athletes
+      if (state.flowType.includes('admin') && createdAthletes.length > 0) {
+        updateState({ 
+          athleteInfo: [],
+          selectedAthletes: createdAthletes.map(athlete => athlete.id)
+        });
+      } else {
+        // Clear the athlete info and selected athletes after successful creation
+        updateState({ 
+          athleteInfo: [],
+          selectedAthletes: [] // Clear selected athletes to force user to explicitly choose
+        });
+      }
       
       // Clear waiver data
       setAthleteWaivers({});
       
-      // Go back to athlete selection step
+      // Handle navigation based on flow type
       if (state.flowType === 'parent-portal') {
+        // Go back to athlete selection step for parent portal
         const currentFlow = BOOKING_FLOWS['parent-portal'];
         const athleteSelectIndex = currentFlow.indexOf('athleteSelect');
         updateState({ currentStep: athleteSelectIndex });
+      } else if (state.flowType.includes('admin')) {
+        // For admin flows, move to next step (focus areas)
+        // The newly created athlete will be automatically selected by the backend
+        const currentFlow = BOOKING_FLOWS[state.flowType];
+        const currentIndex = state.currentStep;
+        const nextIndex = Math.min(currentIndex + 1, currentFlow.length - 1);
+        updateState({ currentStep: nextIndex });
       } else {
         prevStep();
       }
@@ -357,43 +378,45 @@ export function AthleteInfoFormStep() {
               </RadioGroup>
             </div>
 
-            {/* Waiver Section */}
-            <div className="space-y-3 pt-4 border-t border-slate-200/60 dark:border-white/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-[#0F0276] dark:text-[#D8BD2A]" />
-                  <Label className="text-[#0F0276] dark:text-white font-medium">Safety Waiver</Label>
+            {/* Waiver Section - Only show for non-admin flows */}
+            {!state.flowType.includes('admin') && (
+              <div className="space-y-3 pt-4 border-t border-slate-200/60 dark:border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-[#0F0276] dark:text-[#D8BD2A]" />
+                    <Label className="text-[#0F0276] dark:text-white font-medium">Safety Waiver</Label>
+                  </div>
+                  {athleteWaivers[index] && (
+                    <span className="text-sm text-green-600 font-medium">✓ Signed</span>
+                  )}
                 </div>
-                {athleteWaivers[index] && (
-                  <span className="text-sm text-green-600 font-medium">✓ Signed</span>
+                
+                {!athleteWaivers[index] ? (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
+                    <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                      A safety waiver is required for all gymnastics activities. You can sign it now or later in the booking process.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowWaiverFor(index)}
+                      className="w-full"
+                      disabled={!athlete.firstName || !athlete.lastName || !athlete.dateOfBirth}
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Sign Waiver Now
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+                    <p className="text-sm text-green-800 dark:text-green-200">
+                      ✓ Safety waiver signed by {athleteWaivers[index].signature}
+                    </p>
+                  </div>
                 )}
               </div>
-              
-              {!athleteWaivers[index] ? (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3">
-                  <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
-                    A safety waiver is required for all gymnastics activities. You can sign it now or later in the booking process.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowWaiverFor(index)}
-                    className="w-full"
-                    disabled={!athlete.firstName || !athlete.lastName || !athlete.dateOfBirth}
-                  >
-                    <Shield className="h-4 w-4 mr-2" />
-                    Sign Waiver Now
-                  </Button>
-                </div>
-              ) : (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
-                  <p className="text-sm text-green-800 dark:text-green-200">
-                    ✓ Safety waiver signed by {athleteWaivers[index].signature}
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
       ))}
