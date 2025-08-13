@@ -192,6 +192,33 @@ export default function Home() {
           },
           {
             "@context": "https://schema.org",
+            "@type": "Service",
+            "name": "Private Gymnastics Lessons in Oceanside, CA",
+            "areaServed": { "@type": "City", "name": "Oceanside" },
+            "provider": { "@type": "LocalBusiness", "name": "Coach Will Tumbles" },
+            "serviceType": ["Gymnastics Lessons"],
+            "offers": { "@type": "Offer", "priceCurrency": "USD" }
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "name": "Private Tumbling Coach — Oceanside",
+            "areaServed": { "@type": "City", "name": "Oceanside" },
+            "provider": { "@type": "LocalBusiness", "name": "Coach Will Tumbles" },
+            "serviceType": ["Tumbling Coaching"],
+            "offers": { "@type": "Offer", "priceCurrency": "USD" }
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            "name": "Cheer Stunt Coaching — Oceanside, CA",
+            "areaServed": { "@type": "City", "name": "Oceanside" },
+            "provider": { "@type": "LocalBusiness", "name": "Coach Will Tumbles" },
+            "serviceType": ["Cheer Stunt"],
+            "offers": { "@type": "Offer", "priceCurrency": "USD" }
+          },
+          {
+            "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "name": "Home", "item": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com' }

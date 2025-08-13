@@ -207,6 +207,26 @@ export default function Booking() {
                     "@type": "Question",
                     "name": "Where are lessons held?",
                     "acceptedAnswer": { "@type": "Answer", "text": "At Oceanside Gymnastics, 1935 Ave. del Oro #A, Oceanside, CA 92056." }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Do you offer private gymnastics lessons in Oceanside, CA?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Yes, we offer private gymnastics lessons in Oceanside, CA with flexible scheduling for families." }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Is Coach Will a private tumbling coach in Oceanside?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Yes, Coach Will provides private tumbling coaching for cheerleaders and gymnasts in Oceanside." }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Do you coach cheer stunt technique?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "We offer cheer stunt coaching focused on safe technique, progressions, and confidence building." }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Do you teach kids who are brand new to tumbling?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Absolutely—beginners are welcome. We build strong foundations at a comfortable pace." }
                   }
                 ]
               }

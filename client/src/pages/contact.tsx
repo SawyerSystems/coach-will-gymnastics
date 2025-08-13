@@ -212,6 +212,22 @@ export default function Contact() {
           },
           {
             "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How do I book private gymnastics lessons in Oceanside?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Use the booking page to choose a session type and time, or contact us here and we’ll help you schedule." }
+              },
+              {
+                "@type": "Question",
+                "name": "Do you work with new tumblers and cheer athletes?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes, we coach beginners through advanced athletes with personalized progressions." }
+              }
+            ]
+          },
+          {
+            "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             "itemListElement": [
               { "@type": "ListItem", "position": 1, "name": "Home", "item": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com' },
