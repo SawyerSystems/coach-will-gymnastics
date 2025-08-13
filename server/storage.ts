@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "../shared/schema";
 import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
@@ -2483,9 +2483,23 @@ export class SupabaseStorage implements IStorage {
     if (updateDataNormalized.email) {
       updateDataNormalized.email = updateDataNormalized.email.toLowerCase();
     }
+
+    // Map camelCase fields to snake_case column names for Supabase
+    const dbUpdateData: any = {};
+    if (updateDataNormalized.firstName !== undefined) dbUpdateData.first_name = updateDataNormalized.firstName;
+    if (updateDataNormalized.lastName !== undefined) dbUpdateData.last_name = updateDataNormalized.lastName;
+    if (updateDataNormalized.email !== undefined) dbUpdateData.email = updateDataNormalized.email;
+    if (updateDataNormalized.phone !== undefined) dbUpdateData.phone = updateDataNormalized.phone;
+    if (updateDataNormalized.emergencyContactName !== undefined) dbUpdateData.emergency_contact_name = updateDataNormalized.emergencyContactName;
+    if (updateDataNormalized.emergencyContactPhone !== undefined) dbUpdateData.emergency_contact_phone = updateDataNormalized.emergencyContactPhone;
+    if (updateDataNormalized.passwordHash !== undefined) dbUpdateData.password_hash = updateDataNormalized.passwordHash;
+    if (updateDataNormalized.isVerified !== undefined) dbUpdateData.is_verified = updateDataNormalized.isVerified;
+
+    console.log('[DEBUG] Updating parent with data:', dbUpdateData);
+    
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .update(updateDataNormalized)
+      .update(dbUpdateData)
       .eq('id', id)
       .select()
       .single();

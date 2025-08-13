@@ -19,7 +19,7 @@ import { SessionNoShow } from '../../emails/SessionNoShow';
 import { SessionReminder } from '../../emails/SessionReminder';
 import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
 import { WaiverReminder } from '../../emails/WaiverReminder';
-import { PaymentStatusEnum } from '@shared/schema';
+import { PaymentStatusEnum } from '../../shared/schema';
 import { ContactMessage } from '../../emails/ContactMessage';
 
 // Email type mapping

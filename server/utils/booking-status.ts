@@ -1,4 +1,4 @@
-import { BookingStatusEnum } from "@shared/schema";
+import { BookingStatusEnum } from "../../shared/schema";
 
 /**
  * Determines a booking's status based on payment and attendance status

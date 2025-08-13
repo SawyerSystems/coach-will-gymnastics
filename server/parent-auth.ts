@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { sendEmailVerificationLink, sendParentWelcomeEmail } from './lib/email';
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { storage } from './storage';
@@ -31,7 +31,7 @@ export const isParentAuthenticated = (
   next();
 };
 
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 
 // Email verification utilities
 const generateVerificationToken = (): string => {
@@ -133,11 +133,24 @@ parentAuthRouter.post('/login', [
   }
   try {
     const { email, password } = req.body;
+    console.log(`[PARENT-LOGIN] Attempting login for email: ${email}`);
     const parent = await storage.getParentByEmail(email);
     if (!parent) {
+      console.log(`[PARENT-LOGIN] No parent found with email: ${email}`);
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    
+    console.log(`[PARENT-LOGIN] Parent found - ID: ${parent.id}, Name: ${parent.firstName} ${parent.lastName}`);
     const passwordHash = parent.passwordHash || (parent as any).password_hash;
+    console.log(`[PARENT-LOGIN] Password hash exists: ${!!passwordHash}`);
+    
+    if (!passwordHash) {
+      console.log(`[PARENT-LOGIN] No password hash found for parent ${parent.id}. Password setup may not be complete.`);
+      return res.status(401).json({ 
+        error: 'Please complete your password setup. Check your email for the password setup link.' 
+      });
+    }
+    
     const isValid = await bcrypt.compare(password, passwordHash);
     if (!isValid) {
       return res.status(401).json({ error: 'Invalid email or password' });

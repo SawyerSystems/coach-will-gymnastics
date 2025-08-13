@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
 import { body, validationResult } from 'express-validator';

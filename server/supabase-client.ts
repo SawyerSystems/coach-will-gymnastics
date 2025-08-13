@@ -1,4 +1,4 @@
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co';

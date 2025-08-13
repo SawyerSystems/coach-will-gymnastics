@@ -1,5 +1,5 @@
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import { body, validationResult } from 'express-validator';
 import { sendPasswordSetupEmail, sendPasswordResetEmail } from './lib/email';
@@ -151,7 +151,9 @@ passwordSetupRouter.post('/set-password', [
 
     // Update the parent's password
     const passwordHash = await bcrypt.hash(password, 10);
-    await storage.updateParent(parentId, { passwordHash });
+    console.log('[PASSWORD-SETUP] About to update parent', parentId, 'with passwordHash length:', passwordHash.length);
+    const updateResult = await storage.updateParent(parentId, { passwordHash });
+    console.log('[PASSWORD-SETUP] Update result:', updateResult ? 'Success' : 'Failed');
     
     // Mark the token as used
     await storage.markPasswordResetTokenAsUsed(token);

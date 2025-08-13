@@ -1,9 +1,9 @@
-import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "@shared/schema";
+import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "../shared/schema";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import fs from 'fs/promises';
-import path from 'path';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from 'multer';
@@ -4099,8 +4099,6 @@ setTimeout(async () => {
           }
         }
       }
-        }
-      }
       
       if (!parent) {
         console.error("[ADMIN-BOOKING] Failed to identify or create parent with data:", 
@@ -4144,22 +4142,22 @@ setTimeout(async () => {
         // Safety information - use NULL for empty fields in admin bookings
         dropoffPersonName: safetyInfo.willDropOff 
           ? `${parent.firstName} ${parent.lastName}` 
-          : handleAdminSafetyField(safetyInfo.dropoffPersonName),
+          : (safetyInfo.dropoffPersonName || 'Not Specified'),
         dropoffPersonRelationship: safetyInfo.willDropOff 
-          ? 'Parent' 
-          : handleAdminSafetyField(safetyInfo.dropoffPersonRelationship),
+          ? 'Parent' as const
+          : (safetyInfo.dropoffPersonRelationship || 'Other') as 'Parent' | 'Guardian' | 'Grandparent' | 'Aunt/Uncle' | 'Sibling' | 'Family Friend' | 'Other',
         dropoffPersonPhone: safetyInfo.willDropOff 
           ? parent.phone 
-          : handleAdminSafetyField(safetyInfo.dropoffPersonPhone),
+          : (safetyInfo.dropoffPersonPhone || ''),
         pickupPersonName: safetyInfo.willPickUp 
           ? `${parent.firstName} ${parent.lastName}` 
-          : handleAdminSafetyField(safetyInfo.pickupPersonName),
+          : (safetyInfo.pickupPersonName || 'Not Specified'),
         pickupPersonRelationship: safetyInfo.willPickUp 
-          ? 'Parent' 
-          : handleAdminSafetyField(safetyInfo.pickupPersonRelationship),
+          ? 'Parent' as const
+          : (safetyInfo.pickupPersonRelationship || 'Other') as 'Parent' | 'Guardian' | 'Grandparent' | 'Aunt/Uncle' | 'Sibling' | 'Family Friend' | 'Other',
         pickupPersonPhone: safetyInfo.willPickUp 
           ? parent.phone 
-          : handleAdminSafetyField(safetyInfo.pickupPersonPhone),
+          : (safetyInfo.pickupPersonPhone || ''),
         safetyVerificationSignedAt: new Date()
       });
 
