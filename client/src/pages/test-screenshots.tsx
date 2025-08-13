@@ -98,6 +98,11 @@ export default function TestScreenshots() {
   const [currentView, setCurrentView] = useState<TestView>("booking");
   const [selectedAthlete, setSelectedAthlete] = useState(mockAthletes[0]);
 
+  // Debug logging to track state changes
+  React.useEffect(() => {
+    console.log('TestScreenshots component mounted/updated, currentView:', currentView);
+  }, [currentView]);
+
   const views: { key: TestView; label: string; description: string }[] = [
     { key: "booking", label: "Booking Calendar", description: "Clean booking UI on phone" },
     { key: "athletes", label: "Add Athletes", description: "Parent adding athlete profiles" },
@@ -136,7 +141,7 @@ export default function TestScreenshots() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
       <SEOHead
         title="Test Screenshots - Coach Will Tumbles"
         description="Test pages for capturing feature screenshots"
@@ -144,7 +149,7 @@ export default function TestScreenshots() {
       />
       
       {/* Navigation */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4">
+      <div className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 border-b border-slate-200/60 dark:border-white/10 p-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -162,7 +167,11 @@ export default function TestScreenshots() {
                 variant={currentView === view.key ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentView(view.key)}
-                className="text-xs"
+                className={`text-xs transition-all duration-300 transform hover:scale-[1.02] ${
+                  currentView === view.key 
+                    ? 'bg-[#0F0276] hover:bg-[#0F0276]/90 dark:bg-[#D8BD2A] dark:text-[#0F0276] dark:hover:bg-[#D8BD2A]/90' 
+                    : 'bg-slate-50/80 text-gray-700 hover:bg-white dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:border-white/20'
+                }`}
               >
                 {view.label}
               </Button>
@@ -173,7 +182,11 @@ export default function TestScreenshots() {
 
       {/* Main content */}
       <div className="p-4">
-        {renderView()}
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl shadow-lg border border-slate-200/60 dark:border-white/10 p-6">
+            {renderView()}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -190,11 +203,11 @@ function BookingCalendarView() {
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl shadow-xl border border-slate-200/60 dark:border-white/10 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/80 p-6 text-white">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-xl">
+            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
               <Calendar className="h-6 w-6" />
             </div>
             <div>
@@ -205,14 +218,14 @@ function BookingCalendarView() {
         </div>
 
         {/* Lesson Type Selection */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-200/60 dark:border-white/10">
           <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Lesson Type</h3>
           <div className="space-y-2">
             {["Tumbling Basics", "Handstand Training", "Back Walkover", "Cartwheel Mastery"].map((type) => (
-              <div key={type} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-[#D8BD2A] transition-colors cursor-pointer">
+              <div key={type} className="p-3 border border-slate-200/60 dark:border-white/10 bg-white/50 dark:bg-white/5 rounded-lg hover:border-[#D8BD2A] transition-all duration-300 transform hover:scale-[1.02] cursor-pointer backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-slate-900 dark:text-white">{type}</span>
-                  <Badge variant="outline">$45</Badge>
+                  <Badge variant="outline" className="bg-white/70 dark:bg-white/10">$45</Badge>
                 </div>
               </div>
             ))}
@@ -220,7 +233,7 @@ function BookingCalendarView() {
         </div>
 
         {/* Date Selection */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-200/60 dark:border-white/10">
           <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Select Date</h3>
           <div className="grid grid-cols-7 gap-2 text-center text-sm">
             <div className="text-slate-500 dark:text-slate-400 font-medium">S</div>
@@ -234,10 +247,10 @@ function BookingCalendarView() {
             {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
               <button
                 key={day}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${
                   day === 15 
-                    ? "bg-[#D8BD2A] text-[#0F0276] font-bold" 
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    ? "bg-[#D8BD2A] text-[#0F0276] font-bold shadow-lg" 
+                    : "hover:bg-white/70 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 bg-white/30 dark:bg-white/5"
                 }`}
               >
                 {day}
@@ -247,16 +260,16 @@ function BookingCalendarView() {
         </div>
 
         {/* Time Selection */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-200/60 dark:border-white/10">
           <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Available Times</h3>
           <div className="grid grid-cols-2 gap-2">
             {timeSlots.map((time) => (
               <button
                 key={time}
-                className={`p-3 rounded-lg border transition-colors ${
+                className={`p-3 rounded-lg border transition-all duration-300 transform hover:scale-[1.02] backdrop-blur-sm ${
                   time === selectedTime
-                    ? "border-[#D8BD2A] bg-[#D8BD2A]/10 text-[#0F0276] font-semibold"
-                    : "border-slate-200 dark:border-slate-700 hover:border-[#D8BD2A]/50 text-slate-700 dark:text-slate-300"
+                    ? "border-[#D8BD2A] bg-[#D8BD2A]/10 text-[#0F0276] font-semibold shadow-lg"
+                    : "border-slate-200/60 dark:border-white/10 hover:border-[#D8BD2A]/50 text-slate-700 dark:text-slate-300 bg-white/30 dark:bg-white/5"
                 }`}
                 onClick={() => setSelectedTime(time)}
               >
@@ -269,7 +282,7 @@ function BookingCalendarView() {
 
         {/* Book Button */}
         <div className="p-6">
-          <Button className="w-full bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold py-3">
+          <Button className="w-full bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A]/70 text-[#0F0276] font-bold py-3 shadow-lg transform transition-all duration-300 hover:scale-[1.02]">
             Continue to Athlete Selection
           </Button>
         </div>
@@ -383,7 +396,7 @@ function AddAthletesView() {
 function DashboardView() {
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:bg-white/10 rounded-2xl shadow-xl border border-slate-200/60 dark:border-white/10 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 text-white">
           <div className="flex items-center justify-between">
@@ -391,24 +404,24 @@ function DashboardView() {
               <h2 className="text-xl font-bold">My Dashboard</h2>
               <p className="text-white/80 text-sm">Track your gymnastics journey</p>
             </div>
-            <div className="p-2 bg-white/20 rounded-xl">
+            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
               <CalendarIcon className="h-6 w-6" />
             </div>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-200/60 dark:border-white/10">
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
+            <div className="p-3 bg-white/50 dark:bg-white/5 rounded-xl backdrop-blur-sm">
               <div className="text-2xl font-bold text-emerald-600">12</div>
               <div className="text-xs text-slate-600 dark:text-slate-400">Total Lessons</div>
             </div>
-            <div>
+            <div className="p-3 bg-white/50 dark:bg-white/5 rounded-xl backdrop-blur-sm">
               <div className="text-2xl font-bold text-blue-600">8</div>
               <div className="text-xs text-slate-600 dark:text-slate-400">Skills Learned</div>
             </div>
-            <div>
+            <div className="p-3 bg-white/50 dark:bg-white/5 rounded-xl backdrop-blur-sm">
               <div className="text-2xl font-bold text-purple-600">24</div>
               <div className="text-xs text-slate-600 dark:text-slate-400">Badges Earned</div>
             </div>
@@ -416,11 +429,11 @@ function DashboardView() {
         </div>
 
         {/* Upcoming Lessons */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-200/60 dark:border-white/10">
           <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Upcoming Lessons</h3>
           <div className="space-y-3">
             {mockBookings.slice(0, 2).map((booking) => (
-              <div key={booking.id} className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <div key={booking.id} className="p-4 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 dark:from-emerald-900/20 dark:to-teal-900/20 backdrop-blur-sm rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 transform transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-semibold text-slate-900 dark:text-white">{booking.type}</h4>
