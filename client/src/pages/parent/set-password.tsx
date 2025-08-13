@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { z } from "zod";
+import SEOHead from "@/components/SEOHead";
 
 const passwordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -81,6 +82,13 @@ export default function SetPasswordPage() {
   if (tokenError) {
     return (
       <div className="container max-w-md py-10">
+        <SEOHead
+          title="Set Password — Coach Will Tumbles"
+          description="Set your account password."
+          canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/parent/set-password` : 'https://www.coachwilltumbles.com/parent/set-password'}
+          robots="noindex,follow"
+          structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
+        />
         <Card>
           <CardHeader className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-destructive" />

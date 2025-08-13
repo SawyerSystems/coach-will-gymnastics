@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function ConfirmBookingPage() {
   const [, setLocation] = useLocation();
@@ -63,6 +64,13 @@ export default function ConfirmBookingPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
+        <SEOHead
+          title="Confirm Booking — Coach Will Tumbles"
+          description="Confirm your booking."
+          canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/parent/confirm-booking` : 'https://www.coachwilltumbles.com/parent/confirm-booking'}
+          robots="noindex,follow"
+          structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
+        />
         <div className="text-center">
           <img 
             src="/CWT_Circle_LogoSPIN.png" 

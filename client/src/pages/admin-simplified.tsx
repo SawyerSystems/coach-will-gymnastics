@@ -1,6 +1,7 @@
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
+import SEOHead from "@/components/SEOHead";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -79,6 +80,13 @@ export default function Admin() {
         }}
       />
 
+      <SEOHead
+        title="Admin Dashboard — Coach Will Tumbles"
+        description="Admin dashboard."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/admin` : 'https://www.coachwilltumbles.com/admin'}
+        robots="noindex,follow"
+        structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
+      />
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function ParentSetupSuccess() {
   const [, setLocation] = useLocation();
@@ -19,6 +20,13 @@ export default function ParentSetupSuccess() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 p-4">
+      <SEOHead
+        title="Account Created — Coach Will Tumbles"
+        description="Parent account created."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/parent-setup-success` : 'https://www.coachwilltumbles.com/parent-setup-success'}
+        robots="noindex,follow"
+        structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">

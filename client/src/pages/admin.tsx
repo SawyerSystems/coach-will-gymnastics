@@ -86,6 +86,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
+import SEOHead from "@/components/SEOHead";
 import { useLocation } from "wouter";
 import { MainContentContainer } from "@/components/admin-ui/MainContentContainer";
 
@@ -1312,8 +1313,15 @@ export default function Admin() {
           } else {
             source = 'unresolved(0)';
           }
-          return {
-            id: b?.id,
+          return (
+            <div className="flex h-screen bg-gray-100">
+              <SEOHead
+                title="Admin Dashboard — Coach Will Tumbles"
+                description="Admin dashboard."
+                canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/admin` : 'https://www.coachwilltumbles.com/admin'}
+                robots="noindex,follow"
+                structuredData={{ '@context': 'https://schema.org', '@type': 'WebPage' }}
+              />
             lessonTypeId: ltId,
             lessonTypeName: typeof ltObj === 'string' ? ltObj : (ltObj?.name || undefined),
             bookingAmount,
