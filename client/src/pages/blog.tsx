@@ -148,7 +148,7 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen theme-smooth bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black">
-      <SEOHead
+  <SEOHead
         title="Gymnastics Tips & Stories | Coach Will Tumbles Blog"
         description="Training tips, stories, and parent-friendly guides to help young athletes grow with confidence at Coach Will Tumbles."
         canonicalUrl="https://www.coachwilltumbles.com/blog"
@@ -164,10 +164,10 @@ export default function Blog() {
           },
           {
             "@context": "https://schema.org",
-            "@type": "Blog",
-            name: "Coach Will Tumbles Blog",
-            url: "https://www.coachwilltumbles.com/blog",
-            description: "Gymnastics tips, stories, and guides for parents and athletes."
+    "@type": "CollectionPage",
+    name: "Coach Will Tumbles Blog",
+    url: "https://www.coachwilltumbles.com/blog",
+    description: "Gymnastics tips, stories, and guides for parents and athletes."
           }
         ]}
       />

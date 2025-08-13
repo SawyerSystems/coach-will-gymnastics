@@ -157,7 +157,26 @@ export default function Booking() {
                 "@type": "Service",
                 "name": "Private Gymnastics Lessons",
                 "areaServed": { "@type": "City", "name": "Oceanside" },
-                "provider": { "@type": "LocalBusiness", "name": "Coach Will Tumbles" },
+                "provider": {
+                  "@type": ["LocalBusiness", "SportsActivityLocation"],
+                  "name": "Coach Will Tumbles",
+                  "telephone": "(585) 755-8122",
+                  "email": "Will@coachwilltumbles.com",
+                  "priceRange": "$$",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "1935 Ave. del Oro #A",
+                    "addressLocality": "Oceanside",
+                    "addressRegion": "CA",
+                    "postalCode": "92056",
+                    "addressCountry": "US"
+                  },
+                  "sameAs": [
+                    "https://www.facebook.com/coachwilltumbles",
+                    "https://www.instagram.com/coachwilltumbles",
+                    "https://www.youtube.com/@coachwilltumbles"
+                  ]
+                },
                 "serviceType": ["Gymnastics", "Tumbling", "Cheer Stunt"],
                 "offers": { "@type": "Offer", "priceCurrency": "USD" }
               },
@@ -167,6 +186,28 @@ export default function Booking() {
                 "itemListElement": [
                   { "@type": "ListItem", "position": 1, "name": "Home", "item": typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com' },
                   { "@type": "ListItem", "position": 2, "name": "Booking", "item": typeof window !== 'undefined' ? `${window.location.origin}/booking` : 'https://www.coachwilltumbles.com/booking' }
+                ]
+              },
+              // Optional FAQPage to boost rich results; content is non-visual
+              {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": [
+                  {
+                    "@type": "Question",
+                    "name": "What ages do you coach?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "We coach kids and teens of all levels, from beginners to competitive athletes." }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Do you offer semi-private lessons?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "Yes, you can book 1:1 or semi-private sessions depending on your preference." }
+                  },
+                  {
+                    "@type": "Question",
+                    "name": "Where are lessons held?",
+                    "acceptedAnswer": { "@type": "Answer", "text": "At Oceanside Gymnastics, 1935 Ave. del Oro #A, Oceanside, CA 92056." }
+                  }
                 ]
               }
             ]}

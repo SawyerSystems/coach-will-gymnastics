@@ -202,7 +202,13 @@ export default function Contact() {
               "addressRegion": "CA",
               "postalCode": "92056",
               "addressCountry": "US"
-            }
+            },
+            "geo": { "@type": "GeoCoordinates", "latitude": 33.2206, "longitude": -117.3089 },
+            "sameAs": [
+              "https://www.facebook.com/coachwilltumbles",
+              "https://www.instagram.com/coachwilltumbles",
+              "https://www.youtube.com/@coachwilltumbles"
+            ]
           },
           {
             "@context": "https://schema.org",

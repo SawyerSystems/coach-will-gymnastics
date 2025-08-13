@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function VerifyEmail() {
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,13 @@ export default function VerifyEmail() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 p-4">
+      <SEOHead
+        title="Verify Email — Coach Will Tumbles"
+        description="Email verification in progress."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/verify-email` : 'https://www.coachwilltumbles.com/verify-email'}
+        robots="noindex,follow"
+        structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           {loading ? (

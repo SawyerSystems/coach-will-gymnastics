@@ -5,6 +5,7 @@ import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-
 import { loadStripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { useLocation } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -126,6 +127,13 @@ export default function Checkout() {
   // Make SURE to wrap the form in <Elements> which provides the stripe context.
   return (
     <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <SEOHead
+        title="Checkout — Coach Will Tumbles"
+        description="Secure checkout for your lesson reservation."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/checkout` : 'https://www.coachwilltumbles.com/checkout'}
+        robots="noindex,follow"
+        structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
+      />
       <CheckoutForm bookingDetails={bookingDetails} />
     </Elements>
   );

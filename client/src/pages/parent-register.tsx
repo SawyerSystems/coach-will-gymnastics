@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'wouter';
 import { z } from 'zod';
+import SEOHead from '@/components/SEOHead';
 
 const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -87,6 +88,13 @@ export default function ParentRegister() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 p-4">
+      <SEOHead
+        title="Parent Registration — Coach Will Tumbles"
+        description="Create your parent account to book lessons."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/parent-register` : 'https://www.coachwilltumbles.com/parent-register'}
+        robots="noindex,follow"
+        structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">

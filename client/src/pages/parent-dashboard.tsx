@@ -455,6 +455,8 @@ function EditBookingForm({ booking, onClose }: { booking: Booking; onClose: () =
   );
 }
 
+import SEOHead from '@/components/SEOHead';
+
 function ParentDashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -651,6 +653,13 @@ function ParentDashboard() {
 
   return (
     <>
+      <SEOHead
+        title="Parent Dashboard — Coach Will Tumbles"
+        description="Private parent dashboard."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/parent-dashboard` : 'https://www.coachwilltumbles.com/parent-dashboard'}
+        robots="noindex,follow"
+        structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
+      />
       <ParentMainContainer>
         <ParentContentContainer>
           <ParentPageHeader>

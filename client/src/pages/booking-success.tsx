@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "wouter";
+import SEOHead from "@/components/SEOHead";
 
 export default function BookingSuccess() {
   const { toast } = useToast();
@@ -166,6 +167,13 @@ export default function BookingSuccess() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 py-12 px-4">
+      <SEOHead
+        title="Booking Success — Coach Will Tumbles"
+        description="Your booking was successful."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/booking-success` : 'https://www.coachwilltumbles.com/booking-success'}
+        robots="noindex,follow"
+        structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
+      />
       <div className="max-w-2xl mx-auto">
         {/* Success Header */}
         <div className="text-center mb-8">

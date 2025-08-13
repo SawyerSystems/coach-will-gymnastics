@@ -11,18 +11,18 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import {
-    Activity,
-    Brain,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Dumbbell,
-    Shield,
-    Star,
-    Target,
-    TrendingUp,
-    Trophy,
-    Zap
+  Activity,
+  Brain,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Dumbbell,
+  Shield,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Zap
 } from "lucide-react";
 // hooks imported via combined React import above
 import { Link } from "wouter";
@@ -35,7 +35,6 @@ export default function Home() {
   const [isNewParent, setIsNewParent] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const { getLessonPrice } = useStripePricing();
-
   // Light/Dark mode toggle for testing glassmorphism
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -173,16 +172,23 @@ export default function Home() {
               "longitude": -117.3089
             },
             "sameAs": [
-              "https://www.facebook.com/", 
-              "https://www.instagram.com/",
-              "https://www.youtube.com/"
+              "https://www.facebook.com/coachwilltumbles",
+              "https://www.instagram.com/coachwilltumbles",
+              "https://www.youtube.com/@coachwilltumbles"
             ],
-            "openingHoursSpecification": Object.entries((siteContent?.hours || {})).map(([day, hours]: any) => ({
-              "@type": "OpeningHoursSpecification",
-              "dayOfWeek": day,
-              "opens": hours?.start || '09:00',
-              "closes": hours?.end || '17:00'
-            }))
+            "openingHoursSpecification": Array.isArray((siteContent as any)?.hours?.hours)
+              ? ((siteContent as any)?.hours?.hours as any[]).map((h: any) => ({
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": h.day || h.dayOfWeek || h.day_of_week,
+                  "opens": h.start || h.opens || '09:00',
+                  "closes": h.end || h.closes || '17:00'
+                }))
+              : Object.entries(((siteContent as any)?.hours?.hours || (siteContent as any)?.hours || {})).map(([day, hours]: any) => ({
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": day,
+                  "opens": hours?.start || '09:00',
+                  "closes": hours?.end || '17:00'
+                }))
           },
           {
             "@context": "https://schema.org",
