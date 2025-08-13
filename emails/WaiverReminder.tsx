@@ -15,7 +15,7 @@ export function WaiverReminder({ parentName, waiverLink }: { parentName: string;
         <CTAButton href={waiverLink} color="danger">Complete the Waiver</CTAButton>
       </div>
       <Text style={{ color: theme.colors.muted }}>
-        It only takes a minute, and then you’re all set. We can’t wait to welcome you!
+        It only takes a minute, and then you’re all set. I can’t wait to welcome you!
       </Text>
     </EmailLayout>
   );

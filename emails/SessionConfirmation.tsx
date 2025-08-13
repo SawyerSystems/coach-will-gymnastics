@@ -38,7 +38,7 @@ export function SessionConfirmation({
         </div>
       ) : null}
       <Text style={{ color: theme.colors.muted }}>
-        We can’t wait to see {athleteName} shine! If plans change, you can reschedule anytime.
+        I can’t wait to see {athleteName} shine! If plans change, you can reschedule anytime.
       </Text>
     </EmailLayout>
   );

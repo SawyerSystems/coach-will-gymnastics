@@ -1158,12 +1158,21 @@ function ParentDashboard() {
                                     </div>
                                   </div>
                                 </div>
-                                <Badge 
-                                  variant="outline"
-                                  className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700 text-[10px] xs:text-xs h-auto py-0.5"
-                                >
-                                  ✅ Completed
-                                </Badge>
+                                {booking.status === 'cancelled' ? (
+                                  <Badge 
+                                    variant="outline"
+                                    className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-700 text-[10px] xs:text-xs h-auto py-0.5"
+                                  >
+                                    ❌ Cancelled
+                                  </Badge>
+                                ) : (
+                                  <Badge 
+                                    variant="outline"
+                                    className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700 text-[10px] xs:text-xs h-auto py-0.5"
+                                  >
+                                    ✅ Completed
+                                  </Badge>
+                                )}
                               </div>
 
                               {/* Focus Areas */}

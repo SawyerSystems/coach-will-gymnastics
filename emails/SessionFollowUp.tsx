@@ -8,7 +8,7 @@ export function SessionFollowUp({ athleteName, bookingLink }: { athleteName: str
   return (
     <EmailLayout title="🏆 Great work today!">
       <Text style={{ color: theme.colors.text }}>
-        {athleteName} crushed it today — we’re proud of their effort and progress.
+        {athleteName} crushed it today — I always appreciate hard work. I'm very proud of their effort and progress.
       </Text>
       <Text style={{ color: theme.colors.text }}>
         Keep the momentum going with another session:

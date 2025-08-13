@@ -21,7 +21,7 @@ export function SessionReminder({ athleteName, sessionDate, sessionTime, manageL
         </div>
       ) : null}
       <Text style={{ color: theme.colors.muted }}>
-        We’re excited for a great session — see you soon!
+        I'm excited for a great session — see you soon!
       </Text>
     </EmailLayout>
   );

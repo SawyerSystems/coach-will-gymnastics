@@ -38,7 +38,7 @@ export function SignedWaiverConfirmation({ parentName, athleteName, logoUrl }: {
       </Text>
 
       <Text style={{ fontSize: '14px', color: theme.colors.muted, marginTop: '20px' }}>
-        Coach Will Sawyer<br/>
+        Coach Will<br/>
         CoachWillTumbles.com<br/>
         📧 will@coachwilltumbles.com<br/>
         📱 Text: (585) 755-8122
