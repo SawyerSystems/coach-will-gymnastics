@@ -29,6 +29,7 @@ const Blog = lazy(() => import("@/pages/blog"));
 const Tips = lazy(() => import("@/pages/tips"));
 const Contact = lazy(() => import("@/pages/contact"));
 const Features = lazy(() => import("@/pages/features"));
+const TestScreenshots = lazy(() => import("@/pages/test-screenshots"));
 const Admin = lazy(() => import("@/pages/admin"));
 const AdminLogin = lazy(() => import("@/pages/admin-login"));
 const ProgressShare = lazy(() => import("@/pages/progress-share"));
@@ -77,6 +78,7 @@ function Router() {
           <Route path="/tips" component={Tips} />
           <Route path="/tips/:id" component={TipDetail} />
           <Route path="/features" component={Features} />
+          <Route path="/test-screenshots" component={TestScreenshots} />
           <Route path="/contact" component={Contact} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/login" component={AdminLogin} />

@@ -78,23 +78,30 @@ function useParallax() {
   return offset;
 }
 
-function useInView() {
+function useInView<T extends HTMLElement = HTMLDivElement>() {
   const [inView, setInView] = useState(false);
-  const ref = useRef<HTMLElement>(null);
-  
+  const ref = useRef<T>(null);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.1, rootMargin: '50px' }
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
     );
-    if (ref.current) observer.observe(ref.current);
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
     return () => observer.disconnect();
   }, []);
-  
-  return [ref, inView] as const;
-}
 
-function useMousePosition() {
+  return [ref, inView] as const;
+}function useMousePosition() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   
   useEffect(() => {
@@ -607,7 +614,7 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
 }
 
 function AnimatedStatCard({ label, value, suffix, icon: Icon }: { label: string; value: number; suffix: string; icon: any }) {
-  const [ref, inView] = useInView();
+  const [ref, inView] = useInView<HTMLDivElement>();
   const [displayValue, setDisplayValue] = useState(0);
   
   useEffect(() => {
@@ -650,7 +657,7 @@ function AnimatedStatCard({ label, value, suffix, icon: Icon }: { label: string;
 }
 
 function ChapterCard({ chapter, index }: { chapter: any; index: number }) {
-  const [ref, inView] = useInView();
+  const [ref, inView] = useInView<HTMLElement>();
   const isEven = index % 2 === 0;
   
   return (
