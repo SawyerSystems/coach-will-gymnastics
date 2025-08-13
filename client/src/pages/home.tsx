@@ -695,6 +695,7 @@ export default function Home() {
               ]).map((src: string, index: number) => (
                 <div key={index} className="aspect-square rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 glass-surface glass-card">
                   <img 
+                    loading="lazy" decoding="async"
                     src={src}
                     alt={`Gymnastics equipment ${index + 1}`}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 

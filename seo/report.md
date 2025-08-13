@@ -1,3 +1,27 @@
+# SEO Report — CoachWillTumbles.com (v1)
+
+Date: 2025-08-13
+
+This is a scaffold to be populated by CI and manual notes.
+
+## Summary
+- Targets: SEO=100, Performance≥90 (mobile), A11y≥95
+- CWV Targets: LCP < 2.5s, INP < 200ms, CLS < 0.1
+
+## Scorecards (Pre vs Post)
+- To be filled after LHCI run
+
+## Changes
+- Head meta and JSON-LD across key routes via `SEOHead`
+- robots.txt present with Sitemap
+- sitemap.xml generated on build
+- Noindex on auth/admin/private routes
+
+## CWV Notes
+- Preconnects added in index.html; lazy-loading for below-fold images
+
+## Internal Linking Map
+- To be captured in next iteration
 # SEO Report — CoachWillTumbles.com v1
 
 Date: 2025-08-13
