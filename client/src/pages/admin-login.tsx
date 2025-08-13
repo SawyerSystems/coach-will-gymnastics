@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield } from 'lucide-react';
+import SEOHead from '@/components/SEOHead';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -76,6 +77,13 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen theme-smooth flex items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-4">
+      <SEOHead
+        title="Admin Login — Coach Will Tumbles"
+        description="Administrator sign in."
+        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/admin-login` : 'https://www.coachwilltumbles.com/admin-login'}
+        robots="noindex,follow"
+        structuredData={{ "@context": "https://schema.org", "@type": "WebPage" }}
+      />
       <Card className="w-full max-w-md border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-[#D8BD2A]/20 border border-slate-200/60 dark:border-[#D8BD2A]/40">

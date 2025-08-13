@@ -24,7 +24,7 @@ function escapeXml(str: string) {
 
 function urlXml(loc: string, priority = '0.7') {
   return `  <url>
-    <loc>${escapeXml(baseUrl + route)}</loc>
+    <loc>${escapeXml(baseUrl + loc)}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${priority}</priority>
