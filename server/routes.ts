@@ -11,7 +11,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -5892,6 +5892,9 @@ setTimeout(async () => {
         return res.status(404).json({ message: "Booking not found" });
       }
 
+      // Store original status for delayed email system
+      const originalStatus = existingBooking.attendanceStatus;
+
       // Time-based restrictions for completed/no-show statuses (temporarily disabled for testing)
       // if (attendanceStatus === "completed" || attendanceStatus === "no-show") {
       //   const bookingDateTime = new Date(`${existingBooking.preferredDate}T${existingBooking.preferredTime}`);
@@ -5917,70 +5920,21 @@ setTimeout(async () => {
           await storage.updateBookingPaymentStatus(id, PaymentStatusEnum.SESSION_PAID);
           booking.paymentStatus = PaymentStatusEnum.SESSION_PAID;
         }
-        
-        // Send session follow-up email to parent
-        try {
-          // Get booking with full relations to access parent and athlete data
-          // We need to query with Supabase directly to get the booking_athletes relationship
-          const { data: bookingData } = await supabaseAdmin
-            .from('bookings')
-            .select(`
-              *,
-              booking_athletes(*, athletes(*))
-            `)
-            .eq('id', id)
-            .single();
-            
-          if (bookingData) {
-            const parent = bookingData.parent_id ? await storage.getParentById(bookingData.parent_id) : null;
-            
-            // Get athlete name from booking_athletes relation
-            let athleteName = 'Athlete';
-            if (bookingData.booking_athletes && bookingData.booking_athletes.length > 0 && 
-                bookingData.booking_athletes[0].athletes) {
-              athleteName = bookingData.booking_athletes[0].athletes.name || 'Athlete';
-            } else if (bookingData.athlete1_name) {
-              athleteName = bookingData.athlete1_name;
-            }
-            
-            // Create booking link for next session
-            const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-            const bookingLink = `${baseUrl}/parent/dashboard`;
-            
-            if (parent?.email) {
-              await sendSessionFollowUp(
-                parent.email,
-                athleteName,
-                bookingLink
-              );
-              console.log(`[SESSION-FOLLOW-UP] Sent follow-up email to ${parent.email} for completed session (booking ${id})`);
-            } else {
-              console.warn(`[SESSION-FOLLOW-UP] Cannot send follow-up email - no parent email found for booking ${id}`);
-            }
-          }
-        } catch (emailError) {
-          console.error('[SESSION-FOLLOW-UP] Failed to send follow-up email:', emailError);
-          // Don't fail the attendance update if email fails
-        }
       }
-      // Send confirmation email when status becomes CONFIRMED (idempotent)
-      else if (attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
+      
+      // Schedule delayed email for status changes that require notification
+      if (originalStatus !== attendanceStatus) {
+        const rescheduleLink = `${getBaseUrl()}/booking`;
+        await scheduleStatusChangeEmail(id, originalStatus, attendanceStatus, storage, rescheduleLink);
+      }
+      
+      // Send confirmation email immediately when status becomes CONFIRMED (idempotent)
+      if (attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
         try {
           console.log(`[ATTENDANCE-STATUS] Attempting idempotent session confirmation send for booking ${id}`);
           await sendSessionConfirmationIfNeeded(id, storage);
         } catch (emailErr) {
           console.error('[ATTENDANCE-STATUS] Failed to send confirmation email:', emailErr);
-          // Non-fatal
-        }
-      }
-      // Send cancellation email when status becomes CANCELLED
-      else if (attendanceStatus === AttendanceStatusEnum.CANCELLED) {
-        try {
-          console.log(`[ATTENDANCE-STATUS] Sending cancellation email for booking ${id}`);
-          const rescheduleLink = `${getBaseUrl()}/booking`;
-          await sendSessionCancellationIfNeeded(id, storage, rescheduleLink);
-        } catch (emailErr) {
-          console.error('[ATTENDANCE-STATUS] Failed to send cancellation email:', emailErr);
           // Non-fatal
         }
       }

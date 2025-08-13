@@ -14,6 +14,7 @@ import { SafetyInformationLink } from '../../emails/SafetyInformationLink';
 import { SessionCancellation } from '../../emails/SessionCancellation';
 import { SessionConfirmation } from '../../emails/SessionConfirmation';
 import { SessionFollowUp } from '../../emails/SessionFollowUp';
+import { SessionNoShow } from '../../emails/SessionNoShow';
 import { SessionReminder } from '../../emails/SessionReminder';
 import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
 import { WaiverReminder } from '../../emails/WaiverReminder';
@@ -57,6 +58,10 @@ export const emailTemplates = {
   'session-cancelled': { 
     subject: '❌ Session Cancelled — Let\'s Reschedule!', 
     component: SessionCancellation 
+  },
+  'session-no-show': { 
+    subject: '🤸 We Missed You — Let\'s Reschedule!', 
+    component: SessionNoShow 
   },
   'reschedule-confirmation': { 
     subject: '🔄 New Adventure Scheduled!', 
@@ -433,6 +438,29 @@ export async function sendSessionCancellation(
   });
 }
 
+// Helper function to send session no-show
+export async function sendSessionNoShow(
+  to: string,
+  parentName: string,
+  rescheduleLink: string,
+  sessionData?: {
+    sessionDate?: string;
+    sessionTime?: string;
+    athleteNames?: string[];
+    lessonType?: string;
+  }
+) {
+  return sendEmail({
+    type: 'session-no-show',
+    to,
+    data: { 
+      parentName, 
+      rescheduleLink,
+      ...sessionData
+    }
+  });
+}
+
 // Helper function to send reschedule confirmation
 export async function sendRescheduleConfirmation(
   to: string,
@@ -658,5 +686,167 @@ export async function sendPasswordSetupEmail(
       resetUrl,
     },
   });
+}
+
+// Delayed Email System for Attendance Status Changes
+interface DelayedStatusEmail {
+  bookingId: number;
+  originalStatus: string;
+  targetStatus: string;
+  timestamp: number;
+  timeoutId: NodeJS.Timeout;
+}
+
+// In-memory store for delayed emails (in production, you'd use Redis or similar)
+const delayedStatusEmails = new Map<number, DelayedStatusEmail>();
+
+export async function scheduleStatusChangeEmail(
+  bookingId: number,
+  originalStatus: string,
+  newStatus: string,
+  storage: EmailStorage,
+  rescheduleLink?: string
+) {
+  console.log(`[STATUS-EMAIL-DELAY] Scheduling email for booking ${bookingId}: ${originalStatus} -> ${newStatus}`);
+  
+  // Clear any existing delayed email for this booking
+  const existing = delayedStatusEmails.get(bookingId);
+  if (existing) {
+    console.log(`[STATUS-EMAIL-DELAY] Clearing existing timer for booking ${bookingId}`);
+    clearTimeout(existing.timeoutId);
+    delayedStatusEmails.delete(bookingId);
+  }
+
+  // Only schedule emails for status changes that require notification
+  const emailableStatuses = ['completed', 'cancelled', 'no-show'];
+  if (!emailableStatuses.includes(newStatus)) {
+    console.log(`[STATUS-EMAIL-DELAY] Status ${newStatus} doesn't require email notification`);
+    return;
+  }
+
+  // Schedule the email to be sent after 30 seconds
+  const timeoutId = setTimeout(async () => {
+    try {
+      console.log(`[STATUS-EMAIL-DELAY] 30 seconds elapsed, checking final status for booking ${bookingId}`);
+      
+      // Get current booking status
+      const booking = await storage.getBookingWithRelations(bookingId);
+      if (!booking) {
+        console.warn(`[STATUS-EMAIL-DELAY] Booking ${bookingId} not found`);
+        delayedStatusEmails.delete(bookingId);
+        return;
+      }
+
+      const currentStatus = booking.attendanceStatus;
+      console.log(`[STATUS-EMAIL-DELAY] Final status for booking ${bookingId}: ${currentStatus}`);
+
+      // Send email based on final status
+      if (currentStatus === 'completed') {
+        await sendCompletedSessionEmail(bookingId, storage);
+      } else if (currentStatus === 'cancelled') {
+        await sendSessionCancellationIfNeeded(bookingId, storage, rescheduleLink);
+      } else if (currentStatus === 'no-show') {
+        await sendNoShowSessionEmail(bookingId, storage, rescheduleLink);
+      }
+
+      // Clean up
+      delayedStatusEmails.delete(bookingId);
+      
+    } catch (error) {
+      console.error(`[STATUS-EMAIL-DELAY] Error sending delayed email for booking ${bookingId}:`, error);
+      delayedStatusEmails.delete(bookingId);
+    }
+  }, 30000); // 30 seconds
+
+  // Store the delayed email info
+  delayedStatusEmails.set(bookingId, {
+    bookingId,
+    originalStatus,
+    targetStatus: newStatus,
+    timestamp: Date.now(),
+    timeoutId
+  });
+
+  console.log(`[STATUS-EMAIL-DELAY] Scheduled ${newStatus} email for booking ${bookingId} in 30 seconds`);
+}
+
+async function sendCompletedSessionEmail(bookingId: number, storage: EmailStorage) {
+  console.log(`[STATUS-EMAIL] Sending completed session follow-up for booking ${bookingId}`);
+  
+  try {
+    // Get booking with full relations to access parent and athlete data
+    const booking = await storage.getBookingWithRelations(bookingId);
+    if (!booking) {
+      console.warn(`[STATUS-EMAIL] Booking ${bookingId} not found for completed email`);
+      return;
+    }
+
+    // Get parent info
+    const parentEmail = booking.parent?.email || booking.parentEmail;
+    const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
+    
+    if (!parentEmail) {
+      console.warn(`[STATUS-EMAIL] No parent email found for booking ${bookingId}`);
+      return;
+    }
+
+    // Get athlete name
+    let athleteName = 'Athlete';
+    if (booking.athletes && booking.athletes.length > 0) {
+      athleteName = booking.athletes[0].firstName || booking.athletes[0].name || 'Athlete';
+    } else if (booking.athlete1Name) {
+      athleteName = booking.athlete1Name;
+    }
+    
+    // Create booking link for next session
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const bookingLink = `${baseUrl}/parent/dashboard`;
+    
+    console.log(`[STATUS-EMAIL] Sending completed session follow-up for booking ${bookingId} to ${parentEmail}`);
+    
+    await sendSessionFollowUp(parentEmail, athleteName, bookingLink);
+    console.log(`[STATUS-EMAIL] ✅ Sent completed session follow-up for booking ${bookingId}`);
+    
+  } catch (error) {
+    console.error(`[STATUS-EMAIL] Error sending completed session follow-up for booking ${bookingId}:`, error);
+  }
+}
+
+async function sendNoShowSessionEmail(bookingId: number, storage: EmailStorage, rescheduleLink?: string) {
+  try {
+    const booking = await storage.getBookingWithRelations(bookingId);
+    if (!booking) {
+      console.warn(`[STATUS-EMAIL] Booking ${bookingId} not found for no-show email`);
+      return;
+    }
+
+    // Get parent info
+    const parentEmail = booking.parent?.email || booking.parentEmail;
+    const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
+    
+    if (!parentEmail) {
+      console.warn(`[STATUS-EMAIL] No parent email found for booking ${bookingId}`);
+      return;
+    }
+
+    // Use provided reschedule link or build default one
+    const finalRescheduleLink = rescheduleLink || '/booking';
+    
+    // Extract session information
+    const sessionData = {
+      sessionDate: booking.preferredDate,
+      sessionTime: booking.preferredTime,
+      athleteNames: booking.athletes?.map((athlete: any) => athlete.firstName || athlete.name) || [],
+      lessonType: booking.lessonType?.name
+    };
+    
+    console.log(`[STATUS-EMAIL] Sending no-show email for booking ${bookingId} to ${parentEmail}`);
+    
+    await sendSessionNoShow(parentEmail, parentName, finalRescheduleLink, sessionData);
+    console.log(`[STATUS-EMAIL] ✅ Sent no-show email for booking ${bookingId}`);
+    
+  } catch (error) {
+    console.error(`[STATUS-EMAIL] Error sending no-show email for booking ${bookingId}:`, error);
+  }
 }
 
