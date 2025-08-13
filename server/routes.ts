@@ -3205,35 +3205,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const bookings = await storage.getAllBookings();
         const athletes = await storage.getAllAthletesWithWaiverStatus();
         const now = new Date();
-        
+
         for (const booking of bookings) {
-          if (booking.paymentStatus === PaymentStatusEnum.RESERVATION_PAID) {
-            // Check if any athletes in this booking need waivers
-            const bookingAthletes = athletes.filter(athlete => {
-              const athleteName = athlete.firstName && athlete.lastName 
-                ? `${athlete.firstName} ${athlete.lastName}`
-                : athlete.name;
-              return booking.athlete1Name === athleteName || 
-                     booking.athlete2Name === athleteName ||
-                     booking.athlete1Name === athlete.name;
-            });
-            
-            const hasUnsignedWaivers = bookingAthletes.some(athlete => 
-              athlete.waiverStatus !== 'signed'
-            );
-            
-            if (hasUnsignedWaivers) {
-              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate) : null;
-              if (sessionDate) {
-                const daysUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-              
-                // Send reminder 2 days before session
-                if (daysUntilSession <= 2 && daysUntilSession > 1) {
-                  console.log(`[STATUS SYNC] Waiver reminder needed for booking ${booking.id}`);
-                  // Add waiver reminder logic here
+          try {
+            // Only consider active, paid, non-cancelled upcoming sessions with a date
+            if (!booking.preferredDate) continue;
+            if (booking.attendanceStatus === AttendanceStatusEnum.CANCELLED) continue;
+            if (booking.paymentStatus !== PaymentStatusEnum.RESERVATION_PAID && booking.paymentStatus !== PaymentStatusEnum.SESSION_PAID) continue;
+
+            // Determine if any athletes linked to this booking still need a waiver
+            // Prefer relational athlete IDs when available
+            let hasUnsignedWaivers = true; // default true if we can't resolve
+            let linkedAthleteIds: number[] = [];
+            if (Array.isArray(booking.athletes) && booking.athletes.length > 0) {
+              linkedAthleteIds = booking.athletes
+                .map((a: any) => (typeof a?.athleteId === 'number' ? a.athleteId : (typeof a?.id === 'number' ? a.id : null)))
+                .filter((id): id is number => typeof id === 'number');
+            }
+
+            if (linkedAthleteIds.length > 0) {
+              const statuses = await Promise.all(
+                linkedAthleteIds.map(async (id) => {
+                  const a = await storage.getAthleteWithWaiverStatus(id);
+                  const status = (a?.computedWaiverStatus || a?.waiverStatus || 'pending') as string;
+                  return status;
+                })
+              );
+              hasUnsignedWaivers = statuses.some(s => s !== 'signed');
+            } else {
+              // Fallback: match by name against global athletes-with-status list
+              const bookingAthletes = athletes.filter(athlete => {
+                const athleteName = athlete.firstName && athlete.lastName 
+                  ? `${athlete.firstName} ${athlete.lastName}`
+                  : athlete.name;
+                return booking.athlete1Name === athleteName || 
+                       booking.athlete2Name === athleteName ||
+                       booking.athlete1Name === athlete.name;
+              });
+              hasUnsignedWaivers = bookingAthletes.some(a => (a as any).waiverStatus !== 'signed' && (a as any).computedWaiverStatus !== 'signed');
+            }
+
+            if (!hasUnsignedWaivers) continue;
+
+            // Compute hours until session (approximate; date-only if time missing)
+            const sessionDate = new Date(booking.preferredDate);
+            const sessionTime = (booking.preferredTime || '00:00').split(':');
+            if (sessionTime.length >= 2 && !isNaN(Number(sessionTime[0])) && !isNaN(Number(sessionTime[1]))) {
+              sessionDate.setHours(Number(sessionTime[0]), Number(sessionTime[1]), 0, 0);
+            }
+            const hoursUntil = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+            // Build waiver link and idempotency markers on booking.adminNotes
+            const waiverLink = `${getBaseUrl()}/parent/login?redirect=dashboard&booking_id=${booking.id}`;
+            const notes = booking.adminNotes || '';
+
+            // 24-hour window: 20–28 hours before
+            if (hoursUntil <= 28 && hoursUntil >= 20) {
+              if (!notes.includes('WAIVER_REMINDER_24H_SENT')) {
+                const toEmail = booking.parentEmail;
+                const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+                if (toEmail) {
+                  await sendWaiverReminder(toEmail, parentName, waiverLink);
+                  const updatedNotes = notes
+                    ? `${notes}\n\nWAIVER_REMINDER_24H_SENT - ${new Date().toISOString()}`
+                    : `WAIVER_REMINDER_24H_SENT - ${new Date().toISOString()}`;
+                  await storage.updateBooking(booking.id, { adminNotes: updatedNotes });
+                  console.log(`[WAIVER REMINDER] Sent 24h reminder for booking ${booking.id} to ${toEmail}`);
+                } else {
+                  console.warn(`[WAIVER REMINDER] Skipped 24h reminder - no parent email for booking ${booking.id}`);
                 }
               }
             }
+
+            // 2-hour window: 1.5–2.5 hours before
+            if (hoursUntil <= 2.5 && hoursUntil >= 1.5) {
+              if (!notes.includes('WAIVER_REMINDER_2H_SENT')) {
+                const toEmail = booking.parentEmail;
+                const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+                if (toEmail) {
+                  await sendWaiverReminder(toEmail, parentName, waiverLink);
+                  const updatedNotes = (booking.adminNotes || '')
+                    ? `${(booking.adminNotes || '')}\n\nWAIVER_REMINDER_2H_SENT - ${new Date().toISOString()}`
+                    : `WAIVER_REMINDER_2H_SENT - ${new Date().toISOString()}`;
+                  await storage.updateBooking(booking.id, { adminNotes: updatedNotes });
+                  console.log(`[WAIVER REMINDER] Sent 2h reminder for booking ${booking.id} to ${toEmail}`);
+                } else {
+                  console.warn(`[WAIVER REMINDER] Skipped 2h reminder - no parent email for booking ${booking.id}`);
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`[WAIVER REMINDER] Error processing booking ${booking.id}:`, err);
           }
         }
       } catch (error) {
@@ -5901,6 +5963,37 @@ setTimeout(async () => {
           // Don't fail the attendance update if email fails
         }
       }
+      // Send confirmation email when status becomes CONFIRMED (idempotent)
+      else if (attendanceStatus === AttendanceStatusEnum.CONFIRMED) {
+        try {
+          console.log(`[ATTENDANCE-STATUS] Attempting idempotent session confirmation send for booking ${id}`);
+          await sendSessionConfirmationIfNeeded(id, storage);
+        } catch (emailErr) {
+          console.error('[ATTENDANCE-STATUS] Failed to send confirmation email:', emailErr);
+          // Non-fatal
+        }
+      }
+      // Send cancellation email when status becomes CANCELLED
+      else if (attendanceStatus === AttendanceStatusEnum.CANCELLED) {
+        try {
+          const parentName = `${existingBooking.parentFirstName || ''} ${existingBooking.parentLastName || ''}`.trim() || 'Parent';
+          const toEmail = existingBooking.parentEmail;
+          if (toEmail) {
+            const rescheduleLink = `${getBaseUrl()}/booking`;
+            await sendSessionCancellation(
+              toEmail,
+              parentName,
+              rescheduleLink
+            );
+            console.log(`[ATTENDANCE-STATUS] Sent cancellation email for booking ${id} to ${toEmail}`);
+          } else {
+            console.warn(`[ATTENDANCE-STATUS] Skipping cancellation email - no parent email for booking ${id}`);
+          }
+        } catch (emailErr) {
+          console.error('[ATTENDANCE-STATUS] Failed to send cancellation email:', emailErr);
+          // Non-fatal
+        }
+      }
       
       // Derive and update booking status based on payment and attendance status
       const derivedStatus = determineBookingStatus(booking.paymentStatus, attendanceStatus);
@@ -5917,73 +6010,6 @@ setTimeout(async () => {
         message: "Failed to update attendance status", 
         error: errorMessage 
       });
-    }
-  });
-
-  app.delete("/api/bookings/:id", isAdminAuthenticated, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const deleted = await storage.deleteBooking(id);
-      if (!deleted) {
-        res.status(404).json({ message: "Booking not found" });
-        return;
-      }
-      res.json({ message: "Booking deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete booking" });
-    }
-  });
-
-  // Send waiver email for manual bookings
-  app.post("/api/bookings/:id/send-waiver-email", isAdminAuthenticated, async (req, res) => {
-    try {
-      const bookingId = parseInt(req.params.id);
-      const booking = await storage.getBookingWithRelations(bookingId);
-
-      if (!booking) {
-        return res.status(404).json({ error: "Booking not found" });
-      }
-
-      // Resolve parent email and name
-      const parentEmail = booking.parent?.email || booking.parentEmail || '';
-      const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
-
-      if (!parentEmail) {
-        return res.status(400).json({ error: "Parent email is missing for this booking" });
-      }
-
-      // Determine if any athletes tied to this booking still need a waiver
-      const athleteIds: number[] = (booking.athletes || [])
-        .map((a: any) => (typeof a?.athleteId === 'number' ? a.athleteId : (typeof a?.id === 'number' ? a.id : null)))
-        .filter((id): id is number => typeof id === 'number');
-
-      let needsWaivers = true; // default to true if no athletes are linked
-      if (athleteIds.length > 0) {
-        const statuses = await Promise.all(
-          athleteIds.map(async (id) => {
-            const a = await storage.getAthleteWithWaiverStatus(id);
-            // Prefer computedWaiverStatus if available, fall back to waiverStatus
-            const status = (a?.computedWaiverStatus || a?.waiverStatus || 'pending') as string;
-            return status;
-          })
-        );
-        needsWaivers = statuses.some(s => s !== 'signed');
-      }
-
-      if (!needsWaivers) {
-        return res.status(400).json({ error: "All athletes have signed waivers for this booking" });
-      }
-
-      // Build a valid link that exists in the frontend: send parent to login, then redirect to dashboard for waiver
-      const waiverLink = `${getBaseUrl()}/parent/login?redirect=dashboard&booking_id=${bookingId}`;
-
-      // Send waiver reminder email
-      await sendWaiverReminder(parentEmail, parentName, waiverLink);
-
-      res.json({ message: "Waiver email sent successfully" });
-    } catch (error) {
-      console.error("Failed to send waiver email:", error);
-      res.status(500).json({ error: "Failed to send waiver email" });
     }
   });
 
