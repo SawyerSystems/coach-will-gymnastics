@@ -316,6 +316,42 @@ export async function sendSessionConfirmationIfNeeded(bookingId: number, storage
   }
 }
 
+// Helper function to send session cancellation email (idempotent, fetches all needed data)
+export async function sendSessionCancellationIfNeeded(bookingId: number, storage: EmailStorage, rescheduleLink?: string) {
+  try {
+    const booking = await storage.getBookingWithRelations(bookingId);
+    if (!booking) {
+      console.warn(`[SESSION-CANCELLATION] Booking ${bookingId} not found`);
+      return false;
+    }
+
+    // Get parent info (from relations or fallback to booking fields)
+    const parentEmail = booking.parent?.email || booking.parentEmail;
+    const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
+    
+    if (!parentEmail) {
+      console.warn(`[SESSION-CANCELLATION] No parent email found for booking ${bookingId}`);
+      return false;
+    }
+
+    // Use provided reschedule link or build default one
+    const finalRescheduleLink = rescheduleLink || '/booking';
+    
+    console.log(`[SESSION-CANCELLATION] Sending cancellation email for booking ${bookingId} to ${parentEmail}`);
+    try {
+      await sendSessionCancellation(parentEmail, parentName, finalRescheduleLink);
+      console.log(`[SESSION-CANCELLATION] ✅ Sent cancellation email for booking ${bookingId}`);
+      return true;
+    } catch (sendErr) {
+      console.error(`[SESSION-CANCELLATION] Failed to send email for booking ${bookingId}`, sendErr);
+      return false;
+    }
+  } catch (err) {
+    console.error(`[SESSION-CANCELLATION] Unexpected error booking ${bookingId}`, err);
+    return false;
+  }
+}
+
 // Helper function to send manual booking confirmation
 export async function sendManualBookingConfirmation(
   to: string,

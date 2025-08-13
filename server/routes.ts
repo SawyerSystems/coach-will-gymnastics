@@ -11,7 +11,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
+import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -5976,19 +5976,9 @@ setTimeout(async () => {
       // Send cancellation email when status becomes CANCELLED
       else if (attendanceStatus === AttendanceStatusEnum.CANCELLED) {
         try {
-          const parentName = `${existingBooking.parentFirstName || ''} ${existingBooking.parentLastName || ''}`.trim() || 'Parent';
-          const toEmail = existingBooking.parentEmail;
-          if (toEmail) {
-            const rescheduleLink = `${getBaseUrl()}/booking`;
-            await sendSessionCancellation(
-              toEmail,
-              parentName,
-              rescheduleLink
-            );
-            console.log(`[ATTENDANCE-STATUS] Sent cancellation email for booking ${id} to ${toEmail}`);
-          } else {
-            console.warn(`[ATTENDANCE-STATUS] Skipping cancellation email - no parent email for booking ${id}`);
-          }
+          console.log(`[ATTENDANCE-STATUS] Sending cancellation email for booking ${id}`);
+          const rescheduleLink = `${getBaseUrl()}/booking`;
+          await sendSessionCancellationIfNeeded(id, storage, rescheduleLink);
         } catch (emailErr) {
           console.error('[ATTENDANCE-STATUS] Failed to send cancellation email:', emailErr);
           // Non-fatal
