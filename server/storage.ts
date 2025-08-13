@@ -3024,13 +3024,30 @@ export class SupabaseStorage implements IStorage {
       paid_amount: insertBooking.paidAmount || 0
     };
 
-    // Optional fields
-    if (insertBooking.dropoffPersonName) dbBooking.dropoff_person_name = insertBooking.dropoffPersonName;
-    if (insertBooking.dropoffPersonRelationship) dbBooking.dropoff_person_relationship = insertBooking.dropoffPersonRelationship;
-    if (insertBooking.dropoffPersonPhone) dbBooking.dropoff_person_phone = insertBooking.dropoffPersonPhone;
-    if (insertBooking.pickupPersonName) dbBooking.pickup_person_name = insertBooking.pickupPersonName;
-    if (insertBooking.pickupPersonRelationship) dbBooking.pickup_person_relationship = insertBooking.pickupPersonRelationship;
-    if (insertBooking.pickupPersonPhone) dbBooking.pickup_person_phone = insertBooking.pickupPersonPhone;
+    // Optional fields - but safety contact fields must be provided for all bookings
+    // For admin bookings, allow NULL values; for parent bookings, require them
+    const isAdminBooking = insertBooking.bookingMethod === 'Admin';
+    
+    // Safety contact fields - required for parent bookings, optional for admin bookings
+    if (isAdminBooking) {
+      // Admin bookings can have NULL safety contact fields
+      dbBooking.dropoff_person_name = insertBooking.dropoffPersonName || null;
+      dbBooking.dropoff_person_relationship = insertBooking.dropoffPersonRelationship || null;
+      dbBooking.dropoff_person_phone = insertBooking.dropoffPersonPhone || null;
+      dbBooking.pickup_person_name = insertBooking.pickupPersonName || null;
+      dbBooking.pickup_person_relationship = insertBooking.pickupPersonRelationship || null;
+      dbBooking.pickup_person_phone = insertBooking.pickupPersonPhone || null;
+    } else {
+      // Parent bookings require safety contact information
+      dbBooking.dropoff_person_name = insertBooking.dropoffPersonName || 'To be provided';
+      dbBooking.dropoff_person_relationship = insertBooking.dropoffPersonRelationship || 'To be provided';
+      dbBooking.dropoff_person_phone = insertBooking.dropoffPersonPhone || 'To be provided';
+      dbBooking.pickup_person_name = insertBooking.pickupPersonName || 'To be provided';
+      dbBooking.pickup_person_relationship = insertBooking.pickupPersonRelationship || 'To be provided';
+      dbBooking.pickup_person_phone = insertBooking.pickupPersonPhone || 'To be provided';
+    }
+    
+    // Alternative pickup is always optional
     if (insertBooking.altPickupPersonName) dbBooking.alt_pickup_person_name = insertBooking.altPickupPersonName;
     if (insertBooking.altPickupPersonRelationship) dbBooking.alt_pickup_person_relationship = insertBooking.altPickupPersonRelationship;
     if (insertBooking.altPickupPersonPhone) dbBooking.alt_pickup_person_phone = insertBooking.altPickupPersonPhone;

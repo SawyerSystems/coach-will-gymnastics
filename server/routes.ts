@@ -4064,30 +4064,41 @@ setTimeout(async () => {
       console.log(`[ADMIN-BOOKING] Parent status check - isNewParent: ${isNewParent}, parentId: ${parent?.id}`);
       
       // Send password setup email when a new parent is created
+      // But prevent duplicate emails by checking if one was already sent recently
       if (isNewParent && parent) {
-        console.log(`[ADMIN-BOOKING] Preparing to send password setup email for new parent: ${parent.email}`);
-        try {
-          // Generate a reset token
-          const resetToken = crypto.randomBytes(32).toString('hex');
-          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-          
-          // Store the reset token
-          await storage.createPasswordResetToken({
-            parentId: parent.id,
-            token: resetToken,
-            expiresAt,
-          });
+        console.log(`[ADMIN-BOOKING] Checking if password setup email should be sent for: ${parent.email}`);
+        
+        // Skip sending email if this is during the same booking flow
+        // (password setup email was already sent during parent creation)
+        if (bookingData.isNewParentCreated) {
+          console.log(`[ADMIN-BOOKING] Skipping duplicate password setup email - already sent during parent creation`);
+        } else {
+          console.log(`[ADMIN-BOOKING] Preparing to send password setup email for new parent: ${parent.email}`);
+          try {
+            // Generate a reset token
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+            
+            // Store the reset token
+            await storage.createPasswordResetToken({
+              parentId: parent.id,
+              token: resetToken,
+              expiresAt,
+            });
 
-          // Send the password setup email
-          await sendPasswordSetupEmail(
-            parent.email,
-            parent.firstName,
-            resetToken
-          );
-          console.log(`[ADMIN-BOOKING] Password setup email sent to new parent ${parent.email}`);
-        } catch (emailError) {
-          console.error(`[ADMIN-BOOKING] Failed to send password setup email to ${parent.email}:`, emailError);
-          // Continue with booking creation even if email fails
+            // Send the password setup email
+            await sendPasswordSetupEmail(
+              parent.email,
+              parent.firstName,
+              resetToken
+            );
+            console.log(`[ADMIN-BOOKING] Password setup email sent to new parent ${parent.email}`);
+          } catch (emailError) {
+            console.error(`[ADMIN-BOOKING] Failed to send password setup email to ${parent.email}:`, emailError);
+            // Continue with booking creation even if email fails
+          }
+        }
+      }
         }
       }
       
@@ -4107,8 +4118,13 @@ setTimeout(async () => {
 
       console.log("[ADMIN-BOOKING] Using parent ID:", parent.id);
 
-      // Prepare the safety information
+      // Prepare the safety information - allow NULL for admin bookings
       const safetyInfo = bookingData.safetyContact || {};
+      
+      // Helper function to handle empty strings as NULL for admin bookings
+      const handleAdminSafetyField = (value: string) => {
+        return (value && value.trim() !== '') ? value.trim() : null;
+      };
       
       // Create booking
       const booking = await storage.createBooking({
@@ -4125,25 +4141,25 @@ setTimeout(async () => {
         apparatusIds: [],
         focusAreaIds: [],
         sideQuestIds: [],
-        // Safety information
+        // Safety information - use NULL for empty fields in admin bookings
         dropoffPersonName: safetyInfo.willDropOff 
           ? `${parent.firstName} ${parent.lastName}` 
-          : safetyInfo.dropoffPersonName || '',
+          : handleAdminSafetyField(safetyInfo.dropoffPersonName),
         dropoffPersonRelationship: safetyInfo.willDropOff 
           ? 'Parent' 
-          : safetyInfo.dropoffPersonRelationship || '',
+          : handleAdminSafetyField(safetyInfo.dropoffPersonRelationship),
         dropoffPersonPhone: safetyInfo.willDropOff 
           ? parent.phone 
-          : safetyInfo.dropoffPersonPhone || '',
+          : handleAdminSafetyField(safetyInfo.dropoffPersonPhone),
         pickupPersonName: safetyInfo.willPickUp 
           ? `${parent.firstName} ${parent.lastName}` 
-          : safetyInfo.pickupPersonName || '',
+          : handleAdminSafetyField(safetyInfo.pickupPersonName),
         pickupPersonRelationship: safetyInfo.willPickUp 
           ? 'Parent' 
-          : safetyInfo.pickupPersonRelationship || '',
+          : handleAdminSafetyField(safetyInfo.pickupPersonRelationship),
         pickupPersonPhone: safetyInfo.willPickUp 
           ? parent.phone 
-          : safetyInfo.pickupPersonPhone || '',
+          : handleAdminSafetyField(safetyInfo.pickupPersonPhone),
         safetyVerificationSignedAt: new Date()
       });
 
