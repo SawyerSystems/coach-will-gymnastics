@@ -35,7 +35,7 @@ async function ensureAdmin() {
       return;
     }
     
-    console.log('🔧 No admin accounts found. Creating first admin...');
+    console.log('🔧 No admin accounts found. Attempting admin creation...');
     console.log(`📧 Email: ${email}`);
     console.log(`🔑 Password: ${password.replace(/./g, '*')}`); // Hide password in logs
     
@@ -87,7 +87,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   ensureAdmin().catch(error => {
     console.error('Unhandled error in ensureAdmin:', error);
     // Don't exit with error status, just log the error
-    process.exit(0);
+    console.log('❌ Admin creation failed, but continuing for stability');
   });
 }
 

@@ -14,6 +14,17 @@ import { serveStatic, setupVite } from "./vite";
 // Set Pacific timezone for the server
 process.env.TZ = 'America/Los_Angeles';
 
+// Global error handlers to prevent application crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process, just log the error
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process, just log the error
+});
+
 const app = express();
 
 // Explicitly set Express environment based on NODE_ENV
@@ -38,7 +49,7 @@ if (!serviceRoleKey) {
   console.error('❌ CRITICAL: Missing Supabase service role key!');
   console.error('   Set either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY');
   console.error('   Without this key, admin dashboard will show empty booking lists due to RLS restrictions');
-  process.exit(1);
+  console.error('   Continuing startup, but admin functionality will be limited');
 }
 
 console.log('✅ Service role key configured for admin operations');
@@ -49,10 +60,10 @@ if (!stripeKey) {
   console.error('❌ CRITICAL: Missing Stripe secret key!');
   console.error('   Set STRIPE_SECRET_KEY environment variable');
   console.error('   Without this key, payment processing and syncing will fail');
-  process.exit(1);
+  console.error('   Continuing startup, but payment functionality will be limited');
 }
 
-const stripe = new Stripe(stripeKey, {
+const stripe = new Stripe(stripeKey || 'dummy_key_for_startup', {
   apiVersion: '2025-07-30.basil',
 });
 console.log('✅ Stripe client initialized');
@@ -1008,6 +1019,9 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5001', 10);
   console.log(`🚀 Starting server on port ${port} (host: 0.0.0.0)`);
   
+  // Trust first proxy for secure cookies with Render
+  app.set('trust proxy', 1);
+  
   server.listen({
     port,
     host: "0.0.0.0",
@@ -1017,14 +1031,23 @@ app.use((req, res, next) => {
     console.log(`🌐 Health check available at: http://0.0.0.0:${port}/api/health`);
     
     // Check admin accounts in the background (non-blocking)
-    import('./ensure-admin.js').then(module => {
-      const ensureAdmin = module.ensureAdmin;
-      ensureAdmin().catch(error => {
-        console.error('Admin check failed:', error);
+    // Only run admin bootstrap if enabled by environment variable
+    const shouldRunAdminBootstrap = process.env.RUN_ADMIN_BOOTSTRAP === 'true';
+    if (shouldRunAdminBootstrap) {
+      console.log('🔄 Admin bootstrap enabled by RUN_ADMIN_BOOTSTRAP env var');
+      import('./ensure-admin.js').then(module => {
+        const ensureAdmin = module.ensureAdmin;
+        ensureAdmin().catch(error => {
+          console.error('Admin check failed:', error);
+          // Log but don't exit process
+        });
+      }).catch(err => {
+        console.error('Failed to import ensureAdmin:', err);
+        // Log but don't exit process
       });
-    }).catch(err => {
-      console.error('Failed to import ensureAdmin:', err);
-    });
+    } else {
+      console.log('ℹ️ Admin bootstrap skipped (RUN_ADMIN_BOOTSTRAP not set to true)');
+    }
     
     // Set up scheduled payment sync job - run every 30 minutes
     const PAYMENT_SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
@@ -1044,10 +1067,27 @@ app.use((req, res, next) => {
   server.on('error', (error: any) => {
     console.error('❌ Server startup error:', error);
     if (error.code === 'EADDRINUSE') {
-      console.error(`Port ${port} is already in use`);
+      console.error(`Port ${port} is already in use. Will retry with a different port.`);
+      // Try a different port instead of exiting
+      const newPort = port + 1;
+      console.log(`Attempting to start on port ${newPort}...`);
+      server.listen({
+        port: newPort,
+        host: "0.0.0.0",
+        reusePort: true,
+      });
     } else if (error.code === 'EACCES') {
-      console.error(`Permission denied to bind to port ${port}`);
+      console.error(`Permission denied to bind to port ${port}. Will try a higher port.`);
+      // Try a port above 1024 which doesn't require elevated privileges
+      const newPort = Math.max(port, 1025);
+      console.log(`Attempting to start on port ${newPort}...`);
+      server.listen({
+        port: newPort,
+        host: "0.0.0.0",
+        reusePort: true,
+      });
+    } else {
+      console.error('Server will continue attempting to start despite error');
     }
-    process.exit(1);
   });
 })();

@@ -1,6 +1,7 @@
 import cors from 'cors';
 import type { Application, RequestHandler } from 'express';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
 
 /**
  * Environment-aware session and CORS middleware configuration
@@ -14,6 +15,7 @@ import session from 'express-session';
  * - SESSION_SECRET_PROD: Production session secret (required in production)
  * - SESSION_SECRET_DEV: Development session secret (required in development)
  * - NODE_ENV: Environment indicator ('production' or 'development')
+ * - DATABASE_URL: PostgreSQL connection string for session storage
  */
 
 // Detect environment
@@ -36,6 +38,29 @@ const getSessionSecret = (): string => {
   }
 };
 
+// Configure session store based on availability of DATABASE_URL
+let sessionStore: any;
+try {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    const PgSession = pgSession(session);
+    sessionStore = new PgSession({
+      conString: databaseUrl,
+      tableName: 'session',
+      createTableIfMissing: true, // Auto-create the session table if it doesn't exist
+      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+    });
+    console.log('✅ Using PostgreSQL session store with DATABASE_URL');
+  } else {
+    console.log('⚠️ DATABASE_URL not found, using in-memory session store (not recommended for production)');
+    sessionStore = undefined; // Default to MemoryStore
+  }
+} catch (error) {
+  console.error('❌ Error setting up PostgreSQL session store:', error);
+  console.log('⚠️ Falling back to in-memory session store');
+  sessionStore = undefined; // Default to MemoryStore
+}
+
 /**
  * Session middleware with environment-specific configuration
  */
@@ -46,11 +71,14 @@ export const sessionMiddleware = session({
   // Environment-specific secrets
   secret: getSessionSecret(),
   
+  // Use Postgres store if available, otherwise MemoryStore
+  store: sessionStore,
+  
   // Standard session options
   resave: false,
   saveUninitialized: false,
   
-    // Environment-aware cookie configuration
+  // Environment-aware cookie configuration
   cookie: {
     httpOnly: true,                              // Security: prevent XSS
     secure: isProd,                              // HTTPS only in production
