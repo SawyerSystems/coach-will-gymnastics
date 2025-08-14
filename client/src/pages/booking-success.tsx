@@ -24,6 +24,15 @@ export default function BookingSuccess() {
   const bookingId = urlParams.get("booking_id");
   const skipStripe = urlParams.get("skip_stripe") === "true";
 
+  // Fetch dynamic site content for contact information
+  const { data: siteContent } = useQuery({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/site-content');
+      return response.json();
+    }
+  });
+
   // Fetch booking details using session ID or booking ID
   const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: sessionId ? ["/api/booking-by-session", sessionId] : ["/api/booking-by-id", bookingId],
@@ -315,7 +324,7 @@ export default function BookingSuccess() {
                 <li>Bring comfortable athletic clothing</li>
                 <li>Water bottle recommended</li>
                 <li>Remaining payment of ${remainingBalance} due at lesson</li>
-                <li>Questions? Contact us at (585) 755-8122</li>
+                <li>Questions? Contact us at {siteContent?.contact?.phone || '(585) 755-8122'}</li>
               </ul>
             </div>
           </CardContent>
@@ -337,7 +346,7 @@ export default function BookingSuccess() {
             Coach Will Tumbles
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Phone: (585) 755-8122 | Email: will@coachwilltumbles.com
+            Phone: {siteContent?.contact?.phone || '(585) 755-8122'} | Email: {siteContent?.contact?.email || 'will@coachwilltumbles.com'}
           </p>
         </div>
       </div>
