@@ -29,7 +29,9 @@ TABLE LIST:
 - site_content
 - site_faqs
 - site_inquiries
+- skill_components
 - skills
+- skills_prerequisites
 - slot_reservations
 - testimonials
 - tips
@@ -352,6 +354,42 @@ DETAILED SCHEMA DATA:
         {
           "column_name": "updated_at",
           "data_type": "timestamp with time zone"
+        },
+        {
+          "column_name": "caption",
+          "data_type": "text"
+        },
+        {
+          "column_name": "is_visible",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "is_featured",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "display_date",
+          "data_type": "date"
+        },
+        {
+          "column_name": "sort_index",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "thumbnail_url",
+          "data_type": "text"
+        },
+        {
+          "column_name": "optimized_url",
+          "data_type": "text"
+        },
+        {
+          "column_name": "processing_status",
+          "data_type": "text"
+        },
+        {
+          "column_name": "processing_error",
+          "data_type": "text"
         }
       ]
     },
@@ -774,15 +812,15 @@ DETAILED SCHEMA DATA:
         },
         {
           "column_name": "status",
-          "data_type": "USER-DEFINED"
+          "data_type": "booking_status"
         },
         {
           "column_name": "payment_status",
-          "data_type": "USER-DEFINED"
+          "data_type": "payment_status"
         },
         {
           "column_name": "attendance_status",
-          "data_type": "USER-DEFINED"
+          "data_type": "attendance_status"
         },
         {
           "column_name": "preferred_date",
@@ -798,10 +836,6 @@ DETAILED SCHEMA DATA:
         },
         {
           "column_name": "lesson_type_id",
-          "data_type": "integer"
-        },
-        {
-          "column_name": "waiver_id",
           "data_type": "integer"
         },
         {
@@ -1295,6 +1329,31 @@ DETAILED SCHEMA DATA:
         }
       ]
     },
+    "skill_components": {
+      "exists": true,
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "parent_skill_id",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "component_skill_id",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "position",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp with time zone"
+        }
+      ]
+    },
     "skills": {
       "exists": true,
       "columns": [
@@ -1333,6 +1392,35 @@ DETAILED SCHEMA DATA:
         {
           "column_name": "apparatus_id",
           "data_type": "integer"
+        },
+        {
+          "column_name": "is_connected_combo",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "reference_videos",
+          "data_type": "jsonb"
+        }
+      ]
+    },
+    "skills_prerequisites": {
+      "exists": true,
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "skill_id",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "prerequisite_skill_id",
+          "data_type": "integer"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp with time zone"
         }
       ]
     },

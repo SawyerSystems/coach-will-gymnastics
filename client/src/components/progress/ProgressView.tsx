@@ -575,7 +575,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
             </Card>
 
             {/* Skills Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {filteredSkills.map((skill: ProgressSkill) => (
                 <Card key={skill.athleteSkill.id} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
                   <CardHeader className="bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/50 dark:to-slate-700/50 pb-3">
