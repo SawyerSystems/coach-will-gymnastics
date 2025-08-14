@@ -1833,20 +1833,21 @@ function ParentDashboard() {
           description="Update athlete details and preferences"
           size="lg"
         >
-          {editingAthleteInfo && (
-            <div className="space-y-6">
+          <div className="max-h-[45vh] sm:max-h-[55vh] md:max-h-none overflow-y-auto px-1">
+            {editingAthleteInfo && (
+              <div className="space-y-4 sm:space-y-6">
               <ParentModalSection title="Basic Information">
                 <ParentModalGrid>
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-firstName" className="text-[#0F0276] dark:text-white">First Name</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-firstName" className="text-[#0F0276] dark:text-white text-sm">First Name</Label>
                     <ParentFormInput
                       id="athlete-firstName"
                       value={editingAthleteFirstName}
                       onChange={(e) => setEditingAthleteFirstName(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-lastName" className="text-[#0F0276] dark:text-white">Last Name</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-lastName" className="text-[#0F0276] dark:text-white text-sm">Last Name</Label>
                     <ParentFormInput
                       id="athlete-lastName"
                       value={editingAthleteLastName}
@@ -1857,9 +1858,9 @@ function ParentDashboard() {
               </ParentModalSection>
 
               <ParentModalSection title="Personal Details">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-dob" className="text-[#0F0276] dark:text-white">Date of Birth</Label>
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-dob" className="text-[#0F0276] dark:text-white text-sm">Date of Birth</Label>
                     <ParentFormInput
                       id="athlete-dob"
                       type="date"
@@ -1868,8 +1869,8 @@ function ParentDashboard() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-gender" className="text-[#0F0276] dark:text-white">Gender</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-gender" className="text-[#0F0276] dark:text-white text-sm">Gender</Label>
                     <GenderSelect
                       value={editingAthleteGender}
                       onValueChange={setEditingAthleteGender}
@@ -1881,13 +1882,13 @@ function ParentDashboard() {
               </ParentModalSection>
 
               <ParentModalSection title="Experience & Membership">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-gymmember" className="text-[#0F0276] dark:text-white">Already in Gym Classes?</Label>
-                    <div className="flex items-center justify-between rounded-md border p-3 border-gray-300 dark:border-[#B8860B]">
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-gymmember" className="text-[#0F0276] dark:text-white text-sm">Already in Gym Classes?</Label>
+                    <div className="flex items-center justify-between rounded-md border p-2 sm:p-3 border-gray-300 dark:border-[#B8860B]">
                       <div>
-                        <p className="font-medium text-[#0F0276] dark:text-white">Gym Member</p>
-                        <p className="text-sm text-[#0F0276]/60 dark:text-white/60">Toggle on if this athlete is already enrolled in gym classes.</p>
+                        <p className="font-medium text-[#0F0276] dark:text-white text-sm">Gym Member</p>
+                        <p className="text-xs sm:text-sm text-[#0F0276]/60 dark:text-white/60">Toggle on if this athlete is already enrolled in gym classes.</p>
                       </div>
                       <Switch
                         id="athlete-gymmember"
@@ -1897,8 +1898,8 @@ function ParentDashboard() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-experience" className="text-[#0F0276] dark:text-white">Experience Level</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-experience" className="text-[#0F0276] dark:text-white text-sm">Experience Level</Label>
                     <Select value={editingAthleteExperience} onValueChange={setEditingAthleteExperience}>
                       <ParentFormSelectTrigger>
                         <SelectValue placeholder="Select experience level" />
@@ -1915,21 +1916,23 @@ function ParentDashboard() {
               </ParentModalSection>
 
               <ParentModalSection title="Additional Information">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="athlete-allergies" className="text-[#0F0276] dark:text-white">Allergies & Medical Notes</Label>
+                <div className="space-y-2 sm:space-y-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="athlete-allergies" className="text-[#0F0276] dark:text-white text-sm">Allergies & Medical Notes</Label>
                     <ParentFormTextarea
+                      key={`athlete-allergies-${editingAthleteInfo?.id || 'new'}`}
                       id="athlete-allergies"
                       value={editingAthleteAllergies}
                       onChange={(e) => setEditingAthleteAllergies(e.target.value)}
                       placeholder="Enter any allergies or medical notes..."
-                      rows={3}
+                      rows={2}
+                      className="text-sm"
                     />
                   </div>
                 </div>
               </ParentModalSection>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-2 sm:gap-3 pt-2 sm:pt-4">
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -1943,7 +1946,7 @@ function ParentDashboard() {
                     setEditingAthleteDateOfBirth('');
                     setEditingAthleteAllergies('');
                   }}
-                  className="text-[#0F0276] border-[#0F0276]/50 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/50 dark:hover:bg-white/20"
+                  className="text-[#0F0276] border-[#0F0276]/50 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/50 dark:hover:bg-white/20 text-sm px-3 py-1.5 sm:px-4 sm:py-2"
                 >
                   Cancel
                 </Button>
@@ -1987,13 +1990,14 @@ function ParentDashboard() {
                       });
                     }
                   }}
-                  className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#B8860B] dark:hover:bg-[#B8860B]/90 dark:text-[#0F0276]"
+                  className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white dark:bg-[#B8860B] dark:hover:bg-[#B8860B]/90 dark:text-[#0F0276] text-sm px-3 py-1.5 sm:px-4 sm:py-2"
                 >
                   Save Changes
                 </Button>
               </div>
             </div>
           )}
+          </div>
         </ParentModal>
 
         {/* Update Profile Modal */}

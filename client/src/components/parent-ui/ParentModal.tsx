@@ -12,11 +12,11 @@ export interface ParentModalProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-md",
-  md: "max-w-lg", 
-  lg: "max-w-2xl",
-  xl: "max-w-4xl",
-  full: "max-w-7xl",
+  sm: "max-w-md w-[calc(100%-2rem)] sm:w-full mx-auto",
+  md: "max-w-lg w-[calc(100%-2rem)] sm:w-full mx-auto", 
+  lg: "max-w-2xl w-[calc(100%-2rem)] sm:w-full mx-auto",
+  xl: "max-w-4xl w-[calc(100%-2rem)] sm:w-full mx-auto",
+  full: "max-w-7xl w-[calc(100%-2rem)] sm:w-full mx-auto",
 };
 
 export function ParentModal({ 
@@ -32,6 +32,7 @@ export function ParentModal({
       <DialogContent 
         className={cn(
           "rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-white/10 dark:bg-white/10",
+          "max-h-[85vh] sm:max-h-[90vh] overflow-hidden", // More aggressive mobile height constraint
           sizeClasses[size]
         )}
       >
@@ -57,9 +58,9 @@ export function ParentModalSection({ className, title, children, ...props }: {
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("space-y-4", className)} {...props}>
+    <div className={cn("space-y-2 sm:space-y-4", className)} {...props}>
       {title && (
-        <h3 className="font-semibold text-[#0F0276] dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+        <h3 className="font-semibold text-[#0F0276] dark:text-white border-b border-gray-200 dark:border-gray-700 pb-1 sm:pb-2 text-sm sm:text-base">
           {title}
         </h3>
       )}
@@ -72,7 +73,7 @@ export function ParentModalGrid({ className, ...props }: React.HTMLAttributes<HT
   return (
     <div
       className={cn(
-        "grid grid-cols-1 md:grid-cols-2 gap-4",
+        "grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4",
         className
       )}
       {...props}
