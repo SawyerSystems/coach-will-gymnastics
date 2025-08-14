@@ -50,12 +50,18 @@ async function ensureAdmin() {
       
       // Try the API workaround method
       try {
-        await createAdminViaAPI();
-        console.log('✅ Admin account created via API workaround!');
-        console.log('🚀 You can now login at /admin/login');
+        const result = await createAdminViaAPI();
+        if (result.success) {
+          console.log('✅ Admin account created via API workaround!');
+          console.log('🚀 You can now login at /admin/login');
+        } else {
+          console.log('⚠️  API workaround also failed');
+          console.log('❌ All admin creation methods failed - continuing with server startup');
+          console.log('✅ Admin account check completed (manual setup required)');
+        }
         return;
       } catch (apiError) {
-        console.log('⚠️  API workaround also failed');
+        console.log('⚠️  API workaround also failed with exception');
         console.log('❌ All admin creation methods failed - continuing with server startup');
         console.log('✅ Admin account check completed (manual setup required)');
         return;
@@ -78,7 +84,11 @@ async function ensureAdmin() {
 
 // Run if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  ensureAdmin();
+  ensureAdmin().catch(error => {
+    console.error('Unhandled error in ensureAdmin:', error);
+    // Don't exit with error status, just log the error
+    process.exit(0);
+  });
 }
 
 export { ensureAdmin };

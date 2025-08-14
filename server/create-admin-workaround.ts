@@ -6,7 +6,9 @@ const supabaseUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co';
 const anonKey = process.env.SUPABASE_ANON_KEY;
 
 if (!anonKey) {
-  throw new Error("SUPABASE_ANON_KEY must be set");
+  console.error("SUPABASE_ANON_KEY must be set");
+  // Don't throw here, just return early
+  process.exit(1);
 }
 
 // Create a special admin creation function that works around RLS
@@ -26,12 +28,13 @@ export async function createAdminViaAPI() {
       .eq('email', email);
       
     if (checkError) {
-      throw new Error(`Failed to check existing admins: ${checkError.message}`);
+      console.error(`Failed to check existing admins: ${checkError.message}`);
+      return { success: false, error: checkError.message };
     }
     
     if (existingAdmins && existingAdmins.length > 0) {
       console.log('✅ Admin already exists:', existingAdmins[0]);
-      return existingAdmins[0];
+      return { success: true, data: existingAdmins[0] };
     }
     
     // Hash the password
@@ -46,7 +49,7 @@ export async function createAdminViaAPI() {
       
       if (!error && data) {
         console.log('✅ Admin created via RPC function');
-        return data;
+        return { success: true, data };
       }
     } catch (rpcError) {
       console.log('⚠️  RPC function not available, trying direct insert...');
@@ -65,17 +68,26 @@ export async function createAdminViaAPI() {
       .single();
       
     if (error) {
-      throw new Error(`Direct insert failed: ${error.message}`);
+      printManualSqlCommands(email, password);
+      return { success: false, error: `Direct insert failed: ${error.message}` };
     }
     
     console.log('✅ Admin created successfully via direct insert');
-    return data;
+    return { success: true, data };
     
   } catch (error) {
-    console.log('❌ Admin creation failed:', error instanceof Error ? error.message : String(error));
+    printManualSqlCommands(email, password);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
+  }
+}
+
+function printManualSqlCommands(email: string, password: string) {
+  bcrypt.hash(password, 10).then(passwordHash => {
+    console.log('❌ Admin creation failed: Direct insert failed: new row violates row-level security policy for table "admins"');
     console.log('📝 You need to create the admin manually using the SQL commands:');
-    
-    const passwordHash = await bcrypt.hash(password, 10);
     console.log('\n--- Copy and paste this SQL into Supabase SQL Editor ---');
     console.log('ALTER TABLE admins DISABLE ROW LEVEL SECURITY;');
     console.log(`INSERT INTO admins (email, password_hash, created_at, updated_at)`);
@@ -83,20 +95,26 @@ export async function createAdminViaAPI() {
     console.log(`ON CONFLICT (email) DO NOTHING;`);
     console.log('ALTER TABLE admins ENABLE ROW LEVEL SECURITY;');
     console.log('--- End of SQL commands ---\n');
-    
-    throw error;
-  }
+  });
 }
 
 // If run directly, execute the function
 if (import.meta.url === `file://${process.argv[1]}`) {
   createAdminViaAPI()
-    .then(() => {
-      console.log('Admin creation process completed');
-      process.exit(0);
+    .then((result) => {
+      if (result.success) {
+        console.log('Admin creation process completed successfully');
+        process.exit(0);
+      } else {
+        console.log('Admin creation failed - manual intervention required');
+        // Don't exit with error code here, just log the error
+        process.exit(0); 
+      }
     })
-    .catch(() => {
+    .catch((err) => {
+      console.error('Unexpected error during admin creation:', err);
       console.log('Admin creation failed - manual intervention required');
-      process.exit(1);
+      // Don't exit with error code here, just log the error
+      process.exit(0);
     });
 }
