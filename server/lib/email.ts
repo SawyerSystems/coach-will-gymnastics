@@ -470,12 +470,13 @@ export async function sendSessionNoShow(
 export async function sendRescheduleConfirmation(
   to: string,
   newSessionDate: string,
-  newSessionTime: string
+  newSessionTime: string,
+  athleteNames?: string[]
 ) {
   return sendEmail({
     type: 'reschedule-confirmation',
     to,
-    data: { newSessionDate, newSessionTime }
+    data: { newSessionDate, newSessionTime, athleteNames }
   });
 }
 

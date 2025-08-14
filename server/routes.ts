@@ -5171,11 +5171,37 @@ setTimeout(async () => {
           const parentEmail = parentData?.email;
           console.log(`[RESCHEDULE DEBUG] Parent email:`, parentEmail);
           
+          // Fetch athlete names for the booking
+          let athleteNames: string[] = [];
+          try {
+            const { data: bookingAthletesData, error: bookingAthletesError } = await supabaseAdmin
+              .from('booking_athletes')
+              .select(`
+                athletes:athlete_id (
+                  first_name,
+                  last_name
+                )
+              `)
+              .eq('booking_id', updatedBooking.id);
+
+            if (bookingAthletesError) {
+              console.error('[RESCHEDULE DEBUG] Error fetching booking athletes:', bookingAthletesError);
+            } else if (bookingAthletesData) {
+              athleteNames = bookingAthletesData
+                .map((ba: any) => ba.athletes?.first_name)
+                .filter((name: string) => name); // Filter out null/undefined names
+              console.log(`[RESCHEDULE DEBUG] Found athlete names:`, athleteNames);
+            }
+          } catch (athleteError) {
+            console.error('[RESCHEDULE DEBUG] Failed to fetch athlete names:', athleteError);
+          }
+          
           if (parentEmail) {
             await sendRescheduleConfirmation(
               parentEmail,
               newSessionDate,
-              newSessionTime
+              newSessionTime,
+              athleteNames.length > 0 ? athleteNames : undefined
             );
             console.log(`[RESCHEDULE EMAIL] Sent reschedule confirmation to ${parentEmail} for booking ${id}`);
           } else {
@@ -6651,6 +6677,15 @@ setTimeout(async () => {
             email,
             "Test Parent",
             `${getBaseUrl()}/booking`
+          );
+          break;
+          
+        case 'reschedule-confirmation':
+          result = await sendRescheduleConfirmation(
+            email,
+            "Monday, January 22, 2025",
+            "4:00 PM",
+            athleteGender === 'multiple' ? ["Emma", "Jake"] : ["Alex"]
           );
           break;
           
