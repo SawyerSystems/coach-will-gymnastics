@@ -5,14 +5,12 @@ services:
     runtime: node
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
+  buildCommand: npm run build:render
     startCommand: npm start
     healthCheckPath: /api/health
-    envVars:
+  envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 5001
       # These will need to be set manually in Render dashboard:
       # - SUPABASE_URL
       # - SUPABASE_ANON_KEY  
