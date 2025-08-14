@@ -3,17 +3,19 @@ import { Section, Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
+import { formatPossessivePronoun, type Gender } from './utils/pronouns';
 
 export const SUBJECT = 'Please complete your waiver';
 export const PREHEADER = 'Required before the first session — it only takes a minute.';
 interface WaiverCompletionLinkProps {
   parentName: string;
   athleteName: string;
+  athleteGender?: Gender;
   loginLink: string;
   logoUrl?: string;
 }
 
-export function WaiverCompletionLink({ parentName, athleteName, loginLink, logoUrl }: WaiverCompletionLinkProps) {
+export function WaiverCompletionLink({ parentName, athleteName, athleteGender, loginLink, logoUrl }: WaiverCompletionLinkProps) {
   return (
     <EmailLayout logoUrl={logoUrl} title="📝 Complete Your Waiver" preheader={PREHEADER}>
 
@@ -22,7 +24,7 @@ export function WaiverCompletionLink({ parentName, athleteName, loginLink, logoU
           Hi {parentName}! Welcome to the CoachWillTumbles family!
         </Text>
         <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
-          Before {athleteName} can begin their gymnastics adventure, I need you to complete their digital waiver and adventure agreement. This ensures everyone's safety and sets clear expectations for the training experience.
+          Before {athleteName} can begin {formatPossessivePronoun(athleteGender)} gymnastics adventure, I need you to complete {formatPossessivePronoun(athleteGender)} digital waiver and adventure agreement. This ensures everyone's safety and sets clear expectations for the training experience.
         </Text>
       </Section>
 

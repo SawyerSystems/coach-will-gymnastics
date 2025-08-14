@@ -3,10 +3,12 @@ import { Section, Text, Hr } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
+import { formatPossessivePronoun, type Gender } from './utils/pronouns';
 
 interface SafetyInformationLinkProps {
   parentName: string;
   athleteName: string;
+  athleteGender?: Gender;
   loginLink: string;
   logoUrl?: string;
 }
@@ -14,13 +16,13 @@ interface SafetyInformationLinkProps {
 export const SUBJECT = 'Set your safety authorization';
 export const PREHEADER = 'Add who can pick up and drop off — this keeps your athlete safe.';
 
-export function SafetyInformationLink({ parentName, athleteName, loginLink, logoUrl }: SafetyInformationLinkProps) {
+export function SafetyInformationLink({ parentName, athleteName, athleteGender, loginLink, logoUrl }: SafetyInformationLinkProps) {
   return (
   <EmailLayout title="Important: Safety Authorization Required 🛡️" preheader={PREHEADER}>
 
       <Section>
         <Text style={{ fontSize: '16px', color: theme.colors.text, lineHeight: theme.font.lineHeight }}>
-          Hi {parentName}! As part of keeping {athleteName} safe during their gymnastics sessions, we need you to specify who is authorized for pickup and drop-off.
+          Hi {parentName}! As part of keeping {athleteName} safe during {formatPossessivePronoun(athleteGender)} gymnastics sessions, we need you to specify who is authorized for pickup and drop-off.
         </Text>
       </Section>
 
