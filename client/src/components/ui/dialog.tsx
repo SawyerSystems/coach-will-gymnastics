@@ -60,8 +60,9 @@ const DialogContent = React.forwardRef<
   const [hasTitleElement, setHasTitleElement] = React.useState(false);
   const [hasDescriptionElement, setHasDescriptionElement] = React.useState(false);
 
-  // Save the current focus element when the dialog opens
+  // Save the current focus element when the dialog opens and handle cleanup when it closes
   React.useEffect(() => {
+    // Store the currently focused element when dialog opens
     previousFocusRef.current = document.activeElement as HTMLElement;
     
     // Handle focus and aria-hidden issues
@@ -76,6 +77,26 @@ const DialogContent = React.forwardRef<
     };
     
     document.addEventListener('focusin', handleFocusIn);
+    
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      
+      // Return focus when the dialog closes
+      if (previousFocusRef.current) {
+        try {
+          previousFocusRef.current.focus();
+        } catch (e) {
+          console.warn("Failed to restore focus", e);
+        }
+      }
+    };
+  }, []); // Empty dependency array - only run on mount/unmount
+
+  // Separate effect to scan for title/description elements
+  React.useEffect(() => {
+    // Reset state
+    setHasTitleElement(false);
+    setHasDescriptionElement(false);
     
     // Scan children for DialogTitle and DialogDescription elements
     React.Children.forEach(children, child => {
@@ -103,20 +124,7 @@ const DialogContent = React.forwardRef<
         }
       }
     });
-
-    return () => {
-      document.removeEventListener('focusin', handleFocusIn);
-      
-      // Return focus when the dialog closes
-      if (previousFocusRef.current) {
-        try {
-          previousFocusRef.current.focus();
-        } catch (e) {
-          console.warn("Failed to restore focus", e);
-        }
-      }
-    };
-  }, [children]);
+  }, [children]); // Keep children dependency only for accessibility scanning
 
   return (
     <DialogPortal>
