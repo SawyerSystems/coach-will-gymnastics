@@ -1014,8 +1014,13 @@ app.use((req, res, next) => {
     console.log(`serving on port ${port}`);
     
     // Check admin accounts in the background (non-blocking)
-    ensureAdmin().catch(error => {
-      console.error('Admin check failed:', error);
+    import('./ensure-admin.js').then(module => {
+      const ensureAdmin = module.ensureAdmin;
+      ensureAdmin().catch(error => {
+        console.error('Admin check failed:', error);
+      });
+    }).catch(err => {
+      console.error('Failed to import ensureAdmin:', err);
     });
     
     // Set up scheduled payment sync job - run every 30 minutes
