@@ -1471,7 +1471,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           </Badge>
                         </div>
                         {/* Details action */}
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 flex justify-end gap-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -1482,6 +1482,17 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             Details
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to delete this archived booking?')) {
+                                deleteBookingMutation.mutate(booking.id);
+                              }
+                            }}
+                          >
+                            Delete
                           </Button>
                         </div>
                       </CardContent>
@@ -1619,7 +1630,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                             </div>
                           </TableCell>
                           <TableCell className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">
-                            <Dialog>
+                            <div className="flex items-center gap-1">
                               <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -1630,7 +1641,18 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                            </Dialog>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm('Are you sure you want to delete this archived booking?')) {
+                                    deleteBookingMutation.mutate(booking.id);
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

@@ -5225,6 +5225,42 @@ setTimeout(async () => {
     }
   });
 
+  // Delete booking endpoint (admin only)
+  app.delete("/api/bookings/:id", isAdminAuthenticated, async (req, res) => {
+    console.log("🗑️ DELETE ENDPOINT HIT - /api/bookings/:id with ID:", req.params.id);
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid booking ID" });
+      }
+
+      // Get the booking to check if it exists
+      const booking = await storage.getBooking(id);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Delete the booking
+      const success = await storage.deleteBooking(id);
+      
+      if (success) {
+        console.log(`✅ Successfully deleted booking ${id}`);
+        res.json({ 
+          success: true, 
+          message: "Booking deleted successfully",
+          deletedBookingId: id 
+        });
+      } else {
+        console.error(`❌ Failed to delete booking ${id}`);
+        res.status(500).json({ error: "Failed to delete booking" });
+      }
+    } catch (error: any) {
+      console.error("Error deleting booking:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.patch("/api/bookings/:id/status", isAdminAuthenticated, async (req, res) => {
     console.log("🚨 STATUS PATCH ENDPOINT HIT - /api/bookings/:id/status with ID:", req.params.id);
     try {
