@@ -500,6 +500,11 @@ function ParentDashboard() {
   const [editingAthleteInfo, setEditingAthleteInfo] = useState<any>(null);
   const [editingAthleteGender, setEditingAthleteGender] = useState<string>('');
   const [editingAthleteIsGymMember, setEditingAthleteIsGymMember] = useState<boolean>(false);
+  const [editingAthleteExperience, setEditingAthleteExperience] = useState<string>('');
+  const [editingAthleteFirstName, setEditingAthleteFirstName] = useState<string>('');
+  const [editingAthleteLastName, setEditingAthleteLastName] = useState<string>('');
+  const [editingAthleteDateOfBirth, setEditingAthleteDateOfBirth] = useState<string>('');
+  const [editingAthleteAllergies, setEditingAthleteAllergies] = useState<string>('');
   const [showAddAthleteModal, setShowAddAthleteModal] = useState<boolean>(false);
   const [selectedAthleteForBooking, setSelectedAthleteForBooking] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -535,9 +540,15 @@ function ParentDashboard() {
     editingAthleteId ?? ''
   );
 
-  // Initialize the edit-toggle state when an athlete is selected for editing
+  // Initialize the edit form state when an athlete is selected for editing
   useEffect(() => {
-    if (editingAthleteInfo && typeof editingAthleteInfo.isGymMember === 'boolean') {
+    if (editingAthleteInfo) {
+      setEditingAthleteFirstName(editingAthleteInfo.firstName || editingAthleteInfo.name?.split(' ')[0] || '');
+      setEditingAthleteLastName(editingAthleteInfo.lastName || editingAthleteInfo.name?.split(' ').slice(1).join(' ') || '');
+      setEditingAthleteDateOfBirth(editingAthleteInfo.dateOfBirth || '');
+      setEditingAthleteGender(editingAthleteInfo.gender || '');
+      setEditingAthleteExperience(editingAthleteInfo.experience || 'beginner');
+      setEditingAthleteAllergies(editingAthleteInfo.allergies || '');
       setEditingAthleteIsGymMember(!!editingAthleteInfo.isGymMember);
     }
   }, [editingAthleteInfo]);
@@ -1812,6 +1823,11 @@ function ParentDashboard() {
             setEditingAthleteInfo(null);
             setEditingAthleteGender('');
             setEditingAthleteIsGymMember(false);
+            setEditingAthleteExperience('');
+            setEditingAthleteFirstName('');
+            setEditingAthleteLastName('');
+            setEditingAthleteDateOfBirth('');
+            setEditingAthleteAllergies('');
           }}
           title="Edit Athlete Information"
           description="Update athlete details and preferences"
@@ -1825,14 +1841,16 @@ function ParentDashboard() {
                     <Label htmlFor="athlete-firstName" className="text-[#0F0276] dark:text-white">First Name</Label>
                     <ParentFormInput
                       id="athlete-firstName"
-                      defaultValue={editingAthleteInfo.firstName || editingAthleteInfo.name.split(' ')[0]}
+                      value={editingAthleteFirstName}
+                      onChange={(e) => setEditingAthleteFirstName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="athlete-lastName" className="text-[#0F0276] dark:text-white">Last Name</Label>
                     <ParentFormInput
                       id="athlete-lastName"
-                      defaultValue={editingAthleteInfo.lastName || editingAthleteInfo.name.split(' ').slice(1).join(' ')}
+                      value={editingAthleteLastName}
+                      onChange={(e) => setEditingAthleteLastName(e.target.value)}
                     />
                   </div>
                 </ParentModalGrid>
@@ -1845,7 +1863,8 @@ function ParentDashboard() {
                     <ParentFormInput
                       id="athlete-dob"
                       type="date"
-                      defaultValue={editingAthleteInfo.dateOfBirth}
+                      value={editingAthleteDateOfBirth}
+                      onChange={(e) => setEditingAthleteDateOfBirth(e.target.value)}
                     />
                   </div>
 
@@ -1880,7 +1899,7 @@ function ParentDashboard() {
 
                   <div className="space-y-2">
                     <Label htmlFor="athlete-experience" className="text-[#0F0276] dark:text-white">Experience Level</Label>
-                    <Select defaultValue={editingAthleteInfo.experience}>
+                    <Select value={editingAthleteExperience} onValueChange={setEditingAthleteExperience}>
                       <ParentFormSelectTrigger>
                         <SelectValue placeholder="Select experience level" />
                       </ParentFormSelectTrigger>
@@ -1901,7 +1920,8 @@ function ParentDashboard() {
                     <Label htmlFor="athlete-allergies" className="text-[#0F0276] dark:text-white">Allergies & Medical Notes</Label>
                     <ParentFormTextarea
                       id="athlete-allergies"
-                      defaultValue={editingAthleteInfo.allergies || ''}
+                      value={editingAthleteAllergies}
+                      onChange={(e) => setEditingAthleteAllergies(e.target.value)}
                       placeholder="Enter any allergies or medical notes..."
                       rows={3}
                     />
@@ -1916,6 +1936,12 @@ function ParentDashboard() {
                   onClick={() => {
                     setEditingAthleteInfo(null);
                     setEditingAthleteGender('');
+                    setEditingAthleteIsGymMember(false);
+                    setEditingAthleteExperience('');
+                    setEditingAthleteFirstName('');
+                    setEditingAthleteLastName('');
+                    setEditingAthleteDateOfBirth('');
+                    setEditingAthleteAllergies('');
                   }}
                   className="text-[#0F0276] border-[#0F0276]/50 hover:bg-[#0F0276]/10 dark:text-white dark:border-white/50 dark:hover:bg-white/20"
                 >
@@ -1924,22 +1950,14 @@ function ParentDashboard() {
                 <Button 
                   onClick={async () => {
                     try {
-                      const firstName = (document.getElementById('athlete-firstName') as HTMLInputElement)?.value;
-                      const lastName = (document.getElementById('athlete-lastName') as HTMLInputElement)?.value;
-                      const dateOfBirth = (document.getElementById('athlete-dob') as HTMLInputElement)?.value;
-                      const allergies = (document.getElementById('athlete-allergies') as HTMLTextAreaElement)?.value;
-                      const gender = editingAthleteGender;
-                      const experienceSelect = document.querySelector('[name="experience"]') as HTMLSelectElement;
-                      const experience = experienceSelect?.value;
-
                       const updateData = {
-                        firstName,
-                        lastName,
-                        name: `${firstName} ${lastName}`,
-                        dateOfBirth,
-                        gender,
-                        allergies: allergies || null,
-                        experience,
+                        firstName: editingAthleteFirstName,
+                        lastName: editingAthleteLastName,
+                        name: `${editingAthleteFirstName} ${editingAthleteLastName}`,
+                        dateOfBirth: editingAthleteDateOfBirth,
+                        gender: editingAthleteGender,
+                        allergies: editingAthleteAllergies || null,
+                        experience: editingAthleteExperience,
                         isGymMember: editingAthleteIsGymMember
                       };
 
@@ -1955,6 +1973,12 @@ function ParentDashboard() {
                       });
                       setEditingAthleteInfo(null);
                       setEditingAthleteGender('');
+                      setEditingAthleteIsGymMember(false);
+                      setEditingAthleteExperience('');
+                      setEditingAthleteFirstName('');
+                      setEditingAthleteLastName('');
+                      setEditingAthleteDateOfBirth('');
+                      setEditingAthleteAllergies('');
                     } catch (error) {
                       toast({
                         title: "Update Failed",
