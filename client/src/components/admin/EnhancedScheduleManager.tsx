@@ -155,15 +155,18 @@ export function EnhancedScheduleManager() {
   function executeCopyToOtherDays() {
     if (!blockToCopy || selectedDaysForCopy.length === 0) return;
 
-    const promises = selectedDaysForCopy.map(dayOfWeek => 
-      createAvailability.mutateAsync({
+    const promises = selectedDaysForCopy.map(dayOfWeek => {
+      const availabilityData: InsertAvailability = {
         dayOfWeek,
         startTime: blockToCopy.startTime,
         endTime: blockToCopy.endTime,
         isRecurring: blockToCopy.isRecurring,
         isAvailable: blockToCopy.isAvailable
-      })
-    );
+      };
+      
+      console.log('Creating availability with data:', availabilityData);
+      return createAvailability.mutateAsync(availabilityData);
+    });
 
     Promise.all(promises).then(() => {
       toast({
@@ -173,7 +176,8 @@ export function EnhancedScheduleManager() {
       setCopyToDialogOpen(false);
       setBlockToCopy(null);
       setSelectedDaysForCopy([]);
-    }).catch(() => {
+    }).catch((error) => {
+      console.error('Copy blocks error:', error);
       toast({
         title: "Error",
         description: "Failed to copy availability blocks",
