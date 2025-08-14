@@ -35,28 +35,27 @@ const requiredEnvVars = [
 
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 if (!serviceRoleKey) {
-  console.warn('⚠️ Supabase service role key NOT set. Admin privileged operations may be limited due to RLS.');
-} else {
-  console.log('✅ Service role key configured for admin operations');
+  console.error('❌ CRITICAL: Missing Supabase service role key!');
+  console.error('   Set either SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY');
+  console.error('   Without this key, admin dashboard will show empty booking lists due to RLS restrictions');
+  process.exit(1);
 }
+
+console.log('✅ Service role key configured for admin operations');
 
 // Initialize Stripe client
 const stripeKey = process.env.STRIPE_SECRET_KEY;
-let stripe: any;
-if (stripeKey) {
-  stripe = new Stripe(stripeKey, {
-    apiVersion: '2025-07-30.basil',
-  });
-  console.log('✅ Stripe client initialized');
-} else {
-  console.warn('⚠️ Stripe is DISABLED: STRIPE_SECRET_KEY not set. Payment features will be unavailable.');
-  // Safe fallback proxy so accidental calls clearly fail at call-time, not at startup
-  stripe = new Proxy({}, {
-    get() {
-      throw new Error('Stripe disabled: STRIPE_SECRET_KEY not set');
-    },
-  });
+if (!stripeKey) {
+  console.error('❌ CRITICAL: Missing Stripe secret key!');
+  console.error('   Set STRIPE_SECRET_KEY environment variable');
+  console.error('   Without this key, payment processing and syncing will fail');
+  process.exit(1);
 }
+
+const stripe = new Stripe(stripeKey, {
+  apiVersion: '2025-07-30.basil',
+});
+console.log('✅ Stripe client initialized');
 
 // Validate other required environment variables
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -1032,11 +1031,6 @@ app.use((req, res, next) => {
     
     setInterval(async () => {
       try {
-        if (!stripeKey) {
-          // Skip sync in degraded mode (no Stripe)
-          console.warn('Skipping scheduled payment status sync: Stripe disabled');
-          return;
-        }
         console.log('Running scheduled payment status sync');
         const result = await storage.syncPaymentStatus(stripe, logger);
         console.log(`Scheduled payment sync complete: updated ${result.updatedCount}/${result.totalCount} bookings`);

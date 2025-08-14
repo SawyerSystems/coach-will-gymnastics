@@ -53,17 +53,12 @@ const upload = multer({
   }
 });
 
-// Initialize Stripe conditionally so the server can run in degraded mode
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-let stripe: any = null;
-if (STRIPE_SECRET_KEY) {
-  stripe = new Stripe(STRIPE_SECRET_KEY, {
-    apiVersion: "2025-07-30.basil",
-  });
-  console.log('[INIT] Stripe client initialized');
-} else {
-  console.warn('[INIT] Stripe is DISABLED: STRIPE_SECRET_KEY not set. Stripe endpoints will be unavailable.');
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-07-30.basil",
+});
 
 // Focus area validation helper
 function validateFocusAreas(focusAreaIds: number[], lessonType: string): { isValid: boolean; message?: string } {
@@ -363,22 +358,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/parent-auth', passwordSetupRouter);
   
   // Time slot locking routes
-  // If Stripe is disabled, short-circuit common Stripe endpoints
-  if (!STRIPE_SECRET_KEY) {
-    const stripePaths = [
-      "/api/stripe/webhook",
-      "/api/stripe/products",
-      "/api/stripe/checkout-session",
-      "/api/stripe/create-session",
-      "/api/stripe/sync-payments",
-    ];
-    app.use((req, res, next) => {
-      if (stripePaths.some(p => req.path.startsWith(p))) {
-        return res.status(503).json({ error: 'Stripe disabled in this environment' });
-      }
-      next();
-    });
-  }
   app.use('/api/time-slot-locks', timeSlotLocksRouter);
 
   // ===============================
@@ -2880,9 +2859,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         athletesCount: booking.athletes?.length || 0
       });
       
-  // Check if payment is recorded; if not and Stripe is enabled, check Stripe directly
-  // This handles cases where webhook hasn't processed yet
-  if (booking.stripeSessionId && !booking.reservationFeePaid && STRIPE_SECRET_KEY) {
+      // Check if payment is recorded, if not, check Stripe directly
+      // This handles cases where webhook hasn't processed yet
+      if (booking.stripeSessionId && !booking.reservationFeePaid) {
         try {
           console.log(`[BOOKING-SESSION] Payment not recorded yet, checking Stripe for session ${booking.stripeSessionId}`);
           const session = await stripe.checkout.sessions.retrieve(booking.stripeSessionId);
@@ -2979,7 +2958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentStatus: booking.paymentStatus || "unknown"
       };
       
-  console.log('[DEBUG] Returning legacy booking format with payment data');
+      console.log('[DEBUG] Returning legacy booking format with payment data');
       res.json(enhancedLegacyBooking);
     } catch (error: any) {
       console.error("Error fetching booking by session:", error);
@@ -3007,9 +2986,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get Stripe products for testing
   app.get("/api/stripe/products", async (req, res) => {
     try {
-      if (!STRIPE_SECRET_KEY) {
-        return res.status(503).json({ message: "Stripe disabled in this environment" });
-      }
       const products = await stripe.products.list({
         active: true,
         limit: 20,
@@ -3481,9 +3457,6 @@ setTimeout(async () => {
 
   // Enhanced Stripe webhook for automatic status updates
   app.post("/api/stripe/webhook", async (req, res) => {
-    if (!STRIPE_SECRET_KEY) {
-      return res.status(503).send('Stripe disabled in this environment');
-    }
     console.log('[STRIPE WEBHOOK] Webhook called!');
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -5972,9 +5945,6 @@ setTimeout(async () => {
 
   app.post("/api/stripe/sync-payments", isAdminAuthenticated, async (req, res) => {
     try {
-      if (!STRIPE_SECRET_KEY) {
-        return res.status(503).json({ message: 'Stripe disabled in this environment' });
-      }
       const Stripe = await import('stripe');
       const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!);
       let updated = 0;
