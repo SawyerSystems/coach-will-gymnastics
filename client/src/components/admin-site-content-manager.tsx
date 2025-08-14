@@ -560,18 +560,25 @@ export function AdminSiteContentManager() {
   }, []);
 
   const handleSaveHours = useCallback(async (hoursData: SiteContent['hours']) => {
+    // Convert lowercase keys back to capitalized format for backend
+    const capitalizedHoursData: any = {};
+    Object.keys(hoursData).forEach(key => {
+      const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
+      capitalizedHoursData[capitalizedKey] = hoursData[key];
+    });
+
     const response = await apiRequest('POST', '/api/admin/site-content/hours', {
-      hours: hoursData
+      hours: capitalizedHoursData
     });
 
     if (!response.ok) {
       throw new Error('Failed to save hours information');
     }
 
-    // Update the main content state
+    // Update the main content state with capitalized keys
     setContent(prev => ({
       ...prev,
-      hours: hoursData
+      hours: capitalizedHoursData
     }));
   }, []);
 
@@ -993,10 +1000,43 @@ export function AdminSiteContentManager() {
         return acc;
       }, {} as any);
       
+      // Convert initialData keys to lowercase to match component expectations
+      const normalizedInitialData: any = {};
+      if (initialData) {
+        Object.keys(initialData).forEach(key => {
+          const lowerKey = key.toLowerCase();
+          normalizedInitialData[lowerKey] = initialData[key];
+        });
+      }
+      
       // Merge with existing data
-      return { ...defaultHours, ...initialData };
+      return { ...defaultHours, ...normalizedInitialData };
     });
     const { toast } = useToast();
+
+    // Sync with parent data changes when initialData updates
+    useEffect(() => {
+      if (initialData && Object.keys(initialData).length > 0) {
+        const defaultHours = orderedDays.reduce((acc, day) => {
+          acc[day.toLowerCase()] = {
+            start: '',
+            end: '',
+            available: false
+          };
+          return acc;
+        }, {} as any);
+        
+        // Convert initialData keys to lowercase to match component expectations
+        const normalizedInitialData: any = {};
+        Object.keys(initialData).forEach(key => {
+          const lowerKey = key.toLowerCase();
+          normalizedInitialData[lowerKey] = initialData[key];
+        });
+        
+        // Merge with incoming data
+        setLocalData({ ...defaultHours, ...normalizedInitialData });
+      }
+    }, [initialData, orderedDays]);
 
     const handleSave = async () => {
       try {
@@ -1089,63 +1129,191 @@ export function AdminSiteContentManager() {
       });
     };
 
+    const formatTimeRange = (start: string, end: string) => {
+      if (!start || !end) return '';
+      return `${start} - ${end}`;
+    };
+
     return (
-      <Card className="rounded-xl border bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/90 shadow-lg hover:shadow-xl transition-all duration-300">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-indigo-800 dark:text-indigo-200 flex items-center gap-3">
-            <Clock className="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
-            Hours of Operation
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+              <Clock className="h-7 w-7 text-[#D8BD2A]" />
+              Hours of Operation Management
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+              Configure your business hours and availability for online booking
+            </p>
+          </div>
+        </div>
+
+        {/* Current Hours Display */}
+        {(() => {
+          const hasAnyHours = orderedDays.some(day => {
+            const hours = localData[day.toLowerCase()];
+            return hours?.available && hours?.start && hours?.end;
+          });
+
+          if (hasAnyHours) {
+            return (
+              <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 dark:bg-white/10 dark:border-white/20 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-blue-800 dark:text-white flex items-center gap-2">
+                    📅 Current Business Hours
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {orderedDays.map(day => {
+                      const hours = localData[day.toLowerCase()];
+                      const isAvailable = hours?.available && hours?.start && hours?.end;
+                      
+                      return (
+                        <div key={day} className={`p-3 rounded-lg border ${
+                          isAvailable 
+                            ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                            : 'bg-gray-50 border-gray-200 dark:bg-gray-800/20 dark:border-gray-700'
+                        }`}>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                              {day}
+                            </span>
+                            {isAvailable ? (
+                              <span className="text-sm text-green-700 dark:text-green-300 font-medium">
+                                {formatTimeRange(hours.start, hours.end)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                Contact required
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          return null;
+        })()}
+
+        {/* Business Hours System Overview */}
+        <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 dark:bg-white/10 dark:border-white/20 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="p-6">
+            <h3 className="text-xl font-bold mb-3 text-blue-800 dark:text-white flex items-center gap-2">
+              🚀 Business Hours System
+            </h3>
+            <p className="text-sm text-slate-700 dark:text-slate-300 mb-4 leading-relaxed">
+              Configure when customers can book lessons. Days marked as unavailable will show "Ask us about availability!" on the website.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 dark:bg-white/10 dark:border-white/20 rounded-xl p-4">
+                <h4 className="font-bold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
+                  ✅ Available Days
+                </h4>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Show your operating hours and allow online booking during these times.
+                </p>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm border border-slate-200/60 dark:bg-white/10 dark:border-white/20 rounded-xl p-4">
+                <h4 className="font-bold text-orange-700 dark:text-orange-400 mb-2 flex items-center gap-2">
+                  📞 Contact Days
+                </h4>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Unavailable days prompt customers to contact you directly for special arrangements.
+                </p>
+                <p className="text-xs text-slate-500 mt-2">
+                  Perfect for holidays or special event days
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Days Grid */}
+        <div className="grid grid-cols-1 gap-4">
           {orderedDays.map((day) => {
             const hours = localData[day.toLowerCase() as keyof typeof localData];
+            const isAvailable = hours?.available || false;
+            const hasTimeSet = hours?.start && hours?.end;
+            
             return (
-              <div key={day} className="flex items-center gap-4 p-4 border rounded-lg">
-                <div className="font-medium w-24">{day}</div>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={hours.start}
-                    onChange={(e) => updateLocal(`${day.toLowerCase()}.start`, e.target.value)}
-                    className="w-32"
-                  />
-                  <span>to</span>
-                  <Input
-                    type="time"
-                    value={hours.end}
-                    onChange={(e) => updateLocal(`${day.toLowerCase()}.end`, e.target.value)}
-                    className="w-32"
-                  />
+              <div key={day} className="bg-white/60 backdrop-blur-sm border border-slate-200/60 dark:bg-white/10 dark:border-white/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-lg font-bold text-[#0F0276] dark:text-white">
+                        {day}
+                      </h4>
+                      {isAvailable && hasTimeSet && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {formatTimeRange(hours.start, hours.end)}
+                        </Badge>
+                      )}
+                      {!isAvailable && (
+                        <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-300">
+                          Contact Required
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={`available-${day}`}
+                        checked={isAvailable}
+                        onChange={(e) => updateLocal(`${day.toLowerCase()}.available`, e.target.checked)}
+                        className="rounded border-gray-300 text-[#0F0276] focus:ring-[#0F0276] h-4 w-4"
+                      />
+                      <Label htmlFor={`available-${day}`} className="text-sm font-medium">
+                        Available for booking
+                      </Label>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 flex-1">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 w-16">From:</Label>
+                      <Input
+                        type="time"
+                        value={hours?.start || ''}
+                        onChange={(e) => updateLocal(`${day.toLowerCase()}.start`, e.target.value)}
+                        className="flex-1 bg-white/80 border-slate-300 dark:bg-slate-800/80 dark:border-slate-600"
+                        disabled={!isAvailable}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 flex-1">
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 w-16">To:</Label>
+                      <Input
+                        type="time"
+                        value={hours?.end || ''}
+                        onChange={(e) => updateLocal(`${day.toLowerCase()}.end`, e.target.value)}
+                        className="flex-1 bg-white/80 border-slate-300 dark:bg-slate-800/80 dark:border-slate-600"
+                        disabled={!isAvailable}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={hours.available}
-                    onChange={(e) => updateLocal(`${day.toLowerCase()}.available`, e.target.checked)}
-                  />
-                  Available
-                </label>
               </div>
             );
           })}
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
-              Days marked as unavailable will show "Ask us about availability!" on the website.
-            </p>
-          </div>
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {saving ? 'Saving...' : 'Save Hours'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? 'Saving...' : 'Save Hours'}
+          </Button>
+        </div>
+      </div>
     );
   });
 

@@ -239,7 +239,7 @@ export function EnhancedScheduleManager() {
                       setSelectedDay(day.value);
                       setIsAddingBlock(true);
                     }}
-                    className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276]"
+                    className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] text-black font-semibold"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Block
