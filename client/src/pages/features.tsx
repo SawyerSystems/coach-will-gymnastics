@@ -154,13 +154,13 @@ export default function FeaturesPage() {
     headline: "Level Up Your Child’s Training",
     sub: "Book fast. Track progress. Celebrate wins.",
     imageAlt: "Smiling young gymnast mid-air during a confident tumbling pass",
-  image: "/assets/marketing/Marketing_Dashboard.png",
+  image: "/assets/marketing/Marketing_Progress2.png",
   } : {
     headline: "Track Real Progress, Not Just Attendance",
     sub: "Book in minutes. Get videos and coach notes after.",
     imageAlt: "Phone mockup showing a clean parent portal with progress videos and badges",
     // Use a known-good image URL instead of an invalid placeholder so the hero always renders
-  image: "/assets/marketing/Marketing_Dashboard.png",
+  image: "/assets/marketing/Marketing_Progress2.png",
   };
 
   const chapters = [
@@ -171,7 +171,7 @@ export default function FeaturesPage() {
       tagline: "Choose your quest in seconds.",
       benefit: "Find a time that fits and lock it in—no phone tag.",
       bullets: ["Simple flow, mobile-first", "Instant confirmation", "Clear pricing"],
-      img: "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Booking.png",
       alt: "Clean booking calendar UI on a phone screen",
       gradient: "from-blue-500 to-cyan-500",
     },
@@ -182,7 +182,7 @@ export default function FeaturesPage() {
       tagline: "Build your party.",
       benefit: "Set up one or more athletes so everyone can level up.",
       bullets: ["Siblings welcome", "Manage profiles", "Save preferences"],
-      img: "https://images.unsplash.com/photo-1483721310020-03333e577078?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Athletes.png",
       alt: "Parent adding athlete profiles on a mobile portal",
       gradient: "from-purple-500 to-pink-500",
     },
@@ -193,7 +193,7 @@ export default function FeaturesPage() {
       tagline: "Your journey map.",
       benefit: "See what’s coming and what you’ve done at a glance.",
       bullets: ["Calendar overview", "Past session history", "One-tap details"],
-      img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Portal.png",
       alt: "Parent viewing upcoming and past lessons on a phone",
       gradient: "from-green-500 to-emerald-500",
     },
@@ -204,7 +204,7 @@ export default function FeaturesPage() {
       tagline: "Unlock achievements.",
       benefit: "Short videos and notes so you can see the wins and what’s next.",
       bullets: ["Coach notes", "Private video links", "Badges for milestones"],
-      img: "https://images.unsplash.com/photo-1557800636-894a64c1696f?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Progress1.png",
       alt: "Phone showing a progress video and badges earned",
       gradient: "from-orange-500 to-red-500",
     },
@@ -215,7 +215,7 @@ export default function FeaturesPage() {
       tagline: "Guided by signals.",
       benefit: "Stay in the loop from booking to follow-up—no surprises.",
       bullets: ["Reminders & receipts", "Coach follow-ups", "No spam—ever"],
-      img: "https://images.unsplash.com/photo-1519305123185-828c1ee76f53?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Notifications.png",
       alt: "Phone notifications for lesson reminders and updates",
       gradient: "from-yellow-500 to-orange-500",
     },
@@ -226,7 +226,7 @@ export default function FeaturesPage() {
       tagline: "Plot a new route.",
       benefit: "Life happens. Move or cancel with clear, fair policies.",
       bullets: ["Self-serve changes", "Transparent windows", "No hidden fees"],
-      img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Reschedule.png",
       alt: "Parent adjusting a lesson time on a phone calendar",
       gradient: "from-indigo-500 to-purple-500",
     },
@@ -237,7 +237,7 @@ export default function FeaturesPage() {
       tagline: "Treasure chest, guarded.",
       benefit: "Stripe-powered checkout with industry‑standard security.",
       bullets: ["SSL everywhere", "No card storage here", "Instant receipts"],
-      img: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?q=80&w=1400&auto=format&fit=crop",
+  img: "/assets/marketing/Marketing_Checkout.png",
       alt: "Secure checkout screen on a mobile device",
       gradient: "from-emerald-500 to-teal-500",
     },
@@ -695,8 +695,6 @@ function ChapterCard({ chapter, index }: { chapter: any; index: number }) {
               loading="lazy" 
               className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110" 
             />
-            <div className={`absolute inset-0 bg-gradient-to-br ${chapter.gradient} opacity-20 group-hover:opacity-30 transition-opacity duration-300`} />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300" />
           </div>
           
           {/* Floating chapter number */}
