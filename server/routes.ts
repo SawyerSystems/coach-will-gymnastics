@@ -10236,5 +10236,11 @@ setTimeout(async () => {
   });
 
   const httpServer = createServer(app);
+  
+  // Configure server timeouts for Render deployment
+  // Recommended by Render docs for Node.js services experiencing timeouts
+  httpServer.keepAliveTimeout = 120000; // 120 seconds
+  httpServer.headersTimeout = 120000; // 120 seconds
+  
   return httpServer;
 }

@@ -1003,15 +1003,18 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   }
 
-  // Use PORT from environment variable, default to 5001
-  // this serves both the API and the client.
+  // Use PORT from environment variable, default to 5001 for local dev
+  // Render automatically provides PORT environment variable
   const port = parseInt(process.env.PORT || '5001', 10);
+  console.log(`🚀 Starting server on port ${port} (host: 0.0.0.0)`);
+  
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    console.log(`serving on port ${port}`);
+    console.log(`✅ Server successfully started on port ${port}`);
+    console.log(`🌐 Health check available at: http://0.0.0.0:${port}/api/health`);
     
     // Check admin accounts in the background (non-blocking)
     import('./ensure-admin.js').then(module => {
@@ -1035,5 +1038,16 @@ app.use((req, res, next) => {
         console.error('Failed to run scheduled payment sync:', error);
       }
     }, PAYMENT_SYNC_INTERVAL);
+  });
+
+  // Add error handling for server startup
+  server.on('error', (error: any) => {
+    console.error('❌ Server startup error:', error);
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use`);
+    } else if (error.code === 'EACCES') {
+      console.error(`Permission denied to bind to port ${port}`);
+    }
+    process.exit(1);
   });
 })();
