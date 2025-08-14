@@ -1678,7 +1678,10 @@ function ParentDashboard() {
     {/* Athlete Detail Modal */}
     <ParentAthleteDetailDialog
           open={editingAthleteId !== null}
-          onOpenChange={(open) => setEditingAthleteId(open ? editingAthleteId : null)}
+          onOpenChange={(open) => {
+            // Only update when actually closing, to avoid cascaded state churn
+            if (!open) setEditingAthleteId(null);
+          }}
           athlete={editingAthleteId ? athletes.find(a => a.id === editingAthleteId) || null : null}
           onBookSession={() => {
             const athlete = athletes.find(a => a.id === editingAthleteId);
@@ -1832,15 +1835,22 @@ function ParentDashboard() {
           title="Edit Athlete Information"
           description="Update athlete details and preferences"
           size="lg"
+          closeOnEscape={false}
+          closeOnOutsideClick={true}
         >
           <div className="max-h-[45vh] sm:max-h-[55vh] md:max-h-none overflow-y-auto px-1">
-            {editingAthleteInfo && (
-              <div className="space-y-4 sm:space-y-6">
+            {editingAthleteInfo && (() => {
+              const athlete = editingAthleteInfo;
+              if (!athlete) return null;
+
+              return (
+                <div className="space-y-4 sm:space-y-6">
               <ParentModalSection title="Basic Information">
                 <ParentModalGrid>
                   <div className="space-y-1 sm:space-y-2">
                     <Label htmlFor="athlete-firstName" className="text-[#0F0276] dark:text-white text-sm">First Name</Label>
                     <ParentFormInput
+                      key={`firstName-${editingAthleteInfo?.id ?? 'new'}`}
                       id="athlete-firstName"
                       value={editingAthleteFirstName}
                       onChange={(e) => setEditingAthleteFirstName(e.target.value)}
@@ -1849,6 +1859,7 @@ function ParentDashboard() {
                   <div className="space-y-1 sm:space-y-2">
                     <Label htmlFor="athlete-lastName" className="text-[#0F0276] dark:text-white text-sm">Last Name</Label>
                     <ParentFormInput
+                      key={`lastName-${editingAthleteInfo?.id ?? 'new'}`}
                       id="athlete-lastName"
                       value={editingAthleteLastName}
                       onChange={(e) => setEditingAthleteLastName(e.target.value)}
@@ -1862,6 +1873,7 @@ function ParentDashboard() {
                   <div className="space-y-1 sm:space-y-2">
                     <Label htmlFor="athlete-dob" className="text-[#0F0276] dark:text-white text-sm">Date of Birth</Label>
                     <ParentFormInput
+                      key={`dob-${editingAthleteInfo?.id ?? 'new'}`}
                       id="athlete-dob"
                       type="date"
                       value={editingAthleteDateOfBirth}
@@ -1872,6 +1884,7 @@ function ParentDashboard() {
                   <div className="space-y-1 sm:space-y-2">
                     <Label htmlFor="athlete-gender" className="text-[#0F0276] dark:text-white text-sm">Gender</Label>
                     <GenderSelect
+                      key={`gender-${editingAthleteInfo?.id ?? 'new'}`}
                       value={editingAthleteGender}
                       onValueChange={setEditingAthleteGender}
                       id="athlete-gender"
@@ -1900,7 +1913,11 @@ function ParentDashboard() {
 
                   <div className="space-y-1 sm:space-y-2">
                     <Label htmlFor="athlete-experience" className="text-[#0F0276] dark:text-white text-sm">Experience Level</Label>
-                    <Select value={editingAthleteExperience} onValueChange={setEditingAthleteExperience}>
+                    <Select 
+                      key={`experience-${editingAthleteInfo?.id ?? 'new'}`}
+                      value={editingAthleteExperience} 
+                      onValueChange={setEditingAthleteExperience}
+                    >
                       <ParentFormSelectTrigger>
                         <SelectValue placeholder="Select experience level" />
                       </ParentFormSelectTrigger>
@@ -1919,8 +1936,9 @@ function ParentDashboard() {
                 <div className="space-y-2 sm:space-y-4">
                   <div className="space-y-1 sm:space-y-2">
                     <Label htmlFor="athlete-allergies" className="text-[#0F0276] dark:text-white text-sm">Allergies & Medical Notes</Label>
+                    {/* Stable key to prevent remounts if props around change; */}
                     <ParentFormTextarea
-                      key={`athlete-allergies-${editingAthleteInfo?.id || 'new'}`}
+                      key={`allergies-${editingAthleteInfo?.id ?? 'new'}`}
                       id="athlete-allergies"
                       value={editingAthleteAllergies}
                       onChange={(e) => setEditingAthleteAllergies(e.target.value)}
@@ -1996,7 +2014,8 @@ function ParentDashboard() {
                 </Button>
               </div>
             </div>
-          )}
+              );
+            })()}
           </div>
         </ParentModal>
 

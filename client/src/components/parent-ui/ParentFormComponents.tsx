@@ -60,7 +60,7 @@ export const ParentFormSelectTrigger = React.forwardRef<
   return (
     <SelectTrigger
       ref={ref}
-      className={cn(defaultInputClasses, className)}
+  className={cn("select-trigger", defaultInputClasses, className)}
       {...props}
     >
       {children}
