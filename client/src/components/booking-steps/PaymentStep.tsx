@@ -8,7 +8,7 @@ import { useFocusAreas } from "@/hooks/useFocusAreas";
 import { formatBookingDate } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { AlertCircle, CreditCard, Info } from "lucide-react";
+import { AlertCircle, CheckCircle, CreditCard, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
@@ -202,8 +202,11 @@ export function PaymentStep() {
         });
         const checkoutData = await response.json();
 
-        if (checkoutData.url) {
-          // Redirect to Stripe checkout
+        if (checkoutData.skipped) {
+          // $0 reservation fee - redirect directly to success page
+          window.location.href = checkoutData.url;
+        } else if (checkoutData.url) {
+          // Normal Stripe checkout flow
           window.location.href = checkoutData.url;
         } else {
           throw new Error('No checkout URL received');
@@ -231,7 +234,7 @@ export function PaymentStep() {
 
   const lessonInfo = byKey(state.lessonType);
   const lessonPrice = lessonInfo?.price || 0;
-  const reservationFee = lessonInfo?.reservationFee ?? Math.max(5, lessonPrice * 0.25);
+  const reservationFee = lessonInfo?.reservationFee ?? 0; // Default to $0, not $5 or 25%
   const remainingBalance = Math.max(lessonPrice - reservationFee, 0);
 
   const handlePayment = () => {
@@ -325,31 +328,47 @@ export function PaymentStep() {
         </CardContent>
       </Card>
 
-      <Card className="bg-amber-50 border-amber-200">
-        <CardContent className="pt-6">
-          <div className="flex gap-3">
-            <Info className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-900">
-              <p className="font-semibold mb-1">Reservation Fee Policy</p>
-              <p>The ${reservationFee.toFixed(2)} reservation fee secures your lesson slot and will be applied toward your total lesson cost. 
-                 The remaining balance of ${remainingBalance.toFixed(2)} is due at the time of your lesson.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {reservationFee > 0 ? (
+        <>
+          <Card className="bg-amber-50 border-amber-200">
+            <CardContent className="pt-6">
+              <div className="flex gap-3">
+                <Info className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-900">
+                  <p className="font-semibold mb-1">Reservation Fee Policy</p>
+                  <p>The ${reservationFee.toFixed(2)} reservation fee secures your lesson slot and will be applied toward your total lesson cost. 
+                     The remaining balance of ${remainingBalance.toFixed(2)} is due at the time of your lesson.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900">
-              <p className="font-semibold mb-1">Secure Payment</p>
-              <p>You'll be redirected to our secure payment processor to complete your ${reservationFee.toFixed(2)} reservation fee. 
-                 All payment information is encrypted and secure.</p>
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-6">
+              <div className="flex gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-semibold mb-1">Secure Payment</p>
+                  <p>You'll be redirected to our secure payment processor to complete your ${reservationFee.toFixed(2)} reservation fee. 
+                     All payment information is encrypted and secure.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-green-900">
+                <p className="font-semibold mb-1">No Reservation Fee Required</p>
+                <p>This lesson type has no reservation fee. The full lesson cost of ${lessonPrice.toFixed(2)} is due at the time of your lesson.</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Button 
         onClick={handlePayment}
@@ -370,7 +389,7 @@ export function PaymentStep() {
         ) : (
           <>
             <CreditCard className="h-5 w-5 mr-2" />
-            Pay ${reservationFee.toFixed(2)} Reservation Fee
+            {reservationFee > 0 ? `Pay $${reservationFee.toFixed(2)} Reservation Fee` : 'Complete Booking'}
           </>
         )}
       </Button>

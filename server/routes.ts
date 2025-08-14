@@ -2966,6 +2966,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to handle bookings by ID (for $0 reservation fee cases)
+  app.get("/api/booking-by-id/:bookingId", async (req, res) => {
+    try {
+      const { bookingId } = req.params;
+      const id = parseInt(bookingId);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid booking ID" });
+      }
+      
+      logger.debug(`Looking for booking with ID: ${id}`);
+      
+      const booking = await storage.getBooking(id);
+      
+      if (!booking) {
+        logger.debug(`No booking found with ID: ${id}`);
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      
+      console.log('Found booking by ID:', {
+        id: booking.id,
+        reservationFeePaid: booking.reservationFeePaid,
+        paidAmount: booking.paidAmount,
+        paymentStatus: booking.paymentStatus,
+        athlete1Name: booking.athlete1Name
+      });
+      
+      // Try to get booking with relations first
+      try {
+        const bookingWithRelations = await storage.getBookingWithRelations(booking.id);
+        
+        if (bookingWithRelations) {
+          // Ensure payment data is included in the response
+          const enhancedBooking = {
+            ...bookingWithRelations,
+            reservationFeePaid: bookingWithRelations.reservationFeePaid === true,
+            paidAmount: bookingWithRelations.paidAmount || "0.00",
+            paymentStatus: bookingWithRelations.paymentStatus || "unknown"
+          };
+          
+          logger.debug(`Returning booking with relations and payment data: 
+            reservationFeePaid: ${enhancedBooking.reservationFeePaid}
+            paidAmount: ${enhancedBooking.paidAmount}
+            paymentStatus: ${enhancedBooking.paymentStatus}`);
+            
+          return res.json(enhancedBooking);
+        }
+      } catch (relationError) {
+        console.warn('[DEBUG] Failed to get booking with relations:', relationError instanceof Error ? relationError.message : String(relationError));
+      }
+      
+      // If relations failed, return as-is but ensure payment data
+      const enhancedBooking = {
+        ...booking,
+        reservationFeePaid: booking.reservationFeePaid === true,
+        paidAmount: booking.paidAmount || "0.00",
+        paymentStatus: booking.paymentStatus || "unknown"
+      };
+      
+      console.log('[DEBUG] Returning booking format with payment data');
+      res.json(enhancedBooking);
+    } catch (error: any) {
+      console.error("Error fetching booking by ID:", error);
+      res.status(500).json({ message: "Error fetching booking: " + error.message });
+    }
+  });
+
   // Test email endpoint for Thomas Sawyer
   app.post("/api/test-email-thomas", async (req, res) => {
     try {
@@ -3866,18 +3933,48 @@ setTimeout(async () => {
       } else {
         // Fallback: try legacy booking.amount if present
         fullLessonPrice = Number((booking as any).amount || 0) || 0;
-        // Heuristic reservation fee fallback (25%) if not explicitly set
-        reservationFee = Number(((booking as any).amount || 0)) * 0.25;
+        // Default reservation fee fallback to $0 if not explicitly set
+        reservationFee = 0;
       }
 
       // Safety guards
       if (!Number.isFinite(fullLessonPrice) || fullLessonPrice <= 0) {
-        console.warn('[CHECKOUT] Invalid full lesson price. Defaulting to $10.');
-        fullLessonPrice = 10;
+        console.warn('[CHECKOUT] Invalid full lesson price. Defaulting to $0.');
+        fullLessonPrice = 0;
       }
-      if (!Number.isFinite(reservationFee) || reservationFee <= 0 || reservationFee > fullLessonPrice) {
-        // Default to first quarter but max out at full price - 1 if extreme
-        reservationFee = Math.min(Math.max(fullLessonPrice * 0.25, 5), fullLessonPrice);
+      if (!Number.isFinite(reservationFee) || reservationFee < 0 || reservationFee > fullLessonPrice) {
+        // Default to $0 if invalid
+        reservationFee = 0;
+      }
+
+      // If reservation fee is $0, skip Stripe and mark booking as confirmed
+      if (reservationFee === 0) {
+        try {
+          await storage.updateBooking(bookingId, {
+            paymentStatus: PaymentStatusEnum.RESERVATION_PAID,
+            reservationFeePaid: true,
+            paidAmount: "0.00",
+            status: BookingStatusEnum.CONFIRMED
+          });
+
+          console.log('[CHECKOUT] $0 reservation fee - skipping Stripe, booking confirmed', {
+            bookingId,
+            lessonTypeId: (booking as any).lessonTypeId,
+            fullLessonPrice,
+            reservationFee
+          });
+
+          // Return direct success URL instead of Stripe session
+          res.json({ 
+            sessionId: null, 
+            url: `${getBaseUrl()}/booking-success?booking_id=${bookingId}&skip_stripe=true`,
+            skipped: true 
+          });
+          return;
+        } catch (updateError) {
+          console.error('[CHECKOUT] Failed to update booking for $0 reservation fee:', updateError);
+          return res.status(500).json({ message: 'Error processing $0 reservation fee booking' });
+        }
       }
 
       // Create Stripe Checkout Session using admin-managed reservation fee
@@ -5453,9 +5550,9 @@ setTimeout(async () => {
         });
         paidAmount = finalAmount;
       } else if (paymentStatus === "reservation-paid") {
-        // Reservation paid - use Stripe amount if available, otherwise default to $10
+        // Reservation paid - use actual amount paid, default to $0 if none
         if (paidAmount === 0) {
-          paidAmount = 10; // Default reservation fee
+          paidAmount = 0; // Default to $0 reservation fee
         }
         await storage.updateBooking(id, { 
           paidAmount: paidAmount.toString(),

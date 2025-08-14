@@ -70,7 +70,7 @@ const CheckoutForm = ({ bookingDetails }: { bookingDetails: any }) => {
                 <p><span className="font-medium">Athlete:</span> {bookingDetails?.athlete1Name}</p>
                 <p><span className="font-medium">Date:</span> {bookingDetails?.preferredDate}</p>
                 <p><span className="font-medium">Time:</span> {bookingDetails?.preferredTime}</p>
-                <p><span className="font-medium">Total:</span> ${bookingDetails?.reservationFee || '0.50'} (Reservation Fee)</p>
+                <p><span className="font-medium">Total:</span> ${bookingDetails?.reservationFee || '0.00'} (Reservation Fee)</p>
               </div>
             </div>
 

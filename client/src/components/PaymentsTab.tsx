@@ -420,7 +420,7 @@ export function PaymentsTab() {
                     balanceDue = 0;
                   } else if (booking.paymentStatus === "reservation-paid") {
                     displayPaidAmount = parseFloat(booking.paidAmount || "0");
-                    if (displayPaidAmount <= 0) displayPaidAmount = 10.0;
+                    if (displayPaidAmount <= 0) displayPaidAmount = 0.0;
                     balanceDue = totalPrice - displayPaidAmount;
                   } else if (
                     booking.paymentStatus === "reservation-pending" ||
@@ -566,9 +566,9 @@ export function PaymentsTab() {
                         displayPaidAmount = totalPrice;
                         balanceDue = 0;
                       } else if (booking.paymentStatus === "reservation-paid") {
-                        // Use paidAmount if present and > 0, otherwise default to $0.50
+                        // Use paidAmount if present and > 0, otherwise default to $0
                         displayPaidAmount = parseFloat(booking.paidAmount || "0");
-                        if (displayPaidAmount <= 0) displayPaidAmount = 10.00; // align with server default reservation fee
+                        if (displayPaidAmount <= 0) displayPaidAmount = 0.00;
                         balanceDue = totalPrice - displayPaidAmount;
                       } else if (booking.paymentStatus === "reservation-pending" || booking.paymentStatus === "reservation-failed" || booking.paymentStatus === "unpaid") {
                         displayPaidAmount = 0;

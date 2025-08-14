@@ -21,20 +21,31 @@ export default function BookingSuccess() {
   const { toast } = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("session_id");
+  const bookingId = urlParams.get("booking_id");
+  const skipStripe = urlParams.get("skip_stripe") === "true";
 
-  // Fetch booking details using session ID
+  // Fetch booking details using session ID or booking ID
   const { data: booking, isLoading, error, refetch } = useQuery({
-    queryKey: ["/api/booking-by-session", sessionId],
+    queryKey: sessionId ? ["/api/booking-by-session", sessionId] : ["/api/booking-by-id", bookingId],
     queryFn: async () => {
-      if (!sessionId) return null;
-      const response = await apiRequest('GET', `/api/booking-by-session/${sessionId}`);
-      if (!response.ok) {
-        console.error(`Failed to fetch booking: ${response.status} ${response.statusText}`);
-        throw new Error("Failed to fetch booking");
+      if (sessionId) {
+        const response = await apiRequest('GET', `/api/booking-by-session/${sessionId}`);
+        if (!response.ok) {
+          console.error(`Failed to fetch booking: ${response.status} ${response.statusText}`);
+          throw new Error("Failed to fetch booking");
+        }
+        return response.json();
+      } else if (bookingId) {
+        const response = await apiRequest('GET', `/api/booking-by-id/${bookingId}`);
+        if (!response.ok) {
+          console.error(`Failed to fetch booking: ${response.status} ${response.statusText}`);
+          throw new Error("Failed to fetch booking");
+        }
+        return response.json();
       }
-      return response.json();
+      return null;
     },
-    enabled: !!sessionId,
+    enabled: !!(sessionId || bookingId),
     retry: 3,
     retryDelay: 1000,
     // Increase staleTime to reduce unnecessary fetches
@@ -47,9 +58,9 @@ export default function BookingSuccess() {
     // Reset any booking state when user reaches success page
     window.scrollTo(0, 0);
     
-    // If payment is already confirmed, no need to poll
-    if (booking?.reservationFeePaid) {
-      console.log("Payment already confirmed, no need to poll");
+    // If payment is already confirmed or this is a $0 reservation fee booking, no need to poll
+    if (booking?.reservationFeePaid || skipStripe) {
+      console.log("Payment already confirmed or $0 reservation fee, no need to poll");
       return;
     }
     
@@ -68,7 +79,7 @@ export default function BookingSuccess() {
       refetch();
       
       // Show toast if payment is still pending after a minute
-      if (!booking?.reservationFeePaid) {
+      if (!booking?.reservationFeePaid && !skipStripe) {
         toast({
           title: "Payment Status Update",
           description: "We're still processing your payment. You'll receive an email confirmation once complete.",
@@ -82,7 +93,7 @@ export default function BookingSuccess() {
       clearInterval(refetchInterval);
       clearTimeout(timeoutId);
     };
-  }, [refetch, booking?.reservationFeePaid]);
+  }, [refetch, booking?.reservationFeePaid, skipStripe]);
 
   if (isLoading) {
     return (
@@ -123,13 +134,13 @@ export default function BookingSuccess() {
     );
   }
 
-  if (!sessionId) {
+  if (!sessionId && !bookingId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid Booking Session</h1>
           <p className="text-gray-600 mb-4">
-            No booking session was found. Please contact us if you need assistance.
+            No booking information found. Please check your booking confirmation email or contact us for assistance.
           </p>
           <Button asChild className="bg-orange-500 hover:bg-orange-600">
             <Link href="/">Return to Home</Link>

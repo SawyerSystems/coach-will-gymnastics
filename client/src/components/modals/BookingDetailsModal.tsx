@@ -141,7 +141,7 @@ export function BookingDetailsModal({
       paid = total; // full lesson price paid
     } else if (status === 'reservation-paid') {
       paid = parseFloat(booking.paidAmount || '0');
-      if (!Number.isFinite(paid) || paid <= 0) paid = 10.0; // fallback to default reservation fee
+      if (!Number.isFinite(paid) || paid < 0) paid = 0.0; // fallback to $0 for invalid amounts
     } else {
       paid = parseFloat(booking.paidAmount || '0');
       if (!Number.isFinite(paid)) paid = 0;
