@@ -280,99 +280,106 @@ export const Navigation = memo(function Navigation() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-            <nav className="flex flex-col space-y-4 mt-8">
-              {/* Theme toggle inside drawer */}
-              <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm text-slate-900 dark:text-slate-100">Theme</span>
-                <ThemeToggle />
-              </div>
-              {navItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <span
-                    className={`block px-4 py-3 text-lg rounded-lg transition-colors duration-200 cursor-pointer min-h-[48px] flex items-center w-full ${
-                      isActive(item.href)
-                        ? "text-blue-600 font-semibold bg-blue-50 dark:text-[#D8BD2A] dark:bg-slate-800/60"
-                        : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-[#D8BD2A] dark:hover:text-white dark:hover:bg-slate-800/40"
-                    }`}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-              <div className="space-y-3 mt-6">
-                {/* Booking Button - Always First */}
-                <Link href="/booking">
-                  <Button 
-                    className="w-full coach-will-gradient text-white px-4 py-2 text-sm rounded-full font-medium hover:scale-105 transform transition-all duration-200 shadow-lg"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Book Now
-                  </Button>
-                </Link>
-                
-                {/* Dashboard Button for Logged In Users */}
-                {(isAdminLoggedIn || isParentLoggedIn) && (
+          {/* Full-height sheet with scrollable content and sticky footer */}
+          <SheetContent side="right" className="w-[300px] sm:w-[380px] p-0 flex h-full flex-col overflow-hidden">
+            {/* Header / Theme toggle */}
+            <div className="flex items-center justify-between px-3 pt-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+              <span className="text-[0.9rem] font-medium text-slate-900 dark:text-slate-100 leading-tight">Theme</span>
+              <ThemeToggle />
+            </div>
+
+            {/* Non-scrollable nav list with responsive sizing */}
+            <div className="flex-1">
+              <nav className="flex flex-col space-y-1.5 py-3">
+                {navItems.map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    <span
+                      className={`block px-3 py-[clamp(8px,2vh,12px)] text-[clamp(0.95rem,3.2vw,1.125rem)] leading-tight rounded-lg transition-colors duration-200 cursor-pointer min-h-[36px] flex items-center w-full ${
+                        isActive(item.href)
+                          ? "text-blue-600 font-semibold bg-blue-50 dark:text-[#D8BD2A] dark:bg-slate-800/60"
+                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-[#D8BD2A] dark:hover:text-white dark:hover:bg-slate-800/40"
+                      }`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {item.label}
+                    </span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            {/* Sticky footer with CTAs, always accessible */}
+            <div className="sticky bottom-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60 border-t border-slate-200 dark:border-slate-800 p-3 space-y-2.5">
+              {/* Booking Button - Always First */}
+              <Link href="/booking">
+                <Button 
+                  className="w-full coach-will-gradient text-white px-4 py-2 text-[0.95rem] rounded-full font-medium hover:scale-[1.02] transform transition-all duration-200 shadow-lg"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Book Now
+                </Button>
+              </Link>
+
+              {/* Dashboard Button for Logged In Users */}
+              {(isAdminLoggedIn || isParentLoggedIn) && (
+                <Button
+                  onClick={() => {
+                    if (isAdminLoggedIn) handleAdminAction();
+                    else handleParentAction();
+                    setIsOpen(false);
+                  }}
+                  variant="default"
+                  className={`w-full flex items-center justify-center space-x-2 py-2 text-[0.95rem] transition-all duration-200 ${
+                    isAdminLoggedIn 
+                      ? "bg-green-600 hover:bg-green-700 text-white" 
+                      : "bg-purple-600 hover:bg-purple-700 text-white"
+                  }`}
+                >
+                  <User className="h-3 w-3" />
+                  <span>Dashboard</span>
+                </Button>
+              )}
+
+              {/* Dynamic Login/Logout Buttons */}
+              {isAdminLoggedIn || isParentLoggedIn ? (
+                <Button
+                  onClick={() => {
+                    handleLogout();
+                    setIsOpen(false);
+                  }}
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 py-2 text-[0.95rem] border-red-300 hover:bg-red-50 transition-all duration-200"
+                >
+                  <LogOut className="h-3 w-3" />
+                  <span>Logout</span>
+                </Button>
+              ) : (
+                <>
                   <Button
                     onClick={() => {
-                      if (isAdminLoggedIn) handleAdminAction();
-                      else handleParentAction();
-                      setIsOpen(false);
-                    }}
-                    variant="default"
-                    className={`w-full flex items-center justify-center space-x-2 py-2 text-sm transition-all duration-200 ${
-                      isAdminLoggedIn 
-                        ? "bg-green-600 hover:bg-green-700 text-white" 
-                        : "bg-purple-600 hover:bg-purple-700 text-white"
-                    }`}
-                  >
-                    <User className="h-3 w-3" />
-                    <span>Dashboard</span>
-                  </Button>
-                )}
-                
-                {/* Dynamic Login/Logout Buttons */}
-                {isAdminLoggedIn || isParentLoggedIn ? (
-                  <Button
-                    onClick={() => {
-                      handleLogout();
+                      handleAdminAction();
                       setIsOpen(false);
                     }}
                     variant="outline"
-                    className="w-full flex items-center justify-center space-x-2 py-2 text-sm border-red-300 hover:bg-red-50 transition-all duration-200"
+                    className="w-full flex items-center justify-center space-x-2 py-2 text-[0.95rem] border-gray-300 hover:bg-gray-50 transition-all duration-200"
                   >
-                    <LogOut className="h-3 w-3" />
-                    <span>Logout</span>
+                    <Lock className="h-3 w-3" />
+                    <span>Admin Login</span>
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => {
-                        handleAdminAction();
-                        setIsOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full flex items-center justify-center space-x-2 py-2 text-sm border-gray-300 hover:bg-gray-50 transition-all duration-200"
-                    >
-                      <Lock className="h-3 w-3" />
-                      <span>Admin Login</span>
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleParentAction();
-                        setIsOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full flex items-center justify-center space-x-2 py-2 text-sm border-purple-300 hover:bg-purple-50 transition-all duration-200"
-                    >
-                      <UserCircle className="h-3 w-3" />
-                      <span>Parent Portal</span>
-                    </Button>
-                  </>
-                )}
-              </div>
-            </nav>
+                  <Button
+                    onClick={() => {
+                      handleParentAction();
+                      setIsOpen(false);
+                    }}
+                    variant="outline"
+                    className="w-full flex items-center justify-center space-x-2 py-2 text-[0.95rem] border-purple-300 hover:bg-purple-50 transition-all duration-200"
+                  >
+                    <UserCircle className="h-3 w-3" />
+                    <span>Parent Portal</span>
+                  </Button>
+                </>
+              )}
+            </div>
           </SheetContent>
         </Sheet>
       </div>
