@@ -5,6 +5,7 @@ import path from "path";
 import Stripe from "stripe";
 import { isAdminAuthenticated } from "./auth";
 import { configureSessionAndCors, sessionConfig } from "./config/session";
+import { ensureAdmin } from "./ensure-admin";
 import { logger } from "./logger";
 import { registerRoutes } from "./routes";
 import { storage } from "./storage";
