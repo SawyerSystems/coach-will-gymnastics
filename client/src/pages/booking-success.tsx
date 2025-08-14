@@ -97,14 +97,14 @@ export default function BookingSuccess() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 dark:bg-gradient-to-br dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
         <div className="text-center">
           <img 
             src="/CWT_Circle_LogoSPIN.png" 
             alt="Loading" 
             className="h-8 w-8 animate-spin mx-auto mb-4" 
           />
-          <p className="text-gray-600">Loading your booking details...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading your booking details...</p>
         </div>
       </div>
     );
@@ -112,21 +112,21 @@ export default function BookingSuccess() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 dark:bg-gradient-to-br dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-red-500 mb-4">
+          <div className="text-red-500 dark:text-red-400 mb-4">
             <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Booking Details Unavailable</h1>
-          <p className="text-gray-600 mb-4">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Booking Details Unavailable</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
             We're having trouble loading your booking details, but your payment was successful!
           </p>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             You should receive a confirmation email shortly. If you have any questions, please contact us.
           </p>
-          <Button asChild className="bg-orange-500 hover:bg-orange-600">
+          <Button asChild className="bg-orange-500 hover:bg-orange-600 dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]">
             <Link href="/">Return to Home</Link>
           </Button>
         </div>
@@ -136,13 +136,13 @@ export default function BookingSuccess() {
 
   if (!sessionId && !bookingId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 dark:bg-gradient-to-br dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid Booking Session</h1>
-          <p className="text-gray-600 mb-4">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Invalid Booking Session</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
             No booking information found. Please check your booking confirmation email or contact us for assistance.
           </p>
-          <Button asChild className="bg-orange-500 hover:bg-orange-600">
+          <Button asChild className="bg-orange-500 hover:bg-orange-600 dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]">
             <Link href="/">Return to Home</Link>
           </Button>
         </div>
@@ -177,7 +177,7 @@ export default function BookingSuccess() {
   const reservationFeePaid = booking?.reservationFeePaid === true;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-green-50 dark:bg-gradient-to-br dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black py-12 px-4">
       <SEOHead
         title="Booking Success — Coach Will Tumbles"
         description="Your booking was successful."
@@ -188,57 +188,57 @@ export default function BookingSuccess() {
       <div className="max-w-2xl mx-auto">
         {/* Success Header */}
         <div className="text-center mb-8">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <CheckCircle className="h-16 w-16 text-green-500 dark:text-green-400 mx-auto mb-4" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Payment Successful!
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 dark:text-gray-300">
             Your reservation fee has been processed and your lesson is confirmed
           </p>
         </div>
 
         {/* Booking Details Card */}
         {booking && (
-          <Card className="mb-6">
+          <Card className="mb-6 dark:bg-[#2A4A9B]/30 dark:border-[#D8BD2A]/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 dark:text-white">
+                <Calendar className="h-5 w-5 dark:text-[#D8BD2A]" />
                 Booking Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <User className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Athletes</p>
-                    <p className="font-semibold">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Athletes</p>
+                    <p className="font-semibold dark:text-white">
                       {athleteNames.length > 0 ? athleteNames.join(", ") : "No athlete information available - please contact us"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <Calendar className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Date</p>
-                    <p className="font-semibold">{formattedDate}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Date</p>
+                    <p className="font-semibold dark:text-white">{formattedDate}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Time</p>
-                    <p className="font-semibold">{booking.preferredTime}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Time</p>
+                    <p className="font-semibold dark:text-white">{booking.preferredTime}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <Calendar className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Lesson Type</p>
-                    <p className="font-semibold">{booking.lessonType?.name || "Lesson information not available"}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Lesson Type</p>
+                    <p className="font-semibold dark:text-white">{booking.lessonType?.name || "Lesson information not available"}</p>
                   </div>
                 </div>
               </div>
@@ -247,9 +247,9 @@ export default function BookingSuccess() {
         )}
 
         {/* Payment Summary Card */}
-        <Card className="mb-6 border-green-200 bg-green-50">
+        <Card className="mb-6 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-700/30">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-300">
               <DollarSign className="h-5 w-5" />
               Payment Summary
             </CardTitle>
@@ -257,30 +257,30 @@ export default function BookingSuccess() {
           <CardContent className="space-y-3">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Lesson Total:</span>
-                <span className="font-medium">${totalLessonPrice.toFixed(2)}</span>
+                <span className="dark:text-green-200">Lesson Total:</span>
+                <span className="font-medium dark:text-green-200">${totalLessonPrice.toFixed(2)}</span>
               </div>
               
               {reservationFeePaid ? (
-                <div className="flex justify-between text-sm text-green-700">
+                <div className="flex justify-between text-sm text-green-700 dark:text-green-300">
                   <span>Reservation Fee Paid:</span>
                   <span className="font-medium">-${actualPaidAmount.toFixed(2)}</span>
                 </div>
               ) : (
-                <div className="flex justify-between text-sm text-yellow-700">
+                <div className="flex justify-between text-sm text-yellow-700 dark:text-yellow-300">
                   <span>Reservation Fee:</span>
                   <span className="font-medium">Payment processing...</span>
                 </div>
               )}
               
-              <div className="border-t pt-2 flex justify-between">
-                <span className="font-semibold">Remaining Balance:</span>
-                <span className="font-semibold">${remainingBalance.toFixed(2)}</span>
+              <div className="border-t pt-2 flex justify-between dark:border-green-700/30">
+                <span className="font-semibold dark:text-green-200">Remaining Balance:</span>
+                <span className="font-semibold dark:text-green-200">${remainingBalance.toFixed(2)}</span>
               </div>
               
               {/* Removed Payment ID display per product requirements */}
             </div>
-            <p className="text-sm text-green-700 bg-green-100 p-3 rounded">
+            <p className="text-sm text-green-700 bg-green-100 dark:bg-green-800/30 dark:text-green-200 p-3 rounded">
               The remaining balance of ${remainingBalance} is due at the time of
               your lesson. Please bring cash or check for payment.
             </p>
@@ -288,29 +288,29 @@ export default function BookingSuccess() {
         </Card>
 
         {/* What's Next Card */}
-        <Card className="mb-6">
+        <Card className="mb-6 dark:bg-[#2A4A9B]/30 dark:border-[#D8BD2A]/20">
           <CardHeader>
-            <CardTitle>What's Next?</CardTitle>
+            <CardTitle className="dark:text-white">What's Next?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
-              <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-800">
+                <h3 className="font-semibold text-blue-800 dark:text-blue-300">
                   Confirmation Email
                 </h3>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-blue-700 dark:text-blue-200">
                   Check your email for a detailed confirmation with all lesson
                   information.
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold text-gray-800 mb-2">
+            <div className="p-4 bg-gray-50 dark:bg-[#0F0276]/20 rounded-lg">
+              <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
                 Important Reminders:
               </h3>
-              <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1 list-disc list-inside">
                 <li>Arrive on time for check-in</li>
                 <li>Bring comfortable athletic clothing</li>
                 <li>Water bottle recommended</li>
@@ -323,20 +323,20 @@ export default function BookingSuccess() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild className="bg-orange-500 hover:bg-orange-600">
+          <Button asChild className="bg-orange-500 hover:bg-orange-600 dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]">
             <Link href="/">Return to Home</Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="dark:border-[#D8BD2A]/40 dark:text-[#D8BD2A] dark:hover:bg-[#D8BD2A]/10">
             <Link href="/contact">Contact Us</Link>
           </Button>
         </div>
 
         {/* Contact Info */}
-        <div className="text-center mt-8 p-4 bg-white rounded-lg shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-2">
+        <div className="text-center mt-8 p-4 bg-white dark:bg-[#2A4A9B]/30 rounded-lg shadow-sm dark:border dark:border-[#D8BD2A]/20">
+          <h3 className="font-semibold text-gray-800 dark:text-white mb-2">
             Coach Will Tumbles
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Phone: (585) 755-8122 | Email: will@coachwilltumbles.com
           </p>
         </div>
