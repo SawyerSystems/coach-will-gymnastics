@@ -132,15 +132,7 @@ app.use((req, res, next) => {
     console.error(error);
   }
 
-  // Ensure admin account exists on startup
-  try {
-    const { ensureAdmin } = await import("./ensure-admin.js");
-    await ensureAdmin();
-    console.log("✅ Admin account check completed");
-  } catch (error) {
-    console.log("⚠️ Admin account check failed, continuing with startup...");
-    console.error(error);
-  }
+  // Note: Admin account check moved to run after server startup to avoid blocking
 
   // Site content management endpoints
   let siteContentData: any = {
@@ -1019,6 +1011,11 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     console.log(`serving on port ${port}`);
+    
+    // Check admin accounts in the background (non-blocking)
+    ensureAdmin().catch(error => {
+      console.error('Admin check failed:', error);
+    });
     
     // Set up scheduled payment sync job - run every 30 minutes
     const PAYMENT_SYNC_INTERVAL = 30 * 60 * 1000; // 30 minutes
