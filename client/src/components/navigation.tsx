@@ -57,6 +57,7 @@ export const Navigation = memo(function Navigation() {
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
     { href: "/booking", label: "Booking" },
+  { href: "/features", label: "Features" },
     { href: "/blog", label: "Blog" },
     { href: "/tips", label: "Tips" },
     { href: "/contact", label: "Contact" },
@@ -108,34 +109,34 @@ export const Navigation = memo(function Navigation() {
 
   return (
   <header className="sticky top-0 z-50 w-full border-b-4 border-[#D8BD2A] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-lg dark:bg-slate-900/80">
-      <div className="container mx-auto flex h-20 md:h-20 items-center justify-between px-4 py-4 md:px-6 md:py-0">
+  <div className="container mx-auto flex h-20 md:h-20 items-center justify-between px-4 py-4 md:px-6 md:py-0">
         <Link href="/">
-          <div className="flex items-center space-x-2 cursor-pointer relative">
-            <div className="w-14 h-14 animate-logo-spin">
+          <div className="flex items-center space-x-2 cursor-pointer relative flex-shrink-0">
+            <div className="w-14 h-14 animate-logo-spin flex-shrink-0">
               <img 
                 src={logoSpin} 
                 alt="Coach Will Tumbles Logo" 
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain flex-shrink-0"
               />
             </div>
             {/* Hidden text for SEO but visually replaced with PNG */}
             <span className="sr-only">Coach Will Tumbles</span>
-            <div className="h-12">
+            <div className="h-12 flex-shrink-0">
               <img 
                 src={logoText} 
                 alt="Coach Will Tumbles" 
-                className="h-full object-contain"
+                className="h-full object-contain flex-shrink-0"
               />
             </div>
           </div>
         </Link>
 
     {/* Desktop Navigation - Hide on smaller screens to prevent tablet horizontal scrolling */}
-  <nav className="hidden lg:flex items-center space-x-6 ml-8 xl:ml-16">
+  <nav className="hidden lg:flex items-center space-x-3 xl:space-x-6 ml-4 xl:ml-16 min-w-0 flex-shrink">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <span
-                className={`text-[#0F0276] dark:text-[#D8BD2A] hover:text-[#E10B0B] transition-colors duration-200 font-semibold cursor-pointer athletic-title text-lg ${
+                className={`text-[#0F0276] dark:text-[#D8BD2A] hover:text-[#E10B0B] transition-colors duration-200 font-semibold cursor-pointer athletic-title text-sm md:text-base xl:text-lg ${
                   isActive(item.href) ? "text-[#E10B0B] dark:text-[#D8BD2A] font-bold" : ""
                 }`}
                 onMouseEnter={() => {
@@ -214,7 +215,7 @@ export const Navigation = memo(function Navigation() {
         </nav>
 
   {/* Tablet Navigation - Simplified for medium screens */}
-  <nav className="hidden md:flex lg:hidden items-center space-x-4 ml-4 md:ml-6">
+  <nav className="hidden md:flex lg:hidden items-center space-x-3 ml-2 md:ml-6 min-w-0">
           {/* Theme toggle for tablet */}
           <ThemeToggle />
           <Link href="/booking">

@@ -145,8 +145,8 @@ export default function FeaturesPage() {
     // Fallback snapshot with animated counters
     return {
       athletes: siteContent?.stats?.athletes || 240,
-      rebookPct: siteContent?.stats?.rebookPct || 86,
-      weeksToProgress: siteContent?.stats?.weeksToProgress || 4,
+      rebookPct: siteContent?.stats?.rebookPct || 94,
+      weeksToProgress: siteContent?.stats?.weeksToProgress || 3,
     };
   }, [siteContent]);
 
