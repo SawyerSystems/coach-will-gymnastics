@@ -154,13 +154,13 @@ export default function FeaturesPage() {
     headline: "Level Up Your Child’s Training",
     sub: "Book fast. Track progress. Celebrate wins.",
     imageAlt: "Smiling young gymnast mid-air during a confident tumbling pass",
-    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1600&auto=format&fit=crop",
+  image: "/assets/marketing/Marketing_Dashboard.png",
   } : {
     headline: "Track Real Progress, Not Just Attendance",
     sub: "Book in minutes. Get videos and coach notes after.",
     imageAlt: "Phone mockup showing a clean parent portal with progress videos and badges",
     // Use a known-good image URL instead of an invalid placeholder so the hero always renders
-    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop",
+  image: "/assets/marketing/Marketing_Dashboard.png",
   };
 
   const chapters = [
@@ -392,14 +392,15 @@ export default function FeaturesPage() {
               
               <Button
                 variant="outline"
-                onClick={() => { setShowTour(true); track("features_demo_open", { where: "hero_secondary" }) }}
-                className="group relative overflow-hidden border-2 border-[#0F0276]/20 dark:border-[#D8BD2A]/20 hover:border-[#0F0276] dark:hover:border-[#D8BD2A] px-8 py-6 text-lg font-semibold rounded-xl backdrop-blur-sm bg-white/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 hover:scale-105"
-                aria-haspopup="dialog"
-                aria-controls="portal-demo"
+                disabled
+                // Temporarily muted: disable interaction and analytics
+                onClick={(e) => e.preventDefault()}
+                className="group relative overflow-hidden border-2 border-slate-300/40 dark:border-slate-700/40 px-8 py-6 text-lg font-semibold rounded-xl backdrop-blur-sm bg-white/40 dark:bg-slate-900/40 text-slate-500 dark:text-slate-400 pointer-events-none opacity-60"
+                aria-disabled="true"
               >
                 <span className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  See the Parent Portal
+                  <Target className="h-5 w-5 opacity-70" />
+                  See the Parent Portal (coming soon)
                 </span>
               </Button>
             </div>
@@ -418,6 +419,11 @@ export default function FeaturesPage() {
                 alt={hero.imageAlt}
                 loading="eager"
                 className="w-full h-auto rounded-3xl shadow-2xl ring-1 ring-black/5 object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              {/* Dark mode overlay over hero image */}
+              <div
+                className="absolute inset-0 rounded-3xl bg-transparent dark:bg-black/40 pointer-events-none transform transition-transform duration-500 group-hover:scale-105"
+                aria-hidden="true"
               />
               
               {/* Floating achievement badge */}
