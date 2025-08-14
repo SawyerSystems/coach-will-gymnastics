@@ -366,7 +366,7 @@ export default function FeaturesPage() {
               
               <h1 
                 id="features-hero-title" 
-                className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-[#0F0276] to-slate-900 dark:from-white dark:via-[#D8BD2A] dark:to-white bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4"
+                className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-[#D8BD2A] via-[#DC2626] to-[#D8BD2A] dark:from-[#D8BD2A] dark:via-[#DC2626] dark:to-[#D8BD2A] bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-4"
               >
                 {hero.headline}
               </h1>
@@ -429,8 +429,7 @@ export default function FeaturesPage() {
                   <Trophy className="h-6 w-6 text-[#0F0276]" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-900 dark:text-white">Achievement Unlocked!</div>
-                  <div className="text-xs text-slate-600 dark:text-slate-400">Progress tracking activated</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">Track your athlete's journey</div>
                 </div>
               </div>
               
