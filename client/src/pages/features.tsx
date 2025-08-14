@@ -745,13 +745,7 @@ function ChapterCard({ chapter, index }: { chapter: any; index: number }) {
             </Button>
           </Link>
           
-          <button
-            type="button"
-            onClick={() => track("features_how_it_works_click", { chapter: chapter.key })}
-            className="text-sm text-[#0F0276] dark:text-[#D8BD2A] hover:text-[#0F0276]/80 dark:hover:text-[#D8BD2A]/80 underline underline-offset-4 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D8BD2A] px-6 py-3 rounded-lg hover:bg-[#D8BD2A]/5 transition-all duration-200"
-          >
-            See how it works →
-          </button>
+          {/* Hidden: "See how it works" buttons removed for cleaner UI */}
         </div>
       </div>
     </article>
