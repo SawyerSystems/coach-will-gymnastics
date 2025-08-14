@@ -1120,3 +1120,39 @@ export type SiteContentResponse = {
     displayOrder: number;
   }>;
 };
+
+// Privacy Requests (dedicated table)
+export const privacyRequests = pgTable("privacy_requests", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  requestType: text("request_type").notNull(),
+  details: text("details"),
+  status: text("status").default("new").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPrivacyRequestSchema = createInsertSchema(privacyRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export type PrivacyRequest = typeof privacyRequests.$inferSelect;
+export type InsertPrivacyRequest = z.infer<typeof insertPrivacyRequestSchema>;
+
+// Cookie Consent log (optional)
+export const cookieConsent = pgTable("cookie_consent", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  necessary: boolean("necessary").default(true).notNull(),
+  analytics: boolean("analytics").default(false).notNull(),
+  marketing: boolean("marketing").default(false).notNull(),
+  region: text("region"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCookieConsentSchema = createInsertSchema(cookieConsent).omit({ id: true, createdAt: true });
+export type CookieConsent = typeof cookieConsent.$inferSelect;
+export type InsertCookieConsent = z.infer<typeof insertCookieConsentSchema>;

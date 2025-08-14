@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertFocusArea, type InsertParent, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "../shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type CookieConsent, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertCookieConsent, type InsertFocusArea, type InsertParent, type InsertPrivacyRequest, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type PrivacyRequest, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "../shared/schema";
 import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
@@ -268,6 +268,14 @@ export interface IStorage {
   createSiteInquiry(input: InsertSiteInquiry): Promise<SiteInquiry>;
   updateSiteInquiryStatus(id: number, status: SiteInquiry['status']): Promise<SiteInquiry | undefined>;
   deleteSiteInquiry(id: number): Promise<boolean>;
+
+  // Privacy Requests
+  listPrivacyRequests(): Promise<PrivacyRequest[]>;
+  createPrivacyRequest(input: InsertPrivacyRequest): Promise<PrivacyRequest>;
+  updatePrivacyRequestStatus(id: number, status: PrivacyRequest['status']): Promise<PrivacyRequest | undefined>;
+
+  // Cookie Consent
+  createCookieConsentLog(input: InsertCookieConsent): Promise<CookieConsent>;
 }
 
 export class MemStorage implements IStorage {
@@ -1634,6 +1642,18 @@ With the right setup and approach, home practice can accelerate your child's gym
   async updateSiteInquiryStatus(id: number, status: SiteInquiry['status']): Promise<SiteInquiry | undefined> { return undefined; }
   async deleteSiteInquiry(id: number): Promise<boolean> { return false; }
 
+  // Privacy Requests (MemStorage stubs)
+  async listPrivacyRequests(): Promise<PrivacyRequest[]> { return []; }
+  async createPrivacyRequest(input: InsertPrivacyRequest): Promise<PrivacyRequest> {
+    return { id: Date.now(), ...input, createdAt: new Date(), updatedAt: new Date() } as any;
+  }
+  async updatePrivacyRequestStatus(id: number, status: PrivacyRequest['status']): Promise<PrivacyRequest | undefined> { return undefined; }
+
+  // Cookie Consent (MemStorage stubs)
+  async createCookieConsentLog(input: InsertCookieConsent): Promise<CookieConsent> {
+    return { id: Date.now(), ...input, createdAt: new Date() } as any;
+  }
+
   // Skills (MemStorage stubs)
   async listSkills(): Promise<Skill[]> { return []; }
   async createSkill(input: InsertSkill): Promise<Skill> { return { id: Date.now(), ...input } as any; }
@@ -1804,6 +1824,129 @@ export class SupabaseStorage implements IStorage {
       return false;
     }
     return true;
+  }
+
+  // ===============================
+  // Privacy Requests
+  // ===============================
+  async listPrivacyRequests(): Promise<PrivacyRequest[]> {
+    const { data, error } = await supabaseAdmin
+      .from('privacy_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('[STORAGE][PRIVACY-REQUESTS] list error:', error);
+      return [];
+    }
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      requestType: row.request_type,
+      details: row.details,
+      status: row.status,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  async createPrivacyRequest(input: InsertPrivacyRequest): Promise<PrivacyRequest> {
+    const insert: any = {
+      name: input.name,
+      email: input.email,
+      phone: input.phone ?? null,
+      request_type: input.requestType,
+      details: input.details ?? null,
+      status: input.status ?? 'new',
+      ip_address: input.ipAddress ?? null,
+      user_agent: input.userAgent ?? null,
+    };
+    const { data, error } = await supabaseAdmin
+      .from('privacy_requests')
+      .insert(insert)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[STORAGE][PRIVACY-REQUESTS] create error:', error);
+      throw error;
+    }
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      requestType: data.request_type,
+      details: data.details,
+      status: data.status,
+      ipAddress: data.ip_address,
+      userAgent: data.user_agent,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } as PrivacyRequest;
+  }
+
+  async updatePrivacyRequestStatus(id: number, status: PrivacyRequest['status']): Promise<PrivacyRequest | undefined> {
+    const { data, error } = await supabaseAdmin
+      .from('privacy_requests')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[STORAGE][PRIVACY-REQUESTS] update error:', error);
+      return undefined;
+    }
+    return data ? {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      requestType: data.request_type,
+      details: data.details,
+      status: data.status,
+      ipAddress: data.ip_address,
+      userAgent: data.user_agent,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    } as PrivacyRequest : undefined;
+  }
+
+  // ===============================
+  // Cookie Consent
+  // ===============================
+  async createCookieConsentLog(input: InsertCookieConsent): Promise<CookieConsent> {
+    const insert: any = {
+      user_id: input.userId ?? null,
+      necessary: input.necessary ?? true,
+      analytics: input.analytics ?? false,
+      marketing: input.marketing ?? false,
+      region: input.region ?? null,
+      ip_address: input.ipAddress ?? null,
+      user_agent: input.userAgent ?? null,
+    };
+    const { data, error } = await supabaseAdmin
+      .from('cookie_consent')
+      .insert(insert)
+      .select('*')
+      .single();
+    if (error) {
+      console.error('[STORAGE][COOKIE-CONSENT] create error:', error);
+      throw error;
+    }
+    return {
+      id: data.id,
+      userId: data.user_id,
+      necessary: data.necessary,
+      analytics: data.analytics,
+      marketing: data.marketing,
+      region: data.region,
+      ipAddress: data.ip_address,
+      userAgent: data.user_agent,
+      createdAt: data.created_at,
+    } as CookieConsent;
   }
 
   // ===============================

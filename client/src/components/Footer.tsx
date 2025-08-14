@@ -280,7 +280,12 @@ export function Footer() {
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link href="/privacy" className="hover:text-[#D8BD2A] transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-[#D8BD2A] transition-colors">Terms of Service</Link>
-              <Link href="/contact" className="hover:text-[#D8BD2A] transition-colors">Sitemap</Link>
+              <Link href="/privacy-requests" className="hover:text-[#D8BD2A] transition-colors">Privacy Requests</Link>
+              <button
+                type="button"
+                className="hover:text-[#D8BD2A] transition-colors"
+                onClick={() => document.dispatchEvent(new CustomEvent('open-cookie-settings'))}
+              >Cookie Settings</button>
             </div>
           </div>
         </div>

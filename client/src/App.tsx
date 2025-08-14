@@ -7,6 +7,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ConsentProvider } from "@/contexts/ConsentManager";
 // Simple loading component
 const PageLoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -46,6 +47,9 @@ const BookingSuccess = lazy(() => import("@/pages/booking-success").catch(() => 
 })));
 const ParentDashboard = lazy(() => import("@/pages/parent-dashboard"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
+const TermsOfService = lazy(() => import("@/pages/terms-of-service"));
+const PrivacyRequests = lazy(() => import("@/pages/privacy-requests"));
 
 function Router() {
   const [location] = useLocation();
@@ -94,6 +98,9 @@ function Router() {
           <Route path="/parent-dashboard" component={ParentDashboard} />
           <Route path="/checkout" component={Checkout} />
           <Route path="/booking-success" component={BookingSuccess} />
+          <Route path="/privacy" component={PrivacyPolicy} />
+          <Route path="/terms" component={TermsOfService} />
+          <Route path="/privacy-requests" component={PrivacyRequests} />
 
           <Route component={NotFound} />
         </Switch>
@@ -117,12 +124,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <div className="app-root">
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </div>
+        <ConsentProvider>
+          <div className="app-root">
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </div>
+        </ConsentProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

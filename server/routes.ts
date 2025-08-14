@@ -7634,6 +7634,74 @@ setTimeout(async () => {
     }
   });
 
+  // Privacy Requests endpoint (store minimal request and email admin if configured)
+  app.post('/api/privacy-requests', async (req, res) => {
+    try {
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
+      const ua = req.headers['user-agent'] || '';
+      const { name, email, phone, type, details } = req.body || {};
+      if (!name || !email || !type) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      // Persist to dedicated privacy_requests table
+      const inquiry = await storage.createPrivacyRequest({
+        name,
+        email,
+        phone: phone || null,
+        requestType: type,
+        details: details || null,
+        status: 'new',
+        ipAddress: ip,
+        userAgent: String(ua).slice(0, 500),
+      } as any);
+      // Best-effort email notify
+      try {
+        if (process.env.RESEND_API_KEY) {
+          const { Resend } = await import('resend');
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: 'Coach Will <noreply@coachwilltumbles.com>',
+            to: [process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com'],
+            subject: `Privacy request: ${type}`,
+            text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || ''}\nType: ${type}\nDetails: ${details || ''}\nIP: ${ip}\nUA: ${ua}`,
+          });
+        }
+      } catch (e) {
+        console.warn('[PRIVACY] Email notify failed:', e);
+      }
+      res.json({ ok: true, id: (inquiry as any)?.id || null });
+    } catch (err) {
+      console.error('[PRIVACY] Failed', err);
+      res.status(500).json({ error: 'Failed to submit request' });
+    }
+  });
+
+  // Cookie consent logging endpoint (optional best-effort; no PII needed)
+  app.post('/api/cookie-consent', async (req, res) => {
+    try {
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
+      const ua = req.headers['user-agent'] || '';
+      const { necessary = true, analytics = false, marketing = false, region, userId } = req.body || {};
+      // Persist best-effort; do not fail client if DB write fails
+      try {
+        await storage.createCookieConsentLog({
+          userId: userId ?? null,
+          necessary,
+          analytics,
+          marketing,
+          region: region || null,
+          ipAddress: ip,
+          userAgent: String(ua).slice(0, 500),
+        } as any);
+      } catch (dbErr) {
+        console.warn('[COOKIE-CONSENT] Persist failed:', dbErr);
+      }
+      res.json({ ok: true });
+    } catch (err) {
+      res.json({ ok: true });
+    }
+  });
+
   // DEPRECATED: Database test endpoint - no longer needed with Supabase client
   /*
   app.get("/api/db-test", async (req, res) => {
