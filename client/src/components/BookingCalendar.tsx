@@ -126,23 +126,27 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       
       const title = `${lessonTypeName} - ${athleteNames}`;
       
-      // Set color based on status
-      let color;
+  // Set color based on status
+  let color;
       const paymentStatus = booking.paymentStatus || booking.payment_status;
       const attendanceStatus = booking.attendanceStatus || booking.attendance_status;
       
       // Status-based coloring (ensure contrast and brand rules: blue -> white/yellow text)
       if (attendanceStatus === 'completed') {
-        color = 'bg-emerald-100 border-emerald-300';
+        // success
+        color = 'bg-emerald-100 border-emerald-300 dark:bg-emerald-600/40 dark:border-emerald-400';
       } else if (attendanceStatus === 'no-show') {
-        color = 'bg-red-100 border-red-300';
+        // error
+        color = 'bg-red-100 border-red-300 dark:bg-red-600/40 dark:border-red-400';
       } else if (attendanceStatus === 'cancelled') {
-        color = 'bg-gray-100 border-gray-300';
+        // neutral/disabled
+        color = 'bg-gray-100 border-gray-300 dark:bg-gray-600/40 dark:border-gray-400';
       } else if (paymentStatus === 'reservation-paid' || paymentStatus === 'session-paid') {
-        // Blue event background; event text will render white/yellow
-        color = 'bg-blue-600/20 border-blue-400';
+        // paid/reserved
+        color = 'bg-blue-600/20 border-blue-400 dark:bg-blue-500/40 dark:border-blue-400';
       } else {
-        color = 'bg-amber-100 border-amber-300';
+        // pending/unpaid
+        color = 'bg-amber-100 border-amber-300 dark:bg-amber-500/40 dark:border-amber-400';
       }
 
       return {
@@ -217,12 +221,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     }
     
     return (
-      <div 
-        className={`rounded p-1 ${event.color || 'bg-blue-600/20 border-blue-400'} border`}
+      <div
+        className={`rounded p-1 ${event.color || 'bg-blue-600/20 border-blue-400 dark:bg-blue-500/40 dark:border-blue-400'} border`}
         style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         title={`${event.title} - ${event.status}`}
       >
-        <span className={`text-xs font-medium ${statusClass || 'text-blue-900 dark:text-yellow-200'}`}>
+        <span className={`text-xs font-medium ${statusClass || 'text-slate-900 dark:text-white'}`}>
           {format(event.start, 'h:mm a')} - {event.title}
           {statusIcon && <span className="ml-1 font-bold">{statusIcon}</span>}
         </span>
@@ -254,8 +258,10 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         }
         :root.dark .rbc-off-range-bg { background-color: rgba(255,255,255,0.05); }
         :root.dark .rbc-today { background-color: rgba(216,189,42,0.15); }
-        :root.dark .rbc-event { background-color: rgba(59,130,246,0.2); color: #fff; }
+        /* Let our custom event component control colors; make wrapper transparent in dark */
+        :root.dark .rbc-event { background: transparent; }
         :root.dark .rbc-event-label { color: #fff; }
+        :root.dark .rbc-slot-selection { background: rgba(216,189,42,0.25); }
         :root.dark .rbc-toolbar button { color: #fff; border-color: rgba(255,255,255,0.4); }
         :root.dark .rbc-toolbar button.rbc-active, :root.dark .rbc-toolbar button:active {
           background-color: #D8BD2A !important;

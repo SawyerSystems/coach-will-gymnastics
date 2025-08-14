@@ -795,17 +795,24 @@ function CheckoutView() {
         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
           <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Order Summary</h3>
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Tumbling Basics Lesson</span>
-              <span className="font-semibold text-slate-900 dark:text-white">$45.00</span>
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-slate-900 dark:text-white font-medium">30-Min Private Lesson</span>
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  <p>📅 Saturday, Aug 16 at 2:00 PM</p>
+                  <p>👧 Emma Rodriguez (Age 8)</p>
+                  <p>🎯 Focus: Handstand & Cartwheel</p>
+                </div>
+              </div>
+              <span className="font-semibold text-slate-900 dark:text-white">$40.00</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Processing Fee</span>
-              <span className="font-semibold text-slate-900 dark:text-white">$2.25</span>
+              <span className="text-slate-600 dark:text-slate-400">Reservation Fee</span>
+              <span className="font-semibold text-slate-900 dark:text-white">$5.00</span>
             </div>
             <div className="border-t border-slate-200 dark:border-slate-800 pt-3 flex justify-between">
-              <span className="font-bold text-slate-900 dark:text-white">Total</span>
-              <span className="font-bold text-emerald-600 text-lg">$47.25</span>
+              <span className="font-bold text-slate-900 dark:text-white">Total Due Today</span>
+              <span className="font-bold text-emerald-600 text-lg">$5.00</span>
             </div>
           </div>
         </div>
@@ -851,7 +858,7 @@ function CheckoutView() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Cardholder Name</label>
               <input 
                 type="text" 
-                placeholder="John Smith"
+                placeholder="Sarah Rodriguez"
                 className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-slate-800"
               />
             </div>
@@ -878,7 +885,7 @@ function CheckoutView() {
         {/* Complete Payment */}
         <div className="p-6">
           <Button className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-4 text-lg">
-            Complete Payment - $47.25
+            Complete Payment - $5.00
           </Button>
           <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-3">
             By completing this purchase, you agree to our Terms of Service
