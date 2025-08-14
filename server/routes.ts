@@ -11,7 +11,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
+import { sendBirthdayEmail, sendEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -6583,7 +6583,7 @@ setTimeout(async () => {
   // Email testing endpoint (development only)
   app.post("/api/test-email", isAdminAuthenticated, async (req, res) => {
     try {
-      const { type, email } = req.body;
+      const { type, email, athleteGender } = req.body;
       
       if (!email) {
         res.status(400).json({ message: "Email address is required" });
@@ -6594,13 +6594,56 @@ setTimeout(async () => {
       
       switch (type) {
         case 'session-confirmation':
-          result = await sendSessionConfirmation(
-            email,
-            "Test Parent",
-            "Test Athlete",
-            "Monday, January 15, 2025",
-            "3:00 PM"
-          );
+          result = await sendEmail({
+            type: 'session-confirmation',
+            to: email,
+            data: { 
+              parentName: "Test Parent",
+              athleteName: "Test Athlete",
+              athleteGender: athleteGender || 'female',  // Test with different genders
+              sessionDate: "Monday, January 15, 2025",
+              sessionTime: "3:00 PM",
+              manageLink: `${getBaseUrl()}/parent/bookings`
+            }
+          });
+          break;
+          
+        case 'session-follow-up':
+          result = await sendEmail({
+            type: 'session-follow-up',
+            to: email,
+            data: {
+              athleteName: "Test Athlete",
+              athleteGender: athleteGender || 'male',  // Test with different genders
+              bookingLink: `${getBaseUrl()}/book`
+            }
+          });
+          break;
+          
+        case 'waiver-completion':
+          result = await sendEmail({
+            type: 'waiver-completion',
+            to: email,
+            data: {
+              parentName: "Test Parent",
+              athleteName: "Test Athlete", 
+              athleteGender: athleteGender || 'non-binary',  // Test with different genders
+              loginLink: `${getBaseUrl()}/parent/login`
+            }
+          });
+          break;
+          
+        case 'safety-information':
+          result = await sendEmail({
+            type: 'safety-information',
+            to: email,
+            data: {
+              parentName: "Test Parent",
+              athleteName: "Test Athlete",
+              athleteGender: athleteGender,  // Can be undefined to test default
+              loginLink: `${getBaseUrl()}/parent/login`
+            }
+          });
           break;
           
         case 'session-cancellation':
@@ -6608,14 +6651,6 @@ setTimeout(async () => {
             email,
             "Test Parent",
             `${getBaseUrl()}/booking`
-          );
-          break;
-          
-        case 'session-follow-up':
-          result = await sendSessionFollowUp(
-            email,
-            "Test Athlete",
-            `${getBaseUrl()}/parent/dashboard`
           );
           break;
           
