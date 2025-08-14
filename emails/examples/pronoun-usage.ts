@@ -5,7 +5,7 @@
  * across different email templates in the gymnastics booking platform.
  */
 
-import { formatPossessivePronoun, formatSubjectPronoun, formatObjectPronoun, type Gender } from './utils/pronouns';
+import { formatPossessivePronoun, formatSubjectPronoun, formatObjectPronoun, type Gender } from '../utils/pronouns';
 
 // Example data
 const athleteName = "Alex";
