@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { sendEmailVerificationLink, sendParentWelcomeEmail } from './lib/email';
+import { getBaseUrl } from './lib/url';
 
 import * as crypto from 'crypto';
 import { NextFunction } from 'express';
@@ -45,14 +46,14 @@ const sendVerificationEmail = async (email: string, firstName: string, token: st
     // Log the token in development mode for testing
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔍 DEV: Verification token for ${email}: ${token}`);
-      console.log(`🔍 DEV: Verification URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`);
+      console.log(`🔍 DEV: Verification URL: ${getBaseUrl()}/verify-email?token=${token}`);
     }
   } catch (error) {
     console.error(`Failed to send verification email to ${email}:`, error);
     // Log the token in development mode only
     if (process.env.NODE_ENV === 'development') {
       console.log(`Verification token for ${email}: ${token}`);
-      console.log(`Verification URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`);
+      console.log(`Verification URL: ${getBaseUrl()}/verify-email?token=${token}`);
     }
   }
 };
@@ -102,7 +103,7 @@ parentAuthRouter.post('/register', [
     await sendVerificationEmail(email, firstName, token);
 
     // Send welcome email to new parent
-    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
+    const loginLink = `${getBaseUrl()}/parent/login`;
     try {
       await sendParentWelcomeEmail(email, firstName, loginLink);
       console.log(`Welcome email sent to ${email}`);

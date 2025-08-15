@@ -1951,10 +1951,14 @@ export function AdminSiteContentManager() {
                   key={testimonial.id || index}
                   testimonial={testimonial}
                   index={index}
-                  onSave={(index, updatedTestimonial) => {
+                  onSave={async (index, updatedTestimonial) => {
+                    // First update local state for immediate UI feedback
                     const newTestimonials = [...content.testimonials];
                     newTestimonials[index] = updatedTestimonial;
                     updateContent('testimonials', newTestimonials);
+                    
+                    // Then save to backend
+                    await handleSaveTestimonial(updatedTestimonial, index);
                   }}
                   onRemove={(index) => removeArrayItem('testimonials', index)}
                   onSetFeatured={handleSetFeaturedTestimonial}

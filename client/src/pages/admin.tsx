@@ -720,6 +720,53 @@ export default function Admin() {
     }
   });
 
+  // Password email mutations
+  const sendPasswordSetupMutation = useMutation({
+    mutationFn: async ({ parentId, email }: { parentId?: number; email?: string }) => {
+      const response = await apiRequest("POST", "/api/admin/send-password-setup-email", {
+        parentId, 
+        email
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Password setup email sent",
+        description: data.message || "Password setup email sent successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send password setup email",
+        description: error.message || "Failed to send password setup email",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendPasswordResetMutation = useMutation({
+    mutationFn: async ({ parentId, email }: { parentId?: number; email?: string }) => {
+      const response = await apiRequest("POST", "/api/admin/send-password-reset-email", {
+        parentId, 
+        email
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Password reset email sent",
+        description: data.message || "Password reset email sent successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send password reset email",
+        description: error.message || "Failed to send password reset email",
+        variant: "destructive",
+      });
+    },
+  });
+
   // MEMO VALUES
   const parentMapping = useMemo(() => {
     const mapping = new Map();
@@ -3207,6 +3254,67 @@ export default function Admin() {
                   </div>
                 </AdminModalSection>
               )}
+              
+              {/* Password Management Actions */}
+              <AdminModalSection
+                title="Password Management"
+                icon={<Mail className="h-5 w-5" />}
+                className="mt-6"
+              >
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                    Send password setup or reset emails to this parent. These emails will use the correct production URLs.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      onClick={() => {
+                        if (!selectedParentDetails?.id && !selectedParentDetails?.email) {
+                          console.error('No parent ID or email available');
+                          return;
+                        }
+                        
+                        sendPasswordSetupMutation.mutate({
+                          parentId: selectedParentDetails.id,
+                          email: selectedParentDetails.email
+                        });
+                      }}
+                      disabled={sendPasswordSetupMutation.isPending || !selectedParentDetails?.id}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {sendPasswordSetupMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Mail className="h-4 w-4 mr-2" />
+                      )}
+                      Send Password Setup Email
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!selectedParentDetails?.id && !selectedParentDetails?.email) {
+                          console.error('No parent ID or email available for reset');
+                          return;
+                        }
+                        
+                        sendPasswordResetMutation.mutate({
+                          parentId: selectedParentDetails.id,
+                          email: selectedParentDetails.email
+                        });
+                      }}
+                      disabled={sendPasswordResetMutation.isPending || !selectedParentDetails?.id}
+                      size="sm"
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                      {sendPasswordResetMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      Send Password Reset Email
+                    </Button>
+                  </div>
+                </div>
+              </AdminModalSection>
             </>
           )}
         </AdminModal>

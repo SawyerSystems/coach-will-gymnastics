@@ -16,7 +16,7 @@ interface Testimonial {
 interface TestimonialFormProps {
   testimonial: Testimonial;
   index: number;
-  onSave: (index: number, testimonial: Testimonial) => void;
+  onSave: (index: number, testimonial: Testimonial) => void | Promise<void>;
   onRemove: (index: number) => void;
   onSetFeatured: (index: number) => Promise<void>;
 }
@@ -33,8 +33,8 @@ const TestimonialForm = memo(({ testimonial, index, onSave, onRemove, onSetFeatu
     }));
   };
 
-  const handleSave = () => {
-    onSave(index, localTestimonial);
+  const handleSave = async () => {
+    await onSave(index, localTestimonial);
   };
 
   return (

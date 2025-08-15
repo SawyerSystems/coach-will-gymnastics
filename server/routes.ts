@@ -11,7 +11,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
+import { sendBirthdayEmail, sendEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordResetEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -24,15 +24,8 @@ import { determineBookingStatus } from "./utils/booking-status";
 
 // ...existing code...
 
-// Helper function to get the base URL for the application
-function getBaseUrl(): string {
-  // In production, use the environment variable or default to Render subdomain
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.BASE_URL || `https://${process.env.RENDER_SERVICE_NAME || 'coachwilltumbles'}.onrender.com`;
-  }
-  // In development, use localhost
-  return process.env.BASE_URL || 'http://localhost:5173';
-}
+// Import shared URL utility
+import { getBaseUrl } from './lib/url';
 
 // Initialize storage
 const storage = new SupabaseStorage();
@@ -1685,6 +1678,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/admin/send-password-setup-email - Manually send password setup email to a parent
+  app.post("/api/admin/send-password-setup-email", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { parentId, email } = req.body;
+      
+      if (!parentId && !email) {
+        return res.status(400).json({ error: "Either parentId or email is required" });
+      }
+
+      let parent;
+      if (parentId) {
+        parent = await storage.getParentById(parentId);
+        if (!parent) {
+          return res.status(404).json({ error: "Parent not found" });
+        }
+      } else if (email) {
+        // Find parent by email
+        const parents = await storage.getAllParents();
+        parent = parents.find((p: any) => p.email === email);
+        if (!parent) {
+          return res.status(404).json({ error: "Parent not found with that email" });
+        }
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Store the reset token
+      await storage.createPasswordResetToken({
+        parentId: parent!.id,
+        token: resetToken,
+        expiresAt
+      });
+
+      // Send password setup email
+      await sendPasswordSetupEmail(parent!.email, parent!.firstName || 'Parent', resetToken);
+      
+      console.log(`Admin manually sent password setup email to ${parent!.email}`);
+      res.json({ 
+        success: true, 
+        message: `Password setup email sent to ${parent!.email}`,
+        parentId: parent!.id 
+      });
+    } catch (error) {
+      console.error("Error sending password setup email:", error);
+      res.status(500).json({ error: "Failed to send password setup email" });
+    }
+  });
+
+  // POST /api/admin/send-password-reset-email - Manually send password reset email to a parent
+  app.post("/api/admin/send-password-reset-email", isAdminAuthenticated, async (req, res) => {
+    try {
+      const { parentId, email } = req.body;
+      
+      if (!parentId && !email) {
+        return res.status(400).json({ error: "Either parentId or email is required" });
+      }
+
+      let parent;
+      if (parentId) {
+        parent = await storage.getParentById(parentId);
+        if (!parent) {
+          return res.status(404).json({ error: "Parent not found" });
+        }
+      } else if (email) {
+        // Find parent by email
+        const parents = await storage.getAllParents();
+        parent = parents.find((p: any) => p.email === email);
+        if (!parent) {
+          return res.status(404).json({ error: "Parent not found with that email" });
+        }
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Store the reset token
+      await storage.createPasswordResetToken({
+        parentId: parent!.id,
+        token: resetToken,
+        expiresAt
+      });
+
+      // Send password reset email
+      await sendPasswordResetEmail(parent!.email, parent!.firstName || 'Parent', resetToken);
+      
+      console.log(`Admin manually sent password reset email to ${parent!.email}`);
+      res.json({ 
+        success: true, 
+        message: `Password reset email sent to ${parent!.email}`,
+        parentId: parent!.id 
+      });
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      res.status(500).json({ error: "Failed to send password reset email" });
+    }
+  });
+
   app.get("/api/parents/:id/athletes", async (req, res) => {
     try {
       const parentId = parseInt(req.params.id);
@@ -3124,7 +3217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
                 
                 // Create booking link for next session
-                const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                const baseUrl = getBaseUrl();
                 const bookingLink = `${baseUrl}/parent/dashboard`;
                 
                 if (parent?.email) {
@@ -3618,7 +3711,7 @@ setTimeout(async () => {
                 
                 // Send welcome email for automatically created parent accounts
                 try {
-                  const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/parent/login`;
+                  const loginLink = `${getBaseUrl()}/parent/login`;
                   await sendParentWelcomeEmail(parentEmail, booking.parentFirstName || 'Gymnastics Parent', loginLink);
                   console.log(`[STRIPE WEBHOOK] Welcome email sent to new parent ${parentEmail}`);
                 } catch (emailError) {
@@ -4092,8 +4185,8 @@ setTimeout(async () => {
           },
         ],
         mode: 'payment',
-        success_url: `${process.env.FRONTEND_URL || 'http://localhost:5001'}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5001'}/booking`,
+        success_url: `${getBaseUrl()}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/booking`,
         metadata: {
           bookingId: bookingId.toString(),
           type: 'reservation_payment'
@@ -4101,7 +4194,7 @@ setTimeout(async () => {
       });
       
       // Create parent login link with proper redirect
-      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5001';
+      const baseUrl = getBaseUrl();
       const parentLoginLink = `${baseUrl}/parent/login?redirect=dashboard&booking_id=${bookingId}`;
       
       // Send all three emails using helper functions

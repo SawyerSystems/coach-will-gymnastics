@@ -1,6 +1,7 @@
 import { render } from '@react-email/render';
 import React from 'react';
 import { Resend } from 'resend';
+import { getBaseUrl } from './url';
 import { BirthdayEmail } from '../../emails/BirthdayEmail';
 import { EmailVerification } from '../../emails/EmailVerification';
 import { ManualBookingConfirmation } from '../../emails/ManualBookingConfirmation';
@@ -675,7 +676,7 @@ export async function sendEmailVerificationLink(
   firstName: string,
   verificationToken: string
 ) {
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const baseUrl = getBaseUrl();
   const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
   
   return sendEmail({
@@ -694,7 +695,7 @@ export async function sendPasswordSetupEmail(
   firstName: string,
   resetToken: string,
 ) {
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const baseUrl = getBaseUrl();
   const resetUrl = `${baseUrl}/parent/set-password?token=${resetToken}`;
   
   return sendEmail({
@@ -714,7 +715,7 @@ export async function sendPasswordResetEmail(
   firstName: string,
   resetToken: string,
 ) {
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const baseUrl = getBaseUrl();
   const resetUrl = `${baseUrl}/parent/set-password?token=${resetToken}`;
   
   return sendEmail({
@@ -839,7 +840,7 @@ async function sendCompletedSessionEmail(bookingId: number, storage: EmailStorag
     }
     
     // Create booking link for next session
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseUrl = getBaseUrl();
     const bookingLink = `${baseUrl}/parent/dashboard`;
     
     console.log(`[STATUS-EMAIL] Sending completed session follow-up for booking ${bookingId} to ${parentEmail}`);
