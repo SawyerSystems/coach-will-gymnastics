@@ -2624,7 +2624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Header & logo (smaller, tidy)
-      const invoiceNo = `INV-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 12)}`;
+      const receiptNo = `RCP-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 12)}`;
       try {
         const logoPath = path.join(process.cwd(), 'client', 'public', 'CWT_Circle_LogoSPIN.png');
         const logoBytes = await fs.readFile(logoPath);
@@ -2634,17 +2634,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const targetH = logoImg.height * scale;
         page.drawImage(logoImg, { x: margin, y: y - targetH + 6, width: targetW, height: targetH, opacity: 0.9 });
       } catch {}
-      drawText('CoachWillTumbles', margin + 80, y, 12, bold, textGray);
-      y -= 6;
+      
+      // Left side: Payout title and details
       drawText(invoiceTitle || 'Manual Payout', margin + 80, y, 18, bold);
       y -= 20;
-      drawText(`Invoice #: ${invoiceNo}`, margin + 80, y, 10, font, textGray);
+      drawText(`Receipt #: ${receiptNo}`, margin + 80, y, 10, font, textGray);
       y -= 12;
       if (periodStart || periodEnd) {
         drawText(`Period: ${periodStart || '—'} to ${periodEnd || '—'}`, margin + 80, y, 10, font, textGray);
         y -= 12;
       }
       drawText(`Generated: ${new Date().toLocaleString('en-US', { timeZone: tz })} (${tz})`, margin + 80, y, 10, font, textGray);
+      
+      // Right side: Company name
+      const rightX = width - margin - 150; // Position from right edge
+      const companyY = height - margin; // Reset to top for company name
+      drawText('Coach Will Tumbles', rightX, companyY, 12, bold, textGray);
       y -= 18;
       if (notes) { drawText(`Notes: ${notes}`, margin, y, 10, font, textGray); y -= 14; }
       // Divider
@@ -2807,7 +2812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .replace(/\s+/g, '-')
         .toLowerCase()
         .slice(0, 60);
-      const fileName = `${safeTitle || 'manual-payout'}-${invoiceNo}.pdf`;
+      const fileName = `${safeTitle || 'manual-payout'}-${receiptNo}.pdf`;
       res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
       res.send(Buffer.from(pdfBytes));
     } catch (e) {
