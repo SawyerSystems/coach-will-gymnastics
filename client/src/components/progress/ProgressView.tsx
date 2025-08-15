@@ -59,6 +59,27 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   const [selectedSkillForTest, setSelectedSkillForTest] = React.useState<any>(null);
   const [showAddSkillDialog, setShowAddSkillDialog] = React.useState(false);
   
+  // URL-based route protection for videos tab
+  React.useEffect(() => {
+    // Check if parent user is trying to access videos tab via URL hash or direct link
+    if (!isAdmin && (window.location.hash === '#videos' || window.location.search.includes('tab=videos'))) {
+      // Analytics tracking for parent video access attempt via URL
+      console.log('Analytics: Parent attempted to access videos tab via direct URL');
+      
+      // Redirect to skills tab by modifying URL and programmatically switching tab
+      window.history.replaceState(null, '', window.location.pathname + window.location.search.replace(/[?&]tab=videos/, ''));
+      window.location.hash = '';
+      
+      // Wait for component to render, then switch to skills tab
+      setTimeout(() => {
+        const skillsTab = document.querySelector('[value="skills"]') as HTMLElement;
+        if (skillsTab) {
+          skillsTab.click();
+        }
+      }, 100);
+    }
+  }, [isAdmin]);
+  
   // Modal states for video stacks
   const [dayVideoModal, setDayVideoModal] = React.useState<{
     isOpen: boolean;
@@ -263,7 +284,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} lg:w-auto ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -272,10 +293,13 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
               <Target className="h-4 w-4" />
               Skills
             </TabsTrigger>
-            <TabsTrigger value="videos" className="flex items-center gap-2">
-              <Play className="h-4 w-4" />
-              Videos
-            </TabsTrigger>
+            {/* Videos tab - only visible to admin/coach users */}
+            {isAdmin && (
+              <TabsTrigger value="videos" className="flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                Videos
+              </TabsTrigger>
+            )}
             <TabsTrigger value="achievements" className="flex items-center gap-2">
               <Trophy className="h-4 w-4" />
               Achievements
@@ -724,57 +748,58 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
             )}
           </TabsContent>
 
-          {/* Videos Tab */}
-          <TabsContent value="videos" className="space-y-6">
-            {/* Grouped by Day */}
-            {(() => {
-              type VideoListItem = ProgressVideo & { skillName: string; skillStatus?: string | null };
-              // Flatten all videos across skills
-              const allVideos: VideoListItem[] = (data.skills as ProgressSkill[]).flatMap((skill) =>
-                (skill.videos || []).map((video) => ({
-                  ...video,
-                  skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
-                  skillStatus: skill.athleteSkill?.status || null,
-                }))
-              );
+          {/* Videos Tab - Admin/Coach Only */}
+          {isAdmin ? (
+            <TabsContent value="videos" className="space-y-6">
+              {/* Grouped by Day */}
+              {(() => {
+                type VideoListItem = ProgressVideo & { skillName: string; skillStatus?: string | null };
+                // Flatten all videos across skills
+                const allVideos: VideoListItem[] = (data.skills as ProgressSkill[]).flatMap((skill) =>
+                  (skill.videos || []).map((video) => ({
+                    ...video,
+                    skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
+                    skillStatus: skill.athleteSkill?.status || null,
+                  }))
+                );
 
-              if (!allVideos.length) return null;
+                if (!allVideos.length) return null;
 
-              // Normalize to YYYY-MM-DD for grouping
-              const toDay = (v: ProgressVideo) => {
-                const d = (v.recordedAt as any) || (v as any).createdAt || null;
-                try {
-                  return d ? new Date(d).toISOString().slice(0, 10) : 'Unknown Date';
-                } catch {
-                  return 'Unknown Date';
+                // Normalize to YYYY-MM-DD for grouping
+                const toDay = (v: ProgressVideo) => {
+                  const d = (v.recordedAt as any) || (v as any).createdAt || null;
+                  try {
+                    return d ? new Date(d).toISOString().slice(0, 10) : 'Unknown Date';
+                  } catch {
+                    return 'Unknown Date';
+                  }
+                };
+
+                const groups = new Map<string, VideoListItem[]>();
+                for (const v of allVideos) {
+                  const key = toDay(v);
+                  if (!groups.has(key)) groups.set(key, []);
+                  groups.get(key)!.push(v);
                 }
-              };
 
-              const groups = new Map<string, VideoListItem[]>();
-              for (const v of allVideos) {
-                const key = toDay(v);
-                if (!groups.has(key)) groups.set(key, []);
-                groups.get(key)!.push(v);
-              }
+                // Sort groups by date desc, with Unknown at bottom
+                const sortedDays = Array.from(groups.keys()).sort((a, b) => {
+                  if (a === 'Unknown Date') return 1;
+                  if (b === 'Unknown Date') return -1;
+                  return a < b ? 1 : a > b ? -1 : 0;
+                });
 
-              // Sort groups by date desc, with Unknown at bottom
-              const sortedDays = Array.from(groups.keys()).sort((a, b) => {
-                if (a === 'Unknown Date') return 1;
-                if (b === 'Unknown Date') return -1;
-                return a < b ? 1 : a > b ? -1 : 0;
-              });
-
-              return (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-[#D8BD2A]" />
-                      Videos by Day
-                    </h3>
-                    <div className="text-sm text-[#0F0276]/70 dark:text-white/70">
-                      {allVideos.length} clip{allVideos.length !== 1 ? 's' : ''}
+                return (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-[#D8BD2A]" />
+                        Videos by Day
+                      </h3>
+                      <div className="text-sm text-[#0F0276]/70 dark:text-white/70">
+                        {allVideos.length} clip{allVideos.length !== 1 ? 's' : ''}
+                      </div>
                     </div>
-                  </div>
 
                   {sortedDays.map((day) => {
                     const items = groups.get(day)!;
@@ -973,6 +998,34 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
               </Card>
             )}
           </TabsContent>
+          ) : (
+            // Fallback content for parent users - redirect them to Skills tab
+            <TabsContent value="videos" className="space-y-6">
+              <Card className="bg-amber-50/60 backdrop-blur-sm border-amber-200/60 dark:bg-amber-900/20 dark:border-amber-700/30">
+                <CardContent className="text-center py-12">
+                  <Shield className="h-12 w-12 mx-auto mb-4 text-amber-600 dark:text-amber-400" />
+                  <h3 className="text-lg font-medium text-amber-800 dark:text-amber-200 mb-2">Access Restricted</h3>
+                  <p className="text-amber-700 dark:text-amber-300 mb-4">
+                    Video content is available to coaches and administrators only.
+                  </p>
+                  <Button 
+                    onClick={() => {
+                      // Analytics tracking for parent video access attempt
+                      console.log('Analytics: Parent attempted to access videos tab');
+                      // Redirect to Skills tab
+                      const skillsTab = document.querySelector('[data-state="inactive"][value="skills"]') as HTMLElement;
+                      if (skillsTab) {
+                        skillsTab.click();
+                      }
+                    }}
+                    className="bg-[#0F0276] hover:bg-[#0F0276]/90 text-white"
+                  >
+                    View Skills Progress
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           {/* Achievements Tab */}
           <TabsContent value="achievements" className="space-y-6">
