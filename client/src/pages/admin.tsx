@@ -840,6 +840,185 @@ export default function Admin() {
     }
   }, [activeTab]);
 
+  // DASHBOARD STATS
+  // Merge active + archived for "ALL" views
+  const allBookings = useMemo(() => {
+    return [...(bookings || []), ...(archivedBookings || [])];
+  }, [bookings, archivedBookings]);
+
+  const totalBookingsAll = allBookings.length;
+  const totalParents = parents.length;
+
+  // Upcoming = future date/time AND not cancelled/completed
+  const isUpcoming = useCallback((b: Booking) => {
+    if (!b?.preferredDate) return false;
+    try {
+      const time = (b.preferredTime && typeof b.preferredTime === 'string') ? b.preferredTime : '00:00:00';
+      const dt = new Date(`${b.preferredDate}T${time}`);
+      const now = new Date();
+      const status = (b.attendanceStatus || '').toLowerCase();
+      const notDone = status === 'pending' || status === 'confirmed';
+      return notDone && dt >= now;
+    } catch {
+      return false;
+    }
+  }, []);
+  
+  const upcomingBookingsCount = useMemo(() => allBookings.filter(isUpcoming).length, [allBookings, isUpcoming]);
+  const pendingBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "pending").length, [allBookings]);
+  const confirmedBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "confirmed").length, [allBookings]);
+
+  // Shared analytics/header computed values
+  const thisMonthBookings = useMemo(() => {
+    return allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const bookingDate = new Date(b.preferredDate);
+      const now = new Date();
+      return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
+    }).length;
+  }, [allBookings]);
+
+  const conversionRate = useMemo(() => {
+    if (!allBookings.length) return 0;
+    const converted = allBookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length;
+    return Math.round((converted / allBookings.length) * 100);
+  }, [allBookings]);
+
+  const avgBookingValue = useMemo(() => {
+    if (!allBookings.length) return '0.00';
+    const toNumber = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const sum = allBookings.reduce((acc, b: any) => {
+      const amountNum = toNumber(b?.amount);
+      if (amountNum > 0) return acc + amountNum;
+      if (b?.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) {
+        const match: any = lessonTypesById.get(b.lessonTypeId);
+        return acc + toNumber(match?.price);
+      }
+      const lt: any = b?.lessonType;
+      if (lt && typeof lt === 'object' && 'price' in lt) return acc + toNumber(lt.price);
+      const name = typeof lt === 'string' ? lt : undefined;
+      if (name && lessonTypesByName.has(name)) {
+        const match: any = lessonTypesByName.get(name);
+        return acc + toNumber(match?.price);
+      }
+      return acc;
+    }, 0);
+    return (sum / allBookings.length).toFixed(2);
+  }, [allBookings, lessonTypesById, lessonTypesByName]);
+
+  const onlinePct = useMemo(() => {
+    if (!allBookings.length) return 0;
+    const count = allBookings.filter((b: any) => b?.bookingMethod === 'Website').length;
+    return Math.round((count / allBookings.length) * 100);
+  }, [allBookings]);
+
+  const adminBookedPct = useMemo(() => {
+    if (!allBookings.length) return 0;
+    const count = allBookings.filter((b: any) => b?.bookingMethod === 'Admin').length;
+    return Math.round((count / allBookings.length) * 100);
+  }, [allBookings]);
+
+  const dashboardHeaderMetrics = useMemo<MetricCard[]>(() => {
+    const metrics: MetricCard[] = [
+      {
+        key: 'upcoming',
+        label: 'Upcoming Missions',
+        value: upcomingBookingsCount,
+        hint: `of ${totalBookingsAll} total`,
+        icon: <Calendar className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
+        color: 'indigo' as const,
+      },
+      {
+        key: 'total',
+        label: 'Total Missions',
+        value: totalBookingsAll,
+        icon: <Calendar className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
+        color: 'slate' as const,
+      },
+      {
+        key: 'pending',
+        label: 'Pending',
+        value: pendingBookings,
+        icon: <Clock className="h-5 w-5 text-amber-700" />,
+        color: 'amber' as const,
+      },
+      {
+        key: 'confirmed',
+        label: 'Confirmed',
+        value: confirmedBookings,
+        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
+        color: 'green' as const,
+      },
+      {
+        key: 'athletes',
+        label: 'Total Athletes',
+        value: athletes.length,
+        icon: <Users className="h-5 w-5 text-blue-700 dark:text-blue-300" />,
+        color: 'blue' as const,
+      },
+      {
+        key: 'parents',
+        label: 'Total Parents',
+        value: totalParents,
+        icon: <Users className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
+        color: 'indigo' as const,
+      },
+    ];
+    if (missingWaivers.length > 0) {
+      metrics.push({
+        key: 'missing-waivers',
+        label: 'Missing Waivers',
+        value: missingWaivers.length,
+        hint: 'Athletes need waivers signed',
+        icon: <AlertCircle className="h-5 w-5 text-red-700" />,
+  color: 'amber' as const,
+      });
+    }
+    return metrics;
+  }, [upcomingBookingsCount, totalBookingsAll, pendingBookings, confirmedBookings, athletes.length, totalParents, missingWaivers.length]);
+
+  // Analytics tab key metrics
+  const analyticsHeaderMetrics = useMemo(() => {
+    const metrics = [
+      {
+        key: 'total-all',
+        label: 'Total Bookings',
+        value: totalBookingsAll,
+        hint: 'All time',
+        icon: <Calendar className="h-5 w-5 text-slate-700" />,
+        color: 'slate' as const,
+      },
+      {
+        key: 'this-month',
+        label: 'This Month',
+        value: thisMonthBookings,
+        hint: 'Monthly bookings',
+        icon: <CalendarDays className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
+        color: 'indigo' as const,
+      },
+      {
+        key: 'conversion',
+        label: 'Conversion Rate',
+        value: `${conversionRate}%`,
+        hint: 'Form to payment',
+        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
+        color: 'green' as const,
+      },
+      {
+        key: 'avg-value',
+        label: 'Avg Booking Value',
+        value: `$${avgBookingValue}`,
+        hint: 'Full lesson price only',
+        icon: <DollarSign className="h-5 w-5 text-amber-700" />,
+        color: 'amber' as const,
+      },
+    ];
+    return metrics;
+  }, [totalBookingsAll, thisMonthBookings, conversionRate, avgBookingValue]);
+
   // EARLY RETURNS AFTER ALL HOOKS
   if (authLoading) {
     return (
@@ -1078,186 +1257,6 @@ export default function Admin() {
     }
   };
 
-
-
-  // DASHBOARD STATS
-  // Merge active + archived for "ALL" views
-  const allBookings = useMemo(() => {
-    return [...(bookings || []), ...(archivedBookings || [])];
-  }, [bookings, archivedBookings]);
-
-  const totalBookingsAll = allBookings.length;
-  const totalParents = parents.length;
-
-  // Upcoming = future date/time AND not cancelled/completed
-  const isUpcoming = useCallback((b: Booking) => {
-    if (!b?.preferredDate) return false;
-    try {
-      const time = (b.preferredTime && typeof b.preferredTime === 'string') ? b.preferredTime : '00:00:00';
-      const dt = new Date(`${b.preferredDate}T${time}`);
-      const now = new Date();
-      const status = (b.attendanceStatus || '').toLowerCase();
-      const notDone = status === 'pending' || status === 'confirmed';
-      return notDone && dt >= now;
-    } catch {
-      return false;
-    }
-  }, []);
-  
-  const upcomingBookingsCount = useMemo(() => allBookings.filter(isUpcoming).length, [allBookings, isUpcoming]);
-  const pendingBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "pending").length, [allBookings]);
-  const confirmedBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "confirmed").length, [allBookings]);
-
-  // Shared analytics/header computed values
-  const thisMonthBookings = useMemo(() => {
-    return allBookings.filter(b => {
-      if (!b.preferredDate) return false;
-      const bookingDate = new Date(b.preferredDate);
-      const now = new Date();
-      return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
-    }).length;
-  }, [allBookings]);
-
-  const conversionRate = useMemo(() => {
-    if (!allBookings.length) return 0;
-    const converted = allBookings.filter(b => b.attendanceStatus === 'confirmed' || b.attendanceStatus === 'completed').length;
-    return Math.round((converted / allBookings.length) * 100);
-  }, [allBookings]);
-
-  const avgBookingValue = useMemo(() => {
-    if (!allBookings.length) return '0.00';
-    const toNumber = (v: any) => {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    };
-    const sum = allBookings.reduce((acc, b: any) => {
-      const amountNum = toNumber(b?.amount);
-      if (amountNum > 0) return acc + amountNum;
-      if (b?.lessonTypeId && lessonTypesById.has(b.lessonTypeId)) {
-        const match: any = lessonTypesById.get(b.lessonTypeId);
-        return acc + toNumber(match?.price);
-      }
-      const lt: any = b?.lessonType;
-      if (lt && typeof lt === 'object' && 'price' in lt) return acc + toNumber(lt.price);
-      const name = typeof lt === 'string' ? lt : undefined;
-      if (name && lessonTypesByName.has(name)) {
-        const match: any = lessonTypesByName.get(name);
-        return acc + toNumber(match?.price);
-      }
-      return acc;
-    }, 0);
-    return (sum / allBookings.length).toFixed(2);
-  }, [allBookings, lessonTypesById, lessonTypesByName]);
-
-  const onlinePct = useMemo(() => {
-    if (!allBookings.length) return 0;
-    const count = allBookings.filter((b: any) => b?.bookingMethod === 'Website').length;
-    return Math.round((count / allBookings.length) * 100);
-  }, [allBookings]);
-
-  const adminBookedPct = useMemo(() => {
-    if (!allBookings.length) return 0;
-    const count = allBookings.filter((b: any) => b?.bookingMethod === 'Admin').length;
-    return Math.round((count / allBookings.length) * 100);
-  }, [allBookings]);
-
-  const dashboardHeaderMetrics = useMemo<MetricCard[]>(() => {
-    const metrics: MetricCard[] = [
-      {
-        key: 'upcoming',
-        label: 'Upcoming Missions',
-        value: upcomingBookingsCount,
-        hint: `of ${totalBookingsAll} total`,
-        icon: <Calendar className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
-        color: 'indigo' as const,
-      },
-      {
-        key: 'total',
-        label: 'Total Missions',
-        value: totalBookingsAll,
-        icon: <Calendar className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
-        color: 'slate' as const,
-      },
-      {
-        key: 'pending',
-        label: 'Pending',
-        value: pendingBookings,
-        icon: <Clock className="h-5 w-5 text-amber-700" />,
-        color: 'amber' as const,
-      },
-      {
-        key: 'confirmed',
-        label: 'Confirmed',
-        value: confirmedBookings,
-        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
-        color: 'green' as const,
-      },
-      {
-        key: 'athletes',
-        label: 'Total Athletes',
-        value: athletes.length,
-        icon: <Users className="h-5 w-5 text-blue-700 dark:text-blue-300" />,
-        color: 'blue' as const,
-      },
-      {
-        key: 'parents',
-        label: 'Total Parents',
-        value: totalParents,
-        icon: <Users className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
-        color: 'indigo' as const,
-      },
-    ];
-    if (missingWaivers.length > 0) {
-      metrics.push({
-        key: 'missing-waivers',
-        label: 'Missing Waivers',
-        value: missingWaivers.length,
-        hint: 'Athletes need waivers signed',
-        icon: <AlertCircle className="h-5 w-5 text-red-700" />,
-  color: 'amber' as const,
-      });
-    }
-    return metrics;
-  }, [upcomingBookingsCount, totalBookingsAll, pendingBookings, confirmedBookings, athletes.length, totalParents, missingWaivers.length]);
-
-  // Analytics tab key metrics
-  const analyticsHeaderMetrics = useMemo(() => {
-    const metrics = [
-      {
-        key: 'total-all',
-        label: 'Total Bookings',
-        value: totalBookingsAll,
-        hint: 'All time',
-        icon: <Calendar className="h-5 w-5 text-slate-700" />,
-        color: 'slate' as const,
-      },
-      {
-        key: 'this-month',
-        label: 'This Month',
-        value: thisMonthBookings,
-        hint: 'Monthly bookings',
-        icon: <CalendarDays className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
-        color: 'indigo' as const,
-      },
-      {
-        key: 'conversion',
-        label: 'Conversion Rate',
-        value: `${conversionRate}%`,
-        hint: 'Form to payment',
-        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
-        color: 'green' as const,
-      },
-      {
-        key: 'avg-value',
-        label: 'Avg Booking Value',
-        value: `$${avgBookingValue}`,
-        hint: 'Full lesson price only',
-        icon: <DollarSign className="h-5 w-5 text-amber-700" />,
-        color: 'amber' as const,
-      },
-    ];
-    return metrics;
-  }, [totalBookingsAll, thisMonthBookings, conversionRate, avgBookingValue]);
 
   // ANALYTICS COMPUTED DATA
   const filteredBookingsForAnalytics = allBookings.filter(booking => {
