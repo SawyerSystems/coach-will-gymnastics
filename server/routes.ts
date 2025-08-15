@@ -2533,7 +2533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manual invoice generation (PDF) from ad-hoc selection of athletes and dates
+  // Manual payout generation (PDF) from ad-hoc selection of athletes and dates
   // POST body schema:
   // {
   //   invoiceTitle?: string,
@@ -2544,11 +2544,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //     athleteId?: number,
   //     athleteName?: string,
   //     date: string, // YYYY-MM-DD
+  //     time?: string, // HH:MM
   //     durationMinutes?: number,
   //     member?: boolean,
   //     rateCents?: number,
-  //     amountCents?: number, // overrides rateCents if provided
-  //     description?: string
+  //     owedCents?: number, // replaces amountCents
   //   }>
   // }
   app.post('/api/admin/invoices/manual/export.pdf', isAdminAuthenticated, async (req, res) => {
@@ -2557,11 +2557,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         athleteId: z.number().optional(),
         athleteName: z.string().optional(),
         date: z.string(),
+        time: z.string().optional(),
         durationMinutes: z.number().optional(),
         member: z.boolean().optional(),
         rateCents: z.number().optional(),
-        amountCents: z.number().optional(),
-        description: z.string().optional()
+        owedCents: z.number().optional()
       });
       const bodySchema = z.object({
         invoiceTitle: z.string().optional(),
@@ -2602,11 +2602,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Normalize items and compute amounts
       const items = rawItems.map(i => {
         const athleteName = i.athleteName || (i.athleteId ? idToName.get(i.athleteId) : undefined) || 'Athlete';
-        const amountCents = typeof i.amountCents === 'number' ? i.amountCents : (typeof i.rateCents === 'number' ? i.rateCents : 0);
-        return { ...i, athleteName, amountCents };
+        const owedCents = typeof i.owedCents === 'number' ? i.owedCents : (typeof i.rateCents === 'number' ? i.rateCents : 0);
+        return { ...i, athleteName, owedCents };
       });
 
-      const totalCents = items.reduce((sum, i) => sum + (i.amountCents || 0), 0);
+      const totalCents = items.reduce((sum, i) => sum + (i.owedCents || 0), 0);
 
       // Build PDF
       const doc = await PDFDocument.create();
@@ -2636,7 +2636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch {}
       drawText('CoachWillTumbles', margin + 80, y, 12, bold, textGray);
       y -= 6;
-      drawText(invoiceTitle || 'Manual Invoice', margin + 80, y, 18, bold);
+      drawText(invoiceTitle || 'Manual Payout', margin + 80, y, 18, bold);
       y -= 20;
       drawText(`Invoice #: ${invoiceNo}`, margin + 80, y, 10, font, textGray);
       y -= 12;
@@ -2651,37 +2651,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
       y -= 14;
 
-      // Table columns (space numeric columns anchored from right to prevent overlap)
+      // Table columns (match the payout PDF structure: Date, Time, Athlete, Member, Dur, Rate, Owed)
       const right = width - margin;
       const col = {
         date: margin,
-        athlete: margin + 90,
-        desc: margin + 230,
-        dur: right - 150,   // 150pt from right edge, before rate/amount
-        rate: right - 90,   // 60pt before amount
-        amount: right - 30, // last numeric column near right edge
+        time: margin + 80,
+        athlete: margin + 150,
+        // Right-anchored numeric columns (use these as right boundaries)
+        memberRight: right - 180,
+        durRight: right - 120, 
+        rateRight: right - 80,
+        owedRight: right - margin,
       } as const;
 
-      const clipText = (text: string, maxWidth: number, size = 11, f = font) => {
-        if (f.widthOfTextAtSize(text, size) <= maxWidth) return text;
+      // Helper to truncate text to fit within a max width with ellipsis
+      const fitText = (text: string, maxWidth: number, size = 11) => {
+        if (!text) return '';
+        let t = text;
+        if (font.widthOfTextAtSize(t, size) <= maxWidth) return t;
         const ell = '…';
-        let lo = 0, hi = text.length;
+        const ellW = font.widthOfTextAtSize(ell, size);
+        // Binary-like reduction
+        let lo = 0, hi = t.length;
         while (lo < hi) {
           const mid = Math.floor((lo + hi) / 2);
-          const candidate = text.slice(0, mid) + ell;
-          const w = f.widthOfTextAtSize(candidate, size);
+          const slice = t.slice(0, mid);
+          const w = font.widthOfTextAtSize(slice, size) + ellW;
           if (w <= maxWidth) lo = mid + 1; else hi = mid;
         }
-        const trimmed = text.slice(0, Math.max(0, lo - 1)) + ell;
-        return trimmed;
+        const keep = Math.max(0, lo - 1);
+        return t.slice(0, keep) + ell;
       };
-  drawText('Date', col.date, y, 11, bold);
-  drawText('Athlete', col.athlete, y, 11, bold);
-  drawText('Description', col.desc, y, 11, bold);
-  drawText('Dur', col.dur, y, 11, bold);
-  // Right-align headers for numeric columns for consistency
-  page.drawText('Rate', { x: col.rate - bold.widthOfTextAtSize('Rate', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
-  page.drawText('Amount', { x: col.amount - bold.widthOfTextAtSize('Amount', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
+
+      // Table header
+      drawText('Date', col.date, y, 11, bold);
+      drawText('Time', col.time, y, 11, bold);
+      drawText('Athlete', col.athlete, y, 11, bold);
+      // Right-align headers for numeric columns to their right boundaries
+      const memberHdr = 'Member';
+      const durHdr = 'Dur';
+      const rateHdr = 'Rate';
+      const owedHdr = 'Owed';
+      drawText(memberHdr, col.memberRight - bold.widthOfTextAtSize(memberHdr, 11), y, 11, bold);
+      drawText(durHdr, col.durRight - bold.widthOfTextAtSize(durHdr, 11), y, 11, bold);
+      drawText(rateHdr, col.rateRight - bold.widthOfTextAtSize(rateHdr, 11), y, 11, bold);
+      drawText(owedHdr, col.owedRight - bold.widthOfTextAtSize(owedHdr, 11), y, 11, bold);
       y -= 12;
       page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 1, color: lineGray });
       y -= 8;
@@ -2691,13 +2705,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           page = doc.addPage([612, 792]);
           const pw = page.getSize().width;
           y = page.getSize().height - margin;
-          // Header of new page (table header only)
+          // Repeat header on new page
           drawText('Date', col.date, y, 11, bold);
+          drawText('Time', col.time, y, 11, bold);
           drawText('Athlete', col.athlete, y, 11, bold);
-          drawText('Description', col.desc, y, 11, bold);
-          drawText('Dur', col.dur, y, 11, bold);
-          page.drawText('Rate', { x: col.rate - bold.widthOfTextAtSize('Rate', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
-          page.drawText('Amount', { x: col.amount - bold.widthOfTextAtSize('Amount', 11), y, size: 11, font: bold, color: rgb(0,0,0) });
+          drawText(memberHdr, col.memberRight - bold.widthOfTextAtSize(memberHdr, 11), y, 11, bold);
+          drawText(durHdr, col.durRight - bold.widthOfTextAtSize(durHdr, 11), y, 11, bold);
+          drawText(rateHdr, col.rateRight - bold.widthOfTextAtSize(rateHdr, 11), y, 11, bold);
+          drawText(owedHdr, col.owedRight - bold.widthOfTextAtSize(owedHdr, 11), y, 11, bold);
           y -= 12;
           page.drawLine({ start: { x: margin, y }, end: { x: pw - margin, y }, thickness: 1, color: lineGray });
           y -= 8;
@@ -2707,24 +2722,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       items.forEach((row, idx) => {
         ensureSpace();
         const rateUsd = (row.rateCents || 0) / 100;
-        const amountUsd = (row.amountCents || 0) / 100;
-        // Zebra row background
-        if (idx % 2 === 1) {
-          page.drawRectangle({ x: margin - 2, y: y - 2, width: width - margin * 2 + 4, height: 16, color: lightGray });
+        const owedUsd = (row.owedCents || 0) / 100;
+        
+        // Parse time if provided
+        let timePart = '';
+        if (row.time) {
+          try {
+            // Convert HH:MM to readable format
+            const [hours, minutes] = row.time.split(':');
+            const hour24 = parseInt(hours, 10);
+            const min = minutes || '00';
+            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+            const ampm = hour24 >= 12 ? 'PM' : 'AM';
+            timePart = `${hour12}:${min} ${ampm}`;
+          } catch {
+            timePart = row.time;
+          }
         }
-  // Clip text to prevent column overlap
-  const athleteMaxW = col.desc - col.athlete - 8;
-  const descMaxW = col.dur - col.desc - 8;
-  drawText(String(row.date), col.date, y);
-  drawText(clipText(String(row.athleteName || 'Athlete'), athleteMaxW), col.athlete, y);
-  const desc = row.description || (row.member != null ? (row.member ? 'Member session' : 'Non-member session') : 'Session');
-  drawText(clipText(desc, descMaxW), col.desc, y);
-  drawText(row.durationMinutes ? `${row.durationMinutes}` : '', col.dur, y);
-  // Right-align numeric cells
-  const rateStr = rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-';
-  const amountStr = amountUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
-  page.drawText(rateStr, { x: col.rate - font.widthOfTextAtSize(rateStr, 11), y, size: 11, font, color: rgb(0,0,0) });
-  page.drawText(amountStr, { x: col.amount - font.widthOfTextAtSize(amountStr, 11), y, size: 11, font, color: rgb(0,0,0) });
+        
+        // Zebra row background (every other row)
+        if (idx % 2 === 0) {
+          page.drawRectangle({ x: margin - 2, y: y - 12, width: width - margin * 2 + 4, height: 16, color: rgb(0.96, 0.97, 0.99), opacity: 0.6 });
+        }
+        
+        // Truncate athlete name to fit between athlete and member columns
+        const athleteMaxWidth = (col.memberRight - col.athlete) - 16;
+        const athleteFitted = fitText(String(row.athleteName || 'Athlete'), Math.max(athleteMaxWidth, 40));
+        const member = row.member ? 'Yes' : 'No';
+        const dur = row.durationMinutes || '';
+        
+        // Draw row data
+        drawText(String(row.date), col.date, y);
+        drawText(timePart, col.time, y);
+        drawText(athleteFitted, col.athlete, y);
+        drawText(member, col.memberRight - font.widthOfTextAtSize(member, 11), y);
+        drawText(String(dur), col.durRight - font.widthOfTextAtSize(String(dur), 11), y);
+        
+        // Right-align currency values to their boundaries
+        const rateStr = rateUsd ? rateUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '-';
+        const owedStr = owedUsd.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+        drawText(rateStr, col.rateRight - font.widthOfTextAtSize(rateStr, 11), y);
+        drawText(owedStr, col.owedRight - font.widthOfTextAtSize(owedStr, 11), y);
+        
         y -= 16;
       });
 
@@ -2737,7 +2776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const boxX = width - margin - boxW;
       const boxY = y - boxH + 18;
       page.drawRectangle({ x: boxX, y: boxY, width: boxW, height: boxH, borderColor: rgb(0,0,0), borderWidth: 0.8 });
-      drawText('Total', boxX + 12, boxY + 10, 11, bold);
+      drawText('Total Owed', boxX + 12, boxY + 10, 11, bold);
       drawText((totalCents / 100).toLocaleString(undefined, { style: 'currency', currency: 'USD' }), boxX + boxW - 110, boxY + 10, 12, bold);
       y = boxY - 16;
       drawText('Generated by CoachWillTumbles Admin', margin, y, 9, font, textGray);
@@ -2761,19 +2800,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const pdfBytes = await doc.save();
       res.setHeader('Content-Type', 'application/pdf');
       // Provide a sanitized filename to avoid header encoding issues
-      const safeTitle = String(invoiceTitle || 'manual-invoice')
+      const safeTitle = String(invoiceTitle || 'manual-payout')
         .normalize('NFKD')
         .replace(/[^\w\s-]/g, '')
         .trim()
         .replace(/\s+/g, '-')
         .toLowerCase()
         .slice(0, 60);
-      const fileName = `${safeTitle || 'manual-invoice'}-${invoiceNo}.pdf`;
+      const fileName = `${safeTitle || 'manual-payout'}-${invoiceNo}.pdf`;
       res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
       res.send(Buffer.from(pdfBytes));
     } catch (e) {
-      console.error('[INVOICE][MANUAL][EXPORT PDF] Exception:', e);
-      res.status(500).send('Failed to generate invoice PDF');
+      console.error('[PAYOUT][MANUAL][EXPORT PDF] Exception:', e);
+      res.status(500).send('Failed to generate payout PDF');
     }
   });
 

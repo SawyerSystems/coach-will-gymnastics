@@ -188,7 +188,7 @@ export default function AdminPayoutsTab() {
 				<Button className="w-full sm:w-auto" onClick={onExportPdf}>
 					<Download className="h-4 w-4 mr-2" /> PDF
 				</Button>
-				<ManualInvoiceDialog defaultStart={start} defaultEnd={end} />
+				<ManualPayoutDialog defaultStart={start} defaultEnd={end} />
 			</div>
 
 			{/* Filters */}
@@ -494,23 +494,23 @@ export default function AdminPayoutsTab() {
 // ———————————————————————————————
 
 type AdminAthlete = { id: number; name?: string | null; first_name?: string | null; last_name?: string | null };
-type InvoiceLine = {
+type PayoutLine = {
 	athleteId?: number;
 	athleteName?: string;
 	date: string; // YYYY-MM-DD
+	time?: string; // HH:MM
 	durationMinutes?: number;
 	member?: boolean;
 	rateDollars?: string; // UI only; convert to cents
-	amountDollars?: string; // UI only; convert to cents
-	description?: string;
+	owedDollars?: string; // UI only; convert to cents (renamed from amountDollars)
 	// internal flags
 	_userEditedRate?: boolean;
 };
 
-function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: string; defaultEnd: string }) {
+function ManualPayoutDialog({ defaultStart, defaultEnd }: { defaultStart: string; defaultEnd: string }) {
 	const { toast } = useToast();
 	const [open, setOpen] = useState(false);
-	const [invoiceTitle, setInvoiceTitle] = useState<string>('Manual Invoice');
+	const [invoiceTitle, setInvoiceTitle] = useState<string>('Manual Payout');
 	const [periodStart, setPeriodStart] = useState<string>(defaultStart);
 	const [periodEnd, setPeriodEnd] = useState<string>(defaultEnd);
 	const [timezone, setTimezone] = useState<string>('America/Los_Angeles');
@@ -531,11 +531,11 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 	const athleteLabel = (a: AdminAthlete) => a?.name || [a?.first_name, a?.last_name].filter(Boolean).join(' ') || `Athlete #${a?.id}`;
 
 	const todayISO = new Date().toISOString().slice(0, 10);
-	const [lines, setLines] = useState<InvoiceLine[]>([{ date: todayISO }]);
+	const [lines, setLines] = useState<PayoutLine[]>([{ date: todayISO }]);
 
 	const addLine = () => setLines((ls) => [...ls, { date: todayISO }]);
 	const removeLine = (idx: number) => setLines((ls) => ls.filter((_, i) => i !== idx));
-	const updateLine = (idx: number, patch: Partial<InvoiceLine>) => setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+	const updateLine = (idx: number, patch: Partial<PayoutLine>) => setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
 
 	// Fetch active payout rates to auto-fill rate when duration+member are chosen
 	const { data: activeRates = [] } = usePayoutRates('active');
@@ -576,11 +576,11 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 				athleteId: l.athleteId || undefined,
 				athleteName: l.athleteName?.trim() ? l.athleteName.trim() : undefined,
 				date: l.date,
+				time: l.time?.trim() || undefined,
 				durationMinutes: l.durationMinutes || undefined,
 				member: typeof l.member === 'boolean' ? l.member : undefined,
 				rateCents: l.rateDollars && l.rateDollars.trim() !== '' ? Math.round(parseFloat(l.rateDollars) * 100) : undefined,
-				amountCents: l.amountDollars && l.amountDollars.trim() !== '' ? Math.round(parseFloat(l.amountDollars) * 100) : undefined,
-				description: l.description?.trim() || undefined,
+				owedCents: l.owedDollars && l.owedDollars.trim() !== '' ? Math.round(parseFloat(l.owedDollars) * 100) : undefined,
 			}));
 
 			const payload = {
@@ -632,12 +632,12 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 	return (
 		<>
 			<Button className="w-full sm:w-auto" variant="outline" onClick={() => setOpen(true)}>
-				<Plus className="h-4 w-4 mr-2" /> Manual Invoice
+				<Plus className="h-4 w-4 mr-2" /> Manual Payout
 			</Button>
 			<AdminModal
 				isOpen={open}
 				onClose={() => setOpen(false)}
-				title="Create Manual Invoice"
+				title="Create Manual Payout"
 				size="3xl"
 				className="[&_.absolute.right-4.top-4]:hidden"
 				footer={
@@ -651,7 +651,7 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 					</div>
 				}
 			>
-				<AdminModalSection title="Invoice Settings" icon={<FileText className="h-5 w-5" />}>
+				<AdminModalSection title="Payout Settings" icon={<FileText className="h-5 w-5" />}>
 					<AdminModalGrid cols={2}>
 						<div>
 							<label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
@@ -660,7 +660,7 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 							<Input
 								value={invoiceTitle}
 								onChange={(e) => setInvoiceTitle(e.target.value)}
-								placeholder="Manual Invoice"
+								placeholder="Manual Payout"
 								className="w-full"
 							/>
 						</div>
@@ -768,6 +768,18 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 										
 										<div>
 											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+												Time
+											</label>
+											<Input 
+												type="time" 
+												value={l.time || ''} 
+												onChange={(e) => updateLine(idx, { time: e.target.value })} 
+												className="w-full"
+											/>
+										</div>
+										
+										<div>
+											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
 												Duration
 											</label>
 											<Select
@@ -829,37 +841,26 @@ function ManualInvoiceDialog({ defaultStart, defaultEnd }: { defaultStart: strin
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
 										<div>
 											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
-												Amount ($)
+												Owed ($)
 											</label>
 											<Input
 												inputMode="decimal"
 												placeholder="0.00"
-												value={l.amountDollars || ''}
-												onChange={(e) => updateLine(idx, { amountDollars: e.target.value })}
+												value={l.owedDollars || ''}
+												onChange={(e) => updateLine(idx, { owedDollars: e.target.value })}
 												className="w-full"
 											/>
 										</div>
 										
-										<div>
-											<label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
-												Description
-											</label>
-											<div className="flex gap-2">
-												<Input
-													value={l.description || ''}
-													onChange={(e) => updateLine(idx, { description: e.target.value })}
-													placeholder="Description"
-													className="flex-1"
-												/>
-												<AdminButton
-													size="sm"
-													variant="destructive"
-													onClick={() => removeLine(idx)}
-													className="px-2"
-												>
-													<Trash2 className="h-4 w-4" />
-												</AdminButton>
-											</div>
+										<div className="flex items-end">
+											<AdminButton
+												size="sm"
+												variant="destructive"
+												onClick={() => removeLine(idx)}
+												className="px-3 h-9"
+											>
+												<Trash2 className="h-4 w-4 mr-1" /> Remove
+											</AdminButton>
 										</div>
 									</div>
 								</div>
