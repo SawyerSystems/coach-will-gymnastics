@@ -72,7 +72,7 @@ function validate(specs: Spec[]) {
   }
 }
 
-const mdPath = path.resolve(process.cwd(), 'SEOPrompt.md');
+const mdPath = path.resolve(process.cwd(), 'docs/SEOPrompt.md');
 const md = fs.readFileSync(mdPath, 'utf8');
 const specs = parseSpecs(md);
 validate(specs);
