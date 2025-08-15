@@ -106,7 +106,7 @@ export default function AdminLogin() {
                     <FormControl>
                       <Input 
                         type="email" 
-                        placeholder="admin@coachwilltumbles.com"
+                        placeholder="Enter your email"                  
                         {...field} 
                       />
                     </FormControl>

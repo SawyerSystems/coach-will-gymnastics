@@ -15,6 +15,10 @@ import { Progress } from '@/components/ui/progress';
 import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft, User } from 'lucide-react';
 import AddAthleteSkillDialog from '@/components/admin/AddAthleteSkillDialog';
 import { TestSkillDialog } from '@/components/admin/TestSkillDialog';
+import { VideoStack } from '@/components/progress/VideoStack';
+import { VideoGalleryModal } from '@/components/progress/VideoGalleryModal';
+import { DayVideoModal } from '@/components/progress/DayVideoModal';
+import { groupVideosByDay, getVisibleGroups, shouldShowSeeMore, type VideoGroup } from '@/utils/videoGrouping';
 import type { Skill as SharedSkill } from '@shared/schema';
 
 type ProgressVideo = {
@@ -54,6 +58,20 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   const [showEditAthlete, setShowEditAthlete] = React.useState(false);
   const [selectedSkillForTest, setSelectedSkillForTest] = React.useState<any>(null);
   const [showAddSkillDialog, setShowAddSkillDialog] = React.useState(false);
+  
+  // Modal states for video stacks
+  const [dayVideoModal, setDayVideoModal] = React.useState<{
+    isOpen: boolean;
+    skillName: string;
+    dateLabel: string;
+    videos: any[];
+  }>({ isOpen: false, skillName: '', dateLabel: '', videos: [] });
+  
+  const [galleryModal, setGalleryModal] = React.useState<{
+    isOpen: boolean;
+    skillName: string;
+    groups: VideoGroup[];
+  }>({ isOpen: false, skillName: '', groups: [] });
   const [testingSkill, setTestingSkill] = React.useState<{ skill: SharedSkill; athleteSkillId?: number; status?: string | null; notes?: string | null } | null>(null);
 
   // Typed helpers
@@ -625,88 +643,64 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       </div>
                     )}
                     
-                    {skill.videos.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs font-medium text-[#0F0276]/70 dark:text-white/70 uppercase tracking-wider">
-                            Progress Videos
+                    {skill.videos.length > 0 && (() => {
+                      // Group videos by day for this skill
+                      const videoGroups = groupVideosByDay(skill.videos);
+                      const visibleGroups = getVisibleGroups(videoGroups);
+                      const showSeeMore = shouldShowSeeMore(videoGroups);
+                      const totalVideos = skill.videos.length;
+                      
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs font-medium text-[#0F0276]/70 dark:text-white/70 uppercase tracking-wider">
+                              Progress Videos
+                            </div>
+                            <div className="text-xs text-[#0F0276]/70 dark:text-white/70">
+                              {totalVideos} total
+                            </div>
                           </div>
-                          <div className="text-xs text-[#0F0276]/70 dark:text-white/70">
-                            {skill.videos.length} video{skill.videos.length !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {skill.videos.map((video: ProgressVideo) => {
-                            const direct = isDirectVideoUrl(video.url);
-                            return (
-                              <div key={video.id} className="group">
-                                {direct ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => video.url && setOpenVideo({ url: video.url, title: video.title || undefined })}
-                                    className="w-full text-left"
-                                  >
-                                    <AspectRatio ratio={16/9} className="overflow-hidden rounded-md shadow-sm">
-                                      <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
-                                        <video
-                                          className="absolute inset-0 h-full w-full object-cover opacity-90"
-                                          src={video.url || undefined}
-                                          muted
-                                          playsInline
-                                          preload="metadata"
-                                          onLoadedMetadata={(e) => {
-                                            const vid = e.currentTarget as HTMLVideoElement;
-                                            try {
-                                              vid.currentTime = 0;
-                                              vid.pause();
-                                            } catch {}
-                                          }}
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                          <div className="rounded-full bg-[#0F0276]/90 p-3 shadow-md group-hover:scale-110 group-hover:bg-[#0F0276] transition-transform">
-                                            <Play className="h-4 w-4 text-white" fill="white" />
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </AspectRatio>
-                                    <div className="mt-2 space-y-1">
-                                      <div className="text-xs font-medium truncate text-[#0F0276] dark:text-white" title={video.title || video.url || ''}>
-                                        {video.title || 'Untitled Video'}
-                                      </div>
-                                      {video.recordedAt && (
-                                        <div className="flex items-center text-[10px] text-[#0F0276]/70 dark:text-white/70">
-                                          <Calendar className="h-3 w-3 mr-1" />
-                                          {new Date(video.recordedAt as any).toLocaleDateString()}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </button>
-                                ) : (
-                                  <div className="p-3 border border-slate-200/60 dark:border-white/20 rounded-md bg-white/50 dark:bg-white/5">
-                                    <a 
-                                      className="text-[#0F0276] hover:text-[#0F0276]/80 dark:text-white dark:hover:text-white/80 font-medium text-sm flex items-center gap-1" 
-                                      href={video.url || undefined} 
-                                      target="_blank" 
-                                      rel="noreferrer"
-                                    >
-                                      <Play className="h-3 w-3" />
-                                      {video.title || video.url}
-                                    </a>
-                                    {video.recordedAt && (
-                                      <div className="flex items-center text-[10px] text-[#0F0276]/70 dark:text-white/70 mt-1">
-                                        <Calendar className="h-3 w-3 mr-1" />
-                                        {new Date(video.recordedAt as any).toLocaleDateString()}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
+                          
+                          {/* Video stacks */}
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {visibleGroups.map((group) => (
+                                <VideoStack
+                                  key={group.dayKey}
+                                  coverVideo={group.coverVideo}
+                                  count={group.videos.length}
+                                  dateLabel={group.dateLabel}
+                                  isDirectVideoUrl={isDirectVideoUrl}
+                                  onClick={() => setDayVideoModal({
+                                    isOpen: true,
+                                    skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
+                                    dateLabel: group.dateLabel,
+                                    videos: group.videos
+                                  })}
+                                />
+                              ))}
+                            </div>
+                            
+                            {/* See more control */}
+                            {showSeeMore && (
+                              <div className="pt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setGalleryModal({
+                                    isOpen: true,
+                                    skillName: skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`,
+                                    groups: videoGroups
+                                  })}
+                                  className="w-full text-center py-2 px-4 text-sm font-medium text-[#0F0276] dark:text-white bg-white/60 dark:bg-white/10 border border-slate-200/60 dark:border-white/20 rounded-md hover:bg-white/80 dark:hover:bg-white/20 transition-colors"
+                                >
+                                  See more ({videoGroups.length - 2} more day{videoGroups.length - 2 !== 1 ? 's' : ''})
+                                </button>
                               </div>
-                            );
-                          })}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                     
                     {skill.videos.length === 0 && (
                       <div className="text-center py-6 text-slate-400 dark:text-slate-500">
@@ -1084,6 +1078,27 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Day Video Modal */}
+      <DayVideoModal
+        isOpen={dayVideoModal.isOpen}
+        onClose={() => setDayVideoModal({ isOpen: false, skillName: '', dateLabel: '', videos: [] })}
+        skillName={dayVideoModal.skillName}
+        dateLabel={dayVideoModal.dateLabel}
+        videos={dayVideoModal.videos}
+        isDirectVideoUrl={isDirectVideoUrl}
+        onVideoClick={(url, title) => setOpenVideo({ url, title })}
+      />
+
+      {/* Video Gallery Modal */}
+      <VideoGalleryModal
+        isOpen={galleryModal.isOpen}
+        onClose={() => setGalleryModal({ isOpen: false, skillName: '', groups: [] })}
+        skillName={galleryModal.skillName}
+        groups={galleryModal.groups}
+        isDirectVideoUrl={isDirectVideoUrl}
+        onVideoClick={(url, title) => setOpenVideo({ url, title })}
+      />
 
       {/* Edit Athlete Modal */}
       {isAdmin && (
