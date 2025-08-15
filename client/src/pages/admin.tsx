@@ -84,7 +84,7 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useMemo, useState, lazy, Suspense } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense, useCallback } from "react";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
 import SEOHead from "@/components/SEOHead";
 import { useLocation } from "wouter";
@@ -1077,7 +1077,7 @@ export default function Admin() {
   const totalParents = parents.length;
 
   // Upcoming = future date/time AND not cancelled/completed
-  const isUpcoming = (b: Booking) => {
+  const isUpcoming = useCallback((b: Booking) => {
     if (!b?.preferredDate) return false;
     try {
       const time = (b.preferredTime && typeof b.preferredTime === 'string') ? b.preferredTime : '00:00:00';
@@ -1089,10 +1089,11 @@ export default function Admin() {
     } catch {
       return false;
     }
-  };
-  const upcomingBookingsCount = allBookings.filter(isUpcoming).length;
-  const pendingBookings = allBookings.filter(b => b.attendanceStatus === "pending").length;
-  const confirmedBookings = allBookings.filter(b => b.attendanceStatus === "confirmed").length;
+  }, []);
+  
+  const upcomingBookingsCount = useMemo(() => allBookings.filter(isUpcoming).length, [allBookings, isUpcoming]);
+  const pendingBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "pending").length, [allBookings]);
+  const confirmedBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "confirmed").length, [allBookings]);
 
   // Shared analytics/header computed values
   const thisMonthBookings = useMemo(() => {
@@ -1212,7 +1213,7 @@ export default function Admin() {
       {
         key: 'total-all',
         label: 'Total Bookings',
-        value: allBookings.length,
+        value: totalBookingsAll,
         hint: 'All time',
         icon: <Calendar className="h-5 w-5 text-slate-700" />,
         color: 'slate' as const,
@@ -1243,7 +1244,7 @@ export default function Admin() {
       },
     ];
     return metrics;
-  }, [allBookings.length, thisMonthBookings, conversionRate, avgBookingValue]);
+  }, [totalBookingsAll, thisMonthBookings, conversionRate, avgBookingValue]);
 
   // ANALYTICS COMPUTED DATA
   const filteredBookingsForAnalytics = allBookings.filter(booking => {
