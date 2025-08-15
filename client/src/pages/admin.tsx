@@ -100,7 +100,13 @@ export default function Admin() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(window?.innerWidth >= 768); // Default to open on desktop only
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false); // Track sidebar collapsed state
-  const [activeTab, setActiveTab] = useState<string>("bookings");
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Persist active tab across refreshes to prevent hook count mismatches
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('admin-active-tab') || "bookings";
+    }
+    return "bookings";
+  });
   
   // Set sidebar open state based on window size with enhanced mobile support
   useEffect(() => {
@@ -826,6 +832,13 @@ export default function Admin() {
       setEditingTipSections(contentToSections(editingTip.content));
     }
   }, [editingTip]);
+
+  // Persist active tab to prevent hook count mismatches on refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('admin-active-tab', activeTab);
+    }
+  }, [activeTab]);
 
   // EARLY RETURNS AFTER ALL HOOKS
   if (authLoading) {
