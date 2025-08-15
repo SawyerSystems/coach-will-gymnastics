@@ -84,7 +84,7 @@ import {
     Users,
     X
 } from "lucide-react";
-import { useEffect, useMemo, useState, lazy, Suspense, useCallback } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
 import SEOHead from "@/components/SEOHead";
 import { useLocation } from "wouter";
@@ -724,8 +724,8 @@ export default function Admin() {
   const sendPasswordSetupMutation = useMutation({
     mutationFn: async ({ parentId, email }: { parentId?: number; email?: string }) => {
       const response = await apiRequest("POST", "/api/admin/send-password-setup-email", {
-        parentId, 
-        email
+        body: JSON.stringify({ parentId, email }),
+        headers: { "Content-Type": "application/json" },
       });
       return response.json();
     },
@@ -747,8 +747,8 @@ export default function Admin() {
   const sendPasswordResetMutation = useMutation({
     mutationFn: async ({ parentId, email }: { parentId?: number; email?: string }) => {
       const response = await apiRequest("POST", "/api/admin/send-password-reset-email", {
-        parentId, 
-        email
+        body: JSON.stringify({ parentId, email }),
+        headers: { "Content-Type": "application/json" },
       });
       return response.json();
     },
@@ -1077,7 +1077,7 @@ export default function Admin() {
   const totalParents = parents.length;
 
   // Upcoming = future date/time AND not cancelled/completed
-  const isUpcoming = useCallback((b: Booking) => {
+  const isUpcoming = (b: Booking) => {
     if (!b?.preferredDate) return false;
     try {
       const time = (b.preferredTime && typeof b.preferredTime === 'string') ? b.preferredTime : '00:00:00';
@@ -1089,11 +1089,10 @@ export default function Admin() {
     } catch {
       return false;
     }
-  }, []);
-  
-  const upcomingBookingsCount = useMemo(() => allBookings.filter(isUpcoming).length, [allBookings, isUpcoming]);
-  const pendingBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "pending").length, [allBookings]);
-  const confirmedBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "confirmed").length, [allBookings]);
+  };
+  const upcomingBookingsCount = allBookings.filter(isUpcoming).length;
+  const pendingBookings = allBookings.filter(b => b.attendanceStatus === "pending").length;
+  const confirmedBookings = allBookings.filter(b => b.attendanceStatus === "confirmed").length;
 
   // Shared analytics/header computed values
   const thisMonthBookings = useMemo(() => {
@@ -1213,7 +1212,7 @@ export default function Admin() {
       {
         key: 'total-all',
         label: 'Total Bookings',
-        value: totalBookingsAll,
+        value: allBookings.length,
         hint: 'All time',
         icon: <Calendar className="h-5 w-5 text-slate-700" />,
         color: 'slate' as const,
@@ -1244,7 +1243,7 @@ export default function Admin() {
       },
     ];
     return metrics;
-  }, [totalBookingsAll, thisMonthBookings, conversionRate, avgBookingValue]);
+  }, [allBookings.length, thisMonthBookings, conversionRate, avgBookingValue]);
 
   // ANALYTICS COMPUTED DATA
   const filteredBookingsForAnalytics = allBookings.filter(booking => {
@@ -3269,17 +3268,12 @@ export default function Admin() {
                   <div className="flex flex-wrap gap-3">
                     <Button
                       onClick={() => {
-                        if (!selectedParentDetails?.id && !selectedParentDetails?.email) {
-                          console.error('No parent ID or email available');
-                          return;
-                        }
-                        
                         sendPasswordSetupMutation.mutate({
                           parentId: selectedParentDetails.id,
                           email: selectedParentDetails.email
                         });
                       }}
-                      disabled={sendPasswordSetupMutation.isPending || !selectedParentDetails?.id}
+                      disabled={sendPasswordSetupMutation.isPending}
                       size="sm"
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
@@ -3292,17 +3286,12 @@ export default function Admin() {
                     </Button>
                     <Button
                       onClick={() => {
-                        if (!selectedParentDetails?.id && !selectedParentDetails?.email) {
-                          console.error('No parent ID or email available for reset');
-                          return;
-                        }
-                        
                         sendPasswordResetMutation.mutate({
                           parentId: selectedParentDetails.id,
                           email: selectedParentDetails.email
                         });
                       }}
-                      disabled={sendPasswordResetMutation.isPending || !selectedParentDetails?.id}
+                      disabled={sendPasswordResetMutation.isPending}
                       size="sm"
                       className="bg-orange-600 hover:bg-orange-700 text-white"
                     >
