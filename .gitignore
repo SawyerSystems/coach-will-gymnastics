@@ -53,8 +53,8 @@ admin*.txt
 .ggshield_cache/
 
 # Test scripts
-test-*.js
-test-*.ts
+dev-tools/test-*.js
+dev-tools/test-*.ts
 debug-*.js
 debug-*.cjs
 parent*.txt

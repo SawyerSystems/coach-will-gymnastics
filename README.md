@@ -74,6 +74,9 @@ Open frontend at http://localhost:5173 and backend at http://localhost:5001.
 - server/ — Express API (TypeScript) with session auth
 - shared/ — Drizzle ORM schema and shared types imported by both sides
 - emails/ — React Email templates for Resend
+- migrations/ — Database schema migrations and update scripts
+- dev-tools/ — Development utilities, test scripts, and debugging tools
+- docs/ — Project documentation and implementation guides
 - setup/
    - docs/ — all setup and feature docs (storage, payments, fixes, etc.)
    - migrations/sql/ — SQL files for schema and data migrations

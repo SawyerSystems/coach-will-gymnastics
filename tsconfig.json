@@ -20,6 +20,8 @@
     "*.backup*",
     "**/*.backup*",
     "test-*.js",
+    "dev-tools/**",
+    "migrations/**",
     "comprehensive-*.js",
     "fix-*.js",
     "setup-*.js",
