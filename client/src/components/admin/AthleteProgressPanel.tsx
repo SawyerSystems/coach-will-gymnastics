@@ -28,6 +28,7 @@ export function AthleteProgressPanel({ athleteId }: Props) {
     });
   }, [rows]);
 
+  // Early returns AFTER all hooks
   if (isLoading) return <div className="text-sm text-slate-500">Loading progress…</div>;
   if (error) return <div className="text-sm text-red-600">Failed to load progress.</div>;
 
