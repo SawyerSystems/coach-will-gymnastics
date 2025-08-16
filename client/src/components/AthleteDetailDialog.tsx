@@ -145,23 +145,9 @@ export function AthleteDetailDialog({
   // Waiver status query  
   const { data: waiverStatus, isLoading: waiverLoading, refetch: refetchWaiver } = useAthleteWaiverStatus(athleteData?.id || 0);
   
-  // Determine a target booking for sending a waiver email
-  const selectTargetBookingId = (): number | null => {
-    const now = new Date();
-    const enriched = athleteBookings.map((b) => ({
-      b,
-      date: b.preferredDate ? new Date(`${b.preferredDate}T${(b.preferredTime || '00:00')}:00`) : null,
-    }));
-    const upcoming = enriched.filter(e => e.date && e.date >= now).sort((a, b) => (a.date!.getTime() - b.date!.getTime()));
-    if (upcoming.length > 0) return upcoming[0].b.id;
-    const past = enriched.filter(e => e.date).sort((a, b) => (b.date!.getTime() - a.date!.getTime()));
-    if (past.length > 0) return past[0].b.id;
-    return athleteBookings[0]?.id ?? null;
-  };
-
   const sendWaiverEmail = useMutation({
-    mutationFn: async (bookingId: number) => {
-      const resp = await apiRequest('POST', `/api/bookings/${bookingId}/send-waiver-email`);
+    mutationFn: async (athleteId: number) => {
+      const resp = await apiRequest('POST', `/api/athletes/${athleteId}/send-waiver-email`);
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err?.error || 'Failed to send waiver email');
@@ -649,12 +635,11 @@ export function AthleteDetailDialog({
                     {mode === 'admin' && (
                       <AdminButton 
                         onClick={() => {
-                          const bookingId = selectTargetBookingId();
-                          if (!bookingId) {
-                            toast({ title: 'No Booking Found', description: 'No related booking to send a waiver for.', variant: 'destructive' });
+                          if (!athleteData?.id) {
+                            toast({ title: 'Error', description: 'No athlete information available.', variant: 'destructive' });
                             return;
                           }
-                          sendWaiverEmail.mutate(bookingId);
+                          sendWaiverEmail.mutate(athleteData.id);
                         }}
                         className="w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white border-red-600 dark:border-red-700"
                         disabled={sendWaiverEmail.isPending}

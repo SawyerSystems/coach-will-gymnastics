@@ -4308,6 +4308,127 @@ setTimeout(async () => {
     }
   });
 
+  // Send waiver email to parent for a booking
+  app.post("/api/bookings/:id/send-waiver-email", isAdminAuthenticated, async (req, res) => {
+    try {
+      const bookingId = parseInt(req.params.id);
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      if (!booking.parentEmail) {
+        return res.status(400).json({ error: "No parent email found for this booking" });
+      }
+
+      // Get parent name
+      const parentName = `${booking.parentFirstName || ''} ${booking.parentLastName || ''}`.trim() || 'Parent';
+      
+      // Get the athlete name - prefer athlete1Name, fallback to parsing from booking_athletes
+      let athleteName = booking.athlete1Name;
+      
+      if (!athleteName && booking.athletes && booking.athletes.length > 0) {
+        // Try to get athlete name from the first athlete in booking_athletes
+        const firstAthlete = booking.athletes[0];
+        if (firstAthlete && firstAthlete.athleteId) {
+          const athlete = await storage.getAthlete(firstAthlete.athleteId);
+          if (athlete) {
+            athleteName = athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim();
+          }
+        }
+      }
+      
+      if (!athleteName) {
+        return res.status(400).json({ error: "No athlete name found for this booking" });
+      }
+
+      // Create parent login link - they'll need to log in to complete the waiver
+      const baseUrl = getBaseUrl();
+      const parentLoginLink = `${baseUrl}/parent/login?redirect=dashboard`;
+      
+      // Send waiver completion link email
+      await sendWaiverCompletionLink(
+        booking.parentEmail,
+        parentName,
+        athleteName,
+        parentLoginLink
+      );
+      
+      res.json({ 
+        success: true, 
+        message: "Waiver email sent successfully",
+        parentEmail: booking.parentEmail,
+        athleteName,
+        parentName
+      });
+      
+    } catch (error: any) {
+      console.error("Error sending waiver email:", error);
+      res.status(500).json({ error: "Failed to send waiver email" });
+    }
+  });
+
+  // Send waiver email to parent for an athlete (regardless of booking)
+  app.post("/api/athletes/:id/send-waiver-email", isAdminAuthenticated, async (req, res) => {
+    try {
+      const athleteId = parseInt(req.params.id);
+      const athlete = await storage.getAthlete(athleteId);
+      
+      if (!athlete) {
+        return res.status(404).json({ error: "Athlete not found" });
+      }
+      
+      // Get parent information from the athlete's parentId
+      if (!athlete.parentId) {
+        return res.status(400).json({ error: "No parent associated with this athlete" });
+      }
+      
+      const parent = await storage.getParentById(athlete.parentId);
+      if (!parent) {
+        return res.status(400).json({ error: "Parent not found" });
+      }
+      
+      if (!parent.email) {
+        return res.status(400).json({ error: "No parent email found" });
+      }
+
+      // Get parent name
+      const parentName = `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || 'Parent';
+      
+      // Get athlete name
+      const athleteName = athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim();
+      
+      if (!athleteName) {
+        return res.status(400).json({ error: "No athlete name found" });
+      }
+
+      // Create parent login link - they'll need to log in to complete the waiver
+      const baseUrl = getBaseUrl();
+      const parentLoginLink = `${baseUrl}/parent/login?redirect=dashboard`;
+      
+      // Send waiver completion link email
+      await sendWaiverCompletionLink(
+        parent.email,
+        parentName,
+        athleteName,
+        parentLoginLink
+      );
+      
+      res.json({ 
+        success: true, 
+        message: "Waiver email sent successfully",
+        parentEmail: parent.email,
+        athleteName,
+        parentName
+      });
+      
+    } catch (error: any) {
+      console.error("Error sending waiver email for athlete:", error);
+      res.status(500).json({ error: "Failed to send waiver email" });
+    }
+  });
+
   // Admin booking creation endpoint
   app.post("/api/admin/bookings", isAdminAuthenticated, async (req, res) => {
     const perfTimer = logger.performance.api.request('POST', '/api/admin/bookings');
