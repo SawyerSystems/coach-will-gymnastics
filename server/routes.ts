@@ -2107,9 +2107,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/payouts/list', isAdminAuthenticated, async (req, res) => {
     try {
       const { start, end, membership, athleteId, state, duration } = req.query as any;
+  // Using a manual sort since Supabase foreign table ordering isn't working reliably
   let query = supabaseAdmin
         .from('booking_athletes')
-  .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status), athletes!inner(first_name, last_name, name)')
+  .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, preferred_time, attendance_status), athletes!inner(first_name, last_name, name)')
         .not('gym_payout_owed_cents', 'is', null);
 
       if (start) query = query.gte('bookings.preferred_date', String(start));
@@ -2120,13 +2121,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (state) query = query.eq('bookings.attendance_status', String(state));
   if (duration) query = query.eq('duration_minutes', Number(duration));
 
-  // Order by bookings.preferred_date via foreignTable option
-  const { data, error } = await query.order('preferred_date', { ascending: true, foreignTable: 'bookings' });
+  // Get the data first, then sort manually
+  const { data, error } = await query;
       if (error) {
         console.error('[PAYOUTS][LIST] Error:', error);
         return res.status(500).json({ error: 'Failed to load payout list' });
       }
-      res.json(data || []);
+
+      // Sort the data manually by date and time
+      const sortedData = (data || []).sort((a, b) => {
+        const dateA = a.bookings.preferred_date;
+        const dateB = b.bookings.preferred_date;
+        
+        // First sort by date
+        if (dateA !== dateB) {
+          return dateA.localeCompare(dateB);
+        }
+        
+        // If same date, sort by time
+        const timeA = a.bookings.preferred_time;
+        const timeB = b.bookings.preferred_time;
+        return timeA.localeCompare(timeB);
+      });
+
+      res.json(sortedData);
     } catch (e) {
       console.error('[PAYOUTS][LIST] Exception:', e);
       res.status(500).json({ error: 'Failed to load payout list' });
@@ -2160,7 +2178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Load rows similar to list endpoint
       let query = supabaseAdmin
         .from('booking_athletes')
-        .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status, lesson_type_id, lesson_types(total_price)), athletes!inner(first_name, last_name, name)')
+        .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, preferred_time, attendance_status, lesson_type_id, lesson_types(total_price)), athletes!inner(first_name, last_name, name)')
         .not('gym_payout_owed_cents', 'is', null);
 
       if (start) query = query.gte('bookings.preferred_date', String(start));
@@ -2171,11 +2189,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (state) query = query.eq('bookings.attendance_status', String(state));
   if (duration) query = query.eq('duration_minutes', Number(duration));
 
-      const { data, error } = await query.order('preferred_date', { ascending: true, foreignTable: 'bookings' });
+      const { data, error } = await query;
       if (error) {
         console.error('[PAYOUTS][PDF] Query error:', error);
         return res.status(500).json({ error: 'Failed to load payout data' });
       }
+
+      // Sort the data manually by date and time
+      const sortedData = (data || []).sort((a, b) => {
+        const dateA = a.bookings.preferred_date;
+        const dateB = b.bookings.preferred_date;
+        
+        // First sort by date
+        if (dateA !== dateB) {
+          return dateA.localeCompare(dateB);
+        }
+        
+        // If same date, sort by time
+        const timeA = a.bookings.preferred_time;
+        const timeB = b.bookings.preferred_time;
+        return timeA.localeCompare(timeB);
+      });
 
       // Build PDF document with polished invoice-style layout
       const doc = await PDFDocument.create();
@@ -2315,7 +2349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      for (const rowRaw of (data || [])) {
+      for (const rowRaw of sortedData) {
         const row: any = rowRaw as any;
         // Relations can come back as objects or single-element arrays depending on join; normalize
         const bookingRel: any = Array.isArray(row.bookings) ? row.bookings[0] : row.bookings;

@@ -3778,7 +3778,7 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabaseAdmin
       .from('gym_payout_runs')
       .select('*')
-      .order('period_start', { ascending: false })
+      .order('period_start', { ascending: true })
       .limit(limit);
     if (error) throw error;
     return data || [];
