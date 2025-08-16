@@ -2258,7 +2258,32 @@ export class SupabaseStorage implements IStorage {
       url: (input as any).url,
       title: (input as any).title ?? null,
       recorded_at: (input as any).recordedAt ?? null,
+      caption: (input as any).caption ?? null,
+      is_visible: (input as any).isVisible ?? true,
+      is_featured: (input as any).isFeatured ?? false,
+      sort_index: (input as any).sortIndex ?? null,
+      thumbnail_url: (input as any).thumbnailUrl ?? null,
+      optimized_url: (input as any).optimizedUrl ?? null,
+      processing_status: (input as any).processingStatus ?? 'pending',
     };
+
+    // Set display_date based on recordedAt in Pacific timezone, or current date as fallback
+    if ((input as any).recordedAt) {
+      // Convert recordedAt to Pacific timezone date
+      const recordedDate = new Date((input as any).recordedAt);
+      const pacificDateString = recordedDate.toLocaleDateString('en-CA', { 
+        timeZone: 'America/Los_Angeles' 
+      }); // en-CA gives YYYY-MM-DD format
+      payload.display_date = pacificDateString;
+    } else {
+      // Fallback to current date in Pacific timezone
+      const today = new Date();
+      const pacificDateString = today.toLocaleDateString('en-CA', { 
+        timeZone: 'America/Los_Angeles' 
+      });
+      payload.display_date = pacificDateString;
+    }
+
     const { data, error } = await supabaseAdmin.from('athlete_skill_videos').insert(payload).select('*').single();
     if (error) throw error;
     return {
@@ -2269,6 +2294,14 @@ export class SupabaseStorage implements IStorage {
       recordedAt: data.recorded_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      caption: data.caption,
+      isVisible: data.is_visible,
+      isFeatured: data.is_featured,
+      displayDate: data.display_date,
+      sortIndex: data.sort_index,
+      thumbnailUrl: data.thumbnail_url,
+      optimizedUrl: data.optimized_url,
+      processingStatus: data.processing_status,
     };
   }
 
@@ -2290,6 +2323,14 @@ export class SupabaseStorage implements IStorage {
       recordedAt: row.recorded_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      caption: row.caption,
+      isVisible: row.is_visible,
+      isFeatured: row.is_featured,
+      displayDate: row.display_date,
+      sortIndex: row.sort_index,
+      thumbnailUrl: row.thumbnail_url,
+      optimizedUrl: row.optimized_url,
+      processingStatus: row.processing_status,
     }));
   }
 

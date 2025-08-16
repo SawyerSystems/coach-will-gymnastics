@@ -7,6 +7,7 @@ export interface VideoItem {
   url?: string | null;
   title?: string | null;
   recordedAt?: string | Date | null;
+  displayDate?: string | Date | null;
   [key: string]: any; // Allow additional properties
 }
 
@@ -19,9 +20,35 @@ export interface VideoGroup {
 
 /**
  * Converts a video's timestamp to a local day key (YYYY-MM-DD).
+ * Prioritizes displayDate over recordedAt for accurate date grouping.
  * Always uses the viewer's local timezone to avoid UTC midnight bugs.
  */
 export function getLocalDayKey(video: VideoItem): string {
+  // If we have displayDate (stored as date), use it directly since it's already the correct date
+  if (video.displayDate) {
+    try {
+      const dateStr = String(video.displayDate);
+      
+      // If it's already in YYYY-MM-DD format, use it directly
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+      }
+      
+      // Otherwise parse it carefully to avoid timezone shifts
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        // For date-only values, use UTC to avoid timezone interpretation
+        const year = date.getUTCFullYear();
+        const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = date.getUTCDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    } catch (e) {
+      console.warn('Invalid displayDate:', video.displayDate);
+    }
+  }
+  
+  // Fallback to recordedAt or createdAt, converted to local timezone
   const timestamp = video.recordedAt || (video as any).createdAt;
   if (!timestamp) return 'Unknown';
   
@@ -41,23 +68,30 @@ export function getLocalDayKey(video: VideoItem): string {
 }
 
 /**
- * Formats a day key (YYYY-MM-DD) into a user-friendly date label.
- * Uses locale-aware formatting with short month names.
+ * Formats a day key (YYYY-MM-DD) into a readable date label.
+ * Always uses the viewer's local timezone for consistent display.
  */
 export function formatDateLabel(dayKey: string): string {
   if (dayKey === 'Unknown') return 'Unknown Date';
   
   try {
-    // Parse the day key and create a date at local midnight
+    // Parse the day key as YYYY-MM-DD
     const [year, month, day] = dayKey.split('-').map(Number);
+    
+    // Create date in local timezone to avoid UTC conversion issues
     const date = new Date(year, month - 1, day);
     
+    if (isNaN(date.getTime())) return dayKey;
+    
+    // Format in user's locale with their timezone
     return date.toLocaleDateString(undefined, {
-      month: 'short', // "Aug"
-      day: 'numeric', // "14"
-      year: 'numeric' // "2025"
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
     });
-  } catch {
+  } catch (e) {
+    console.warn('Invalid date key:', dayKey);
     return dayKey;
   }
 }

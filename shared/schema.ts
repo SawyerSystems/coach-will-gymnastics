@@ -353,6 +353,14 @@ export const athleteSkillVideos = pgTable("athlete_skill_videos", {
   recordedAt: timestamp("recorded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
+  caption: text("caption"),
+  isVisible: boolean("is_visible").default(true),
+  isFeatured: boolean("is_featured").default(false),
+  displayDate: date("display_date"),
+  sortIndex: integer("sort_index"),
+  thumbnailUrl: text("thumbnail_url"),
+  optimizedUrl: text("optimized_url"),
+  processingStatus: text("processing_status"),
 });
 
 export const progressShareLinks = pgTable("progress_share_links", {

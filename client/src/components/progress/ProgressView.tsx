@@ -18,7 +18,7 @@ import { TestSkillDialog } from '@/components/admin/TestSkillDialog';
 import { VideoStack } from '@/components/progress/VideoStack';
 import { VideoGalleryModal } from '@/components/progress/VideoGalleryModal';
 import { DayVideoModal } from '@/components/progress/DayVideoModal';
-import { groupVideosByDay, getVisibleGroups, shouldShowSeeMore, type VideoGroup } from '@/utils/videoGrouping';
+import { groupVideosByDay, getVisibleGroups, shouldShowSeeMore, formatDateLabel, getLocalDayKey, type VideoGroup } from '@/utils/videoGrouping';
 import type { Skill as SharedSkill } from '@shared/schema';
 
 type ProgressVideo = {
@@ -765,27 +765,18 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
 
                 if (!allVideos.length) return null;
 
-                // Normalize to YYYY-MM-DD for grouping
-                const toDay = (v: ProgressVideo) => {
-                  const d = (v.recordedAt as any) || (v as any).createdAt || null;
-                  try {
-                    return d ? new Date(d).toISOString().slice(0, 10) : 'Unknown Date';
-                  } catch {
-                    return 'Unknown Date';
-                  }
-                };
-
+                // Group videos by day using the utility function
                 const groups = new Map<string, VideoListItem[]>();
                 for (const v of allVideos) {
-                  const key = toDay(v);
+                  const key = getLocalDayKey(v);
                   if (!groups.has(key)) groups.set(key, []);
                   groups.get(key)!.push(v);
                 }
 
                 // Sort groups by date desc, with Unknown at bottom
                 const sortedDays = Array.from(groups.keys()).sort((a, b) => {
-                  if (a === 'Unknown Date') return 1;
-                  if (b === 'Unknown Date') return -1;
+                  if (a === 'Unknown') return 1;
+                  if (b === 'Unknown') return -1;
                   return a < b ? 1 : a > b ? -1 : 0;
                 });
 
@@ -810,7 +801,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       if (ad !== bd) return ad - bd;
                       return (a.id || 0) - (b.id || 0);
                     });
-                    const pretty = day === 'Unknown Date' ? 'Unknown Date' : new Date(day + 'T00:00:00').toLocaleDateString();
+                    const pretty = formatDateLabel(day);
                     return (
                       <Card key={day} className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20 shadow-lg">
                         <CardHeader className="pb-3">
