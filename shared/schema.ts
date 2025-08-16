@@ -226,6 +226,58 @@ export const paymentLogs = pgTable("payment_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Comprehensive Activity/Audit Log System
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+  
+  // Who performed the action
+  actorType: text("actor_type").notNull(), // "admin", "parent", "system"
+  actorId: integer("actor_id"), // admin.id, parent.id, or null for system
+  actorName: text("actor_name").notNull(), // Display name for the actor
+  
+  // What was the action
+  actionType: text("action_type").notNull(), // "created", "updated", "deleted", "status_changed", etc.
+  actionCategory: text("action_category").notNull(), // "booking", "athlete", "payment", "waiver", "schedule", etc.
+  actionDescription: text("action_description").notNull(), // Human-readable description
+  
+  // What was affected
+  targetType: text("target_type").notNull(), // "booking", "athlete", "parent", "payment", etc.
+  targetId: integer("target_id"), // ID of the affected record
+  targetIdentifier: text("target_identifier"), // Human-readable identifier (e.g., "Booking #123", "Bailey S.")
+  
+  // Change details
+  fieldChanged: text("field_changed"), // Specific field that changed (optional)
+  previousValue: text("previous_value"), // JSON string of old values
+  newValue: text("new_value"), // JSON string of new values
+  
+  // Additional context
+  notes: text("notes"), // Optional admin note explaining the change
+  metadata: json("metadata").$type<Record<string, any>>(), // Additional context data
+  
+  // Technical details
+  ipAddress: text("ip_address"), // For security auditing
+  userAgent: text("user_agent"), // Browser/device info
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  // Soft delete and undo functionality
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: integer("deleted_by"), // admin.id who soft-deleted this entry
+  
+  // Undo/reversal tracking
+  isReversed: boolean("is_reversed").default(false).notNull(),
+  reversedAt: timestamp("reversed_at"),
+  reversedBy: integer("reversed_by"), // admin.id who reversed this action
+  reverseActionId: integer("reverse_action_id"), // Reference to the activity log entry that reversed this
+  originalActionId: integer("original_action_id"), // Reference to the original action if this is a reverse
+  
+  // Grouping for bulk operations
+  batchId: text("batch_id"), // UUID for grouping related actions
+  batchDescription: text("batch_description"), // Description of the batch operation
+});
+
 export const waivers = pgTable("waivers", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }), // nullable, FK SET NULL on delete
@@ -1164,3 +1216,87 @@ export const cookieConsent = pgTable("cookie_consent", {
 export const insertCookieConsentSchema = createInsertSchema(cookieConsent).omit({ id: true, createdAt: true });
 export type CookieConsent = typeof cookieConsent.$inferSelect;
 export type InsertCookieConsent = z.infer<typeof insertCookieConsentSchema>;
+
+// Activity Log types and schemas
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+// Enums for activity log standardization
+export enum ActivityActorType {
+  ADMIN = "admin",
+  PARENT = "parent", 
+  SYSTEM = "system"
+}
+
+export enum ActivityActionType {
+  CREATED = "created",
+  UPDATED = "updated", 
+  DELETED = "deleted",
+  STATUS_CHANGED = "status_changed",
+  PAYMENT_CAPTURED = "payment_captured",
+  PAYMENT_REFUNDED = "payment_refunded",
+  PAYMENT_FAILED = "payment_failed",
+  EMAIL_SENT = "email_sent",
+  SMS_SENT = "sms_sent",
+  LOGIN = "login",
+  LOGOUT = "logout",
+  PASSWORD_CHANGED = "password_changed",
+  PERMISSIONS_CHANGED = "permissions_changed",
+  WAIVER_REQUESTED = "waiver_requested",
+  WAIVER_SUBMITTED = "waiver_submitted",
+  WAIVER_REPLACED = "waiver_replaced",
+  SKILL_ADDED = "skill_added",
+  SKILL_UPDATED = "skill_updated",
+  VIDEO_UPLOADED = "video_uploaded",
+  VIDEO_REMOVED = "video_removed",
+  AVAILABILITY_ADDED = "availability_added",
+  AVAILABILITY_REMOVED = "availability_removed",
+  REMINDER_SENT = "reminder_sent",
+  NO_SHOW_MARKED = "no_show_marked",
+  NO_SHOW_CLEARED = "no_show_cleared",
+  RESCHEDULED = "rescheduled",
+  BULK_OPERATION = "bulk_operation"
+}
+
+export enum ActivityCategory {
+  BOOKING = "booking",
+  ATHLETE = "athlete", 
+  PARENT = "parent",
+  PAYMENT = "payment",
+  WAIVER = "waiver",
+  SCHEDULE = "schedule",
+  COMMUNICATION = "communication",
+  PROGRESS = "progress",
+  ADMIN = "admin",
+  AUTH = "auth",
+  SKILL = "skill",
+  VIDEO = "video"
+}
+
+export enum ActivityTargetType {
+  BOOKING = "booking",
+  ATHLETE = "athlete",
+  PARENT = "parent", 
+  PAYMENT = "payment",
+  WAIVER = "waiver",
+  AVAILABILITY = "availability",
+  SKILL = "skill",
+  VIDEO = "video",
+  EMAIL = "email",
+  SMS = "sms",
+  ADMIN_SETTING = "admin_setting"
+}
+
+// Helper type for activity log with human-readable information
+export type ActivityLogWithDetails = ActivityLog & {
+  actorDisplayName: string;
+  targetDisplayName: string;
+  formattedTimestamp: string;
+  changesSummary?: string;
+  isUndoable: boolean;
+};

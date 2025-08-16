@@ -1,4 +1,4 @@
-import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum } from "../shared/schema";
+import { AttendanceStatusEnum, BookingMethodEnum, BookingStatusEnum, insertAthleteSchema, insertAvailabilitySchema, insertBlogPostSchema, insertBookingSchema, insertTipSchema, insertWaiverSchema, PaymentStatusEnum, ActivityActorType, ActivityActionType, ActivityCategory, ActivityTargetType } from "../shared/schema";
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -10,6 +10,7 @@ import multer from 'multer';
 import Stripe from "stripe";
 import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
+import { getActivityLogger, ActivityLogger } from "./activity-logger";
 import { authRouter, isAdminAuthenticated } from "./auth";
 import { sendBirthdayEmail, sendEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordResetEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
@@ -29,6 +30,9 @@ import { getBaseUrl } from './lib/url';
 
 // Initialize storage
 const storage = new SupabaseStorage();
+
+// Initialize activity logger
+const activityLogger = getActivityLogger(storage);
 
 // Configure multer for file uploads
 const upload = multer({
@@ -53,30 +57,99 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-07-30.basil",
 });
 
+// Helper function to get valid focus areas by lesson type
+function getFocusAreasByType(lessonType: string): string[] {
+  console.log('🔍 [GET_FOCUS_AREAS] Getting focus areas for lesson type:', lessonType);
+  
+  // All available focus areas from the database - just the skill names (matching API format)
+  const allFocusAreas = [
+    // Tumbling skills
+    "Forward Roll", "Backward Roll", "Cartwheel", "Round-off", "Handstand",
+    "Bridge", "Back Walkover", "Front Walkover", "Back Handspring",
+    "Front Handspring", "Back Tuck", "Front Tuck", "Layout", "Twist",
+    "Headstand", "Walkover", "Handspring", "Tuck Jump", "Pike Jump", "Straddle Jump",
+    
+    // Beam skills
+    "Straight Walk", "Tip Toe Walk", "Heel Walk", "Relevé Walk", "Chassé",
+    "Kick to Handstand", "Split Leap", "Full Turn", "Side Aerial", "Back Tuck Dismount",
+    "Straight Jump", "Tuck Jump", "Stag Jump", "Pike Jump",
+    
+    // Vault skills
+    "Hurdle", "Board Contact", "Squat On", "Straddle On", "Half-On", "Front Pike", 
+    "Yurchenko Timer", "Handstand Flatback",
+    
+    // Bars skills
+    "Support Hold", "Pull-ups", "Hanging", "Glide Swing", "Cast", "Pullover",
+    "Spin-the-Cat", "Kickover", "Glide Kip", "Cast Handstand", "Back Hip Circle", 
+    "Flyaway", "Baby Giant", "Toe-On Circle", "Clear Hip to Handstand", "Mill Circle",
+    "Tap Swing", "Dismount",
+    
+    // Side Quests
+    "Flexibility", "Strength", "Balance", "Coordination", "Body Awareness", 
+    "Spatial Awareness", "Fear Reduction", "Confidence Building", "Goal Setting",
+    "Mental Preparation", "Flexibility Training", "Strength Training", "Agility Training",
+    "Meditation and Breathing Techniques", "Mental Blocks"
+  ];
+  
+  console.log('🔍 [GET_FOCUS_AREAS] All available focus areas count:', allFocusAreas.length);
+  console.log('🔍 [GET_FOCUS_AREAS] First few focus areas:', allFocusAreas.slice(0, 5));
+  return allFocusAreas;
+}
+
 // Focus area validation helper
-function validateFocusAreas(focusAreaIds: number[], lessonType: string): { isValid: boolean; message?: string } {
-  const duration = LessonUtils.getDurationMinutes(lessonType);
-  const max = duration === 60 ? 4 : 2;
-  
-  // Focus areas are optional - allow empty array
-  if (focusAreaIds.length === 0) {
-    return { isValid: true };
+function validateFocusAreas(focusAreas: string[], lessonType: string): { isValid: boolean; message?: string } {
+  console.log('🔍 [VALIDATE] validateFocusAreas called with:', {
+    focusAreas,
+    lessonType,
+    focusAreasLength: focusAreas?.length,
+    focusAreasType: typeof focusAreas,
+    lessonTypeType: typeof lessonType
+  });
+
+  if (!focusAreas || !Array.isArray(focusAreas) || focusAreas.length === 0) {
+    console.error('🚨 [VALIDATE] No focus areas provided');
+    return { 
+      isValid: false, 
+      message: "Please provide at least one focus area for the lesson" 
+    };
   }
-  
-  if (focusAreaIds.length > max) {
-    const limitMessage = duration === 30 
-      ? "30-minute lessons can only have up to 2 focus areas"
-      : "60-minute lessons can only have up to 4 focus areas";
-    return { isValid: false, message: limitMessage };
-  }
-  
-  // Validate that all IDs are positive numbers
-  for (const id of focusAreaIds) {
-    if (!Number.isInteger(id) || id <= 0) {
-      return { isValid: false, message: "Invalid focus area ID" };
+
+  // Get all valid focus areas for the lesson type
+  const validAreas = getFocusAreasByType(lessonType);
+  console.log('🔍 [VALIDATE] Valid focus areas for lesson type:', validAreas);
+  console.log('🔍 [VALIDATE] getFocusAreasByType function result type:', typeof validAreas);
+  console.log('🔍 [VALIDATE] getFocusAreasByType function result is array:', Array.isArray(validAreas));
+
+  // Check if all provided focus areas are valid
+  for (const area of focusAreas) {
+    const isOtherArea = area.startsWith('Other:');
+    const isValidArea = validAreas.includes(area) || isOtherArea;
+    
+    console.log('🔍 [VALIDATE] Checking area:', {
+      area,
+      areaType: typeof area,
+      isOtherArea,
+      isValidArea,
+      validAreasIncludes: validAreas.includes(area),
+      validAreasAsString: JSON.stringify(validAreas)
+    });
+    
+    if (!isValidArea) {
+      console.error('🚨 [VALIDATE] Invalid focus area found:', area);
+      console.error('🚨 [VALIDATE] Debug info:', {
+        providedArea: area,
+        validAreas: validAreas,
+        lessonType: lessonType,
+        focusAreasInput: focusAreas
+      });
+      return { 
+        isValid: false, 
+        message: `Invalid focus area ID: ${area}` 
+      };
     }
   }
-  
+
+  console.log('✅ [VALIDATE] All focus areas valid');
   return { isValid: true };
 }
 
@@ -1643,10 +1716,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
+      
+      // Get original parent data for comparison
+      const originalParent = await storage.getParent(id);
+      if (!originalParent) {
+        return res.status(404).json({ error: "Parent not found" });
+      }
+      
       const parent = await storage.updateParent(id, updateData);
       if (!parent) {
         return res.status(404).json({ error: "Parent not found" });
       }
+
+      // Log parent update activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session?.adminId);
+        
+        // Log individual field changes
+        const changedFields = [];
+        if (updateData.emergencyContactName !== originalParent.emergencyContactName) {
+          changedFields.push('Emergency Contact Name');
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Emergency contact name updated for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            fieldChanged: 'emergencyContactName',
+            previousValue: originalParent.emergencyContactName || '',
+            newValue: updateData.emergencyContactName || ''
+          });
+        }
+        
+        if (updateData.emergencyContactPhone !== originalParent.emergencyContactPhone) {
+          changedFields.push('Emergency Contact Phone');
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Emergency contact phone updated for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            fieldChanged: 'emergencyContactPhone',
+            previousValue: originalParent.emergencyContactPhone || '',
+            newValue: updateData.emergencyContactPhone || ''
+          });
+        }
+
+        if (updateData.firstName !== originalParent.firstName) {
+          changedFields.push('First Name');
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `First name updated from "${originalParent.firstName}" to "${updateData.firstName}"`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            fieldChanged: 'firstName',
+            previousValue: originalParent.firstName || '',
+            newValue: updateData.firstName || ''
+          });
+        }
+
+        if (updateData.lastName !== originalParent.lastName) {
+          changedFields.push('Last Name');
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Last name updated from "${originalParent.lastName}" to "${updateData.lastName}"`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            fieldChanged: 'lastName',
+            previousValue: originalParent.lastName || '',
+            newValue: updateData.lastName || ''
+          });
+        }
+
+        if (updateData.email !== originalParent.email) {
+          changedFields.push('Email');
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Email updated for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            fieldChanged: 'email',
+            previousValue: originalParent.email || '',
+            newValue: updateData.email || ''
+          });
+        }
+
+        if (updateData.phone !== originalParent.phone) {
+          changedFields.push('Phone');
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Phone updated for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            fieldChanged: 'phone',
+            previousValue: originalParent.phone || '',
+            newValue: updateData.phone || ''
+          });
+        }
+
+        // Log overall parent update if any fields changed
+        if (changedFields.length > 0) {
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Parent profile updated: ${changedFields.join(', ')} changed for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            metadata: {
+              fieldsChanged: changedFields,
+              updateCount: changedFields.length
+            }
+          });
+        }
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log parent update activity:', logError);
+        console.error('🚨 Parent ID:', id, 'Admin ID:', req.session?.adminId);
+      }
+
       res.json(parent);
     } catch (error: any) {
       console.error("Error updating parent:", error);
@@ -1796,13 +1993,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
+      
+      // Get original parent data for comparison
+      const originalParent = await storage.getParent(id);
+      if (!originalParent) {
+        return res.status(404).json({ error: "Parent not found" });
+      }
+      
       const parent = await storage.updateParent(id, updateData);
       if (!parent) {
         return res.status(404).json({ error: "Parent not found" });
       }
+
+      // Log parent update activity (duplicate route - legacy compatibility)
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session?.adminId);
+        
+        const changedFields: string[] = [];
+        Object.keys(updateData).forEach(field => {
+          if (updateData[field] !== originalParent[field as keyof typeof originalParent]) {
+            changedFields.push(field);
+          }
+        });
+
+        if (changedFields.length > 0) {
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Parent profile updated (legacy route): ${changedFields.join(', ')} changed for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            metadata: {
+              fieldsChanged: changedFields,
+              updateCount: changedFields.length,
+              routeType: 'legacy'
+            }
+          });
+        }
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log parent update activity (legacy route):', logError);
+        console.error('🚨 Parent ID:', id, 'Admin ID:', req.session?.adminId);
+      }
+
       res.json(parent);
     } catch (error: any) {
       console.error("Error updating parent:", error);
+      res.status(500).json({ error: "Failed to update parent" });
+    }
+  });
+
+  // PATCH route for parent updates with comprehensive activity logging
+  app.patch("/api/parents/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid parent ID" });
+      }
+
+      const updateData = req.body;
+      console.log(`🔍 [PARENT-UPDATE] Updating parent ${id} with data:`, updateData);
+      
+      // Get original parent data for comparison
+      const originalParent = await storage.getParentById(id);
+      if (!originalParent) {
+        return res.status(404).json({ error: "Parent not found" });
+      }
+      
+      // Update parent data
+      const updatedParent = await storage.updateParent(id, updateData);
+      if (!updatedParent) {
+        return res.status(404).json({ error: "Failed to update parent" });
+      }
+
+      // Log detailed parent update activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session?.adminId);
+        
+        const changedFields: string[] = [];
+        const fieldChanges: Record<string, { from: any; to: any }> = {};
+        
+        // Check each field for changes and record detailed change info
+        Object.keys(updateData).forEach(field => {
+          const oldValue = originalParent[field as keyof typeof originalParent];
+          const newValue = updateData[field];
+          
+          if (oldValue !== newValue) {
+            changedFields.push(field);
+            fieldChanges[field] = {
+              from: oldValue || '(empty)',
+              to: newValue || '(empty)'
+            };
+          }
+        });
+
+        if (changedFields.length > 0) {
+          // Create descriptive field change summaries
+          const changeDescriptions = Object.entries(fieldChanges).map(([field, change]) => {
+            const fieldLabel = field.replace(/([A-Z])/g, ' $1').toLowerCase().replace(/^\w/, c => c.toUpperCase());
+            return `${fieldLabel}: "${change.from}" → "${change.to}"`;
+          });
+
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.UPDATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Updated parent profile for ${originalParent.firstName} ${originalParent.lastName}`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: id,
+            targetIdentifier: `${originalParent.firstName} ${originalParent.lastName}`,
+            metadata: {
+              fieldsChanged: changedFields,
+              changeDetails: fieldChanges,
+              updateCount: changedFields.length,
+              routeType: 'modern',
+              changeDescriptions
+            }
+          });
+
+          console.log(`✅ [PARENT-UPDATE] Successfully logged activity for parent ${id}, changed fields: ${changedFields.join(', ')}`);
+        } else {
+          console.log(`ℹ️ [PARENT-UPDATE] No fields changed for parent ${id}`);
+        }
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log parent update activity:', logError);
+        console.error('🚨 Parent ID:', id, 'Admin ID:', req.session?.adminId);
+      }
+
+      res.json(updatedParent);
+    } catch (error: any) {
+      console.error("🚨 CRITICAL: Error updating parent:", error);
       res.status(500).json({ error: "Failed to update parent" });
     }
   });
@@ -1844,6 +2163,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const athleteData = req.body;
       const athlete = await storage.createAthlete(athleteData);
+      
+      // Log athlete creation activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session?.adminId);
+        await activityLogger.logAthleteActivity(
+          context,
+          athlete.id,
+          athlete.name || `${athlete.firstName} ${athlete.lastName}`,
+          ActivityActionType.CREATED,
+          `New athlete profile created: ${athlete.name || `${athlete.firstName} ${athlete.lastName}`}`,
+          null,
+          athlete
+        );
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log athlete creation activity:', logError);
+        console.error('🚨 Athlete ID:', athlete.id, 'Admin ID:', req.session?.adminId);
+      }
+
       res.json(athlete);
     } catch (error: any) {
       console.error("Error creating athlete:", error);
@@ -1977,10 +2314,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updateData = req.body;
+      
+      // Get original athlete data for comparison
+      const originalAthlete = await storage.getAthlete(id);
+      if (!originalAthlete) {
+        return res.status(404).json({ error: "Athlete not found" });
+      }
+      
       const athlete = await storage.updateAthlete(id, updateData);
       if (!athlete) {
         return res.status(404).json({ error: "Athlete not found" });
       }
+
+      // Log athlete update activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session?.adminId);
+        
+        // Log individual field changes
+        const changedFields = [];
+        if (updateData.firstName !== originalAthlete.firstName) {
+          changedFields.push('First Name');
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `First name updated from "${originalAthlete.firstName}" to "${updateData.firstName}"`,
+            originalAthlete.firstName,
+            updateData.firstName,
+            'firstName'
+          );
+        }
+
+        if (updateData.lastName !== originalAthlete.lastName) {
+          changedFields.push('Last Name');
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `Last name updated from "${originalAthlete.lastName}" to "${updateData.lastName}"`,
+            originalAthlete.lastName,
+            updateData.lastName,
+            'lastName'
+          );
+        }
+
+        if (updateData.dateOfBirth !== originalAthlete.dateOfBirth) {
+          changedFields.push('Date of Birth');
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `Date of birth updated for ${originalAthlete.name}`,
+            originalAthlete.dateOfBirth,
+            updateData.dateOfBirth,
+            'dateOfBirth'
+          );
+        }
+
+        if (updateData.gender !== originalAthlete.gender) {
+          changedFields.push('Gender');
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `Gender updated for ${originalAthlete.name}`,
+            originalAthlete.gender,
+            updateData.gender,
+            'gender'
+          );
+        }
+
+        if (updateData.allergies !== originalAthlete.allergies) {
+          changedFields.push('Allergies');
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `Allergies updated for ${originalAthlete.name}`,
+            originalAthlete.allergies,
+            updateData.allergies,
+            'allergies'
+          );
+        }
+
+        if (updateData.experience !== originalAthlete.experience) {
+          changedFields.push('Experience Level');
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `Experience level updated for ${originalAthlete.name}`,
+            originalAthlete.experience,
+            updateData.experience,
+            'experience'
+          );
+        }
+
+        // Log overall athlete update if any fields changed
+        if (changedFields.length > 0) {
+          await activityLogger.logAthleteActivity(
+            context,
+            id,
+            originalAthlete.name || `${originalAthlete.firstName} ${originalAthlete.lastName}`,
+            ActivityActionType.UPDATED,
+            `Athlete profile updated: ${changedFields.join(', ')} changed for ${originalAthlete.name}`,
+            null,
+            { fieldsChanged: changedFields, updateCount: changedFields.length }
+          );
+        }
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log athlete update activity:', logError);
+        console.error('🚨 Athlete ID:', id, 'Admin ID:', req.session?.adminId);
+      }
+
       res.json(athlete);
     } catch (error: any) {
       console.error("Error updating athlete:", error);
@@ -2129,7 +2581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Sort the data manually by date and time
-      const sortedData = (data || []).sort((a, b) => {
+      const sortedData = (data || []).sort((a: any, b: any) => {
         const dateA = a.bookings.preferred_date;
         const dateB = b.bookings.preferred_date;
         
@@ -2196,7 +2648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Sort the data manually by date and time
-      const sortedData = (data || []).sort((a, b) => {
+      const sortedData = (data || []).sort((a: any, b: any) => {
         const dateA = a.bookings.preferred_date;
         const dateB = b.bookings.preferred_date;
         
@@ -4918,7 +5370,7 @@ setTimeout(async () => {
       // Validate focus areas
       const focusAreaIds = Array.isArray(validatedData.focusAreaIds) ? validatedData.focusAreaIds : [];
       const lessonTypeStr = typeof validatedData.lessonType === 'string' ? validatedData.lessonType : '';
-      const focusAreaValidation = validateFocusAreas(focusAreaIds, lessonTypeStr);
+      const focusAreaValidation = validateFocusAreas(focusAreaIds.map(String), lessonTypeStr);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -4956,6 +5408,26 @@ setTimeout(async () => {
       }
       
       const booking = await storage.createBooking(validatedData);
+      
+      // Log booking creation activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.PARENT, validatedData.parentId);
+        await activityLogger.logBookingActivity(
+          context,
+          booking.id,
+          ActivityActionType.CREATED,
+          `Booking created via website for ${validatedData.athletes?.length || 0} athlete(s)`,
+          null,
+          {
+            preferredDate: validatedData.preferredDate,
+            preferredTime: validatedData.preferredTime,
+            lessonType: validatedData.lessonType,
+            athleteCount: validatedData.athletes?.length || 0
+          }
+        );
+      } catch (logError) {
+        console.error('Failed to log booking creation activity:', logError);
+      }
       
       // Email will be sent after successful payment via webhook
       // Do not send confirmation email immediately
@@ -5010,8 +5482,10 @@ setTimeout(async () => {
       
       // Check if parent exists
       let parent = await storage.identifyParent(bookingData.parentEmail, bookingData.parentPhone);
+      let isNewParent = false;
       
       if (!parent) {
+        isNewParent = true;
         // Create parent account
         parent = await storage.createParent({
           firstName: bookingData.parentFirstName,
@@ -5033,6 +5507,45 @@ setTimeout(async () => {
         status: BookingStatusEnum.PENDING, // Changed from MANUAL to PENDING
         paymentStatus: PaymentStatusEnum.UNPAID
       });
+
+      // Log booking creation activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session.adminId);
+        await activityLogger.logBookingActivity(
+          context,
+          booking.id,
+          ActivityActionType.CREATED,
+          `Manual booking created by admin for ${bookingData.parentFirstName} ${bookingData.parentLastName}`,
+          null,
+          {
+            preferredDate: bookingData.preferredDate,
+            preferredTime: bookingData.preferredTime,
+            lessonType: bookingData.lessonType,
+            parentEmail: bookingData.parentEmail,
+            athleteCount: bookingData.athletes?.length || 0
+          }
+        );
+
+        // Log parent creation if new
+        if (isNewParent && parent) {
+          await activityLogger.logActivity(context, {
+            actionType: ActivityActionType.CREATED,
+            actionCategory: ActivityCategory.PARENT,
+            actionDescription: `Parent account created via manual booking`,
+            targetType: ActivityTargetType.PARENT,
+            targetId: parent.id,
+            targetIdentifier: `${parent.firstName} ${parent.lastName}`,
+            metadata: {
+              email: parent.email,
+              phone: parent.phone,
+              createdVia: 'manual_booking'
+            }
+          });
+        }
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log manual booking creation activity:', logError);
+        console.error('🚨 Booking ID:', booking.id, 'Admin ID:', req.session.adminId);
+      }
 
       // Debug log the booking object
       console.log('[DEBUG] Created booking:', booking);
@@ -5080,7 +5593,7 @@ setTimeout(async () => {
       // Validate focus areas
       const focusAreaIds = Array.isArray(bookingData.focusAreaIds) ? bookingData.focusAreaIds : [];
       const lessonTypeStr = typeof bookingData.lessonType === 'string' ? bookingData.lessonType : '';
-      const focusAreaValidation = validateFocusAreas(focusAreaIds, lessonTypeStr);
+      const focusAreaValidation = validateFocusAreas(focusAreaIds.map(String), lessonTypeStr);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -5430,6 +5943,13 @@ setTimeout(async () => {
       // For backward compatibility
       if (specialNotes !== undefined) updateData.adminNotes = specialNotes;
       
+      // Debug: Check focus areas values
+      console.log('🔧 [FOCUS-DEBUG] focusAreas value:', focusAreas);
+      console.log('🔧 [FOCUS-DEBUG] focusAreas type:', typeof focusAreas);
+      console.log('🔧 [FOCUS-DEBUG] focusAreas !== undefined:', focusAreas !== undefined);
+      console.log('🔧 [FOCUS-DEBUG] focusAreaOther value:', focusAreaOther);
+      console.log('🔧 [FOCUS-DEBUG] focusAreaOther !== undefined:', focusAreaOther !== undefined);
+      
       // Handle focus areas
       if (focusAreas !== undefined || focusAreaOther !== undefined) {
         // First get the current booking to validate focus areas against lesson type
@@ -5440,15 +5960,46 @@ setTimeout(async () => {
         
         // If only focus areas are changing
         if (focusAreas !== undefined) {
+          console.log('🚀 [START] Focus areas validation started for:', focusAreas);
+          
+          // Get lesson type name for validation - need to fetch the lesson type details
+          let lessonTypeName = '';
+          console.log('🔍 [LESSON_TYPE_FETCH] currentBooking.lessonTypeId:', currentBooking.lessonTypeId);
+          if (currentBooking.lessonTypeId) {
+            try {
+              console.log('🔍 [LESSON_TYPE_FETCH] Calling storage.getLessonType...');
+              const lessonType = await storage.getLessonType(currentBooking.lessonTypeId);
+              console.log('🔍 [LESSON_TYPE_FETCH] lessonType from storage:', lessonType);
+              lessonTypeName = lessonType?.name || '';
+              console.log('🔍 [LESSON_TYPE_FETCH] lessonTypeName set to:', lessonTypeName);
+            } catch (error) {
+              console.error('🚨 CRITICAL: Failed to fetch lesson type for focus area validation:', error);
+              lessonTypeName = 'Quick Journey'; // Fallback to default
+              console.log('🔍 [LESSON_TYPE_FETCH] Using fallback lessonTypeName:', lessonTypeName);
+            }
+          }
+          
+          console.log('🔍 [VALIDATION_CALL] About to call validateFocusAreas with:', {
+            focusAreas: Array.isArray(focusAreas) ? focusAreas : [],
+            lessonTypeName
+          });
+          
+          // Test function accessibility
+          console.log('🔍 [FUNCTION_TEST] validateFocusAreas function type:', typeof validateFocusAreas);
+          console.log('🔍 [FUNCTION_TEST] validateFocusAreas function exists:', validateFocusAreas !== undefined);
+          
           // Validate focus areas
-          const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], currentBooking.lessonType || '');
+          const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], lessonTypeName);
+          console.log('🔍 [VALIDATION_RESULT] focusAreaValidation result:', focusAreaValidation);
           if (!focusAreaValidation.isValid) {
+            console.error('🚨 CRITICAL: Focus area validation failed:', focusAreaValidation.message);
             return res.status(400).json({
-              message: "Focus area validation failed",
-              details: focusAreaValidation.message
+              error: "Invalid focus area ID",
+              message: focusAreaValidation.message || "Please provide at least one focus area for the lesson"
             });
           }
           
+          console.log('🎯 [UPDATE] Setting updateData.focusAreas to:', focusAreas);
           updateData.focusAreas = focusAreas;
         }
         
@@ -5537,7 +6088,29 @@ setTimeout(async () => {
         }
       }
       
-      const updatedBooking = await storage.updateBooking(id, updateData);
+      console.log('🗄️ [DATABASE_UPDATE] About to call storage.updateBooking with updateData:', JSON.stringify(updateData, null, 2));
+      console.log('🗄️ [DATABASE_UPDATE] updateData.focusAreas value:', updateData.focusAreas);
+      console.log('🗄️ [DATABASE_UPDATE] updateData.focusAreas type:', typeof updateData.focusAreas);
+      console.log('🗄️ [DATABASE_UPDATE] Booking ID:', id);
+      console.log('🛡️ [PRE-CALL] About to call storage.updateBooking with ID:', id, 'and data keys:', Object.keys(updateData));
+      
+      // Fix: Debug point to help identify if storage.updateBooking is actually being called
+      console.log('🔎 [TRACE] TRACE_THIS_REQUEST marker found:', req.body.testMarker === 'TRACE_THIS_REQUEST');
+      console.log('🚀 [FIXING FOCUS AREAS] Storage call about to execute');
+      
+      let updatedBooking;
+      try {
+        console.log('🔥 [ERROR-TRACE] About to call storage.updateBooking...');
+        updatedBooking = await storage.updateBooking(id, updateData);
+        console.log('🔥 [ERROR-TRACE] storage.updateBooking completed successfully');
+      } catch (error) {
+        console.error('🔥 [ERROR-TRACE] storage.updateBooking threw an error:', error);
+        console.error('🔥 [ERROR-TRACE] Error stack:', (error as Error).stack);
+        throw error; // Re-throw to maintain existing error handling
+      }
+      
+      console.log('🎯 [POST-CALL] storage.updateBooking returned:', JSON.stringify(updatedBooking, null, 2));
+      console.log('🎯 [POST-CALL] returned focusAreas:', updatedBooking?.focusAreas);
       
       console.log(`[RESCHEDULE DEBUG] After update - Updated booking date: ${updatedBooking?.preferredDate}, time: ${updatedBooking?.preferredTime}`);
       
@@ -5718,6 +6291,22 @@ setTimeout(async () => {
         return;
       }
       
+      // Log booking status change activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session.adminId);
+        await activityLogger.logBookingActivity(
+          context,
+          id,
+          ActivityActionType.STATUS_CHANGED,
+          `Booking status changed to ${finalStatus}${isDeveloperMode ? ' (Developer Mode)' : ''}`,
+          existingBooking.status,
+          finalStatus,
+          'status'
+        );
+      } catch (logError) {
+        console.error('Failed to log booking status change activity:', logError);
+      }
+      
       // Send cancellation email if booking was cancelled
       if (status === 'cancelled') {
         try {
@@ -5796,6 +6385,41 @@ setTimeout(async () => {
         return res.status(404).json({ message: "Booking not found after update" });
       }
 
+      // Resolve authoritative total lesson price from lesson_types table
+      let totalPrice = 0;
+      try {
+        const ltId = (booking as any).lessonTypeId;
+        if (ltId) {
+          const lt = await storage.getLessonType(Number(ltId));
+          if (lt) {
+            totalPrice = lt.totalPrice || lt.price || 0;
+          }
+        }
+      } catch (priceError) {
+        console.error('[ERROR] Failed to resolve lesson type price:', priceError);
+      }
+
+      // Log payment status change activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session.adminId);
+        await activityLogger.logPaymentActivity(
+          context,
+          null, // No specific payment ID for status changes
+          id,
+          ActivityActionType.STATUS_CHANGED,
+          `Payment status changed to ${paymentStatus}`,
+          paidAmount,
+          {
+            previousStatus: currentBooking.paymentStatus,
+            newStatus: paymentStatus,
+            amountPaid: paidAmount,
+            totalPrice: totalPrice || 0
+          }
+        );
+      } catch (logError) {
+        console.error('Failed to log payment status change activity:', logError);
+      }
+
       // Automatic attendance status updates based on payment status
       let attendanceStatus = booking.attendanceStatus;
       if (paymentStatus === "reservation-pending" || paymentStatus === "reservation-failed") {
@@ -5810,29 +6434,6 @@ setTimeout(async () => {
       const derivedStatus = determineBookingStatus(paymentStatus, attendanceStatus);
       await storage.updateBookingStatus(id, derivedStatus);
       console.log("🔄 Auto-derived booking status from payment change:", derivedStatus);
-
-      // Resolve authoritative total lesson price from lesson_types table
-      let totalPrice = 0;
-      try {
-        const ltId = (booking as any).lessonTypeId;
-        if (ltId) {
-          const lt = await storage.getLessonType(Number(ltId));
-          if (lt) {
-            totalPrice = Number(lt.price || 0);
-          }
-        }
-        if (!totalPrice) {
-          const legacyMap: Record<string, number> = {
-            'quick-journey': 40,
-            'dual-quest': 50,
-            'deep-dive': 60,
-            'partner-progression': 80,
-          };
-          totalPrice = legacyMap[booking.lessonType || ''] || 0;
-        }
-      } catch (priceErr) {
-        console.warn('[PAYMENT][PRICE_RESOLVE] Failed to resolve lesson type price, using 0', priceErr);
-      }
 
       // Update paid amount and balance based on payment status  
       if (paymentStatus === "session-paid") {
@@ -6535,6 +7136,27 @@ setTimeout(async () => {
       const booking = await storage.updateBookingAttendanceStatus(id, attendanceStatus);
       if (!booking) {
         return res.status(404).json({ message: "Booking not found after update" });
+      }
+      
+      // Log attendance status change activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session.adminId);
+        const actionType = attendanceStatus === AttendanceStatusEnum.NO_SHOW ? ActivityActionType.NO_SHOW_MARKED : ActivityActionType.STATUS_CHANGED;
+        const actionDescription = attendanceStatus === AttendanceStatusEnum.NO_SHOW 
+          ? `Marked as no-show`
+          : `Attendance status changed to ${attendanceStatus}`;
+          
+        await activityLogger.logBookingActivity(
+          context,
+          id,
+          actionType,
+          actionDescription,
+          originalStatus,
+          attendanceStatus,
+          'attendanceStatus'
+        );
+      } catch (logError) {
+        console.error('Failed to log attendance status change activity:', logError);
       }
       
       // Synchronize payment status when attendance is marked as completed
@@ -7868,6 +8490,145 @@ setTimeout(async () => {
     } catch (err) {
       console.error('[ADMIN][SITE-INQUIRIES] Failed to delete', err);
       res.status(500).json({ message: 'Failed to delete inquiry' });
+    }
+  });
+
+  // ===============================
+  // Activity Logs API
+  // ===============================
+  
+  // Get all activity logs with filtering, pagination, and search
+  app.get('/api/admin/activity-logs', isAdminAuthenticated, async (req, res) => {
+    try {
+      const {
+        page = 1,
+        limit = 50,
+        actorType,
+        actionCategory,
+        targetType,
+        targetId,
+        startDate,
+        endDate,
+        search
+      } = req.query;
+
+      const offset = (Number(page) - 1) * Number(limit);
+      
+      const options: any = {
+        limit: Number(limit),
+        offset: offset,
+        searchTerm: search as string,
+      };
+
+      if (actorType) options.actorType = actorType as ActivityActorType;
+      if (actionCategory) options.actionCategory = actionCategory as ActivityCategory;
+      if (targetType) options.targetType = targetType as ActivityTargetType;
+      if (targetId) options.targetId = Number(targetId);
+      if (startDate) options.startDate = new Date(startDate as string);
+      if (endDate) options.endDate = new Date(endDate as string);
+
+      const result = await storage.getAllActivityLogs(options);
+      
+      res.json({
+        logs: result.logs,
+        total: result.total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(result.total / Number(limit))
+      });
+    } catch (error) {
+      console.error('[ADMIN][ACTIVITY-LOGS] Failed to fetch activity logs:', error);
+      res.status(500).json({ error: 'Failed to fetch activity logs' });
+    }
+  });
+
+  // Get activity logs for a specific target
+  app.get('/api/admin/activity-logs/:targetType/:targetId', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { targetType, targetId } = req.params;
+      const { limit = 50 } = req.query;
+
+      const logs = await storage.getActivityLogsByTarget(
+        targetType as ActivityTargetType, 
+        Number(targetId), 
+        Number(limit)
+      );
+      
+      res.json(logs);
+    } catch (error) {
+      console.error('[ADMIN][ACTIVITY-LOGS] Failed to fetch target activity logs:', error);
+      res.status(500).json({ error: 'Failed to fetch activity logs' });
+    }
+  });
+
+  // Reverse/undo an activity
+  app.post('/api/admin/activity-logs/:id/reverse', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session.adminId);
+      
+      const success = await activityLogger.reverseActivity(Number(id), context, reason);
+      
+      if (success) {
+        res.json({ success: true, message: 'Activity reversed successfully' });
+      } else {
+        res.status(404).json({ error: 'Activity not found or could not be reversed' });
+      }
+    } catch (error) {
+      console.error('[ADMIN][ACTIVITY-LOGS] Failed to reverse activity:', error);
+      res.status(500).json({ error: 'Failed to reverse activity' });
+    }
+  });
+
+  // Export activity logs
+  app.get('/api/admin/activity-logs/export', isAdminAuthenticated, async (req, res) => {
+    try {
+      const {
+        format = 'csv',
+        actorType,
+        actionCategory,
+        targetType,
+        startDate,
+        endDate,
+        search
+      } = req.query;
+
+      const options: any = {
+        limit: 10000, // Large limit for export
+        searchTerm: search as string,
+      };
+
+      if (actorType) options.actorType = actorType as ActivityActorType;
+      if (actionCategory) options.actionCategory = actionCategory as ActivityCategory;
+      if (targetType) options.targetType = targetType as ActivityTargetType;
+      if (startDate) options.startDate = new Date(startDate as string);
+      if (endDate) options.endDate = new Date(endDate as string);
+
+      const result = await storage.getAllActivityLogs(options);
+      
+      if (format === 'csv') {
+        const csvHeader = 'ID,Timestamp,Actor,Action,Category,Target,Description,Previous Value,New Value,Notes,IP Address\n';
+        const csvRows = result.logs.map(log => {
+          const timestamp = new Date(log.createdAt).toLocaleString();
+          const previousValue = log.previousValue ? JSON.stringify(log.previousValue).replace(/"/g, '""') : '';
+          const newValue = log.newValue ? JSON.stringify(log.newValue).replace(/"/g, '""') : '';
+          const notes = log.notes ? log.notes.replace(/"/g, '""') : '';
+          const description = log.actionDescription.replace(/"/g, '""');
+          
+          return `${log.id},"${timestamp}","${log.actorName}","${log.actionType}","${log.actionCategory}","${log.targetIdentifier}","${description}","${previousValue}","${newValue}","${notes}","${log.ipAddress || ''}"`;
+        }).join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="activity-logs-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send(csvHeader + csvRows);
+      } else {
+        res.json(result.logs);
+      }
+    } catch (error) {
+      console.error('[ADMIN][ACTIVITY-LOGS] Failed to export activity logs:', error);
+      res.status(500).json({ error: 'Failed to export activity logs' });
     }
   });
 
@@ -9492,6 +10253,23 @@ setTimeout(async () => {
       
       const athlete = await storage.createAthlete(athleteData);
       
+      // Log athlete creation activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session?.adminId);
+        await activityLogger.logAthleteActivity(
+          context,
+          athlete.id,
+          athlete.name || `${athlete.firstName} ${athlete.lastName}`,
+          ActivityActionType.CREATED,
+          `Admin created athlete profile: ${athlete.name || `${athlete.firstName} ${athlete.lastName}`} for parent ${parent.firstName} ${parent.lastName}`,
+          null,
+          athlete
+        );
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log admin athlete creation activity:', logError);
+        console.error('🚨 Athlete ID:', athlete.id, 'Admin ID:', req.session?.adminId);
+      }
+      
       console.log(`✅ Admin created athlete ${athlete.id} for parent ${parentId}`);
       res.status(201).json(athlete);
     } catch (error: any) {
@@ -9563,6 +10341,23 @@ setTimeout(async () => {
           console.error("Error creating waiver for athlete:", waiverError);
           // Don't fail the athlete creation if waiver fails
         }
+      }
+
+      // Log athlete creation activity
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.PARENT, parentId);
+        await activityLogger.logAthleteActivity(
+          context,
+          athlete.id,
+          athlete.name || `${athlete.firstName} ${athlete.lastName}`,
+          ActivityActionType.CREATED,
+          `Parent created athlete profile: ${athlete.name || `${athlete.firstName} ${athlete.lastName}`}`,
+          null,
+          athlete
+        );
+      } catch (logError) {
+        console.error('🚨 CRITICAL: Failed to log parent athlete creation activity:', logError);
+        console.error('🚨 Athlete ID:', athlete.id, 'Parent ID:', parentId);
       }
       
       res.status(201).json(athlete);

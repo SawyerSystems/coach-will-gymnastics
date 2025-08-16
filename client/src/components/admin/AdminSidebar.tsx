@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
+  Activity,
   BarChart,
   BookOpen,
   Calendar,
@@ -139,6 +140,11 @@ export function AdminSidebar({
       id: 'analytics',
       label: 'Analytics',
       icon: <BarChart className="h-5 w-5" />
+    },
+    {
+      id: 'activity-logs',
+      label: 'Activity Logs',
+      icon: <Activity className="h-5 w-5" />
     },
     {
       id: 'settings',

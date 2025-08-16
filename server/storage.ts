@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type CookieConsent, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertCookieConsent, type InsertFocusArea, type InsertParent, type InsertPrivacyRequest, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type PrivacyRequest, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "../shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type CookieConsent, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertCookieConsent, type InsertFocusArea, type InsertParent, type InsertPrivacyRequest, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type PrivacyRequest, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, type ActivityLog, type InsertActivityLog, ActivityActorType, ActivityActionType, ActivityCategory, ActivityTargetType, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "../shared/schema";
 import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
@@ -34,6 +34,7 @@ export interface IStorage {
   deleteParent(id: number): Promise<boolean>;
   getParentAthletes(parentId: number): Promise<Athlete[]>;
   getParentById(id: number): Promise<Parent | undefined>;
+  getParent(id: number): Promise<Parent | undefined>;
 
   // Parents (legacy compatibility)
   identifyParent(email: string, phone: string): Promise<Parent | undefined>;
@@ -276,6 +277,24 @@ export interface IStorage {
 
   // Cookie Consent
   createCookieConsentLog(input: InsertCookieConsent): Promise<CookieConsent>;
+
+  // Activity Logs
+  createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
+  getActivityLog(id: number): Promise<ActivityLog | undefined>;
+  getAllActivityLogs(options?: {
+    limit?: number;
+    offset?: number;
+    actorType?: ActivityActorType;
+    actionCategory?: ActivityCategory;
+    targetType?: ActivityTargetType;
+    targetId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    searchTerm?: string;
+  }): Promise<{ logs: ActivityLog[]; total: number }>;
+  getActivityLogsByTarget(targetType: ActivityTargetType, targetId: number, limit?: number): Promise<ActivityLog[]>;
+  markActivityReversed(id: number, reversedBy?: number, reverseActionId?: number): Promise<boolean>;
+  deleteActivityLog(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -1269,6 +1288,10 @@ With the right setup and approach, home practice can accelerate your child's gym
     return undefined;
   }
 
+  async getParent(id: number): Promise<Parent | undefined> {
+    return this.getParentById(id);
+  }
+
   async createParentAuthCode(authCode: InsertParentAuthCode): Promise<ParentAuthCode> {
     throw new Error("Parent auth code creation not implemented in MemStorage");
   }
@@ -1654,6 +1677,22 @@ With the right setup and approach, home practice can accelerate your child's gym
     return { id: Date.now(), ...input, createdAt: new Date() } as any;
   }
 
+  // Activity Logs (MemStorage stubs)
+  async createActivityLog(log: InsertActivityLog): Promise<ActivityLog> {
+    return { id: Date.now(), ...log, createdAt: new Date() } as any;
+  }
+  async getActivityLog(id: number): Promise<ActivityLog | undefined> { return undefined; }
+  async getAllActivityLogs(options?: any): Promise<{ logs: ActivityLog[]; total: number }> {
+    return { logs: [], total: 0 };
+  }
+  async getActivityLogsByTarget(targetType: ActivityTargetType, targetId: number, limit?: number): Promise<ActivityLog[]> {
+    return [];
+  }
+  async markActivityReversed(id: number, reversedBy?: number, reverseActionId?: number): Promise<boolean> {
+    return false;
+  }
+  async deleteActivityLog(id: number): Promise<boolean> { return false; }
+
   // Skills (MemStorage stubs)
   async listSkills(): Promise<Skill[]> { return []; }
   async createSkill(input: InsertSkill): Promise<Skill> { return { id: Date.now(), ...input } as any; }
@@ -1947,6 +1986,305 @@ export class SupabaseStorage implements IStorage {
       userAgent: data.user_agent,
       createdAt: data.created_at,
     } as CookieConsent;
+  }
+
+  // ===============================
+  // Activity Logs
+  // ===============================
+  async createActivityLog(log: InsertActivityLog): Promise<ActivityLog> {
+    const insert: any = {
+      actor_type: log.actorType,
+      actor_id: log.actorId ?? null,
+      actor_name: log.actorName,
+      action_type: log.actionType,
+      action_category: log.actionCategory,
+      action_description: log.actionDescription,
+      target_type: log.targetType,
+      target_id: log.targetId ?? null,
+      target_identifier: log.targetIdentifier,
+      field_changed: log.fieldChanged ?? null,
+      previous_value: log.previousValue ?? null,
+      new_value: log.newValue ?? null,
+      notes: log.notes ?? null,
+      metadata: log.metadata ?? null,
+      ip_address: log.ipAddress ?? null,
+      user_agent: log.userAgent ?? null,
+      batch_id: log.batchId ?? null,
+      batch_description: log.batchDescription ?? null,
+      is_deleted: log.isDeleted ?? false,
+      is_reversed: log.isReversed ?? false,
+      reversed_by: log.reversedBy ?? null,
+      reverse_action_id: log.reverseActionId ?? null,
+      original_action_id: log.originalActionId ?? null,
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from('activity_logs')
+      .insert(insert)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('[STORAGE][ACTIVITY-LOGS] create error:', error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      actorType: data.actor_type,
+      actorId: data.actor_id,
+      actorName: data.actor_name,
+      actionType: data.action_type,
+      actionCategory: data.action_category,
+      actionDescription: data.action_description,
+      targetType: data.target_type,
+      targetId: data.target_id,
+      targetIdentifier: data.target_identifier,
+      fieldChanged: data.field_changed,
+      previousValue: data.previous_value,
+      newValue: data.new_value,
+      notes: data.notes,
+      metadata: data.metadata,
+      ipAddress: data.ip_address,
+      userAgent: data.user_agent,
+      batchId: data.batch_id,
+      batchDescription: data.batch_description,
+      createdAt: data.created_at,
+      isDeleted: data.is_deleted,
+      deletedAt: data.deleted_at,
+      deletedBy: data.deleted_by,
+      isReversed: data.is_reversed,
+      reversedAt: data.reversed_at,
+      reversedBy: data.reversed_by,
+      reverseActionId: data.reverse_action_id,
+      originalActionId: data.original_action_id,
+    } as ActivityLog;
+  }
+
+  async getActivityLog(id: number): Promise<ActivityLog | undefined> {
+    const { data, error } = await supabaseAdmin
+      .from('activity_logs')
+      .select('*')
+      .eq('id', id)
+      .eq('is_deleted', false)
+      .single();
+
+    if (error) {
+      console.error('[STORAGE][ACTIVITY-LOGS] get error:', error);
+      return undefined;
+    }
+
+    if (!data) return undefined;
+
+    return {
+      id: data.id,
+      actorType: data.actor_type,
+      actorId: data.actor_id,
+      actorName: data.actor_name,
+      actionType: data.action_type,
+      actionCategory: data.action_category,
+      actionDescription: data.action_description,
+      targetType: data.target_type,
+      targetId: data.target_id,
+      targetIdentifier: data.target_identifier,
+      fieldChanged: data.field_changed,
+      previousValue: data.previous_value,
+      newValue: data.new_value,
+      notes: data.notes,
+      metadata: data.metadata,
+      ipAddress: data.ip_address,
+      userAgent: data.user_agent,
+      batchId: data.batch_id,
+      batchDescription: data.batch_description,
+      createdAt: data.created_at,
+      isDeleted: data.is_deleted,
+      deletedAt: data.deleted_at,
+      deletedBy: data.deleted_by,
+      isReversed: data.is_reversed,
+      reversedAt: data.reversed_at,
+      reversedBy: data.reversed_by,
+      reverseActionId: data.reverse_action_id,
+      originalActionId: data.original_action_id,
+    } as ActivityLog;
+  }
+
+  async getAllActivityLogs(options?: {
+    limit?: number;
+    offset?: number;
+    actorType?: ActivityActorType;
+    actionCategory?: ActivityCategory;
+    targetType?: ActivityTargetType;
+    targetId?: number;
+    startDate?: Date;
+    endDate?: Date;
+    searchTerm?: string;
+  }): Promise<{ logs: ActivityLog[]; total: number }> {
+    let query = supabaseAdmin.from('activity_logs').select('*', { count: 'exact' });
+    
+    // Apply filters
+    query = query.eq('is_deleted', false);
+    
+    if (options?.actorType) {
+      query = query.eq('actor_type', options.actorType);
+    }
+    
+    if (options?.actionCategory) {
+      query = query.eq('action_category', options.actionCategory);
+    }
+    
+    if (options?.targetType) {
+      query = query.eq('target_type', options.targetType);
+    }
+    
+    if (options?.targetId) {
+      query = query.eq('target_id', options.targetId);
+    }
+    
+    if (options?.startDate) {
+      query = query.gte('created_at', options.startDate.toISOString());
+    }
+    
+    if (options?.endDate) {
+      query = query.lte('created_at', options.endDate.toISOString());
+    }
+    
+    if (options?.searchTerm) {
+      query = query.or(`action_description.ilike.%${options.searchTerm}%,target_identifier.ilike.%${options.searchTerm}%,actor_name.ilike.%${options.searchTerm}%`);
+    }
+    
+    // Apply pagination
+    query = query.order('created_at', { ascending: false });
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options?.limit || 50) - 1);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error('[STORAGE][ACTIVITY-LOGS] getAllActivityLogs error:', error);
+      return { logs: [], total: 0 };
+    }
+
+    const logs = (data || []).map((row: any) => ({
+      id: row.id,
+      actorType: row.actor_type,
+      actorId: row.actor_id,
+      actorName: row.actor_name,
+      actionType: row.action_type,
+      actionCategory: row.action_category,
+      actionDescription: row.action_description,
+      targetType: row.target_type,
+      targetId: row.target_id,
+      targetIdentifier: row.target_identifier,
+      fieldChanged: row.field_changed,
+      previousValue: row.previous_value,
+      newValue: row.new_value,
+      notes: row.notes,
+      metadata: row.metadata,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      batchId: row.batch_id,
+      batchDescription: row.batch_description,
+      createdAt: row.created_at,
+      isDeleted: row.is_deleted,
+      deletedAt: row.deleted_at,
+      deletedBy: row.deleted_by,
+      isReversed: row.is_reversed,
+      reversedAt: row.reversed_at,
+      reversedBy: row.reversed_by,
+      reverseActionId: row.reverse_action_id,
+      originalActionId: row.original_action_id,
+    })) as ActivityLog[];
+
+    return { logs, total: count || 0 };
+  }
+
+  async getActivityLogsByTarget(targetType: ActivityTargetType, targetId: number, limit: number = 50): Promise<ActivityLog[]> {
+    const { data, error } = await supabaseAdmin
+      .from('activity_logs')
+      .select('*')
+      .eq('target_type', targetType)
+      .eq('target_id', targetId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('[STORAGE][ACTIVITY-LOGS] getActivityLogsByTarget error:', error);
+      return [];
+    }
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      actorType: row.actor_type,
+      actorId: row.actor_id,
+      actorName: row.actor_name,
+      actionType: row.action_type,
+      actionCategory: row.action_category,
+      actionDescription: row.action_description,
+      targetType: row.target_type,
+      targetId: row.target_id,
+      targetIdentifier: row.target_identifier,
+      fieldChanged: row.field_changed,
+      previousValue: row.previous_value,
+      newValue: row.new_value,
+      notes: row.notes,
+      metadata: row.metadata,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      batchId: row.batch_id,
+      batchDescription: row.batch_description,
+      createdAt: row.created_at,
+      isDeleted: row.is_deleted,
+      deletedAt: row.deleted_at,
+      deletedBy: row.deleted_by,
+      isReversed: row.is_reversed,
+      reversedAt: row.reversed_at,
+      reversedBy: row.reversed_by,
+      reverseActionId: row.reverse_action_id,
+      originalActionId: row.original_action_id,
+    })) as ActivityLog[];
+  }
+
+  async markActivityReversed(id: number, reversedBy?: number, reverseActionId?: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('activity_logs')
+      .update({
+        is_reversed: true,
+        reversed_at: new Date().toISOString(),
+        reversed_by: reversedBy || null,
+        reverse_action_id: reverseActionId || null,
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('[STORAGE][ACTIVITY-LOGS] markActivityReversed error:', error);
+      return false;
+    }
+
+    return true;
+  }
+
+  async deleteActivityLog(id: number): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('activity_logs')
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('[STORAGE][ACTIVITY-LOGS] deleteActivityLog error:', error);
+      return false;
+    }
+
+    return true;
   }
 
   // ===============================
@@ -3423,7 +3761,7 @@ export class SupabaseStorage implements IStorage {
       parentPhone: undefined,
       emergencyContactName: undefined,
       emergencyContactPhone: undefined,
-      focusAreas: [], // Now handled via booking_focus_areas junction table
+      focusAreas: Array.isArray(data.focus_areas) ? data.focus_areas : [], // Read from JSON field in DB
       focusAreaOther: data.focus_area_other,
       amount: undefined, // Now calculated from lesson type
       preferredDate: data.preferred_date,
@@ -3668,10 +4006,30 @@ export class SupabaseStorage implements IStorage {
     // Add missing fields for reschedule functionality
     if (data.preferredDate !== undefined) dbUpdate.preferred_date = data.preferredDate;
     if (data.preferredTime !== undefined) dbUpdate.preferred_time = data.preferredTime;
-    if (data.focusAreas !== undefined) dbUpdate.focus_areas = data.focusAreas;
-  // Idempotent email tracking fields
-  if (data.sessionConfirmationEmailSent !== undefined) dbUpdate.session_confirmation_email_sent = data.sessionConfirmationEmailSent;
-  if (data.sessionConfirmationEmailSentAt !== undefined) dbUpdate.session_confirmation_email_sent_at = data.sessionConfirmationEmailSentAt;
+    
+    // ENHANCED FIX: Make sure focusAreas is properly processed
+    if (data.focusAreas !== undefined) {
+      console.log('🔧 [FIX-DEBUG] Processing focusAreas:', data.focusAreas);
+      console.log('🔧 [FIX-DEBUG] Type of focusAreas:', typeof data.focusAreas);
+      console.log('🔧 [FIX-DEBUG] Is array?', Array.isArray(data.focusAreas));
+      
+      // Fetch existing booking to see current focus_areas
+      const { data: existingBooking } = await supabaseAdmin
+        .from('bookings')
+        .select('focus_areas')
+        .eq('id', id)
+        .single();
+      
+      console.log('🔧 [FIX-DEBUG] Existing focus_areas in DB:', existingBooking?.focus_areas);
+      
+      // Ensure we're setting the correct field
+      dbUpdate.focus_areas = data.focusAreas;
+      console.log('🔧 [FIX-DEBUG] Set dbUpdate.focus_areas to:', dbUpdate.focus_areas);
+    }
+    
+    // Idempotent email tracking fields
+    if (data.sessionConfirmationEmailSent !== undefined) dbUpdate.session_confirmation_email_sent = data.sessionConfirmationEmailSent;
+    if (data.sessionConfirmationEmailSentAt !== undefined) dbUpdate.session_confirmation_email_sent_at = data.sessionConfirmationEmailSentAt;
     
     // Safety information fields
     if (data.dropoffPersonName !== undefined) dbUpdate.dropoff_person_name = data.dropoffPersonName;
@@ -3691,12 +4049,33 @@ export class SupabaseStorage implements IStorage {
     // Update the updated_at timestamp
     dbUpdate.updated_at = new Date().toISOString();
 
+    console.log('💾 [STORAGE] updateBooking - incoming data:', JSON.stringify(data, null, 2));
+    console.log('💾 [STORAGE] updateBooking - dbUpdate object:', JSON.stringify(dbUpdate, null, 2));
+    console.log('💾 [STORAGE] updateBooking - focus_areas specifically:', dbUpdate.focus_areas);
+    console.log('💾 [STORAGE] updateBooking - focus_areas type:', typeof dbUpdate.focus_areas);
+    console.log('💾 [STORAGE] updateBooking - updating booking ID:', id);
+    
+    // Query existing booking to check current focus_areas in database
+    const { data: existingData } = await supabaseAdmin
+      .from('bookings')
+      .select('focus_areas, id')
+      .eq('id', id)
+      .single();
+      
+    console.log('💾 [STORAGE] updateBooking - EXISTING focus_areas in DB:', existingData?.focus_areas);
+    console.log('💾 [STORAGE] updateBooking - EXISTING focus_areas type:', typeof existingData?.focus_areas);
+
     const { data: updatedBooking, error } = await supabaseAdmin
       .from('bookings')
       .update(dbUpdate)
       .eq('id', id)
       .select()
       .single();
+
+    console.log('💾 [STORAGE] updateBooking - Supabase response error:', error);
+    console.log('💾 [STORAGE] updateBooking - Supabase response data:', JSON.stringify(updatedBooking, null, 2));
+    console.log('💾 [STORAGE] updateBooking - returned focus_areas:', updatedBooking?.focus_areas);
+    console.log('💾 [STORAGE] updateBooking - returned focus_areas type:', typeof updatedBooking?.focus_areas);
 
     if (error) {
       console.error('Error updating booking:', error);
@@ -5165,6 +5544,10 @@ export class SupabaseStorage implements IStorage {
     } : undefined;
   }
 
+  async getParent(id: number): Promise<Parent | undefined> {
+    return this.getParentById(id);
+  }
+
   async createParentAuthCode(authCode: InsertParentAuthCode): Promise<ParentAuthCode> {
     // Map camelCase to snake_case for Supabase
     const supabaseData = {
@@ -5979,7 +6362,10 @@ export class SupabaseStorage implements IStorage {
       parent,
       lessonType,
       apparatus: apparatusData?.map(item => ({ id: (item.apparatus as any).id, name: (item.apparatus as any).name })) || [],
-      focusAreas: focusAreasData?.map(item => (item.focus_areas as any).name) || [],
+      // Use direct focus_areas from booking if available, otherwise use junction table data
+      focusAreas: booking.focusAreas && booking.focusAreas.length > 0 ? 
+                 booking.focusAreas : 
+                 (focusAreasData?.map(item => (item.focus_areas as any).name) || []),
       sideQuests: sideQuestsData?.map(item => ({ id: (item.side_quests as any).id, name: (item.side_quests as any).name })) || [],
       athletes: athletesData?.map(item => {
         const athlete = item.athletes as any;

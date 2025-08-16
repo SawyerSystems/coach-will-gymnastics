@@ -1,4 +1,5 @@
 import { EnhancedScheduleManager } from "@/components/admin/EnhancedScheduleManager";
+import { ActivityLogPage } from "@/components/ActivityLogPage";
 import { AthleteDetailDialog } from "@/components/AthleteDetailDialog";
 import { GenderSelect } from "@/components/GenderSelect";
 import { PaymentsTab } from "@/components/PaymentsTab";
@@ -50,6 +51,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+    Activity,
     AlertCircle,
     BarChart,
   Calendar,
@@ -174,6 +176,16 @@ export default function Admin() {
   const [editingParent, setEditingParent] = useState<any>(null);
   const [viewingParent, setViewingParent] = useState<any>(null);
   
+  // Parent edit form state
+  const [editParentForm, setEditParentForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    emergencyContactName: '',
+    emergencyContactPhone: ''
+  });
+  
   // Athletes search state
   const [athleteSearchTerm, setAthleteSearchTerm] = useState<string>("");
   
@@ -209,6 +221,20 @@ export default function Admin() {
       setEditIsGymMember(!!selectedAthlete.isGymMember);
     }
   }, [isAthleteEditOpen, selectedAthlete]);
+  
+  // Populate parent edit form when editing parent changes
+  useEffect(() => {
+    if (editingParent) {
+      setEditParentForm({
+        firstName: editingParent.first_name || editingParent.firstName || '',
+        lastName: editingParent.last_name || editingParent.lastName || '',
+        email: editingParent.email || '',
+        phone: editingParent.phone || '',
+        emergencyContactName: editingParent.emergencyContactName || editingParent.emergency_contact_name || '',
+        emergencyContactPhone: editingParent.emergencyContactPhone || editingParent.emergency_contact_phone || ''
+      });
+    }
+  }, [editingParent]);
   
   // ALL QUERIES
   const { data: authStatus, isLoading: authLoading } = useQuery<{ loggedIn: boolean; adminId?: number }>({
@@ -545,6 +571,34 @@ export default function Admin() {
         title: "Email test failed", 
         description: error.message || "Failed to send test email",
         variant: "destructive"
+      });
+    },
+  });
+
+  // Parent update mutation
+  const saveParentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest("PATCH", `/api/parents/${id}`, data);
+      if (!response.ok) {
+        throw new Error(`Failed to update parent: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/parents'] });
+      toast({
+        title: "Parent Updated Successfully",
+        description: "Parent information has been saved.",
+      });
+      setIsParentEditOpen(false);
+      setEditingParent(null);
+    },
+    onError: (error: any) => {
+      console.error("Error updating parent:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update parent information",
+        variant: "destructive",
       });
     },
   });
@@ -1589,6 +1643,12 @@ export default function Admin() {
               className="hidden"
             >
               📊 Analytics
+            </TabsTrigger>
+            <TabsTrigger 
+              value="activity-logs" 
+              className="hidden"
+            >
+              📋 Activity Logs
             </TabsTrigger>
             <TabsTrigger 
               value="waivers" 
@@ -2972,6 +3032,19 @@ export default function Admin() {
             </MainContentContainer>
           </TabsContent>
 
+          <TabsContent value="activity-logs" className="w-full max-w-full px-0 sm:px-2">
+            <MainContentContainer 
+              heading={
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Activity className="h-8 w-8 text-[#D8BD2A]" />
+                  Activity Logs
+                </div>
+              }
+            >
+              <ActivityLogPage />
+            </MainContentContainer>
+          </TabsContent>
+
           <TabsContent value="waivers" className="w-full max-w-full px-0 sm:px-2">
             <MainContentContainer 
               heading={
@@ -3715,7 +3788,8 @@ export default function Admin() {
                         <Label htmlFor="parent-first-name" className="text-slate-700 font-medium">First Name</Label>
                         <Input 
                           id="parent-first-name"
-                          defaultValue={editingParent.first_name}
+                          value={editParentForm.firstName}
+                          onChange={(e) => setEditParentForm(prev => ({ ...prev, firstName: e.target.value }))}
                           placeholder="First Name"
                           className="mt-1"
                         />
@@ -3724,7 +3798,8 @@ export default function Admin() {
                         <Label htmlFor="parent-last-name" className="text-slate-700 font-medium">Last Name</Label>
                         <Input 
                           id="parent-last-name"
-                          defaultValue={editingParent.last_name}
+                          value={editParentForm.lastName}
+                          onChange={(e) => setEditParentForm(prev => ({ ...prev, lastName: e.target.value }))}
                           placeholder="Last Name"
                           className="mt-1"
                         />
@@ -3735,7 +3810,8 @@ export default function Admin() {
                       <Input 
                         id="parent-email"
                         type="email"
-                        defaultValue={editingParent.email}
+                        value={editParentForm.email}
+                        onChange={(e) => setEditParentForm(prev => ({ ...prev, email: e.target.value }))}
                         placeholder="Email"
                         className="mt-1"
                       />
@@ -3750,7 +3826,8 @@ export default function Admin() {
                       <Label htmlFor="parent-phone" className="text-slate-700 font-medium">Phone</Label>
                       <Input 
                         id="parent-phone"
-                        defaultValue={editingParent.phone}
+                        value={editParentForm.phone}
+                        onChange={(e) => setEditParentForm(prev => ({ ...prev, phone: e.target.value }))}
                         placeholder="Phone Number"
                         className="mt-1"
                       />
@@ -3772,7 +3849,8 @@ export default function Admin() {
                         <Label htmlFor="emergency-name" className="text-slate-700 font-medium">Contact Name</Label>
                         <Input 
                           id="emergency-name"
-                          defaultValue={editingParent?.emergencyContactName || editingParent?.emergency_contact_name || ''}
+                          value={editParentForm.emergencyContactName}
+                          onChange={(e) => setEditParentForm(prev => ({ ...prev, emergencyContactName: e.target.value }))}
                           placeholder="Emergency Contact Name"
                           className="mt-1"
                         />
@@ -3781,7 +3859,8 @@ export default function Admin() {
                         <Label htmlFor="emergency-phone" className="text-slate-700 font-medium">Contact Phone</Label>
                         <Input 
                           id="emergency-phone"
-                          defaultValue={editingParent?.emergencyContactPhone || editingParent?.emergency_contact_phone || ''}
+                          value={editParentForm.emergencyContactPhone}
+                          onChange={(e) => setEditParentForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
                           placeholder="Emergency Contact Phone"
                           className="mt-1"
                         />
@@ -3801,14 +3880,23 @@ export default function Admin() {
                   </Button>
                   <Button 
                     onClick={() => {
-                      // TODO: Implement save functionality
-                      console.log('Save parent changes');
-                      setIsParentEditOpen(false);
+                      if (editingParent) {
+                        const updateData = {
+                          firstName: editParentForm.firstName,
+                          lastName: editParentForm.lastName,
+                          email: editParentForm.email,
+                          phone: editParentForm.phone,
+                          emergencyContactName: editParentForm.emergencyContactName,
+                          emergencyContactPhone: editParentForm.emergencyContactPhone
+                        };
+                        saveParentMutation.mutate({ id: editingParent.id, data: updateData });
+                      }
                     }}
+                    disabled={saveParentMutation.isPending}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    {saveParentMutation.isPending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </div>
