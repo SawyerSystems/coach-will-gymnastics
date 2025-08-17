@@ -11,7 +11,6 @@ import {
   Phone, 
   AlertCircle, 
   Medal, 
-  Target, 
   Shield, 
   FileText,
   ExternalLink,
@@ -243,17 +242,33 @@ export function BookingDetailsModal({
       footer={footer}
     >
       <div className="space-y-6">
-        <AdminModalGrid cols={2}>
-          {/* Lesson Details */}
-          <AdminModalSection
-            title="Lesson Details"
-            icon={<Calendar className="w-4 h-4" />}
-            gradient="blue"
-          >
+        {/* Lesson Details spanning two columns with left/right groups */}
+        <AdminModalSection
+          title="Lesson Details"
+          icon={<Calendar className="w-4 h-4" />}
+          gradient="blue"
+        >
+          <AdminModalGrid cols={2}>
+            {/* Left column: Type, Date, Time, Focus */}
             <div className="space-y-2.5 text-sm">
               <AdminModalDetailRow label="Type" value={lessonTypeName} />
               <AdminModalDetailRow label="Date" value={b.preferredDate} />
               <AdminModalDetailRow label="Time" value={b.preferredTime} />
+              <AdminModalDetailRow
+                label="Focus"
+                value={(() => {
+                  const areas: string[] = Array.isArray(b.focusAreas) ? [...b.focusAreas] : [];
+                  const hasOther = areas.some(a => typeof a === 'string' && a.toLowerCase().startsWith('other:'));
+                  if ((b as any).focusAreaOther && !hasOther) {
+                    areas.push(`Other: ${(b as any).focusAreaOther}`);
+                  }
+                  return areas.length ? areas.join(", ") : "None";
+                })()}
+              />
+            </div>
+
+            {/* Right column: Payment/Attendance/Amount/Paid */}
+            <div className="space-y-2.5 text-sm">
               <AdminModalDetailRow 
                 label="Payment Status" 
                 value={
@@ -261,7 +276,7 @@ export function BookingDetailsModal({
                     {paymentBadge.icon}
                     {booking.displayPaymentStatus || paymentBadge.text}
                   </Badge>
-                } 
+                }
               />
               <AdminModalDetailRow 
                 label="Attendance Status" 
@@ -270,7 +285,7 @@ export function BookingDetailsModal({
                     {attendanceBadge.icon}
                     {attendanceBadge.text}
                   </Badge>
-                } 
+                }
               />
               <AdminModalDetailRow 
                 label="Amount" 
@@ -283,14 +298,17 @@ export function BookingDetailsModal({
                 className="font-medium"
               />
             </div>
-          </AdminModalSection>
+          </AdminModalGrid>
+        </AdminModalSection>
 
-          {/* Parent Information */}
-          <AdminModalSection
-            title="Parent Information"
-            icon={<User className="w-4 h-4" />}
-            gradient="purple"
-          >
+        {/* Parent Information moved below lesson details */}
+        <AdminModalSection
+          title="Parent Information"
+          icon={<User className="w-4 h-4" />}
+          gradient="purple"
+        >
+          <AdminModalGrid cols={2}>
+            {/* Left column: primary contact info */}
             <div className="space-y-2.5 text-sm">
               <AdminModalDetailRow 
                 label="Name" 
@@ -307,6 +325,10 @@ export function BookingDetailsModal({
                 value={(b as any).parent?.phone || b.parentPhone}
                 icon={<Phone className="w-3.5 h-3.5 text-purple-500" />}
               />
+            </div>
+
+            {/* Right column: emergency contact info */}
+            <div className="space-y-2.5 text-sm">
               <AdminModalDetailRow 
                 label="Emergency Contact" 
                 value={(b as any).parent?.emergencyContactName || (b as any).emergencyContactName || 'N/A'}
@@ -318,8 +340,8 @@ export function BookingDetailsModal({
                 icon={<Phone className="w-3.5 h-3.5 text-red-500" />}
               />
             </div>
-          </AdminModalSection>
-        </AdminModalGrid>
+          </AdminModalGrid>
+        </AdminModalSection>
 
         {/* Athletes Section */}
         <AdminModalSection
@@ -418,33 +440,7 @@ export function BookingDetailsModal({
           </div>
         </AdminModalSection>
 
-        {/* Focus Areas Section */}
-        {(Array.isArray(b.focusAreas) && b.focusAreas.length > 0) || (b as any).focusAreaOther ? (
-          <AdminModalSection
-            title="Focus Areas"
-            icon={<Target className="w-4 h-4" />}
-            gradient="amber"
-          >
-            <div className="flex flex-wrap gap-2">
-              {(() => {
-                const areas: string[] = Array.isArray(b.focusAreas) ? [...b.focusAreas] : [];
-                const hasOtherBadge = areas.some(a => typeof a === 'string' && a.toLowerCase().startsWith('other:'));
-                if ((b as any).focusAreaOther && !hasOtherBadge) {
-                  areas.push(`Other: ${(b as any).focusAreaOther}`);
-                }
-                return areas.map((area: any, index: number) => (
-                <Badge 
-                  key={index} 
-                  variant="secondary"
-                  className="bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200"
-                >
-                  {area}
-                </Badge>
-                ));
-              })()}
-            </div>
-          </AdminModalSection>
-        ) : null}
+  {/* Focus Areas section removed; focus is now shown within Lesson Details */}
 
         {/* Safety Information Section */}
         <AdminModalSection
