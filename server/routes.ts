@@ -7219,17 +7219,15 @@ setTimeout(async () => {
         adminNotes: cancellationNotes.trim()
       });
       
-      // Send cancellation email to parent
+      // Send cancellation email to parent (relation-aware + idempotent)
       try {
-        const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
         const rescheduleLink = `${getBaseUrl()}/booking`;
-        
-        await sendSessionCancellation(
-          booking.parentEmail || '',
-          parentName,
-          rescheduleLink
-        );
-        console.log(`Cancellation email sent for booking ${bookingId}`);
+        const sent = await sendSessionCancellationIfNeeded(bookingId, storage as any, rescheduleLink);
+        if (sent) {
+          console.log(`Cancellation email sent for booking ${bookingId}`);
+        } else {
+          console.warn(`[PARENT-CANCEL] Cancellation email not sent (missing email or conditions not met) for booking ${bookingId}`);
+        }
       } catch (emailError) {
         console.error('Failed to send cancellation email:', emailError);
       }
