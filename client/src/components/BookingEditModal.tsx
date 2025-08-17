@@ -606,29 +606,60 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   };
   
   const addFocusArea = () => {
-    if (!tempFocusArea.trim()) return;
+    const raw = tempFocusArea.trim();
+    if (!raw) return;
     
     const newLessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
     if (!newLessonType) return;
     
-  const maxFocusAreas = newLessonType.durationMinutes >= 60 ? 4 : 2;
+    const maxFocusAreas = newLessonType.durationMinutes >= 60 ? 4 : 2;
     
-    if (focusAreas.length < maxFocusAreas) {
-      setFocusAreas([...focusAreas, tempFocusArea.trim()]);
-      setTempFocusArea('');
+    // Determine if this is a known predefined area
+    const isKnownArea = dynamicFocusAreas.some((fa: any) => fa?.name?.toLowerCase() === raw.toLowerCase());
+    
+    // Compose the next focus areas list respecting max and avoiding duplicates
+    let nextAreas = [...focusAreas];
+    
+    if (!isKnownArea) {
+      // Treat as custom -> sync to focusAreaOther and prefix with "Other:" for server validation
+      const otherLabel = `Other: ${raw}`;
+      // Remove any existing Other entry
+      nextAreas = nextAreas.filter(a => typeof a === 'string' && !a.toLowerCase().startsWith('other:'));
+      // Only add if capacity allows and not already present
+      if (nextAreas.length < maxFocusAreas && !nextAreas.includes(otherLabel)) {
+        nextAreas.push(otherLabel);
+        setFocusAreaOther(raw);
+      }
     } else {
-      toast({
-        title: "Maximum Focus Areas",
-        description: `You can only add up to ${maxFocusAreas} focus areas for this lesson type.`,
-        variant: "destructive"
-      });
+      // Known area
+      if (!nextAreas.includes(raw) && nextAreas.length < maxFocusAreas) {
+        nextAreas.push(raw);
+      }
+    }
+    
+    if (nextAreas.length === focusAreas.length) {
+      // No change (likely due to max limit); show feedback if over limit
+      if (focusAreas.length >= maxFocusAreas) {
+        toast({
+          title: "Maximum Focus Areas",
+          description: `You can only add up to ${maxFocusAreas} focus areas for this lesson type.`,
+          variant: "destructive"
+        });
+      }
+    } else {
+      setFocusAreas(nextAreas);
+      setTempFocusArea('');
     }
   };
   
   const removeFocusArea = (index: number) => {
     const newFocusAreas = [...focusAreas];
-    newFocusAreas.splice(index, 1);
+    const removed = newFocusAreas.splice(index, 1)[0];
     setFocusAreas(newFocusAreas);
+    // If removing the Other entry, clear focusAreaOther to keep consistency
+    if (typeof removed === 'string' && removed.toLowerCase().startsWith('other:')) {
+      setFocusAreaOther('');
+    }
   };
   
   const handleAthleteChange = (athleteId: string, index: number) => {
@@ -853,6 +884,30 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         return;
       }
       
+      // Normalize focus areas for server validation:
+      // - Keep known areas as-is
+      // - Prefix unknown/custom areas with "Other: "
+      // - Ensure focusAreaOther is set if we created an Other entry
+      const knownAreaNames = new Set<string>([
+        ...dynamicFocusAreas.map((fa: any) => fa?.name).filter(Boolean),
+        'Strength Training',
+        'Flexibility',
+      ]);
+      let normalizedOther = focusAreaOther || '';
+      const normalizedFocusAreas = (focusAreas || []).map((area) => {
+        if (typeof area !== 'string') return '';
+        if (area.toLowerCase().startsWith('other:')) {
+          // Extract custom text if not already stored
+          const text = area.slice(6).trim();
+          if (!normalizedOther && text) normalizedOther = text;
+          return area;
+        }
+        if (knownAreaNames.has(area)) return area;
+        // Unknown -> treat as custom
+        if (!normalizedOther) normalizedOther = area;
+        return `Other: ${area}`;
+      }).filter(Boolean) as string[];
+
       // Prepare complete booking data for update
       const bookingData = {
         status: derivedStatus, // Use the derived status based on payment and attendance
@@ -863,8 +918,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         adminNotes,
         specialRequests,
         lessonTypeId: selectedLessonTypeId,
-        focusAreas,
-        focusAreaOther,
+        focusAreas: normalizedFocusAreas,
+        focusAreaOther: normalizedOther,
         athletes: cleanedAthletes,
         parentId: selectedParentId,
         
@@ -1233,13 +1288,20 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                         <Select
                           value="custom"
                           onValueChange={(value) => {
-                            if (value !== "custom" && 
-                                value !== "no-focus-areas-empty" && 
-                                value !== "no-focus-areas-apparatus") {
-                              setTempFocusArea(value);
+                            if (value === "custom" || value === "no-focus-areas-empty" || value === "no-focus-areas-apparatus") return;
+                            // If the selected value is a known area, add directly; else route through addFocusArea logic as custom
+                            setTempFocusArea(value);
+                            const isKnown = dynamicFocusAreas.some((fa: any) => fa?.name === value) || [
+                              "Strength Training","Flexibility"
+                            ].includes(value);
+                            if (isKnown) {
                               if (focusAreas.length < getMaxFocusAreas() && !focusAreas.includes(value)) {
                                 setFocusAreas([...focusAreas, value]);
+                                setTempFocusArea('');
                               }
+                            } else {
+                              // Custom selection (unlikely through dropdown), treat like typing and Add button
+                              addFocusArea();
                             }
                           }}
                         >
