@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -65,6 +67,28 @@ export function TwoStepFocusAreas({
   const [selectedEvent, setSelectedEvent] = useState<string>("");
   const [selectedSkill, setSelectedSkill] = useState<string>("");
   const [showWarning, setShowWarning] = useState(false);
+
+  // Load parent apparatus availability and apparatus list for id->name mapping
+  const { data: siteContent } = useQuery<any>({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => (await apiRequest('GET', '/api/site-content')).json(),
+    staleTime: 60_000,
+  });
+  const { data: apparatusList } = useQuery<any>({
+    queryKey: ['/api/apparatus'],
+    queryFn: async () => (await apiRequest('GET', '/api/apparatus')).json(),
+    staleTime: 60_000,
+  });
+  const parentAllowedIds: number[] | null = siteContent?.about?.apparatusAvailability?.parent ?? null;
+  const allowedEventNames = useMemo(() => {
+    const allEventNames = Object.values(EVENTS).map(e => e.name);
+    if (!Array.isArray(parentAllowedIds) || parentAllowedIds.length === 0) return allEventNames; // allow all by default
+    if (!Array.isArray(apparatusList)) return allEventNames;
+    const idToName = new Map<number, string>(apparatusList.map((a: any) => [a.id, a.name]));
+    const names = parentAllowedIds.map((id: number) => idToName.get(id)).filter(Boolean) as string[];
+    // Always include Side Quests (not a DB apparatus)
+    return Array.from(new Set([...names, 'Side Quests']));
+  }, [parentAllowedIds, apparatusList]);
 
   const handleEventChange = (eventKey: string) => {
     setSelectedEvent(eventKey);
@@ -194,10 +218,12 @@ export function TwoStepFocusAreas({
                   <SelectValue placeholder="Choose an event (Tumbling, Beam, Vault, Bars)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(EVENTS).map(([key, event]) => (
-                    <SelectItem key={key} value={key}>
-                      {event.name}
-                    </SelectItem>
+                  {Object.entries(EVENTS)
+                    .filter(([_, event]) => allowedEventNames.includes(event.name))
+                    .map(([key, event]) => (
+                      <SelectItem key={key} value={key}>
+                        {event.name}
+                      </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

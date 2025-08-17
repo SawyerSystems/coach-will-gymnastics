@@ -69,7 +69,8 @@ export function ParentModal({
         ref={contentRef as any}
         className={cn(
           "rounded-2xl border border-slate-200/60 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md shadow-lg dark:border-white/10 dark:bg-white/10",
-          "max-h-[85vh] sm:max-h-[90vh] overflow-hidden", // More aggressive mobile height constraint
+          // Constrain height but allow scrolling, especially on desktop
+          "max-h-[85vh] sm:max-h-[90vh] overflow-y-auto",
           sizeClasses[size]
         )}
         onMouseDownCapture={(e) => {

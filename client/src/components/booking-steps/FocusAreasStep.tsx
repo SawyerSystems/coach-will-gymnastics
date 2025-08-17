@@ -10,8 +10,10 @@ import { BOOKING_FLOWS, BookingFlowType } from "@/contexts/BookingFlowContext";
 import { GYMNASTICS_EVENTS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { AlertCircle, ChevronLeft, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export function FocusAreasStep() {
   const { state, updateState } = useBookingFlow();
@@ -41,6 +43,28 @@ export function FocusAreasStep() {
       skills: GYMNASTICS_EVENTS["side-quests"]?.skills || []
     }
   ];
+
+  // Load parent apparatus availability and apparatus list for id->name mapping
+  const { data: siteContent } = useQuery<any>({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => (await apiRequest('GET', '/api/site-content')).json(),
+    staleTime: 60_000,
+  });
+  const { data: apparatusList } = useQuery<any>({
+    queryKey: ['/api/apparatus'],
+    queryFn: async () => (await apiRequest('GET', '/api/apparatus')).json(),
+    staleTime: 60_000,
+  });
+  const parentAllowedIds: number[] | null = siteContent?.about?.apparatusAvailability?.parent ?? null;
+  const allowedEventNames = useMemo(() => {
+    const allNames = apparatusOptions.map(a => a.name);
+    if (!Array.isArray(parentAllowedIds) || parentAllowedIds.length === 0) return allNames;
+    if (!Array.isArray(apparatusList)) return allNames;
+    const idToName = new Map<number, string>(apparatusList.map((a: any) => [a.id, a.name]));
+    const names = parentAllowedIds.map((id: number) => idToName.get(id)).filter(Boolean) as string[];
+    // Always include Side Quests since it's not a DB apparatus
+    return Array.from(new Set([...names, 'Side Quests']));
+  }, [parentAllowedIds, apparatusList, apparatusOptions]);
 
   // Effect to handle lesson type changes
   useEffect(() => {
@@ -174,7 +198,9 @@ export function FocusAreasStep() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {apparatusOptions.map((apparatus) => (
+          {apparatusOptions
+            .filter(ap => allowedEventNames.includes(ap.name))
+            .map((apparatus) => (
             <Card 
               key={apparatus.name}
               className="cursor-pointer transition-all border-2 border-gray-200 hover:border-gray-300"

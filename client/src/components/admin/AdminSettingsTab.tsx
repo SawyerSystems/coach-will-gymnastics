@@ -10,6 +10,7 @@ import { AdminSiteContentManager } from '@/components/admin-site-content-manager
 import { MainContentContainer } from '@/components/admin-ui/MainContentContainer';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import AdminProgressSettings from '@/components/admin/AdminProgressSettings';
+import ApparatusAvailabilitySettings from '@/components/admin/ApparatusAvailabilitySettings';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   AlertCircle, 
@@ -21,6 +22,8 @@ import {
   Monitor,
   Database
 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -386,7 +389,9 @@ export default function AdminSettingsTab({
               </AdminCardTitle>
             </AdminCardHeader>
             <AdminCardContent className="p-6">
-              <p className="text-gray-600 dark:text-slate-300">General application settings will be implemented here.</p>
+              <p className="text-gray-600 dark:text-slate-300 mb-4">Configure platform-wide preferences.</p>
+              {/* Apparatus availability configuration */}
+              <ApparatusAvailabilitySettings />
             </AdminCardContent>
           </AdminCard>
         </TabsContent>

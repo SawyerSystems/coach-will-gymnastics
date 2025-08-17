@@ -36,6 +36,7 @@ import {
     X
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery as useRQQuery } from '@tanstack/react-query';
 
 // Define the FocusArea interface
 interface FocusArea {
@@ -201,7 +202,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   };
   
   // Fetch all apparatus
-  const { data: apparatus = [] } = useQuery<Apparatus[]>({
+  const { data: apparatusAll = [] } = useQuery<Apparatus[]>({
     queryKey: ['/api/apparatus'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/apparatus');
@@ -211,6 +212,21 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       return response.json();
     }
   });
+
+  // Load site-content to get admin apparatus availability
+  const { data: siteContent } = useQuery<any>({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => (await apiRequest('GET', '/api/site-content')).json(),
+    staleTime: 60_000,
+  });
+
+  const adminAllowedIds: number[] | null = siteContent?.about?.apparatusAvailability?.admin || null;
+  const apparatus: Apparatus[] = React.useMemo(() => {
+    if (!Array.isArray(apparatusAll)) return [];
+    if (!adminAllowedIds || adminAllowedIds.length === 0) return apparatusAll; // default allow all
+    const set = new Set<number>(adminAllowedIds);
+    return apparatusAll.filter(a => set.has(a.id));
+  }, [apparatusAll, adminAllowedIds]);
 
   // Get appropriate focus areas based on athlete experience levels and selected apparatus
   const { data: dynamicFocusAreas = [], isLoading: isFocusAreasLoading } = useQuery<FocusArea[]>({

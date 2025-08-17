@@ -40,10 +40,24 @@ export function TwoStepFocusAreas({
   const [warningMessage, setWarningMessage] = useState<string>('');
 
   // Fetch apparatus list
-  const { data: apparatus = [], isLoading: isApparatusLoading } = useQuery<Apparatus[]>({
+  const { data: apparatusAll = [], isLoading: isApparatusLoading } = useQuery<Apparatus[]>({
     queryKey: ['/api/apparatus'],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Load site-content for parent apparatus availability
+  const { data: siteContent } = useQuery<any>({
+    queryKey: ['/api/site-content'],
+    queryFn: async () => (await apiRequest('GET', '/api/site-content')).json(),
+    staleTime: 60_000,
+  });
+
+  const parentAllowedIds: number[] | null = siteContent?.about?.apparatusAvailability?.parent || null;
+  const apparatus: Apparatus[] = Array.isArray(apparatusAll)
+    ? (!parentAllowedIds || parentAllowedIds.length === 0
+        ? apparatusAll
+        : apparatusAll.filter(a => parentAllowedIds.includes(a.id)))
+    : [];
 
   // Fetch focus areas for selected apparatus
   const { data: focusAreas = [], isLoading: isFocusAreasLoading } = useQuery<FocusArea[]>({
