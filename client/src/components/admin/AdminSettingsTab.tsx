@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import {
   Monitor,
   Database
 } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
@@ -391,7 +392,9 @@ export default function AdminSettingsTab({
             <AdminCardContent className="p-6">
               <p className="text-gray-600 dark:text-slate-300 mb-4">Configure platform-wide preferences.</p>
               {/* Apparatus availability configuration */}
-              <ApparatusAvailabilitySettings />
+              <ApparatusCollapsible />
+              {/* Notifications configuration */}
+              <NotificationsCollapsible />
             </AdminCardContent>
           </AdminCard>
         </TabsContent>
@@ -418,6 +421,79 @@ export default function AdminSettingsTab({
           </AdminCard>
         </TabsContent>
       </AdminContentTabs>
+    </div>
+  );
+}
+
+// Render NotificationSettings component via React.lazy
+const LazyNotificationSettings = lazy(() => import('./NotificationSettings'));
+
+function NotificationsSettingsSlot() {
+  return (
+    <Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
+      <LazyNotificationSettings />
+    </Suspense>
+  );
+}
+
+// Collapsible wrapper for Notifications to save space (collapsed by default)
+function NotificationsCollapsible() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-8 border rounded-lg bg-white/40 dark:bg-white/5">
+      <button
+        type="button"
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-controls="notifications-section"
+      >
+        <div className="flex items-center gap-2">
+          {open ? (
+            <ChevronDown className="h-5 w-5 text-[#0F0276] dark:text-slate-200" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-[#0F0276] dark:text-slate-200" />
+          )}
+          <span className="font-medium text-[#0F0276] dark:text-white">Notifications</span>
+        </div>
+        <span className="text-xs text-gray-500">{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open && (
+        <div id="notifications-section" className="px-4 pb-4">
+          <NotificationsSettingsSlot />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Collapsible wrapper for Apparatus Availability (collapsed by default)
+function ApparatusCollapsible() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2 border rounded-lg bg-white/40 dark:bg-white/5">
+      <button
+        type="button"
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-controls="apparatus-section"
+      >
+        <div className="flex items-center gap-2">
+          {open ? (
+            <ChevronDown className="h-5 w-5 text-[#0F0276] dark:text-slate-200" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-[#0F0276] dark:text-slate-200" />
+          )}
+          <span className="font-medium text-[#0F0276] dark:text-white">Apparatus Availability</span>
+        </div>
+        <span className="text-xs text-gray-500">{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open && (
+        <div id="apparatus-section" className="px-4 pb-4">
+          <ApparatusAvailabilitySettings />
+        </div>
+      )}
     </div>
   );
 }

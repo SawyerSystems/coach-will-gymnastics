@@ -95,8 +95,16 @@ export function PaymentStep() {
       const hasOtherFocusArea = focusAreasList.includes('Other');
       const focusAreaOther = hasOtherFocusArea ? state.focusAreaOther : undefined;
       
+      // Extract skill names from apparatus-prefixed format (e.g., "Tumbling: Cartwheel" -> "Cartwheel")
+      const extractedSkillNames = focusAreasList.map(area => {
+        if (area.includes(': ')) {
+          return area.split(': ')[1]; // Extract skill name after apparatus prefix
+        }
+        return area; // Return as-is if no prefix (e.g., "Other", "General Skills")
+      });
+      
       // Map focus areas to focus area IDs
-      const focusAreaIds = mapFocusAreaNamesToIds(focusAreasList);
+      const focusAreaIds = mapFocusAreaNamesToIds(extractedSkillNames);
       
       // Prepare booking data based on flow type - aligned with insertBookingSchema
       let bookingData: any = {
@@ -173,6 +181,7 @@ export function PaymentStep() {
       console.log("Final booking data being sent:", JSON.stringify(bookingData, null, 2));
       console.log("Focus areas transformation:", {
         original: state.focusAreas,
+        extracted: extractedSkillNames,
         mapped: bookingData.focusAreaIds,
         hasOther: bookingData.focusAreaOther ? true : false,
         otherText: bookingData.focusAreaOther

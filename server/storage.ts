@@ -2682,11 +2682,11 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink> {
-    const crypto = require('crypto');
+    const { randomBytes } = await import('crypto');
     
     const payload: any = {
       athlete_id: (input as any).athleteId,
-      token: (input as any).token || crypto.randomBytes(16).toString('hex'),
+      token: (input as any).token || randomBytes(16).toString('hex'),
       expires_at: (input as any).expiresAt ?? null,
     };
     const { data, error } = await supabaseAdmin.from('progress_share_links').insert(payload).select('*').single();

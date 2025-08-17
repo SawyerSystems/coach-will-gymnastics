@@ -1,122 +1,107 @@
-import { render } from '@react-email/render';
-import React from 'react';
 import { Resend } from 'resend';
-import { getBaseUrl } from './url';
-import { BirthdayEmail } from '../../emails/BirthdayEmail';
-import { EmailVerification } from '../../emails/EmailVerification';
-import { ManualBookingConfirmation } from '../../emails/ManualBookingConfirmation';
-import { NewTipOrBlog } from '../../emails/NewTipOrBlog';
-import { ParentAuthorization } from '../../emails/ParentAuthorization';
-import { ParentWelcome } from '../../emails/ParentWelcome';
-import { PasswordSetupEmail } from '../../emails/PasswordSetupEmail';
-import { PasswordResetEmail } from '../../emails/PasswordResetEmail';
-import { RescheduleConfirmation } from '../../emails/RescheduleConfirmation';
-import { ReservationPaymentLink } from '../../emails/ReservationPaymentLink';
-import { SafetyInformationLink } from '../../emails/SafetyInformationLink';
-import { SessionCancellation } from '../../emails/SessionCancellation';
-import { SessionConfirmation } from '../../emails/SessionConfirmation';
-import { SessionFollowUp } from '../../emails/SessionFollowUp';
-import { SessionNoShow } from '../../emails/SessionNoShow';
-import { SessionReminder } from '../../emails/SessionReminder';
-import { WaiverCompletionLink } from '../../emails/WaiverCompletionLink';
-import { WaiverReminder } from '../../emails/WaiverReminder';
 import { PaymentStatusEnum } from '../../shared/schema';
-import { ContactMessage } from '../../emails/ContactMessage';
+import { getBaseUrl } from './url';
 
 // Email type mapping
 export const emailTemplates = {
-  'parent-auth': { 
-    subject: '🗝️ Access Code to Begin Your Journey', 
-    component: ParentAuthorization 
+  'parent-auth': {
+    subject: '🗝️ Access Code to Begin Your Journey',
+    loader: async () => (await import('../../emails/ParentAuthorization')).ParentAuthorization,
   },
   'parent-welcome': {
     subject: '🤸‍♀️ Welcome to Coach Will Tumbles!',
-    component: ParentWelcome
+    loader: async () => (await import('../../emails/ParentWelcome')).ParentWelcome,
   },
   'email-verification': {
     subject: '✉️ Verify Your Email — Coach Will Tumbles',
-    component: EmailVerification
+    loader: async () => (await import('../../emails/EmailVerification')).EmailVerification,
   },
   'password-setup': {
     subject: '🔐 Set Up Your Password — Coach Will Tumbles',
-    component: PasswordSetupEmail
+    loader: async () => (await import('../../emails/PasswordSetupEmail')).PasswordSetupEmail,
   },
   'password-reset': {
     subject: '🔒 Reset Your Password — Coach Will Tumbles',
-    component: PasswordResetEmail
+    loader: async () => (await import('../../emails/PasswordResetEmail')).PasswordResetEmail,
   },
-  'session-confirmation': { 
-    subject: '✅ Session Confirmed! — Coach Will Tumbles', 
-    component: SessionConfirmation 
+  'session-confirmation': {
+    subject: '✅ Session Confirmed! — Coach Will Tumbles',
+    loader: async () => (await import('../../emails/SessionConfirmation')).SessionConfirmation,
   },
-  'manual-booking': { 
-    subject: '⚠️ Confirm Your Session Booking', 
-    component: ManualBookingConfirmation 
+  'manual-booking': {
+    subject: '⚠️ Confirm Your Session Booking',
+    loader: async () => (await import('../../emails/ManualBookingConfirmation')).ManualBookingConfirmation,
   },
-  'waiver-reminder': { 
-    subject: '📜 Complete Your Training Scroll', 
-    component: WaiverReminder 
+  'waiver-reminder': {
+    subject: '📜 Complete Your Training Scroll',
+    loader: async () => (await import('../../emails/WaiverReminder')).WaiverReminder,
   },
-  'session-reminder': { 
-    subject: '⏰ Adventure Incoming!', 
-    component: SessionReminder 
+  'session-reminder': {
+    subject: '⏰ Adventure Incoming!',
+    loader: async () => (await import('../../emails/SessionReminder')).SessionReminder,
   },
-  'session-cancelled': { 
-    subject: '❌ Session Cancelled — Let\'s Reschedule!', 
-    component: SessionCancellation 
+  'session-cancelled': {
+    subject: '❌ Session Cancelled — Let\'s Reschedule!',
+    loader: async () => (await import('../../emails/SessionCancellation')).SessionCancellation,
   },
-  'session-no-show': { 
-    subject: '🤸 We Missed You — Let\'s Reschedule!', 
-    component: SessionNoShow 
+  'session-no-show': {
+    subject: '🤸 We Missed You — Let\'s Reschedule!',
+    loader: async () => (await import('../../emails/SessionNoShow')).SessionNoShow,
   },
-  'reschedule-confirmation': { 
-    subject: '🔄 New Adventure Scheduled!', 
-    component: RescheduleConfirmation 
+  'reschedule-confirmation': {
+    subject: '🔄 New Adventure Scheduled!',
+    loader: async () => (await import('../../emails/RescheduleConfirmation')).RescheduleConfirmation,
   },
-  'session-follow-up': { 
-    subject: '🏆 Training with Coach Will!', 
-    component: SessionFollowUp 
+  'session-follow-up': {
+    subject: '🏆 Training with Coach Will!',
+    loader: async () => (await import('../../emails/SessionFollowUp')).SessionFollowUp,
   },
-  'birthday': { 
-    subject: '🎉 Happy Birthday from Coach Will!', 
-    component: BirthdayEmail 
+  'birthday': {
+    subject: '🎉 Happy Birthday from Coach Will!',
+    loader: async () => (await import('../../emails/BirthdayEmail')).BirthdayEmail,
   },
-  'new-tip': { 
-    subject: '✨ New Tip Unlocked on Your Journey!', 
-    component: NewTipOrBlog 
+  'new-tip': {
+    subject: '✨ New Tip Unlocked on Your Journey!',
+    loader: async () => (await import('../../emails/NewTipOrBlog')).NewTipOrBlog,
   },
-  'new-blog': { 
-    subject: '📝 New Blog Post from Coach Will!', 
-    component: NewTipOrBlog 
+  'new-blog': {
+    subject: '📝 New Blog Post from Coach Will!',
+    loader: async () => (await import('../../emails/NewTipOrBlog')).NewTipOrBlog,
   },
-  'reservation-payment': { 
-    subject: '💳 Complete Your Reservation Payment', 
-    component: ReservationPaymentLink 
+  'reservation-payment': {
+    subject: '💳 Complete Your Reservation Payment',
+    loader: async () => (await import('../../emails/ReservationPaymentLink')).ReservationPaymentLink,
   },
-  'waiver-completion': { 
-    subject: '📋 Complete Your Waiver Form', 
-    component: WaiverCompletionLink 
+  'waiver-completion': {
+    subject: '📋 Complete Your Waiver Form',
+    loader: async () => (await import('../../emails/WaiverCompletionLink')).WaiverCompletionLink,
   },
-  'safety-information': { 
-    subject: '🛡️ Important Safety Information', 
-    component: SafetyInformationLink 
+  'safety-information': {
+    subject: '🛡️ Important Safety Information',
+    loader: async () => (await import('../../emails/SafetyInformationLink')).SafetyInformationLink,
   },
   'contact-message': {
     subject: '📬 New Contact Form Message',
-    component: ContactMessage,
-  }
-};
+    loader: async () => (await import('../../emails/ContactMessage')).ContactMessage,
+  },
+} as const;
 
 export type EmailType = keyof typeof emailTemplates;
 
 interface SendEmailOptions<T extends EmailType> {
   type: T;
   to: string;
-  data: React.ComponentProps<typeof emailTemplates[T]['component']>;
+  // Use a broad type here to avoid importing React types at module load time
+  data: any;
   logoUrl?: string; // Optional logo URL to use in email
 }
 
 export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }: SendEmailOptions<T>) {
+  // Lazy-load heavy/SSR-oriented deps only when actually sending a templated email
+  const [{ render }, React] = await Promise.all([
+    import('@react-email/render'),
+    import('react')
+  ]);
   // Get Resend API key from environment
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!to) {
@@ -153,10 +138,9 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
   let finalLogoUrl = logoUrl;
   if (!finalLogoUrl) {
     try {
-      // Import at function level to avoid circular dependencies
-      const { Storage } = require('../storage');
-      const storage = new Storage();
-      const siteContent = await storage.getSiteContent();
+      // Import at function level to avoid circular dependencies and maintain ESM
+      const mod = await import('../storage');
+      const siteContent = await mod.storage.getSiteContent();
       // Use the text logo if available, otherwise use default
       finalLogoUrl = siteContent?.logo?.text || undefined;
     } catch (error) {
@@ -167,16 +151,17 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
   // Add the logo URL to the component props if the property exists on the component
   const componentData = {
     ...data,
-    ...(finalLogoUrl && 'logoUrl' in template.component ? { logoUrl: finalLogoUrl } : {})
+    // Best-effort pass-through of logoUrl; many components accept it
+    ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {})
   };
 
   try {
-    // Make React available globally for email components
-    (global as any).React = React;
+  // Make React available globally for email components (react-email requirement)
+  (global as any).React = React as any;
     
     // Render the email component to HTML
-    const EmailComponent = template.component as React.ComponentType<any>;
-    const html = await render(React.createElement(EmailComponent, componentData));
+  const EmailComponent = await template.loader();
+  const html = await render((React as any).createElement(EmailComponent as any, componentData));
     
     // Send the email
     const result = await resend.emails.send({
@@ -620,9 +605,11 @@ export async function sendSignedWaiverConfirmation(
     // Import the component here to avoid circular imports
     const { SignedWaiverConfirmation } = await import('../../emails/SignedWaiverConfirmation');
     const { render } = await import('@react-email/render');
+  // Ensure React is available in this scope for createElement
+  const React = await import('react');
     
     // Render the email component to HTML
-    const html = await render(React.createElement(SignedWaiverConfirmation, { 
+  const html = await render((React as any).createElement(SignedWaiverConfirmation as any, { 
       parentName, 
       athleteName 
     }));

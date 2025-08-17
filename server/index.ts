@@ -8,6 +8,7 @@ import { configureSessionAndCors, sessionConfig } from "./config/session";
 import { ensureAdmin } from "./ensure-admin";
 import { logger } from "./logger";
 import { registerRoutes } from "./routes";
+import { startDigestScheduler } from './lib/notifications';
 import { storage } from "./storage";
 import { serveStatic, setupVite } from "./vite";
 
@@ -277,6 +278,7 @@ app.use((req, res, next) => {
 
   // REGISTER ROUTES FIRST (before developer routes)
   const server = await registerRoutes(app);
+  try { startDigestScheduler(storage); } catch {}
 
   // Developer Settings Admin Routes
   // Admin function to clear all test data

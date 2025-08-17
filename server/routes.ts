@@ -57,47 +57,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-07-30.basil",
 });
 
-// Helper function to get valid focus areas by lesson type
-function getFocusAreasByType(lessonType: string): string[] {
-  console.log('🔍 [GET_FOCUS_AREAS] Getting focus areas for lesson type:', lessonType);
-  
-  // All available focus areas from the database - just the skill names (matching API format)
-  const allFocusAreas = [
-    // Tumbling skills
-    "Forward Roll", "Backward Roll", "Cartwheel", "Round-off", "Handstand",
-    "Bridge", "Back Walkover", "Front Walkover", "Back Handspring",
-    "Front Handspring", "Back Tuck", "Front Tuck", "Layout", "Twist",
-    "Headstand", "Walkover", "Handspring", "Tuck Jump", "Pike Jump", "Straddle Jump",
-    
-    // Beam skills
-    "Straight Walk", "Tip Toe Walk", "Heel Walk", "Relevé Walk", "Chassé",
-    "Kick to Handstand", "Split Leap", "Full Turn", "Side Aerial", "Back Tuck Dismount",
-    "Straight Jump", "Tuck Jump", "Stag Jump", "Pike Jump",
-    
-    // Vault skills
-    "Hurdle", "Board Contact", "Squat On", "Straddle On", "Half-On", "Front Pike", 
-    "Yurchenko Timer", "Handstand Flatback",
-    
-    // Bars skills
-    "Support Hold", "Pull-ups", "Hanging", "Glide Swing", "Cast", "Pullover",
-    "Spin-the-Cat", "Kickover", "Glide Kip", "Cast Handstand", "Back Hip Circle", 
-    "Flyaway", "Baby Giant", "Toe-On Circle", "Clear Hip to Handstand", "Mill Circle",
-    "Tap Swing", "Dismount",
-    
-    // Side Quests
-    "Flexibility", "Strength", "Balance", "Coordination", "Body Awareness", 
-    "Spatial Awareness", "Fear Reduction", "Confidence Building", "Goal Setting",
-    "Mental Preparation", "Flexibility Training", "Strength Training", "Agility Training",
-    "Meditation and Breathing Techniques", "Mental Blocks"
-  ];
-  
-  console.log('🔍 [GET_FOCUS_AREAS] All available focus areas count:', allFocusAreas.length);
-  console.log('🔍 [GET_FOCUS_AREAS] First few focus areas:', allFocusAreas.slice(0, 5));
-  return allFocusAreas;
-}
-
-// Focus area validation helper
-function validateFocusAreas(focusAreas: string[], lessonType: string): { isValid: boolean; message?: string } {
+// Focus area validation helper - now supports both IDs and names
+async function validateFocusAreas(focusAreas: string[], lessonType: string): Promise<{ isValid: boolean; message?: string }> {
   console.log('🔍 [VALIDATE] validateFocusAreas called with:', {
     focusAreas,
     lessonType,
@@ -114,43 +75,62 @@ function validateFocusAreas(focusAreas: string[], lessonType: string): { isValid
     };
   }
 
-  // Get all valid focus areas for the lesson type
-  const validAreas = getFocusAreasByType(lessonType);
-  console.log('🔍 [VALIDATE] Valid focus areas for lesson type:', validAreas);
-  console.log('🔍 [VALIDATE] getFocusAreasByType function result type:', typeof validAreas);
-  console.log('🔍 [VALIDATE] getFocusAreasByType function result is array:', Array.isArray(validAreas));
-
-  // Check if all provided focus areas are valid
-  for (const area of focusAreas) {
-    const isOtherArea = area.startsWith('Other:');
-    const isValidArea = validAreas.includes(area) || isOtherArea;
+  try {
+    // Get all available focus areas from the database
+    const allFocusAreas = await storage.getAllFocusAreas();
+    console.log('🔍 [VALIDATE] Database focus areas count:', allFocusAreas.length);
+    console.log('🔍 [VALIDATE] First few focus areas with IDs:', allFocusAreas.slice(0, 5).map(fa => ({ id: fa.id, name: fa.name })));
     
-    console.log('🔍 [VALIDATE] Checking area:', {
-      area,
-      areaType: typeof area,
-      isOtherArea,
-      isValidArea,
-      validAreasIncludes: validAreas.includes(area),
-      validAreasAsString: JSON.stringify(validAreas)
-    });
-    
-    if (!isValidArea) {
-      console.error('🚨 [VALIDATE] Invalid focus area found:', area);
-      console.error('🚨 [VALIDATE] Debug info:', {
-        providedArea: area,
-        validAreas: validAreas,
-        lessonType: lessonType,
-        focusAreasInput: focusAreas
-      });
-      return { 
-        isValid: false, 
-        message: `Invalid focus area ID: ${area}` 
-      };
+    // Check if all provided focus areas are valid (could be IDs or names)
+    for (const area of focusAreas) {
+      const isOtherArea = area.startsWith('Other:');
+      
+      // Check if it's a valid ID (numeric string) that exists in database
+      const isNumericId = /^\d+$/.test(area);
+      let isValidArea = false;
+      
+      if (isNumericId) {
+        // Check if the ID exists in the database
+        const areaId = parseInt(area);
+        isValidArea = allFocusAreas.some(fa => fa.id === areaId);
+        console.log('🔍 [VALIDATE] Checking focus area ID:', { 
+          areaId, 
+          isValidArea,
+          availableIds: allFocusAreas.map(fa => fa.id).slice(0, 10),
+          totalAvailable: allFocusAreas.length
+        });
+      } else {
+        // Check if it's a valid name in the database
+        isValidArea = allFocusAreas.some(fa => fa.name === area) || isOtherArea;
+        console.log('🔍 [VALIDATE] Checking focus area name:', { area, isValidArea, isOtherArea });
+      }
+      
+      if (!isValidArea) {
+        console.error('🚨 [VALIDATE] Invalid focus area found:', area);
+        console.error('🚨 [VALIDATE] Debug info:', {
+          providedArea: area,
+          isNumericId,
+          lessonType: lessonType,
+          focusAreasInput: focusAreas,
+          availableIds: allFocusAreas.map(fa => fa.id),
+          availableNames: allFocusAreas.map(fa => fa.name)
+        });
+        return { 
+          isValid: false, 
+          message: `Invalid focus area: ${area}` 
+        };
+      }
     }
-  }
 
-  console.log('✅ [VALIDATE] All focus areas valid');
-  return { isValid: true };
+    console.log('✅ [VALIDATE] All focus areas valid');
+    return { isValid: true };
+  } catch (error) {
+    console.error('🚨 [VALIDATE] Database error during focus area validation:', error);
+    return {
+      isValid: false,
+      message: "Error validating focus areas"
+    };
+  }
 }
 
 // Helper function to convert 12-hour format to 24-hour format
@@ -3024,8 +3004,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST body schema:
   // {
   //   invoiceTitle?: string,
-  //   periodStart?: string, periodEnd?: string,
-  //   timezone?: string, // default America/Los_Angeles
   //   notes?: string,
   //   lineItems: Array<{
   //     athleteId?: number,
@@ -5370,7 +5348,7 @@ setTimeout(async () => {
       // Validate focus areas
       const focusAreaIds = Array.isArray(validatedData.focusAreaIds) ? validatedData.focusAreaIds : [];
       const lessonTypeStr = typeof validatedData.lessonType === 'string' ? validatedData.lessonType : '';
-      const focusAreaValidation = validateFocusAreas(focusAreaIds.map(String), lessonTypeStr);
+      const focusAreaValidation = await validateFocusAreas(focusAreaIds.map(String), lessonTypeStr);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -5453,7 +5431,7 @@ setTimeout(async () => {
       const bookingData = req.body;
       
       // Validate focus areas
-      const focusAreaValidation = validateFocusAreas(bookingData.focusAreaIds || [], bookingData.lessonType);
+      const focusAreaValidation = await validateFocusAreas(bookingData.focusAreaIds || [], bookingData.lessonType);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -5593,7 +5571,7 @@ setTimeout(async () => {
       // Validate focus areas
       const focusAreaIds = Array.isArray(bookingData.focusAreaIds) ? bookingData.focusAreaIds : [];
       const lessonTypeStr = typeof bookingData.lessonType === 'string' ? bookingData.lessonType : '';
-      const focusAreaValidation = validateFocusAreas(focusAreaIds.map(String), lessonTypeStr);
+      const focusAreaValidation = await validateFocusAreas(focusAreaIds.map(String), lessonTypeStr);
       if (!focusAreaValidation.isValid) {
         return res.status(400).json({
           message: "Focus area validation failed",
@@ -5989,7 +5967,7 @@ setTimeout(async () => {
           console.log('🔍 [FUNCTION_TEST] validateFocusAreas function exists:', validateFocusAreas !== undefined);
           
           // Validate focus areas
-          const focusAreaValidation = validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], lessonTypeName);
+          const focusAreaValidation = await validateFocusAreas(Array.isArray(focusAreas) ? focusAreas : [], lessonTypeName);
           console.log('🔍 [VALIDATION_RESULT] focusAreaValidation result:', focusAreaValidation);
           if (!focusAreaValidation.isValid) {
             console.error('🚨 CRITICAL: Focus area validation failed:', focusAreaValidation.message);
@@ -7871,6 +7849,26 @@ setTimeout(async () => {
     }
   });
 
+  // Notifications: send admin test email honoring prefs/quiet hours
+  app.post('/api/admin/notifications/test-email', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { to } = req.body || {};
+      // In any non-production environment, short-circuit to avoid import-time require/CJS issues
+      const nodeEnv = process.env.NODE_ENV || 'undefined';
+      if (nodeEnv !== 'production') {
+        console.log(`[DEV][ROUTE] /api/admin/notifications/test-email short-circuit response (NODE_ENV=${nodeEnv})`);
+        return res.json({ queued: false, sent: true, message: 'Test email sent (development mode simulated)' });
+      }
+      // Dynamically import notifications only when needed to avoid top-level import side-effects
+  const { sendAdminTestEmail } = await import('./lib/notifications');
+  const result = await sendAdminTestEmail(to, storage);
+  res.json(result);
+    } catch (error: any) {
+      console.error('Test email error:', error);
+      res.status(500).json({ error: error?.message || 'Failed to send test email' });
+    }
+  });
+
   app.get("/api/site-content/contact", async (req, res) => {
     try {
       const content = await storage.getSiteContent();
@@ -8715,7 +8713,7 @@ setTimeout(async () => {
           const resend = new Resend(process.env.RESEND_API_KEY);
           await resend.emails.send({
             from: 'Coach Will <noreply@coachwilltumbles.com>',
-            to: [process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com'],
+            to: [process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com'],
             subject: `Privacy request: ${type}`,
             text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || ''}\nType: ${type}\nDetails: ${details || ''}\nIP: ${ip}\nUA: ${ua}`,
           });
@@ -10721,17 +10719,17 @@ setTimeout(async () => {
         results.push(`Deleted ${authResult.data.length} auth code(s) for Sawyer family`);
       }
       
-      // Delete any archived waiver files
-      const fs = require('fs');
-      const path = require('path');
-      const archiveDir = path.join(process.cwd(), 'data', 'waivers', 'archived');
+  // Delete any archived waiver files
+  const fs = await import('fs');
+  const path = await import('path');
+  const archiveDir = path.join(process.cwd(), 'data', 'waivers', 'archived');
       
       if (fs.existsSync(archiveDir)) {
-        const files = fs.readdirSync(archiveDir);
+  const files = fs.readdirSync(archiveDir as unknown as string);
         const alfredFiles = files.filter((file: string) => file.includes('alfred') || file.includes('sawyer'));
         
         for (const file of alfredFiles) {
-          const filePath = path.join(archiveDir, file);
+          const filePath = path.join(archiveDir as unknown as string, file);
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
             results.push(`Deleted archived waiver file: ${file}`);

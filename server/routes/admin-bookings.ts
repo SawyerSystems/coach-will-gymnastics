@@ -196,8 +196,8 @@ export function initAdminBookingRoutes(app: Express) {
           console.log(`[EMAIL] Preparing to send confirmation email for ${bookingData.adminPaymentMethod} payment`);
           console.log(`[EMAIL] Parent email: ${parent.email}, Parent name: ${parent.firstName || 'Parent'}`);
           
-          const { sendManualBookingConfirmation } = require('../lib/email');
-          const { getBaseUrl } = require('../utils');
+          const { sendManualBookingConfirmation } = await import('../lib/email');
+          const { getBaseUrl } = await import('../utils');
           const confirmLink = `${getBaseUrl()}/parent/confirm-booking?bookingId=${booking.id}`;
           
           console.log(`[EMAIL] Confirmation link: ${confirmLink}`);
