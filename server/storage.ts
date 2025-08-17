@@ -3606,7 +3606,7 @@ export class SupabaseStorage implements IStorage {
 
     if (!data) throw new Error('No data returned from booking creation');
 
-    const booking = this.mapBookingFromDb(data);
+  const booking = this.mapBookingFromDb(data);
     
     // Create athlete records and booking_athletes relationships if athletes provided
     if (insertBooking.athletes && Array.isArray(insertBooking.athletes) && insertBooking.athletes.length > 0) {
@@ -3691,6 +3691,28 @@ export class SupabaseStorage implements IStorage {
         console.error(`Exception adding focus areas to booking ${booking.id}:`, err);
         // Continue execution instead of throwing to not block the whole booking
       }
+
+      // Also populate legacy JSON focus_areas with names for consistent reads
+      try {
+        const { data: allFa } = await supabaseAdmin
+          .from('focus_areas')
+          .select('id, name')
+          .in('id', insertBooking.focusAreaIds as number[]);
+        const names = (allFa || [])
+          .filter((fa: any) => insertBooking.focusAreaIds!.includes(fa.id))
+          .map((fa: any) => fa.name);
+        const { error: faJsonErr } = await supabaseAdmin
+          .from('bookings')
+          .update({ focus_areas: names })
+          .eq('id', booking.id);
+        if (faJsonErr) {
+          console.error('Failed to update legacy JSON focus_areas on create:', faJsonErr);
+        } else {
+          (booking as any).focusAreas = names;
+        }
+      } catch (mapErr) {
+        console.error('Exception mapping focus area names on create:', mapErr);
+      }
     }
 
     // Create apparatus relationships if provided
@@ -3734,6 +3756,23 @@ export class SupabaseStorage implements IStorage {
       } catch (err) {
         console.error(`Exception adding side quests to booking ${booking.id}:`, err);
         // Continue execution instead of throwing to not block the whole booking
+      }
+    }
+
+    // Persist custom focus area text if provided
+    if ((insertBooking as any).focusAreaOther !== undefined) {
+      try {
+        const { error: otherErr } = await supabaseAdmin
+          .from('bookings')
+          .update({ focus_area_other: (insertBooking as any).focusAreaOther })
+          .eq('id', booking.id);
+        if (otherErr) {
+          console.error('Failed to save focus_area_other on create:', otherErr);
+        } else {
+          (booking as any).focusAreaOther = (insertBooking as any).focusAreaOther;
+        }
+      } catch (otherEx) {
+        console.error('Exception saving focus_area_other on create:', otherEx);
       }
     }
 
@@ -4007,24 +4046,65 @@ export class SupabaseStorage implements IStorage {
     if (data.preferredDate !== undefined) dbUpdate.preferred_date = data.preferredDate;
     if (data.preferredTime !== undefined) dbUpdate.preferred_time = data.preferredTime;
     
-    // ENHANCED FIX: Make sure focusAreas is properly processed
+    // Persist custom "Other" focus area text
+    if (data.focusAreaOther !== undefined) {
+      dbUpdate.focus_area_other = data.focusAreaOther;
+    }
+
+    // ENHANCED FIX: Make sure focusAreas are synchronized with the junction table
     if (data.focusAreas !== undefined) {
-      console.log('🔧 [FIX-DEBUG] Processing focusAreas:', data.focusAreas);
-      console.log('🔧 [FIX-DEBUG] Type of focusAreas:', typeof data.focusAreas);
-      console.log('🔧 [FIX-DEBUG] Is array?', Array.isArray(data.focusAreas));
-      
-      // Fetch existing booking to see current focus_areas
-      const { data: existingBooking } = await supabaseAdmin
-        .from('bookings')
-        .select('focus_areas')
-        .eq('id', id)
-        .single();
-      
-      console.log('🔧 [FIX-DEBUG] Existing focus_areas in DB:', existingBooking?.focus_areas);
-      
-      // Ensure we're setting the correct field
-      dbUpdate.focus_areas = data.focusAreas;
-      console.log('🔧 [FIX-DEBUG] Set dbUpdate.focus_areas to:', dbUpdate.focus_areas);
+      console.log('🔧 [FOCUS SYNC] Processing focusAreas:', data.focusAreas);
+      console.log('🔧 [FOCUS SYNC] Type of focusAreas:', typeof data.focusAreas);
+      console.log('🔧 [FOCUS SYNC] Is array?', Array.isArray(data.focusAreas));
+
+      // Normalize to array of strings
+      const nextFocusAreas: string[] = Array.isArray(data.focusAreas)
+        ? data.focusAreas.filter((x): x is string => typeof x === 'string')
+        : [];
+
+      // Always update legacy JSON for backward compatibility (includes any "Other: ..." entries)
+      dbUpdate.focus_areas = nextFocusAreas;
+
+      // Update the normalized relations in booking_focus_areas
+      try {
+        // Fetch all focus areas to map names -> ids
+        const { data: allFa, error: faErr } = await supabaseAdmin
+          .from('focus_areas')
+          .select('id, name');
+        if (faErr) {
+          console.error('🔧 [FOCUS SYNC] Failed to fetch focus areas for mapping:', faErr);
+        }
+
+        const nameToId = new Map<string, number>();
+        (allFa || []).forEach((fa: any) => nameToId.set(fa.name, fa.id));
+
+        // Map provided names to IDs, skipping custom "Other:" entries and unknowns
+        const mappedIds = nextFocusAreas
+          .filter(name => !name.toLowerCase().startsWith('other:'))
+          .map(name => nameToId.get(name))
+          .filter((id): id is number => typeof id === 'number');
+
+        // Replace existing relations with the new set (idempotent update)
+        const { error: delErr } = await supabaseAdmin
+          .from('booking_focus_areas')
+          .delete()
+          .eq('booking_id', id);
+        if (delErr) {
+          console.error('🔧 [FOCUS SYNC] Failed to delete existing booking_focus_areas:', delErr);
+        }
+
+        if (mappedIds.length > 0) {
+          const inserts = mappedIds.map(fid => ({ booking_id: id, focus_area_id: fid }));
+          const { error: insErr } = await supabaseAdmin
+            .from('booking_focus_areas')
+            .insert(inserts);
+          if (insErr) {
+            console.error('🔧 [FOCUS SYNC] Failed to insert booking_focus_areas:', insErr);
+          }
+        }
+      } catch (focusSyncErr) {
+        console.error('🔧 [FOCUS SYNC] Exception while syncing booking_focus_areas:', focusSyncErr);
+      }
     }
     
     // Idempotent email tracking fields
