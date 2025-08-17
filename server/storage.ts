@@ -912,7 +912,12 @@ With the right setup and approach, home practice can accelerate your child's gym
   stripeSessionId: insertBooking.stripeSessionId ?? null,
   // Idempotent email defaults
   sessionConfirmationEmailSent: false,
-  sessionConfirmationEmailSentAt: null
+  sessionConfirmationEmailSentAt: null,
+  // Cancellation fields
+  cancellationReason: insertBooking.cancellationReason ?? null,
+  cancellationRequestedAt: insertBooking.cancellationRequestedAt ?? null,
+  wantsReschedule: insertBooking.wantsReschedule ?? null,
+  reschedulePreferences: insertBooking.reschedulePreferences ?? null
     };
     this.bookings.set(id, booking);
     return booking;
@@ -3830,6 +3835,11 @@ export class SupabaseStorage implements IStorage {
   // Idempotent session confirmation email tracking
   sessionConfirmationEmailSent: data.session_confirmation_email_sent ?? false,
   sessionConfirmationEmailSentAt: data.session_confirmation_email_sent_at ?? null,
+      // Cancellation fields
+      cancellationReason: data.cancellation_reason || null,
+      cancellationRequestedAt: data.cancellation_requested_at ? new Date(data.cancellation_requested_at) : null,
+      wantsReschedule: data.wants_reschedule || null,
+      reschedulePreferences: data.reschedule_preferences || null,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

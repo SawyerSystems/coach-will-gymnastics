@@ -187,6 +187,11 @@ export const bookings = pgTable("bookings", {
   altPickupPersonPhone: text("alt_pickup_person_phone"),
   safetyVerificationSigned: boolean("safety_verification_signed").notNull().default(false),
   safetyVerificationSignedAt: timestamp("safety_verification_signed_at"),
+  // Cancellation tracking fields
+  cancellationReason: text("cancellation_reason"),
+  cancellationRequestedAt: timestamp("cancellation_requested_at"),
+  wantsReschedule: boolean("wants_reschedule").default(false),
+  reschedulePreferences: text("reschedule_preferences"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

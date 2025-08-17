@@ -318,7 +318,12 @@ export class ModernSupabaseStorage {
       athlete2Name: data.athlete2_name,
       athlete2DateOfBirth: data.athlete2_date_of_birth,
       athlete2Allergies: data.athlete2_allergies,
-      athlete2Experience: data.athlete2_experience
+      athlete2Experience: data.athlete2_experience,
+      // Cancellation fields
+      cancellationReason: data.cancellation_reason || null,
+      cancellationRequestedAt: data.cancellation_requested_at ? new Date(data.cancellation_requested_at) : null,
+      wantsReschedule: data.wants_reschedule || null,
+      reschedulePreferences: data.reschedule_preferences || null
     };
   }
 

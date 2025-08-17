@@ -2,10 +2,10 @@ import { GenderSelect } from '@/components/GenderSelect';
 import { ParentWaiverManagement } from '@/components/parent-waiver-management';
 import { ParentAthleteDetailDialog } from '@/components/ParentAthleteDetailDialog';
 import { SafetyInformationDialog } from '@/components/safety-information-dialog';
+import { BookingCancellationModal } from '@/components/BookingCancellationModal';
 import { ParentFormInput, ParentFormTextarea, ParentFormSelectTrigger, Select, SelectContent, SelectItem, SelectValue } from '@/components/parent-ui/ParentFormComponents';
 import { TwoStepFocusAreas } from '@/components/two-step-focus-areas-edit';
 import { AddAthleteModal } from '@/components/AddAthleteModal';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -590,24 +590,6 @@ function ParentDashboard() {
     onSuccess: () => {
       queryClient.clear();
       setLocation('/');
-    },
-  });
-
-  // Cancel booking mutation
-  const cancelBookingMutation = useMutation({
-    mutationFn: async (bookingId: number) => {
-      return apiRequest('PATCH', `/api/bookings/${bookingId}/cancel`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/parent/bookings'] });
-      toast({ title: 'Booking cancelled successfully' });
-      setCancelBookingId(null);
-    },
-    onError: () => {
-      toast({ 
-        title: 'Failed to cancel booking', 
-        variant: 'destructive' 
-      });
     },
   });
 
@@ -1798,26 +1780,16 @@ function ParentDashboard() {
           </div>
         </ParentModal>
 
-        {/* Cancel Booking Dialog */}
-        <AlertDialog open={cancelBookingId !== null} onOpenChange={() => setCancelBookingId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to cancel this booking? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => cancelBookingId && cancelBookingMutation.mutate(cancelBookingId)}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Cancel Booking
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* Cancel Booking Modal */}
+        <BookingCancellationModal
+          isOpen={cancelBookingId !== null}
+          onClose={() => setCancelBookingId(null)}
+          booking={cancelBookingId ? bookings.find(b => b.id === cancelBookingId) || null : null}
+          onSuccess={() => {
+            // Additional success handling if needed
+            setCancelBookingId(null);
+          }}
+        />
 
         {/* Edit Athlete Modal */}
         <ParentModal

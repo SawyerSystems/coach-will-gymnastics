@@ -12,7 +12,7 @@ import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { getActivityLogger, ActivityLogger } from "./activity-logger";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordResetEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
+import { sendBirthdayEmail, sendEmail, sendGenericEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordResetEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -7182,33 +7182,44 @@ setTimeout(async () => {
   });
 
   // Parent booking cancellation
-  app.patch("/api/bookings/:id/cancel", async (req, res) => {
+  app.patch("/api/bookings/:id/cancel", isParentAuthenticated, async (req, res) => {
     console.log("🚨 CANCEL PATCH ENDPOINT HIT - /api/bookings/:id/cancel with ID:", req.params.id);
     try {
       const bookingId = parseInt(req.params.id);
+      const { reason, wantsReschedule, preferredRescheduleDate, preferredRescheduleTime } = req.body;
+      
       const booking = await storage.getBooking(bookingId);
       
       if (!booking) {
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      // Check if parent is authenticated and owns this booking
-      if (!req.session.parentId && !req.session.adminId) {
-        return res.status(401).json({ error: "Not authenticated" });
+      // Security check: ensure parent can only cancel their own bookings
+      if (booking.parentId !== req.session.parentId) {
+        console.warn(`[PARENT-CANCEL] Unauthorized cancel attempt: Parent ${req.session.parentId} tried to cancel booking ${bookingId} owned by parent ${booking.parentId}`);
+        return res.status(403).json({ error: 'Unauthorized to cancel this booking', code: 'UNAUTHORIZED' });
       }
 
-      // If parent is making the request, verify they own the booking
-      if (req.session.parentId && booking.parentEmail !== req.session.parentEmail) {
-        return res.status(403).json({ error: "Unauthorized to cancel this booking" });
-      }
+      // Update booking status to cancelled with cancellation details in dedicated fields
+      const reschedulePrefs = wantsReschedule ? JSON.stringify({
+        preferredDate: preferredRescheduleDate || null,
+        preferredTime: preferredRescheduleTime || null
+      }) : null;
 
-      // Update booking status to cancelled
+      const existingNotes = booking.adminNotes || '';
+      const cancellationNotes = `${existingNotes}\n\n[CANCELLATION - ${new Date().toLocaleDateString()}]\nReason: ${reason || 'No reason provided'}\nWants Reschedule: ${wantsReschedule ? 'Yes' : 'No'}${wantsReschedule ? `\nPreferred Date: ${preferredRescheduleDate || 'Not specified'}\nPreferred Time: ${preferredRescheduleTime || 'Not specified'}` : ''}`;
+
       const updatedBooking = await storage.updateBooking(bookingId, { 
         status: BookingStatusEnum.CANCELLED,
-        attendanceStatus: AttendanceStatusEnum.CANCELLED
+        attendanceStatus: AttendanceStatusEnum.CANCELLED,
+        cancellationReason: reason || 'No reason provided',
+        cancellationRequestedAt: new Date(),
+        wantsReschedule: wantsReschedule || false,
+        reschedulePreferences: reschedulePrefs,
+        adminNotes: cancellationNotes.trim()
       });
       
-      // Send cancellation email
+      // Send cancellation email to parent
       try {
         const parentName = `${booking.parentFirstName} ${booking.parentLastName}`;
         const rescheduleLink = `${getBaseUrl()}/booking`;
@@ -7223,9 +7234,46 @@ setTimeout(async () => {
         console.error('Failed to send cancellation email:', emailError);
       }
 
+      // Send admin notification
+      try {
+        const adminEmailContent = `
+Booking Cancellation Notice
+
+Booking ID: ${bookingId}
+Parent: ${booking.parentFirstName} ${booking.parentLastName}
+Email: ${booking.parentEmail}
+Date: ${booking.preferredDate}
+Time: ${booking.preferredTime}
+Lesson Type: ${booking.lessonType}
+
+Cancellation Reason: ${reason || 'No reason provided'}
+
+${wantsReschedule ? `
+RESCHEDULE REQUESTED:
+Preferred Date: ${preferredRescheduleDate || 'Not specified'}
+Preferred Time: ${preferredRescheduleTime || 'Not specified'}
+
+Please contact the parent to arrange a new session.
+` : 'This is a full cancellation - no reschedule requested.'}
+
+Login to admin panel to view details: ${getBaseUrl()}/admin
+        `.trim();
+
+        // Send notification email to admin
+        await sendGenericEmail(
+          process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com',
+          wantsReschedule ? 'Booking Cancellation - Reschedule Requested' : 'Booking Cancellation',
+          adminEmailContent
+        );
+        
+        console.log(`Admin notification sent for booking cancellation ${bookingId}`);
+      } catch (emailError) {
+        console.error('Failed to send admin notification:', emailError);
+      }
+
       res.json({ 
         success: true, 
-        message: "Booking cancelled successfully",
+        message: wantsReschedule ? "Cancellation request sent. We'll contact you about rescheduling." : "Booking cancelled successfully",
         booking: updatedBooking
       });
     } catch (error: any) {
