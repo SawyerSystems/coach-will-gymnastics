@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { BookingStatusEnum, PaymentStatusEnum } from "@shared/schema";
 import express, { NextFunction, type Request, Response } from "express";
 import fs from "fs";

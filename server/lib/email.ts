@@ -111,19 +111,6 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
   
   if (!resendApiKey) {
     console.error('RESEND_API_KEY not found in environment variables');
-    // In development, just log the email that would be sent
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode - Email that would be sent:', {
-        type,
-        to,
-        subject: emailTemplates[type].subject,
-        data,
-        logoUrl
-      });
-      return;
-    }
-  // In non-development environments, emit structured log for alerting
-  console.error(`[EMAIL][${type}] Cannot send email in non-development environment - missing RESEND_API_KEY`);
     throw new Error('RESEND_API_KEY is required for sending emails');
   }
 
@@ -185,15 +172,6 @@ export async function sendGenericEmail(to: string, subject: string, htmlContent:
   
   if (!resendApiKey) {
     console.error('RESEND_API_KEY not found in environment variables');
-    // In development, just log the email that would be sent
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode - Email that would be sent:', {
-        to,
-        subject,
-        htmlContent: htmlContent.substring(0, 200) + '...'
-      });
-      return;
-    }
     throw new Error('RESEND_API_KEY is required for sending emails');
   }
 
