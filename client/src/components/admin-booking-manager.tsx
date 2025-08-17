@@ -1944,25 +1944,32 @@ function BookingDetailsView({ booking }: { booking: Booking }) {
         </div>
       </div>
 
-      {booking.focusAreas && booking.focusAreas.length > 0 && (
+      {(booking.focusAreas && booking.focusAreas.length > 0) || booking.focusAreaOther ? (
         <div className="bg-gradient-to-r from-white to-amber-50 p-3 sm:p-4 rounded-xl border border-amber-100 shadow-sm">
           <h4 className="font-semibold text-amber-800 flex items-center gap-2 mb-3">
             <Target className="w-4 h-4" />
             Focus Areas
           </h4>
           <div className="flex flex-wrap gap-2">
-            {booking.focusAreas.map((area: any, index: number) => (
-              <Badge 
-                key={index} 
-                variant="secondary"
-                className="bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200"
-              >
-                {area}
-              </Badge>
-            ))}
+            {(() => {
+              const areas: string[] = Array.isArray(booking.focusAreas) ? [...booking.focusAreas] : [];
+              const hasOtherBadge = areas.some(a => typeof a === 'string' && a.toLowerCase().startsWith('other:'));
+              if (booking.focusAreaOther && !hasOtherBadge) {
+                areas.push(`Other: ${booking.focusAreaOther}`);
+              }
+              return areas.map((area: any, index: number) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary"
+                  className="bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200"
+                >
+                  {area}
+                </Badge>
+              ));
+            })()}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Safety Information Section */}
       <div className="bg-gradient-to-r from-white to-red-50 p-3 sm:p-4 rounded-xl border border-red-100 shadow-sm">

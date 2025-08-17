@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "../admin-ui/AdminModal";
 import { AdminButton } from "../admin-ui/AdminButton";
@@ -18,6 +19,7 @@ import {
   Edit
 } from "lucide-react";
 import type { Booking } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -115,6 +117,44 @@ export function BookingDetailsModal({
 }: BookingDetailsModalProps) {
   if (!booking) return null;
 
+  // Local detailed booking state: start with the provided booking, then hydrate from /details when open
+  const [detailed, setDetailed] = useState<Booking>(booking);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Only fetch when modal is open and we have an id
+    if (!isOpen || !booking?.id) {
+      setDetailed(booking);
+      return;
+    }
+    // If the summary booking lacks focus areas or parent/lessonType, fetch the full details
+    const needsHydration = !Array.isArray(booking.focusAreas) || booking.focusAreas.length === 0 || !(booking as any).parent || !(booking as any).lessonType;
+    if (!needsHydration) {
+      setDetailed(booking);
+      return;
+    }
+    (async () => {
+      try {
+        setIsLoadingDetails(true);
+        const res = await apiRequest('GET', `/api/bookings/${booking.id}/details`);
+        if (!res.ok) throw new Error('Failed to load booking details');
+        const full = await res.json();
+        if (!cancelled) setDetailed(full);
+      } catch (e) {
+        // Fall back to the provided booking on error
+        if (!cancelled) setDetailed(booking);
+        console.error('[BookingDetailsModal] Failed to hydrate details:', e);
+      } finally {
+        if (!cancelled) setIsLoadingDetails(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, booking?.id]);
+
+  // Use a memo to consistently refer to the best-available data
+  const b: Booking = useMemo(() => detailed || booking, [detailed, booking]);
+
   // Calculate lesson price
   const getLessonPrice = (booking: Booking): number => {
     let price = 0;
@@ -151,15 +191,15 @@ export function BookingDetailsModal({
   };
 
   const lessonTypeName = (() => {
-    const lessonType = booking.lessonType;
+    const lessonType = (b as any).lessonType;
     if (typeof lessonType === 'object' && lessonType && 'name' in lessonType) {
       return (lessonType as any).name;
     }
-    return lessonType || booking.lessonTypeName || 'Unknown Lesson Type';
+    return lessonType || (b as any).lessonTypeName || 'Unknown Lesson Type';
   })();
 
-  const paymentBadge = getPaymentStatusBadgeProps(booking.paymentStatus || 'unpaid');
-  const attendanceBadge = getAttendanceStatusBadgeProps(booking.attendanceStatus || 'pending');
+  const paymentBadge = getPaymentStatusBadgeProps(b.paymentStatus || 'unpaid');
+  const attendanceBadge = getAttendanceStatusBadgeProps(b.attendanceStatus || 'pending');
 
   const footer = (
     <div className="flex items-center justify-between gap-3">
@@ -197,7 +237,7 @@ export function BookingDetailsModal({
     <AdminModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Booking Details ${booking.id ? `#${booking.id}` : ''}`}
+  title={`Booking Details ${b.id ? `#${b.id}` : ''}`}
       size="3xl"
       showCloseButton={false}
       footer={footer}
@@ -212,8 +252,8 @@ export function BookingDetailsModal({
           >
             <div className="space-y-2.5 text-sm">
               <AdminModalDetailRow label="Type" value={lessonTypeName} />
-              <AdminModalDetailRow label="Date" value={booking.preferredDate} />
-              <AdminModalDetailRow label="Time" value={booking.preferredTime} />
+              <AdminModalDetailRow label="Date" value={b.preferredDate} />
+              <AdminModalDetailRow label="Time" value={b.preferredTime} />
               <AdminModalDetailRow 
                 label="Payment Status" 
                 value={
@@ -234,12 +274,12 @@ export function BookingDetailsModal({
               />
               <AdminModalDetailRow 
                 label="Amount" 
-                value={`$${getLessonPrice(booking).toFixed(2)}`}
+                value={`$${getLessonPrice(b).toFixed(2)}`}
                 className="font-medium"
               />
               <AdminModalDetailRow 
                 label="Paid Amount" 
-                value={`$${getPaidAmount(booking).toFixed(2)}`}
+                value={`$${getPaidAmount(b).toFixed(2)}`}
                 className="font-medium"
               />
             </div>
@@ -254,27 +294,27 @@ export function BookingDetailsModal({
             <div className="space-y-2.5 text-sm">
               <AdminModalDetailRow 
                 label="Name" 
-                value={`${booking.parent?.firstName || booking.parentFirstName} ${booking.parent?.lastName || booking.parentLastName}`}
+                value={`${(b as any).parent?.firstName || b.parentFirstName} ${(b as any).parent?.lastName || b.parentLastName}`}
                 icon={<User className="w-3.5 h-3.5 text-purple-500" />}
               />
               <AdminModalDetailRow 
                 label="Email" 
-                value={booking.parent?.email || booking.parentEmail}
+                value={(b as any).parent?.email || b.parentEmail}
                 icon={<Mail className="w-3.5 h-3.5 text-purple-500" />}
               />
               <AdminModalDetailRow 
                 label="Phone" 
-                value={booking.parent?.phone || booking.parentPhone}
+                value={(b as any).parent?.phone || b.parentPhone}
                 icon={<Phone className="w-3.5 h-3.5 text-purple-500" />}
               />
               <AdminModalDetailRow 
                 label="Emergency Contact" 
-                value={booking.parent?.emergencyContactName || booking.emergencyContactName || 'N/A'}
+                value={(b as any).parent?.emergencyContactName || (b as any).emergencyContactName || 'N/A'}
                 icon={<AlertCircle className="w-3.5 h-3.5 text-red-500" />}
               />
               <AdminModalDetailRow 
                 label="Emergency Phone" 
-                value={booking.parent?.emergencyContactPhone || booking.emergencyContactPhone || 'N/A'}
+                value={(b as any).parent?.emergencyContactPhone || (b as any).emergencyContactPhone || 'N/A'}
                 icon={<Phone className="w-3.5 h-3.5 text-red-500" />}
               />
             </div>
@@ -288,8 +328,8 @@ export function BookingDetailsModal({
           gradient="green"
         >
           <div className="space-y-3">
-            {booking.athletes && booking.athletes.length > 0 ? (
-              booking.athletes.map((athlete: any, index: number) => (
+            {b.athletes && (b.athletes as any).length > 0 ? (
+              (b.athletes as any).map((athlete: any, index: number) => (
                 <div key={athlete.id || index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
                   <div className="font-medium flex items-center gap-1.5 dark:text-blue-200">
                     <User className="w-3.5 h-3.5 text-green-600 dark:text-blue-300" />
@@ -311,9 +351,9 @@ export function BookingDetailsModal({
                   )}
                 </div>
               ))
-            ) : (booking as any).athleteNames && (booking as any).athleteNames.length > 0 ? (
+            ) : (b as any).athleteNames && (b as any).athleteNames.length > 0 ? (
               // Fallback to athleteNames from upcoming sessions
-              (booking as any).athleteNames.map((athleteName: string, index: number) => (
+              (b as any).athleteNames.map((athleteName: string, index: number) => (
                 <div key={index} className="p-3 bg-white rounded-lg border border-green-100 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
                   <div className="font-medium flex items-center gap-1.5 dark:text-blue-200">
                     <User className="w-3.5 h-3.5 text-green-600 dark:text-blue-300" />
@@ -369,7 +409,7 @@ export function BookingDetailsModal({
                 )}
               </>
             )}
-            {(!booking.athletes || booking.athletes.length === 0) && !(booking as any).athleteNames && !booking.athlete1Name && (
+            {(!b.athletes || (b.athletes as any).length === 0) && !(b as any).athleteNames && !b.athlete1Name && (
               <div className="text-center py-4 text-gray-500 dark:text-blue-300">
                 <Users className="w-8 h-8 mx-auto text-gray-400 dark:text-blue-400 mb-2" />
                 No athletes assigned
@@ -379,14 +419,20 @@ export function BookingDetailsModal({
         </AdminModalSection>
 
         {/* Focus Areas Section */}
-        {booking.focusAreas && booking.focusAreas.length > 0 && (
+        {(Array.isArray(b.focusAreas) && b.focusAreas.length > 0) || (b as any).focusAreaOther ? (
           <AdminModalSection
             title="Focus Areas"
             icon={<Target className="w-4 h-4" />}
             gradient="amber"
           >
             <div className="flex flex-wrap gap-2">
-              {booking.focusAreas.map((area: any, index: number) => (
+              {(() => {
+                const areas: string[] = Array.isArray(b.focusAreas) ? [...b.focusAreas] : [];
+                const hasOtherBadge = areas.some(a => typeof a === 'string' && a.toLowerCase().startsWith('other:'));
+                if ((b as any).focusAreaOther && !hasOtherBadge) {
+                  areas.push(`Other: ${(b as any).focusAreaOther}`);
+                }
+                return areas.map((area: any, index: number) => (
                 <Badge 
                   key={index} 
                   variant="secondary"
@@ -394,10 +440,11 @@ export function BookingDetailsModal({
                 >
                   {area}
                 </Badge>
-              ))}
+                ));
+              })()}
             </div>
           </AdminModalSection>
-        )}
+        ) : null}
 
         {/* Safety Information Section */}
         <AdminModalSection
@@ -412,9 +459,9 @@ export function BookingDetailsModal({
                 Drop-off Person
               </h5>
               <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
-                <AdminModalDetailRow label="Name" value={booking.dropoffPersonName || 'N/A'} />
-                <AdminModalDetailRow label="Relationship" value={booking.dropoffPersonRelationship || 'N/A'} />
-                <AdminModalDetailRow label="Phone" value={booking.dropoffPersonPhone || 'N/A'} />
+                <AdminModalDetailRow label="Name" value={b.dropoffPersonName || 'N/A'} />
+                <AdminModalDetailRow label="Relationship" value={b.dropoffPersonRelationship || 'N/A'} />
+                <AdminModalDetailRow label="Phone" value={b.dropoffPersonPhone || 'N/A'} />
               </div>
             </div>
             
@@ -424,37 +471,37 @@ export function BookingDetailsModal({
                 Pick-up Person
               </h5>
               <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
-                <AdminModalDetailRow label="Name" value={booking.pickupPersonName || 'N/A'} />
-                <AdminModalDetailRow label="Relationship" value={booking.pickupPersonRelationship || 'N/A'} />
-                <AdminModalDetailRow label="Phone" value={booking.pickupPersonPhone || 'N/A'} />
+                <AdminModalDetailRow label="Name" value={b.pickupPersonName || 'N/A'} />
+                <AdminModalDetailRow label="Relationship" value={b.pickupPersonRelationship || 'N/A'} />
+                <AdminModalDetailRow label="Phone" value={b.pickupPersonPhone || 'N/A'} />
               </div>
             </div>
           </AdminModalGrid>
 
-          {booking.altPickupPersonName && (
+          {b.altPickupPersonName && (
             <div className="mt-4">
               <h5 className="font-medium text-red-700 text-sm flex items-center gap-1.5 mb-2 dark:text-red-400">
                 <Users className="w-3.5 h-3.5" />
                 Alternative Pick-up Person
               </h5>
               <div className="space-y-2 text-xs sm:text-sm bg-white p-2 sm:p-3 rounded-lg border border-red-100 dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40">
-                <AdminModalDetailRow label="Name" value={booking.altPickupPersonName} />
-                <AdminModalDetailRow label="Relationship" value={booking.altPickupPersonRelationship || 'N/A'} />
-                <AdminModalDetailRow label="Phone" value={booking.altPickupPersonPhone || 'N/A'} />
+                <AdminModalDetailRow label="Name" value={b.altPickupPersonName} />
+                <AdminModalDetailRow label="Relationship" value={b.altPickupPersonRelationship || 'N/A'} />
+                <AdminModalDetailRow label="Phone" value={b.altPickupPersonPhone || 'N/A'} />
               </div>
             </div>
           )}
         </AdminModalSection>
 
         {/* Admin Notes Section */}
-        {booking.adminNotes && (
+        {b.adminNotes && (
           <AdminModalSection
             title="Admin Notes"
             icon={<FileText className="w-4 h-4" />}
             gradient="gray"
           >
             <p className="text-sm bg-white p-3 rounded-lg border border-gray-100 text-gray-700 leading-relaxed dark:bg-[#0F0276]/40 dark:border-[#2A4A9B]/40 dark:text-blue-200">
-              {booking.adminNotes}
+              {b.adminNotes}
             </p>
           </AdminModalSection>
         )}
