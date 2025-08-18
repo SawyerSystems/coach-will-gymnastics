@@ -2,10 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Mail, Phone, Search, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Lock, Mail, Phone, Search, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 
 // API response interface (matches database field names)
@@ -31,9 +32,14 @@ interface NewParentForm {
 
 export function ParentSelectionStep() {
   const { state, updateState, nextStep } = useBookingFlow();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [newParentForm, setNewParentForm] = useState<NewParentForm>({
     firstName: "",
     lastName: "",
@@ -78,6 +84,9 @@ export function ParentSelectionStep() {
 
   const handleBackToSelection = () => {
     setShowCreateForm(false);
+    setShowLoginForm(false);
+    setLoginEmail("");
+    setLoginPassword("");
     setNewParentForm({
       firstName: "",
       lastName: "",
@@ -158,6 +167,80 @@ export function ParentSelectionStep() {
 
   const handleNewParent = () => {
     setShowCreateForm(true);
+    setShowLoginForm(false);
+  };
+
+  const handleExistingParentLogin = () => {
+    setShowLoginForm(true);
+    setShowCreateForm(false);
+  };
+
+  const handleParentLogin = async () => {
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const response = await apiRequest("POST", "/api/parent-auth/login", {
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Fetch full parent details
+        const parentResponse = await apiRequest("GET", "/api/parent/info");
+        if (parentResponse.ok) {
+          const parentInfo = await parentResponse.json();
+          
+          // Update booking state with authenticated parent
+          updateState({
+            parentInfo: {
+              firstName: parentInfo.firstName || '',
+              lastName: parentInfo.lastName || '',
+              email: parentInfo.email || '',
+              phone: parentInfo.phone || '',
+              emergencyContactName: parentInfo.emergencyContactName || '',
+              emergencyContactPhone: parentInfo.emergencyContactPhone || '',
+            },
+            parentId: parentInfo.id,
+            selectedParent: parentInfo,
+          });
+
+          toast({
+            title: "Login Successful",
+            description: "Welcome back! Continuing with your booking.",
+          });
+          
+          nextStep();
+        } else {
+          throw new Error("Failed to fetch parent information");
+        }
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Login Failed",
+          description: error.error || "Invalid email or password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login Error",
+        description: "Failed to login. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleSelectParent = (parent: Parent) => {
@@ -350,6 +433,91 @@ export function ParentSelectionStep() {
     );
   }
 
+  // Show login form if user clicked "Login as Existing Parent"
+  if (showLoginForm) {
+    return (
+      <div className="space-y-6 py-4">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold">Parent Login</h2>
+          <p className="text-muted-foreground">
+            Sign in to your existing parent account
+          </p>
+        </div>
+
+        {/* Back to Selection Button */}
+        <div className="flex justify-start">
+          <Button
+            onClick={handleBackToSelection}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Selection
+          </Button>
+        </div>
+
+        {/* Login Form */}
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-6 space-y-4">
+            <div className="text-center mb-4">
+              <div className="bg-blue-100 p-3 rounded-full w-12 h-12 mx-auto mb-2">
+                <Lock className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="font-semibold">Sign In</h3>
+            </div>
+
+            <div>
+              <label htmlFor="loginEmail" className="block text-sm font-medium mb-1">
+                Email Address *
+              </label>
+              <Input
+                id="loginEmail"
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="parent@example.com"
+                disabled={isLoggingIn}
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="loginPassword" className="block text-sm font-medium mb-1">
+                Password *
+              </label>
+              <Input
+                id="loginPassword"
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Enter your password"
+                disabled={isLoggingIn}
+                onKeyDown={(e) => e.key === 'Enter' && handleParentLogin()}
+                required
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                onClick={handleBackToSelection}
+                variant="outline"
+                disabled={isLoggingIn}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleParentLogin}
+                disabled={isLoggingIn || !loginEmail.trim() || !loginPassword.trim()}
+              >
+                {isLoggingIn ? "Signing In..." : "Sign In & Continue"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Default parent selection view
   return (
     <div className="space-y-6 py-4">
@@ -373,6 +541,24 @@ export function ParentSelectionStep() {
             <h3 className="font-semibold text-lg">Create New Parent</h3>
             <p className="text-sm text-muted-foreground">
               Create a new parent account for this booking
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Login as Existing Parent Option */}
+      <Card 
+        className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-500 max-w-md mx-auto"
+        onClick={handleExistingParentLogin}
+      >
+        <CardContent className="flex items-center gap-4 p-4">
+          <div className="bg-green-100 p-3 rounded-full">
+            <Lock className="h-6 w-6 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">Login as Existing Parent</h3>
+            <p className="text-sm text-muted-foreground">
+              Sign in with your email and password
             </p>
           </div>
         </CardContent>

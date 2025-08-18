@@ -65,9 +65,9 @@ interface BookingModalProps {
     phone: string;
     emergencyContactName: string;
     emergencyContactPhone: string;
-    waiverSigned: boolean;
-    waiverSignedAt: string | null;
-    waiverSignatureName: string | null;
+    waiverSigned?: boolean;
+    waiverSignedAt?: string | null;
+    waiverSignatureName?: string | null;
   } | null;
   prefilledAthletes?: {
     id: string;
@@ -229,17 +229,23 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
   // Handle prefilled parent and auto-populate parent information
   useEffect(() => {
     if (prefilledParent) {
+      console.log("🔍 DEBUG - Prefilled parent data in booking modal:", prefilledParent);
+      console.log("🔍 DEBUG - Prefilled parent waiver status:", prefilledParent.waiverSigned);
+      
       form.setValue("parentFirstName", prefilledParent.firstName);
       form.setValue("parentLastName", prefilledParent.lastName);
       form.setValue("parentEmail", prefilledParent.email);
       form.setValue("parentPhone", prefilledParent.phone);
       form.setValue("emergencyContactName", prefilledParent.emergencyContactName);
       form.setValue("emergencyContactPhone", prefilledParent.emergencyContactPhone);
-      form.setValue("waiverSigned", prefilledParent.waiverSigned);
+      form.setValue("waiverSigned", prefilledParent.waiverSigned || false);
       
       // If waiver is already signed, set the waiver state to true
       if (prefilledParent.waiverSigned) {
+        console.log("🔍 DEBUG - Setting waiver signed to true");
         setWaiverSigned(true);
+      } else {
+        console.log("🔍 DEBUG - Waiver not signed, keeping false");
       }
     }
   }, [prefilledParent, form]);
@@ -321,14 +327,6 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
       // Skip parent info step (step 4) if parent is already logged in OR has prefilled data
       if (currentStep === 3 && (parentAuthData?.loggedIn || (prefilledParent && isReturningParent))) {
         nextStepNumber = 5; // Skip directly to waiver step
-      }
-      // Skip waiver step (step 5) if waiver is already signed  
-      else if (nextStepNumber === 5 && waiverSigned) {
-        nextStepNumber = 6; // Skip directly to payment
-      }
-      // Skip waiver step if currently on it and waiver is signed
-      else if (currentStep === 5 && waiverSigned) {
-        nextStepNumber = 6; // Skip directly to payment
       }
       
       setCurrentStep(nextStepNumber);
@@ -1045,6 +1043,33 @@ export function BookingModal({ isOpen, open, onClose, onOpenChange, onBack, init
                           {watchedFocusAreaIds.join(", ")}
                         </span>
                       </div>
+                      {(form.watch("parentFirstName") || form.watch("parentLastName") || prefilledParent) && (
+                        <div className="flex justify-between">
+                          <span>Parent/Guardian:</span>
+                          <span className="font-medium">
+                            {prefilledParent 
+                              ? `${prefilledParent.firstName} ${prefilledParent.lastName}` 
+                              : `${form.watch("parentFirstName")} ${form.watch("parentLastName")}`
+                            }
+                          </span>
+                        </div>
+                      )}
+                      {(form.watch("parentEmail") || prefilledParent?.email) && (
+                        <div className="flex justify-between">
+                          <span>Contact Email:</span>
+                          <span className="font-medium">
+                            {prefilledParent?.email || form.watch("parentEmail")}
+                          </span>
+                        </div>
+                      )}
+                      {(form.watch("parentPhone") || prefilledParent?.phone) && (
+                        <div className="flex justify-between">
+                          <span>Contact Phone:</span>
+                          <span className="font-medium">
+                            {prefilledParent?.phone || form.watch("parentPhone")}
+                          </span>
+                        </div>
+                      )}
                       <hr className="my-4" />
                       <div className="flex justify-between text-lg font-bold">
                         <span>Total:</span>

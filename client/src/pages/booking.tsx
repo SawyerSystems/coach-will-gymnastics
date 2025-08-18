@@ -1,8 +1,8 @@
 import { Footer } from "@/components/Footer";
-import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UnifiedBookingModal } from "@/components/UnifiedBookingModal";
+import { ParentIdentificationEnhanced } from "@/components/parent-identification-enhanced";
 import { useStripePricing } from "@/hooks/use-stripe-products";
 // import { LESSON_TYPES } from "@/lib/constants";
 import { useLessonTypes } from "@/hooks/useLessonTypes";
@@ -14,8 +14,8 @@ import { useEffect, useState } from "react";
 import SEOHead from "@/components/SEOHead";
 
 export default function Booking() {
-  const [showParentModal, setShowParentModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showParentIdentificationModal, setShowParentIdentificationModal] = useState(false);
   const [parentData, setParentData] = useState<Parent | null>(null);
   const [selectedAthletes, setSelectedAthletes] = useState<Athlete[]>([]);
   const [isNewParent, setIsNewParent] = useState(false);
@@ -77,20 +77,6 @@ export default function Booking() {
   const { getLessonPrice } = useStripePricing();
   const { data: lessonTypes } = useLessonTypes();
 
-  const handleParentConfirmed = (data: {
-    parent: Parent;
-    selectedAthletes: Athlete[];
-    isNewParent: boolean;
-  }) => {
-    console.log("handleParentConfirmed called with:", data);
-    setParentData(data.parent);
-    setSelectedAthletes(data.selectedAthletes);
-    setIsNewParent(data.isNewParent);
-    setShowParentModal(false);
-    setShowBookingModal(true);
-    console.log("Should now show booking modal");
-  };
-
   const handleBookNow = (lessonType?: string) => {
     console.log("handleBookNow called with:", {
       parentAuth,
@@ -114,8 +100,8 @@ export default function Booking() {
       if (parentInfo && !parentInfoError) {
         console.log("Using complete parent info from API");
         setParentData(parentInfo); // Use complete parent info directly
-  // Do not preselect athletes; force explicit user selection
-  setSelectedAthletes([]);
+        // Do not preselect athletes; force explicit user selection
+        setSelectedAthletes([]);
         setIsNewParent(false);
         setShowBookingModal(true);
       } else {
@@ -123,16 +109,29 @@ export default function Booking() {
         // The UnifiedBookingModal will handle this via parentAuthStatus
         console.log("Parent is logged in but full info not available, letting modal handle via auth status");
         setParentData(null); // Let modal handle via auth status
-  // Do not preselect athletes; force explicit user selection
-  setSelectedAthletes([]);
+        // Do not preselect athletes; force explicit user selection
+        setSelectedAthletes([]);
         setIsNewParent(false);
         setShowBookingModal(true);
       }
     } else {
-      // Show parent identification modal for non-logged in users
-      console.log("Showing parent identification modal - not logged in");
-      setShowParentModal(true);
+      // For non-logged in users, show parent identification modal first
+      console.log("Showing parent identification modal for non-logged in user");
+      setShowParentIdentificationModal(true);
     }
+  };
+
+  const handleParentConfirmed = (data: {
+    parent: Parent;
+    selectedAthletes: Athlete[];
+    isNewParent: boolean;
+  }) => {
+    console.log("Parent confirmed in booking.tsx:", data);
+    setParentData(data.parent);
+    setSelectedAthletes(data.selectedAthletes);
+    setIsNewParent(data.isNewParent);
+    setShowParentIdentificationModal(false);
+    setShowBookingModal(true);
   };
 
   return (
@@ -575,20 +574,20 @@ export default function Booking() {
         </div>
       </section>
 
-      <ParentIdentificationEnhanced 
-        isOpen={showParentModal} 
-        onClose={() => {
-          console.log("Parent modal closing");
-          setShowParentModal(false);
-        }}
+      <ParentIdentificationEnhanced
+        isOpen={showParentIdentificationModal}
+        onClose={() => setShowParentIdentificationModal(false)}
         onParentConfirmed={handleParentConfirmed}
       />
-      
+
       <UnifiedBookingModal
         isOpen={showBookingModal}
         onClose={() => {
           console.log("Booking modal closing");
           setShowBookingModal(false);
+          setParentData(null);
+          setSelectedAthletes([]);
+          setIsNewParent(false);
         }}
         parentData={parentData || undefined}
         selectedAthletes={selectedAthletes}

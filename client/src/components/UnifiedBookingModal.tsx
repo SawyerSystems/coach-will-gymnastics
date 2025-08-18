@@ -55,6 +55,16 @@ export function UnifiedBookingModal({
     enabled: !isAdminFlow && !parentData, // Only check if not admin and no parent data provided
   });
 
+  // Fetch parent athletes for waiver status when parent is logged in
+  const { data: parentAthletes } = useQuery({
+    queryKey: ['/api/parent/athletes'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/parent/athletes');
+      return await response.json();
+    },
+    enabled: (!!parentData || parentAuthStatus?.loggedIn) && !isAdminFlow, // Only fetch if parent is logged in and not admin
+  });
+
   // Define helper variables for flow determination
   const loggedInParent = !!parentData || parentAuthStatus?.loggedIn;
   const isAdmin = isAdminFlow;

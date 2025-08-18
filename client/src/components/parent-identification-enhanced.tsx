@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { Parent, Athlete } from "@shared/schema";
 import { BookingLoginModal } from "./booking-login-modal";
-import { EnhancedBookingModal } from "./enhanced-booking-modal";
 
 interface ParentIdentificationEnhancedProps {
   isOpen: boolean;
@@ -18,51 +16,32 @@ export function ParentIdentificationEnhanced({
   onClose, 
   onParentConfirmed 
 }: ParentIdentificationEnhancedProps) {
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [parentData, setParentData] = useState<Parent | null>(null);
-  const [isNewParent, setIsNewParent] = useState(false);
-
-  console.log("ParentIdentificationEnhanced - isOpen:", isOpen, "step:", showBookingModal ? "booking" : "login");
+  console.log("ParentIdentificationEnhanced - isOpen:", isOpen);
 
   const handleLoginSuccess = (parent: Parent | null) => {
     if (parent) {
-      // Existing parent logged in
-      setParentData(parent);
-      setIsNewParent(false);
+      // Existing parent logged in - pass complete data to parent
+      onParentConfirmed({
+        parent: parent,
+        selectedAthletes: [],
+        isNewParent: false
+      });
     } else {
-      // New parent flow
-      setParentData(null);
-      setIsNewParent(true);
+      // New parent flow - this shouldn't happen with password login
+      // But handle it gracefully
+      onParentConfirmed({
+        parent: null as any, // This will be handled by the parent component
+        selectedAthletes: [],
+        isNewParent: true
+      });
     }
-    
-    // Close login modal and open booking modal
-    onClose();
-    setShowBookingModal(true);
-  };
-
-  const handleBookingClose = () => {
-    setShowBookingModal(false);
-    setParentData(null);
-    setIsNewParent(false);
   };
 
   return (
-    <>
-      <BookingLoginModal
-        isOpen={isOpen}
-        onClose={onClose}
-        onLoginSuccess={handleLoginSuccess}
-      />
-      
-      {showBookingModal && (
-        <EnhancedBookingModal
-          isOpen={showBookingModal}
-          onClose={handleBookingClose}
-          parentData={parentData || undefined}
-          selectedAthletes={[]}
-          isNewParent={isNewParent}
-        />
-      )}
-    </>
+    <BookingLoginModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onLoginSuccess={handleLoginSuccess}
+    />
   );
 }

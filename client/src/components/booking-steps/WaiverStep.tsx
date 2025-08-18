@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useToast } from "@/hooks/use-toast";
-import { useWaiverStatus } from "@/hooks/use-waiver-status";
+import { useWaiverStatus, useAthleteWaiverStatus } from "@/hooks/use-waiver-status";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +13,8 @@ export function WaiverStep() {
   const [waiverData, setWaiverData] = useState<any>(null);
   const { toast } = useToast();
 
+  console.log('🔍 DEBUG - WaiverStep component loaded with state:', state);
+
   // Get athlete info from booking flow state
   const athleteInfo = state.athleteInfo?.[0] || {};
   const athleteName = `${athleteInfo.firstName || ''} ${athleteInfo.lastName || ''}`.trim();
@@ -21,10 +23,22 @@ export function WaiverStep() {
   const selectedAthleteId = state.selectedAthletes[0];
 
   // Check if waiver already signed for this athlete
+  // Use athlete ID if available (for logged-in parents), otherwise use name/DOB
   const { data: waiverStatus, isLoading: waiverLoading } = useWaiverStatus(
     athleteName,
     athleteInfo.dateOfBirth
   );
+
+  // Alternative waiver check using athlete ID (for logged-in parents)
+  const { data: athleteWaiverStatus, isLoading: athleteWaiverLoading } = useAthleteWaiverStatus(
+    selectedAthleteId || ''
+  );
+
+  // Determine which waiver status to use
+  const effectiveWaiverStatus = selectedAthleteId ? athleteWaiverStatus : waiverStatus;
+  const effectiveWaiverLoading = selectedAthleteId ? athleteWaiverLoading : waiverLoading;
+
+
 
   // Check parent authentication status to get the parentId
   const { data: parentAuthData } = useQuery({
@@ -36,30 +50,31 @@ export function WaiverStep() {
 
   // Auto-skip if waiver already signed
   useEffect(() => {
-    if (!skippedRef.current && (waiverStatus?.hasWaiver || state.waiverStatus.signed)) {
+    if (!skippedRef.current && (effectiveWaiverStatus?.hasWaiver || effectiveWaiverStatus?.waiverSigned || state.waiverStatus.signed)) {
       skippedRef.current = true;
       updateState({ 
         waiverStatus: { 
           signed: true, 
-          signedAt: waiverStatus?.waiverSignedAt ? new Date(waiverStatus.waiverSignedAt) : new Date()
+          signedAt: effectiveWaiverStatus?.waiverSignedAt ? new Date(effectiveWaiverStatus.waiverSignedAt) : new Date()
         } 
       });
       // Add a small delay to allow user to see the confirmation
       const timer = setTimeout(() => nextStep(), 1500);
       return () => clearTimeout(timer);
     }
-  }, [waiverStatus?.hasWaiver, state.waiverStatus.signed]);
+  }, [effectiveWaiverStatus?.hasWaiver, effectiveWaiverStatus?.waiverSigned, state.waiverStatus.signed]);
   // ^ removed updateState and nextStep from dependencies
 
   // Show loading state while checking waiver status
-  if (waiverLoading && athleteName) {
+  if (effectiveWaiverLoading && (athleteName || selectedAthleteId)) {
+    const displayName = athleteName || `Athlete ${selectedAthleteId}`;
     return (
       <div className="space-y-6 py-4">
         <div className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-[rgba(0,0,102,0.1)] dark:border-[rgba(0,0,102,0.3)] p-6 rounded-lg text-center">
           <img src="/CWT_Circle_LogoSPIN.png" alt="Loading" className="animate-spin h-8 w-8 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Checking Waiver Status</h3>
           <p className="text-sm text-[#0F0276]/70 dark:text-white mt-2">
-            Verifying if {athleteName} has a signed waiver on file...
+            Verifying if {displayName} has a signed waiver on file...
           </p>
         </div>
       </div>
