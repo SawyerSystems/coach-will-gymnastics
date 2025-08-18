@@ -8041,8 +8041,8 @@ setTimeout(async () => {
             bookingId: "TEST-456",
             parentName: "Test Parent",
             parentEmail: "testparent@example.com",
-            originalSessionDate: "Monday, January 15, 2025",
-            originalSessionTime: "3:00 PM",
+            oldSessionDate: "Monday, January 15, 2025",
+            oldSessionTime: "3:00 PM",
             newSessionDate: "Tuesday, January 16, 2025",
             newSessionTime: "4:00 PM",
             lessonType: "Group Lesson",
@@ -8146,14 +8146,14 @@ setTimeout(async () => {
             testResults.push(`❌ Admin booking cancellation failed: ${err.message}`);
           }
           
-          try {
+      try {
             console.log(`📧 Testing admin booking reschedule...`);
             await sendAdminBookingReschedule(adminEmail, {
               bookingId: "TEST-RESCHEDULE-002",
               parentName: "Mike Smith",
               parentEmail: "mike@example.com",
-              originalSessionDate: "Tuesday, January 16, 2025",
-              originalSessionTime: "2:00 PM",
+        oldSessionDate: "Tuesday, January 16, 2025",
+        oldSessionTime: "2:00 PM",
               newSessionDate: "Thursday, January 18, 2025",
               newSessionTime: "3:00 PM",
               lessonType: "Group Lesson",
@@ -8226,17 +8226,19 @@ setTimeout(async () => {
             testResults.push(`❌ Admin new athlete failed: ${err.message}`);
           }
           
-          try {
+      try {
             console.log(`📧 Testing admin waiver signed...`);
             await sendAdminWaiverSigned(adminEmail, {
               waiverId: "TEST-WAIVER-006",
               athleteName: "Lucas Garcia",
+              athleteId: "111",
               athleteAge: 11,
               parentName: "Maria Garcia",
               parentEmail: "maria@example.com",
               signedDate: new Date().toISOString(),
-              emergencyContact: "Carlos Garcia - (555) 777-8888",
-              medicalInfo: "Mild asthma, uses inhaler as needed",
+        emergencyContactName: "Carlos Garcia",
+        emergencyContactPhone: "(555) 777-8888",
+        medicalConditions: "Mild asthma, uses inhaler as needed",
               adminPanelLink: `${baseUrl}/admin/waivers/TEST-WAIVER-006`
             });
             testResults.push("✅ Admin waiver signed sent");
@@ -10036,7 +10038,6 @@ setTimeout(async () => {
                 ipAddress,
                 emergencyContactName: waiver.signerName,
                 emergencyContactPhone: waiver.emergencyContactNumber,
-                medicalConditions: waiver.medicalConditions || 'None specified',
                 adminPanelLink: `${baseUrl}/admin/waivers/${waiver.id}`,
                 waiverPdfLink: pdfPath ? `${baseUrl}/api/waivers/${waiver.id}/pdf` : undefined
               });
