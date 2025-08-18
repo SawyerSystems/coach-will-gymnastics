@@ -5590,19 +5590,19 @@ export class SupabaseStorage implements IStorage {
   }
 
   async updateWaiverEmailSent(id: number): Promise<Waiver | undefined> {
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS and avoid single-row selection errors
+    const { error } = await supabaseAdmin
       .from('waivers')
       .update({ email_sent_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
     if (error) {
       console.error('Error updating waiver email sent:', error);
       return undefined;
     }
 
-    return data;
+    // Fetch and return the updated waiver for consistency
+    return this.getWaiver(id);
   }
 
   // Parent auth methods

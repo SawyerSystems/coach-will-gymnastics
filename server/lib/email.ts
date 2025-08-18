@@ -48,6 +48,26 @@ export const emailTemplates = {
     subject: '🚨 Booking Cancellation Notice',
     loader: async () => (await import('../../emails/AdminBookingCancellation')).default,
   },
+  'admin-booking-reschedule': {
+    subject: '🔄 Booking Reschedule Notice',
+    loader: async () => (await import('../../emails/AdminBookingReschedule')).default,
+  },
+  'admin-new-booking': {
+    subject: '🎉 New Booking Received',
+    loader: async () => (await import('../../emails/AdminNewBooking')).default,
+  },
+  'admin-new-parent': {
+    subject: '👋 New Parent Registration',
+    loader: async () => (await import('../../emails/AdminNewParent')).default,
+  },
+  'admin-new-athlete': {
+    subject: '🤸‍♀️ New Athlete Registration',
+    loader: async () => (await import('../../emails/AdminNewAthlete')).default,
+  },
+  'admin-waiver-signed': {
+    subject: '✅ Waiver Completed',
+    loader: async () => (await import('../../emails/AdminWaiverSigned')).default,
+  },
   'session-no-show': {
     subject: '🤸 We Missed You — Let\'s Reschedule!',
     loader: async () => (await import('../../emails/SessionNoShow')).SessionNoShow,
@@ -447,6 +467,144 @@ export async function sendAdminBookingCancellation(
   
   return sendEmail({
     type: 'admin-booking-cancellation',
+    to,
+    data
+  });
+}
+
+// Helper function to send admin booking reschedule notification
+export async function sendAdminBookingReschedule(
+  to: string,
+  data: {
+    bookingId: string;
+    parentName: string;
+    parentEmail: string;
+    athleteNames: string[];
+    lessonType: string;
+    oldSessionDate: string;
+    oldSessionTime: string;
+    newSessionDate: string;
+    newSessionTime: string;
+    rescheduleReason?: string;
+    adminPanelLink: string;
+  }
+) {
+  console.log(`[sendAdminBookingReschedule] Sending to: ${to}`);
+  console.log(`[sendAdminBookingReschedule] Data:`, JSON.stringify(data, null, 2));
+  
+  return sendEmail({
+    type: 'admin-booking-reschedule',
+    to,
+    data
+  });
+}
+
+// Helper function to send admin new booking notification
+export async function sendAdminNewBooking(
+  to: string,
+  data: {
+    bookingId: string;
+    parentName: string;
+    parentEmail: string;
+    parentPhone?: string;
+    athleteNames: string[];
+    sessionDate: string;
+    sessionTime: string;
+    lessonType: string;
+    paymentStatus: string;
+    totalAmount: string;
+    specialRequests?: string;
+    adminPanelLink: string;
+  }
+) {
+  console.log(`[sendAdminNewBooking] Sending to: ${to}`);
+  console.log(`[sendAdminNewBooking] Data:`, JSON.stringify(data, null, 2));
+  
+  return sendEmail({
+    type: 'admin-new-booking',
+    to,
+    data
+  });
+}
+
+// Helper function to send admin new parent notification
+export async function sendAdminNewParent(
+  to: string,
+  data: {
+    parentId: string;
+    parentName: string;
+    parentEmail: string;
+    parentPhone?: string;
+    registrationDate: string;
+    athletes: Array<{
+      id: string;
+      name: string;
+      age?: number;
+    }>;
+    adminPanelLink: string;
+  }
+) {
+  console.log(`[sendAdminNewParent] Sending to: ${to}`);
+  console.log(`[sendAdminNewParent] Data:`, JSON.stringify(data, null, 2));
+  
+  return sendEmail({
+    type: 'admin-new-parent',
+    to,
+    data
+  });
+}
+
+// Helper function to send admin new athlete notification
+export async function sendAdminNewAthlete(
+  to: string,
+  data: {
+    athleteId: string;
+    athleteName: string;
+    athleteAge?: number;
+    athleteGender?: string;
+    athleteExperience?: string;
+    parentName: string;
+    parentEmail: string;
+    parentPhone?: string;
+    registrationDate: string;
+    waiverStatus?: string;
+    adminPanelLink: string;
+  }
+) {
+  console.log(`[sendAdminNewAthlete] Sending to: ${to}`);
+  console.log(`[sendAdminNewAthlete] Data:`, JSON.stringify(data, null, 2));
+  
+  return sendEmail({
+    type: 'admin-new-athlete',
+    to,
+    data
+  });
+}
+
+// Helper function to send admin waiver signed notification
+export async function sendAdminWaiverSigned(
+  to: string,
+  data: {
+    waiverId: string;
+    athleteName: string;
+    athleteId: string;
+    athleteAge?: number;
+    parentName: string;
+    parentEmail: string;
+    signedDate: string;
+    ipAddress?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    medicalConditions?: string;
+    adminPanelLink: string;
+    waiverPdfLink?: string;
+  }
+) {
+  console.log(`[sendAdminWaiverSigned] Sending to: ${to}`);
+  console.log(`[sendAdminWaiverSigned] Data:`, JSON.stringify(data, null, 2));
+  
+  return sendEmail({
+    type: 'admin-waiver-signed',
     to,
     data
   });
