@@ -7242,8 +7242,10 @@ setTimeout(async () => {
           
           console.log(`[DEBUG-EMAIL] About to call sendSessionCancellation with: to="${parentEmail}", parentName="${parentName}", rescheduleLink="${rescheduleLink}"`);
           console.log(`[DEBUG-EMAIL] sessionData:`, JSON.stringify(sessionData, null, 2));
+          console.log(`[DEBUG-EMAIL] Parameter types: to=${typeof parentEmail}, parentName=${typeof parentName}, rescheduleLink=${typeof rescheduleLink}`);
           
-          await sendSessionCancellation(parentEmail, parentName, rescheduleLink, sessionData);
+          const emailResult = await sendSessionCancellation(parentEmail, parentName, rescheduleLink, sessionData);
+          console.log(`[DEBUG-EMAIL] Email result:`, emailResult);
           console.log(`✅ Cancellation email sent for booking ${bookingId} to ${parentEmail}`);
         } else {
           console.warn(`[PARENT-CANCEL] No parent email found for booking ${bookingId} - session: ${req.session.parentEmail}, booking: ${updatedBooking.parent?.email}`);
@@ -7254,15 +7256,37 @@ setTimeout(async () => {
 
       // Send admin notification
       try {
+        // Get parent info - either from session, updatedBooking relations, or fetch from DB
+        let parentEmail = req.session.parentEmail || updatedBooking.parent?.email;
+        let parentFirstName = updatedBooking.parent?.firstName;
+        let parentLastName = updatedBooking.parent?.lastName;
+        
+        // If parent info not available in updatedBooking, fetch from database
+        if (!parentFirstName || !parentLastName || !parentEmail) {
+          try {
+            const parentInfo = await storage.getParent(req.session.parentId);
+            parentEmail = parentEmail || parentInfo?.email || 'No email available';
+            parentFirstName = parentFirstName || parentInfo?.firstName || 'Unknown';
+            parentLastName = parentLastName || parentInfo?.lastName || 'Parent';
+          } catch (err) {
+            console.warn('[ADMIN-EMAIL] Could not fetch parent info:', err);
+            parentEmail = parentEmail || 'No email available';
+            parentFirstName = parentFirstName || 'Unknown';
+            parentLastName = parentLastName || 'Parent';
+          }
+        }
+        
+        const lessonTypeName = updatedBooking.lessonType?.name || 'Unknown Lesson Type';
+        
         const adminEmailContent = `
 Booking Cancellation Notice
 
 Booking ID: ${bookingId}
-Parent: ${booking.parentFirstName} ${booking.parentLastName}
-Email: ${booking.parentEmail}
-Date: ${booking.preferredDate}
-Time: ${booking.preferredTime}
-Lesson Type: ${booking.lessonType}
+Parent: ${parentFirstName} ${parentLastName}
+Email: ${parentEmail}
+Date: ${updatedBooking.preferredDate}
+Time: ${updatedBooking.preferredTime}
+Lesson Type: ${lessonTypeName}
 
 Cancellation Reason: ${reason || 'No reason provided'}
 
@@ -7279,7 +7303,7 @@ Login to admin panel to view details: ${getBaseUrl()}/admin
 
         // Send notification email to admin
         await sendGenericEmail(
-          process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com',
+          process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com',
           wantsReschedule ? 'Booking Cancellation - Reschedule Requested' : 'Booking Cancellation',
           adminEmailContent
         );

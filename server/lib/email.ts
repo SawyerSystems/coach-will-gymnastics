@@ -402,7 +402,11 @@ export async function sendSessionCancellation(
     lessonType?: string;
   }
 ) {
-  return sendEmail({
+  console.log(`[sendSessionCancellation] Called with: to="${to}", parentName="${parentName}", rescheduleLink="${rescheduleLink}"`);
+  console.log(`[sendSessionCancellation] Parameter types: to=${typeof to}, parentName=${typeof parentName}`);
+  console.log(`[sendSessionCancellation] sessionData:`, JSON.stringify(sessionData, null, 2));
+  
+  const result = sendEmail({
     type: 'session-cancelled',
     to,
     data: { 
@@ -411,6 +415,9 @@ export async function sendSessionCancellation(
       ...sessionData
     }
   });
+  
+  console.log(`[sendSessionCancellation] sendEmail result:`, result);
+  return result;
 }
 
 // Helper function to send session no-show
