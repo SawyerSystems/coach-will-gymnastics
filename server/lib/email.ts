@@ -44,6 +44,10 @@ export const emailTemplates = {
     subject: '❌ Session Cancelled — Let\'s Reschedule!',
     loader: async () => (await import('../../emails/SessionCancellation')).SessionCancellation,
   },
+  'admin-booking-cancellation': {
+    subject: '🚨 Booking Cancellation Notice',
+    loader: async () => (await import('../../emails/AdminBookingCancellation')).default,
+  },
   'session-no-show': {
     subject: '🤸 We Missed You — Let\'s Reschedule!',
     loader: async () => (await import('../../emails/SessionNoShow')).SessionNoShow,
@@ -152,7 +156,7 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
     
     // Send the email
     const result = await resend.emails.send({
-      from: 'Coach Will Tumbles <coach@coachwilltumbles.com>',
+      from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
       to,
       subject: template.subject,
       html,
@@ -180,7 +184,7 @@ export async function sendGenericEmail(to: string, subject: string, htmlContent:
   try {
     // Send the email
     const result = await resend.emails.send({
-      from: 'Coach Will Tumbles <coach@coachwilltumbles.com>',
+      from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
       to,
       subject,
       html: htmlContent,
@@ -420,6 +424,34 @@ export async function sendSessionCancellation(
   return result;
 }
 
+// Helper function to send admin booking cancellation notification
+export async function sendAdminBookingCancellation(
+  to: string,
+  data: {
+    bookingId: string;
+    parentName: string;
+    parentEmail: string;
+    sessionDate: string;
+    sessionTime: string;
+    lessonType: string;
+    athleteNames: string[];
+    cancellationReason: string;
+    wantsReschedule: boolean;
+    preferredRescheduleDate?: string;
+    preferredRescheduleTime?: string;
+    adminPanelLink: string;
+  }
+) {
+  console.log(`[sendAdminBookingCancellation] Sending to: ${to}`);
+  console.log(`[sendAdminBookingCancellation] Data:`, JSON.stringify(data, null, 2));
+  
+  return sendEmail({
+    type: 'admin-booking-cancellation',
+    to,
+    data
+  });
+}
+
 // Helper function to send session no-show
 export async function sendSessionNoShow(
   to: string,
@@ -607,7 +639,7 @@ export async function sendSignedWaiverConfirmation(
     
     // Prepare email data
     const emailData: any = {
-      from: 'Coach Will Tumbles <coach@coachwilltumbles.com>',
+      from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
       to,
       subject: `CoachWillTumbles - Signed Waiver for ${athleteName}`,
       html,

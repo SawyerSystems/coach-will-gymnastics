@@ -1642,7 +1642,7 @@ function ParentDashboard() {
                         Need help or have questions? Coach Will is here to assist you.
                       </p>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        <p>📧 Email: will@coachwilltumbles.com</p>
+                        <p>📧 Email: admin@coachwilltumbles.com</p>
                         <p>📞 Phone: (585) 755-8122</p>
                       </div>
                     </div>

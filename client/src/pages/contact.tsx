@@ -194,7 +194,7 @@ export default function Contact() {
             "@type": ["LocalBusiness", "SportsActivityLocation"],
             "name": "Coach Will Tumbles",
             "telephone": "(585) 755-8122",
-            "email": "Will@coachwilltumbles.com",
+            "email": "admin@coachwilltumbles.com",
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "1935 Ave. del Oro #A",

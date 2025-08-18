@@ -59,8 +59,8 @@ export async function sendAdminTestEmail(to?: string, storage: IStorage = defaul
   const subject = 'CoachWillTumbles — Test Notification';
   const body = '<p>This is a test notification from Admin settings.</p>';
 
-  const admin = await storage.getAdminByEmail(process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com');
-  const recipient = to || admin?.email || process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com';
+  const admin = await storage.getAdminByEmail(process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com');
+  const recipient = to || admin?.email || process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
 
   // Activity log helper
   const log = async (status: 'sent' | 'queued' | 'skipped' | 'failed', error?: any) => {
@@ -128,8 +128,8 @@ export function startDigestScheduler(storage: IStorage = defaultStorage) {
       if (now.getHours() !== target.h || now.getMinutes() !== target.m) return;
       if (digestQueue.length === 0) return;
 
-  const admin = await storage.getAdminByEmail(process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com');
-  const recipient = admin?.email || process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com';
+  const admin = await storage.getAdminByEmail(process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com');
+  const recipient = admin?.email || process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
       const items = digestQueue.splice(0, digestQueue.length);
       const subject = 'CoachWillTumbles — Daily Digest';
       const body = `<h3>Queued Notifications</h3><ul>${items.map(i => `<li>${i.eventKey}: ${i.subject}</li>`).join('')}</ul>`;

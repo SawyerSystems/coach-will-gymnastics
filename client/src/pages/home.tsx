@@ -156,7 +156,7 @@ export default function Home() {
             "name": "Coach Will Tumbles",
             "image": `${typeof window !== 'undefined' ? window.location.origin : 'https://www.coachwilltumbles.com'}/icons/icon-512.png`,
             "telephone": "(585) 755-8122",
-            "email": "Will@coachwilltumbles.com",
+            "email": "admin@coachwilltumbles.com",
             "priceRange": "$$",
             "address": {
               "@type": "PostalAddress",

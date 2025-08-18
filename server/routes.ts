@@ -12,7 +12,7 @@ import { z } from "zod";
 import { formatPublishedAtToPacific, formatToPacificISO, getTodayInPacific, isSessionDateTimeInPast } from "../shared/timezone-utils";
 import { getActivityLogger, ActivityLogger } from "./activity-logger";
 import { authRouter, isAdminAuthenticated } from "./auth";
-import { sendBirthdayEmail, sendEmail, sendGenericEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordResetEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail } from "./lib/email";
+import { sendBirthdayEmail, sendEmail, sendGenericEmail, sendManualBookingConfirmation, sendNewTipOrBlogNotification, sendParentWelcomeEmail, sendPasswordResetEmail, sendPasswordSetupEmail, sendRescheduleConfirmation, sendReservationPaymentLink, sendSafetyInformationLink, sendSafetyInformationReminder, sendSessionCancellation, sendSessionCancellationIfNeeded, sendSessionConfirmation, sendSessionConfirmationIfNeeded, sendSessionFollowUp, sendSessionNoShow, sendSessionReminder, sendSignedWaiverConfirmation, sendWaiverCompletionLink, sendWaiverReminder, scheduleStatusChangeEmail, sendAdminBookingCancellation } from "./lib/email";
 import { saveWaiverPDF } from "./lib/waiver-pdf";
 import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
@@ -7264,10 +7264,14 @@ setTimeout(async () => {
         // If parent info not available in updatedBooking, fetch from database
         if (!parentFirstName || !parentLastName || !parentEmail) {
           try {
+            console.log('[ADMIN-EMAIL] Parent info missing, fetching from database for parentId:', req.session.parentId);
             const parentInfo = await storage.getParent(req.session.parentId);
-            parentEmail = parentEmail || parentInfo?.email || 'No email available';
-            parentFirstName = parentFirstName || parentInfo?.firstName || 'Unknown';
-            parentLastName = parentLastName || parentInfo?.lastName || 'Parent';
+            if (parentInfo.data) {
+              parentEmail = parentEmail || parentInfo.data.email || 'No email available';
+              parentFirstName = parentFirstName || parentInfo.data.firstName || 'Unknown';
+              parentLastName = parentLastName || parentInfo.data.lastName || 'Parent';
+              console.log('[ADMIN-EMAIL] Retrieved parent info:', `${parentFirstName} ${parentLastName} (${parentEmail})`);
+            }
           } catch (err) {
             console.warn('[ADMIN-EMAIL] Could not fetch parent info:', err);
             parentEmail = parentEmail || 'No email available';
@@ -7276,37 +7280,62 @@ setTimeout(async () => {
           }
         }
         
-        const lessonTypeName = updatedBooking.lessonType?.name || 'Unknown Lesson Type';
+        // Get lesson type name
+        let lessonTypeName = updatedBooking.lesson_types?.name || 'Unknown Lesson Type';
+        if (!lessonTypeName && updatedBooking.lesson_type_id) {
+          try {
+            const lessonTypeResult = await storage.getLessonType(updatedBooking.lesson_type_id);
+            lessonTypeName = lessonTypeResult.data?.name || 'Unknown Lesson Type';
+          } catch (err) {
+            console.warn('[ADMIN-EMAIL] Could not fetch lesson type:', err);
+          }
+        }
+
+        // Get athlete names for context
+        let athleteNames = [];
+        try {
+          // Try to get athlete names from the parent bookings query that already includes athlete data
+          if (updatedBooking.athletes && Array.isArray(updatedBooking.athletes)) {
+            athleteNames = updatedBooking.athletes.map(athlete => `${athlete.firstName} ${athlete.lastName}`);
+            console.log('[ADMIN-EMAIL] Found athletes from booking:', athleteNames);
+          } else {
+            // Fallback: Query the booking_athletes table directly
+            const { data: athletesData, error: athletesError } = await supabaseAdmin
+              .from('booking_athletes')
+              .select(`
+                athletes (first_name, last_name)
+              `)
+              .eq('booking_id', bookingId);
+              
+            if (athletesData && athletesData.length > 0) {
+              athleteNames = athletesData.map(ba => `${ba.athletes.first_name} ${ba.athletes.last_name}`);
+              console.log('[ADMIN-EMAIL] Found athletes from direct query:', athleteNames);
+            }
+          }
+        } catch (err) {
+          console.log('[ADMIN-EMAIL] Could not fetch athletes:', err.message);
+        }
         
-        const adminEmailContent = `
-Booking Cancellation Notice
-
-Booking ID: ${bookingId}
-Parent: ${parentFirstName} ${parentLastName}
-Email: ${parentEmail}
-Date: ${updatedBooking.preferredDate}
-Time: ${updatedBooking.preferredTime}
-Lesson Type: ${lessonTypeName}
-
-Cancellation Reason: ${reason || 'No reason provided'}
-
-${wantsReschedule ? `
-RESCHEDULE REQUESTED:
-Preferred Date: ${preferredRescheduleDate || 'Not specified'}
-Preferred Time: ${preferredRescheduleTime || 'Not specified'}
-
-Please contact the parent to arrange a new session.
-` : 'This is a full cancellation - no reschedule requested.'}
-
-Login to admin panel to view details: ${getBaseUrl()}/admin
-        `.trim();
-
-        // Send notification email to admin
-        await sendGenericEmail(
-          process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com',
-          wantsReschedule ? 'Booking Cancellation - Reschedule Requested' : 'Booking Cancellation',
-          adminEmailContent
+        // Send notification email to admin using template
+        console.log('[DEBUG] About to call sendAdminBookingCancellation');
+        await sendAdminBookingCancellation(
+          process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com',
+          {
+            bookingId: bookingId.toString(),
+            parentName: `${parentFirstName} ${parentLastName}`,
+            parentEmail: parentEmail,
+            sessionDate: updatedBooking.preferred_date || '',
+            sessionTime: updatedBooking.preferred_time || '',
+            lessonType: lessonTypeName,
+            athleteNames: athleteNames,
+            cancellationReason: reason || 'No reason provided',
+            wantsReschedule: wantsReschedule,
+            preferredRescheduleDate: preferredRescheduleDate,
+            preferredRescheduleTime: preferredRescheduleTime,
+            adminPanelLink: `${getBaseUrl()}/admin`
+          }
         );
+        console.log('[DEBUG] sendAdminBookingCancellation completed');
         
         console.log(`Admin notification sent for booking cancellation ${bookingId}`);
       } catch (emailError) {
@@ -7936,6 +7965,37 @@ Login to admin panel to view details: ${getBaseUrl()}/admin
     } catch (error: any) {
       console.error("Error updating about content:", error);
       res.status(500).json({ error: `Failed to update about content: ${error.message}` });
+    }
+  });
+
+  // Test admin booking cancellation email template
+  app.post('/api/admin/test-cancellation-email', isAdminAuthenticated, async (req, res) => {
+    try {
+      console.log('[TEST-ADMIN-EMAIL] Testing admin booking cancellation email template');
+      
+      await sendAdminBookingCancellation(
+        process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com',
+        {
+          bookingId: '9999',
+          parentName: 'Test Parent',
+          parentEmail: 'test@example.com',
+          sessionDate: '2025-08-20',
+          sessionTime: '10:00 AM',
+          lessonType: 'Test Lesson',
+          athleteNames: ['Test Athlete'],
+          cancellationReason: 'Testing email template',
+          wantsReschedule: true,
+          preferredRescheduleDate: '2025-08-25',
+          preferredRescheduleTime: '2:00 PM',
+          adminPanelLink: `${getBaseUrl()}/admin`
+        }
+      );
+      
+      console.log('[TEST-ADMIN-EMAIL] Admin booking cancellation test email sent successfully');
+      res.json({ success: true, message: 'Test admin cancellation email sent' });
+    } catch (error) {
+      console.error('[TEST-ADMIN-EMAIL] Failed to send test admin email:', error);
+      res.status(500).json({ error: 'Failed to send test email', details: error.message });
     }
   });
 
@@ -8745,7 +8805,7 @@ Login to admin panel to view details: ${getBaseUrl()}/admin
         const { sendEmail } = await import('./lib/email');
         await sendEmail({
           type: 'contact-message',
-          to: 'will@coachwilltumbles.com',
+          to: 'admin@coachwilltumbles.com',
           data: payload as any,
         });
       } catch (err) {
@@ -8803,7 +8863,7 @@ Login to admin panel to view details: ${getBaseUrl()}/admin
           const resend = new Resend(process.env.RESEND_API_KEY);
           await resend.emails.send({
             from: 'Coach Will <noreply@coachwilltumbles.com>',
-            to: [process.env.ADMIN_EMAIL || 'will@coachwilltumbles.com'],
+            to: [process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com'],
             subject: `Privacy request: ${type}`,
             text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || ''}\nType: ${type}\nDetails: ${details || ''}\nIP: ${ip}\nUA: ${ua}`,
           });

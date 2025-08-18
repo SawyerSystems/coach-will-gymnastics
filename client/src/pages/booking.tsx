@@ -161,7 +161,7 @@ export default function Booking() {
                   "@type": ["LocalBusiness", "SportsActivityLocation"],
                   "name": "Coach Will Tumbles",
                   "telephone": "(585) 755-8122",
-                  "email": "Will@coachwilltumbles.com",
+                  "email": "admin@coachwilltumbles.com",
                   "priceRange": "$$",
                   "address": {
                     "@type": "PostalAddress",

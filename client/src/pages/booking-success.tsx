@@ -346,7 +346,7 @@ export default function BookingSuccess() {
             Coach Will Tumbles
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Phone: {siteContent?.contact?.phone || '(585) 755-8122'} | Email: {siteContent?.contact?.email || 'will@coachwilltumbles.com'}
+            Phone: {siteContent?.contact?.phone || '(585) 755-8122'} | Email: {siteContent?.contact?.email || 'admin@coachwilltumbles.com'}
           </p>
         </div>
       </div>

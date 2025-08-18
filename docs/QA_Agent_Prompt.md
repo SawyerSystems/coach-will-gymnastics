@@ -118,7 +118,7 @@ Trigger and verify (use jamie.qa+{timestamp}@example.com inbox):
 - Cancellation notice
 - Waiver reminder/confirmation
 For each: subject clarity, from/sender identity, brand colors/logo, no broken images/links, mobile readability, and footer with contact details:
-  Coach Will • CoachWillTumbles.com • will@coachwilltumbles.com • Text: (585) [redacted]
+  Coach Will • CoachWillTumbles.com • admin@coachwilltumbles.com • Text: (585) [redacted]
 
 10) Accessibility (WCAG 2.1 AA quick pass)
 - Keyboard-only through sign-up, booking, portal flows. Focus visible? Skip-to-content exists?

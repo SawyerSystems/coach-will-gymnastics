@@ -176,7 +176,7 @@ CWV meets Google "Good" thresholds for mobile & desktop. -->
 - Name: Coach Will Tumbles
 - Location: Oceanside Gymnastics, 1935 Ave. del Oro #A, Oceanside, CA 92056
 - Phone: (585) 755-8122
-- Email: Will@coachwilltumbles.com
+- Email: admin@coachwilltumbles.com
 - Geo: [lat,long TBD]
 - Hours: See server/index.ts siteContent.hours (or specify here explicitly)
 - SameAs: [Facebook], [Instagram], [YouTube], [Google Business]
@@ -223,7 +223,7 @@ Use the template below per route. Add as many routes as needed.
 ### Contact
 - route: /contact
 - title: Contact Coach Will Tumbles | Oceanside Gymnastics
-- metaDescription: Call (585) 755-8122 or email Will@coachwilltumbles.com to ask questions or plan training. Visit 1935 Ave. del Oro #A, Oceanside, CA 92056. Were here to help.
+- metaDescription: Call (585) 755-8122 or email admin@coachwilltumbles.com to ask questions or plan training. Visit 1935 Ave. del Oro #A, Oceanside, CA 92056. Were here to help.
 - robots: index,follow
 - canonical: https://www.coachwilltumbles.com/contact
 - schema:

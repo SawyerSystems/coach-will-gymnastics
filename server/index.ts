@@ -163,7 +163,7 @@ app.use((req, res, next) => {
     },
     contact: {
       phone: '(585) 755-8122',
-      email: 'Will@coachwilltumbles.com',
+      email: 'admin@coachwilltumbles.com',
       address: {
         name: 'Oceanside Gymnastics',
         street: '1935 Ave. del Oro #A',

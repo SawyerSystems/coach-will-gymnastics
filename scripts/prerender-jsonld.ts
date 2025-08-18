@@ -51,7 +51,7 @@ const routes: RouteSpec[] = [
         name: 'Coach Will Tumbles',
         image: `${siteUrl}/icons/icon-512.png`,
         telephone: '(585) 755-8122',
-        email: 'Will@coachwilltumbles.com',
+        email: 'admin@coachwilltumbles.com',
         address: {
           '@type': 'PostalAddress',
           streetAddress: '1935 Ave. del Oro #A',
