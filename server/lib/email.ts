@@ -756,7 +756,9 @@ export async function scheduleStatusChangeEmail(
       if (currentStatus === 'completed') {
         await sendCompletedSessionEmail(bookingId, storage);
       } else if (currentStatus === 'cancelled') {
-        await sendSessionCancellationIfNeeded(bookingId, storage, rescheduleLink);
+        console.log(`[STATUS-EMAIL-DELAY] Skipping delayed cancellation email for booking ${bookingId} - immediate email already sent`);
+        // Skip delayed cancellation email since immediate email is sent in routes.ts
+        // await sendSessionCancellationIfNeeded(bookingId, storage, rescheduleLink);
       } else if (currentStatus === 'no-show') {
         await sendNoShowSessionEmail(bookingId, storage, rescheduleLink);
       }

@@ -7219,14 +7219,34 @@ setTimeout(async () => {
         adminNotes: cancellationNotes.trim()
       });
       
-      // Send cancellation email to parent (relation-aware + idempotent)
+      // Send cancellation email to parent (using session parent info)
+      console.log(`🚨 [EMAIL-DEBUG] Starting email send process for booking ${bookingId}`);
       try {
         const rescheduleLink = `${getBaseUrl()}/booking`;
-        const sent = await sendSessionCancellationIfNeeded(bookingId, storage as any, rescheduleLink);
-        if (sent) {
-          console.log(`Cancellation email sent for booking ${bookingId}`);
+        
+        // Get parent info from session and booking details
+        const parentEmail = req.session.parentEmail || (updatedBooking.parent?.email);
+        const parentName = req.session.parentName || `${updatedBooking.parent?.firstName || ''} ${updatedBooking.parent?.lastName || ''}`.trim() || 'Parent';
+        
+        console.log(`[PARENT-CANCEL-EMAIL] Parent email from session: ${req.session.parentEmail}, from booking: ${updatedBooking.parent?.email}`);
+        console.log(`[PARENT-CANCEL-EMAIL] Using email: ${parentEmail}, name: ${parentName}`);
+        
+        if (parentEmail) {
+          // Extract session information for email
+          const sessionData = {
+            sessionDate: updatedBooking.preferredDate,
+            sessionTime: updatedBooking.preferredTime,
+            athleteNames: updatedBooking.athletes?.map((athlete: any) => athlete.firstName || athlete.name) || [],
+            lessonType: updatedBooking.lessonType?.name
+          };
+          
+          console.log(`[DEBUG-EMAIL] About to call sendSessionCancellation with: to="${parentEmail}", parentName="${parentName}", rescheduleLink="${rescheduleLink}"`);
+          console.log(`[DEBUG-EMAIL] sessionData:`, JSON.stringify(sessionData, null, 2));
+          
+          await sendSessionCancellation(parentEmail, parentName, rescheduleLink, sessionData);
+          console.log(`✅ Cancellation email sent for booking ${bookingId} to ${parentEmail}`);
         } else {
-          console.warn(`[PARENT-CANCEL] Cancellation email not sent (missing email or conditions not met) for booking ${bookingId}`);
+          console.warn(`[PARENT-CANCEL] No parent email found for booking ${bookingId} - session: ${req.session.parentEmail}, booking: ${updatedBooking.parent?.email}`);
         }
       } catch (emailError) {
         console.error('Failed to send cancellation email:', emailError);
