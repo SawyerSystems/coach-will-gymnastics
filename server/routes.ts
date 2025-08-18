@@ -9999,7 +9999,7 @@ setTimeout(async () => {
               // Get athlete information to calculate age
               let athleteAge: number | undefined;
               try {
-                const athlete = await storage.getAthleteById(waiver.athleteId);
+                const athlete = await storage.getAthlete(waiver.athleteId);
                 if (athlete?.dateOfBirth) {
                   const birthDate = new Date(athlete.dateOfBirth);
                   const today = new Date();
