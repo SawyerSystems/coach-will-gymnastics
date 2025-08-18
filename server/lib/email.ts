@@ -305,12 +305,23 @@ export async function sendSessionCancellationIfNeeded(bookingId: number, storage
       preferredDate: booking.preferredDate,
       preferredTime: booking.preferredTime,
       lessonType: booking.lessonType,
-      athletes: booking.athletes
+      athletes: booking.athletes,
+      parent: booking.parent,
+      parentEmail: booking.parentEmail,
+      parentFirstName: booking.parentFirstName,
+      parentLastName: booking.parentLastName
     });
 
     // Get parent info (from relations or fallback to booking fields)
     const parentEmail = booking.parent?.email || booking.parentEmail;
     const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
+    
+    console.log(`📧 [SESSION-CANCELLATION-DEBUG] Email details:`, {
+      parentEmail,
+      parentName,
+      fromParent: booking.parent?.email || null,
+      fromBooking: booking.parentEmail || null
+    });
     
     if (!parentEmail) {
       console.warn(`[SESSION-CANCELLATION] No parent email found for booking ${bookingId}`);
