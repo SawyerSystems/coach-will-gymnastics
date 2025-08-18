@@ -300,31 +300,26 @@ export async function sendSessionCancellationIfNeeded(bookingId: number, storage
       return false;
     }
 
-    console.log(`🔍 [SESSION-CANCELLATION-DEBUG] Booking found:`, {
-      id: booking.id,
-      preferredDate: booking.preferredDate,
-      preferredTime: booking.preferredTime,
-      lessonType: booking.lessonType,
-      athletes: booking.athletes,
-      parent: booking.parent,
-      parentEmail: booking.parentEmail,
-      parentFirstName: booking.parentFirstName,
-      parentLastName: booking.parentLastName
-    });
+    console.log(`🔍 [SESSION-CANCELLATION-DEBUG] Full booking object:`, JSON.stringify(booking, null, 2));
 
     // Get parent info (from relations or fallback to booking fields)
     const parentEmail = booking.parent?.email || booking.parentEmail;
     const parentName = `${booking.parent?.firstName || booking.parentFirstName || ''} ${booking.parent?.lastName || booking.parentLastName || ''}`.trim() || 'Parent';
     
-    console.log(`📧 [SESSION-CANCELLATION-DEBUG] Email details:`, {
+    console.log(`📧 [SESSION-CANCELLATION-DEBUG] Email resolution:`, {
       parentEmail,
       parentName,
-      fromParent: booking.parent?.email || null,
-      fromBooking: booking.parentEmail || null
+      parentRelation: booking.parent,
+      bookingParentEmail: booking.parentEmail,
+      bookingParentId: booking.parentId
     });
     
     if (!parentEmail) {
-      console.warn(`[SESSION-CANCELLATION] No parent email found for booking ${bookingId}`);
+      console.error(`[SESSION-CANCELLATION] No parent email found for booking ${bookingId}`, {
+        parentRelation: booking.parent,
+        bookingParentEmail: booking.parentEmail,
+        parentId: booking.parentId
+      });
       return false;
     }
 
