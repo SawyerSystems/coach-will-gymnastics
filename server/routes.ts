@@ -8236,9 +8236,10 @@ setTimeout(async () => {
               parentName: "Maria Garcia",
               parentEmail: "maria@example.com",
               signedDate: new Date().toISOString(),
-        emergencyContactName: "Carlos Garcia",
-        emergencyContactPhone: "(555) 777-8888",
-        medicalConditions: "Mild asthma, uses inhaler as needed",
+              ipAddress: "127.0.0.1",
+              emergencyContactName: "Carlos Garcia",
+              emergencyContactPhone: "(555) 777-8888",
+              medicalConditions: "Mild asthma, uses inhaler as needed",
               adminPanelLink: `${baseUrl}/admin/waivers/TEST-WAIVER-006`
             });
             testResults.push("✅ Admin waiver signed sent");
