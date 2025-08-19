@@ -302,8 +302,8 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
     const latestStartTime = slotEnd - lessonDuration;
     logger.debug(` Cutoff calculation: Slot ends at ${slotEnd}min, lesson takes ${lessonDuration}min, so latest start is ${latestStartTime}min (${Math.floor(latestStartTime / 60)}:${(latestStartTime % 60).toString().padStart(2, '0')})`);
     
-    // Generate 30-minute intervals within this slot, respecting the cutoff
-    for (let minutes = slotStart; minutes <= latestStartTime; minutes += 30) {
+    // Generate 15-minute intervals within this slot, respecting the cutoff
+    for (let minutes = slotStart; minutes <= latestStartTime; minutes += 15) {
       const timeStr = `${Math.floor(minutes / 60).toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}`;
       const endMinutes = minutes + lessonDuration;
       
@@ -9693,8 +9693,8 @@ setTimeout(async () => {
         const slotStart = timeToMinutes(slot.startTime);
         const slotEnd = timeToMinutes(slot.endTime);
         
-        // Generate 30-minute intervals within this slot
-        for (let minutes = slotStart; minutes <= slotEnd - lessonDuration; minutes += 30) {
+        // Generate 15-minute intervals within this slot
+        for (let minutes = slotStart; minutes <= slotEnd - lessonDuration; minutes += 15) {
           const timeStr = `${Math.floor(minutes / 60).toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}`;
           const endMinutes = minutes + lessonDuration;
           
