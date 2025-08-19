@@ -51,7 +51,7 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
     // Batch upload selected files first (if any)
     if (videoFiles.length > 0) {
       for (const file of videoFiles) {
-        const url = await uploadMedia.mutateAsync(file);
+        const url = await uploadMedia.mutateAsync({ file, context: 'athlete-skill' });
         await addVideo.mutateAsync({
           athleteSkillId: saved.id,
           url,

@@ -83,10 +83,18 @@ export function useDeleteAthleteSkillVideo() {
 // Upload a media file (video) and return a public URL
 export function useUploadMedia() {
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (input: File | { file: File; context?: string }) => {
+      // Support both old File and new { file, context } formats
+      const file = input instanceof File ? input : input.file;
+      const context = input instanceof File ? undefined : input.context;
+      
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch('/api/admin/media', {
+      
+      // Construct URL with context parameter for athlete skill videos
+      const url = context ? `/api/admin/media?context=${context}` : '/api/admin/media';
+      
+      const res = await fetch(url, {
         method: 'POST',
         body: form,
         // credentials handled globally; this endpoint is admin-protected

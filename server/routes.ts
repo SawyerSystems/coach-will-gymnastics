@@ -8512,12 +8512,25 @@ setTimeout(async () => {
       const file = req.file;
       const fileExtension = file.originalname.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExtension}`;
-      const filePath = `skill-reference/${fileName}`;
+      
+      // Determine storage folder based on context (query parameter or file type)
+      const context = req.query.context as string;
+      let filePath: string;
+      
+      if (context === 'athlete-skill' || context === 'athlete-progress') {
+        // Store athlete skill/progress videos in athlete-skills folder
+        filePath = `athlete-skills/${fileName}`;
+      } else {
+        // Default to skill-reference for general uploads (site content, etc.)
+        filePath = `skill-reference/${fileName}`;
+      }
 
       // Log upload attempt details
       console.log("Media upload attempt:", {
         bucket: 'site-media',
         fileName,
+        filePath,
+        context: context || 'general',
         mimeType: file.mimetype,
         size: file.size,
         originalName: file.originalname
