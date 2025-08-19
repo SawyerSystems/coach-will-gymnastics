@@ -2888,6 +2888,7 @@ export default function Admin() {
           onClose={() => setViewingParent(null)}
           title="Parent Details"
           size="4xl"
+          showCloseButton={false}
         >
           {viewingParent && selectedParentDetails && (
             <>
@@ -3209,6 +3210,7 @@ export default function Admin() {
           onClose={() => setIsAthleteEditOpen(false)}
           title="Edit Athlete"
           size="2xl"
+          showCloseButton={false}
         >
       {selectedAthlete && (
               <form onSubmit={(e) => {
@@ -3230,10 +3232,10 @@ export default function Admin() {
                   }
                 });
               }}>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {/* Photo Upload Section */}
-                  <div className="flex flex-col items-center space-y-3 mb-4">
-                    <Label className="text-blue-800 font-medium">Athlete Photo</Label>
+                  <div className="flex flex-col items-center space-y-3">
+                    <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white">Athlete Photo</h3>
                     <div className="relative">
                       {selectedAthlete.photo ? (
                         <img
@@ -3264,178 +3266,132 @@ export default function Admin() {
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-blue-600 font-medium flex items-center">
-                      <span className="p-1 bg-blue-100 rounded-full mr-1">
-                        <Edit className="h-3 w-3" />
-                      </span>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium flex items-center">
+                      <Edit className="h-3 w-3 mr-1" />
                       Click photo to enlarge or upload new
                     </p>
                   </div>
 
-                  {/* Basic Info Card */}
-                  <Card className="rounded-xl border shadow-sm mb-6">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                        <User className="h-5 w-5 text-blue-600" />
-                        Basic Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="edit-firstName" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
-                            First Name
-                          </Label>
-                          <Input
-                            id="edit-firstName"
-                            name="firstName"
-                            defaultValue={selectedAthlete.firstName || (selectedAthlete.name ? selectedAthlete.name.split(' ')[0] : '')}
-                            required
-                            aria-describedby="edit-firstName-error"
-                            autoComplete="given-name"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="edit-lastName" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
-                            Last Name
-                          </Label>
-                          <Input
-                            id="edit-lastName"
-                            name="lastName"
-                            defaultValue={selectedAthlete.lastName || (selectedAthlete.name ? selectedAthlete.name.split(' ').slice(1).join(' ') : '')}
-                            required
-                            aria-describedby="edit-lastName-error"
-                            autoComplete="family-name"
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between rounded-md border p-3">
-                          <div>
-                            <Label className="text-slate-700 font-medium">Gym Membership</Label>
-                            <p className="text-sm text-muted-foreground">Toggle on if athlete is already in gym classes.</p>
-                          </div>
-                          <Switch
-                            checked={editIsGymMember}
-                            onCheckedChange={setEditIsGymMember}
-                            aria-label="Toggle gym membership"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="edit-dob" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
-                            Date of Birth
-                          </Label>
-                          <Input
-                            id="edit-dob"
-                            name="dateOfBirth"
-                            type="date"
-                            defaultValue={selectedAthlete.dateOfBirth || ''}
-                            required
-                            aria-describedby="edit-dob-help"
-                            autoComplete="bday"
-                            className="mt-1"
-                          />
-                          <p id="edit-dob-help" className="text-xs text-blue-600 mt-2 flex items-center">
-                            <span className="p-1 bg-blue-100 rounded-full mr-1">
-                              <Calendar className="h-3 w-3" />
-                            </span>
-                            Used to calculate age for appropriate class placement
-                          </p>
-                        </div>
-                        <div>
-                          <Label htmlFor="edit-gender" className="text-slate-700 font-medium">
-                            Gender
-                          </Label>
-                          <GenderSelect
-                            name="gender"
-                            defaultValue={selectedAthlete.gender || ""}
-                            id="edit-gender"
-                            aria-describedby="edit-gender-help"
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Training Info Card */}
-                  <Card className="rounded-xl border shadow-sm mb-6">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-green-800 flex items-center gap-2">
-                        <Dumbbell className="h-5 w-5 text-green-600" />
-                        Training Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                      <User className="h-5 w-5 text-[#D8BD2A]" />
+                      Basic Information
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="edit-experience" className="text-slate-700 font-medium after:content-['*'] after:ml-0.5 after:text-red-500">
-                          Experience Level
-                        </Label>
-                        <Select
-                          name="experience"
-                          defaultValue={selectedAthlete.experience}
+                        <Label htmlFor="edit-firstName">First Name *</Label>
+                        <Input
+                          id="edit-firstName"
+                          name="firstName"
+                          defaultValue={selectedAthlete.firstName || (selectedAthlete.name ? selectedAthlete.name.split(' ')[0] : '')}
                           required
-                        >
-                          <SelectTrigger 
-                            id="edit-experience"
-                            aria-describedby="edit-experience-help"
-                            className="mt-1"
-                          >
-                            <SelectValue placeholder="Select experience level" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner" aria-label="Beginner level">Beginner</SelectItem>
-                            <SelectItem value="intermediate" aria-label="Intermediate level">Intermediate</SelectItem>
-                            <SelectItem value="advanced" aria-label="Advanced level">Advanced</SelectItem>
-                            <SelectItem value="elite" aria-label="Elite level">Elite</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p id="edit-experience-help" className="text-xs text-blue-600 mt-2 flex items-center">
-                          <span className="p-1 bg-blue-100 rounded-full mr-1">
-                            <Star className="h-3 w-3" />
-                          </span>
-                          Used to match appropriate coaching and skill development
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Medical Info Card */}
-                  <Card className="rounded-xl border shadow-sm mb-6">
-                    <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-xl">
-                      <CardTitle className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-red-600" />
-                        Medical Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
-                      <div>
-                        <Label htmlFor="edit-allergies" className="text-slate-700 font-medium">Allergies/Medical Notes</Label>
-                        <Textarea
-                          id="edit-allergies"
-                          name="allergies"
-                          defaultValue={selectedAthlete.allergies || ''}
-                          placeholder="Any allergies or medical conditions..."
-                          aria-describedby="edit-allergies-help"
-                          rows={3}
-                          className="mt-1"
+                          autoComplete="given-name"
                         />
-                        <p id="edit-allergies-help" className="text-xs text-blue-600 mt-2 flex items-center">
-                          <span className="p-1 bg-red-100 rounded-full mr-1">
-                            <AlertCircle className="h-3 w-3" />
-                          </span>
-                          Important medical information for coaches to be aware of
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-lastName">Last Name *</Label>
+                        <Input
+                          id="edit-lastName"
+                          name="lastName"
+                          defaultValue={selectedAthlete.lastName || (selectedAthlete.name ? selectedAthlete.name.split(' ').slice(1).join(' ') : '')}
+                          required
+                          autoComplete="family-name"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-md border p-3">
+                      <div>
+                        <Label>Gym Membership</Label>
+                        <p className="text-sm text-muted-foreground">Toggle on if athlete is already in gym classes.</p>
+                      </div>
+                      <Switch
+                        checked={editIsGymMember}
+                        onCheckedChange={setEditIsGymMember}
+                        aria-label="Toggle gym membership"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="edit-dob">Date of Birth *</Label>
+                        <Input
+                          id="edit-dob"
+                          name="dateOfBirth"
+                          type="date"
+                          defaultValue={selectedAthlete.dateOfBirth || ''}
+                          required
+                          autoComplete="bday"
+                        />
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Used to calculate age for appropriate class placement
                         </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                  <div className="flex justify-end pt-6 mt-2 border-t border-dashed border-slate-200">
+                      <div>
+                        <Label htmlFor="edit-gender">Gender</Label>
+                        <GenderSelect
+                          name="gender"
+                          defaultValue={selectedAthlete.gender || ""}
+                          id="edit-gender"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Training Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                      <Dumbbell className="h-5 w-5 text-[#D8BD2A]" />
+                      Training Information
+                    </h3>
+                    <div>
+                      <Label htmlFor="edit-experience">Experience Level *</Label>
+                      <Select
+                        name="experience"
+                        defaultValue={selectedAthlete.experience}
+                        required
+                      >
+                        <SelectTrigger id="edit-experience">
+                          <SelectValue placeholder="Select experience level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">Intermediate</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="elite">Elite</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center">
+                        <Star className="h-3 w-3 mr-1" />
+                        Used to match appropriate coaching and skill development
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Medical Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-[#D8BD2A]" />
+                      Medical Information
+                    </h3>
+                    <div>
+                      <Label htmlFor="edit-allergies">Allergies/Medical Notes</Label>
+                      <Textarea
+                        id="edit-allergies"
+                        name="allergies"
+                        defaultValue={selectedAthlete.allergies || ''}
+                        placeholder="Any allergies or medical conditions..."
+                        rows={3}
+                      />
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-2 flex items-center">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Important medical information for coaches to be aware of
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
                     <Button 
                       type="submit"
                       aria-label={`Save changes for ${selectedAthlete.name}`}
@@ -3516,113 +3472,90 @@ export default function Admin() {
           onClose={() => setIsParentEditOpen(false)}
           title="Edit Parent Information"
           size="2xl"
+          showCloseButton={false}
         >
             {editingParent && (
               <div className="space-y-6">
-                {/* Contact Info Card */}
-                <Card className="rounded-xl border shadow-sm mb-6">
-                  <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-                    <CardTitle className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                      <User className="h-5 w-5 text-blue-600" />
-                      Contact Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="parent-first-name" className="text-slate-700 font-medium">First Name</Label>
-                        <Input 
-                          id="parent-first-name"
-                          value={editParentForm.firstName}
-                          onChange={(e) => setEditParentForm(prev => ({ ...prev, firstName: e.target.value }))}
-                          placeholder="First Name"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="parent-last-name" className="text-slate-700 font-medium">Last Name</Label>
-                        <Input 
-                          id="parent-last-name"
-                          value={editParentForm.lastName}
-                          onChange={(e) => setEditParentForm(prev => ({ ...prev, lastName: e.target.value }))}
-                          placeholder="Last Name"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                    <User className="h-5 w-5 text-[#D8BD2A]" />
+                    Contact Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="parent-email" className="text-slate-700 font-medium">Email</Label>
+                      <Label htmlFor="parent-first-name">First Name</Label>
                       <Input 
-                        id="parent-email"
-                        type="email"
-                        value={editParentForm.email}
-                        onChange={(e) => setEditParentForm(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="Email"
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-blue-600 mt-2 flex items-center">
-                        <span className="p-1 bg-blue-100 rounded-full mr-1">
-                          <Mail className="h-3 w-3" />
-                        </span>
-                        Used for account access and communication
-                      </p>
-                    </div>
-                    <div>
-                      <Label htmlFor="parent-phone" className="text-slate-700 font-medium">Phone</Label>
-                      <Input 
-                        id="parent-phone"
-                        value={editParentForm.phone}
-                        onChange={(e) => setEditParentForm(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="Phone Number"
-                        className="mt-1"
+                        id="parent-first-name"
+                        value={editParentForm.firstName}
+                        onChange={(e) => setEditParentForm(prev => ({ ...prev, firstName: e.target.value }))}
+                        placeholder="First Name"
                       />
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Emergency Contact Card */}
-                <Card className="rounded-xl border shadow-sm mb-6">
-                  <CardHeader className="pb-2 bg-gradient-to-r from-red-50 to-orange-50 rounded-t-xl">
-                    <CardTitle className="text-lg font-semibold text-red-800 flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-red-600" />
-                      Emergency Contact
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="emergency-name" className="text-slate-700 font-medium">Contact Name</Label>
-                        <Input 
-                          id="emergency-name"
-                          value={editParentForm.emergencyContactName}
-                          onChange={(e) => setEditParentForm(prev => ({ ...prev, emergencyContactName: e.target.value }))}
-                          placeholder="Emergency Contact Name"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="emergency-phone" className="text-slate-700 font-medium">Contact Phone</Label>
-                        <Input 
-                          id="emergency-phone"
-                          value={editParentForm.emergencyContactPhone}
-                          onChange={(e) => setEditParentForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
-                          placeholder="Emergency Contact Phone"
-                          className="mt-1"
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="parent-last-name">Last Name</Label>
+                      <Input 
+                        id="parent-last-name"
+                        value={editParentForm.lastName}
+                        onChange={(e) => setEditParentForm(prev => ({ ...prev, lastName: e.target.value }))}
+                        placeholder="Last Name"
+                      />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div>
+                    <Label htmlFor="parent-email">Email</Label>
+                    <Input 
+                      id="parent-email"
+                      type="email"
+                      value={editParentForm.email}
+                      onChange={(e) => setEditParentForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Email"
+                    />
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center">
+                      <Mail className="h-3 w-3 mr-1" />
+                      Used for account access and communication
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="parent-phone">Phone</Label>
+                    <Input 
+                      id="parent-phone"
+                      value={editParentForm.phone}
+                      onChange={(e) => setEditParentForm(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="Phone Number"
+                    />
+                  </div>
+                </div>
 
-                <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-dashed border-slate-200">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsParentEditOpen(false)}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-800"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
+                {/* Emergency Contact */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-[#D8BD2A]" />
+                    Emergency Contact
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="emergency-name">Contact Name</Label>
+                      <Input 
+                        id="emergency-name"
+                        value={editParentForm.emergencyContactName}
+                        onChange={(e) => setEditParentForm(prev => ({ ...prev, emergencyContactName: e.target.value }))}
+                        placeholder="Emergency Contact Name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="emergency-phone">Contact Phone</Label>
+                      <Input 
+                        id="emergency-phone"
+                        value={editParentForm.emergencyContactPhone}
+                        onChange={(e) => setEditParentForm(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
+                        placeholder="Emergency Contact Phone"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
                   <Button 
                     onClick={() => {
                       if (editingParent) {
@@ -3756,6 +3689,7 @@ export default function Admin() {
           onClose={() => setIsCreateBlogPostOpen(false)}
           title="Create New Blog Post"
           size="3xl"
+          showCloseButton={false}
         >
           <div className="space-y-4">
             <div>
@@ -3813,6 +3747,7 @@ export default function Admin() {
           onClose={() => setIsCreateTipOpen(false)}
           title="Create New Tip"
           size="3xl"
+          showCloseButton={false}
         >
           <div className="space-y-4">
             <div>
@@ -3904,7 +3839,8 @@ export default function Admin() {
           isOpen={isAddAvailabilityBlockOpen} 
           onClose={() => setIsAddAvailabilityBlockOpen(false)}
           title="Block Time"
-          size="md"
+          size="xl"
+          showCloseButton={false}
         >
           <div className="space-y-4">
             <div>

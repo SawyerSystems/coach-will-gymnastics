@@ -3,6 +3,7 @@ import { BookingCalendar } from "@/components/BookingCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
+import { AdminModal } from "@/components/admin-ui/AdminModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -1248,26 +1249,27 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             </CardContent>
           </Card>
           {/* Reschedule Modal */}
-          <Dialog open={showRescheduleModal} onOpenChange={setShowRescheduleModal}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Quick Reschedule</DialogTitle>
-              </DialogHeader>
-              {rescheduleBooking && (
-                <AdminRescheduleForm 
-                  booking={rescheduleBooking} 
-                  onSubmit={(date, time) => {
-                    rescheduleBookingMutation.mutate({
-                      id: rescheduleBooking.id,
-                      date,
-                      time
-                    });
-                  }} 
-                  onCancel={() => setShowRescheduleModal(false)} 
-                />
-              )}
-            </DialogContent>
-          </Dialog>
+          <AdminModal 
+            isOpen={showRescheduleModal} 
+            onClose={() => setShowRescheduleModal(false)}
+            title="Quick Reschedule"
+            size="lg"
+            showCloseButton={false}
+          >
+            {rescheduleBooking && (
+              <AdminRescheduleForm 
+                booking={rescheduleBooking} 
+                onSubmit={(date, time) => {
+                  rescheduleBookingMutation.mutate({
+                    id: rescheduleBooking.id,
+                    date,
+                    time
+                  });
+                }} 
+                onCancel={() => setShowRescheduleModal(false)} 
+              />
+            )}
+          </AdminModal>
           {/* Unified Booking Modal for Admin Flows */}
           <UnifiedBookingModal
             isOpen={showUnifiedBooking}
