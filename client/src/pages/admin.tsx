@@ -130,8 +130,10 @@ export default function Admin() {
   const [newPostSections, setNewPostSections] = useState<ContentSection[]>([]);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [editingPostSections, setEditingPostSections] = useState<ContentSection[]>([]);
+  const [isCreateBlogPostOpen, setIsCreateBlogPostOpen] = useState(false);
   const [editingTip, setEditingTip] = useState<Tip | null>(null);
   const [editingTipSections, setEditingTipSections] = useState<ContentSection[]>([]);
+  const [isCreateTipOpen, setIsCreateTipOpen] = useState(false);
   const [newTip, setNewTip] = useState({
     title: "",
     content: "",
@@ -156,6 +158,7 @@ export default function Admin() {
     isAvailable: false,
     reason: ""
   });
+  const [isAddAvailabilityBlockOpen, setIsAddAvailabilityBlockOpen] = useState(false);
   
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isAthleteViewOpen, setIsAthleteViewOpen] = useState(false);
@@ -442,6 +445,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ['/api/blog-posts'] });
       setNewPost({ title: "", content: "", excerpt: "", category: "", imageUrl: null });
       setNewPostSections([]);
+      setIsCreateBlogPostOpen(false);
       toast({ title: "Blog post created successfully" });
     },
   });
@@ -478,6 +482,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ['/api/tips'] });
       setNewTip({ title: "", content: "", category: "vault", difficulty: "beginner", videoUrl: "" });
       setNewTipSections([]);
+      setIsCreateTipOpen(false);
       toast({ title: "Tip created successfully" });
     },
   });
@@ -2163,79 +2168,22 @@ export default function Admin() {
                 >
                   <TabsContent value="blog" className="space-y-6 mt-6">
                     <div className="flex justify-end">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]">
-                            <Plus className="h-5 w-5 mr-2" />
-                            New Blog Post
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Create New Blog Post</DialogTitle>
-                            <DialogDescription>
-                              Fill out the details to create a new blog post.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="blog-title">Title</Label>
-                              <Input
-                                id="blog-title"
-                                value={newPost.title}
-                                onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                                placeholder="Enter blog post title"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="blog-excerpt">Excerpt</Label>
-                              <Textarea
-                                id="blog-excerpt"
-                                value={newPost.excerpt}
-                                onChange={(e) => setNewPost({ ...newPost, excerpt: e.target.value })}
-                                placeholder="Brief description of the post"
-                                rows={3}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="blog-category">Category</Label>
-                              <Input
-                                id="blog-category"
-                                value={newPost.category || ''}
-                                onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
-                                placeholder="e.g., Training Tips, Nutrition"
-                              />
-                            </div>
-                            <div>
-                              <Label>Content</Label>
-                              <SectionBasedContentEditor
-                                sections={newPostSections}
-                                onChange={setNewPostSections}
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => {
-                                const content = sectionsToContent(newPostSections);
-                                createBlogPostMutation.mutate({ ...newPost, content });
-                              }}
-                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                            >
-                              Create Post
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        onClick={() => setIsCreateBlogPostOpen(true)}
+                        className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]"
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        New Blog Post
+                      </Button>
                     </div>
                     
                     {/* Edit Blog Post Dialog */}
-                    <Dialog open={!!editingPost} onOpenChange={() => setEditingPost(null)}>
-                      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Blog Post</DialogTitle>
-                          <DialogDescription>
-                            Edit the details of your blog post below.
-                          </DialogDescription>
-                        </DialogHeader>
+                    <AdminModal 
+                      isOpen={!!editingPost} 
+                      onClose={() => setEditingPost(null)}
+                      title="Edit Blog Post"
+                      size="3xl"
+                    >
                         {editingPost && (
                           <form onSubmit={(e) => {
                             e.preventDefault();
@@ -2285,27 +2233,18 @@ export default function Admin() {
                                   onChange={setEditingPostSections}
                                 />
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex justify-end gap-2">
                                 <Button 
                                   type="submit"
                                   className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
                                 >
                                   Save Changes
                                 </Button>
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={() => setEditingPost(null)}
-                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                >
-                                  Cancel
-                                </Button>
                               </div>
                             </div>
                           </form>
                         )}
-                      </DialogContent>
-                    </Dialog>
+                    </AdminModal>
                     
                     <div className="grid grid-cols-1 gap-6">
                       {blogPosts.map((post) => (
@@ -2364,114 +2303,22 @@ export default function Admin() {
                   
                   <TabsContent value="tips" className="space-y-6 mt-6">
                     <div className="flex justify-end">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]">
-                            <Plus className="h-5 w-5 mr-2" />
-                            New Tip
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Create New Tip</DialogTitle>
-                            <DialogDescription>
-                              Add a new tip for athletes and parents.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="tip-title">Title</Label>
-                              <Input
-                                id="tip-title"
-                                value={newTip.title}
-                                onChange={(e) => setNewTip({ ...newTip, title: e.target.value })}
-                                placeholder="Enter tip title"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="tip-category">Category</Label>
-                              <Select
-                                value={newTip.category}
-                                onValueChange={(value) => setNewTip({ ...newTip, category: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="vault">Vault</SelectItem>
-                                  <SelectItem value="bars">Bars</SelectItem>
-                                  <SelectItem value="beam">Beam</SelectItem>
-                                  <SelectItem value="floor">Floor</SelectItem>
-                                  <SelectItem value="drills">Drills</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="tip-difficulty">Difficulty</Label>
-                              <Select
-                                value={newTip.difficulty}
-                                onValueChange={(value) => setNewTip({ ...newTip, difficulty: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="beginner">Beginner</SelectItem>
-                                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                                  <SelectItem value="advanced">Advanced</SelectItem>
-                                  <SelectItem value="elite">Elite</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label>Content</Label>
-                              <SectionBasedContentEditor
-                                sections={newTipSections}
-                                onChange={setNewTipSections}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="tip-video">Video URL (optional)</Label>
-                              <Input
-                                id="tip-video"
-                                value={newTip.videoUrl}
-                                onChange={(e) => setNewTip({ ...newTip, videoUrl: e.target.value })}
-                                placeholder="https://youtube.com/..."
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => {
-                                const content = sectionsToContent(newTipSections);
-                                createTipMutation.mutate({
-                                  ...newTip,
-                                  content,
-                                  // Convert ContentSection to the schema format
-                                  sections: newTipSections.map(section => ({
-                                    title: section.caption || '', // Use caption or empty string instead of 'text'
-                                    content: section.content,
-                                    imageUrl: section.type === 'image' ? section.content : undefined
-                                  })),
-                                  videoUrl: newTip.videoUrl || null
-                                });
-                              }}
-                              className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                            >
-                              Create Tip
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      <Button 
+                        onClick={() => setIsCreateTipOpen(true)}
+                        className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]"
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        New Tip
+                      </Button>
                     </div>
                     
                     {/* Edit Tip Dialog */}
-                    <Dialog open={!!editingTip} onOpenChange={() => setEditingTip(null)}>
-                      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Tip</DialogTitle>
-                          <DialogDescription>
-                            Edit the tip details below.
-                          </DialogDescription>
-                        </DialogHeader>
+                    <AdminModal 
+                      isOpen={!!editingTip} 
+                      onClose={() => setEditingTip(null)}
+                      title="Edit Tip"
+                      size="3xl"
+                    >
                         {editingTip && (
                           <form onSubmit={(e) => {
                             e.preventDefault();
@@ -2548,29 +2395,18 @@ export default function Admin() {
                                   onChange={setEditingTipSections}
                                 />
                               </div>
-                              <div className="flex gap-2">
-                                <Button 
+                              <div className="flex justify-end gap-2">
+                                <Button
                                   type="submit"
                                   className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
                                 >
                                   Save Changes
                                 </Button>
-                                <Button 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={() => setEditingTip(null)}
-                                  className="border-slate-200/60 bg-white/80 hover:bg-white/90 dark:border-[#2A4A9B]/40 dark:bg-[#0F0276]/30 dark:hover:bg-[#0F0276]/50 backdrop-blur-sm transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
-                                >
-                                  Cancel
-                                </Button>
                               </div>
                             </div>
                           </form>
                         )}
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <div className="grid grid-cols-1 gap-6">
+                    </AdminModal>                    <div className="grid grid-cols-1 gap-6">
                       {tips.map((tip) => (
                         <AdminCard 
                           key={tip.id} 
@@ -2688,71 +2524,13 @@ export default function Admin() {
                           <CalendarX className="h-7 w-7 text-[#D8BD2A]" />
                           Availability Exceptions
                         </h3>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
-                              <CalendarX className="h-5 w-5 mr-2" />
-                              Block Time
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Block Time</DialogTitle>
-                              <DialogDescription>
-                                Block specific dates or times when you're not available
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div>
-                                <Label>Date</Label>
-                                <Input
-                                  type="date"
-                                  value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
-                                  onChange={(e) => setNewException({
-                                    ...newException,
-                                    date: new Date(e.target.value)
-                                  })}
-                                />
-                              </div>
-                              <div>
-                                <Label>Start Time (optional)</Label>
-                                <Input
-                                  type="time"
-                                  value={newException.startTime || ''}
-                                  onChange={(e) => setNewException({
-                                    ...newException,
-                                    startTime: e.target.value
-                                  })}
-                                />
-                              </div>
-                              <div>
-                                <Label>End Time (optional)</Label>
-                                <Input
-                                  type="time"
-                                  value={newException.endTime || ''}
-                                  onChange={(e) => setNewException({
-                                    ...newException,
-                                    endTime: e.target.value
-                                  })}
-                                />
-                              </div>
-                              <div>
-                                <Label>Reason (optional)</Label>
-                                <Input
-                                  value={newException.reason || ''}
-                                  onChange={(e) => setNewException({
-                                    ...newException,
-                                    reason: e.target.value || undefined
-                                  })}
-                                  placeholder="e.g., Vacation, Sick day, etc."
-                                />
-                              </div>
-                              <Button onClick={() => createExceptionMutation.mutate(newException)} className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold">
-                                Block Time
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          onClick={() => setIsAddAvailabilityBlockOpen(true)}
+                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+                        >
+                          <CalendarX className="h-5 w-5 mr-2" />
+                          Block Time
+                        </Button>
                       </div>
                       <div className="grid grid-cols-1 gap-4">
                         {availabilityExceptions?.map((exception) => (
@@ -3426,23 +3204,12 @@ export default function Admin() {
         </Dialog>
 
         {/* Athlete Edit Modal */}
-        <Dialog open={isAthleteEditOpen} onOpenChange={setIsAthleteEditOpen}>
-          <DialogContent 
-            className="max-w-2xl max-h-[90vh] overflow-y-auto"
-            aria-labelledby="edit-athlete-title"
-            aria-describedby="edit-athlete-description"
-          >
-            <DialogHeader className="bg-gradient-to-r from-[#0F0276]/10 to-[#D8BD2A]/10 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
-              <DialogTitle id="edit-athlete-title" className="text-2xl font-black text-[#0F0276] dark:text-white tracking-tight flex items-center gap-3">
-                <div className="p-2 bg-[#D8BD2A]/20 rounded-lg">
-                  <Edit className="h-5 w-5 text-[#D8BD2A]" />
-                </div>
-                Edit Athlete
-              </DialogTitle>
-              <DialogDescription id="edit-athlete-description" className="text-slate-600">
-                {selectedAthlete ? `Update information for ${selectedAthlete.name}` : "Edit athlete information"}
-              </DialogDescription>
-            </DialogHeader>
+        <AdminModal 
+          isOpen={isAthleteEditOpen} 
+          onClose={() => setIsAthleteEditOpen(false)}
+          title="Edit Athlete"
+          size="2xl"
+        >
       {selectedAthlete && (
               <form onSubmit={(e) => {
                 e.preventDefault();
@@ -3668,16 +3435,7 @@ export default function Admin() {
                       </div>
                     </CardContent>
                   </Card>
-                  <div className="flex justify-between pt-6 mt-2 border-t border-dashed border-slate-200">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsAthleteEditOpen(false)}
-                      className="border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-800"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Cancel
-                    </Button>
+                  <div className="flex justify-end pt-6 mt-2 border-t border-dashed border-slate-200">
                     <Button 
                       type="submit"
                       aria-label={`Save changes for ${selectedAthlete.name}`}
@@ -3692,8 +3450,7 @@ export default function Admin() {
                 </div>
               </form>
             )}
-          </DialogContent>
-        </Dialog>
+        </AdminModal>
 
         {/* Athlete View Modal */}
         <AthleteDetailDialog
@@ -3754,24 +3511,12 @@ export default function Admin() {
         </Dialog>
 
         {/* Parent Edit Modal */}
-        <Dialog open={isParentEditOpen} onOpenChange={setIsParentEditOpen}>
-          <DialogContent 
-            className="max-w-2xl"
-            // Adding explicit ARIA attributes to prevent accessibility issues
-            aria-labelledby="edit-parent-title"
-            aria-describedby="edit-parent-description"
-          >
-            <DialogHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 rounded-t-lg -mt-6 -mx-6 mb-6">
-              <DialogTitle id="edit-parent-title" className="text-2xl font-bold text-indigo-800 flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <User className="h-6 w-6 text-indigo-600" />
-                </div>
-                Edit Parent Information
-              </DialogTitle>
-              <DialogDescription id="edit-parent-description" className="text-slate-600">
-                Update the parent's information below.
-              </DialogDescription>
-            </DialogHeader>
+        <AdminModal 
+          isOpen={isParentEditOpen} 
+          onClose={() => setIsParentEditOpen(false)}
+          title="Edit Parent Information"
+          size="2xl"
+        >
             {editingParent && (
               <div className="space-y-6">
                 {/* Contact Info Card */}
@@ -3901,8 +3646,7 @@ export default function Admin() {
                 </div>
               </div>
             )}
-          </DialogContent>
-        </Dialog>
+        </AdminModal>
 
         {/* Unified Booking Modal for Admin Flows */}
         <UnifiedBookingModal
@@ -4005,6 +3749,221 @@ export default function Admin() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Create Blog Post Modal */}
+        <AdminModal 
+          isOpen={isCreateBlogPostOpen} 
+          onClose={() => setIsCreateBlogPostOpen(false)}
+          title="Create New Blog Post"
+          size="3xl"
+        >
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="blog-title">Title</Label>
+              <Input
+                id="blog-title"
+                value={newPost.title}
+                onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                placeholder="Enter blog post title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="blog-excerpt">Excerpt</Label>
+              <Textarea
+                id="blog-excerpt"
+                value={newPost.excerpt}
+                onChange={(e) => setNewPost({ ...newPost, excerpt: e.target.value })}
+                placeholder="Brief description of the post"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label htmlFor="blog-category">Category</Label>
+              <Input
+                id="blog-category"
+                value={newPost.category || ''}
+                onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                placeholder="e.g., Training Tips, Nutrition"
+              />
+            </div>
+            <div>
+              <Label>Content</Label>
+              <SectionBasedContentEditor
+                sections={newPostSections}
+                onChange={setNewPostSections}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => {
+                  const content = sectionsToContent(newPostSections);
+                  createBlogPostMutation.mutate({ ...newPost, content });
+                }}
+                className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+              >
+                Create Post
+              </Button>
+            </div>
+          </div>
+        </AdminModal>
+
+        {/* Create Tip Modal */}
+        <AdminModal 
+          isOpen={isCreateTipOpen} 
+          onClose={() => setIsCreateTipOpen(false)}
+          title="Create New Tip"
+          size="3xl"
+        >
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="tip-title">Title</Label>
+              <Input
+                id="tip-title"
+                value={newTip.title}
+                onChange={(e) => setNewTip({ ...newTip, title: e.target.value })}
+                placeholder="Enter tip title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="tip-category">Category</Label>
+              <Select
+                value={newTip.category}
+                onValueChange={(value) => setNewTip({ ...newTip, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vault">Vault</SelectItem>
+                  <SelectItem value="bars">Bars</SelectItem>
+                  <SelectItem value="beam">Beam</SelectItem>
+                  <SelectItem value="floor">Floor</SelectItem>
+                  <SelectItem value="drills">Drills</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="tip-difficulty">Difficulty</Label>
+              <Select
+                value={newTip.difficulty}
+                onValueChange={(value) => setNewTip({ ...newTip, difficulty: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="elite">Elite</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Content</Label>
+              <SectionBasedContentEditor
+                sections={newTipSections}
+                onChange={setNewTipSections}
+              />
+            </div>
+            <div>
+              <Label htmlFor="tip-video">Video URL (optional)</Label>
+              <Input
+                id="tip-video"
+                value={newTip.videoUrl}
+                onChange={(e) => setNewTip({ ...newTip, videoUrl: e.target.value })}
+                placeholder="https://youtube.com/..."
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => {
+                  const content = sectionsToContent(newTipSections);
+                  createTipMutation.mutate({
+                    ...newTip,
+                    content,
+                    // Convert ContentSection to the schema format
+                    sections: newTipSections.map(section => ({
+                      title: section.caption || '', // Use caption or empty string instead of 'text'
+                      content: section.content,
+                      imageUrl: section.type === 'image' ? section.content : undefined
+                    })),
+                    videoUrl: newTip.videoUrl || null
+                  });
+                }}
+                className="bg-gradient-to-r from-[#0F0276] to-[#0F0276]/90 hover:from-[#0F0276]/90 hover:to-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+              >
+                Create Tip
+              </Button>
+            </div>
+          </div>
+        </AdminModal>
+
+        {/* Add Availability Block Modal */}
+        <AdminModal 
+          isOpen={isAddAvailabilityBlockOpen} 
+          onClose={() => setIsAddAvailabilityBlockOpen(false)}
+          title="Block Time"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div>
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
+                onChange={(e) => setNewException({
+                  ...newException,
+                  date: new Date(e.target.value)
+                })}
+              />
+            </div>
+            <div>
+              <Label>Start Time (optional)</Label>
+              <Input
+                type="time"
+                value={newException.startTime || ''}
+                onChange={(e) => setNewException({
+                  ...newException,
+                  startTime: e.target.value
+                })}
+              />
+            </div>
+            <div>
+              <Label>End Time (optional)</Label>
+              <Input
+                type="time"
+                value={newException.endTime || ''}
+                onChange={(e) => setNewException({
+                  ...newException,
+                  endTime: e.target.value
+                })}
+              />
+            </div>
+            <div>
+              <Label>Reason (optional)</Label>
+              <Input
+                value={newException.reason || ''}
+                onChange={(e) => setNewException({
+                  ...newException,
+                  reason: e.target.value || undefined
+                })}
+                placeholder="e.g., Vacation, Sick day, etc."
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                onClick={() => {
+                  createExceptionMutation.mutate(newException);
+                  setIsAddAvailabilityBlockOpen(false);
+                }} 
+                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+              >
+                Block Time
+              </Button>
+            </div>
+          </div>
+        </AdminModal>
           </div>
         </div>
       </div>
