@@ -17,14 +17,15 @@ export interface AdminModalProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-sm w-[90vw] sm:w-auto",
-  md: "max-w-md w-[90vw] sm:w-auto", 
-  lg: "max-w-lg w-[90vw] sm:w-auto",
-  xl: "max-w-xl w-[90vw] sm:w-auto",
-  "2xl": "max-w-2xl w-[90vw] sm:w-auto",
-  "3xl": "max-w-3xl w-[90vw] sm:w-auto", 
-  "4xl": "max-w-4xl w-[90vw] sm:w-auto",
-  full: "max-w-full w-[90vw] sm:w-auto"
+  // On mobile take ~90% viewport width; on sm+ fill available width up to the max
+  sm: "w-[90vw] sm:w-full max-w-sm",
+  md: "w-[90vw] sm:w-full max-w-md", 
+  lg: "w-[90vw] sm:w-full max-w-lg",
+  xl: "w-[90vw] sm:w-full max-w-xl",
+  "2xl": "w-[90vw] sm:w-full max-w-2xl",
+  "3xl": "w-[90vw] sm:w-full max-w-3xl", 
+  "4xl": "w-[90vw] sm:w-full max-w-4xl",
+  full: "w-[95vw] sm:w-full max-w-full"
 };
 
 export function AdminModal({ 

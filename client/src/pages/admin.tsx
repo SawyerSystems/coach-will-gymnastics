@@ -3839,7 +3839,7 @@ export default function Admin() {
           isOpen={isAddAvailabilityBlockOpen} 
           onClose={() => setIsAddAvailabilityBlockOpen(false)}
           title="Block Time"
-          size="2xl"
+          size="3xl"
           showCloseButton={false}
         >
           <div className="space-y-4">
@@ -3878,13 +3878,15 @@ export default function Admin() {
             </div>
             <div>
               <Label>Reason (optional)</Label>
-              <Input
+              <Textarea
                 value={newException.reason || ''}
                 onChange={(e) => setNewException({
                   ...newException,
                   reason: e.target.value || undefined
                 })}
                 placeholder="e.g., Vacation, Sick day, etc."
+                rows={4}
+                className="min-h-[120px] resize-y"
               />
             </div>
             <div className="flex justify-end">
