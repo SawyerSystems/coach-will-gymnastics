@@ -14,6 +14,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import { AdminModal } from "@/components/admin-ui/AdminModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -324,14 +325,16 @@ export function EnhancedScheduleManager() {
       </div>
 
       {/* Add Block Dialog */}
-      <Dialog open={isAddingBlock} onOpenChange={setIsAddingBlock}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Availability Block</DialogTitle>
-            <DialogDescription>
-              {selectedDay !== null && `Add a new availability block for ${DAYS_OF_WEEK[selectedDay].label}`}
-            </DialogDescription>
-          </DialogHeader>
+      <AdminModal 
+        isOpen={isAddingBlock} 
+        onClose={() => setIsAddingBlock(false)}
+        title="Add Availability Block"
+        size="xl"
+        showCloseButton={false}
+      >
+        <DialogDescription>
+          {selectedDay !== null && `Add a new availability block for ${DAYS_OF_WEEK[selectedDay].label}`}
+        </DialogDescription>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -379,16 +382,18 @@ export function EnhancedScheduleManager() {
               </div>
             )}
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-3 mt-6">
             <Button variant="outline" onClick={() => setIsAddingBlock(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddBlock}>
+            <Button 
+              onClick={handleAddBlock}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+            >
               Add Block
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </AdminModal>
 
       {/* Copy to Other Days Dialog */}
       <Dialog open={copyToDialogOpen} onOpenChange={setCopyToDialogOpen}>

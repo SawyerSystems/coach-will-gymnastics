@@ -3839,7 +3839,7 @@ export default function Admin() {
           isOpen={isAddAvailabilityBlockOpen} 
           onClose={() => setIsAddAvailabilityBlockOpen(false)}
           title="Block Time"
-          size="xl"
+          size="2xl"
           showCloseButton={false}
         >
           <div className="space-y-4">

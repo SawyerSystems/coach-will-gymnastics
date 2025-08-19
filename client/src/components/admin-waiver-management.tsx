@@ -836,6 +836,7 @@ export function AdminWaiverManagement() {
         }}
         title={selectedWaiver ? `Waiver Details - ${selectedWaiver.athleteName}` : 'Waiver Details'}
         size="4xl"
+        showCloseButton={false}
         footer={
           <div className="flex justify-end gap-3">
             {selectedWaiver && selectedWaiver.pdfPath && typeof selectedWaiver.id === 'number' && (
