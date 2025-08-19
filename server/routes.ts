@@ -351,12 +351,14 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
       }
       
       // Check if time is in the past for today (Pacific Time)
-      const nowPacific = getTodayInPacific();
+      const now = new Date();
+      const nowPacific = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
       const todayPacificISO = formatToPacificISO(nowPacific);
       let isPastTime = false;
       if (date === todayPacificISO) {
         const currentMinutes = nowPacific.getHours() * 60 + nowPacific.getMinutes();
         isPastTime = minutes <= currentMinutes + 60; // Give 1 hour buffer for bookings
+        logger.debug(`  Time check for ${timeStr}: currentMinutes=${currentMinutes}, slotMinutes=${minutes}, isPastTime=${isPastTime}`);
       }
       
       // If no conflicts and not in the past, add this time
@@ -9721,6 +9723,20 @@ setTimeout(async () => {
               if (!(endMinutes <= bookingStart || minutes >= bookingEnd)) {
                 isAvailable = false;
                 break;
+              }
+            }
+          }
+          
+          // Check if time is in the past for today (Pacific Time)
+          if (isAvailable) {
+            const now = new Date();
+            const nowPacific = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+            const todayPacificISO = formatToPacificISO(nowPacific);
+            if (date === todayPacificISO) {
+              const currentMinutes = nowPacific.getHours() * 60 + nowPacific.getMinutes();
+              const isPastTime = minutes <= currentMinutes + 60; // Give 1 hour buffer for bookings
+              if (isPastTime) {
+                isAvailable = false;
               }
             }
           }
