@@ -153,6 +153,37 @@ function convertTo24Hour(timeStr: string): string {
   return `${hours24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
+// Normalize various time inputs into HH:MM (24-hour) or return null if invalid
+function normalizeTimeToHHMM(input?: string | null): string | null {
+  if (input == null) return null;
+  const raw = String(input).trim();
+  if (raw === '') return null;
+
+  // Handle 12-hour times with AM/PM in any case (e.g., "9:15 pm")
+  const ampmMatch = raw.match(/^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])\s*$/);
+  if (ampmMatch) {
+    const h = parseInt(ampmMatch[1], 10);
+    const m = parseInt(ampmMatch[2], 10);
+    const isPM = /pm/i.test(ampmMatch[3]);
+    let hh = h % 12 + (isPM ? 12 : 0);
+    return `${hh.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
+
+  // Handle 24-hour with optional seconds (e.g., 09:00 or 09:00:00)
+  const hhmmOrSeconds = raw.match(/^\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*$/);
+  if (hhmmOrSeconds) {
+    const h = parseInt(hhmmOrSeconds[1], 10);
+    const m = parseInt(hhmmOrSeconds[2], 10);
+    if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+      return null;
+    }
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
+
+  // As a final attempt, if string contains AM/PM without colon (rare), or other formats, treat as invalid
+  return null;
+}
+
 // Helper function to convert time string to minutes since midnight
 function timeToMinutes(timeStr: string): number {
   // Convert to 24-hour format first
@@ -8974,11 +9005,15 @@ setTimeout(async () => {
       // Direct property access to handle field name variations
       const startTime = requestData.startTime || requestData.start_time;
       const endTime = requestData.endTime || requestData.end_time;
+
+      // Normalize times early to accept HH:MM, HH:MM:SS, or 12-hour inputs
+      const normalizedStart = normalizeTimeToHHMM(startTime);
+      const normalizedEnd = normalizeTimeToHHMM(endTime);
       
       const mappedData = {
         date: requestData.date,
-        startTime: startTime,
-        endTime: endTime,
+        startTime: requestData.allDay ? undefined : (normalizedStart ?? undefined),
+        endTime: requestData.allDay ? undefined : (normalizedEnd ?? undefined),
         isAvailable: requestData.isAvailable ?? false,
         reason: requestData.reason || 'Blocked time',
         title: requestData.title,
@@ -9006,13 +9041,11 @@ setTimeout(async () => {
         });
       }
       
-      // Validate time format for timed events
+      // Validate time format for timed events after normalization
       if (!mappedData.allDay && mappedData.startTime && mappedData.endTime) {
-        const timeRegex = /^\d{1,2}:\d{2}$/;
-        if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
-          return res.status(400).json({ 
-            message: "Invalid time format. Use HH:MM format" 
-          });
+        const valid = mappedData.startTime !== null && mappedData.endTime !== null;
+        if (!valid) {
+          return res.status(400).json({ message: "Invalid time format. Use HH:MM format" });
         }
       }
       
@@ -9034,11 +9067,15 @@ setTimeout(async () => {
       // Direct property access to handle field name variations
       const startTime = requestData.startTime || requestData.start_time;
       const endTime = requestData.endTime || requestData.end_time;
+
+      // Normalize times (allow empty strings to become null)
+      const normalizedStart = normalizeTimeToHHMM(startTime);
+      const normalizedEnd = normalizeTimeToHHMM(endTime);
       
       const mappedData = {
         date: requestData.date,
-        startTime: startTime || null, // Convert empty string to null
-        endTime: endTime || null,     // Convert empty string to null
+        startTime: requestData.allDay ? undefined : (normalizedStart ?? undefined),
+        endTime: requestData.allDay ? undefined : (normalizedEnd ?? undefined),
         isAvailable: requestData.isAvailable ?? false,
         reason: requestData.reason || 'Blocked time',
         title: requestData.title,
@@ -9055,11 +9092,9 @@ setTimeout(async () => {
       
       // Basic validation - allow missing startTime/endTime for all-day events
       if (!mappedData.allDay && mappedData.startTime && mappedData.endTime) {
-        const timeRegex = /^\d{1,2}:\d{2}$/;
-        if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
-          return res.status(400).json({ 
-            message: "Invalid time format. Use HH:MM format" 
-          });
+        const valid = mappedData.startTime !== null && mappedData.endTime !== null;
+        if (!valid) {
+          return res.status(400).json({ message: "Invalid time format. Use HH:MM format" });
         }
       }
       

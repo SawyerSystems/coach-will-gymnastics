@@ -178,6 +178,7 @@ export default function Admin() {
   
   // Edit state for availability exceptions
   const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
+  const [viewingException, setViewingException] = useState<AvailabilityException | null>(null);
   
   // Unified modal state - modal is open when we have editingException OR isAddAvailabilityBlockOpen
   const isModalOpen = isAddAvailabilityBlockOpen || !!editingException;
@@ -2693,7 +2694,7 @@ export default function Admin() {
                             endAccessor="end"
                             style={{ height: '100%' }}
                             onSelectEvent={(event) => {
-                              handleEditException(event.resource);
+                              setViewingException(event.resource);
                             }}
                             eventPropGetter={(event) => {
                               const exception = event.resource;
@@ -2937,6 +2938,15 @@ export default function Admin() {
                                     </div>
 
                                     <div className="flex gap-2 ml-4">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setViewingException(exception)}
+                                        className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
+                                        title="View Details"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
                                       <Button
                                         size="sm"
                                         variant="outline"
@@ -3570,6 +3580,76 @@ export default function Admin() {
                 </div>
               </AdminModalSection>
             </>
+          )}
+        </AdminModal>
+
+        {/* View Event Details Modal */}
+        <AdminModal 
+          isOpen={!!viewingException}
+          onClose={() => setViewingException(null)}
+          title="Event Details"
+          size="3xl"
+        >
+          {viewingException && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Date</Label>
+                  <div className="p-2 rounded border bg-white dark:bg-slate-800">
+                    {(() => {
+                      const [y,m,d] = viewingException.date.split('-').map(Number);
+                      return new Date(y, m-1, d).toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+                    })()}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Category</Label>
+                  <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.category || '—'}</div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Title</Label>
+                <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.title || '—'}</div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">All Day</Label>
+                  <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.allDay ? 'Yes' : 'No'}</div>
+                </div>
+                {!viewingException.allDay && (
+                  <div>
+                    <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Time</Label>
+                    <div className="p-2 rounded border bg-white dark:bg-slate-800">{(viewingException.startTime && viewingException.endTime) ? `${viewingException.startTime} - ${viewingException.endTime}` : '—'}</div>
+                  </div>
+                )}
+              </div>
+              {(viewingException.addressLine1 || viewingException.city) && (
+                <div className="space-y-1">
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Location</Label>
+                  <div className="p-3 rounded border bg-white dark:bg-slate-800">
+                    {viewingException.addressLine1 && <div>{viewingException.addressLine1}</div>}
+                    {viewingException.addressLine2 && <div>{viewingException.addressLine2}</div>}
+                    {viewingException.city && <div>{viewingException.city}{viewingException.state && `, ${viewingException.state}`}{viewingException.zipCode && ` ${viewingException.zipCode}`}</div>}
+                  </div>
+                </div>
+              )}
+              {viewingException.reason && (
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Reason</Label>
+                  <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.reason}</div>
+                </div>
+              )}
+              {viewingException.notes && (
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Notes</Label>
+                  <div className="p-2 rounded border bg-white dark:bg-slate-800 whitespace-pre-wrap">{viewingException.notes}</div>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setViewingException(null)}>Close</Button>
+                <Button onClick={() => { if (viewingException) { handleEditException(viewingException); setViewingException(null); } }}>Edit</Button>
+              </div>
+            </div>
           )}
         </AdminModal>
         
