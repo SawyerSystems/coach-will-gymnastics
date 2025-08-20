@@ -203,6 +203,11 @@ async function checkBookingAvailability(date: string, startTime: string, duratio
   const exceptions = await storage.getAvailabilityExceptionsByDateRange(date, date);
   for (const exception of exceptions) {
     if (!exception.isAvailable) {
+      // Handle all-day blocks
+      if (exception.allDay || !exception.startTime || !exception.endTime) {
+        return { available: false, reason: `Day blocked: ${exception.reason || 'Unavailable'}` };
+      }
+      
       const exceptionStart = timeToMinutes(exception.startTime);
       const exceptionEnd = timeToMinutes(exception.endTime);
       
@@ -339,6 +344,13 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
       // Check if this time conflicts with blocked times
       let conflictsWithBlock = false;
       for (const block of blockedTimes) {
+        // Handle all-day blocks
+        if (block.allDay || !block.startTime || !block.endTime) {
+          logger.debug(`   ALL DAY BLOCK: slot ${timeStr} is blocked by all-day exception`);
+          conflictsWithBlock = true;
+          break;
+        }
+        
         const blockStart = timeToMinutes(block.startTime);
         const blockEnd = timeToMinutes(block.endTime);
         logger.debug(`  Checking slot ${timeStr}-${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')} against block ${block.startTime}-${block.endTime} (${blockStart}-${blockEnd})`);
@@ -8968,22 +8980,40 @@ setTimeout(async () => {
         startTime: startTime,
         endTime: endTime,
         isAvailable: requestData.isAvailable ?? false,
-        reason: requestData.reason || 'Blocked time'
+        reason: requestData.reason || 'Blocked time',
+        title: requestData.title,
+        category: requestData.category,
+        notes: requestData.notes,
+        allDay: requestData.allDay ?? false,
+        addressLine1: requestData.addressLine1,
+        addressLine2: requestData.addressLine2,
+        city: requestData.city,
+        state: requestData.state,
+        zipCode: requestData.zipCode,
+        country: requestData.country || 'United States'
       };
       
-      // Basic validation
-      if (!mappedData.date || !mappedData.startTime || !mappedData.endTime) {
+      // Basic validation - allow missing startTime/endTime for all-day events
+      if (!mappedData.date) {
         return res.status(400).json({ 
-          message: "Missing required fields: date, startTime/start_time, endTime/end_time" 
+          message: "Missing required field: date" 
         });
       }
       
-      // Validate time format
-      const timeRegex = /^\d{1,2}:\d{2}$/;
-      if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
+      if (!mappedData.allDay && (!mappedData.startTime || !mappedData.endTime)) {
         return res.status(400).json({ 
-          message: "Invalid time format. Use HH:MM format" 
+          message: "Missing required fields for timed event: startTime and endTime" 
         });
+      }
+      
+      // Validate time format for timed events
+      if (!mappedData.allDay && mappedData.startTime && mappedData.endTime) {
+        const timeRegex = /^\d{1,2}:\d{2}$/;
+        if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
+          return res.status(400).json({ 
+            message: "Invalid time format. Use HH:MM format" 
+          });
+        }
       }
       
       const exception = await storage.createAvailabilityException(mappedData);
@@ -9704,6 +9734,12 @@ setTimeout(async () => {
           
           // Check against blocked times
           for (const blocked of blockedTimes) {
+            // Handle all-day blocks
+            if (blocked.allDay || !blocked.startTime || !blocked.endTime) {
+              isAvailable = false;
+              break;
+            }
+            
             const blockedStart = timeToMinutes(blocked.startTime);
             const blockedEnd = timeToMinutes(blocked.endTime);
             

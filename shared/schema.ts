@@ -341,14 +341,42 @@ export const availability = pgTable("availability", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Define enum for availability exception categories
+export const availabilityExceptionCategoryEnum = pgEnum("availability_exception_category", [
+  "Coaching: Team Meet/Competition",
+  "Coaching: Practice", 
+  "Own: Team Meet/Competition",
+  "Own: Practice",
+  "Medical Appointment",
+  "Dental Appointment",
+  "Other Appointment",
+  "Meeting",
+  "Busy: Work",
+  "Busy: Personal"
+]);
+
 export const availabilityExceptions = pgTable("availability_exceptions", {
   id: serial("id").primaryKey(),
   date: date("date").notNull(), // Native DATE type
-  startTime: time("start_time").notNull(), // Native TIME type
-  endTime: time("end_time").notNull(), // Native TIME type
+  startTime: time("start_time"), // Made optional for all-day events
+  endTime: time("end_time"), // Made optional for all-day events
   isAvailable: boolean("is_available").default(false).notNull(), // Usually false for exceptions (blocked times)
   reason: text("reason"), // Optional reason for the exception
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  
+  // New fields for personal reminder functionality
+  title: text("title"), // Optional title for better event naming
+  category: text("category"), // Category selector with predefined options
+  notes: text("notes"), // Additional details
+  allDay: boolean("all_day").default(false).notNull(), // Full day events
+  
+  // Address fields (all nullable)
+  addressLine1: text("address_line_1"),
+  addressLine2: text("address_line_2"),
+  city: text("city"),
+  state: text("state"),
+  zipCode: text("zip_code"),
+  country: text("country").default("United States"),
 });
 
 // Normalized lookup tables for apparatus, focus areas, side quests, and genders
@@ -620,19 +648,58 @@ export const insertAvailabilityExceptionSchema = z.object({
   end_time: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format").optional(),
   isAvailable: z.boolean().default(false),
   reason: z.string().optional(),
+  
+  // New fields for personal reminder functionality
+  title: z.string().optional(),
+  category: z.enum([
+    "Coaching: Team Meet/Competition",
+    "Coaching: Practice", 
+    "Own: Team Meet/Competition",
+    "Own: Practice",
+    "Medical Appointment",
+    "Dental Appointment",
+    "Other Appointment",
+    "Meeting",
+    "Busy: Work",
+    "Busy: Personal"
+  ]).optional(),
+  notes: z.string().optional(),
+  allDay: z.boolean().default(false),
+  
+  // Address fields (all optional)
+  addressLine1: z.string().optional(),
+  addressLine2: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().default("United States").optional(),
 }).transform((data) => {
   // Handle both camelCase and snake_case
   return {
     date: data.date,
-    startTime: data.startTime || data.start_time!,
-    endTime: data.endTime || data.end_time!,
+    startTime: data.startTime || data.start_time,
+    endTime: data.endTime || data.end_time,
     isAvailable: data.isAvailable,
     reason: data.reason,
+    title: data.title,
+    category: data.category,
+    notes: data.notes,
+    allDay: data.allDay,
+    addressLine1: data.addressLine1,
+    addressLine2: data.addressLine2,
+    city: data.city,
+    state: data.state,
+    zipCode: data.zipCode,
+    country: data.country,
   };
 }).refine((data) => {
-  return data.startTime && data.endTime;
+  // If not an all-day event, require start and end times
+  if (!data.allDay) {
+    return data.startTime && data.endTime;
+  }
+  return true;
 }, {
-  message: "Both start time and end time are required",
+  message: "Start time and end time are required for timed events",
 });
 
 export const insertAdminSchema = createInsertSchema(admins).omit({

@@ -42,12 +42,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability } from "@/hooks/use-availability";
+import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability, useUpdateAvailabilityException } from "@/hooks/use-availability";
 import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -156,9 +159,101 @@ export default function Admin() {
     startTime: "09:00",
     endTime: "17:00",
     isAvailable: false,
-    reason: ""
+    reason: "",
+    title: "",
+    category: undefined,
+    notes: "",
+    allDay: false,
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "United States",
   });
   const [isAddAvailabilityBlockOpen, setIsAddAvailabilityBlockOpen] = useState(false);
+  
+  // Edit state for availability exceptions
+  const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // Big Calendar localizer
+  const localizer = momentLocalizer(moment);
+  
+  // Edit handlers
+  const handleEditException = (exception: AvailabilityException) => {
+    setEditingException(exception);
+    setNewException({
+      date: new Date(exception.date),
+      startTime: exception.startTime || "",
+      endTime: exception.endTime || "",
+      isAvailable: exception.isAvailable,
+      reason: exception.reason || "",
+      title: exception.title || "",
+      category: exception.category as "Coaching: Team Meet/Competition" | "Coaching: Practice" | "Own: Team Meet/Competition" | "Own: Practice" | "Medical Appointment" | "Dental Appointment" | "Other Appointment" | "Meeting" | "Busy: Work" | "Busy: Personal" | undefined,
+      notes: exception.notes || "",
+      allDay: exception.allDay || false,
+      addressLine1: exception.addressLine1 || "",
+      addressLine2: exception.addressLine2 || "",
+      city: exception.city || "",
+      state: exception.state || "",
+      zipCode: exception.zipCode || "",
+      country: exception.country || "United States",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingException) {
+      updateExceptionMutation.mutate({
+        id: editingException.id,
+        data: newException
+      });
+      setIsEditModalOpen(false);
+      setEditingException(null);
+      // Reset form
+      setNewException({
+        date: new Date(),
+        startTime: "09:00",
+        endTime: "17:00",
+        isAvailable: false,
+        reason: "",
+        title: "",
+        category: undefined,
+        notes: "",
+        allDay: false,
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "United States",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false);
+    setEditingException(null);
+    // Reset form
+    setNewException({
+      date: new Date(),
+      startTime: "09:00",
+      endTime: "17:00",
+      isAvailable: false,
+      reason: "",
+      title: "",
+      category: undefined,
+      notes: "",
+      allDay: false,
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "United States",
+    });
+  };
   
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
   const [isAthleteViewOpen, setIsAthleteViewOpen] = useState(false);
@@ -387,6 +482,7 @@ export default function Admin() {
   const updateAvailabilityMutation = useUpdateAvailability();
   const deleteAvailabilityMutation = useDeleteAvailability();
   const createExceptionMutation = useCreateAvailabilityException();
+  const updateExceptionMutation = useUpdateAvailabilityException();
   const deleteExceptionMutation = useDeleteAvailabilityException();
 
   const updateBookingMutation = useMutation({
@@ -2513,16 +2609,44 @@ export default function Admin() {
                       </div>
                     </AdminCardContent>
                   </AdminCard>
-                  
-                    {/* Enhanced Schedule Manager */}
-                    <EnhancedScheduleManager />
 
-                    {/* Availability Exceptions (date-specific blocks) */}
-                    <div className="space-y-6">
+                  {/* Schedule Management Tabs */}
+                  <Tabs defaultValue="availability" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl mb-6">
+                      <TabsTrigger 
+                        value="availability" 
+                        className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#0F0276] data-[state=active]:to-[#0F0276]/90 data-[state=active]:text-white data-[state=active]:shadow-md font-semibold transition-all duration-200"
+                      >
+                        📅 Regular Availability
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="exceptions" 
+                        className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md font-semibold transition-all duration-200"
+                      >
+                        🚫 Availability Exceptions
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="calendar" 
+                        className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/90 data-[state=active]:text-[#0F0276] data-[state=active]:shadow-md font-semibold transition-all duration-200"
+                      >
+                        📋 Personal Calendar
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Regular Availability Tab */}
+                    <TabsContent value="availability" className="space-y-6">
+                      <EnhancedScheduleManager />
+                    </TabsContent>
+
+                    {/* Availability Exceptions Tab */}
+                    <TabsContent value="exceptions" className="space-y-6">
                       <div className="flex items-center justify-between">
                         <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
-                          <CalendarX className="h-7 w-7 text-[#D8BD2A]" />
+                          <CalendarX className="h-7 w-7 text-red-500" />
                           Availability Exceptions
+                          <Badge variant="secondary" className="bg-gradient-to-r from-red-100 to-red-200/50 text-red-700 font-bold rounded-xl px-3 py-1">
+                            {availabilityExceptions?.length || 0} exceptions
+                          </Badge>
                         </h3>
                         <Button 
                           onClick={() => setIsAddAvailabilityBlockOpen(true)}
@@ -2532,49 +2656,306 @@ export default function Admin() {
                           Block Time
                         </Button>
                       </div>
+
                       <div className="grid grid-cols-1 gap-4">
-                        {availabilityExceptions?.map((exception) => (
-                            <AdminCard key={exception.id}>
+                        {availabilityExceptions
+                          ?.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by closest date first
+                          ?.map((exception) => (
+                            <AdminCard key={exception.id} className="border-l-4 border-red-500">
                               <AdminCardContent className="p-6">
-                                <div className="flex justify-between items-center">
-                                  <div className="space-y-1">
-                                    <div className="text-sm font-bold text-red-700 dark:text-red-400">
-                                      Blocked: {exception.date}
-                                    </div>
-                                    <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                      {exception.startTime && exception.endTime ? (
-                                        <>
-                                          <Clock className="h-3 w-3" />
-                                          {exception.startTime} - {exception.endTime}
-                                        </>
-                                      ) : (
-                                        <>
-                                          <CalendarX className="h-3 w-3" />
-                                          All Day
-                                        </>
-                                      )}
-                                      {exception.reason && (
-                                        <>
-                                          <span className="text-red-400">•</span>
-                                          <span className="font-medium">{exception.reason}</span>
-                                        </>
+                                <div className="flex justify-between items-start">
+                                  <div className="space-y-2 flex-1">
+                                    <div className="flex items-center gap-3">
+                                      <div className="text-lg font-bold text-red-700 dark:text-red-400">
+                                        {new Date(exception.date).toLocaleDateString('en-US', { 
+                                          weekday: 'long', 
+                                          year: 'numeric', 
+                                          month: 'long', 
+                                          day: 'numeric' 
+                                        })}
+                                      </div>
+                                      {exception.title && (
+                                        <Badge variant="outline" className="bg-red-50 border-red-200 text-red-700">
+                                          {exception.title}
+                                        </Badge>
                                       )}
                                     </div>
+                                    
+                                    <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
+                                      {exception.allDay ? (
+                                        <div className="flex items-center gap-2">
+                                          <CalendarX className="h-4 w-4 text-red-500" />
+                                          <span className="font-medium">All Day</span>
+                                        </div>
+                                      ) : exception.startTime && exception.endTime ? (
+                                        <div className="flex items-center gap-2">
+                                          <Clock className="h-4 w-4 text-red-500" />
+                                          <span className="font-medium">{exception.startTime} - {exception.endTime}</span>
+                                        </div>
+                                      ) : null}
+                                      
+                                      {exception.category && (
+                                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-medium">
+                                          {exception.category}
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    {exception.reason && (
+                                      <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                        <strong>Reason:</strong> {exception.reason}
+                                      </p>
+                                    )}
+
+                                    {exception.notes && (
+                                      <p className="text-sm text-slate-600 dark:text-slate-300 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                                        <strong>Notes:</strong> {exception.notes}
+                                      </p>
+                                    )}
+
+                                    {/* Address Display */}
+                                    {(exception.addressLine1 || exception.city) && (
+                                      <div className="text-sm text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                                        <strong>Location:</strong>
+                                        <div className="mt-1">
+                                          {exception.addressLine1 && <div>{exception.addressLine1}</div>}
+                                          {exception.addressLine2 && <div>{exception.addressLine2}</div>}
+                                          {exception.city && (
+                                            <div>
+                                              {exception.city}
+                                              {exception.state && `, ${exception.state}`}
+                                              {exception.zipCode && ` ${exception.zipCode}`}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => deleteExceptionMutation.mutate(exception.id)}
-                                    className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
+
+                                  <div className="flex gap-2 ml-4">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleEditException(exception)}
+                                      className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => deleteExceptionMutation.mutate(exception.id)}
+                                      className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </AdminCardContent>
                             </AdminCard>
                           ))}
+
+                        {(!availabilityExceptions || availabilityExceptions.length === 0) && (
+                          <div className="text-center py-12">
+                            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/20 dark:to-red-800/20 rounded-full flex items-center justify-center mb-4">
+                              <CalendarX className="h-12 w-12 text-red-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No exceptions found</h3>
+                            <p className="text-slate-600 dark:text-slate-200 max-w-md mx-auto">
+                              No availability exceptions have been created yet. Use "Block Time" to add exceptions for specific dates.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </TabsContent>
+
+                    {/* Personal Calendar Tab */}
+                    <TabsContent value="calendar" className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
+                          <Calendar className="h-7 w-7 text-[#D8BD2A]" />
+                          Personal Calendar & Reminders
+                          <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
+                            {availabilityExceptions?.length || 0} events
+                          </Badge>
+                        </h3>
+                        <Button 
+                          onClick={() => setIsAddAvailabilityBlockOpen(true)}
+                          className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]"
+                        >
+                          <Plus className="h-5 w-5 mr-2" />
+                          Add Event
+                        </Button>
+                      </div>
+
+                      {/* React Big Calendar */}
+                      <AdminCard className="p-0 overflow-hidden">
+                        <div className="h-[600px] p-4">
+                          <BigCalendar
+                            localizer={localizer}
+                            events={
+                              availabilityExceptions?.map(exception => ({
+                                id: exception.id,
+                                title: exception.title || exception.reason || 'Event',
+                                start: new Date(exception.date + (exception.startTime ? `T${exception.startTime}` : 'T00:00')),
+                                end: new Date(exception.date + (exception.endTime ? `T${exception.endTime}` : exception.allDay ? 'T23:59' : 'T01:00')),
+                                allDay: exception.allDay,
+                                resource: exception
+                              })) || []
+                            }
+                            startAccessor="start"
+                            endAccessor="end"
+                            style={{ height: '100%' }}
+                            onSelectEvent={(event) => {
+                              handleEditException(event.resource);
+                            }}
+                            eventPropGetter={(event) => {
+                              const exception = event.resource;
+                              let backgroundColor = '#D8BD2A';
+                              let borderColor = '#D8BD2A';
+                              
+                              // Color code by category
+                              if (exception.category) {
+                                switch (exception.category) {
+                                  case 'Coaching: Team Meet/Competition':
+                                    backgroundColor = '#8B5CF6'; // purple
+                                    borderColor = '#7C3AED';
+                                    break;
+                                  case 'Coaching: Practice':
+                                    backgroundColor = '#3B82F6'; // blue
+                                    borderColor = '#2563EB';
+                                    break;
+                                  case 'Own: Team Meet/Competition':
+                                    backgroundColor = '#10B981'; // green
+                                    borderColor = '#059669';
+                                    break;
+                                  case 'Own: Practice':
+                                    backgroundColor = '#14B8A6'; // teal
+                                    borderColor = '#0D9488';
+                                    break;
+                                  case 'Medical Appointment':
+                                    backgroundColor = '#EF4444'; // red
+                                    borderColor = '#DC2626';
+                                    break;
+                                  case 'Dental Appointment':
+                                    backgroundColor = '#F97316'; // orange
+                                    borderColor = '#EA580C';
+                                    break;
+                                  case 'Meeting':
+                                    backgroundColor = '#6366F1'; // indigo
+                                    borderColor = '#4F46E5';
+                                    break;
+                                  case 'Busy: Work':
+                                    backgroundColor = '#EAB308'; // yellow
+                                    borderColor = '#CA8A04';
+                                    break;
+                                  case 'Busy: Personal':
+                                    backgroundColor = '#EC4899'; // pink
+                                    borderColor = '#DB2777';
+                                    break;
+                                  default:
+                                    backgroundColor = '#6B7280'; // gray
+                                    borderColor = '#4B5563';
+                                }
+                              } else {
+                                // Availability blocks (no category) are red
+                                backgroundColor = '#EF4444';
+                                borderColor = '#DC2626';
+                              }
+                              
+                              return {
+                                style: {
+                                  backgroundColor,
+                                  borderColor,
+                                  color: 'white',
+                                  fontWeight: '500',
+                                  borderRadius: '4px',
+                                  border: `2px solid ${borderColor}`,
+                                  cursor: 'pointer'
+                                }
+                              };
+                            }}
+                            views={['month', 'week', 'day', 'agenda']}
+                            defaultView="month"
+                            toolbar={true}
+                            popup={true}
+                            popupOffset={{x: 0, y: 0}}
+                            formats={{
+                              eventTimeRangeFormat: ({ start, end }, culture, localizer) => {
+                                return localizer?.format(start, 'h:mm A', culture) + ' - ' + localizer?.format(end, 'h:mm A', culture);
+                              },
+                            }}
+                            components={{
+                              event: ({ event }) => (
+                                <div className="text-xs font-medium truncate">
+                                  {event.title}
+                                  {event.resource.category && (
+                                    <div className="text-xs opacity-80 truncate">
+                                      {event.resource.category}
+                                    </div>
+                                  )}
+                                </div>
+                              ),
+                            }}
+                          />
+                        </div>
+                      </AdminCard>
+
+                      {/* Legend */}
+                      <AdminCard>
+                        <AdminCardHeader>
+                          <AdminCardTitle className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/80 rounded"></div>
+                            Calendar Legend
+                          </AdminCardTitle>
+                        </AdminCardHeader>
+                        <AdminCardContent>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-500 rounded"></div>
+                              <span>Availability Blocks</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                              <span>Coaching Competitions</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                              <span>Coaching Practice</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-green-500 rounded"></div>
+                              <span>Own Competitions</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-teal-500 rounded"></div>
+                              <span>Own Practice</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-500 rounded"></div>
+                              <span>Medical</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                              <span>Dental</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-indigo-500 rounded"></div>
+                              <span>Meetings</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                              <span>Work</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-pink-500 rounded"></div>
+                              <span>Personal</span>
+                            </div>
+                          </div>
+                        </AdminCardContent>
+                      </AdminCard>
+                    </TabsContent>
+                  </Tabs>
                 </div>
             </MainContentContainer>
           </TabsContent>
@@ -3834,73 +4215,365 @@ export default function Admin() {
           </div>
         </AdminModal>
 
-        {/* Add Availability Block Modal */}
+        {/* Enhanced Add Availability Block / Personal Event Modal */}
         <AdminModal 
-          isOpen={isAddAvailabilityBlockOpen} 
-          onClose={() => setIsAddAvailabilityBlockOpen(false)}
-          title="Block Time"
-          size="3xl"
+          isOpen={isAddAvailabilityBlockOpen || isEditModalOpen} 
+          onClose={() => {
+            if (isEditModalOpen) {
+              handleCancelEdit();
+            } else {
+              setIsAddAvailabilityBlockOpen(false);
+            }
+          }}
+          title={editingException ? "Edit Event or Block Time" : "Add Event or Block Time"}
+          size="4xl"
           showCloseButton={false}
         >
-          <div className="space-y-4">
-            <div>
-              <Label>Date</Label>
-              <Input
-                type="date"
-                value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
-                onChange={(e) => setNewException({
-                  ...newException,
-                  date: new Date(e.target.value)
-                })}
-              />
-            </div>
-            <div>
-              <Label>Start Time (optional)</Label>
-              <Input
-                type="time"
-                value={newException.startTime || ''}
-                onChange={(e) => setNewException({
-                  ...newException,
-                  startTime: e.target.value
-                })}
-              />
-            </div>
-            <div>
-              <Label>End Time (optional)</Label>
-              <Input
-                type="time"
-                value={newException.endTime || ''}
-                onChange={(e) => setNewException({
-                  ...newException,
-                  endTime: e.target.value
-                })}
-              />
-            </div>
-            <div>
-              <Label>Reason (optional)</Label>
-              <Textarea
-                value={newException.reason || ''}
-                onChange={(e) => setNewException({
-                  ...newException,
-                  reason: e.target.value || undefined
-                })}
-                placeholder="e.g., Vacation, Sick day, etc."
-                rows={4}
-                className="min-h-[120px] resize-y"
-              />
-            </div>
-            <div className="flex justify-end">
-              <Button 
-                onClick={() => {
-                  createExceptionMutation.mutate(newException);
-                  setIsAddAvailabilityBlockOpen(false);
-                }} 
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold"
+          <Tabs defaultValue="block-time" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 p-1 bg-gradient-to-r from-slate-100 to-slate-200/50 rounded-xl mb-6">
+              <TabsTrigger 
+                value="block-time" 
+                className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md font-semibold transition-all duration-200"
               >
-                Block Time
-              </Button>
-            </div>
-          </div>
+                🚫 Block Availability
+              </TabsTrigger>
+              <TabsTrigger 
+                value="personal-event" 
+                className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#D8BD2A] data-[state=active]:to-[#D8BD2A]/90 data-[state=active]:text-[#0F0276] data-[state=active]:shadow-md font-semibold transition-all duration-200"
+              >
+                📅 Personal Event
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Block Time Tab */}
+            <TabsContent value="block-time" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold text-red-700">Date *</Label>
+                  <Input
+                    type="date"
+                    value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      date: new Date(e.target.value)
+                    })}
+                    className="border-red-200 focus:border-red-500 focus:ring-red-500"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-semibold text-red-700">Title</Label>
+                  <Input
+                    value={newException.title || ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      title: e.target.value || undefined
+                    })}
+                    placeholder="e.g., Vacation Day, Sick Leave"
+                    className="border-red-200 focus:border-red-500 focus:ring-red-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Switch 
+                  id="all-day-block"
+                  checked={newException.allDay || false}
+                  onCheckedChange={(checked) => setNewException({
+                    ...newException,
+                    allDay: checked,
+                    ...(checked ? { startTime: '', endTime: '' } : {})
+                  })}
+                />
+                <Label htmlFor="all-day-block" className="text-sm font-semibold text-red-700">
+                  All Day Block
+                </Label>
+              </div>
+
+              {!newException.allDay && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-red-700">Start Time</Label>
+                    <Input
+                      type="time"
+                      value={newException.startTime || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        startTime: e.target.value
+                      })}
+                      className="border-red-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-red-700">End Time</Label>
+                    <Input
+                      type="time"
+                      value={newException.endTime || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        endTime: e.target.value
+                      })}
+                      className="border-red-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-sm font-semibold text-red-700">Reason</Label>
+                <Textarea
+                  value={newException.reason || ''}
+                  onChange={(e) => setNewException({
+                    ...newException,
+                    reason: e.target.value || undefined
+                  })}
+                  placeholder="e.g., Personal vacation, Medical appointment, etc."
+                  rows={3}
+                  className="border-red-200 focus:border-red-500 focus:ring-red-500 resize-y"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    if (isEditModalOpen) {
+                      handleCancelEdit();
+                    } else {
+                      setIsAddAvailabilityBlockOpen(false);
+                    }
+                  }}
+                  className="px-6"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    const blockData = {
+                      ...newException,
+                      isAvailable: false, // All blocks automatically block availability
+                      category: undefined // No category for availability blocks
+                    };
+                    if (isEditModalOpen) {
+                      handleSaveEdit();
+                    } else {
+                      createExceptionMutation.mutate(blockData);
+                      setIsAddAvailabilityBlockOpen(false);
+                    }
+                  }} 
+                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6"
+                >
+                  🚫 {editingException ? "Update Block" : "Block Time"}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Personal Event Tab */}
+            <TabsContent value="personal-event" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Date *</Label>
+                  <Input
+                    type="date"
+                    value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      date: new Date(e.target.value)
+                    })}
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Title *</Label>
+                  <Input
+                    value={newException.title || ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      title: e.target.value || undefined
+                    })}
+                    placeholder="e.g., Team Competition, Doctor Visit"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Category *</Label>
+                <Select 
+                  value={newException.category || ''} 
+                  onValueChange={(value) => setNewException({
+                    ...newException,
+                    category: value as any
+                  })}
+                >
+                  <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                    <SelectValue placeholder="Select event category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
+                    <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
+                    <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
+                    <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
+                    <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
+                    <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
+                    <SelectItem value="Other Appointment">📅 Other Appointment</SelectItem>
+                    <SelectItem value="Meeting">🤝 Meeting</SelectItem>
+                    <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
+                    <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Switch 
+                  id="all-day-event"
+                  checked={newException.allDay || false}
+                  onCheckedChange={(checked) => setNewException({
+                    ...newException,
+                    allDay: checked,
+                    ...(checked ? { startTime: '', endTime: '' } : {})
+                  })}
+                />
+                <Label htmlFor="all-day-event" className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">
+                  All Day Event
+                </Label>
+              </div>
+
+              {!newException.allDay && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Start Time</Label>
+                    <Input
+                      type="time"
+                      value={newException.startTime || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        startTime: e.target.value
+                      })}
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">End Time</Label>
+                    <Input
+                      type="time"
+                      value={newException.endTime || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        endTime: e.target.value
+                      })}
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Address Section */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A] flex items-center gap-2">
+                  📍 Location (Optional)
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <Input
+                    value={newException.addressLine1 || ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      addressLine1: e.target.value || undefined
+                    })}
+                    placeholder="Address Line 1"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                  <Input
+                    value={newException.addressLine2 || ''}
+                    onChange={(e) => setNewException({
+                      ...newException,
+                      addressLine2: e.target.value || undefined
+                    })}
+                    placeholder="Address Line 2 (Optional)"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input
+                      value={newException.city || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        city: e.target.value || undefined
+                      })}
+                      placeholder="City"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                    <Input
+                      value={newException.state || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        state: e.target.value || undefined
+                      })}
+                      placeholder="State"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                    <Input
+                      value={newException.zipCode || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        zipCode: e.target.value || undefined
+                      })}
+                      placeholder="ZIP Code"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-[#D8BD2A]">Notes</Label>
+                <Textarea
+                  value={newException.notes || ''}
+                  onChange={(e) => setNewException({
+                    ...newException,
+                    notes: e.target.value || undefined
+                  })}
+                  placeholder="Additional details about this event..."
+                  rows={3}
+                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] resize-y"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    if (isEditModalOpen) {
+                      handleCancelEdit();
+                    } else {
+                      setIsAddAvailabilityBlockOpen(false);
+                    }
+                  }}
+                  className="px-6"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    const eventData = {
+                      ...newException,
+                      isAvailable: false, // All events automatically block availability
+                      reason: newException.title // Use title as reason for backward compatibility
+                    };
+                    if (isEditModalOpen) {
+                      handleSaveEdit();
+                    } else {
+                      createExceptionMutation.mutate(eventData);
+                      setIsAddAvailabilityBlockOpen(false);
+                    }
+                  }} 
+                  className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] text-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6 font-semibold"
+                >
+                  📅 {editingException ? "Update Event" : "Add Event"}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </AdminModal>
           </div>
         </div>

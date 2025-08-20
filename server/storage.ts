@@ -1168,6 +1168,10 @@ With the right setup and approach, home practice can accelerate your child's gym
   async getAllAvailabilityExceptions(): Promise<AvailabilityException[]> {
     return Array.from(this.availabilityExceptions.values()).sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
+      // Handle null startTime values for all-day events
+      if (!a.startTime && !b.startTime) return 0;
+      if (!a.startTime) return -1; // All-day events come first
+      if (!b.startTime) return 1;
       return a.startTime.localeCompare(b.startTime);
     });
   }
@@ -1187,7 +1191,20 @@ With the right setup and approach, home practice can accelerate your child's gym
         insertException.date.toISOString().split('T')[0] : 
         insertException.date,
       reason: insertException.reason ?? null,
-      isAvailable: insertException.isAvailable ?? false
+      isAvailable: insertException.isAvailable ?? false,
+      // Convert undefined to null for all new fields
+      title: insertException.title ?? null,
+      category: insertException.category ?? null,
+      notes: insertException.notes ?? null,
+      allDay: insertException.allDay ?? false,
+      addressLine1: insertException.addressLine1 ?? null,
+      addressLine2: insertException.addressLine2 ?? null,
+      city: insertException.city ?? null,
+      state: insertException.state ?? null,
+      zipCode: insertException.zipCode ?? null,
+      country: insertException.country ?? null,
+      startTime: insertException.startTime ?? null,
+      endTime: insertException.endTime ?? null,
     };
     this.availabilityExceptions.set(id, exception);
     return exception;
@@ -1205,7 +1222,20 @@ With the right setup and approach, home practice can accelerate your child's gym
       date: insertException.date instanceof Date ? 
         insertException.date.toISOString().split('T')[0] : 
         insertException.date,
-      reason: insertException.reason ?? null
+      reason: insertException.reason ?? null,
+      // Convert undefined to null for all new fields
+      title: insertException.title ?? null,
+      category: insertException.category ?? null,
+      notes: insertException.notes ?? null,
+      allDay: insertException.allDay ?? false,
+      addressLine1: insertException.addressLine1 ?? null,
+      addressLine2: insertException.addressLine2 ?? null,
+      city: insertException.city ?? null,
+      state: insertException.state ?? null,
+      zipCode: insertException.zipCode ?? null,
+      country: insertException.country ?? null,
+      startTime: insertException.startTime ?? null,
+      endTime: insertException.endTime ?? null,
     };
     this.availabilityExceptions.set(id, updated);
     return updated;
@@ -1220,6 +1250,10 @@ With the right setup and approach, home practice can accelerate your child's gym
       .filter(exception => exception.date >= startDate && exception.date <= endDate)
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
+        // Handle null startTime values for all-day events
+        if (!a.startTime && !b.startTime) return 0;
+        if (!a.startTime) return -1; // All-day events come first
+        if (!b.startTime) return 1;
         return a.startTime.localeCompare(b.startTime);
       });
   }
@@ -5128,7 +5162,17 @@ export class SupabaseStorage implements IStorage {
       endTime: row.end_time,
       isAvailable: row.is_available,
       reason: row.reason,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      title: row.title,
+      category: row.category,
+      notes: row.notes,
+      allDay: row.all_day,
+      addressLine1: row.address_line_1,
+      addressLine2: row.address_line_2,
+      city: row.city,
+      state: row.state,
+      zipCode: row.zip_code,
+      country: row.country,
     }));
   }
 
@@ -5152,7 +5196,17 @@ export class SupabaseStorage implements IStorage {
       endTime: data.end_time,
       isAvailable: data.is_available,
       reason: data.reason,
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      title: data.title,
+      category: data.category,
+      notes: data.notes,
+      allDay: data.all_day,
+      addressLine1: data.address_line_1,
+      addressLine2: data.address_line_2,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zip_code,
+      country: data.country,
     };
   }
 
@@ -5163,7 +5217,17 @@ export class SupabaseStorage implements IStorage {
       start_time: insertException.startTime,
       end_time: insertException.endTime,
       is_available: insertException.isAvailable ?? false,
-      reason: insertException.reason ?? null
+      reason: insertException.reason ?? null,
+      title: insertException.title ?? null,
+      category: insertException.category ?? null,
+      notes: insertException.notes ?? null,
+      all_day: insertException.allDay ?? false,
+      address_line_1: insertException.addressLine1 ?? null,
+      address_line_2: insertException.addressLine2 ?? null,
+      city: insertException.city ?? null,
+      state: insertException.state ?? null,
+      zip_code: insertException.zipCode ?? null,
+      country: insertException.country ?? 'United States'
     };
 
     const { data, error } = await supabaseAdmin
@@ -5184,7 +5248,17 @@ export class SupabaseStorage implements IStorage {
       endTime: data.end_time,
       isAvailable: data.is_available,
       reason: data.reason,
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      title: data.title,
+      category: data.category,
+      notes: data.notes,
+      allDay: data.all_day,
+      addressLine1: data.address_line_1,
+      addressLine2: data.address_line_2,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zip_code,
+      country: data.country,
     };
   }
 
@@ -5194,7 +5268,17 @@ export class SupabaseStorage implements IStorage {
       start_time: insertException.startTime,
       end_time: insertException.endTime,
       is_available: insertException.isAvailable ?? false,
-      reason: insertException.reason ?? null
+      reason: insertException.reason ?? null,
+      title: insertException.title ?? null,
+      category: insertException.category ?? null,
+      notes: insertException.notes ?? null,
+      all_day: insertException.allDay ?? false,
+      address_line_1: insertException.addressLine1 ?? null,
+      address_line_2: insertException.addressLine2 ?? null,
+      city: insertException.city ?? null,
+      state: insertException.state ?? null,
+      zip_code: insertException.zipCode ?? null,
+      country: insertException.country ?? 'United States'
     };
     const { data, error } = await supabaseAdmin
       .from('availability_exceptions')
@@ -5215,7 +5299,17 @@ export class SupabaseStorage implements IStorage {
       endTime: data.end_time,
       isAvailable: data.is_available,
       reason: data.reason,
-      createdAt: data.created_at
+      createdAt: data.created_at,
+      title: data.title,
+      category: data.category,
+      notes: data.notes,
+      allDay: data.all_day,
+      addressLine1: data.address_line_1,
+      addressLine2: data.address_line_2,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zip_code,
+      country: data.country,
     };
   }
 
@@ -5254,7 +5348,17 @@ export class SupabaseStorage implements IStorage {
       endTime: row.end_time,
       isAvailable: row.is_available,
       reason: row.reason,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      title: row.title,
+      category: row.category,
+      notes: row.notes,
+      allDay: row.all_day,
+      addressLine1: row.address_line_1,
+      addressLine2: row.address_line_2,
+      city: row.city,
+      state: row.state,
+      zipCode: row.zip_code,
+      country: row.country,
     }));
     console.debug(`[AVAILABILITY EXCEPTIONS] getAvailabilityExceptionsByDateRange(${startDate}, ${endDate}) -> ${mapped.length} rows`);
     return mapped;
