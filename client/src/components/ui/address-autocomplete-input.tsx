@@ -114,6 +114,7 @@ export const AddressAutocompleteInput = forwardRef<HTMLInputElement, AddressAuto
               className,
               inputClassName
             )}
+            autoComplete="off"
             {...inputProps}
           />
           

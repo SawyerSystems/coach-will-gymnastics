@@ -1186,10 +1186,8 @@ With the right setup and approach, home practice can accelerate your child's gym
       ...insertException, 
       id,
       createdAt: new Date(),
-      // Convert Date to string format for compatibility
-      date: insertException.date instanceof Date ? 
-        insertException.date.toISOString().split('T')[0] : 
-        insertException.date,
+      // Date is already a string from the schema
+      date: insertException.date,
       reason: insertException.reason ?? null,
       isAvailable: insertException.isAvailable ?? false,
       // Convert undefined to null for all new fields
@@ -1218,10 +1216,8 @@ With the right setup and approach, home practice can accelerate your child's gym
       ...existing,
       ...insertException,
       id,
-      // Convert Date to string format for compatibility
-      date: insertException.date instanceof Date ? 
-        insertException.date.toISOString().split('T')[0] : 
-        insertException.date,
+      // Date is already a string from the schema
+      date: insertException.date,
       reason: insertException.reason ?? null,
       // Convert undefined to null for all new fields
       title: insertException.title ?? null,

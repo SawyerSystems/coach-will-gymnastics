@@ -158,13 +158,13 @@ export default function Admin() {
   });
   
   const [newException, setNewException] = useState<InsertAvailabilityException>({
-    date: new Date(),
+    date: new Date().toISOString().split('T')[0],
     startTime: "09:00",
     endTime: "17:00",
     isAvailable: false,
     reason: "",
     title: "",
-    category: undefined,
+    category: "Meeting",
     notes: "",
     allDay: false,
     addressLine1: "",
@@ -189,13 +189,13 @@ export default function Admin() {
   const handleEditException = (exception: AvailabilityException) => {
     setEditingException(exception);
     setNewException({
-      date: new Date(exception.date),
+      date: exception.date, // Keep as string to avoid timezone issues
       startTime: exception.startTime || "",
       endTime: exception.endTime || "",
       isAvailable: exception.isAvailable,
       reason: exception.reason || "",
       title: exception.title || "",
-      category: exception.category as "Coaching: Team Meet/Competition" | "Coaching: Practice" | "Own: Team Meet/Competition" | "Own: Practice" | "Medical Appointment" | "Dental Appointment" | "Other Appointment" | "Meeting" | "Busy: Work" | "Busy: Personal" | undefined,
+      category: (exception.category as any) || "Meeting", // Default to Meeting if no category
       notes: exception.notes || "",
       allDay: exception.allDay || false,
       addressLine1: exception.addressLine1 || "",
@@ -219,7 +219,7 @@ export default function Admin() {
           setEditingException(null);
           // Reset form
           setNewException({
-            date: new Date(),
+            date: new Date().toISOString().split('T')[0],
             startTime: "09:00",
             endTime: "17:00",
             isAvailable: false,
@@ -245,13 +245,13 @@ export default function Admin() {
     setIsAddAvailabilityBlockOpen(false);
     // Reset form
     setNewException({
-      date: new Date(),
+      date: new Date().toISOString().split('T')[0],
       startTime: "09:00",
       endTime: "17:00",
       isAvailable: false,
       reason: "",
       title: "",
-      category: undefined,
+      category: "Meeting",
       notes: "",
       allDay: false,
       addressLine1: "",
@@ -2645,7 +2645,7 @@ export default function Admin() {
                       <div className="flex items-center justify-between">
                         <h3 className="text-2xl font-bold text-[#0F0276] dark:text-white flex items-center gap-3">
                           <Calendar className="h-7 w-7 text-[#D8BD2A]" />
-                          Events & Availability Blocks
+                          Events & Schedule
                           <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
                             {availabilityExceptions?.length || 0} items
                           </Badge>
@@ -2655,7 +2655,7 @@ export default function Admin() {
                           className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]"
                         >
                           <Plus className="h-5 w-5 mr-2" />
-                          Add Event or Block
+                          Add Event
                         </Button>
                       </div>
 
@@ -2665,14 +2665,29 @@ export default function Admin() {
                           <BigCalendar
                             localizer={localizer}
                             events={
-                              availabilityExceptions?.map(exception => ({
-                                id: exception.id,
-                                title: exception.title || exception.reason || 'Event',
-                                start: new Date(exception.date + (exception.startTime ? `T${exception.startTime}` : 'T00:00')),
-                                end: new Date(exception.date + (exception.endTime ? `T${exception.endTime}` : exception.allDay ? 'T23:59' : 'T01:00')),
-                                allDay: exception.allDay,
-                                resource: exception
-                              })) || []
+                              availabilityExceptions?.map(exception => {
+                                // Parse date components to avoid timezone conversion issues
+                                const [year, month, day] = exception.date.split('-').map(Number);
+                                
+                                const startDate = exception.startTime 
+                                  ? new Date(exception.date + `T${exception.startTime}`)
+                                  : new Date(year, month - 1, day, 0, 0, 0); // month is 0-indexed
+                                
+                                const endDate = exception.endTime 
+                                  ? new Date(exception.date + `T${exception.endTime}`)
+                                  : exception.allDay 
+                                    ? new Date(year, month - 1, day, 23, 59, 59)
+                                    : new Date(year, month - 1, day, 1, 0, 0);
+                                
+                                return {
+                                  id: exception.id,
+                                  title: exception.title || exception.reason || 'Event',
+                                  start: startDate,
+                                  end: endDate,
+                                  allDay: exception.allDay,
+                                  resource: exception
+                                };
+                              }) || []
                             }
                             startAccessor="start"
                             endAccessor="end"
@@ -2729,7 +2744,7 @@ export default function Admin() {
                                     borderColor = '#4B5563';
                                 }
                               } else {
-                                // Availability blocks (no category) are red
+                                // All events block availability, styled by category
                                 backgroundColor = '#EF4444';
                                 borderColor = '#DC2626';
                               }
@@ -2784,7 +2799,7 @@ export default function Admin() {
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 bg-red-500 rounded"></div>
-                              <span>Availability Blocks</span>
+                              <span>All Events</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 bg-purple-500 rounded"></div>
@@ -2837,19 +2852,31 @@ export default function Admin() {
                         <AdminCardContent>
                           <div className="grid grid-cols-1 gap-4">
                             {availabilityExceptions
-                              ?.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by closest date first
+                              ?.sort((a, b) => {
+                                // Parse dates to avoid timezone issues when sorting
+                                const [yearA, monthA, dayA] = a.date.split('-').map(Number);
+                                const [yearB, monthB, dayB] = b.date.split('-').map(Number);
+                                const dateA = new Date(yearA, monthA - 1, dayA);
+                                const dateB = new Date(yearB, monthB - 1, dayB);
+                                return dateA.getTime() - dateB.getTime();
+                              })
                               ?.map((exception) => (
                                 <div key={exception.id} className="border-l-4 border-[#D8BD2A] bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
                                   <div className="flex justify-between items-start">
                                     <div className="space-y-2 flex-1">
                                       <div className="flex items-center gap-3">
                                         <div className="text-lg font-bold text-[#0F0276] dark:text-white">
-                                          {new Date(exception.date).toLocaleDateString('en-US', { 
-                                            weekday: 'long', 
-                                            year: 'numeric', 
-                                            month: 'long', 
-                                            day: 'numeric' 
-                                          })}
+                                          {(() => {
+                                            // Parse date to avoid timezone issues
+                                            const [year, month, day] = exception.date.split('-').map(Number);
+                                            const localDate = new Date(year, month - 1, day);
+                                            return localDate.toLocaleDateString('en-US', { 
+                                              weekday: 'long', 
+                                              year: 'numeric', 
+                                              month: 'long', 
+                                              day: 'numeric' 
+                                            });
+                                          })()}
                                         </div>
                                         {exception.title && (
                                           <Badge variant="outline" className="bg-[#D8BD2A]/10 border-[#D8BD2A] text-[#0F0276]">
@@ -2938,7 +2965,7 @@ export default function Admin() {
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No events or blocks found</h3>
                                 <p className="text-slate-600 dark:text-slate-200 max-w-md mx-auto">
-                                  No events or availability blocks have been created yet. Use "Add Event or Block" to get started.
+                                  No events have been created yet. Use "Add Event" to get started.
                                 </p>
                               </div>
                             )}
@@ -4206,108 +4233,72 @@ export default function Admin() {
           </div>
         </AdminModal>
 
-        {/* Enhanced Add Availability Block / Personal Event Modal */}
+        {/* Enhanced Event Scheduler Modal */}
         <AdminModal 
           isOpen={isModalOpen} 
           onClose={handleCancelEdit}
-          title={editingException ? "Edit Event or Block Time" : "Add Event or Block Time"}
+          title={editingException ? "Edit Event" : "Add Event"}
           size="4xl"
           showCloseButton={false}
         >
-          {/* Unified Event/Block Form */}
+          {/* Event Form */}
           <div className="space-y-6">
-            {/* Type Selection */}
+            {/* Date and Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Type</Label>
-                <Select
-                  value={newException.category ? "event" : "block"}
-                  onValueChange={(value) => {
-                    if (value === "block") {
-                      setNewException({
-                        ...newException,
-                        category: undefined,
-                        title: newException.title || "",
-                        reason: newException.reason || "Unavailable"
-                      });
-                    } else {
-                      setNewException({
-                        ...newException,
-                        category: "Meeting" as any,
-                        title: newException.title || "",
-                        reason: ""
-                      });
-                    }
-                  }}
-                >
-                  <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="block">🚫 Availability Block</SelectItem>
-                    <SelectItem value="event">📅 Personal Event</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div>
                 <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Date *</Label>
                 <Input
                   type="date"
-                  value={newException.date instanceof Date ? newException.date.toISOString().split('T')[0] : ''}
+                  value={newException.date || ''}
                   onChange={(e) => setNewException({
                     ...newException,
-                    date: new Date(e.target.value)
+                    date: e.target.value // Keep as string to avoid timezone issues
                   })}
                   className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
                 />
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Event Category</Label>
+                <Select
+                  value={newException.category || 'Meeting'}
+                  onValueChange={(value) => setNewException({
+                    ...newException,
+                    category: value as any
+                  })}
+                >
+                  <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
+                    <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
+                    <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
+                    <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
+                    <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
+                    <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
+                    <SelectItem value="Meeting">🤝 Meeting</SelectItem>
+                    <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
+                    <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
+                    <SelectItem value="Other Appointment">📅 Other Appointment</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Title and Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">
-                  {newException.category ? "Event Title *" : "Block Title"}
-                </Label>
-                <Input
-                  value={newException.title || ''}
-                  onChange={(e) => setNewException({
-                    ...newException,
-                    title: e.target.value || undefined
-                  })}
-                  placeholder={newException.category ? "e.g., Team Competition, Doctor Visit" : "e.g., Vacation Day, Sick Leave"}
-                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                />
-              </div>
-
-              {newException.category && (
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Event Category</Label>
-                  <Select
-                    value={newException.category || ''}
-                    onValueChange={(value) => setNewException({
-                      ...newException,
-                      category: value as any
-                    })}
-                  >
-                    <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
-                      <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
-                      <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
-                      <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
-                      <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
-                      <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
-                      <SelectItem value="Meeting">🤝 Meeting</SelectItem>
-                      <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
-                      <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+            {/* Title */}
+            <div>
+              <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Event Title *</Label>
+              <Input
+                value={newException.title || ''}
+                onChange={(e) => setNewException({
+                  ...newException,
+                  title: e.target.value || undefined
+                })}
+                placeholder="e.g., Team Competition, Doctor Visit, Vacation Day"
+                className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+              />
             </div>
 
             {/* Time Settings */}
@@ -4323,7 +4314,7 @@ export default function Admin() {
                   })}
                 />
                 <Label htmlFor="all-day" className="text-sm font-semibold text-[#0F0276] dark:text-white">
-                  All Day {newException.category ? "Event" : "Block"}
+                  All Day Event
                 </Label>
               </div>
 
@@ -4358,36 +4349,20 @@ export default function Admin() {
               )}
             </div>
 
-            {/* Reason/Notes (conditional based on type) */}
-            {!newException.category ? (
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Reason</Label>
-                <Textarea
-                  value={newException.reason || ''}
-                  onChange={(e) => setNewException({
-                    ...newException,
-                    reason: e.target.value
-                  })}
-                  placeholder="Why is this time blocked? (optional)"
-                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] resize-none"
-                  rows={3}
-                />
-              </div>
-            ) : (
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Notes</Label>
-                <Textarea
-                  value={newException.notes || ''}
-                  onChange={(e) => setNewException({
-                    ...newException,
-                    notes: e.target.value
-                  })}
-                  placeholder="Additional details about this event (optional)"
-                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] resize-none"
-                  rows={3}
-                />
-              </div>
-            )}
+            {/* Notes */}
+            <div>
+              <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Notes</Label>
+              <Textarea
+                value={newException.notes || ''}
+                onChange={(e) => setNewException({
+                  ...newException,
+                  notes: e.target.value
+                })}
+                placeholder="Additional details about this event (optional)"
+                className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] resize-none"
+                rows={3}
+              />
+            </div>
 
             {/* Location (for all exceptions) */}
             <div className="space-y-4">
@@ -4508,8 +4483,10 @@ export default function Admin() {
                 onClick={() => {
                   const formData = {
                     ...newException,
+                    date: typeof newException.date === 'string' ? newException.date : new Date().toISOString().split('T')[0],
                     isAvailable: false, // All entries block availability
-                    reason: newException.category ? newException.title : newException.reason // Use title as reason for events
+                    reason: newException.title || newException.reason, // Use title as the main reason
+                    category: newException.category || 'Meeting' // Default to Meeting if no category selected
                   };
                   
                   if (editingException) {
@@ -4520,13 +4497,13 @@ export default function Admin() {
                         setIsAddAvailabilityBlockOpen(false);
                         // Reset form
                         setNewException({
-                          date: new Date(),
+                          date: new Date().toISOString().split('T')[0],
                           startTime: "09:00",
                           endTime: "17:00",
                           isAvailable: false,
                           reason: "",
                           title: "",
-                          category: undefined,
+                          category: "Meeting",
                           notes: "",
                           allDay: false,
                           addressLine1: "",
@@ -4542,10 +4519,7 @@ export default function Admin() {
                 }} 
                 className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] text-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6 font-semibold"
               >
-                {editingException ? 
-                  (newException.category ? "📅 Update Event" : "🚫 Update Block") : 
-                  (newException.category ? "📅 Add Event" : "🚫 Block Time")
-                }
+                {editingException ? "📅 Update Event" : " Add Event"}
               </Button>
             </div>
           </div>

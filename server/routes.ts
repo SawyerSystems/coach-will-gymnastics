@@ -8966,7 +8966,7 @@ setTimeout(async () => {
     }
   });
 
-  app.post("/api/availability-exceptions", async (req, res) => {
+  app.post("/api/availability-exceptions", isAdminAuthenticated, async (req, res) => {
     try {
       // Handle both camelCase and snake_case input
       const requestData = req.body;
@@ -9024,20 +9024,57 @@ setTimeout(async () => {
     }
   });
 
-  app.put("/api/availability-exceptions/:id", async (req, res) => {
+  app.put("/api/availability-exceptions/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const exception = await storage.updateAvailabilityException(id, req.body);
+      
+      // Handle both camelCase and snake_case input (same as POST)
+      const requestData = req.body;
+      
+      // Direct property access to handle field name variations
+      const startTime = requestData.startTime || requestData.start_time;
+      const endTime = requestData.endTime || requestData.end_time;
+      
+      const mappedData = {
+        date: requestData.date,
+        startTime: startTime || null, // Convert empty string to null
+        endTime: endTime || null,     // Convert empty string to null
+        isAvailable: requestData.isAvailable ?? false,
+        reason: requestData.reason || 'Blocked time',
+        title: requestData.title,
+        category: requestData.category,
+        notes: requestData.notes,
+        allDay: requestData.allDay ?? false,
+        addressLine1: requestData.addressLine1,
+        addressLine2: requestData.addressLine2,
+        city: requestData.city,
+        state: requestData.state,
+        zipCode: requestData.zipCode,
+        country: requestData.country || 'United States'
+      };
+      
+      // Basic validation - allow missing startTime/endTime for all-day events
+      if (!mappedData.allDay && mappedData.startTime && mappedData.endTime) {
+        const timeRegex = /^\d{1,2}:\d{2}$/;
+        if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
+          return res.status(400).json({ 
+            message: "Invalid time format. Use HH:MM format" 
+          });
+        }
+      }
+      
+      const exception = await storage.updateAvailabilityException(id, mappedData);
       if (!exception) {
         return res.status(404).json({ message: "Availability exception not found" });
       }
       res.json(exception);
     } catch (error) {
+      console.error('Error updating availability exception:', error);
       res.status(400).json({ message: "Failed to update availability exception" });
     }
   });
 
-  app.delete("/api/availability-exceptions/:id", async (req, res) => {
+  app.delete("/api/availability-exceptions/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteAvailabilityException(id);
