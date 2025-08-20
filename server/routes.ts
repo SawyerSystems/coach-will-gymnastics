@@ -19,6 +19,7 @@ import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
 import { passwordSetupRouter } from "./password-setup";
 import { SupabaseStorage } from "./storage";
 import { supabase, supabaseAdmin } from "./supabase-client";
+import { expandSeriesForRange } from './recurrence';
 import { timeSlotLocksRouter } from "./time-slot-locks";
 import { LessonUtils, ResponseUtils, ValidationUtils } from "./utils";
 import { determineBookingStatus } from "./utils/booking-status";
@@ -8994,6 +8995,53 @@ setTimeout(async () => {
     } catch (error) {
       console.error('❌ [ADMIN] Error fetching availability exceptions:', error);
       res.status(500).json({ message: "Failed to fetch availability exceptions" });
+    }
+  });
+
+  // Events (recurrence series) Routes - initial scaffolding
+  app.get("/api/events", isAdminAuthenticated, async (req, res) => {
+    try {
+      const start = (req.query.start as string) || new Date(new Date().setDate(new Date().getDate() - 30)).toISOString();
+      const end = (req.query.end as string) || new Date(new Date().setDate(new Date().getDate() + 60)).toISOString();
+      const rows = await storage.listEventsByRange(start, end);
+  const expand = String(req.query.expand || 'false') === 'true';
+  if (!expand) return res.json(rows);
+  const instances = expandSeriesForRange(rows as any, start, end);
+  res.json(instances);
+    } catch (err) {
+      console.error('Error listing events:', err);
+      res.status(500).json({ message: 'Failed to list events' });
+    }
+  });
+
+  app.post("/api/events", isAdminAuthenticated, async (req, res) => {
+    try {
+      const created = await storage.createEvent(req.body);
+      res.json(created);
+    } catch (err: any) {
+      console.error('Error creating event:', err);
+      res.status(400).json({ message: err?.message || 'Failed to create event' });
+    }
+  });
+
+  app.put("/api/events/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const updated = await storage.updateEvent(req.params.id, req.body);
+      if (!updated) return res.status(404).json({ message: 'Event not found' });
+      res.json(updated);
+    } catch (err) {
+      console.error('Error updating event:', err);
+      res.status(400).json({ message: 'Failed to update event' });
+    }
+  });
+
+  app.delete("/api/events/:id", isAdminAuthenticated, async (req, res) => {
+    try {
+      const ok = await storage.deleteEvent(req.params.id);
+      res.json({ success: ok });
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      res.status(400).json({ message: 'Failed to delete event' });
     }
   });
 

@@ -45,10 +45,10 @@ import { TwoStepFocusAreas } from "./two-step-focus-areas";
 import { UpdatedWaiverModal } from "./updated-waiver-modal";
 
 // Initialize Stripe
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+if (!(import.meta as any).env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing Stripe public key');
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLIC_KEY);
 
 interface BookingModalProps {
   isOpen?: boolean;

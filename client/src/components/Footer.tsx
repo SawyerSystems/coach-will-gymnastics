@@ -1,9 +1,11 @@
 
+/// <reference types="vite/client" />
+
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { MapPin, Phone, Mail, Clock, Instagram, Youtube, MessageCircle, Facebook } from "lucide-react";
-import cwtLogo from "@assets/CWT_Circle_LogoSPIN.png";
+import cwtLogo from "/CWT_Circle_LogoSPIN.png";
 
 interface HourSchedule {
   available: boolean;

@@ -10,8 +10,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 // Import logo assets for fallback
-import defaultLogoSpin from "@assets/CWT_Circle_LogoSPIN.png";
-import defaultLogoText from "@assets/CoachWillTumblesText.png";
+import defaultLogoSpin from "/CWT_Circle_LogoSPIN.png";
+import defaultLogoText from "/assets/CoachWillTumblesText.png";
 
 export const Navigation = memo(function Navigation() {
   const [location] = useLocation();

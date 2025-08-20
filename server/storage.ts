@@ -1,6 +1,6 @@
 // ...existing code...
 // ...existing code...
-import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type CookieConsent, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertCookieConsent, type InsertFocusArea, type InsertParent, type InsertPrivacyRequest, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type PrivacyRequest, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, type ActivityLog, type InsertActivityLog, ActivityActorType, ActivityActionType, ActivityCategory, ActivityTargetType, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from "../shared/schema";
+import { type Admin, type Apparatus, type ArchivedWaiver, type Athlete, type AthleteSkill, type AthleteSkillVideo, type AthleteWithWaiverStatus, type Availability, type AvailabilityException, type BlogEmailSignup, type BlogPost, type Booking, type BookingWithRelations, type CookieConsent, type FocusArea, type InsertAdmin, type InsertApparatus, type InsertArchivedWaiver, type InsertAthlete, type InsertAthleteSkill, type InsertAthleteSkillVideo, type InsertAvailability, type InsertAvailabilityException, type InsertBlogPost, type InsertBooking, type InsertCookieConsent, type InsertFocusArea, type InsertParent, type InsertPrivacyRequest, type InsertProgressShareLink, type InsertSideQuest, type InsertSiteInquiry, type InsertSkill, type InsertTip, type InsertWaiver, type Parent, type PrivacyRequest, type ProgressShareLink, type SideQuest, type SiteInquiry, type Skill, type Tip, type Waiver, type ActivityLog, type InsertActivityLog, ActivityActorType, ActivityActionType, ActivityCategory, ActivityTargetType, AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum, type Event, type InsertEvent } from "../shared/schema";
 import Stripe from 'stripe';
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { supabaseServiceRole } from "./supabase-service-role";
@@ -117,6 +117,12 @@ export interface IStorage {
   updateAvailabilityException(id: number, exception: InsertAvailabilityException): Promise<AvailabilityException | undefined>;
   deleteAvailabilityException(id: number): Promise<boolean>;
   getAvailabilityExceptionsByDateRange(startDate: string, endDate: string): Promise<AvailabilityException[]>;
+
+  // Events (recurrence series)
+  listEventsByRange(startIso: string, endIso: string): Promise<Event[]>; // raw series/overrides rows
+  createEvent(input: InsertEvent): Promise<Event>;
+  updateEvent(id: string, input: Partial<InsertEvent>): Promise<Event | undefined>;
+  deleteEvent(id: string): Promise<boolean>;
 
   // Admins
   getAllAdmins(): Promise<Admin[]>;
@@ -402,6 +408,7 @@ export class MemStorage implements IStorage {
   private tips: Map<number, Tip>;
   private availability: Map<number, Availability>;
   private availabilityExceptions: Map<number, AvailabilityException>;
+  private eventsMap?: Map<string, Event>;
   private parents: Map<number, Parent>;
   private athletes: Map<number, Athlete>;
   private admins: Map<number, Admin>;
@@ -431,7 +438,8 @@ export class MemStorage implements IStorage {
     this.blogPosts = new Map();
     this.tips = new Map();
     this.availability = new Map();
-    this.availabilityExceptions = new Map();
+  this.availabilityExceptions = new Map();
+  this.eventsMap = new Map();
     this.parents = new Map();
     this.athletes = new Map();
     this.admins = new Map();
@@ -1690,6 +1698,62 @@ With the right setup and approach, home practice can accelerate your child's gym
   async bulkUpsertSiteFaqs(faqs: any[]): Promise<any[]> {
     // Not implemented in MemStorage
     return faqs.map(faq => ({ id: Math.random(), ...faq }));
+  }
+
+  // Events (recurrence series) - MemStorage implementation
+  async listEventsByRange(_startIso: string, _endIso: string): Promise<Event[]> {
+    return Array.from(this.eventsMap?.values() || []).filter((e): e is Event => !!e && !e.isDeleted);
+  }
+
+  async createEvent(input: InsertEvent): Promise<Event> {
+    const id = (input.id as string) || (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+    const seriesId = (input.seriesId as string) || id;
+    const now = new Date().toISOString();
+    const ev: Event = {
+      id,
+      seriesId,
+      parentEventId: (input.parentEventId as any) ?? null,
+      title: input.title ?? "",
+      notes: (input as any).notes ?? null,
+      location: (input as any).location ?? null,
+      isAllDay: input.isAllDay ?? false,
+      timezone: input.timezone ?? 'America/Los_Angeles',
+      startAt: (input.startAt as any) ?? (now as any),
+      endAt: (input.endAt as any) ?? (now as any),
+      recurrenceRule: (input as any).recurrenceRule ?? null,
+      recurrenceEndAt: (input as any).recurrenceEndAt ?? null,
+      recurrenceExceptions: (input as any).recurrenceExceptions ?? [],
+      createdBy: (input as any).createdBy ?? null,
+      updatedBy: (input as any).updatedBy ?? null,
+      isDeleted: false,
+      createdAt: (input as any).createdAt ?? (now as any),
+      updatedAt: (input as any).updatedAt ?? (now as any),
+    };
+    this.eventsMap?.set(id, ev);
+    return ev;
+  }
+
+  async updateEvent(id: string, input: Partial<InsertEvent>): Promise<Event | undefined> {
+    const existing = this.eventsMap?.get(id);
+    if (!existing) return undefined;
+    const updated: Event = {
+      ...existing,
+      ...(input as any),
+      id: existing.id,
+      seriesId: (input.seriesId as any) ?? existing.seriesId,
+      updatedAt: new Date().toISOString() as any,
+    };
+    this.eventsMap?.set(id, updated);
+    return updated;
+  }
+
+  async deleteEvent(id: string): Promise<boolean> {
+    const existing = this.eventsMap?.get(id);
+    if (!existing) return false;
+    existing.isDeleted = true;
+    existing.updatedAt = new Date().toISOString() as any;
+    this.eventsMap?.set(id, existing);
+    return true;
   }
 
   // Site Inquiries (MemStorage stubs)
@@ -5653,6 +5717,102 @@ export class SupabaseStorage implements IStorage {
         signer_name: parent ? `${parent.first_name} ${parent.last_name}` : 'Unknown Signer'
       });
     });
+  }
+
+
+  // Events (recurrence series) - Supabase implementation
+  async listEventsByRange(startIso: string, endIso: string): Promise<Event[]> {
+    // For now, return all non-deleted rows; range filtering can be added later
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .select('*')
+      .eq('is_deleted', false)
+      .order('start_at', { ascending: true });
+
+    if (error) {
+      console.error('Error listing events:', error);
+      throw new Error('Failed to list events');
+    }
+    return (data || []) as unknown as Event[];
+  }
+
+  async createEvent(input: InsertEvent): Promise<Event> {
+    const insertData: any = {
+      // Map camelCase to snake_case where needed
+      id: input.id,
+      series_id: (input.seriesId as any) || input.id,
+      parent_event_id: (input.parentEventId as any) ?? null,
+      title: input.title ?? '',
+      notes: (input as any).notes ?? null,
+      location: (input as any).location ?? null,
+      is_all_day: input.isAllDay ?? false,
+      timezone: input.timezone ?? 'America/Los_Angeles',
+      start_at: input.startAt as any,
+      end_at: input.endAt as any,
+      recurrence_rule: (input as any).recurrenceRule ?? null,
+      recurrence_end_at: (input as any).recurrenceEndAt ?? null,
+      recurrence_exceptions: (input as any).recurrenceExceptions ?? [],
+      created_by: (input as any).createdBy ?? null,
+      updated_by: (input as any).updatedBy ?? null,
+      is_deleted: (input as any).isDeleted ?? false,
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .insert(insertData)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error creating event:', error);
+      throw new Error('Failed to create event');
+    }
+    return data as unknown as Event;
+  }
+
+  async updateEvent(id: string, input: Partial<InsertEvent>): Promise<Event | undefined> {
+    const updateData: any = { updated_at: new Date().toISOString() };
+    if (input.seriesId !== undefined) updateData.series_id = input.seriesId as any;
+    if (input.parentEventId !== undefined) updateData.parent_event_id = input.parentEventId as any;
+    if (input.title !== undefined) updateData.title = input.title;
+    if ((input as any).notes !== undefined) updateData.notes = (input as any).notes;
+    if ((input as any).location !== undefined) updateData.location = (input as any).location;
+    if (input.isAllDay !== undefined) updateData.is_all_day = input.isAllDay;
+    if (input.timezone !== undefined) updateData.timezone = input.timezone;
+    if (input.startAt !== undefined) updateData.start_at = input.startAt as any;
+    if (input.endAt !== undefined) updateData.end_at = input.endAt as any;
+    if ((input as any).recurrenceRule !== undefined) updateData.recurrence_rule = (input as any).recurrenceRule;
+    if ((input as any).recurrenceEndAt !== undefined) updateData.recurrence_end_at = (input as any).recurrenceEndAt;
+    if ((input as any).recurrenceExceptions !== undefined) updateData.recurrence_exceptions = (input as any).recurrenceExceptions;
+    if ((input as any).createdBy !== undefined) updateData.created_by = (input as any).createdBy;
+    if ((input as any).updatedBy !== undefined) updateData.updated_by = (input as any).updatedBy;
+    if ((input as any).isDeleted !== undefined) updateData.is_deleted = (input as any).isDeleted;
+
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error updating event:', error);
+      throw new Error('Failed to update event');
+    }
+    return (data || undefined) as unknown as Event | undefined;
+  }
+
+  async deleteEvent(id: string): Promise<boolean> {
+    const { error } = await supabaseAdmin
+      .from('events')
+      .update({ is_deleted: true, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting event:', error);
+      return false;
+    }
+    return true;
   }
 
   async updateWaiver(id: number, waiver: Partial<InsertWaiver>): Promise<Waiver | undefined> {

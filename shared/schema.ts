@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, date, decimal, integer, json, pgEnum, pgTable, serial, text, time, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, decimal, integer, json, pgEnum, pgTable, serial, text, time, timestamp, varchar, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -416,6 +416,31 @@ export const skills = pgTable("skills", {
   apparatusId: integer("apparatus_id").references(() => apparatus.id),
   referenceVideos: json("reference_videos").$type<VideoReference[]>().default([]),
 });
+
+// Events (recurring series + overrides). Must match Supabase schema in attached_assets/complete_current_schema.txt after SQL is applied.
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  seriesId: uuid("series_id").notNull().defaultRandom(),
+  parentEventId: uuid("parent_event_id"),
+  title: text("title").notNull().default(""),
+  notes: text("notes"),
+  location: text("location"),
+  isAllDay: boolean("is_all_day").notNull().default(false),
+  timezone: text("timezone").notNull().default("America/Los_Angeles"),
+  startAt: timestamp("start_at", { withTimezone: true }).notNull(),
+  endAt: timestamp("end_at", { withTimezone: true }).notNull(),
+  recurrenceRule: text("recurrence_rule"),
+  recurrenceEndAt: timestamp("recurrence_end_at", { withTimezone: true }),
+  recurrenceExceptions: json("recurrence_exceptions").$type<string[]>().notNull().default([] as unknown as any),
+  createdBy: integer("created_by").references((): any => admins.id),
+  updatedBy: integer("updated_by").references((): any => admins.id),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = typeof events.$inferInsert;
 
 export const athleteSkills = pgTable("athlete_skills", {
   id: serial("id").primaryKey(),
