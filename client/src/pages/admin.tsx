@@ -2863,8 +2863,8 @@ export default function Admin() {
                               })
                               ?.map((exception) => (
                                 <div key={exception.id} className="border-l-4 border-[#D8BD2A] bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
-                                  <div className="flex justify-between items-start">
-                                    <div className="space-y-2 flex-1">
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                                    <div className="space-y-2 flex-1 min-w-0">
                                       <div className="flex items-center gap-3">
                                         <div className="text-lg font-bold text-[#0F0276] dark:text-white">
                                           {(() => {
@@ -2937,7 +2937,7 @@ export default function Admin() {
                                       )}
                                     </div>
 
-                                    <div className="flex gap-2 ml-4">
+                                    <div className="w-full sm:w-auto flex flex-wrap sm:flex-nowrap gap-2 sm:ml-4 justify-start sm:justify-end">
                                       <Button
                                         size="sm"
                                         variant="outline"
@@ -3589,6 +3589,7 @@ export default function Admin() {
           onClose={() => setViewingException(null)}
           title="Event Details"
           size="3xl"
+          showCloseButton={false}
         >
           {viewingException && (
             <div className="space-y-4">

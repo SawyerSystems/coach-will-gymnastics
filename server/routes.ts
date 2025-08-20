@@ -9064,6 +9064,12 @@ setTimeout(async () => {
       // Handle both camelCase and snake_case input (same as POST)
       const requestData = req.body;
       
+      // Load existing record so we can preserve values when fields are omitted
+      const existing = await storage.getAvailabilityException(id);
+      if (!existing) {
+        return res.status(404).json({ message: "Availability exception not found" });
+      }
+
       // Direct property access to handle field name variations
       const startTime = requestData.startTime || requestData.start_time;
       const endTime = requestData.endTime || requestData.end_time;
@@ -9071,29 +9077,55 @@ setTimeout(async () => {
       // Normalize times (allow empty strings to become null)
       const normalizedStart = normalizeTimeToHHMM(startTime);
       const normalizedEnd = normalizeTimeToHHMM(endTime);
-      
+
+      // Determine final allDay value (preserve if omitted)
+      const finalAllDay: boolean = (requestData.allDay ?? existing.allDay) ?? false;
+
+      // Determine final start/end times:
+      // - If allDay, omit both
+      // - If field omitted (undefined), keep existing value
+      // - If provided but invalid (normalize -> null) while non-empty string was sent, we'll catch in validation
+      const startWasProvided = typeof startTime !== 'undefined';
+      const endWasProvided = typeof endTime !== 'undefined';
+
+      const finalStartTime = finalAllDay
+        ? undefined
+        : (startWasProvided
+            ? (normalizedStart ?? undefined)
+            : existing.startTime || undefined);
+      const finalEndTime = finalAllDay
+        ? undefined
+        : (endWasProvided
+            ? (normalizedEnd ?? undefined)
+            : existing.endTime || undefined);
+
       const mappedData = {
-        date: requestData.date,
-        startTime: requestData.allDay ? undefined : (normalizedStart ?? undefined),
-        endTime: requestData.allDay ? undefined : (normalizedEnd ?? undefined),
-        isAvailable: requestData.isAvailable ?? false,
-        reason: requestData.reason || 'Blocked time',
-        title: requestData.title,
-        category: requestData.category,
-        notes: requestData.notes,
-        allDay: requestData.allDay ?? false,
-        addressLine1: requestData.addressLine1,
-        addressLine2: requestData.addressLine2,
-        city: requestData.city,
-        state: requestData.state,
-        zipCode: requestData.zipCode,
-        country: requestData.country || 'United States'
+        date: requestData.date ?? existing.date,
+        startTime: finalStartTime,
+        endTime: finalEndTime,
+        isAvailable: requestData.isAvailable ?? existing.isAvailable ?? false,
+        reason: (requestData.reason ?? existing.reason) || 'Blocked time',
+        title: requestData.title ?? existing.title,
+        category: requestData.category ?? existing.category,
+        notes: requestData.notes ?? existing.notes,
+        allDay: finalAllDay,
+        addressLine1: requestData.addressLine1 ?? existing.addressLine1,
+        addressLine2: requestData.addressLine2 ?? existing.addressLine2,
+        city: requestData.city ?? existing.city,
+        state: requestData.state ?? existing.state,
+        zipCode: requestData.zipCode ?? existing.zipCode,
+        country: requestData.country ?? existing.country ?? 'United States'
       };
       
-      // Basic validation - allow missing startTime/endTime for all-day events
-      if (!mappedData.allDay && mappedData.startTime && mappedData.endTime) {
-        const valid = mappedData.startTime !== null && mappedData.endTime !== null;
-        if (!valid) {
+      // Validation
+      if (!mappedData.allDay) {
+        // Must have both times for a timed event
+        if (!mappedData.startTime || !mappedData.endTime) {
+          return res.status(400).json({ message: "Missing required fields for timed event: startTime and endTime" });
+        }
+        // If both present, ensure they are valid HH:MM (normalization already handled seconds/AMPM)
+        const timeRegex = /^\d{1,2}:\d{2}$/;
+        if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
           return res.status(400).json({ message: "Invalid time format. Use HH:MM format" });
         }
       }
