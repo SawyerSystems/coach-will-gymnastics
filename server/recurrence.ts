@@ -1,6 +1,15 @@
 // Recurrence utilities implemented with Luxon for timezone-aware, DST-correct expansion.
-import type { DateTime as LuxonDateTime, Interval } from 'luxon';
-import { DateTime, Interval as LuxonInterval } from 'luxon';
+import { DateTime, Interval } from 'luxon';
+
+// RecurrenceInstance type definition
+export interface RecurrenceInstance {
+  id: string;
+  title: string;
+  startAt: Date;
+  endAt: Date;
+  isAllDay: boolean;
+  isDeleted: boolean;
+}
 import type { Event } from "../shared/schema";
 
 export type RecurrenceOptions = {
@@ -55,7 +64,7 @@ export function expandSeries(opts: {
   const zone = opts.timezone || 'America/Los_Angeles';
   const durationMs = new Date(opts.endAt).getTime() - new Date(opts.startAt).getTime();
   const exceptionMillis = new Set((opts.exceptions || []).map(s => DateTime.fromISO(s).toUTC().toMillis()));
-  const range = LuxonInterval.fromDateTimes(DateTime.fromISO(opts.rangeStart).toUTC(), DateTime.fromISO(opts.rangeEnd).toUTC());
+  const range = Interval.fromDateTimes(DateTime.fromISO(opts.rangeStart).toUTC(), DateTime.fromISO(opts.rangeEnd).toUTC());
 
   const dtStartLocal = DateTime.fromISO(opts.startAt, { zone });
   const rule = opts.recurrenceRule ? parseRRule(opts.recurrenceRule) : null;
@@ -67,7 +76,7 @@ export function expandSeries(opts: {
     const occEndLocal = occStartLocal.plus({ milliseconds: durationMs });
     const occStartUtc = occStartLocal.toUTC();
     const occEndUtc = occEndLocal.toUTC();
-    const occInterval = LuxonInterval.fromDateTimes(occStartUtc, occEndUtc);
+    const occInterval = Interval.fromDateTimes(occStartUtc, occEndUtc);
     if (occInterval.overlaps(range)) {
       const key = occStartUtc.toMillis();
       if (!exceptionMillis.has(key)) {

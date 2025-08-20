@@ -1297,7 +1297,7 @@ With the right setup and approach, home practice can accelerate your child's gym
       date,
       startTime,
       endTime,
-      isAvailable: sourceEvent.isAvailable || false,
+      isAvailable: !sourceEvent.isAvailabilityBlock, // If event blocks availability, slot is NOT available
       reason: sourceEvent.blockingReason || sourceEvent.title || 'Blocked',
       createdAt: sourceEvent.createdAt,
       title: sourceEvent.title,
@@ -1776,7 +1776,6 @@ With the right setup and approach, home practice can accelerate your child's gym
       recurrenceExceptions: (input as any).recurrenceExceptions ?? [],
       isAvailabilityBlock: (input as any).isAvailabilityBlock ?? false,
       blockingReason: (input as any).blockingReason ?? null,
-      isAvailable: (input as any).isAvailable ?? false,
       createdBy: (input as any).createdBy ?? null,
       updatedBy: (input as any).updatedBy ?? null,
       isDeleted: false,
@@ -5496,7 +5495,7 @@ export class SupabaseStorage implements IStorage {
       date,
       startTime,
       endTime,
-      isAvailable: eventData.is_available,
+      isAvailable: !eventData.is_availability_block, // If event blocks availability, slot is NOT available
       reason: eventData.blocking_reason || eventData.title || 'Blocked',
       createdAt: eventData.created_at,
       title: eventData.title,
@@ -5565,7 +5564,6 @@ export class SupabaseStorage implements IStorage {
       recurrenceExceptions: data.recurrence_exceptions || [],
       isAvailabilityBlock: data.is_availability_block || false,
       blockingReason: data.blocking_reason,
-      isAvailable: data.is_available || false,
       createdBy: data.created_by,
       updatedBy: data.updated_by,
       isDeleted: data.is_deleted || false,

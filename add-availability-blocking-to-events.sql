@@ -4,8 +4,7 @@
 -- Add new columns for availability blocking
 ALTER TABLE events 
 ADD COLUMN IF NOT EXISTS is_availability_block BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN IF NOT EXISTS blocking_reason TEXT,
-ADD COLUMN IF NOT EXISTS is_available BOOLEAN NOT NULL DEFAULT false;
+ADD COLUMN IF NOT EXISTS blocking_reason TEXT;
 
 -- Add index for efficient availability queries
 CREATE INDEX IF NOT EXISTS idx_events_availability_blocking 
@@ -19,4 +18,3 @@ WHERE is_deleted = false;
 
 COMMENT ON COLUMN events.is_availability_block IS 'True if this event blocks availability for bookings (replaces availability_exceptions)';
 COMMENT ON COLUMN events.blocking_reason IS 'Reason for blocking availability (maps to availability_exceptions.reason)';
-COMMENT ON COLUMN events.is_available IS 'For backwards compatibility - usually false for blocking events';

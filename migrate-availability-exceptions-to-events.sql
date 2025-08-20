@@ -4,8 +4,7 @@
 -- First, ensure the events table has the required columns (should already exist from Phase 1)
 ALTER TABLE events 
 ADD COLUMN IF NOT EXISTS is_availability_block BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN IF NOT EXISTS blocking_reason TEXT,
-ADD COLUMN IF NOT EXISTS is_available BOOLEAN NOT NULL DEFAULT false;
+ADD COLUMN IF NOT EXISTS blocking_reason TEXT;
 
 -- Add indexes if they don't exist
 CREATE INDEX IF NOT EXISTS idx_events_availability_blocking 
@@ -34,7 +33,6 @@ INSERT INTO events (
     recurrence_exceptions,
     is_availability_block,
     blocking_reason,
-    is_available,
     created_by,
     updated_by,
     is_deleted,
@@ -72,7 +70,6 @@ SELECT
     '[]'::jsonb as recurrence_exceptions,
     true as is_availability_block,  -- All exceptions become blocking events
     reason as blocking_reason,
-    is_available,
     NULL as created_by,             -- No admin tracking for migrated data
     NULL as updated_by,
     false as is_deleted,
@@ -121,7 +118,6 @@ INSERT INTO events (
   end_at,
   is_availability_block,
   blocking_reason,
-  is_available,
   is_deleted,
   created_at,
   updated_at
@@ -153,7 +149,6 @@ SELECT
   END as end_at,
   true as is_availability_block,
   reason as blocking_reason,
-  is_available,
   false as is_deleted,
   created_at,
   NOW() as updated_at

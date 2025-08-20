@@ -436,7 +436,6 @@ export const events = pgTable("events", {
   // Availability blocking fields (replaces availability_exceptions functionality)
   isAvailabilityBlock: boolean("is_availability_block").notNull().default(false),
   blockingReason: text("blocking_reason"), // Maps to availability_exceptions.reason
-  isAvailable: boolean("is_available").default(false).notNull(), // For backwards compatibility - usually false for blocks
   
   createdBy: integer("created_by").references((): any => admins.id),
   updatedBy: integer("updated_by").references((): any => admins.id),
