@@ -2693,8 +2693,9 @@ export default function Admin() {
                         <div className="h-[600px] p-4">
                           <BigCalendar
                             localizer={localizer}
-                            events={
-                              availabilityExceptions?.map(exception => {
+                            events={[
+                              // Legacy availability exceptions (during migration)
+                              ...(availabilityExceptions?.map(exception => {
                                 // Parse date components to avoid timezone conversion issues
                                 const [year, month, day] = exception.date.split('-').map(Number);
                                 
@@ -2709,73 +2710,172 @@ export default function Admin() {
                                     : new Date(year, month - 1, day, 1, 0, 0);
                                 
                                 return {
-                                  id: exception.id,
-                                  title: exception.title || exception.reason || 'Event',
+                                  id: `exception-${exception.id}`,
+                                  title: exception.title || exception.reason || 'Blocked Time',
                                   start: startDate,
                                   end: endDate,
                                   allDay: exception.allDay,
-                                  resource: exception
+                                  resource: { ...exception, type: 'exception' }
                                 };
-                              }) || []
-                            }
+                              }) || []),
+                              
+                              // Unified events system (new)
+                              ...(events?.map(event => {
+                                // Parse date components to avoid timezone conversion issues
+                                const startDate = event.startTime 
+                                  ? new Date(event.startDate + `T${event.startTime}`)
+                                  : new Date(event.startDate + 'T00:00:00');
+                                
+                                const endDate = event.endTime 
+                                  ? new Date((event.endDate || event.startDate) + `T${event.endTime}`)
+                                  : event.allDay 
+                                    ? new Date((event.endDate || event.startDate) + 'T23:59:59')
+                                    : new Date((event.endDate || event.startDate) + 'T23:59:59');
+                                
+                                return {
+                                  id: `event-${event.id}`,
+                                  title: event.title || event.description || 'Event',
+                                  start: startDate,
+                                  end: endDate,
+                                  allDay: event.allDay,
+                                  resource: { ...event, type: 'event' }
+                                };
+                              }) || [])
+                            ]}
                             startAccessor="start"
                             endAccessor="end"
                             style={{ height: '100%' }}
                             onSelectEvent={(event) => {
-                              setViewingException(event.resource);
+                              const resource = event.resource;
+                              if (resource.type === 'exception') {
+                                setViewingException(resource);
+                              } else if (resource.type === 'event') {
+                                // For now, treat events like exceptions for viewing
+                                // TODO: Create separate event viewing modal if needed
+                                setViewingException({
+                                  ...resource,
+                                  reason: resource.blockingReason || resource.description || 'Event',
+                                  date: resource.startDate,
+                                  startTime: resource.startTime,
+                                  endTime: resource.endTime
+                                });
+                              }
                             }}
                             eventPropGetter={(event) => {
-                              const exception = event.resource;
+                              const resource = event.resource;
                               let backgroundColor = '#D8BD2A';
                               let borderColor = '#D8BD2A';
                               
-                              // Color code by category
-                              if (exception.category) {
-                                switch (exception.category) {
-                                  case 'Coaching: Team Meet/Competition':
-                                    backgroundColor = '#8B5CF6'; // purple
-                                    borderColor = '#7C3AED';
-                                    break;
-                                  case 'Coaching: Practice':
+                              if (resource.type === 'exception') {
+                                // Legacy availability exceptions - always blocking (red)
+                                backgroundColor = '#EF4444'; // red
+                                borderColor = '#DC2626';
+                              } else if (resource.type === 'event') {
+                                // Unified events system
+                                if (resource.isAvailabilityBlock) {
+                                  // Blocking events (red)
+                                  backgroundColor = '#EF4444'; // red
+                                  borderColor = '#DC2626';
+                                } else {
+                                  // Informational events - color by category
+                                  if (resource.category) {
+                                    switch (resource.category) {
+                                      case 'Coaching: Team Meet/Competition':
+                                        backgroundColor = '#8B5CF6'; // purple
+                                        borderColor = '#7C3AED';
+                                        break;
+                                      case 'Coaching: Practice':
+                                        backgroundColor = '#3B82F6'; // blue
+                                        borderColor = '#2563EB';
+                                        break;
+                                      case 'Own: Team Meet/Competition':
+                                        backgroundColor = '#10B981'; // green
+                                        borderColor = '#059669';
+                                        break;
+                                      case 'Own: Practice':
+                                        backgroundColor = '#14B8A6'; // teal
+                                        borderColor = '#0D9488';
+                                        break;
+                                      case 'Medical Appointment':
+                                        backgroundColor = '#EF4444'; // red
+                                        borderColor = '#DC2626';
+                                        break;
+                                      case 'Dental Appointment':
+                                        backgroundColor = '#F97316'; // orange
+                                        borderColor = '#EA580C';
+                                        break;
+                                      case 'Meeting':
+                                        backgroundColor = '#6366F1'; // indigo
+                                        borderColor = '#4F46E5';
+                                        break;
+                                      case 'Busy: Work':
+                                        backgroundColor = '#EAB308'; // yellow
+                                        borderColor = '#CA8A04';
+                                        break;
+                                      case 'Busy: Personal':
+                                        backgroundColor = '#EC4899'; // pink
+                                        borderColor = '#DB2777';
+                                        break;
+                                      default:
+                                        backgroundColor = '#6B7280'; // gray
+                                        borderColor = '#4B5563';
+                                    }
+                                  } else {
+                                    // Default informational event color
                                     backgroundColor = '#3B82F6'; // blue
                                     borderColor = '#2563EB';
-                                    break;
-                                  case 'Own: Team Meet/Competition':
-                                    backgroundColor = '#10B981'; // green
-                                    borderColor = '#059669';
-                                    break;
-                                  case 'Own: Practice':
-                                    backgroundColor = '#14B8A6'; // teal
-                                    borderColor = '#0D9488';
-                                    break;
-                                  case 'Medical Appointment':
-                                    backgroundColor = '#EF4444'; // red
-                                    borderColor = '#DC2626';
-                                    break;
-                                  case 'Dental Appointment':
-                                    backgroundColor = '#F97316'; // orange
-                                    borderColor = '#EA580C';
-                                    break;
-                                  case 'Meeting':
-                                    backgroundColor = '#6366F1'; // indigo
-                                    borderColor = '#4F46E5';
-                                    break;
-                                  case 'Busy: Work':
-                                    backgroundColor = '#EAB308'; // yellow
-                                    borderColor = '#CA8A04';
-                                    break;
-                                  case 'Busy: Personal':
-                                    backgroundColor = '#EC4899'; // pink
-                                    borderColor = '#DB2777';
-                                    break;
-                                  default:
-                                    backgroundColor = '#6B7280'; // gray
-                                    borderColor = '#4B5563';
+                                  }
                                 }
                               } else {
-                                // All events block availability, styled by category
-                                backgroundColor = '#EF4444';
-                                borderColor = '#DC2626';
+                                // Fallback for legacy events without type
+                                if (resource.category) {
+                                  // Use existing category logic
+                                  switch (resource.category) {
+                                    case 'Coaching: Team Meet/Competition':
+                                      backgroundColor = '#8B5CF6'; // purple
+                                      borderColor = '#7C3AED';
+                                      break;
+                                    case 'Coaching: Practice':
+                                      backgroundColor = '#3B82F6'; // blue
+                                      borderColor = '#2563EB';
+                                      break;
+                                    case 'Own: Team Meet/Competition':
+                                      backgroundColor = '#10B981'; // green
+                                      borderColor = '#059669';
+                                      break;
+                                    case 'Own: Practice':
+                                      backgroundColor = '#14B8A6'; // teal
+                                      borderColor = '#0D9488';
+                                      break;
+                                    case 'Medical Appointment':
+                                      backgroundColor = '#EF4444'; // red
+                                      borderColor = '#DC2626';
+                                      break;
+                                    case 'Dental Appointment':
+                                      backgroundColor = '#F97316'; // orange
+                                      borderColor = '#EA580C';
+                                      break;
+                                    case 'Meeting':
+                                      backgroundColor = '#6366F1'; // indigo
+                                      borderColor = '#4F46E5';
+                                      break;
+                                    case 'Busy: Work':
+                                      backgroundColor = '#EAB308'; // yellow
+                                      borderColor = '#CA8A04';
+                                      break;
+                                    case 'Busy: Personal':
+                                      backgroundColor = '#EC4899'; // pink
+                                      borderColor = '#DB2777';
+                                      break;
+                                    default:
+                                      backgroundColor = '#6B7280'; // gray
+                                      borderColor = '#4B5563';
+                                  }
+                                } else {
+                                  // All legacy events without categories block availability
+                                  backgroundColor = '#EF4444';
+                                  borderColor = '#DC2626';
+                                }
                               }
                               
                               return {
