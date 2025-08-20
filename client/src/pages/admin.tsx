@@ -38,6 +38,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import AdminPayoutsTab from "@/components/admin/AdminPayoutsTab";
 import { Label } from "@/components/ui/label";
+import AddressAutocompleteInput from "@/components/ui/address-autocomplete-input";
+import { type AddressComponents } from "@/hooks/use-address-autocomplete";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -4308,9 +4310,11 @@ export default function Admin() {
               )}
             </div>
 
+            {/* Time Settings */}
+            <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <Switch 
-                  id="all-day-block"
+                  id="all-day"
                   checked={newException.allDay || false}
                   onCheckedChange={(checked) => setNewException({
                     ...newException,
@@ -4318,15 +4322,15 @@ export default function Admin() {
                     ...(checked ? { startTime: '', endTime: '' } : {})
                   })}
                 />
-                <Label htmlFor="all-day-block" className="text-sm font-semibold text-red-700">
-                  All Day Block
+                <Label htmlFor="all-day" className="text-sm font-semibold text-[#0F0276] dark:text-white">
+                  All Day {newException.category ? "Event" : "Block"}
                 </Label>
               </div>
 
               {!newException.allDay && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-semibold text-red-700">Start Time</Label>
+                    <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Start Time</Label>
                     <Input
                       type="time"
                       value={newException.startTime || ''}
@@ -4334,11 +4338,12 @@ export default function Admin() {
                         ...newException,
                         startTime: e.target.value
                       })}
-                      className="border-red-200 focus:border-red-500 focus:ring-red-500"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
                     />
                   </div>
+                  
                   <div>
-                    <Label className="text-sm font-semibold text-red-700">End Time</Label>
+                    <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">End Time</Label>
                     <Input
                       type="time"
                       value={newException.endTime || ''}
@@ -4346,75 +4351,146 @@ export default function Admin() {
                         ...newException,
                         endTime: e.target.value
                       })}
-                      className="border-red-200 focus:border-red-500 focus:ring-red-500"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
                     />
                   </div>
                 </div>
               )}
+            </div>
 
+            {/* Reason/Notes (conditional based on type) */}
+            {!newException.category ? (
               <div>
-                <Label className="text-sm font-semibold text-red-700">Reason</Label>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Reason</Label>
                 <Textarea
                   value={newException.reason || ''}
                   onChange={(e) => setNewException({
                     ...newException,
-                    reason: e.target.value || undefined
+                    reason: e.target.value
                   })}
-                  placeholder="e.g., Personal vacation, Medical appointment, etc."
+                  placeholder="Why is this time blocked? (optional)"
+                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] resize-none"
                   rows={3}
-                  className="border-red-200 focus:border-red-500 focus:ring-red-500 resize-y"
                 />
               </div>
+            ) : (
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Notes</Label>
+                <Textarea
+                  value={newException.notes || ''}
+                  onChange={(e) => setNewException({
+                    ...newException,
+                    notes: e.target.value
+                  })}
+                  placeholder="Additional details about this event (optional)"
+                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] resize-none"
+                  rows={3}
+                />
+              </div>
+            )}
 
-              <div className="flex justify-end gap-3">
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    handleCancelEdit();
-                  }}
-                  className="px-6"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={() => {
-                    const blockData = {
+            {/* Location (for all exceptions) */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-[#0F0276] dark:text-white">Location (Optional)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <AddressAutocompleteInput
+                    label="Address Line 1"
+                    value={newException.addressLine1 || ''}
+                    onChange={(e) => setNewException({
                       ...newException,
-                      isAvailable: false, // All blocks automatically block availability
-                      category: undefined // No category for availability blocks
-                    };
-                    if (editingException) {
-                      handleSaveEdit();
-                    } else {
-                      createExceptionMutation.mutate(blockData, {
-                        onSuccess: () => {
-                          setIsAddAvailabilityBlockOpen(false);
-                          // Reset form
-                          setNewException({
-                            date: new Date(),
-                            startTime: "09:00",
-                            endTime: "17:00",
-                            isAvailable: false,
-                            reason: "",
-                            title: "",
-                            category: undefined,
-                            notes: "",
-                            allDay: false,
-                            addressLine1: "",
-                            addressLine2: "",
-                            city: "",
-                            state: "",
-                            zipCode: "",
-                            country: "United States",
-                          });
-                        }
-                      });
-                    }
-                  }} 
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6"
-                >
-                  🚫 {editingException ? "Update Block" : "Block Time"}
-                </Button>
+                      addressLine1: e.target.value
+                    })}
+                    onPlaceSelected={(addressComponents: Partial<AddressComponents>) => {
+                      setNewException(prev => ({
+                        ...prev,
+                        addressLine1: addressComponents.addressLine1 || prev.addressLine1,
+                        city: addressComponents.city || prev.city,
+                        state: addressComponents.state || prev.state,
+                        zipCode: addressComponents.zipCode || prev.zipCode,
+                        country: addressComponents.country || prev.country,
+                      }));
+                    }}
+                    onManualInput={(value) => {
+                      setNewException(prev => ({
+                        ...prev,
+                        addressLine1: value
+                      }));
+                    }}
+                    placeholder="123 Main St"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    helperText="Start typing for address suggestions"
+                    autocompleteOptions={{
+                      componentRestrictions: { country: ['us', 'ca'] },
+                      types: ['address']
+                    }}
+                  />
+                  
+                  <div>
+                    <Label className="text-sm text-slate-600 dark:text-slate-300">Address Line 2</Label>
+                    <Input
+                      value={newException.addressLine2 || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        addressLine2: e.target.value
+                      })}
+                      placeholder="Apt, Suite, Unit"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-sm text-slate-600 dark:text-slate-300">City</Label>
+                    <Input
+                      value={newException.city || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        city: e.target.value
+                      })}
+                      placeholder="City"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm text-slate-600 dark:text-slate-300">State</Label>
+                    <Input
+                      value={newException.state || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        state: e.target.value
+                      })}
+                      placeholder="ST"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm text-slate-600 dark:text-slate-300">ZIP Code</Label>
+                    <Input
+                      value={newException.zipCode || ''}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        zipCode: e.target.value
+                      })}
+                      placeholder="12345"
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm text-slate-600 dark:text-slate-300">Country</Label>
+                    <Input
+                      value={newException.country || 'United States'}
+                      onChange={(e) => setNewException({
+                        ...newException,
+                        country: e.target.value
+                      })}
+                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                    />
+                  </div>
+                </div>
               </div>
 
             {/* Action Buttons */}

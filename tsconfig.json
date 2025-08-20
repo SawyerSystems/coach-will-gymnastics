@@ -1,5 +1,5 @@
 {
-  "include": ["client/src/**/*", "shared/**/*", "server/**/*", "emails/**/*"],
+  "include": ["client/src/**/*", "client/src/types/**/*", "shared/**/*", "server/**/*", "emails/**/*"],
   "exclude": [
     "node_modules", 
     "build", 
@@ -42,7 +42,7 @@
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
     "baseUrl": ".",
-    "types": ["node", "vite/client"],
+    "types": ["node", "vite/client", "./client/src/types/google-maps"],
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
