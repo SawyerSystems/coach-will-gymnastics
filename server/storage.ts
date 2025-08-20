@@ -408,7 +408,7 @@ export class MemStorage implements IStorage {
   private tips: Map<number, Tip>;
   private availability: Map<number, Availability>;
   private availabilityExceptions: Map<number, AvailabilityException>;
-  private eventsMap?: Map<string, Event>;
+  private eventsMap: Map<string, Event>;
   private parents: Map<number, Parent>;
   private athletes: Map<number, Athlete>;
   private admins: Map<number, Admin>;
@@ -1250,16 +1250,67 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
 
   async getAvailabilityExceptionsByDateRange(startDate: string, endDate: string): Promise<AvailabilityException[]> {
-    return Array.from(this.availabilityExceptions.values())
-      .filter(exception => exception.date >= startDate && exception.date <= endDate)
-      .sort((a, b) => {
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
-        // Handle null startTime values for all-day events
-        if (!a.startTime && !b.startTime) return 0;
-        if (!a.startTime) return -1; // All-day events come first
-        if (!b.startTime) return 1;
-        return a.startTime.localeCompare(b.startTime);
-      });
+    // Get blocking events from our events map
+    const blockingEvents = Array.from(this.eventsMap.values())
+      .filter(event => event.isAvailabilityBlock && !event.isDeleted);
+    
+    const availabilityBlocks: AvailabilityException[] = [];
+    
+    for (const event of blockingEvents) {
+      if (event.recurrenceRule) {
+        // Expand recurring series for the date range
+        const { expandSeriesForRange } = await import('./recurrence');
+        const instances = expandSeriesForRange([event], startDate, endDate);
+        
+        for (const instance of instances) {
+          availabilityBlocks.push(this.mapEventToAvailabilityException(instance, event));
+        }
+      } else {
+        // Single event - check if it falls in the date range
+        const eventDate = event.startAt.toISOString().split('T')[0];
+        if (eventDate >= startDate && eventDate <= endDate) {
+          availabilityBlocks.push(this.mapEventToAvailabilityException(event, event));
+        }
+      }
+    }
+    
+    return availabilityBlocks.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      if (!a.startTime && !b.startTime) return 0;
+      if (!a.startTime) return -1;
+      if (!b.startTime) return 1;
+      return a.startTime.localeCompare(b.startTime);
+    });
+  }
+
+  private mapEventToAvailabilityException(eventInstance: Event, sourceEvent: Event): AvailabilityException {
+    const date = eventInstance.startAt.toISOString().split('T')[0];
+    const startTime = eventInstance.isAllDay ? null : 
+      String(eventInstance.startAt.getUTCHours()).padStart(2, '0') + ':' + 
+      String(eventInstance.startAt.getUTCMinutes()).padStart(2, '0');
+    const endTime = eventInstance.isAllDay ? null :
+      String(eventInstance.endAt.getUTCHours()).padStart(2, '0') + ':' + 
+      String(eventInstance.endAt.getUTCMinutes()).padStart(2, '0');
+
+    return {
+      id: parseInt(eventInstance.id.replace(/-/g, ''), 16) % 2147483647,
+      date,
+      startTime,
+      endTime,
+      isAvailable: sourceEvent.isAvailable || false,
+      reason: sourceEvent.blockingReason || sourceEvent.title || 'Blocked',
+      createdAt: sourceEvent.createdAt,
+      title: sourceEvent.title,
+      category: null,
+      notes: sourceEvent.notes,
+      allDay: eventInstance.isAllDay,
+      addressLine1: null,
+      addressLine2: null,
+      city: null,
+      state: null,
+      zipCode: null,
+      country: null,
+    };
   }
 
   // Admin methods
@@ -1702,7 +1753,7 @@ With the right setup and approach, home practice can accelerate your child's gym
 
   // Events (recurrence series) - MemStorage implementation
   async listEventsByRange(_startIso: string, _endIso: string): Promise<Event[]> {
-    return Array.from(this.eventsMap?.values() || []).filter((e): e is Event => !!e && !e.isDeleted);
+    return Array.from(this.eventsMap.values()).filter((e): e is Event => !!e && !e.isDeleted);
   }
 
   async createEvent(input: InsertEvent): Promise<Event> {
@@ -1723,18 +1774,21 @@ With the right setup and approach, home practice can accelerate your child's gym
       recurrenceRule: (input as any).recurrenceRule ?? null,
       recurrenceEndAt: (input as any).recurrenceEndAt ?? null,
       recurrenceExceptions: (input as any).recurrenceExceptions ?? [],
+      isAvailabilityBlock: (input as any).isAvailabilityBlock ?? false,
+      blockingReason: (input as any).blockingReason ?? null,
+      isAvailable: (input as any).isAvailable ?? false,
       createdBy: (input as any).createdBy ?? null,
       updatedBy: (input as any).updatedBy ?? null,
       isDeleted: false,
       createdAt: (input as any).createdAt ?? (now as any),
       updatedAt: (input as any).updatedAt ?? (now as any),
     };
-    this.eventsMap?.set(id, ev);
+    this.eventsMap.set(id, ev);
     return ev;
   }
 
   async updateEvent(id: string, input: Partial<InsertEvent>): Promise<Event | undefined> {
-    const existing = this.eventsMap?.get(id);
+    const existing = this.eventsMap.get(id);
     if (!existing) return undefined;
     const updated: Event = {
       ...existing,
@@ -1743,16 +1797,16 @@ With the right setup and approach, home practice can accelerate your child's gym
       seriesId: (input.seriesId as any) ?? existing.seriesId,
       updatedAt: new Date().toISOString() as any,
     };
-    this.eventsMap?.set(id, updated);
+    this.eventsMap.set(id, updated);
     return updated;
   }
 
   async deleteEvent(id: string): Promise<boolean> {
-    const existing = this.eventsMap?.get(id);
+    const existing = this.eventsMap.get(id);
     if (!existing) return false;
     existing.isDeleted = true;
     existing.updatedAt = new Date().toISOString() as any;
-    this.eventsMap?.set(id, existing);
+    this.eventsMap.set(id, existing);
     return true;
   }
 
@@ -5388,40 +5442,146 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAvailabilityExceptionsByDateRange(startDate: string, endDate: string): Promise<AvailabilityException[]> {
+    // Convert dates to timestamp range for events query 
+    const startTs = `${startDate}T00:00:00.000Z`;
+    const endTs = `${endDate}T23:59:59.999Z`;
+    
+    // Query events that are availability blocks in the date range
     const { data, error } = await supabaseAdmin
-      .from('availability_exceptions')
+      .from('events')
       .select('*')
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date')
-      .order('start_time');
+      .eq('is_availability_block', true)
+      .eq('is_deleted', false)
+      .gte('start_at', startTs)
+      .lte('start_at', endTs)
+      .order('start_at');
 
     if (error) {
-      console.error('Error fetching availability exceptions by date range:', error);
+      console.error('Error fetching availability blocking events:', error);
       return [];
     }
 
-    const mapped = (data || []).map(row => ({
-      id: row.id,
-      date: row.date,
-      startTime: row.start_time,
-      endTime: row.end_time,
-      isAvailable: row.is_available,
-      reason: row.reason,
-      createdAt: row.created_at,
-      title: row.title,
-      category: row.category,
-      notes: row.notes,
-      allDay: row.all_day,
-      addressLine1: row.address_line_1,
-      addressLine2: row.address_line_2,
-      city: row.city,
-      state: row.state,
-      zipCode: row.zip_code,
-      country: row.country,
-    }));
-    console.debug(`[AVAILABILITY EXCEPTIONS] getAvailabilityExceptionsByDateRange(${startDate}, ${endDate}) -> ${mapped.length} rows`);
-    return mapped;
+    // Convert events to AvailabilityException format
+    const blockingEvents = (data || []).map(row => this.mapEventToAvailabilityException(row));
+    
+    // Also expand any recurring series that might have instances in this range
+    const recurringEvents = await this.expandRecurringAvailabilityBlocks(startDate, endDate);
+    
+    // Combine and deduplicate
+    const allBlocks = [...blockingEvents, ...recurringEvents];
+    const uniqueBlocks = this.deduplicateAvailabilityBlocks(allBlocks);
+    
+    console.debug(`[AVAILABILITY EXCEPTIONS] getAvailabilityExceptionsByDateRange(${startDate}, ${endDate}) -> ${uniqueBlocks.length} blocking events`);
+    return uniqueBlocks;
+  }
+
+  private mapEventToAvailabilityException(eventData: any): AvailabilityException {
+    // Convert event timestamp to date and time components
+    const startAt = new Date(eventData.start_at);
+    const endAt = new Date(eventData.end_at);
+    
+    // Format date as YYYY-MM-DD in the event's timezone
+    const date = startAt.toISOString().split('T')[0];
+    
+    // Extract time components (HH:MM format) or null for all-day
+    const startTime = eventData.is_all_day ? null : 
+      String(startAt.getUTCHours()).padStart(2, '0') + ':' + 
+      String(startAt.getUTCMinutes()).padStart(2, '0');
+    const endTime = eventData.is_all_day ? null :
+      String(endAt.getUTCHours()).padStart(2, '0') + ':' + 
+      String(endAt.getUTCMinutes()).padStart(2, '0');
+
+    return {
+      id: parseInt(eventData.id.replace(/-/g, ''), 16) % 2147483647, // Convert UUID to int for compatibility
+      date,
+      startTime,
+      endTime,
+      isAvailable: eventData.is_available,
+      reason: eventData.blocking_reason || eventData.title || 'Blocked',
+      createdAt: eventData.created_at,
+      title: eventData.title,
+      category: null, // Events don't have categories yet
+      notes: eventData.notes,
+      allDay: eventData.is_all_day,
+      addressLine1: null, // Events don't have address fields yet
+      addressLine2: null,
+      city: null,
+      state: null,
+      zipCode: null,
+      country: null,
+    };
+  }
+
+  private async expandRecurringAvailabilityBlocks(startDate: string, endDate: string): Promise<AvailabilityException[]> {
+    // Query recurring availability blocking events that might have instances in range
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .select('*')
+      .eq('is_availability_block', true)
+      .eq('is_deleted', false)
+      .not('recurrence_rule', 'is', null);
+
+    if (error) {
+      console.error('Error fetching recurring availability blocking events:', error);
+      return [];
+    }
+
+    const expandedBlocks: AvailabilityException[] = [];
+    
+    for (const eventData of data || []) {
+      // Convert DB row to Event type and use our recurrence expansion
+      const event = this.mapEventFromDb(eventData);
+      const { expandSeriesForRange } = await import('./recurrence');
+      const instances = expandSeriesForRange([event], startDate, endDate);
+      
+      // Convert each instance to AvailabilityException format
+      for (const instance of instances) {
+        expandedBlocks.push(this.mapEventToAvailabilityException({
+          ...eventData,
+          start_at: instance.startAt.toISOString(),
+          end_at: instance.endAt.toISOString(),
+          is_all_day: instance.isAllDay,
+        }));
+      }
+    }
+
+    return expandedBlocks;
+  }
+
+  private mapEventFromDb(data: any): Event {
+    return {
+      id: data.id,
+      seriesId: data.series_id,
+      parentEventId: data.parent_event_id,
+      title: data.title || '',
+      notes: data.notes,
+      location: data.location,
+      isAllDay: data.is_all_day || false,
+      timezone: data.timezone || 'America/Los_Angeles',
+      startAt: new Date(data.start_at),
+      endAt: new Date(data.end_at),
+      recurrenceRule: data.recurrence_rule,
+      recurrenceEndAt: data.recurrence_end_at ? new Date(data.recurrence_end_at) : null,
+      recurrenceExceptions: data.recurrence_exceptions || [],
+      isAvailabilityBlock: data.is_availability_block || false,
+      blockingReason: data.blocking_reason,
+      isAvailable: data.is_available || false,
+      createdBy: data.created_by,
+      updatedBy: data.updated_by,
+      isDeleted: data.is_deleted || false,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+    };
+  }
+
+  private deduplicateAvailabilityBlocks(blocks: AvailabilityException[]): AvailabilityException[] {
+    const seen = new Set<string>();
+    return blocks.filter(block => {
+      const key = `${block.date}_${block.startTime}_${block.endTime}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   // Admin methods

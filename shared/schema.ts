@@ -432,6 +432,12 @@ export const events = pgTable("events", {
   recurrenceRule: text("recurrence_rule"),
   recurrenceEndAt: timestamp("recurrence_end_at", { withTimezone: true }),
   recurrenceExceptions: json("recurrence_exceptions").$type<string[]>().notNull().default([] as unknown as any),
+  
+  // Availability blocking fields (replaces availability_exceptions functionality)
+  isAvailabilityBlock: boolean("is_availability_block").notNull().default(false),
+  blockingReason: text("blocking_reason"), // Maps to availability_exceptions.reason
+  isAvailable: boolean("is_available").default(false).notNull(), // For backwards compatibility - usually false for blocks
+  
   createdBy: integer("created_by").references((): any => admins.id),
   updatedBy: integer("updated_by").references((): any => admins.id),
   isDeleted: boolean("is_deleted").notNull().default(false),

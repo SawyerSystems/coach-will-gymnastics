@@ -45,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability, useUpdateAvailabilityException } from "@/hooks/use-availability";
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/use-events";
 import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
@@ -53,7 +54,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, Parent, Tip } from "@shared/schema";
+import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Event, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, InsertEvent, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     Activity,
@@ -180,8 +181,26 @@ export default function Admin() {
   const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
   const [viewingException, setViewingException] = useState<AvailabilityException | null>(null);
   
+  // Events state management
+  const [newEvent, setNewEvent] = useState<InsertEvent>({
+    title: "",
+    notes: "",
+    location: "",
+    isAllDay: false,
+    timezone: "America/Los_Angeles",
+    startAt: new Date(),
+    endAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour later
+    recurrenceRule: null,
+    recurrenceEndAt: null,
+    recurrenceExceptions: [],
+    isDeleted: false,
+  });
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  
   // Unified modal state - modal is open when we have editingException OR isAddAvailabilityBlockOpen
   const isModalOpen = isAddAvailabilityBlockOpen || !!editingException;
+  const isEventModalOpen = isAddEventOpen || !!editingEvent;
   
   // Big Calendar localizer
   const localizer = momentLocalizer(moment);
@@ -462,7 +481,16 @@ export default function Admin() {
     enabled: !!authStatus?.loggedIn,
   });
 
+  // Events queries
+  const { data: events = [] } = useEvents();
+
   const { data: missingWaivers = [] } = useMissingWaivers(!!authStatus?.loggedIn) as { data: Athlete[] };
+
+  // ALL MUTATIONS
+  // Events mutations
+  const createEventMutation = useCreateEvent();
+  const updateEventMutation = useUpdateEvent();
+  const deleteEventMutation = useDeleteEvent();
 
   // ALL MUTATIONS
   // Delete parent mutation
