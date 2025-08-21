@@ -117,7 +117,6 @@ export default function Admin() {
     'Meeting': { bg: '#6366F1', border: '#4F46E5' }, // indigo
     'Busy: Work': { bg: '#EAB308', border: '#CA8A04' }, // yellow
     'Busy: Personal': { bg: '#EC4899', border: '#DB2777' }, // pink
-    'Blocked': { bg: '#EF4444', border: '#DC2626' }, // treat blocked as red
     'Default': { bg: '#6B7280', border: '#4B5563' }, // gray fallback
   };
 
@@ -2895,14 +2894,12 @@ export default function Admin() {
                               let borderColor = legendColors['Default'].border;
                               
                               if (resource.type === 'event') {
-                                if (resource.isAvailabilityBlock) {
-                                  backgroundColor = legendColors['Blocked'].bg;
-                                  borderColor = legendColors['Blocked'].border;
-                                } else if (resource.category && legendColors[resource.category]) {
+                                if (resource.category && legendColors[resource.category]) {
+                                  // Use category color regardless of whether it's blocking or not
                                   backgroundColor = legendColors[resource.category].bg;
                                   borderColor = legendColors[resource.category].border;
                                 } else {
-                                  // Default non-blocking event color (blue aligned w/ Coaching Practice for now)
+                                  // Default non-categorized event color (blue aligned w/ Coaching Practice for now)
                                   backgroundColor = legendColors['Coaching: Practice'].bg;
                                   borderColor = legendColors['Coaching: Practice'].border;
                                 }

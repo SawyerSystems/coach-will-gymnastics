@@ -9027,6 +9027,7 @@ setTimeout(async () => {
         recurrenceExceptions: row.recurrenceExceptions ?? row.recurrence_exceptions ?? [],
         isAvailabilityBlock: row.isAvailabilityBlock ?? row.is_availability_block ?? false,
         blockingReason: row.blockingReason ?? row.blocking_reason ?? null,
+        category: row.category ?? null, // Add category field mapping
         createdBy: row.createdBy ?? row.created_by ?? null,
         updatedBy: row.updatedBy ?? row.updated_by ?? null,
         isDeleted: row.isDeleted ?? row.is_deleted ?? false,
