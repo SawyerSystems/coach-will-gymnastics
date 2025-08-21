@@ -18,6 +18,8 @@ export interface EventRow {
   // Availability blocking fields
   isAvailabilityBlock?: boolean;
   blockingReason?: string | null;
+  // Category field for event classification and color coding
+  category?: string | null;
   // Audit fields
   createdBy?: number | null;
   updatedBy?: number | null;

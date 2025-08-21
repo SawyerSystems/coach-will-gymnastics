@@ -197,6 +197,7 @@ export default function Admin() {
     recurrenceExceptions: [],
     isAvailabilityBlock: false,
     blockingReason: "",
+    category: "", // Category for event classification and color coding
     isDeleted: false,
   });
 
@@ -4461,34 +4462,38 @@ export default function Admin() {
                 />
               </div>
 
-              {newEvent.isAvailabilityBlock && (
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Blocking Category</Label>
-                  <Select
-                    value={newEvent.blockingReason || 'Unavailable'}
-                    onValueChange={(value) => setNewEvent({
-                      ...newEvent,
-                      blockingReason: value
-                    })}
-                  >
-                    <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
-                      <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
-                      <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
-                      <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
-                      <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
-                      <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
-                      <SelectItem value="Meeting">🤝 Meeting</SelectItem>
-                      <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
-                      <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">
+                  {newEvent.isAvailabilityBlock ? "Blocking Category" : "Event Category"}
+                </Label>
+                <Select
+                  value={newEvent.isAvailabilityBlock ? (newEvent.blockingReason || 'Unavailable') : (newEvent.category || '')}
+                  onValueChange={(value) => setNewEvent({
+                    ...newEvent,
+                    ...(newEvent.isAvailabilityBlock 
+                      ? { blockingReason: value } 
+                      : { category: value })
+                  })}
+                >
+                  <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
+                    <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
+                    <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
+                    <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
+                    <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
+                    <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
+                    <SelectItem value="Meeting">🤝 Meeting</SelectItem>
+                    <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
+                    <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
+                    {newEvent.isAvailabilityBlock && (
                       <SelectItem value="Unavailable">❌ Unavailable</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Date and Time Settings */}
@@ -4948,6 +4953,7 @@ export default function Admin() {
                     recurrenceExceptions: [],
                     isAvailabilityBlock: newEvent.isAvailabilityBlock || false,
                     blockingReason: newEvent.isAvailabilityBlock ? (newEvent.blockingReason || "Unavailable") : null,
+                    category: newEvent.category || null,
                     isDeleted: false
                   };
                   
@@ -5052,6 +5058,7 @@ export default function Admin() {
                         recurrenceExceptions: eventData.recurrenceExceptions || [],
                         isAvailabilityBlock: eventData.isAvailabilityBlock || false,
                         blockingReason: eventData.blockingReason || '',
+                        category: eventData.category || '',
                         isDeleted: false
                       });
                       initializeRecurrenceFromEvent({

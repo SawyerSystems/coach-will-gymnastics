@@ -446,6 +446,9 @@ export const events = pgTable("events", {
   isAvailabilityBlock: boolean("is_availability_block").notNull().default(false),
   blockingReason: text("blocking_reason"), // Maps to availability_exceptions.reason
   
+  // Category field for event classification and color coding
+  category: text("category"), // Category selector with predefined options
+  
   createdBy: integer("created_by").references((): any => admins.id),
   updatedBy: integer("updated_by").references((): any => admins.id),
   isDeleted: boolean("is_deleted").notNull().default(false),
