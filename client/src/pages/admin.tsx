@@ -2894,10 +2894,13 @@ export default function Admin() {
                               let borderColor = legendColors['Default'].border;
                               
                               if (resource.type === 'event') {
-                                if (resource.category && legendColors[resource.category]) {
-                                  // Use category color regardless of whether it's blocking or not
-                                  backgroundColor = legendColors[resource.category].bg;
-                                  borderColor = legendColors[resource.category].border;
+                                // First try to use category, then fall back to blockingReason
+                                const eventCategory = resource.category || resource.blockingReason;
+                                
+                                if (eventCategory && legendColors[eventCategory]) {
+                                  // Use category/blockingReason color regardless of whether it's blocking or not
+                                  backgroundColor = legendColors[eventCategory].bg;
+                                  borderColor = legendColors[eventCategory].border;
                                 } else {
                                   // Default non-categorized event color (blue aligned w/ Coaching Practice for now)
                                   backgroundColor = legendColors['Coaching: Practice'].bg;
@@ -2960,44 +2963,44 @@ export default function Admin() {
                         <AdminCardContent>
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#8B5CF6'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Coaching: Team Meet/Competition'].bg}}></div>
                               <span>Coaching Competitions</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#3B82F6'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Coaching: Practice'].bg}}></div>
                               <span>Coaching Practice</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#10B981'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Own: Team Meet/Competition'].bg}}></div>
                               <span>Own Competitions</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#14B8A6'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Own: Practice'].bg}}></div>
                               <span>Own Practice</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EF4444'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Medical Appointment'].bg}}></div>
                               <span>Medical</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#F97316'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Dental Appointment'].bg}}></div>
                               <span>Dental</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#6366F1'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Meeting'].bg}}></div>
                               <span>Meetings</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EAB308'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Busy: Work'].bg}}></div>
                               <span>Work</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EC4899'}}></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Busy: Personal'].bg}}></div>
                               <span>Personal</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EF4444'}}></div>
-                              <span>Blocked</span>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: legendColors['Default'].bg}}></div>
+                              <span>Default/Other</span>
                             </div>
                           </div>
                         </AdminCardContent>
