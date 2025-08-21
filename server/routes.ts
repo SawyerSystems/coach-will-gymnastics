@@ -9004,10 +9004,41 @@ setTimeout(async () => {
       const start = (req.query.start as string) || new Date(new Date().setDate(new Date().getDate() - 30)).toISOString();
       const end = (req.query.end as string) || new Date(new Date().setDate(new Date().getDate() + 60)).toISOString();
       const rows = await storage.listEventsByRange(start, end);
-  const expand = String(req.query.expand || 'false') === 'true';
-  if (!expand) return res.json(rows);
-  const instances = expandSeriesForRange(rows as any, start, end);
-  res.json(instances);
+      // Map snake_case rows from DB to camelCase the client expects
+      const mapEventRow = (row: any) => ({
+        id: row.id,
+        seriesId: row.seriesId ?? row.series_id,
+        parentEventId: row.parentEventId ?? row.parent_event_id ?? null,
+        title: row.title,
+        notes: row.notes ?? null,
+        location: row.location ?? null,
+        addressLine1: row.addressLine1 ?? row.address_line_1 ?? null,
+        addressLine2: row.addressLine2 ?? row.address_line_2 ?? null,
+        city: row.city ?? null,
+        state: row.state ?? null,
+        zipCode: row.zipCode ?? row.zip_code ?? null,
+        country: row.country ?? null,
+        isAllDay: row.isAllDay ?? row.is_all_day ?? false,
+        timezone: row.timezone,
+        startAt: row.startAt ?? row.start_at,
+        endAt: row.endAt ?? row.end_at,
+        recurrenceRule: row.recurrenceRule ?? row.recurrence_rule ?? null,
+        recurrenceEndAt: row.recurrenceEndAt ?? row.recurrence_end_at ?? null,
+        recurrenceExceptions: row.recurrenceExceptions ?? row.recurrence_exceptions ?? [],
+        isAvailabilityBlock: row.isAvailabilityBlock ?? row.is_availability_block ?? false,
+        blockingReason: row.blockingReason ?? row.blocking_reason ?? null,
+        createdBy: row.createdBy ?? row.created_by ?? null,
+        updatedBy: row.updatedBy ?? row.updated_by ?? null,
+        isDeleted: row.isDeleted ?? row.is_deleted ?? false,
+        createdAt: row.createdAt ?? row.created_at,
+        updatedAt: row.updatedAt ?? row.updated_at,
+      });
+
+      const camelRows = Array.isArray(rows) ? rows.map(mapEventRow) : [];
+      const expand = String(req.query.expand || 'false') === 'true';
+      if (!expand) return res.json(camelRows);
+      const instances = expandSeriesForRange(camelRows as any, start, end);
+      res.json(instances);
     } catch (err) {
       console.error('Error listing events:', err);
       res.status(500).json({ message: 'Failed to list events' });
@@ -9017,7 +9048,36 @@ setTimeout(async () => {
   app.post("/api/events", isAdminAuthenticated, async (req, res) => {
     try {
       const created = await storage.createEvent(req.body);
-      res.json(created);
+      // Return camelCase for consistency
+      const toCamel = (row: any) => ({
+        id: row.id,
+        seriesId: row.seriesId ?? row.series_id,
+        parentEventId: row.parentEventId ?? row.parent_event_id ?? null,
+        title: row.title,
+        notes: row.notes ?? null,
+        location: row.location ?? null,
+        addressLine1: row.addressLine1 ?? row.address_line_1 ?? null,
+        addressLine2: row.addressLine2 ?? row.address_line_2 ?? null,
+        city: row.city ?? null,
+        state: row.state ?? null,
+        zipCode: row.zipCode ?? row.zip_code ?? null,
+        country: row.country ?? null,
+        isAllDay: row.isAllDay ?? row.is_all_day ?? false,
+        timezone: row.timezone,
+        startAt: row.startAt ?? row.start_at,
+        endAt: row.endAt ?? row.end_at,
+        recurrenceRule: row.recurrenceRule ?? row.recurrence_rule ?? null,
+        recurrenceEndAt: row.recurrenceEndAt ?? row.recurrence_end_at ?? null,
+        recurrenceExceptions: row.recurrenceExceptions ?? row.recurrence_exceptions ?? [],
+        isAvailabilityBlock: row.isAvailabilityBlock ?? row.is_availability_block ?? false,
+        blockingReason: row.blockingReason ?? row.blocking_reason ?? null,
+        createdBy: row.createdBy ?? row.created_by ?? null,
+        updatedBy: row.updatedBy ?? row.updated_by ?? null,
+        isDeleted: row.isDeleted ?? row.is_deleted ?? false,
+        createdAt: row.createdAt ?? row.created_at,
+        updatedAt: row.updatedAt ?? row.updated_at,
+      });
+      res.json(toCamel(created));
     } catch (err: any) {
       console.error('Error creating event:', err);
       res.status(400).json({ message: err?.message || 'Failed to create event' });
@@ -9028,7 +9088,35 @@ setTimeout(async () => {
     try {
       const updated = await storage.updateEvent(req.params.id, req.body);
       if (!updated) return res.status(404).json({ message: 'Event not found' });
-      res.json(updated);
+      const toCamel = (row: any) => ({
+        id: row.id,
+        seriesId: row.seriesId ?? row.series_id,
+        parentEventId: row.parentEventId ?? row.parent_event_id ?? null,
+        title: row.title,
+        notes: row.notes ?? null,
+        location: row.location ?? null,
+        addressLine1: row.addressLine1 ?? row.address_line_1 ?? null,
+        addressLine2: row.addressLine2 ?? row.address_line_2 ?? null,
+        city: row.city ?? null,
+        state: row.state ?? null,
+        zipCode: row.zipCode ?? row.zip_code ?? null,
+        country: row.country ?? null,
+        isAllDay: row.isAllDay ?? row.is_all_day ?? false,
+        timezone: row.timezone,
+        startAt: row.startAt ?? row.start_at,
+        endAt: row.endAt ?? row.end_at,
+        recurrenceRule: row.recurrenceRule ?? row.recurrence_rule ?? null,
+        recurrenceEndAt: row.recurrenceEndAt ?? row.recurrence_end_at ?? null,
+        recurrenceExceptions: row.recurrenceExceptions ?? row.recurrence_exceptions ?? [],
+        isAvailabilityBlock: row.isAvailabilityBlock ?? row.is_availability_block ?? false,
+        blockingReason: row.blockingReason ?? row.blocking_reason ?? null,
+        createdBy: row.createdBy ?? row.created_by ?? null,
+        updatedBy: row.updatedBy ?? row.updated_by ?? null,
+        isDeleted: row.isDeleted ?? row.is_deleted ?? false,
+        createdAt: row.createdAt ?? row.created_at,
+        updatedAt: row.updatedAt ?? row.updated_at,
+      });
+      res.json(toCamel(updated));
     } catch (err) {
       console.error('Error updating event:', err);
       res.status(400).json({ message: 'Failed to update event' });

@@ -3047,74 +3047,42 @@ export default function Admin() {
                             }}
                             eventPropGetter={(event) => {
                               const resource = event.resource as any; // Cast to any for property access
-                              let backgroundColor = '#D8BD2A';
-                              let borderColor = '#D8BD2A';
+                              // Legend color map
+                              const legendColors: Record<string, { bg: string; border: string }> = {
+                                'Coaching: Team Meet/Competition': { bg: '#8B5CF6', border: '#7C3AED' }, // purple
+                                'Coaching: Practice': { bg: '#3B82F6', border: '#2563EB' }, // blue
+                                'Own: Team Meet/Competition': { bg: '#10B981', border: '#059669' }, // green
+                                'Own: Practice': { bg: '#14B8A6', border: '#0D9488' }, // teal
+                                'Medical Appointment': { bg: '#EF4444', border: '#DC2626' }, // red
+                                'Dental Appointment': { bg: '#F97316', border: '#EA580C' }, // orange
+                                'Meeting': { bg: '#6366F1', border: '#4F46E5' }, // indigo
+                                'Busy: Work': { bg: '#EAB308', border: '#CA8A04' }, // yellow
+                                'Busy: Personal': { bg: '#EC4899', border: '#DB2777' }, // pink
+                                'Blocked': { bg: '#EF4444', border: '#DC2626' }, // treat blocked as red
+                                'Default': { bg: '#6B7280', border: '#4B5563' }, // gray fallback
+                              };
+
+                              let backgroundColor = legendColors['Default'].bg;
+                              let borderColor = legendColors['Default'].border;
                               
                               if (resource.type === 'exception') {
-                                // Legacy availability exceptions - always blocking (red)
-                                backgroundColor = '#EF4444'; // red
-                                borderColor = '#DC2626';
+                                backgroundColor = legendColors['Blocked'].bg;
+                                borderColor = legendColors['Blocked'].border;
                               } else if (resource.type === 'event') {
-                                // Unified events system
                                 if (resource.isAvailabilityBlock) {
-                                  // Blocking events (red)
-                                  backgroundColor = '#EF4444'; // red
-                                  borderColor = '#DC2626';
+                                  backgroundColor = legendColors['Blocked'].bg;
+                                  borderColor = legendColors['Blocked'].border;
+                                } else if (resource.category && legendColors[resource.category]) {
+                                  backgroundColor = legendColors[resource.category].bg;
+                                  borderColor = legendColors[resource.category].border;
                                 } else {
-                                  // Informational events - use default blue
-                                  backgroundColor = '#3B82F6'; // blue
-                                  borderColor = '#2563EB';
+                                  // Default non-blocking event color (blue aligned w/ Coaching Practice for now)
+                                  backgroundColor = legendColors['Coaching: Practice'].bg;
+                                  borderColor = legendColors['Coaching: Practice'].border;
                                 }
-                              } else {
-                                // Fallback for legacy events without type
-                                if (resource.category) {
-                                  // Use existing category logic
-                                  switch (resource.category) {
-                                    case 'Coaching: Team Meet/Competition':
-                                      backgroundColor = '#8B5CF6'; // purple
-                                      borderColor = '#7C3AED';
-                                      break;
-                                    case 'Coaching: Practice':
-                                      backgroundColor = '#3B82F6'; // blue
-                                      borderColor = '#2563EB';
-                                      break;
-                                    case 'Own: Team Meet/Competition':
-                                      backgroundColor = '#10B981'; // green
-                                      borderColor = '#059669';
-                                      break;
-                                    case 'Own: Practice':
-                                      backgroundColor = '#14B8A6'; // teal
-                                      borderColor = '#0D9488';
-                                      break;
-                                    case 'Medical Appointment':
-                                      backgroundColor = '#EF4444'; // red
-                                      borderColor = '#DC2626';
-                                      break;
-                                    case 'Dental Appointment':
-                                      backgroundColor = '#F97316'; // orange
-                                      borderColor = '#EA580C';
-                                      break;
-                                    case 'Meeting':
-                                      backgroundColor = '#6366F1'; // indigo
-                                      borderColor = '#4F46E5';
-                                      break;
-                                    case 'Busy: Work':
-                                      backgroundColor = '#EAB308'; // yellow
-                                      borderColor = '#CA8A04';
-                                      break;
-                                    case 'Busy: Personal':
-                                      backgroundColor = '#EC4899'; // pink
-                                      borderColor = '#DB2777';
-                                      break;
-                                    default:
-                                      backgroundColor = '#6B7280'; // gray
-                                      borderColor = '#4B5563';
-                                  }
-                                } else {
-                                  // All legacy events without categories block availability
-                                  backgroundColor = '#EF4444';
-                                  borderColor = '#DC2626';
-                                }
+                              } else if (resource.category && legendColors[resource.category]) {
+                                backgroundColor = legendColors[resource.category].bg;
+                                borderColor = legendColors[resource.category].border;
                               }
                               
                               return {
@@ -3144,7 +3112,7 @@ export default function Admin() {
                                 const resource = event.resource as any; // Cast for property access
                                 return (
                                   <div className="text-xs font-medium truncate">
-                                    {event.title}
+                                    {event.title}{resource.recurrenceRule ? ' 🔁' : ''}
                                     {resource.category && (
                                       <div className="text-xs opacity-80 truncate">
                                         {resource.category}
@@ -3222,7 +3190,23 @@ export default function Admin() {
                         </AdminCardHeader>
                         <AdminCardContent>
                           <div className="grid grid-cols-1 gap-4">
-                            {availabilityExceptions
+                            {[...(availabilityExceptions || []),
+                              // Transform unified events into a shape similar to exceptions for list display
+                              ...((events || []).map(ev => {
+                                return {
+                                  id: ev.id,
+                                  // Use start date for grouping like exceptions (date only)
+                                  date: ev.startAt ? new Date(ev.startAt).toISOString().slice(0,10) : new Date().toISOString().slice(0,10),
+                                  startTime: ev.startAt ? new Date(ev.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+                                  endTime: ev.endAt ? new Date(ev.endAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+                                  allDay: ev.isAllDay,
+                                  title: ev.title,
+                                  reason: ev.blockingReason,
+                                  category: ev.isAvailabilityBlock ? 'Blocked' : undefined,
+                                  notes: ev.notes,
+                                  type: 'event'
+                                };
+                              }))]
                               ?.sort((a, b) => {
                                 // Parse dates to avoid timezone issues when sorting
                                 const [yearA, monthA, dayA] = a.date.split('-').map(Number);
@@ -3232,7 +3216,7 @@ export default function Admin() {
                                 return dateA.getTime() - dateB.getTime();
                               })
                               ?.map((exception) => (
-                                <div key={exception.id} className="border-l-4 border-[#D8BD2A] bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+                                <div key={exception.id + (exception.type === 'event' ? '-event' : '-exc')} className="border-l-4 border-[#D8BD2A] bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
                                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                                     <div className="space-y-2 flex-1 min-w-0">
                                       <div className="flex items-center gap-3">
@@ -5221,8 +5205,9 @@ export default function Admin() {
                     timezone: newEvent.timezone || "America/Los_Angeles",
                     startAt: newEvent.startAt ? newEvent.startAt.toISOString() : new Date().toISOString(),
                     endAt: newEvent.endAt ? newEvent.endAt.toISOString() : new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-                    recurrenceRule: null, // TODO: Add recurrence support
-                    recurrenceEndAt: null,
+                    // Persist recurrence configuration (previously always null)
+                    recurrenceRule: newEvent.recurrenceRule || null,
+                    recurrenceEndAt: newEvent.recurrenceEndAt ? (newEvent.recurrenceEndAt as any instanceof Date ? (newEvent.recurrenceEndAt as Date).toISOString() : newEvent.recurrenceEndAt) : null,
                     recurrenceExceptions: [],
                     isAvailabilityBlock: newEvent.isAvailabilityBlock || false,
                     blockingReason: newEvent.isAvailabilityBlock ? (newEvent.blockingReason || "Unavailable") : null,
@@ -5231,9 +5216,24 @@ export default function Admin() {
                   
                   if (editingEvent) {
                     // Update existing event
+                    console.log('Updating event with data:', eventData);
                     updateEventMutation.mutate({ id: editingEvent.id, data: eventData }, {
-                      onSuccess: () => {
+                      onSuccess: (response) => {
+                        console.log('Event updated successfully:', response);
+                        toast({
+                          title: "Event Updated",
+                          description: "Your event has been updated successfully.",
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["/api/events"] });
                         handleCancelEdit();
+                      },
+                      onError: (error) => {
+                        console.error('Failed to update event:', error);
+                        toast({
+                          title: "Error Updating Event",
+                          description: error?.message || "Failed to update event. Please try again.",
+                          variant: "destructive",
+                        });
                       }
                     });
                   } else if (editingException) {
@@ -5254,9 +5254,24 @@ export default function Admin() {
                     });
                   } else {
                     // Create new event
+                    console.log('Creating event with data:', eventData);
                     createEventMutation.mutate(eventData, {
-                      onSuccess: () => {
+                      onSuccess: (response) => {
+                        console.log('Event created successfully:', response);
+                        toast({
+                          title: "Event Created",
+                          description: "Your event has been saved successfully.",
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["/api/events"] });
                         handleCancelEdit();
+                      },
+                      onError: (error) => {
+                        console.error('Failed to create event:', error);
+                        toast({
+                          title: "Error Creating Event",
+                          description: error?.message || "Failed to create event. Please try again.",
+                          variant: "destructive",
+                        });
                       }
                     });
                   }
