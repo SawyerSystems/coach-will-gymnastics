@@ -106,6 +106,21 @@ import { MainContentContainer } from "@/components/admin-ui/MainContentContainer
 const AdminSkillsManager = lazy(() => import("@/components/admin/AdminSkillsManager"));
 
 export default function Admin() {
+  // Legend color map - centralized for calendar and legend consistency
+  const legendColors: Record<string, { bg: string; border: string }> = {
+    'Coaching: Team Meet/Competition': { bg: '#8B5CF6', border: '#7C3AED' }, // purple
+    'Coaching: Practice': { bg: '#3B82F6', border: '#2563EB' }, // blue
+    'Own: Team Meet/Competition': { bg: '#10B981', border: '#059669' }, // green
+    'Own: Practice': { bg: '#14B8A6', border: '#0D9488' }, // teal
+    'Medical Appointment': { bg: '#EF4444', border: '#DC2626' }, // red
+    'Dental Appointment': { bg: '#F97316', border: '#EA580C' }, // orange
+    'Meeting': { bg: '#6366F1', border: '#4F46E5' }, // indigo
+    'Busy: Work': { bg: '#EAB308', border: '#CA8A04' }, // yellow
+    'Busy: Personal': { bg: '#EC4899', border: '#DB2777' }, // pink
+    'Blocked': { bg: '#EF4444', border: '#DC2626' }, // treat blocked as red
+    'Default': { bg: '#6B7280', border: '#4B5563' }, // gray fallback
+  };
+
   const [, setLocation] = useLocation();
   
   // ALL STATE HOOKS FIRST
@@ -2874,21 +2889,7 @@ export default function Admin() {
                             }}
                             eventPropGetter={(event) => {
                               const resource = event.resource as any; // Cast to any for property access
-                              // Legend color map
-                              const legendColors: Record<string, { bg: string; border: string }> = {
-                                'Coaching: Team Meet/Competition': { bg: '#8B5CF6', border: '#7C3AED' }, // purple
-                                'Coaching: Practice': { bg: '#3B82F6', border: '#2563EB' }, // blue
-                                'Own: Team Meet/Competition': { bg: '#10B981', border: '#059669' }, // green
-                                'Own: Practice': { bg: '#14B8A6', border: '#0D9488' }, // teal
-                                'Medical Appointment': { bg: '#EF4444', border: '#DC2626' }, // red
-                                'Dental Appointment': { bg: '#F97316', border: '#EA580C' }, // orange
-                                'Meeting': { bg: '#6366F1', border: '#4F46E5' }, // indigo
-                                'Busy: Work': { bg: '#EAB308', border: '#CA8A04' }, // yellow
-                                'Busy: Personal': { bg: '#EC4899', border: '#DB2777' }, // pink
-                                'Blocked': { bg: '#EF4444', border: '#DC2626' }, // treat blocked as red
-                                'Default': { bg: '#6B7280', border: '#4B5563' }, // gray fallback
-                              };
-
+                              
                               let backgroundColor = legendColors['Default'].bg;
                               let borderColor = legendColors['Default'].border;
                               
@@ -2961,44 +2962,44 @@ export default function Admin() {
                         <AdminCardContent>
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-red-500 rounded"></div>
-                              <span>All Events</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#8B5CF6'}}></div>
                               <span>Coaching Competitions</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#3B82F6'}}></div>
                               <span>Coaching Practice</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-green-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#10B981'}}></div>
                               <span>Own Competitions</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-teal-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#14B8A6'}}></div>
                               <span>Own Practice</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-red-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EF4444'}}></div>
                               <span>Medical</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#F97316'}}></div>
                               <span>Dental</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-indigo-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#6366F1'}}></div>
                               <span>Meetings</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EAB308'}}></div>
                               <span>Work</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 bg-pink-500 rounded"></div>
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EC4899'}}></div>
                               <span>Personal</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded" style={{backgroundColor: '#EF4444'}}></div>
+                              <span>Blocked</span>
                             </div>
                           </div>
                         </AdminCardContent>
