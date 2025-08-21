@@ -424,7 +424,16 @@ export const events = pgTable("events", {
   parentEventId: uuid("parent_event_id"),
   title: text("title").notNull().default(""),
   notes: text("notes"),
-  location: text("location"),
+  location: text("location"), // Simple location text (kept for backward compatibility)
+  
+  // Full address fields (matching availability_exceptions schema)
+  addressLine1: text("address_line_1"),
+  addressLine2: text("address_line_2"), 
+  city: text("city"),
+  state: text("state"),
+  zipCode: text("zip_code"),
+  country: text("country").default("United States"),
+  
   isAllDay: boolean("is_all_day").notNull().default(false),
   timezone: text("timezone").notNull().default("America/Los_Angeles"),
   startAt: timestamp("start_at", { withTimezone: true }).notNull(),

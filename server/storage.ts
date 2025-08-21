@@ -1776,6 +1776,12 @@ With the right setup and approach, home practice can accelerate your child's gym
       recurrenceExceptions: (input as any).recurrenceExceptions ?? [],
       isAvailabilityBlock: (input as any).isAvailabilityBlock ?? false,
       blockingReason: (input as any).blockingReason ?? null,
+      addressLine1: (input as any).addressLine1 ?? null,
+      addressLine2: (input as any).addressLine2 ?? null,
+      city: (input as any).city ?? null,
+      state: (input as any).state ?? null,
+      zipCode: (input as any).zipCode ?? null,
+      country: (input as any).country ?? null,
       createdBy: (input as any).createdBy ?? null,
       updatedBy: (input as any).updatedBy ?? null,
       isDeleted: false,
@@ -5564,6 +5570,12 @@ export class SupabaseStorage implements IStorage {
       recurrenceExceptions: data.recurrence_exceptions || [],
       isAvailabilityBlock: data.is_availability_block || false,
       blockingReason: data.blocking_reason,
+      addressLine1: data.address_line_1,
+      addressLine2: data.address_line_2,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zip_code,
+      country: data.country,
       createdBy: data.created_by,
       updatedBy: data.updated_by,
       isDeleted: data.is_deleted || false,
@@ -5903,6 +5915,13 @@ export class SupabaseStorage implements IStorage {
       title: input.title ?? '',
       notes: (input as any).notes ?? null,
       location: (input as any).location ?? null,
+      // Address fields
+      address_line_1: (input as any).addressLine1 ?? null,
+      address_line_2: (input as any).addressLine2 ?? null,
+      city: (input as any).city ?? null,
+      state: (input as any).state ?? null,
+      zip_code: (input as any).zipCode ?? null,
+      country: (input as any).country ?? 'United States',
       is_all_day: input.isAllDay ?? false,
       timezone: input.timezone ?? 'America/Los_Angeles',
       start_at: input.startAt as any,
@@ -5937,6 +5956,13 @@ export class SupabaseStorage implements IStorage {
     if (input.title !== undefined) updateData.title = input.title;
     if ((input as any).notes !== undefined) updateData.notes = (input as any).notes;
     if ((input as any).location !== undefined) updateData.location = (input as any).location;
+    // Address fields
+    if ((input as any).addressLine1 !== undefined) updateData.address_line_1 = (input as any).addressLine1;
+    if ((input as any).addressLine2 !== undefined) updateData.address_line_2 = (input as any).addressLine2;
+    if ((input as any).city !== undefined) updateData.city = (input as any).city;
+    if ((input as any).state !== undefined) updateData.state = (input as any).state;
+    if ((input as any).zipCode !== undefined) updateData.zip_code = (input as any).zipCode;
+    if ((input as any).country !== undefined) updateData.country = (input as any).country;
     if (input.isAllDay !== undefined) updateData.is_all_day = input.isAllDay;
     if (input.timezone !== undefined) updateData.timezone = input.timezone;
     if (input.startAt !== undefined) updateData.start_at = input.startAt as any;

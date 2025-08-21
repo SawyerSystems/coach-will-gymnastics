@@ -164,6 +164,13 @@ export default function Admin() {
     title: "",
     notes: "",
     location: "",
+    // Address fields
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "United States",
     isAllDay: false,
     timezone: "America/Los_Angeles",
     startAt: new Date(),
@@ -275,6 +282,13 @@ export default function Admin() {
       title: "",
       notes: "",
       location: "",
+      // Address fields
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "United States",
       isAllDay: false,
       timezone: "America/Los_Angeles",
       startAt: new Date(),
@@ -2801,6 +2815,13 @@ export default function Admin() {
                                   title: eventData.title || '',
                                   notes: eventData.notes || '',
                                   location: eventData.location || '',
+                                  // Address fields
+                                  addressLine1: eventData.addressLine1 || '',
+                                  addressLine2: eventData.addressLine2 || '',
+                                  city: eventData.city || '',
+                                  state: eventData.state || '',
+                                  zipCode: eventData.zipCode || '',
+                                  country: eventData.country || 'United States',
                                   isAllDay: eventData.isAllDay || false,
                                   timezone: eventData.timezone || 'America/Los_Angeles',
                                   startAt: new Date(eventData.startAt),
@@ -4648,18 +4669,117 @@ export default function Admin() {
               )}
             </div>
 
-            {/* Location */}
-            <div>
-              <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Location</Label>
-              <Input
-                value={newEvent.location || ''}
-                onChange={(e) => setNewEvent({
-                  ...newEvent,
-                  location: e.target.value
-                })}
-                placeholder="e.g., Home, Gym, Doctor's Office"
-                className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-              />
+            {/* Location Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-[#0F0276] dark:text-white">Location (Optional)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <AddressAutocompleteInput
+                  label="Address Line 1"
+                  value={newEvent.addressLine1 || ''}
+                  onChange={(e) => setNewEvent({
+                    ...newEvent,
+                    addressLine1: e.target.value
+                  })}
+                  onPlaceSelected={(addressComponents) => {
+                    setNewEvent(prev => ({
+                      ...prev,
+                      addressLine1: addressComponents.addressLine1 || prev.addressLine1,
+                      city: addressComponents.city || prev.city,
+                      state: addressComponents.state || prev.state,
+                      zipCode: addressComponents.zipCode || prev.zipCode,
+                      country: addressComponents.country || prev.country,
+                      // Also set the simple location field for backward compatibility
+                      location: [
+                        addressComponents.addressLine1,
+                        addressComponents.city,
+                        addressComponents.state
+                      ].filter(Boolean).join(', ')
+                    }));
+                  }}
+                  onManualInput={(value) => {
+                    setNewEvent(prev => ({
+                      ...prev,
+                      addressLine1: value,
+                      // Update simple location field too
+                      location: value
+                    }));
+                  }}
+                  placeholder="123 Main St"
+                  className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  labelClassName="text-sm text-slate-600 dark:text-slate-300"
+                  helperText="Start typing for address suggestions"
+                  autocompleteOptions={{
+                    componentRestrictions: { country: ['us', 'ca'] },
+                    types: ['address']
+                  }}
+                />
+                
+                <div>
+                  <Label className="text-sm text-slate-600 dark:text-slate-300">Address Line 2</Label>
+                  <Input
+                    value={newEvent.addressLine2 || ''}
+                    onChange={(e) => setNewEvent({
+                      ...newEvent,
+                      addressLine2: e.target.value
+                    })}
+                    placeholder="Apt, Suite, Unit"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-sm text-slate-600 dark:text-slate-300">City</Label>
+                  <Input
+                    value={newEvent.city || ''}
+                    onChange={(e) => setNewEvent({
+                      ...newEvent,
+                      city: e.target.value
+                    })}
+                    placeholder="City"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm text-slate-600 dark:text-slate-300">State</Label>
+                  <Input
+                    value={newEvent.state || ''}
+                    onChange={(e) => setNewEvent({
+                      ...newEvent,
+                      state: e.target.value
+                    })}
+                    placeholder="ST"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm text-slate-600 dark:text-slate-300">ZIP Code</Label>
+                  <Input
+                    value={newEvent.zipCode || ''}
+                    onChange={(e) => setNewEvent({
+                      ...newEvent,
+                      zipCode: e.target.value
+                    })}
+                    placeholder="12345"
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm text-slate-600 dark:text-slate-300">Country</Label>
+                  <Input
+                    value={newEvent.country || 'United States'}
+                    onChange={(e) => setNewEvent({
+                      ...newEvent,
+                      country: e.target.value
+                    })}
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Notes */}
