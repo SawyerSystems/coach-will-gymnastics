@@ -219,9 +219,12 @@ export default function Admin() {
   const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
   const [viewingException, setViewingException] = useState<AvailabilityException | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  // New: separate viewing state for unified events (view details modal)
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   
   // Unified modal state - single modal for all operations
   const isModalOpen = isEventModalOpen || !!editingException || !!editingEvent;
+  const isViewEventModalOpen = !!viewingEvent; // dedicated view details modal
   
   // Big Calendar localizer
   const localizer = momentLocalizer(moment);
@@ -285,6 +288,7 @@ export default function Admin() {
     // Close all modals and reset states
     setEditingException(null);
     setEditingEvent(null);
+  setViewingEvent(null);
     setIsEventModalOpen(false);
     
     // Reset unified event form
@@ -3011,38 +3015,8 @@ export default function Admin() {
                                   country: exception.country || 'United States'
                                 });
                               } else if (resource.type === 'event') {
-                                // Handle unified event editing - cast to correct type
-                                const eventData = resource as any; // Event type
-                                setEditingEvent(eventData);
-                                setNewEvent({
-                                  title: eventData.title || '',
-                                  notes: eventData.notes || '',
-                                  location: eventData.location || '',
-                                  // Address fields
-                                  addressLine1: eventData.addressLine1 || '',
-                                  addressLine2: eventData.addressLine2 || '',
-                                  city: eventData.city || '',
-                                  state: eventData.state || '',
-                                  zipCode: eventData.zipCode || '',
-                                  country: eventData.country || 'United States',
-                                  isAllDay: eventData.isAllDay || false,
-                                  timezone: eventData.timezone || 'America/Los_Angeles',
-                                  startAt: new Date(eventData.startAt),
-                                  endAt: new Date(eventData.endAt),
-                                  recurrenceRule: eventData.recurrenceRule,
-                                  recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
-                                  recurrenceExceptions: eventData.recurrenceExceptions || [],
-                                  isAvailabilityBlock: eventData.isAvailabilityBlock || false,
-                                  blockingReason: eventData.blockingReason || '',
-                                  isDeleted: false
-                                });
-                                
-                                // Initialize recurrence UI state from event data
-                                initializeRecurrenceFromEvent({
-                                  recurrenceRule: eventData.recurrenceRule,
-                                  recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
-                                  startAt: new Date(eventData.startAt)
-                                });
+                                // View details first instead of editing
+                                setViewingEvent(resource as any);
                               }
                             }}
                             eventPropGetter={(event) => {
@@ -3295,11 +3269,19 @@ export default function Admin() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => handleEditException(exception)}
+                                        onClick={() => {
+                                          if (exception.type === 'event') {
+                                            // Find full event object if available
+                                            const full = (events || []).find(e => e.id === exception.id);
+                                            setViewingEvent(full as any || (exception as any));
+                                          } else {
+                                            handleEditException(exception as any);
+                                          }
+                                        }}
                                         className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
-                                        title="Edit Event"
+                                        title="View Details"
                                       >
-                                        <Edit className="h-4 w-4" />
+                                        <Eye className="h-4 w-4" />
                                       </Button>
                                       <Button
                                         size="sm"
@@ -5282,6 +5264,123 @@ export default function Admin() {
               </Button>
             </div>
           </div>
+        </AdminModal>
+
+        {/* View Event Details Modal */}
+        <AdminModal
+          isOpen={isViewEventModalOpen}
+          onClose={() => setViewingEvent(null)}
+          title={viewingEvent ? viewingEvent.title || 'Event Details' : 'Event Details'}
+          size="3xl"
+          showCloseButton
+        >
+          {viewingEvent && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-4 items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                    {viewingEvent.title || 'Untitled Event'}
+                    {viewingEvent.recurrenceRule && <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-2 py-1 rounded">Recurring</span>}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {new Date(viewingEvent.startAt).toLocaleString()} - {new Date(viewingEvent.endAt).toLocaleString()}
+                  </p>
+                  {viewingEvent.isAllDay && <p className="text-xs text-slate-500 mt-1">All day</p>}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      // Switch to edit mode using current viewing event
+                      const eventData: any = viewingEvent;
+                      setViewingEvent(null);
+                      setEditingEvent(eventData);
+                      setNewEvent({
+                        title: eventData.title || '',
+                        notes: eventData.notes || '',
+                        location: eventData.location || '',
+                        addressLine1: eventData.addressLine1 || '',
+                        addressLine2: eventData.addressLine2 || '',
+                        city: eventData.city || '',
+                        state: eventData.state || '',
+                        zipCode: eventData.zipCode || '',
+                        country: eventData.country || 'United States',
+                        isAllDay: eventData.isAllDay || false,
+                        timezone: eventData.timezone || 'America/Los_Angeles',
+                        startAt: new Date(eventData.startAt),
+                        endAt: new Date(eventData.endAt),
+                        recurrenceRule: eventData.recurrenceRule,
+                        recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
+                        recurrenceExceptions: eventData.recurrenceExceptions || [],
+                        isAvailabilityBlock: eventData.isAvailabilityBlock || false,
+                        blockingReason: eventData.blockingReason || '',
+                        isDeleted: false
+                      });
+                      initializeRecurrenceFromEvent({
+                        recurrenceRule: eventData.recurrenceRule,
+                        recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
+                        startAt: new Date(eventData.startAt)
+                      });
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow hover:shadow-lg"
+                  >
+                    <Edit className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      setViewingEvent(null);
+                      deleteEventMutation.mutate(viewingEvent.id);
+                    }}
+                    className="shadow hover:shadow-lg"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" /> Delete
+                  </Button>
+                </div>
+              </div>
+
+              {viewingEvent.notes && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-sm text-slate-700 dark:text-slate-200">
+                  <strong className="font-semibold">Notes:</strong>
+                  <div className="mt-1 whitespace-pre-wrap">{viewingEvent.notes}</div>
+                </div>
+              )}
+
+              {viewingEvent.isAvailabilityBlock && viewingEvent.blockingReason && (
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-sm text-red-700 dark:text-red-300">
+                  <strong className="font-semibold">Blocking Reason:</strong> {viewingEvent.blockingReason}
+                </div>
+              )}
+
+              {(viewingEvent.addressLine1 || viewingEvent.city) && (
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-sm text-slate-700 dark:text-slate-200">
+                  <strong className="font-semibold">Location:</strong>
+                  <div className="mt-1 space-y-1">
+                    {viewingEvent.addressLine1 && <div>{viewingEvent.addressLine1}</div>}
+                    {viewingEvent.addressLine2 && <div>{viewingEvent.addressLine2}</div>}
+                    {viewingEvent.city && (
+                      <div>
+                        {viewingEvent.city}{viewingEvent.state && `, ${viewingEvent.state}`}{viewingEvent.zipCode && ` ${viewingEvent.zipCode}`}
+                      </div>
+                    )}
+                    {viewingEvent.country && <div>{viewingEvent.country}</div>}
+                  </div>
+                </div>
+              )}
+
+              {viewingEvent.recurrenceRule && (
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg text-xs text-slate-600 dark:text-slate-300 font-mono break-all">
+                  <strong className="font-semibold mr-2">Recurrence Rule:</strong> {viewingEvent.recurrenceRule}
+                  {viewingEvent.recurrenceEndAt && (
+                    <div className="mt-1">
+                      <strong className="font-semibold">Ends:</strong> {new Date(viewingEvent.recurrenceEndAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </AdminModal>
           </div>
         </div>
