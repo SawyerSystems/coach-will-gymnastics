@@ -5910,6 +5910,8 @@ export class SupabaseStorage implements IStorage {
       recurrence_rule: (input as any).recurrenceRule ?? null,
       recurrence_end_at: (input as any).recurrenceEndAt ?? null,
       recurrence_exceptions: (input as any).recurrenceExceptions ?? [],
+      is_availability_block: (input as any).isAvailabilityBlock ?? false,
+      blocking_reason: (input as any).blockingReason ?? null,
       created_by: (input as any).createdBy ?? null,
       updated_by: (input as any).updatedBy ?? null,
       is_deleted: (input as any).isDeleted ?? false,
@@ -5942,6 +5944,8 @@ export class SupabaseStorage implements IStorage {
     if ((input as any).recurrenceRule !== undefined) updateData.recurrence_rule = (input as any).recurrenceRule;
     if ((input as any).recurrenceEndAt !== undefined) updateData.recurrence_end_at = (input as any).recurrenceEndAt;
     if ((input as any).recurrenceExceptions !== undefined) updateData.recurrence_exceptions = (input as any).recurrenceExceptions;
+    if ((input as any).isAvailabilityBlock !== undefined) updateData.is_availability_block = (input as any).isAvailabilityBlock;
+    if ((input as any).blockingReason !== undefined) updateData.blocking_reason = (input as any).blockingReason;
     if ((input as any).createdBy !== undefined) updateData.created_by = (input as any).createdBy;
     if ((input as any).updatedBy !== undefined) updateData.updated_by = (input as any).updatedBy;
     if ((input as any).isDeleted !== undefined) updateData.is_deleted = (input as any).isDeleted;

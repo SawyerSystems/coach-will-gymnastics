@@ -195,17 +195,16 @@ export default function Admin() {
     country: "United States",
   });
   
-  // Unified modal states (replaces separate exception and event modals)
-  const [isAddAvailabilityBlockOpen, setIsAddAvailabilityBlockOpen] = useState(false);
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  // Truly unified modal state - single modal for all event/block operations
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   
   // Edit state for both legacy exceptions and unified events
   const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
   const [viewingException, setViewingException] = useState<AvailabilityException | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   
-  // Unified modal state - modal is open for both legacy exceptions and new events
-  const isModalOpen = isAddAvailabilityBlockOpen || !!editingException || isAddEventOpen || !!editingEvent;
+  // Unified modal state - single modal for all operations
+  const isModalOpen = isEventModalOpen || !!editingException || !!editingEvent;
   
   // Big Calendar localizer
   const localizer = momentLocalizer(moment);
@@ -231,7 +230,7 @@ export default function Admin() {
       country: exception.country || "United States",
     });
     // Close add modal if open and set editing state
-    setIsAddAvailabilityBlockOpen(false);
+    setIsEventModalOpen(false);
   };
 
   const handleSaveEdit = () => {
@@ -269,8 +268,7 @@ export default function Admin() {
     // Close all modals and reset states
     setEditingException(null);
     setEditingEvent(null);
-    setIsAddAvailabilityBlockOpen(false);
-    setIsAddEventOpen(false);
+    setIsEventModalOpen(false);
     
     // Reset unified event form
     setNewEvent({
@@ -2705,37 +2703,21 @@ export default function Admin() {
                             {(availabilityExceptions?.length || 0) + (events?.length || 0)} items
                           </Badge>
                         </h3>
-                        <div className="flex gap-2">
-                          <Button 
-                            onClick={() => {
-                              setNewEvent({
-                                ...newEvent,
-                                isAvailabilityBlock: false,
-                                blockingReason: ""
-                              });
-                              setIsAddEventOpen(true);
-                            }}
-                            variant="outline"
-                            className="border-[#D8BD2A] text-[#0F0276] hover:bg-[#D8BD2A]/10 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-2 font-semibold"
-                          >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Add Event
-                          </Button>
-                          <Button 
-                            onClick={() => {
-                              setNewEvent({
-                                ...newEvent,
-                                isAvailabilityBlock: true,
-                                blockingReason: "Unavailable"
-                              });
-                              setIsAddAvailabilityBlockOpen(true);
-                            }}
-                            className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-4 py-2 font-semibold text-[#0F0276]"
-                          >
-                            <Ban className="h-4 w-4 mr-2" />
-                            Block Time
-                          </Button>
-                        </div>
+                        <Button 
+                          onClick={() => {
+                            // Reset to default state (informational event)
+                            setNewEvent({
+                              ...newEvent,
+                              isAvailabilityBlock: false,
+                              blockingReason: ""
+                            });
+                            setIsEventModalOpen(true);
+                          }}
+                          className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-4 py-2 font-semibold text-[#0F0276]"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Event
+                        </Button>
                       </div>
 
                       {/* React Big Calendar */}
@@ -3098,17 +3080,9 @@ export default function Admin() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => setViewingException(exception)}
-                                        className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
-                                        title="View Details"
-                                      >
-                                        <Eye className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
                                         onClick={() => handleEditException(exception)}
                                         className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
+                                        title="Edit Event"
                                       >
                                         <Edit className="h-4 w-4" />
                                       </Button>
@@ -4475,14 +4449,14 @@ export default function Admin() {
         <AdminModal 
           isOpen={isModalOpen} 
           onClose={handleCancelEdit}
-          title={editingException ? "Edit Legacy Event" : editingEvent ? "Edit Event" : "Add Event/Block Time"}
+          title={editingException ? "Edit Legacy Event" : editingEvent ? "Edit Event" : "Add Event"}
           size="4xl"
           showCloseButton={false}
         >
           {/* Event Form */}
           <div className="space-y-6">
-            {/* Event Type Toggle */}
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+            {/* Event Type Toggle - Enhanced */}
+            <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-4">
                 <Switch 
                   id="availability-block"
@@ -4493,11 +4467,21 @@ export default function Admin() {
                     blockingReason: checked ? (newEvent.blockingReason || "Unavailable") : ""
                   })}
                 />
-                <div>
-                  <Label htmlFor="availability-block" className="text-sm font-semibold text-[#0F0276] dark:text-white">
-                    Block Availability
+                <div className="flex-1">
+                  <Label htmlFor="availability-block" className="text-sm font-semibold text-[#0F0276] dark:text-white flex items-center gap-2">
+                    {newEvent.isAvailabilityBlock ? (
+                      <>
+                        <Ban className="h-4 w-4 text-red-500" />
+                        Block Availability
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="h-4 w-4 text-blue-500" />
+                        Informational Event
+                      </>
+                    )}
                   </Label>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                     {newEvent.isAvailabilityBlock 
                       ? "This will prevent lesson bookings during this time" 
                       : "This is an informational event that won't block bookings"}
