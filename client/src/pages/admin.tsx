@@ -19,6 +19,8 @@ import { ContentSection, SectionBasedContentEditor } from "@/components/section-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from "@/components/admin-ui/AdminCard";
 import { AdminButton } from "@/components/admin-ui/AdminButton";
 import { AdminModal, AdminModalSection, AdminModalDetailRow, AdminModalGrid } from "@/components/admin-ui/AdminModal";
@@ -182,6 +184,14 @@ export default function Admin() {
     blockingReason: "",
     isDeleted: false,
   });
+
+  // Recurrence UI state
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState(false);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY'>('WEEKLY');
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([]);
+  const [monthlyMode, setMonthlyMode] = useState<'DATE' | 'WEEKDAY_POS'>('DATE');
+  const [recurrenceEndMode, setRecurrenceEndMode] = useState<'NEVER' | 'ON_DATE'>('NEVER');
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
   
   // Legacy exception state (deprecated - will be removed after migration)
   const [newException, setNewException] = useState<InsertAvailabilityException>({
@@ -300,6 +310,14 @@ export default function Admin() {
       blockingReason: "",
       isDeleted: false,
     });
+    
+    // Reset recurrence state
+    setRecurrenceEnabled(false);
+    setRecurrenceFrequency('WEEKLY');
+    setSelectedWeekdays([]);
+    setMonthlyMode('DATE');
+    setRecurrenceEndMode('NEVER');
+    setRecurrenceEndDate(null);
     
     // Reset legacy exception form (for backward compatibility)
     setNewException({
@@ -1070,6 +1088,19 @@ export default function Admin() {
     }
   }, [activeTab]);
 
+  // Initialize weekdays when start date changes
+  useEffect(() => {
+    if (newEvent.startAt && selectedWeekdays.length === 0 && recurrenceEnabled && (recurrenceFrequency === 'WEEKLY' || recurrenceFrequency === 'BIWEEKLY')) {
+      const startDay = new Date(newEvent.startAt).getDay();
+      setSelectedWeekdays([startDay]);
+    }
+  }, [newEvent.startAt, recurrenceFrequency, recurrenceEnabled, selectedWeekdays.length]);
+
+  // Update recurrence rule when any recurrence setting changes
+  useEffect(() => {
+    updateRecurrenceRule();
+  }, [recurrenceEnabled, recurrenceFrequency, selectedWeekdays, monthlyMode, recurrenceEndMode, recurrenceEndDate, newEvent.startAt]);
+
   // DASHBOARD STATS
   // Merge active + archived for "ALL" views
   const allBookings = useMemo(() => {
@@ -1342,6 +1373,178 @@ export default function Admin() {
     }
     
     return sections;
+  };
+
+  // Recurrence Helper Functions
+  const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const initializeRecurrenceFromEvent = (event: Partial<InsertEvent>) => {
+    if (event.recurrenceRule) {
+      setRecurrenceEnabled(true);
+      // Parse existing RRULE and set UI state
+      // This is a simplified parser for the UI state restoration
+      if (event.recurrenceRule.includes('FREQ=DAILY')) {
+        setRecurrenceFrequency('DAILY');
+      } else if (event.recurrenceRule.includes('FREQ=WEEKLY')) {
+        setRecurrenceFrequency(event.recurrenceRule.includes('INTERVAL=2') ? 'BIWEEKLY' : 'WEEKLY');
+      } else if (event.recurrenceRule.includes('FREQ=MONTHLY')) {
+        setRecurrenceFrequency('MONTHLY');
+        setMonthlyMode(event.recurrenceRule.includes('BYSETPOS') ? 'WEEKDAY_POS' : 'DATE');
+      } else if (event.recurrenceRule.includes('FREQ=YEARLY')) {
+        setRecurrenceFrequency('YEARLY');
+      }
+      
+      setRecurrenceEndDate(event.recurrenceEndAt ? new Date(event.recurrenceEndAt) : null);
+      setRecurrenceEndMode(event.recurrenceEndAt ? 'ON_DATE' : 'NEVER');
+    } else {
+      setRecurrenceEnabled(false);
+      setRecurrenceFrequency('WEEKLY');
+      setSelectedWeekdays([]);
+      setMonthlyMode('DATE');
+      setRecurrenceEndMode('NEVER');
+      setRecurrenceEndDate(null);
+    }
+  };
+
+  const updateRecurrenceRule = () => {
+    if (!recurrenceEnabled) {
+      setNewEvent(prev => ({
+        ...prev,
+        recurrenceRule: null,
+        recurrenceEndAt: null
+      }));
+      return;
+    }
+
+    const startDate = newEvent.startAt || new Date();
+    const rule = buildRRuleFromUi({
+      frequency: recurrenceFrequency,
+      weekdays: selectedWeekdays.length > 0 ? selectedWeekdays : [startDate.getDay()],
+      monthlyMode,
+      byMonthDay: monthlyMode === 'DATE' ? startDate.getDate() : undefined,
+      bySetPos: monthlyMode === 'WEEKDAY_POS' ? Math.ceil(startDate.getDate() / 7) : undefined,
+      until: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate.toISOString() : null,
+      dtstart: startDate.toISOString()
+    });
+
+    setNewEvent(prev => ({
+      ...prev,
+      recurrenceRule: rule,
+      recurrenceEndAt: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate : null
+    }));
+  };
+
+  const getRecurrenceSummary = () => {
+    if (!recurrenceEnabled) return '';
+    
+    const parts = [];
+    
+    // Frequency
+    if (recurrenceFrequency === 'DAILY') {
+      parts.push('Daily');
+    } else if (recurrenceFrequency === 'WEEKLY') {
+      if (selectedWeekdays.length > 0) {
+        const dayNames = selectedWeekdays.map(d => weekdayNames[d]).join(', ');
+        parts.push(`Weekly on ${dayNames}`);
+      } else {
+        parts.push('Weekly');
+      }
+    } else if (recurrenceFrequency === 'BIWEEKLY') {
+      if (selectedWeekdays.length > 0) {
+        const dayNames = selectedWeekdays.map(d => weekdayNames[d]).join(', ');
+        parts.push(`Bi-weekly on ${dayNames}`);
+      } else {
+        parts.push('Bi-weekly');
+      }
+    } else if (recurrenceFrequency === 'MONTHLY') {
+      if (monthlyMode === 'DATE') {
+        const date = newEvent.startAt ? new Date(newEvent.startAt).getDate() : 1;
+        parts.push(`Monthly on the ${date}${getOrdinalSuffix(date)}`);
+      } else {
+        const startDate = newEvent.startAt ? new Date(newEvent.startAt) : new Date();
+        const weekday = weekdayNames[startDate.getDay()];
+        const weekOfMonth = Math.ceil(startDate.getDate() / 7);
+        parts.push(`Monthly on the ${weekOfMonth}${getOrdinalSuffix(weekOfMonth)} ${weekday}`);
+      }
+    } else if (recurrenceFrequency === 'YEARLY') {
+      parts.push('Yearly');
+    }
+    
+    // End condition
+    if (recurrenceEndMode === 'ON_DATE' && recurrenceEndDate) {
+      parts.push(`until ${recurrenceEndDate.toLocaleDateString()}`);
+    } else {
+      parts.push('forever');
+    }
+    
+    // Duration
+    if (newEvent.startAt && newEvent.endAt) {
+      const start = new Date(newEvent.startAt);
+      const end = new Date(newEvent.endAt);
+      const diffMs = end.getTime() - start.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (newEvent.isAllDay) {
+        parts.push('All-day');
+        if (diffDays > 1) {
+          parts.push(`${diffDays}-day span`);
+        }
+      } else {
+        if (diffDays > 1) {
+          parts.push(`${diffDays}-day span`);
+        }
+      }
+    }
+    
+    return parts.join(' • ');
+  };
+
+  const getOrdinalSuffix = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return s[(v - 20) % 10] || s[v] || s[0];
+  };
+
+  // Client-side RRULE builder
+  const buildRRuleFromUi = (opts: {
+    frequency: 'NONE' | 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY';
+    weekdays?: number[]; // 0-6 Sun..Sat for WEEKLY
+    monthlyMode?: 'DATE' | 'WEEKDAY_POS';
+    byMonthDay?: number; // for DATE
+    bySetPos?: number; // for WEEKDAY_POS (1..5)
+    until?: string | null; // ISO end date (inclusive of start)
+    dtstart?: string; // ISO
+  }): string | null => {
+    if (opts.frequency === 'NONE') return null;
+    const parts: string[] = [];
+    const mapIdxToByday = ['SU','MO','TU','WE','TH','FR','SA'];
+    
+    if (opts.frequency === 'DAILY') {
+      parts.push('FREQ=DAILY');
+    } else if (opts.frequency === 'WEEKLY' || opts.frequency === 'BIWEEKLY') {
+      parts.push('FREQ=WEEKLY');
+      parts.push(`INTERVAL=${opts.frequency === 'BIWEEKLY' ? 2 : 1}`);
+      const days = (opts.weekdays && opts.weekdays.length > 0) ? opts.weekdays : undefined;
+      if (days) parts.push(`BYDAY=${days.map(i => mapIdxToByday[i]).join(',')}`);
+    } else if (opts.frequency === 'MONTHLY') {
+      parts.push('FREQ=MONTHLY');
+      if (opts.monthlyMode === 'DATE' && opts.byMonthDay) parts.push(`BYMONTHDAY=${opts.byMonthDay}`);
+      if (opts.monthlyMode === 'WEEKDAY_POS' && opts.bySetPos && opts.weekdays && opts.weekdays[0] != null) {
+        parts.push(`BYDAY=${mapIdxToByday[opts.weekdays[0]]}`);
+        parts.push(`BYSETPOS=${opts.bySetPos}`);
+      }
+    } else if (opts.frequency === 'YEARLY') {
+      parts.push('FREQ=YEARLY');
+    }
+    
+    if (opts.until) {
+      const d = new Date(opts.until);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const u = `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+      parts.push(`UNTIL=${u}`);
+    }
+    
+    return parts.join(';');
   };
 
   // Developer Settings Handler Functions
@@ -2832,6 +3035,13 @@ export default function Admin() {
                                   isAvailabilityBlock: eventData.isAvailabilityBlock || false,
                                   blockingReason: eventData.blockingReason || '',
                                   isDeleted: false
+                                });
+                                
+                                // Initialize recurrence UI state from event data
+                                initializeRecurrenceFromEvent({
+                                  recurrenceRule: eventData.recurrenceRule,
+                                  recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
+                                  startAt: new Date(eventData.startAt)
                                 });
                               }
                             }}
@@ -4797,12 +5007,173 @@ export default function Admin() {
               />
             </div>
 
-            {/* Recurrence (Future Enhancement) */}
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-[#0F0276] dark:text-white mb-2">Recurrence (Coming Soon)</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Recurring events will be available in a future update. For now, please create separate events for each occurrence.
-              </p>
+            {/* Recurrence */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Switch 
+                  id="recurrence-toggle"
+                  checked={recurrenceEnabled}
+                  onCheckedChange={(checked) => {
+                    setRecurrenceEnabled(checked);
+                    if (!checked) {
+                      setNewEvent(prev => ({
+                        ...prev,
+                        recurrenceRule: null,
+                        recurrenceEndAt: null
+                      }));
+                    }
+                  }}
+                />
+                <Label htmlFor="recurrence-toggle" className="text-sm font-semibold text-[#0F0276] dark:text-white">
+                  Repeat Event
+                </Label>
+              </div>
+
+              {recurrenceEnabled && (
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 space-y-4">
+                  {/* Frequency Selection */}
+                  <div>
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Repeats</Label>
+                    <Select 
+                      value={recurrenceFrequency} 
+                      onValueChange={(value: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY') => {
+                        setRecurrenceFrequency(value);
+                        // Reset weekdays when changing frequency
+                        if (value === 'WEEKLY' || value === 'BIWEEKLY') {
+                          if (selectedWeekdays.length === 0 && newEvent.startAt) {
+                            setSelectedWeekdays([new Date(newEvent.startAt).getDay()]);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DAILY">Daily</SelectItem>
+                        <SelectItem value="WEEKLY">Weekly</SelectItem>
+                        <SelectItem value="BIWEEKLY">Bi-Weekly (Every 2 weeks)</SelectItem>
+                        <SelectItem value="MONTHLY">Monthly</SelectItem>
+                        <SelectItem value="YEARLY">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Weekly/Bi-Weekly Options */}
+                  {(recurrenceFrequency === 'WEEKLY' || recurrenceFrequency === 'BIWEEKLY') && (
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+                        Repeat on
+                      </Label>
+                      <div className="grid grid-cols-7 gap-2">
+                        {weekdayNames.map((day, index) => (
+                          <div key={day} className="flex items-center space-x-1">
+                            <Checkbox
+                              id={`weekday-${index}`}
+                              checked={selectedWeekdays.includes(index)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedWeekdays(prev => [...prev, index].sort((a, b) => a - b));
+                                } else {
+                                  setSelectedWeekdays(prev => prev.filter(d => d !== index));
+                                }
+                              }}
+                              className="border-[#D8BD2A]/50 data-[state=checked]:bg-[#D8BD2A] data-[state=checked]:border-[#D8BD2A]"
+                            />
+                            <Label 
+                              htmlFor={`weekday-${index}`} 
+                              className="text-xs text-slate-600 dark:text-slate-400 cursor-pointer"
+                            >
+                              {day.slice(0, 3)}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Monthly Options */}
+                  {recurrenceFrequency === 'MONTHLY' && (
+                    <div>
+                      <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+                        Monthly pattern
+                      </Label>
+                      <RadioGroup 
+                        value={monthlyMode} 
+                        onValueChange={(value: 'DATE' | 'WEEKDAY_POS') => setMonthlyMode(value)}
+                        className="space-y-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="DATE" id="monthly-date" />
+                          <Label htmlFor="monthly-date" className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                            On day {newEvent.startAt ? new Date(newEvent.startAt).getDate() : 1} of the month
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="WEEKDAY_POS" id="monthly-weekday" />
+                          <Label htmlFor="monthly-weekday" className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                            On the {newEvent.startAt ? Math.ceil(new Date(newEvent.startAt).getDate() / 7) : 1}{getOrdinalSuffix(newEvent.startAt ? Math.ceil(new Date(newEvent.startAt).getDate() / 7) : 1)} {' '}
+                            {newEvent.startAt ? weekdayNames[new Date(newEvent.startAt).getDay()] : 'Monday'} of the month
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  )}
+
+                  {/* End Date Options */}
+                  <div>
+                    <Label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+                      Ends
+                    </Label>
+                    <RadioGroup 
+                      value={recurrenceEndMode} 
+                      onValueChange={(value: 'NEVER' | 'ON_DATE') => setRecurrenceEndMode(value)}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="NEVER" id="end-never" />
+                        <Label htmlFor="end-never" className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                          Never
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="ON_DATE" id="end-date" />
+                        <Label htmlFor="end-date" className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer">
+                          On
+                        </Label>
+                        <Input
+                          type="date"
+                          value={recurrenceEndDate ? 
+                            new Date(recurrenceEndDate.getTime() - recurrenceEndDate.getTimezoneOffset() * 60000)
+                              .toISOString().split('T')[0] : ''}
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              // Create a date in local timezone for the selected date
+                              const [year, month, day] = e.target.value.split('-').map(Number);
+                              const date = new Date(year, month - 1, day, 23, 59, 59);
+                              setRecurrenceEndDate(date);
+                              setRecurrenceEndMode('ON_DATE');
+                            } else {
+                              setRecurrenceEndDate(null);
+                            }
+                          }}
+                          disabled={recurrenceEndMode === 'NEVER'}
+                          className="w-40 border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A] disabled:opacity-50"
+                        />
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Summary */}
+                  {getRecurrenceSummary() && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-md p-3 border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                        📅 {getRecurrenceSummary()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
