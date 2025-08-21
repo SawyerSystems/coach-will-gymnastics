@@ -35,7 +35,7 @@ export function AdminModal({
   children, 
   size = "2xl",
   className,
-  showCloseButton = true,
+  showCloseButton = false, // Default to false since Dialog already provides a close button
   footer
 }: AdminModalProps) {
   return (

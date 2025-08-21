@@ -5010,7 +5010,6 @@ export default function Admin() {
           onClose={() => setViewingEvent(null)}
           title={viewingEvent ? viewingEvent.title || 'Event Details' : 'Event Details'}
           size="3xl"
-          showCloseButton
         >
           {viewingEvent && (
             <div className="space-y-6">
