@@ -45,7 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability, useUpdateAvailabilityException } from "@/hooks/use-availability";
-import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/use-events";
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, type EventRow } from "@/hooks/use-events";
 import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
@@ -59,6 +59,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     Activity,
     AlertCircle,
+    Ban,
     BarChart,
   Calendar,
   CalendarDays,
@@ -158,6 +159,24 @@ export default function Admin() {
     isAvailable: true
   });
   
+  // Unified event state management (replaces both exception and event states)
+  const [newEvent, setNewEvent] = useState<Partial<InsertEvent>>({
+    title: "",
+    notes: "",
+    location: "",
+    isAllDay: false,
+    timezone: "America/Los_Angeles",
+    startAt: new Date(),
+    endAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour later
+    recurrenceRule: null,
+    recurrenceEndAt: null,
+    recurrenceExceptions: [],
+    isAvailabilityBlock: false,
+    blockingReason: "",
+    isDeleted: false,
+  });
+  
+  // Legacy exception state (deprecated - will be removed after migration)
   const [newException, setNewException] = useState<InsertAvailabilityException>({
     date: new Date().toISOString().split('T')[0],
     startTime: "09:00",
@@ -175,32 +194,18 @@ export default function Admin() {
     zipCode: "",
     country: "United States",
   });
-  const [isAddAvailabilityBlockOpen, setIsAddAvailabilityBlockOpen] = useState(false);
   
-  // Edit state for availability exceptions
+  // Unified modal states (replaces separate exception and event modals)
+  const [isAddAvailabilityBlockOpen, setIsAddAvailabilityBlockOpen] = useState(false);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  
+  // Edit state for both legacy exceptions and unified events
   const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
   const [viewingException, setViewingException] = useState<AvailabilityException | null>(null);
-  
-  // Events state management
-  const [newEvent, setNewEvent] = useState<InsertEvent>({
-    title: "",
-    notes: "",
-    location: "",
-    isAllDay: false,
-    timezone: "America/Los_Angeles",
-    startAt: new Date(),
-    endAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour later
-    recurrenceRule: null,
-    recurrenceEndAt: null,
-    recurrenceExceptions: [],
-    isDeleted: false,
-  });
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   
-  // Unified modal state - modal is open when we have editingException OR isAddAvailabilityBlockOpen
-  const isModalOpen = isAddAvailabilityBlockOpen || !!editingException;
-  const isEventModalOpen = isAddEventOpen || !!editingEvent;
+  // Unified modal state - modal is open for both legacy exceptions and new events
+  const isModalOpen = isAddAvailabilityBlockOpen || !!editingException || isAddEventOpen || !!editingEvent;
   
   // Big Calendar localizer
   const localizer = momentLocalizer(moment);
@@ -261,9 +266,30 @@ export default function Admin() {
   };
 
   const handleCancelEdit = () => {
+    // Close all modals and reset states
     setEditingException(null);
+    setEditingEvent(null);
     setIsAddAvailabilityBlockOpen(false);
-    // Reset form
+    setIsAddEventOpen(false);
+    
+    // Reset unified event form
+    setNewEvent({
+      title: "",
+      notes: "",
+      location: "",
+      isAllDay: false,
+      timezone: "America/Los_Angeles",
+      startAt: new Date(),
+      endAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour later
+      recurrenceRule: null,
+      recurrenceEndAt: null,
+      recurrenceExceptions: [],
+      isAvailabilityBlock: false,
+      blockingReason: "",
+      isDeleted: false,
+    });
+    
+    // Reset legacy exception form (for backward compatibility)
     setNewException({
       date: new Date().toISOString().split('T')[0],
       startTime: "09:00",
@@ -2676,16 +2702,40 @@ export default function Admin() {
                           <Calendar className="h-7 w-7 text-[#D8BD2A]" />
                           Events & Schedule
                           <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
-                            {availabilityExceptions?.length || 0} items
+                            {(availabilityExceptions?.length || 0) + (events?.length || 0)} items
                           </Badge>
                         </h3>
-                        <Button 
-                          onClick={() => setIsAddAvailabilityBlockOpen(true)}
-                          className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-6 py-3 font-semibold text-[#0F0276]"
-                        >
-                          <Plus className="h-5 w-5 mr-2" />
-                          Add Event
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => {
+                              setNewEvent({
+                                ...newEvent,
+                                isAvailabilityBlock: false,
+                                blockingReason: ""
+                              });
+                              setIsAddEventOpen(true);
+                            }}
+                            variant="outline"
+                            className="border-[#D8BD2A] text-[#0F0276] hover:bg-[#D8BD2A]/10 shadow-md hover:shadow-lg transition-all duration-200 rounded-xl px-4 py-2 font-semibold"
+                          >
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Add Event
+                          </Button>
+                          <Button 
+                            onClick={() => {
+                              setNewEvent({
+                                ...newEvent,
+                                isAvailabilityBlock: true,
+                                blockingReason: "Unavailable"
+                              });
+                              setIsAddAvailabilityBlockOpen(true);
+                            }}
+                            className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-xl px-4 py-2 font-semibold text-[#0F0276]"
+                          >
+                            <Ban className="h-4 w-4 mr-2" />
+                            Block Time
+                          </Button>
+                        </div>
                       </div>
 
                       {/* React Big Calendar */}
@@ -2721,23 +2771,16 @@ export default function Admin() {
                               
                               // Unified events system (new)
                               ...(events?.map(event => {
-                                // Parse date components to avoid timezone conversion issues
-                                const startDate = event.startTime 
-                                  ? new Date(event.startDate + `T${event.startTime}`)
-                                  : new Date(event.startDate + 'T00:00:00');
-                                
-                                const endDate = event.endTime 
-                                  ? new Date((event.endDate || event.startDate) + `T${event.endTime}`)
-                                  : event.allDay 
-                                    ? new Date((event.endDate || event.startDate) + 'T23:59:59')
-                                    : new Date((event.endDate || event.startDate) + 'T23:59:59');
+                                // Parse ISO datetime strings from the API
+                                const startDate = new Date(event.startAt);
+                                const endDate = new Date(event.endAt);
                                 
                                 return {
                                   id: `event-${event.id}`,
-                                  title: event.title || event.description || 'Event',
+                                  title: event.title || 'Event',
                                   start: startDate,
                                   end: endDate,
-                                  allDay: event.allDay,
+                                  allDay: event.isAllDay,
                                   resource: { ...event, type: 'event' }
                                 };
                               }) || [])
@@ -2748,21 +2791,49 @@ export default function Admin() {
                             onSelectEvent={(event) => {
                               const resource = event.resource;
                               if (resource.type === 'exception') {
-                                setViewingException(resource);
+                                // Handle legacy availability exception editing - cast to correct type
+                                const exception = resource as any; // Legacy exception type
+                                setEditingException(exception);
+                                setNewException({
+                                  date: exception.date,
+                                  startTime: exception.startTime || '',
+                                  endTime: exception.endTime || '',
+                                  isAvailable: exception.isAvailable || false,
+                                  reason: exception.reason || '',
+                                  title: exception.title || '',
+                                  category: exception.category || 'Meeting',
+                                  notes: exception.notes || '',
+                                  allDay: exception.allDay || false,
+                                  addressLine1: exception.addressLine1 || '',
+                                  addressLine2: exception.addressLine2 || '',
+                                  city: exception.city || '',
+                                  state: exception.state || '',
+                                  zipCode: exception.zipCode || '',
+                                  country: exception.country || 'United States'
+                                });
                               } else if (resource.type === 'event') {
-                                // For now, treat events like exceptions for viewing
-                                // TODO: Create separate event viewing modal if needed
-                                setViewingException({
-                                  ...resource,
-                                  reason: resource.blockingReason || resource.description || 'Event',
-                                  date: resource.startDate,
-                                  startTime: resource.startTime,
-                                  endTime: resource.endTime
+                                // Handle unified event editing - cast to correct type
+                                const eventData = resource as any; // Event type
+                                setEditingEvent(eventData);
+                                setNewEvent({
+                                  title: eventData.title || '',
+                                  notes: eventData.notes || '',
+                                  location: eventData.location || '',
+                                  isAllDay: eventData.isAllDay || false,
+                                  timezone: eventData.timezone || 'America/Los_Angeles',
+                                  startAt: new Date(eventData.startAt),
+                                  endAt: new Date(eventData.endAt),
+                                  recurrenceRule: eventData.recurrenceRule,
+                                  recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
+                                  recurrenceExceptions: eventData.recurrenceExceptions || [],
+                                  isAvailabilityBlock: eventData.isAvailabilityBlock || false,
+                                  blockingReason: eventData.blockingReason || '',
+                                  isDeleted: false
                                 });
                               }
                             }}
                             eventPropGetter={(event) => {
-                              const resource = event.resource;
+                              const resource = event.resource as any; // Cast to any for property access
                               let backgroundColor = '#D8BD2A';
                               let borderColor = '#D8BD2A';
                               
@@ -2777,54 +2848,9 @@ export default function Admin() {
                                   backgroundColor = '#EF4444'; // red
                                   borderColor = '#DC2626';
                                 } else {
-                                  // Informational events - color by category
-                                  if (resource.category) {
-                                    switch (resource.category) {
-                                      case 'Coaching: Team Meet/Competition':
-                                        backgroundColor = '#8B5CF6'; // purple
-                                        borderColor = '#7C3AED';
-                                        break;
-                                      case 'Coaching: Practice':
-                                        backgroundColor = '#3B82F6'; // blue
-                                        borderColor = '#2563EB';
-                                        break;
-                                      case 'Own: Team Meet/Competition':
-                                        backgroundColor = '#10B981'; // green
-                                        borderColor = '#059669';
-                                        break;
-                                      case 'Own: Practice':
-                                        backgroundColor = '#14B8A6'; // teal
-                                        borderColor = '#0D9488';
-                                        break;
-                                      case 'Medical Appointment':
-                                        backgroundColor = '#EF4444'; // red
-                                        borderColor = '#DC2626';
-                                        break;
-                                      case 'Dental Appointment':
-                                        backgroundColor = '#F97316'; // orange
-                                        borderColor = '#EA580C';
-                                        break;
-                                      case 'Meeting':
-                                        backgroundColor = '#6366F1'; // indigo
-                                        borderColor = '#4F46E5';
-                                        break;
-                                      case 'Busy: Work':
-                                        backgroundColor = '#EAB308'; // yellow
-                                        borderColor = '#CA8A04';
-                                        break;
-                                      case 'Busy: Personal':
-                                        backgroundColor = '#EC4899'; // pink
-                                        borderColor = '#DB2777';
-                                        break;
-                                      default:
-                                        backgroundColor = '#6B7280'; // gray
-                                        borderColor = '#4B5563';
-                                    }
-                                  } else {
-                                    // Default informational event color
-                                    backgroundColor = '#3B82F6'; // blue
-                                    borderColor = '#2563EB';
-                                  }
+                                  // Informational events - use default blue
+                                  backgroundColor = '#3B82F6'; // blue
+                                  borderColor = '#2563EB';
                                 }
                               } else {
                                 // Fallback for legacy events without type
@@ -2901,16 +2927,19 @@ export default function Admin() {
                               },
                             }}
                             components={{
-                              event: ({ event }) => (
-                                <div className="text-xs font-medium truncate">
-                                  {event.title}
-                                  {event.resource.category && (
-                                    <div className="text-xs opacity-80 truncate">
-                                      {event.resource.category}
-                                    </div>
-                                  )}
-                                </div>
-                              ),
+                              event: ({ event }) => {
+                                const resource = event.resource as any; // Cast for property access
+                                return (
+                                  <div className="text-xs font-medium truncate">
+                                    {event.title}
+                                    {resource.category && (
+                                      <div className="text-xs opacity-80 truncate">
+                                        {resource.category}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              },
                             }}
                           />
                         </div>
@@ -4442,84 +4471,147 @@ export default function Admin() {
           </div>
         </AdminModal>
 
-        {/* Enhanced Event Scheduler Modal */}
+        {/* Unified Event/Availability Modal */}
         <AdminModal 
           isOpen={isModalOpen} 
           onClose={handleCancelEdit}
-          title={editingException ? "Edit Event" : "Add Event"}
+          title={editingException ? "Edit Legacy Event" : editingEvent ? "Edit Event" : "Add Event/Block Time"}
           size="4xl"
           showCloseButton={false}
         >
           {/* Event Form */}
           <div className="space-y-6">
-            {/* Date and Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Date *</Label>
-                <Input
-                  type="date"
-                  value={newException.date || ''}
-                  onChange={(e) => setNewException({
-                    ...newException,
-                    date: e.target.value // Keep as string to avoid timezone issues
+            {/* Event Type Toggle */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+              <div className="flex items-center gap-4">
+                <Switch 
+                  id="availability-block"
+                  checked={newEvent.isAvailabilityBlock || false}
+                  onCheckedChange={(checked) => setNewEvent({
+                    ...newEvent,
+                    isAvailabilityBlock: checked,
+                    blockingReason: checked ? (newEvent.blockingReason || "Unavailable") : ""
                   })}
+                />
+                <div>
+                  <Label htmlFor="availability-block" className="text-sm font-semibold text-[#0F0276] dark:text-white">
+                    Block Availability
+                  </Label>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {newEvent.isAvailabilityBlock 
+                      ? "This will prevent lesson bookings during this time" 
+                      : "This is an informational event that won't block bookings"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Title and Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">
+                  {newEvent.isAvailabilityBlock ? "Block Reason *" : "Event Title *"}
+                </Label>
+                <Input
+                  value={newEvent.title || ''}
+                  onChange={(e) => setNewEvent({
+                    ...newEvent,
+                    title: e.target.value
+                  })}
+                  placeholder={newEvent.isAvailabilityBlock 
+                    ? "e.g., Doctor Visit, Vacation, Team Practice" 
+                    : "e.g., Competition, Meeting, Personal Event"}
                   className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
                 />
               </div>
 
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Event Category</Label>
-                <Select
-                  value={newException.category || 'Meeting'}
-                  onValueChange={(value) => setNewException({
-                    ...newException,
-                    category: value as any
-                  })}
-                >
-                  <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
-                    <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
-                    <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
-                    <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
-                    <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
-                    <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
-                    <SelectItem value="Meeting">🤝 Meeting</SelectItem>
-                    <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
-                    <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
-                    <SelectItem value="Other Appointment">📅 Other Appointment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {newEvent.isAvailabilityBlock && (
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Blocking Category</Label>
+                  <Select
+                    value={newEvent.blockingReason || 'Unavailable'}
+                    onValueChange={(value) => setNewEvent({
+                      ...newEvent,
+                      blockingReason: value
+                    })}
+                  >
+                    <SelectTrigger className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Coaching: Team Meet/Competition">🏆 Coaching: Team Meet/Competition</SelectItem>
+                      <SelectItem value="Coaching: Practice">🤸 Coaching: Practice</SelectItem>
+                      <SelectItem value="Own: Team Meet/Competition">🥇 Own: Team Meet/Competition</SelectItem>
+                      <SelectItem value="Own: Practice">💪 Own: Practice</SelectItem>
+                      <SelectItem value="Medical Appointment">🏥 Medical Appointment</SelectItem>
+                      <SelectItem value="Dental Appointment">🦷 Dental Appointment</SelectItem>
+                      <SelectItem value="Meeting">🤝 Meeting</SelectItem>
+                      <SelectItem value="Busy: Work">💼 Busy: Work</SelectItem>
+                      <SelectItem value="Busy: Personal">🏠 Busy: Personal</SelectItem>
+                      <SelectItem value="Unavailable">❌ Unavailable</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
-            {/* Title */}
-            <div>
-              <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Event Title *</Label>
-              <Input
-                value={newException.title || ''}
-                onChange={(e) => setNewException({
-                  ...newException,
-                  title: e.target.value || undefined
-                })}
-                placeholder="e.g., Team Competition, Doctor Visit, Vacation Day"
-                className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-              />
-            </div>
-
-            {/* Time Settings */}
+            {/* Date and Time Settings */}
             <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Start Date *</Label>
+                  <Input
+                    type="date"
+                    value={newEvent.startAt ? new Date(newEvent.startAt).toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      const currentStart = newEvent.startAt ? new Date(newEvent.startAt) : new Date();
+                      const currentEnd = newEvent.endAt ? new Date(newEvent.endAt) : new Date(Date.now() + 60 * 60 * 1000);
+                      
+                      // Update start date while preserving time
+                      const newStart = new Date(selectedDate + 'T' + currentStart.toTimeString().slice(0, 8));
+                      // Update end date to match if it's the same day, otherwise preserve end date
+                      const newEnd = currentStart.toDateString() === currentEnd.toDateString() 
+                        ? new Date(selectedDate + 'T' + currentEnd.toTimeString().slice(0, 8))
+                        : currentEnd;
+                      
+                      setNewEvent({
+                        ...newEvent,
+                        startAt: newStart,
+                        endAt: newEnd
+                      });
+                    }}
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">End Date</Label>
+                  <Input
+                    type="date"
+                    value={newEvent.endAt ? new Date(newEvent.endAt).toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      const selectedDate = e.target.value;
+                      const currentEnd = newEvent.endAt ? new Date(newEvent.endAt) : new Date();
+                      const newEnd = new Date(selectedDate + 'T' + currentEnd.toTimeString().slice(0, 8));
+                      
+                      setNewEvent({
+                        ...newEvent,
+                        endAt: newEnd
+                      });
+                    }}
+                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center gap-4">
                 <Switch 
                   id="all-day"
-                  checked={newException.allDay || false}
-                  onCheckedChange={(checked) => setNewException({
-                    ...newException,
-                    allDay: checked,
-                    ...(checked ? { startTime: '', endTime: '' } : {})
+                  checked={newEvent.isAllDay || false}
+                  onCheckedChange={(checked) => setNewEvent({
+                    ...newEvent,
+                    isAllDay: checked
                   })}
                 />
                 <Label htmlFor="all-day" className="text-sm font-semibold text-[#0F0276] dark:text-white">
@@ -4527,17 +4619,24 @@ export default function Admin() {
                 </Label>
               </div>
 
-              {!newException.allDay && (
+              {!newEvent.isAllDay && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Start Time</Label>
                     <Input
                       type="time"
-                      value={newException.startTime || ''}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        startTime: e.target.value
-                      })}
+                      value={newEvent.startAt ? new Date(newEvent.startAt).toTimeString().slice(0, 5) : ''}
+                      onChange={(e) => {
+                        const timeValue = e.target.value;
+                        const currentStart = newEvent.startAt ? new Date(newEvent.startAt) : new Date();
+                        const dateStr = currentStart.toISOString().split('T')[0];
+                        const newStart = new Date(dateStr + 'T' + timeValue + ':00');
+                        
+                        setNewEvent({
+                          ...newEvent,
+                          startAt: newStart
+                        });
+                      }}
                       className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
                     />
                   </div>
@@ -4546,11 +4645,18 @@ export default function Admin() {
                     <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">End Time</Label>
                     <Input
                       type="time"
-                      value={newException.endTime || ''}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        endTime: e.target.value
-                      })}
+                      value={newEvent.endAt ? new Date(newEvent.endAt).toTimeString().slice(0, 5) : ''}
+                      onChange={(e) => {
+                        const timeValue = e.target.value;
+                        const currentEnd = newEvent.endAt ? new Date(newEvent.endAt) : new Date();
+                        const dateStr = currentEnd.toISOString().split('T')[0];
+                        const newEnd = new Date(dateStr + 'T' + timeValue + ':00');
+                        
+                        setNewEvent({
+                          ...newEvent,
+                          endAt: newEnd
+                        });
+                      }}
                       className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
                     />
                   </div>
@@ -4558,13 +4664,27 @@ export default function Admin() {
               )}
             </div>
 
+            {/* Location */}
+            <div>
+              <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Location</Label>
+              <Input
+                value={newEvent.location || ''}
+                onChange={(e) => setNewEvent({
+                  ...newEvent,
+                  location: e.target.value
+                })}
+                placeholder="e.g., Home, Gym, Doctor's Office"
+                className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
+              />
+            </div>
+
             {/* Notes */}
             <div>
               <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Notes</Label>
               <Textarea
-                value={newException.notes || ''}
-                onChange={(e) => setNewException({
-                  ...newException,
+                value={newEvent.notes || ''}
+                onChange={(e) => setNewEvent({
+                  ...newEvent,
                   notes: e.target.value
                 })}
                 placeholder="Additional details about this event (optional)"
@@ -4573,162 +4693,77 @@ export default function Admin() {
               />
             </div>
 
-            {/* Location (for all exceptions) */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-[#0F0276] dark:text-white">Location (Optional)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <AddressAutocompleteInput
-                    label="Address Line 1"
-                    value={newException.addressLine1 || ''}
-                    onChange={(e) => setNewException({
-                      ...newException,
-                      addressLine1: e.target.value
-                    })}
-                    onPlaceSelected={(addressComponents: Partial<AddressComponents>) => {
-                      setNewException(prev => ({
-                        ...prev,
-                        addressLine1: addressComponents.addressLine1 || prev.addressLine1,
-                        city: addressComponents.city || prev.city,
-                        state: addressComponents.state || prev.state,
-                        zipCode: addressComponents.zipCode || prev.zipCode,
-                        country: addressComponents.country || prev.country,
-                      }));
-                    }}
-                    onManualInput={(value) => {
-                      setNewException(prev => ({
-                        ...prev,
-                        addressLine1: value
-                      }));
-                    }}
-                    placeholder="123 Main St"
-                    className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                    helperText="Start typing for address suggestions"
-                    autocompleteOptions={{
-                      componentRestrictions: { country: ['us', 'ca'] },
-                      types: ['address']
-                    }}
-                  />
-                  
-                  <div>
-                    <Label className="text-sm text-slate-600 dark:text-slate-300">Address Line 2</Label>
-                    <Input
-                      value={newException.addressLine2 || ''}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        addressLine2: e.target.value
-                      })}
-                      placeholder="Apt, Suite, Unit"
-                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <Label className="text-sm text-slate-600 dark:text-slate-300">City</Label>
-                    <Input
-                      value={newException.city || ''}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        city: e.target.value
-                      })}
-                      placeholder="City"
-                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-sm text-slate-600 dark:text-slate-300">State</Label>
-                    <Input
-                      value={newException.state || ''}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        state: e.target.value
-                      })}
-                      placeholder="ST"
-                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-sm text-slate-600 dark:text-slate-300">ZIP Code</Label>
-                    <Input
-                      value={newException.zipCode || ''}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        zipCode: e.target.value
-                      })}
-                      placeholder="12345"
-                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-sm text-slate-600 dark:text-slate-300">Country</Label>
-                    <Input
-                      value={newException.country || 'United States'}
-                      onChange={(e) => setNewException({
-                        ...newException,
-                        country: e.target.value
-                      })}
-                      className="border-[#D8BD2A]/30 focus:border-[#D8BD2A] focus:ring-[#D8BD2A]"
-                    />
-                  </div>
-                </div>
-              </div>
+            {/* Recurrence (Future Enhancement) */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-[#0F0276] dark:text-white mb-2">Recurrence (Coming Soon)</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Recurring events will be available in a future update. For now, please create separate events for each occurrence.
+              </p>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <Button 
                 variant="outline"
-                onClick={() => {
-                  handleCancelEdit();
-                }}
+                onClick={handleCancelEdit}
                 className="px-6"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={() => {
-                  const formData = {
-                    ...newException,
-                    date: typeof newException.date === 'string' ? newException.date : new Date().toISOString().split('T')[0],
-                    isAvailable: false, // All entries block availability
-                    reason: newException.title || newException.reason, // Use title as the main reason
-                    category: newException.category || 'Meeting' // Default to Meeting if no category selected
+                  // Prepare event data for creation/update
+                  const eventData = {
+                    title: newEvent.title || (newEvent.isAvailabilityBlock ? "Blocked Time" : "Event"),
+                    notes: newEvent.notes,
+                    location: newEvent.location,
+                    isAllDay: newEvent.isAllDay || false,
+                    timezone: newEvent.timezone || "America/Los_Angeles",
+                    startAt: newEvent.startAt ? newEvent.startAt.toISOString() : new Date().toISOString(),
+                    endAt: newEvent.endAt ? newEvent.endAt.toISOString() : new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                    recurrenceRule: null, // TODO: Add recurrence support
+                    recurrenceEndAt: null,
+                    recurrenceExceptions: [],
+                    isAvailabilityBlock: newEvent.isAvailabilityBlock || false,
+                    blockingReason: newEvent.isAvailabilityBlock ? (newEvent.blockingReason || "Unavailable") : null,
+                    isDeleted: false
                   };
                   
-                  if (editingException) {
-                    handleSaveEdit();
-                  } else {
-                    createExceptionMutation.mutate(formData, {
+                  if (editingEvent) {
+                    // Update existing event
+                    updateEventMutation.mutate({ id: editingEvent.id, data: eventData }, {
                       onSuccess: () => {
-                        setIsAddAvailabilityBlockOpen(false);
-                        // Reset form
-                        setNewException({
-                          date: new Date().toISOString().split('T')[0],
-                          startTime: "09:00",
-                          endTime: "17:00",
-                          isAvailable: false,
-                          reason: "",
-                          title: "",
-                          category: "Meeting",
-                          notes: "",
-                          allDay: false,
-                          addressLine1: "",
-                          addressLine2: "",
-                          city: "",
-                          state: "",
-                          zipCode: "",
-                          country: "United States",
-                        });
+                        handleCancelEdit();
+                      }
+                    });
+                  } else if (editingException) {
+                    // For now, editing legacy exceptions still uses the old system
+                    // TODO: Migrate to unified events system
+                    const dateStr = typeof newException.date === 'string' ? newException.date : new Date().toISOString().split('T')[0];
+                    const dateObj = new Date(dateStr);
+                    const formData = {
+                      dayOfWeek: dateObj.getDay(), // 0 = Sunday, 1 = Monday, etc.
+                      startTime: newException.startTime || '09:00',
+                      endTime: newException.endTime || '17:00',
+                      isAvailable: false
+                    };
+                    updateAvailabilityMutation.mutate({ id: editingException.id, data: formData }, {
+                      onSuccess: () => {
+                        handleCancelEdit();
+                      }
+                    });
+                  } else {
+                    // Create new event
+                    createEventMutation.mutate(eventData, {
+                      onSuccess: () => {
+                        handleCancelEdit();
                       }
                     });
                   }
                 }} 
                 className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] text-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6 font-semibold"
               >
-                {editingException ? "📅 Update Event" : " Add Event"}
+                {editingEvent ? "🔄 Update Event" : editingException ? "📅 Update Legacy Event" : newEvent.isAvailabilityBlock ? "🚫 Block Time" : "📅 Add Event"}
               </Button>
             </div>
           </div>

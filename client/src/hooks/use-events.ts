@@ -15,6 +15,15 @@ export interface EventRow {
   recurrenceRule?: string | null;
   recurrenceEndAt?: string | null;
   recurrenceExceptions?: string[];
+  // Availability blocking fields
+  isAvailabilityBlock?: boolean;
+  blockingReason?: string | null;
+  // Audit fields
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  isDeleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export function useEvents(range?: { start: string; end: string }) {
