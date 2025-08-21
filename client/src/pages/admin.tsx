@@ -4777,17 +4777,31 @@ export default function Admin() {
                   <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Start Date *</Label>
                   <Input
                     type="date"
-                    value={newEvent.startAt ? new Date(newEvent.startAt).toISOString().split('T')[0] : ''}
+                    value={newEvent.startAt ? (() => {
+                      const date = new Date(newEvent.startAt);
+                      // Apply timezone offset to prevent date shifting
+                      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                      return offsetDate.toISOString().split('T')[0];
+                    })() : ''}
                     onChange={(e) => {
                       const selectedDate = e.target.value;
+                      if (!selectedDate) return;
+                      
                       const currentStart = newEvent.startAt ? new Date(newEvent.startAt) : new Date();
                       const currentEnd = newEvent.endAt ? new Date(newEvent.endAt) : new Date(Date.now() + 60 * 60 * 1000);
                       
-                      // Update start date while preserving time
-                      const newStart = new Date(selectedDate + 'T' + currentStart.toTimeString().slice(0, 8));
+                      // Parse the date and preserve local timezone
+                      const [year, month, day] = selectedDate.split('-').map(Number);
+                      const newStart = new Date(currentStart);
+                      newStart.setFullYear(year, month - 1, day);
+                      
                       // Update end date to match if it's the same day, otherwise preserve end date
                       const newEnd = currentStart.toDateString() === currentEnd.toDateString() 
-                        ? new Date(selectedDate + 'T' + currentEnd.toTimeString().slice(0, 8))
+                        ? (() => {
+                            const endDate = new Date(currentEnd);
+                            endDate.setFullYear(year, month - 1, day);
+                            return endDate;
+                          })()
                         : currentEnd;
                       
                       setNewEvent({
@@ -4804,11 +4818,22 @@ export default function Admin() {
                   <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">End Date</Label>
                   <Input
                     type="date"
-                    value={newEvent.endAt ? new Date(newEvent.endAt).toISOString().split('T')[0] : ''}
+                    value={newEvent.endAt ? (() => {
+                      const date = new Date(newEvent.endAt);
+                      // Apply timezone offset to prevent date shifting
+                      const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                      return offsetDate.toISOString().split('T')[0];
+                    })() : ''}
                     onChange={(e) => {
                       const selectedDate = e.target.value;
+                      if (!selectedDate) return;
+                      
                       const currentEnd = newEvent.endAt ? new Date(newEvent.endAt) : new Date();
-                      const newEnd = new Date(selectedDate + 'T' + currentEnd.toTimeString().slice(0, 8));
+                      
+                      // Parse the date and preserve local timezone
+                      const [year, month, day] = selectedDate.split('-').map(Number);
+                      const newEnd = new Date(currentEnd);
+                      newEnd.setFullYear(year, month - 1, day);
                       
                       setNewEvent({
                         ...newEvent,
