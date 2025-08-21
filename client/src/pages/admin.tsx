@@ -46,7 +46,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateAvailability, useCreateAvailabilityException, useDeleteAvailability, useDeleteAvailabilityException, useUpdateAvailability, useUpdateAvailabilityException } from "@/hooks/use-availability";
+import { useCreateAvailability, useDeleteAvailability, useUpdateAvailability } from "@/hooks/use-availability";
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, type EventRow } from "@/hooks/use-events";
 import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
@@ -56,7 +56,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import type { Athlete, Availability, AvailabilityException, BlogPost, Booking, Event, InsertAthlete, InsertAvailability, InsertAvailabilityException, InsertBlogPost, InsertEvent, Parent, Tip } from "@shared/schema";
+import type { Athlete, Availability, BlogPost, Booking, Event, InsertAthlete, InsertAvailability, InsertBlogPost, InsertEvent, Parent, Tip } from "@shared/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     Activity,
@@ -193,100 +193,29 @@ export default function Admin() {
   const [recurrenceEndMode, setRecurrenceEndMode] = useState<'NEVER' | 'ON_DATE'>('NEVER');
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
   
-  // Legacy exception state (deprecated - will be removed after migration)
-  const [newException, setNewException] = useState<InsertAvailabilityException>({
-    date: new Date().toISOString().split('T')[0],
-    startTime: "09:00",
-    endTime: "17:00",
-    isAvailable: false,
-    reason: "",
-    title: "",
-    category: "Meeting",
-    notes: "",
-    allDay: false,
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "United States",
-  });
-  
   // Truly unified modal state - single modal for all event/block operations
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   
-  // Edit state for both legacy exceptions and unified events
-  const [editingException, setEditingException] = useState<AvailabilityException | null>(null);
-  const [viewingException, setViewingException] = useState<AvailabilityException | null>(null);
+  // Unified events only
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   // New: separate viewing state for unified events (view details modal)
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
-  
   // Unified modal state - single modal for all operations
-  const isModalOpen = isEventModalOpen || !!editingException || !!editingEvent;
+  const isModalOpen = isEventModalOpen || !!editingEvent;
   const isViewEventModalOpen = !!viewingEvent; // dedicated view details modal
   
   // Big Calendar localizer
   const localizer = momentLocalizer(moment);
   
   // Edit handlers
-  const handleEditException = (exception: AvailabilityException) => {
-    setEditingException(exception);
-    setNewException({
-      date: exception.date, // Keep as string to avoid timezone issues
-      startTime: exception.startTime || "",
-      endTime: exception.endTime || "",
-      isAvailable: exception.isAvailable,
-      reason: exception.reason || "",
-      title: exception.title || "",
-      category: (exception.category as any) || "Meeting", // Default to Meeting if no category
-      notes: exception.notes || "",
-      allDay: exception.allDay || false,
-      addressLine1: exception.addressLine1 || "",
-      addressLine2: exception.addressLine2 || "",
-      city: exception.city || "",
-      state: exception.state || "",
-      zipCode: exception.zipCode || "",
-      country: exception.country || "United States",
-    });
-    // Close add modal if open and set editing state
-    setIsEventModalOpen(false);
-  };
+  // Legacy exception editing removed
 
   const handleSaveEdit = () => {
-    if (editingException) {
-      updateExceptionMutation.mutate({
-        id: editingException.id,
-        data: newException
-      }, {
-        onSuccess: () => {
-          setEditingException(null);
-          // Reset form
-          setNewException({
-            date: new Date().toISOString().split('T')[0],
-            startTime: "09:00",
-            endTime: "17:00",
-            isAvailable: false,
-            reason: "",
-            title: "",
-            category: undefined,
-            notes: "",
-            allDay: false,
-            addressLine1: "",
-            addressLine2: "",
-            city: "",
-            state: "",
-            zipCode: "",
-            country: "United States",
-          });
-        }
-      });
-    }
+  // Legacy exception save removed
   };
 
   const handleCancelEdit = () => {
     // Close all modals and reset states
-    setEditingException(null);
     setEditingEvent(null);
   setViewingEvent(null);
     setIsEventModalOpen(false);
@@ -323,24 +252,6 @@ export default function Admin() {
     setRecurrenceEndMode('NEVER');
     setRecurrenceEndDate(null);
     
-    // Reset legacy exception form (for backward compatibility)
-    setNewException({
-      date: new Date().toISOString().split('T')[0],
-      startTime: "09:00",
-      endTime: "17:00",
-      isAvailable: false,
-      reason: "",
-      title: "",
-      category: "Meeting",
-      notes: "",
-      allDay: false,
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "United States",
-    });
   };
   
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null);
@@ -535,11 +446,7 @@ export default function Admin() {
     enabled: !!authStatus?.loggedIn,
   });
 
-  const { data: availabilityExceptions = [] } = useQuery<AvailabilityException[]>({
-    queryKey: ["/api/availability-exceptions"],
-    queryFn: () => apiRequest("GET", "/api/availability-exceptions").then(res => res.json()),
-    enabled: !!authStatus?.loggedIn,
-  });
+  // Legacy availability exceptions removed from UI
 
   // Events queries
   const { data: events = [] } = useEvents();
@@ -578,9 +485,7 @@ export default function Admin() {
   const createAvailabilityMutation = useCreateAvailability();
   const updateAvailabilityMutation = useUpdateAvailability();
   const deleteAvailabilityMutation = useDeleteAvailability();
-  const createExceptionMutation = useCreateAvailabilityException();
-  const updateExceptionMutation = useUpdateAvailabilityException();
-  const deleteExceptionMutation = useDeleteAvailabilityException();
+  // Legacy exception mutations removed
 
   const updateBookingMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number, status: string }) => {
@@ -2921,7 +2826,7 @@ export default function Admin() {
                           <Calendar className="h-7 w-7 text-[#D8BD2A]" />
                           Events & Schedule
                           <Badge variant="secondary" className="bg-gradient-to-r from-[#D8BD2A]/20 to-[#D8BD2A]/30 text-[#0F0276] dark:text-white font-bold rounded-xl px-3 py-1">
-                            {(availabilityExceptions?.length || 0) + (events?.length || 0)} items
+                            {(events?.length || 0)} items
                           </Badge>
                         </h3>
                         <Button 
@@ -2946,38 +2851,10 @@ export default function Admin() {
                         <div className="h-[600px] p-4">
                           <BigCalendar
                             localizer={localizer}
-                            events={[
-                              // Legacy availability exceptions (during migration)
-                              ...(availabilityExceptions?.map(exception => {
-                                // Parse date components to avoid timezone conversion issues
-                                const [year, month, day] = exception.date.split('-').map(Number);
-                                
-                                const startDate = exception.startTime 
-                                  ? new Date(exception.date + `T${exception.startTime}`)
-                                  : new Date(year, month - 1, day, 0, 0, 0); // month is 0-indexed
-                                
-                                const endDate = exception.endTime 
-                                  ? new Date(exception.date + `T${exception.endTime}`)
-                                  : exception.allDay 
-                                    ? new Date(year, month - 1, day, 23, 59, 59)
-                                    : new Date(year, month - 1, day, 1, 0, 0);
-                                
-                                return {
-                                  id: `exception-${exception.id}`,
-                                  title: exception.title || exception.reason || 'Blocked Time',
-                                  start: startDate,
-                                  end: endDate,
-                                  allDay: exception.allDay,
-                                  resource: { ...exception, type: 'exception' }
-                                };
-                              }) || []),
-                              
-                              // Unified events system (new)
-                              ...(events?.map(event => {
-                                // Parse ISO datetime strings from the API
+                            events={
+                              (events?.map(event => {
                                 const startDate = new Date(event.startAt);
                                 const endDate = new Date(event.endAt);
-                                
                                 return {
                                   id: `event-${event.id}`,
                                   title: event.title || 'Event',
@@ -2987,37 +2864,13 @@ export default function Admin() {
                                   resource: { ...event, type: 'event' }
                                 };
                               }) || [])
-                            ]}
+                            }
                             startAccessor="start"
                             endAccessor="end"
                             style={{ height: '100%' }}
                             onSelectEvent={(event) => {
                               const resource = event.resource;
-                              if (resource.type === 'exception') {
-                                // Handle legacy availability exception editing - cast to correct type
-                                const exception = resource as any; // Legacy exception type
-                                setEditingException(exception);
-                                setNewException({
-                                  date: exception.date,
-                                  startTime: exception.startTime || '',
-                                  endTime: exception.endTime || '',
-                                  isAvailable: exception.isAvailable || false,
-                                  reason: exception.reason || '',
-                                  title: exception.title || '',
-                                  category: exception.category || 'Meeting',
-                                  notes: exception.notes || '',
-                                  allDay: exception.allDay || false,
-                                  addressLine1: exception.addressLine1 || '',
-                                  addressLine2: exception.addressLine2 || '',
-                                  city: exception.city || '',
-                                  state: exception.state || '',
-                                  zipCode: exception.zipCode || '',
-                                  country: exception.country || 'United States'
-                                });
-                              } else if (resource.type === 'event') {
-                                // View details first instead of editing
-                                setViewingEvent(resource as any);
-                              }
+                              if (resource.type === 'event') setViewingEvent(resource as any);
                             }}
                             eventPropGetter={(event) => {
                               const resource = event.resource as any; // Cast to any for property access
@@ -3039,10 +2892,7 @@ export default function Admin() {
                               let backgroundColor = legendColors['Default'].bg;
                               let borderColor = legendColors['Default'].border;
                               
-                              if (resource.type === 'exception') {
-                                backgroundColor = legendColors['Blocked'].bg;
-                                borderColor = legendColors['Blocked'].border;
-                              } else if (resource.type === 'event') {
+                              if (resource.type === 'event') {
                                 if (resource.isAvailabilityBlock) {
                                   backgroundColor = legendColors['Blocked'].bg;
                                   borderColor = legendColors['Blocked'].border;
@@ -3161,26 +3011,22 @@ export default function Admin() {
                             <List className="h-5 w-5 text-[#D8BD2A]" />
                             List View
                           </AdminCardTitle>
+                          {/* Legacy controls removed */}
                         </AdminCardHeader>
                         <AdminCardContent>
                           <div className="grid grid-cols-1 gap-4">
-                            {[...(availabilityExceptions || []),
-                              // Transform unified events into a shape similar to exceptions for list display
-                              ...((events || []).map(ev => {
-                                return {
-                                  id: ev.id,
-                                  // Use start date for grouping like exceptions (date only)
-                                  date: ev.startAt ? new Date(ev.startAt).toISOString().slice(0,10) : new Date().toISOString().slice(0,10),
-                                  startTime: ev.startAt ? new Date(ev.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
-                                  endTime: ev.endAt ? new Date(ev.endAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
-                                  allDay: ev.isAllDay,
-                                  title: ev.title,
-                                  reason: ev.blockingReason,
-                                  category: ev.isAvailabilityBlock ? 'Blocked' : undefined,
-                                  notes: ev.notes,
-                                  type: 'event'
-                                };
-                              }))]
+                            {(events || []).map(ev => ({
+                              id: ev.id,
+                              date: ev.startAt ? new Date(ev.startAt).toISOString().slice(0,10) : new Date().toISOString().slice(0,10),
+                              startTime: ev.startAt ? new Date(ev.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+                              endTime: ev.endAt ? new Date(ev.endAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+                              allDay: ev.isAllDay,
+                              title: ev.title,
+                              reason: ev.blockingReason,
+                              category: ev.isAvailabilityBlock ? 'Blocked' : undefined,
+                              notes: ev.notes,
+                              type: 'event'
+                            }))
                               ?.sort((a, b) => {
                                 // Parse dates to avoid timezone issues when sorting
                                 const [yearA, monthA, dayA] = a.date.split('-').map(Number);
@@ -3190,7 +3036,7 @@ export default function Admin() {
                                 return dateA.getTime() - dateB.getTime();
                               })
                               ?.map((exception) => (
-                                <div key={exception.id + (exception.type === 'event' ? '-event' : '-exc')} className="border-l-4 border-[#D8BD2A] bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+                                <div key={exception.id + '-event'} className="border-l-4 border-[#D8BD2A] bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
                                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                                     <div className="space-y-2 flex-1 min-w-0">
                                       <div className="flex items-center gap-3">
@@ -3245,24 +3091,6 @@ export default function Admin() {
                                           <strong>Notes:</strong> {exception.notes}
                                         </p>
                                       )}
-
-                                      {/* Address Display */}
-                                      {(exception.addressLine1 || exception.city) && (
-                                        <div className="text-sm text-slate-600 dark:text-slate-300 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                                          <strong>Location:</strong>
-                                          <div className="mt-1">
-                                            {exception.addressLine1 && <div>{exception.addressLine1}</div>}
-                                            {exception.addressLine2 && <div>{exception.addressLine2}</div>}
-                                            {exception.city && (
-                                              <div>
-                                                {exception.city}
-                                                {exception.state && `, ${exception.state}`}
-                                                {exception.zipCode && ` ${exception.zipCode}`}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
                                     </div>
 
                                     <div className="w-full sm:w-auto flex flex-wrap sm:flex-nowrap gap-2 sm:ml-4 justify-start sm:justify-end">
@@ -3270,13 +3098,8 @@ export default function Admin() {
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                          if (exception.type === 'event') {
-                                            // Find full event object if available
-                                            const full = (events || []).find(e => e.id === exception.id);
-                                            setViewingEvent(full as any || (exception as any));
-                                          } else {
-                                            handleEditException(exception as any);
-                                          }
+                                          const full = (events || []).find(e => e.id === exception.id);
+                                          setViewingEvent(full as any || (exception as any));
                                         }}
                                         className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white"
                                         title="View Details"
@@ -3286,7 +3109,7 @@ export default function Admin() {
                                       <Button
                                         size="sm"
                                         variant="destructive"
-                                        onClick={() => deleteExceptionMutation.mutate(exception.id)}
+                                        onClick={() => deleteEventMutation.mutate(exception.id)}
                                         className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -3296,7 +3119,7 @@ export default function Admin() {
                                 </div>
                               ))}
 
-                            {(!availabilityExceptions || availabilityExceptions.length === 0) && (
+                            {(!events || events.length === 0) && (
                               <div className="text-center py-12">
                                 <div className="mx-auto w-24 h-24 bg-gradient-to-br from-[#D8BD2A]/20 to-[#D8BD2A]/30 rounded-full flex items-center justify-center mb-4">
                                   <Calendar className="h-12 w-12 text-[#D8BD2A]" />
@@ -3912,75 +3735,6 @@ export default function Admin() {
         </AdminModal>
 
         {/* View Event Details Modal */}
-        <AdminModal 
-          isOpen={!!viewingException}
-          onClose={() => setViewingException(null)}
-          title="Event Details"
-          size="3xl"
-          showCloseButton={false}
-        >
-          {viewingException && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Date</Label>
-                  <div className="p-2 rounded border bg-white dark:bg-slate-800">
-                    {(() => {
-                      const [y,m,d] = viewingException.date.split('-').map(Number);
-                      return new Date(y, m-1, d).toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-                    })()}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Category</Label>
-                  <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.category || '—'}</div>
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Title</Label>
-                <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.title || '—'}</div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">All Day</Label>
-                  <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.allDay ? 'Yes' : 'No'}</div>
-                </div>
-                {!viewingException.allDay && (
-                  <div>
-                    <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Time</Label>
-                    <div className="p-2 rounded border bg-white dark:bg-slate-800">{(viewingException.startTime && viewingException.endTime) ? `${viewingException.startTime} - ${viewingException.endTime}` : '—'}</div>
-                  </div>
-                )}
-              </div>
-              {(viewingException.addressLine1 || viewingException.city) && (
-                <div className="space-y-1">
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Location</Label>
-                  <div className="p-3 rounded border bg-white dark:bg-slate-800">
-                    {viewingException.addressLine1 && <div>{viewingException.addressLine1}</div>}
-                    {viewingException.addressLine2 && <div>{viewingException.addressLine2}</div>}
-                    {viewingException.city && <div>{viewingException.city}{viewingException.state && `, ${viewingException.state}`}{viewingException.zipCode && ` ${viewingException.zipCode}`}</div>}
-                  </div>
-                </div>
-              )}
-              {viewingException.reason && (
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Reason</Label>
-                  <div className="p-2 rounded border bg-white dark:bg-slate-800">{viewingException.reason}</div>
-                </div>
-              )}
-              {viewingException.notes && (
-                <div>
-                  <Label className="text-sm font-semibold text-[#0F0276] dark:text-white">Notes</Label>
-                  <div className="p-2 rounded border bg-white dark:bg-slate-800 whitespace-pre-wrap">{viewingException.notes}</div>
-                </div>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setViewingException(null)}>Close</Button>
-                <Button onClick={() => { if (viewingException) { handleEditException(viewingException); setViewingException(null); } }}>Edit</Button>
-              </div>
-            </div>
-          )}
-        </AdminModal>
         
         {/* Photo Enlargement Modal */}
         <Dialog open={isPhotoEnlarged} onOpenChange={setIsPhotoEnlarged}>
@@ -4646,7 +4400,7 @@ export default function Admin() {
         <AdminModal 
           isOpen={isModalOpen} 
           onClose={handleCancelEdit}
-          title={editingException ? "Edit Legacy Event" : editingEvent ? "Edit Event" : "Add Event"}
+          title={editingEvent ? "Edit Event" : "Add Event"}
           size="4xl"
           showCloseButton={false}
         >
@@ -5189,7 +4943,7 @@ export default function Admin() {
                     endAt: newEvent.endAt ? newEvent.endAt.toISOString() : new Date(Date.now() + 60 * 60 * 1000).toISOString(),
                     // Persist recurrence configuration (previously always null)
                     recurrenceRule: newEvent.recurrenceRule || null,
-                    recurrenceEndAt: newEvent.recurrenceEndAt ? (newEvent.recurrenceEndAt as any instanceof Date ? (newEvent.recurrenceEndAt as Date).toISOString() : newEvent.recurrenceEndAt) : null,
+                    recurrenceEndAt: newEvent.recurrenceEndAt ? (newEvent.recurrenceEndAt instanceof Date ? newEvent.recurrenceEndAt.toISOString() : String(newEvent.recurrenceEndAt)) : null,
                     recurrenceExceptions: [],
                     isAvailabilityBlock: newEvent.isAvailabilityBlock || false,
                     blockingReason: newEvent.isAvailabilityBlock ? (newEvent.blockingReason || "Unavailable") : null,
@@ -5218,22 +4972,6 @@ export default function Admin() {
                         });
                       }
                     });
-                  } else if (editingException) {
-                    // For now, editing legacy exceptions still uses the old system
-                    // TODO: Migrate to unified events system
-                    const dateStr = typeof newException.date === 'string' ? newException.date : new Date().toISOString().split('T')[0];
-                    const dateObj = new Date(dateStr);
-                    const formData = {
-                      dayOfWeek: dateObj.getDay(), // 0 = Sunday, 1 = Monday, etc.
-                      startTime: newException.startTime || '09:00',
-                      endTime: newException.endTime || '17:00',
-                      isAvailable: false
-                    };
-                    updateAvailabilityMutation.mutate({ id: editingException.id, data: formData }, {
-                      onSuccess: () => {
-                        handleCancelEdit();
-                      }
-                    });
                   } else {
                     // Create new event
                     console.log('Creating event with data:', eventData);
@@ -5260,7 +4998,7 @@ export default function Admin() {
                 }} 
                 className="bg-gradient-to-r from-[#D8BD2A] to-[#D8BD2A]/90 hover:from-[#D8BD2A]/90 hover:to-[#D8BD2A] text-[#0F0276] border-0 shadow-lg hover:shadow-xl transition-all duration-200 rounded-lg px-6 font-semibold"
               >
-                {editingEvent ? "🔄 Update Event" : editingException ? "📅 Update Legacy Event" : newEvent.isAvailabilityBlock ? "🚫 Block Time" : "📅 Add Event"}
+                {editingEvent ? "🔄 Update Event" : newEvent.isAvailabilityBlock ? "🚫 Block Time" : "📅 Add Event"}
               </Button>
             </div>
           </div>
