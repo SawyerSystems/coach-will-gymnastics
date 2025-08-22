@@ -2468,6 +2468,7 @@ export class SupabaseStorage implements IStorage {
       apparatusId: row.apparatus_id,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      isConnectedCombo: row.is_connected_combo,
       referenceVideos: row.reference_videos || [],
     }));
   }
@@ -2494,6 +2495,7 @@ export class SupabaseStorage implements IStorage {
       apparatusId: data.apparatus_id,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      isConnectedCombo: data.is_connected_combo,
       referenceVideos: data.reference_videos || [],
     };
   }
@@ -2535,6 +2537,7 @@ export class SupabaseStorage implements IStorage {
       apparatusId: data.apparatus_id,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
+      isConnectedCombo: data.is_connected_combo,
       referenceVideos: data.reference_videos || [],
     };
   }
@@ -2636,7 +2639,7 @@ export class SupabaseStorage implements IStorage {
   async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> {
     const { data, error } = await supabaseAdmin
       .from('athlete_skills')
-      .select('*, skills:skill_id ( id, name, category, level, description, display_order, apparatus_id, created_at, updated_at, reference_videos )')
+      .select('*, skills:skill_id ( id, name, category, level, description, display_order, apparatus_id, created_at, updated_at, reference_videos, is_connected_combo )')
       .eq('athlete_id', athleteId)
       .order('created_at', { ascending: true });
     if (error) {
@@ -2664,6 +2667,7 @@ export class SupabaseStorage implements IStorage {
         apparatusId: row.skills.apparatus_id,
         createdAt: row.skills.created_at,
         updatedAt: row.skills.updated_at,
+        isConnectedCombo: row.skills.is_connected_combo,
         referenceVideos: row.skills.reference_videos || [],
       } : null,
     }));
@@ -2799,6 +2803,7 @@ export class SupabaseStorage implements IStorage {
       thumbnailUrl: data.thumbnail_url,
       optimizedUrl: data.optimized_url,
       processingStatus: data.processing_status,
+      processingError: data.processing_error,
     };
   }
 
@@ -2828,6 +2833,7 @@ export class SupabaseStorage implements IStorage {
       thumbnailUrl: row.thumbnail_url,
       optimizedUrl: row.optimized_url,
       processingStatus: row.processing_status,
+      processingError: row.processing_error,
     }));
   }
 
@@ -3014,7 +3020,7 @@ export class SupabaseStorage implements IStorage {
     this.logQuery('SELECT', 'parents');
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails, last_login_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -3033,6 +3039,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: parent.emergency_contact_phone,
       passwordHash: parent.password_hash || null,
       isVerified: parent.is_verified || false,
+      blogEmails: parent.blog_emails || false,
+      lastLoginAt: parent.last_login_at,
       createdAt: parent.created_at,
       updatedAt: parent.updated_at,
     }));
@@ -3043,7 +3051,7 @@ export class SupabaseStorage implements IStorage {
     const emailLower = email.toLowerCase();
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails, last_login_at')
       .or(`email.ilike.${emailLower},phone.eq.${phone}`)
       .single();
 
@@ -3063,6 +3071,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
+      lastLoginAt: data.last_login_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -3125,6 +3135,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
+      lastLoginAt: data.last_login_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -3153,6 +3165,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
+      lastLoginAt: data.last_login_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -3200,6 +3214,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
+      lastLoginAt: data.last_login_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -6059,7 +6075,7 @@ export class SupabaseStorage implements IStorage {
   async getParentById(id: number): Promise<Parent | undefined> {
     const { data, error } = await supabaseAdmin
       .from('parents')
-      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified')
+      .select('id, first_name, last_name, email, phone, emergency_contact_name, emergency_contact_phone, created_at, updated_at, password_hash, is_verified, blog_emails, last_login_at')
       .eq('id', id)
       .single();
 
@@ -6079,6 +6095,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
+      lastLoginAt: data.last_login_at,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     } : undefined;
@@ -7313,6 +7331,8 @@ export class SupabaseStorage implements IStorage {
       emergencyContactName: item.emergency_contact_name,
       emergencyContactPhone: item.emergency_contact_phone,
       isVerified: item.is_verified,
+      blogEmails: item.blog_emails || false,
+      lastLoginAt: item.last_login_at,
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at),
     }));

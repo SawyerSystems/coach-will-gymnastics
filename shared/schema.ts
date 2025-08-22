@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, date, decimal, integer, json, pgEnum, pgTable, serial, text, time, timestamp, varchar, uuid } from "drizzle-orm/pg-core";
+import { boolean, date, decimal, integer, json, jsonb, pgEnum, pgTable, serial, text, time, timestamp, varchar, uuid, bigserial, bigint, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -85,12 +85,14 @@ export const parents = pgTable("parents", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  email: text("email").notNull().unique(),
-  passwordHash: text("password_hash"), // new column
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(), // Required in DB
   phone: text("phone").notNull(),
   emergencyContactName: text("emergency_contact_name").notNull(),
   emergencyContactPhone: text("emergency_contact_phone").notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
+  blogEmails: boolean("blog_emails").notNull().default(false), // Missing field
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }), // Missing field
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -112,11 +114,13 @@ export const parentVerificationTokens = pgTable("parent_verification_tokens", {
 export const parentPasswordResetTokens = pgTable("parent_password_reset_tokens", {
   id: serial("id").primaryKey(),
   parentId: integer("parent_id").notNull().references(() => parents.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), // with timezone in DB
   used: boolean("used").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+}, (table) => ({
+  parentPasswordResetTokensTokenKey: unique("parent_password_reset_tokens_token_key").on(table.token),
+}));
 
 export const athletes = pgTable('athletes', {
   id: serial('id').primaryKey(),
@@ -134,20 +138,26 @@ export const athletes = pgTable('athletes', {
   // Gym payout membership flag
   isGymMember: boolean('is_gym_member').notNull().default(false),
   latestWaiverId: integer('latest_waiver_id').references((): any => waivers.id, { onDelete: 'set null' }),
-  waiverStatus: varchar('waiver_status').default('pending'), // varchar in actual DB
+  waiverStatus: varchar('waiver_status', { length: 20 }).default('pending'), // varchar(20) in actual DB
   waiverSigned: boolean('waiver_signed').default(false).notNull(), // Simple boolean for waiver status
 });
 
 // Lesson types table
 export const lessonTypes = pgTable("lesson_types", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   description: text("description"),
   durationMinutes: integer("duration_minutes").notNull(),
-  isPrivate: boolean("is_private").default(false).notNull(),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  reservationFee: decimal("reservation_fee", { precision: 10, scale: 2 }).notNull(),
-});
+  isPrivate: boolean("is_private").default(true),
+  totalPrice: decimal("total_price").notNull(), // numeric without precision in DB
+  reservationFee: decimal("reservation_fee").notNull(), // numeric without precision in DB
+  maxAthletes: integer("max_athletes").notNull().default(1), // Missing field
+  minAthletes: integer("min_athletes").notNull().default(1), // Missing field
+  isActive: boolean("is_active").notNull().default(true), // Missing field
+  keyPoints: jsonb("key_points").default([]), // Missing field
+}, (table) => ({
+  lessonTypesNameKey: unique("lesson_types_name_key").on(table.name),
+}));
 
 // Booking method enum for the new dropdown requirements
 export const bookingMethodEnum = pgEnum("booking_method", [
@@ -160,19 +170,19 @@ export const bookings = pgTable("bookings", {
   lessonTypeId: integer("lesson_type_id").references(() => lessonTypes.id),
   preferredDate: date("preferred_date"),
   preferredTime: time("preferred_time"),
-  status: text("status").notNull().default("pending"),
-  paymentStatus: text("payment_status").notNull().default("unpaid"),
-  attendanceStatus: text("attendance_status").notNull().default("pending"),
-  bookingMethod: text("booking_method").notNull().default("Website"),
+  status: bookingStatusEnum("status").notNull().default("pending"),
+  paymentStatus: paymentStatusEnum("payment_status").notNull().default("unpaid"),
+  attendanceStatus: attendanceStatusEnum("attendance_status").notNull().default("pending"),
+  bookingMethod: text("booking_method").notNull().default("Website"), // text in DB, not enum
   reservationFeePaid: boolean("reservation_fee_paid").notNull().default(false),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).notNull().default("0.00"),
   stripeSessionId: text("stripe_session_id"),
   // Idempotent session confirmation email tracking
   sessionConfirmationEmailSent: boolean("session_confirmation_email_sent").notNull().default(false),
-  sessionConfirmationEmailSentAt: timestamp("session_confirmation_email_sent_at"),
+  sessionConfirmationEmailSentAt: timestamp("session_confirmation_email_sent_at", { withTimezone: true }), // with timezone in DB
   specialRequests: text("special_requests"),
   adminNotes: text("admin_notes"),
-  focusAreas: json("focus_areas").$type<string[]>(), // JSON array of focus area names/skills
+  focusAreas: text("focus_areas").array(), // ARRAY type in DB
   focusAreaOther: text("focus_area_other"), // Custom focus area text when "Other" is selected
   progressNote: text("progress_note"), // For Adventure Log progress tracking
   coachName: text("coach_name").default("Coach Will"), // For Adventure Log coach tracking
@@ -189,7 +199,7 @@ export const bookings = pgTable("bookings", {
   safetyVerificationSignedAt: timestamp("safety_verification_signed_at"),
   // Cancellation tracking fields
   cancellationReason: text("cancellation_reason"),
-  cancellationRequestedAt: timestamp("cancellation_requested_at"),
+  cancellationRequestedAt: timestamp("cancellation_requested_at", { withTimezone: true }), // with timezone in DB
   wantsReschedule: boolean("wants_reschedule").default(false),
   reschedulePreferences: text("reschedule_preferences"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -206,7 +216,7 @@ export const bookingAthletes = pgTable("booking_athletes", {
   durationMinutes: integer('duration_minutes'),
   gymRateAppliedCents: integer('gym_rate_applied_cents'),
   gymPayoutOwedCents: integer('gym_payout_owed_cents'),
-  gymPayoutComputedAt: timestamp('gym_payout_computed_at'),
+  gymPayoutComputedAt: timestamp('gym_payout_computed_at', { withTimezone: true }), // with timezone in DB
   gymPayoutOverrideCents: integer('gym_payout_override_cents'),
   gymPayoutOverrideReason: text('gym_payout_override_reason'),
 });
@@ -257,23 +267,23 @@ export const activityLogs = pgTable("activity_logs", {
   
   // Additional context
   notes: text("notes"), // Optional admin note explaining the change
-  metadata: json("metadata").$type<Record<string, any>>(), // Additional context data
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional context data
   
   // Technical details
   ipAddress: text("ip_address"), // For security auditing
   userAgent: text("user_agent"), // Browser/device info
   
   // Timestamps
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
   
   // Soft delete and undo functionality
   isDeleted: boolean("is_deleted").default(false).notNull(),
-  deletedAt: timestamp("deleted_at"),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }), // with timezone in DB
   deletedBy: integer("deleted_by"), // admin.id who soft-deleted this entry
   
   // Undo/reversal tracking
   isReversed: boolean("is_reversed").default(false).notNull(),
-  reversedAt: timestamp("reversed_at"),
+  reversedAt: timestamp("reversed_at", { withTimezone: true }), // with timezone in DB
   reversedBy: integer("reversed_by"), // admin.id who reversed this action
   reverseActionId: integer("reverse_action_id"), // Reference to the activity log entry that reversed this
   originalActionId: integer("original_action_id"), // Reference to the original action if this is a reverse
@@ -313,14 +323,14 @@ export const blogPosts = pgTable("blog_posts", {
   category: text("category").notNull(),
   imageUrl: text("image_url"),
   publishedAt: timestamp("published_at").defaultNow().notNull(),
-  sections: json("sections"),
+  sections: jsonb("sections"),
 });
 
 export const tips = pgTable("tips", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  sections: json("sections").$type<Array<{
+  sections: jsonb("sections").$type<Array<{
     title: string;
     content: string;
     imageUrl?: string;
@@ -382,39 +392,46 @@ export const availabilityExceptions = pgTable("availability_exceptions", {
 // Normalized lookup tables for apparatus, focus areas, side quests, and genders
 export const apparatus = pgTable("apparatus", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+}, (table) => ({
+  apparatusNameKey: unique("apparatus_name_key").on(table.name),
+}));
 
 export const focusAreas = pgTable("focus_areas", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   apparatusId: integer("apparatus_id").references(() => apparatus.id),
-  level: varchar("level", { length: 20 }).notNull().default('intermediate'),
+  level: varchar("level", { length: 20 }),
   sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+}, (table) => ({
+  focusAreasNameKey: unique("focus_areas_name_key").on(table.name),
+}));
 
 export const sideQuests = pgTable("side_quests", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+}, (table) => ({
+  sideQuestsNameKey: unique("side_quests_name_key").on(table.name),
+}));
 
 // Skills master list and athlete progress tracking (must match Supabase schema)
 export const skills = pgTable("skills", {
   id: serial("id").primaryKey(),
-  name: text("name"),
-  category: text("category"),
-  level: varchar("level", { length: 255 }),
-  description: text("description"),
-  displayOrder: integer("display_order"),
-  createdAt: timestamp("created_at", { withTimezone: true }),
-  updatedAt: timestamp("updated_at", { withTimezone: true }),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  level: varchar("level", { length: 20 }).notNull(), // varchar(20) in DB
+  description: text("description").notNull(),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   apparatusId: integer("apparatus_id").references(() => apparatus.id),
-  referenceVideos: json("reference_videos").$type<VideoReference[]>().default([]),
+  isConnectedCombo: boolean("is_connected_combo").default(false), // Missing field from DB
+  referenceVideos: jsonb("reference_videos").$type<VideoReference[]>().default([]),
 });
 
 // Events (recurring series + overrides). Must match Supabase schema in attached_assets/complete_current_schema.txt after SQL is applied.
@@ -440,7 +457,7 @@ export const events = pgTable("events", {
   endAt: timestamp("end_at", { withTimezone: true }).notNull(),
   recurrenceRule: text("recurrence_rule"),
   recurrenceEndAt: timestamp("recurrence_end_at", { withTimezone: true }),
-  recurrenceExceptions: json("recurrence_exceptions").$type<string[]>().notNull().default([] as unknown as any),
+  recurrenceExceptions: jsonb("recurrence_exceptions").$type<string[]>().notNull().default([] as unknown as any),
   
   // Availability blocking fields (replaces availability_exceptions functionality)
   isAvailabilityBlock: boolean("is_availability_block").notNull().default(false),
@@ -463,7 +480,7 @@ export const athleteSkills = pgTable("athlete_skills", {
   id: serial("id").primaryKey(),
   athleteId: integer("athlete_id").references(() => athletes.id),
   skillId: integer("skill_id").references(() => skills.id),
-  status: varchar("status", { length: 255 }),
+  status: varchar("status", { length: 20 }).notNull().default("learning"), // varchar(20) in DB
   notes: text("notes"),
   unlockDate: date("unlock_date"),
   firstTestedAt: timestamp("first_tested_at", { withTimezone: true }),
@@ -474,20 +491,21 @@ export const athleteSkills = pgTable("athlete_skills", {
 
 export const athleteSkillVideos = pgTable("athlete_skill_videos", {
   id: serial("id").primaryKey(),
-  athleteSkillId: integer("athlete_skill_id").references(() => athleteSkills.id),
-  url: text("url"),
+  athleteSkillId: integer("athlete_skill_id").references(() => athleteSkills.id).notNull(),
+  url: text("url").notNull(),
   title: text("title"),
   recordedAt: timestamp("recorded_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }),
-  updatedAt: timestamp("updated_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   caption: text("caption"),
-  isVisible: boolean("is_visible").default(true),
-  isFeatured: boolean("is_featured").default(false),
+  isVisible: boolean("is_visible").notNull().default(true),
+  isFeatured: boolean("is_featured").notNull().default(false),
   displayDate: date("display_date"),
-  sortIndex: integer("sort_index"),
+  sortIndex: integer("sort_index").notNull().default(0),
   thumbnailUrl: text("thumbnail_url"),
   optimizedUrl: text("optimized_url"),
-  processingStatus: text("processing_status"),
+  processingStatus: text("processing_status").notNull().default("pending"),
+  processingError: text("processing_error"), // Missing field from DB
 });
 
 export const progressShareLinks = pgTable("progress_share_links", {
@@ -500,13 +518,15 @@ export const progressShareLinks = pgTable("progress_share_links", {
 
 export const genders = pgTable("genders", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  sortOrder: integer("sort_order").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+  name: varchar("name", { length: 50 }).notNull(), // varchar(50) in DB
+  displayName: varchar("display_name", { length: 50 }).notNull(), // varchar(50) in DB
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  gendersNameKey: unique("genders_name_key").on(table.name),
+}));
 
 // Join tables for booking relationships
 export const bookingApparatus = pgTable("booking_apparatus", {
@@ -530,11 +550,13 @@ export const bookingSideQuests = pgTable("booking_side_quests", {
 // Admin authentication table
 export const admins = pgTable("admins", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
+  email: text("email").notNull(),
   passwordHash: text("password_hash").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  adminsEmailKey: unique("admins_email_key").on(table.email),
+}));
 
 
 export const insertParentSchema = createInsertSchema(parents).omit({
@@ -568,26 +590,26 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
 
 // Gym payout rates (effective-dated)
 export const gymPayoutRates = pgTable('gym_payout_rates', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'number' }).primaryKey(), // bigserial matches DB bigint with sequence
   durationMinutes: integer('duration_minutes').notNull(), // e.g., 30 or 60
   isMember: boolean('is_member').notNull(),
   rateCents: integer('rate_cents').notNull(),
-  effectiveFrom: timestamp('effective_from').notNull(),
-  effectiveTo: timestamp('effective_to'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  effectiveFrom: timestamp('effective_from', { withTimezone: true }).notNull().defaultNow(), // with timezone in DB
+  effectiveTo: timestamp('effective_to', { withTimezone: true }), // with timezone in DB
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
 });
 
 // Gym payout runs (monthly/period summaries)
 export const gymPayoutRuns = pgTable('gym_payout_runs', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'number' }).primaryKey(), // bigserial matches DB bigint with sequence
   periodStart: date('period_start').notNull(),
   periodEnd: date('period_end').notNull(),
-  status: text('status').notNull().default('open'), // open | locked | archived
+  status: text('status').notNull(), // text in DB, not default value
   totalSessions: integer('total_sessions').notNull().default(0),
   totalOwedCents: integer('total_owed_cents').notNull().default(0),
-  generatedAt: timestamp('generated_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  generatedAt: timestamp('generated_at', { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
 });
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
@@ -778,6 +800,69 @@ export const insertSkillSchema = createInsertSchema(skills).omit({ id: true });
 export const insertAthleteSkillSchema = createInsertSchema(athleteSkills).omit({ id: true });
 export const insertAthleteSkillVideoSchema = createInsertSchema(athleteSkillVideos).omit({ id: true });
 export const insertProgressShareLinkSchema = createInsertSchema(progressShareLinks).omit({ id: true });
+
+// Missing tables from database that need to be added to match schema
+
+// Express session table
+export const session = pgTable("session", {
+  sid: varchar("sid").primaryKey().notNull(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(), // timestamp(6) in DB
+});
+
+// Skills prerequisite relationships
+export const skillsPrerequisites = pgTable("skills_prerequisites", {
+  id: serial("id").primaryKey(),
+  skillId: integer("skill_id").notNull().references(() => skills.id),
+  prerequisiteSkillId: integer("prerequisite_skill_id").notNull().references(() => skills.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Skill components (composite skills)
+export const skillComponents = pgTable("skill_components", {
+  id: serial("id").primaryKey(),
+  parentSkillId: integer("parent_skill_id").notNull().references(() => skills.id),
+  componentSkillId: integer("component_skill_id").notNull().references(() => skills.id),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Archived bookings table
+export const archivedBookings = pgTable("archived_bookings", {
+  id: serial("id").primaryKey(),
+  originalBookingId: integer("original_booking_id"),
+  parentId: integer("parent_id"),
+  athleteId: integer("athlete_id"),
+  lessonTypeId: integer("lesson_type_id"),
+  waiverId: integer("waiver_id"),
+  preferredDate: date("preferred_date"),
+  preferredTime: time("preferred_time"),
+  focusAreas: text("focus_areas").array(), // ARRAY type in DB
+  status: text("status"),
+  paymentStatus: text("payment_status"),
+  attendanceStatus: text("attendance_status"),
+  bookingMethod: text("booking_method"),
+  reservationFeePaid: boolean("reservation_fee_paid"),
+  paidAmount: decimal("paid_amount"),
+  stripeSessionId: text("stripe_session_id"),
+  specialRequests: text("special_requests"),
+  adminNotes: text("admin_notes"),
+  dropoffPersonName: text("dropoff_person_name"),
+  dropoffPersonRelationship: text("dropoff_person_relationship"),
+  dropoffPersonPhone: text("dropoff_person_phone"),
+  pickupPersonName: text("pickup_person_name"),
+  pickupPersonRelationship: text("pickup_person_relationship"),
+  pickupPersonPhone: text("pickup_person_phone"),
+  altPickupPersonName: text("alt_pickup_person_name"),
+  altPickupPersonRelationship: text("alt_pickup_person_relationship"),
+  altPickupPersonPhone: text("alt_pickup_person_phone"),
+  safetyVerificationSigned: boolean("safety_verification_signed"),
+  safetyVerificationSignedAt: timestamp("safety_verification_signed_at"),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
+  archivedAt: timestamp("archived_at").defaultNow(),
+  archiveReason: text("archive_reason").notNull(),
+});
 
 // Insert schemas for join tables
 export const insertBookingApparatusSchema = createInsertSchema(bookingApparatus).omit({
@@ -1163,9 +1248,9 @@ export function mapFocusAreaIdsToNames(focusAreaIds: number[]): string[] {
 export const siteContent = pgTable("site_content", {
   id: serial("id").primaryKey(),
   bannerVideo: text("banner_video").default(""),
-  heroImages: json("hero_images").default([]),
-  logo: json("logo").default({ circle: "", text: "" }),
-  about: json("about").default({
+  heroImages: jsonb("hero_images").default([]),
+  logo: jsonb("logo").default({ circle: "", text: "" }),
+  about: jsonb("about").default({
     bio: "Coach Will brings nearly 10 years of passionate gymnastics instruction to every lesson.",
     experience: "Nearly 10 years of coaching experience with athletes of all levels",
     photo: "",
@@ -1175,7 +1260,7 @@ export const siteContent = pgTable("site_content", {
       { title: "Background Checked", body: "Comprehensive background verification completed" }
     ]
   }),
-  contact: json("contact").default({
+  contact: jsonb("contact").default({
     phone: "(585) 755-8122",
     email: "Admin@coachwilltumbles.com",
     address: {
@@ -1186,7 +1271,7 @@ export const siteContent = pgTable("site_content", {
       zip: "92056"
     }
   }),
-  hours: json("hours").default({
+  hours: jsonb("hours").default({
     monday: { available: true, start: "9:00 AM", end: "4:00 PM" },
     tuesday: { available: true, start: "9:00 AM", end: "3:30 PM" },
     wednesday: { available: true, start: "9:00 AM", end: "4:00 PM" },
@@ -1195,8 +1280,9 @@ export const siteContent = pgTable("site_content", {
     saturday: { available: true, start: "10:00 AM", end: "2:00 PM" },
     sunday: { available: false, start: "", end: "" }
   }),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  equipmentImages: jsonb("equipment_images").default([]), // Missing field from DB
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const testimonials = pgTable("testimonials", {
@@ -1221,16 +1307,16 @@ export const siteFaqs = pgTable("site_faqs", {
 
 // Site Inquiries (Contact submissions routed to Admin > Messages > Site Inquiries)
 export const siteInquiries = pgTable("site_inquiries", {
-  id: serial("id").primaryKey(),
+  id: bigserial("id", { mode: 'number' }).primaryKey(), // bigserial matches DB bigint with sequence
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
   athleteInfo: text("athlete_info"),
   message: text("message").notNull(),
-  status: varchar("status", { length: 20 }).notNull().default('new'), // new | open | in_progress | closed | archived
-  source: varchar("source", { length: 50 }).default('contact'),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  status: text("status").notNull().default('new'), // text in DB, not varchar(20)
+  source: text("source").default('contact_form'), // text in DB, not varchar(50)  
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(), // with timezone in DB
 });
 
 // Validation schemas for site content

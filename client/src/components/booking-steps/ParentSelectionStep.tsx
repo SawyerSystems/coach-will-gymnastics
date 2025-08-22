@@ -16,6 +16,12 @@ interface ParentAPIResponse {
   phone?: string;
   first_name?: string;
   last_name?: string;
+  password_hash?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  is_verified?: boolean;
+  blog_emails?: boolean;
+  last_login_at?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -74,10 +80,12 @@ export function ParentSelectionStep() {
     lastName: apiParent.last_name || "",
     email: apiParent.email,
     phone: apiParent.phone || "",
-    passwordHash: null,
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    isVerified: false,
+    passwordHash: apiParent.password_hash || "",
+    emergencyContactName: apiParent.emergency_contact_name || "",
+    emergencyContactPhone: apiParent.emergency_contact_phone || "",
+    isVerified: apiParent.is_verified || false,
+    blogEmails: apiParent.blog_emails || false,
+    lastLoginAt: apiParent.last_login_at ? new Date(apiParent.last_login_at) : null,
     createdAt: apiParent.created_at ? new Date(apiParent.created_at) : null,
     updatedAt: apiParent.updated_at ? new Date(apiParent.updated_at) : null,
   }));
@@ -131,10 +139,12 @@ export function ParentSelectionStep() {
           lastName: createdParent.lastName || newParentForm.lastName,
           email: createdParent.email || newParentForm.email,
           phone: createdParent.phone || newParentForm.phone,
-          passwordHash: null,
+          passwordHash: "",
           emergencyContactName: createdParent.emergencyContactName || newParentForm.emergencyContactName,
           emergencyContactPhone: createdParent.emergencyContactPhone || newParentForm.emergencyContactPhone,
           isVerified: false,
+          blogEmails: false,
+          lastLoginAt: null,
           createdAt: new Date(createdParent.createdAt || Date.now()),
           updatedAt: new Date(createdParent.updatedAt || Date.now()),
         };

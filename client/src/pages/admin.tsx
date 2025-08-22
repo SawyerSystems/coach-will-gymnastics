@@ -463,8 +463,18 @@ export default function Admin() {
 
   // Legacy availability exceptions removed from UI
 
-  // Events queries
-  const { data: events = [] } = useEvents();
+  // Events queries - calculate date range for calendar expansion
+  const calendarRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1); // Start of last month
+    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0); // End of next month
+    return {
+      start: start.toISOString(),
+      end: end.toISOString()
+    };
+  }, []);
+
+  const { data: events = [] } = useEvents(calendarRange);
 
   const { data: missingWaivers = [] } = useMissingWaivers(!!authStatus?.loggedIn) as { data: Athlete[] };
 

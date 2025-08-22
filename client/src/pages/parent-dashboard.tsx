@@ -895,7 +895,7 @@ function ParentDashboard() {
                                 <div className="flex items-center gap-2">
                                   {booking.paymentStatus === 'reservation-pending' && <Clock className="w-4 h-4 text-yellow-600" />}
                                   {(booking.paymentStatus === 'reservation-paid' || booking.paymentStatus === 'session-paid') && <CheckCircle className="w-4 h-4 text-green-600" />}
-                                  {(booking.paymentStatus === 'reservation-failed' || booking.paymentStatus === 'failed') && <XCircle className="w-4 h-4 text-red-600" />}
+                                  {(booking.paymentStatus === 'reservation-failed') && <XCircle className="w-4 h-4 text-red-600" />}
                                   {(booking.paymentStatus === 'reservation-refunded' || booking.paymentStatus === 'session-refunded') && <XCircle className="w-4 h-4 text-blue-600" />}
                                   {booking.paymentStatus === 'unpaid' && <AlertCircle className="w-4 h-4 text-orange-600" />}
                                   

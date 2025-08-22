@@ -194,8 +194,15 @@ export function buildRRuleFromUi(opts: {
 }
 
 export function expandSeriesForRange(events: Event[], startIso: string, endIso: string) {
-  const masters = events.filter(e => e.seriesId === e.id && !e.isDeleted);
+  console.log(`🔍 [EXPAND] Starting expansion with ${events.length} events, range: ${startIso} to ${endIso}`);
+  const masters = events.filter(e => e.parentEventId === null && !e.isDeleted);
+  console.log(`🔍 [EXPAND] Found ${masters.length} master events`);
   const overrides = events.filter(e => e.parentEventId && !e.isDeleted);
+  console.log(`🔍 [EXPAND] Found ${overrides.length} override events`);
+  
+  for (const m of masters) {
+    console.log(`🔍 [EXPAND] Master: ${m.id}, recurrenceRule: ${m.recurrenceRule}, startAt: ${(m as any).startAt}`);
+  }
   const ovBySeries = new Map<string, Event[]>();
   for (const ov of overrides) {
     const sid = ov.seriesId as string;

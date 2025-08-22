@@ -9000,10 +9000,18 @@ setTimeout(async () => {
 
   // Events (recurrence series) Routes - initial scaffolding
   app.get("/api/events", isAdminAuthenticated, async (req, res) => {
+    console.log(`� [EVENTS-API] *** ROUTE HANDLER EXECUTING NOW ***`);
+    console.log(`�🔥 [EVENTS-API] Route handler called with query:`, req.query);
     try {
       const start = (req.query.start as string) || new Date(new Date().setDate(new Date().getDate() - 30)).toISOString();
       const end = (req.query.end as string) || new Date(new Date().setDate(new Date().getDate() + 60)).toISOString();
+      const expand = String(req.query.expand || 'false') === 'true';
+      console.log(`🔥 [EVENTS-API] About to call storage.listEventsByRange(${start}, ${end})`);
       const rows = await storage.listEventsByRange(start, end);
+      console.log(`🔥 [EVENTS-API] Storage returned ${rows ? rows.length : 'null'} rows`);
+      if (rows) {
+        console.log(`🔥 [EVENTS-API] First few rows:`, rows.slice(0, 3));
+      }
       // Map snake_case rows from DB to camelCase the client expects
       const mapEventRow = (row: any) => ({
         id: row.id,
@@ -9036,9 +9044,11 @@ setTimeout(async () => {
       });
 
       const camelRows = Array.isArray(rows) ? rows.map(mapEventRow) : [];
-      const expand = String(req.query.expand || 'false') === 'true';
+      console.log(`🔍 [EVENTS-API] Raw events count: ${camelRows.length}, expand: ${expand}, start: ${start}, end: ${end}`);
       if (!expand) return res.json(camelRows);
+      console.log(`🔍 [EVENTS-API] About to expand ${camelRows.length} events`);
       const instances = expandSeriesForRange(camelRows as any, start, end);
+      console.log(`🔍 [EVENTS-API] Expansion returned ${instances.length} instances`);
       res.json(instances);
     } catch (err) {
       console.error('Error listing events:', err);

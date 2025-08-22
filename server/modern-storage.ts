@@ -359,6 +359,8 @@ export class ModernSupabaseStorage {
       emergencyContactPhone: data.emergency_contact_phone,
       passwordHash: data.password_hash || null,
       isVerified: data.is_verified || false,
+      blogEmails: data.blog_emails || false,
+      lastLoginAt: data.last_login_at,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

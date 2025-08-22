@@ -29,7 +29,7 @@ export interface EventRow {
 }
 
 export function useEvents(range?: { start: string; end: string }) {
-  const qs = range ? `?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}` : '';
+  const qs = range ? `?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}&expand=true` : '?expand=true';
   return useQuery<EventRow[]>({
     queryKey: ["/api/events", range?.start, range?.end],
     queryFn: async () => apiRequest("GET", `/api/events${qs}`).then(r => r.json()),
