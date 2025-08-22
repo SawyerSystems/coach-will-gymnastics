@@ -28,10 +28,10 @@ export function isBookingArchived(state: BookingStatusState): boolean {
   const { attendanceStatus } = state;
   
   // Only attendance status determines archival - not booking status or payment status
-  const archivedAttendanceStatuses = [
-    AttendanceStatusEnum.COMPLETED,
-    AttendanceStatusEnum.NO_SHOW,
-    AttendanceStatusEnum.CANCELLED
+  const archivedAttendanceStatuses: AttendanceStatus[] = [
+    "completed",
+    "no-show",
+    "cancelled"
   ];
   
   return archivedAttendanceStatuses.includes(attendanceStatus);

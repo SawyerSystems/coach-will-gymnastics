@@ -838,9 +838,9 @@ export const archivedBookings = pgTable("archived_bookings", {
   preferredDate: date("preferred_date"),
   preferredTime: time("preferred_time"),
   focusAreas: text("focus_areas").array(), // ARRAY type in DB
-  status: text("status"),
-  paymentStatus: text("payment_status"),
-  attendanceStatus: text("attendance_status"),
+  status: bookingStatusEnum("status"),
+  paymentStatus: paymentStatusEnum("payment_status"),
+  attendanceStatus: attendanceStatusEnum("attendance_status"),
   bookingMethod: text("booking_method"),
   reservationFeePaid: boolean("reservation_fee_paid"),
   paidAmount: decimal("paid_amount"),
