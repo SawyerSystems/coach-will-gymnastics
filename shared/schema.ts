@@ -93,8 +93,8 @@ export const parents = pgTable("parents", {
   isVerified: boolean("is_verified").default(false).notNull(),
   blogEmails: boolean("blog_emails").notNull().default(false), // Missing field
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }), // Missing field
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(), // WITHOUT timezone in DB
+  updatedAt: timestamp("updated_at").defaultNow(), // WITHOUT timezone in DB
 });
 
 export const blogEmailSignups = pgTable("blog_email_signups", {
@@ -107,8 +107,8 @@ export const parentVerificationTokens = pgTable("parent_verification_tokens", {
   id: serial("id").primaryKey(),
   parentId: integer("parent_id").notNull().references(() => parents.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(), // WITHOUT timezone in DB
+  createdAt: timestamp("created_at").defaultNow().notNull(), // WITHOUT timezone in DB
 });
 
 export const parentPasswordResetTokens = pgTable("parent_password_reset_tokens", {
@@ -196,14 +196,14 @@ export const bookings = pgTable("bookings", {
   altPickupPersonRelationship: text("alt_pickup_person_relationship"),
   altPickupPersonPhone: text("alt_pickup_person_phone"),
   safetyVerificationSigned: boolean("safety_verification_signed").notNull().default(false),
-  safetyVerificationSignedAt: timestamp("safety_verification_signed_at"),
+  safetyVerificationSignedAt: timestamp("safety_verification_signed_at"), // WITHOUT timezone in DB
   // Cancellation tracking fields
   cancellationReason: text("cancellation_reason"),
   cancellationRequestedAt: timestamp("cancellation_requested_at", { withTimezone: true }), // with timezone in DB
   wantsReschedule: boolean("wants_reschedule").default(false),
   reschedulePreferences: text("reschedule_preferences"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(), // WITHOUT timezone in DB
+  updatedAt: timestamp("updated_at").notNull().defaultNow(), // WITHOUT timezone in DB
 });
 
 export const bookingAthletes = pgTable("booking_athletes", {
@@ -552,8 +552,8 @@ export const admins = pgTable("admins", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
   passwordHash: text("password_hash").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(), // WITHOUT timezone in DB
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(), // WITH timezone in DB
 }, (table) => ({
   adminsEmailKey: unique("admins_email_key").on(table.email),
 }));
@@ -1291,8 +1291,8 @@ export const testimonials = pgTable("testimonials", {
   text: text("text").notNull(),
   rating: integer("rating").default(5),
   featured: boolean("featured").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(), // WITH timezone in DB
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(), // WITH timezone in DB
 });
 
 export const siteFaqs = pgTable("site_faqs", {
@@ -1301,8 +1301,8 @@ export const siteFaqs = pgTable("site_faqs", {
   answer: text("answer").notNull(),
   category: varchar("category", { length: 100 }).default("General"),
   displayOrder: integer("display_order").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(), // WITH timezone in DB
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(), // WITH timezone in DB
 });
 
 // Site Inquiries (Contact submissions routed to Admin > Messages > Site Inquiries)
