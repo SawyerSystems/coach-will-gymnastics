@@ -22,6 +22,9 @@ export interface EventRow {
   recurrenceRule?: string | null;
   recurrenceEndAt?: string | null;
   recurrenceExceptions?: string[];
+  // Instance information for recurring events
+  isInstance?: boolean;
+  instanceDate?: string;
   // Availability blocking fields
   isAvailabilityBlock?: boolean;
   blockingReason?: string | null;

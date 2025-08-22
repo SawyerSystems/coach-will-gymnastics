@@ -48,6 +48,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAvailability, useDeleteAvailability, useUpdateAvailability } from "@/hooks/use-availability";
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, type EventRow } from "@/hooks/use-events";
+import { EventDeletionModal, type DeletionMode } from "@/components/ui/event-deletion-modal";
 import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
@@ -216,6 +217,8 @@ export default function Admin() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   // New: separate viewing state for unified events (view details modal)
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  // Event deletion modal state
+  const [deletingEvent, setDeletingEvent] = useState<EventRow | null>(null);
   // Unified modal state - single modal for all operations
   const isModalOpen = isEventModalOpen || !!editingEvent;
   const isViewEventModalOpen = !!viewingEvent; // dedicated view details modal
@@ -484,6 +487,39 @@ export default function Admin() {
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
+
+  // Enhanced deletion handler
+  const handleEventDeletion = (deletion: DeletionMode) => {
+    if (!deletingEvent) return;
+    
+    const baseId = deletingEvent.id.includes(':') ? deletingEvent.id.split(':')[0] : deletingEvent.id;
+    const instanceDate = deletion.instanceDate || (deletingEvent.id.includes(':') ? deletingEvent.id.split(':')[1] : undefined);
+    
+    const deleteParams = {
+      id: baseId,
+      mode: deletion.mode,
+      instanceDate: instanceDate
+    };
+    
+    console.log("🗑️ [ADMIN] Deletion params:", deleteParams);
+    
+    deleteEventMutation.mutate(deleteParams, {
+      onSuccess: () => {
+        toast({
+          title: "Event deleted successfully",
+          description: `Event deleted using "${deletion.mode}" mode`,
+        });
+        setDeletingEvent(null);
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Failed to delete event", 
+          description: error.message || "An error occurred while deleting the event",
+          variant: "destructive",
+        });
+      }
+    });
+  };
 
   // ALL MUTATIONS
   // Delete parent mutation
@@ -3171,7 +3207,10 @@ export default function Admin() {
                                       <Button
                                         size="sm"
                                         variant="destructive"
-                                        onClick={() => deleteEventMutation.mutate(exception.id)}
+                                        onClick={() => {
+                                          const fullEvent = (events || []).find(e => e.id === exception.id);
+                                          setDeletingEvent(fullEvent as any || (exception as any));
+                                        }}
                                         className="bg-gradient-to-r from-red-500 to-red-600 border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-3 py-2 font-semibold"
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -5143,9 +5182,19 @@ export default function Admin() {
                     size="sm"
                     variant="destructive"
                     onClick={() => {
-                      const masterEventId = viewingEvent.id.includes(':') ? viewingEvent.id.split(':')[0] : viewingEvent.id;
+                      console.log("🗑️ DELETE BUTTON CLICKED", { viewingEvent });
+                      // Convert viewingEvent to EventRow format
+                      const eventRow: EventRow = {
+                        ...viewingEvent,
+                        startAt: viewingEvent.startAt instanceof Date ? viewingEvent.startAt.toISOString() : viewingEvent.startAt,
+                        endAt: viewingEvent.endAt instanceof Date ? viewingEvent.endAt.toISOString() : viewingEvent.endAt,
+                        recurrenceEndAt: viewingEvent.recurrenceEndAt instanceof Date ? viewingEvent.recurrenceEndAt.toISOString() : viewingEvent.recurrenceEndAt,
+                        createdAt: viewingEvent.createdAt instanceof Date ? viewingEvent.createdAt.toISOString() : viewingEvent.createdAt,
+                        updatedAt: viewingEvent.updatedAt instanceof Date ? viewingEvent.updatedAt.toISOString() : viewingEvent.updatedAt,
+                      } as EventRow;
+                      console.log("🗑️ SETTING DELETING EVENT", { eventRow });
+                      setDeletingEvent(eventRow);
                       setViewingEvent(null);
-                      deleteEventMutation.mutate(masterEventId);
                     }}
                     className="shadow hover:shadow-lg"
                   >
@@ -5196,6 +5245,19 @@ export default function Admin() {
             </div>
           )}
         </AdminModal>
+
+        {/* Event Deletion Modal */}
+        <EventDeletionModal
+          isOpen={!!deletingEvent}
+          onClose={() => {
+            console.log("🚫 MODAL CLOSING");
+            setDeletingEvent(null);
+          }}
+          onConfirm={handleEventDeletion}
+          event={deletingEvent}
+          isLoading={deleteEventMutation.isPending}
+        />
+        {console.log("🔍 DELETION MODAL STATE", { deletingEvent, isOpen: !!deletingEvent })}
           </div>
         </div>
       </div>
