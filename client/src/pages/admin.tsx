@@ -5017,9 +5017,10 @@ export default function Admin() {
                   };
                   
                   if (editingEvent) {
-                    // Update existing event
-                    console.log('Updating event with data:', eventData);
-                    updateEventMutation.mutate({ id: editingEvent.id, data: eventData }, {
+                    // Update existing event - extract master event ID from expanded ID
+                    const masterEventId = editingEvent.id.includes(':') ? editingEvent.id.split(':')[0] : editingEvent.id;
+                    console.log('Updating event with data:', eventData, 'Master ID:', masterEventId);
+                    updateEventMutation.mutate({ id: masterEventId, data: eventData }, {
                       onSuccess: (response) => {
                         console.log('Event updated successfully:', response);
                         toast({
@@ -5134,8 +5135,9 @@ export default function Admin() {
                     size="sm"
                     variant="destructive"
                     onClick={() => {
+                      const masterEventId = viewingEvent.id.includes(':') ? viewingEvent.id.split(':')[0] : viewingEvent.id;
                       setViewingEvent(null);
-                      deleteEventMutation.mutate(viewingEvent.id);
+                      deleteEventMutation.mutate(masterEventId);
                     }}
                     className="shadow hover:shadow-lg"
                   >
