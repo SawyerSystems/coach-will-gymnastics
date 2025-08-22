@@ -231,22 +231,31 @@ async function checkBookingAvailability(date: string, startTime: string, duratio
     return { available: false, reason: "Booking extends beyond available hours" };
   }
   
-  // Check for exceptions (blocked times) on this specific date
-  const exceptions = await storage.getAvailabilityExceptionsByDateRange(date, date);
-  for (const exception of exceptions) {
-    if (!exception.isAvailable) {
-      // Handle all-day blocks
-      if (exception.allDay || !exception.startTime || !exception.endTime) {
-        return { available: false, reason: `Day blocked: ${exception.reason || 'Unavailable'}` };
-      }
-      
-      const exceptionStart = timeToMinutes(exception.startTime);
-      const exceptionEnd = timeToMinutes(exception.endTime);
-      
-      // Check if booking overlaps with blocked time
-      if (!(endMinutes <= exceptionStart || startMinutes >= exceptionEnd)) {
-        return { available: false, reason: `Time blocked: ${exception.reason || 'Unavailable'}` };
-      }
+  // Check for availability blocks (blocked times) on this specific date using events table
+  const startOfDay = new Date(`${date}T00:00:00Z`);
+  const endOfDay = new Date(`${date}T23:59:59Z`);
+  const events = await storage.listEventsByRange(startOfDay.toISOString(), endOfDay.toISOString());
+  
+  // Filter for availability blocks only
+  const blockingEvents = events.filter(event => 
+    event.isAvailabilityBlock && !event.isDeleted
+  );
+  
+  for (const event of blockingEvents) {
+    // Handle all-day blocks
+    if (event.isAllDay) {
+      return { available: false, reason: `Day blocked: ${event.blockingReason || event.title || 'Unavailable'}` };
+    }
+    
+    // Parse event times for comparison
+    const eventStart = new Date(event.startAt);
+    const eventEnd = new Date(event.endAt);
+    const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+    const eventEndMinutes = eventEnd.getHours() * 60 + eventEnd.getMinutes();
+    
+    // Check if booking overlaps with blocked time
+    if (!(endMinutes <= eventStartMinutes || startMinutes >= eventEndMinutes)) {
+      return { available: false, reason: `Time blocked: ${event.blockingReason || event.title || 'Unavailable'}` };
     }
   }
   
@@ -321,10 +330,16 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
     booking.preferredDate === date && booking.status !== AttendanceStatusEnum.CANCELLED
   );
   
-  // Get availability exceptions for this date
-  const exceptions = await storage.getAvailabilityExceptionsByDateRange(date, date);
-  const blockedTimes = exceptions.filter(exception => !exception.isAvailable);
-  logger.debug(`Blocked times for ${date}:`, blockedTimes.map(b => `${b.startTime}-${b.endTime}`));
+  // Get availability blocks for this date using events table
+  const startOfDay = new Date(`${date}T00:00:00Z`);
+  const endOfDay = new Date(`${date}T23:59:59Z`);
+  const events = await storage.listEventsByRange(startOfDay.toISOString(), endOfDay.toISOString());
+  
+  // Filter for availability blocks only
+  const blockedEvents = events.filter(event => 
+    event.isAvailabilityBlock && !event.isDeleted
+  );
+  logger.debug(`Blocked events for ${date}:`, blockedEvents.map(e => `${e.title}: ${e.startAt}-${e.endAt}`));
   
   const availableTimes: string[] = [];
   
@@ -373,22 +388,26 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
         }
       }
       
-      // Check if this time conflicts with blocked times
+      // Check if this time conflicts with blocked events
       let conflictsWithBlock = false;
-      for (const block of blockedTimes) {
+      for (const event of blockedEvents) {
         // Handle all-day blocks
-        if (block.allDay || !block.startTime || !block.endTime) {
-          logger.debug(`   ALL DAY BLOCK: slot ${timeStr} is blocked by all-day exception`);
+        if (event.isAllDay) {
+          logger.debug(`   ALL DAY BLOCK: slot ${timeStr} is blocked by all-day event: ${event.title}`);
           conflictsWithBlock = true;
           break;
         }
         
-        const blockStart = timeToMinutes(block.startTime);
-        const blockEnd = timeToMinutes(block.endTime);
-        logger.debug(`  Checking slot ${timeStr}-${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')} against block ${block.startTime}-${block.endTime} (${blockStart}-${blockEnd})`);
+        // Parse event times for comparison
+        const eventStart = new Date(event.startAt);
+        const eventEnd = new Date(event.endAt);
+        const blockStart = eventStart.getHours() * 60 + eventStart.getMinutes();
+        const blockEnd = eventEnd.getHours() * 60 + eventEnd.getMinutes();
+        
+        logger.debug(`  Checking slot ${timeStr}-${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')} against block ${event.title} ${eventStart.toTimeString()}-${eventEnd.toTimeString()} (${blockStart}-${blockEnd})`);
         // Check for overlap
         if (!(endMinutes <= blockStart || minutes >= blockEnd)) {
-          logger.debug(`   OVERLAP: slot ${timeStr} is blocked by ${block.startTime}-${block.endTime}`);
+          logger.debug(`   OVERLAP: slot ${timeStr} is blocked by event: ${event.title} (${eventStart.toTimeString()}-${eventEnd.toTimeString()})`);
           conflictsWithBlock = true;
           break;
         }
@@ -8985,15 +9004,43 @@ setTimeout(async () => {
     }
   });
 
-  // Availability Exceptions Routes
+  // DEPRECATED: Availability Exceptions Routes (Legacy - migrated to events table)
+  // These routes are maintained for backward compatibility but should not be used for new functionality
   app.get("/api/availability-exceptions", async (_req, res) => {
     try {
-      console.log('🔍 [ADMIN] Getting availability exceptions...');
-      const exceptions = await storage.getAllAvailabilityExceptions();
-      console.log('✅ [ADMIN] Successfully retrieved availability exceptions:', exceptions.length);
-      res.json(exceptions);
+      console.log('⚠️  [DEPRECATED] availability-exceptions API accessed - migrated to events table');
+      // Return events filtered as availability blocks for backward compatibility
+      const allEvents = await storage.listEventsByRange(
+        new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year ago
+        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()   // 1 year ahead
+      );
+      const availabilityBlocks = allEvents.filter(event => 
+        event.isAvailabilityBlock && !event.isDeleted
+      );
+      
+      // Map to legacy format for backward compatibility
+      const legacyFormat = availabilityBlocks.map(event => ({
+        id: event.id,
+        date: event.startAt ? new Date(event.startAt).toISOString().split('T')[0] : null,
+        startTime: event.isAllDay ? null : event.startAt ? new Date(event.startAt).toTimeString().slice(0, 5) : null,
+        endTime: event.isAllDay ? null : event.endAt ? new Date(event.endAt).toTimeString().slice(0, 5) : null,
+        allDay: event.isAllDay,
+        isAvailable: false, // availability blocks are always unavailable
+        reason: event.blockingReason || event.title || 'Unavailable',
+        title: event.title,
+        notes: event.notes,
+        category: event.category,
+        addressLine1: event.addressLine1,
+        addressLine2: event.addressLine2,
+        city: event.city,
+        state: event.state,
+        zipCode: event.zipCode,
+        country: event.country
+      }));
+      
+      res.json(legacyFormat);
     } catch (error) {
-      console.error('❌ [ADMIN] Error fetching availability exceptions:', error);
+      console.error('❌ [DEPRECATED] Error fetching availability exceptions:', error);
       res.status(500).json({ message: "Failed to fetch availability exceptions" });
     }
   });
@@ -9144,161 +9191,31 @@ setTimeout(async () => {
     }
   });
 
+  // DEPRECATED: POST availability-exceptions (Legacy - use events API instead)
   app.post("/api/availability-exceptions", isAdminAuthenticated, async (req, res) => {
-    try {
-      // Handle both camelCase and snake_case input
-      const requestData = req.body;
-      
-      // Direct property access to handle field name variations
-      const startTime = requestData.startTime || requestData.start_time;
-      const endTime = requestData.endTime || requestData.end_time;
-
-      // Normalize times early to accept HH:MM, HH:MM:SS, or 12-hour inputs
-      const normalizedStart = normalizeTimeToHHMM(startTime);
-      const normalizedEnd = normalizeTimeToHHMM(endTime);
-      
-      const mappedData = {
-        date: requestData.date,
-        startTime: requestData.allDay ? undefined : (normalizedStart ?? undefined),
-        endTime: requestData.allDay ? undefined : (normalizedEnd ?? undefined),
-        isAvailable: requestData.isAvailable ?? false,
-        reason: requestData.reason || 'Blocked time',
-        title: requestData.title,
-        category: requestData.category,
-        notes: requestData.notes,
-        allDay: requestData.allDay ?? false,
-        addressLine1: requestData.addressLine1,
-        addressLine2: requestData.addressLine2,
-        city: requestData.city,
-        state: requestData.state,
-        zipCode: requestData.zipCode,
-        country: requestData.country || 'United States'
-      };
-      
-      // Basic validation - allow missing startTime/endTime for all-day events
-      if (!mappedData.date) {
-        return res.status(400).json({ 
-          message: "Missing required field: date" 
-        });
-      }
-      
-      if (!mappedData.allDay && (!mappedData.startTime || !mappedData.endTime)) {
-        return res.status(400).json({ 
-          message: "Missing required fields for timed event: startTime and endTime" 
-        });
-      }
-      
-      // Validate time format for timed events after normalization
-      if (!mappedData.allDay && mappedData.startTime && mappedData.endTime) {
-        const valid = mappedData.startTime !== null && mappedData.endTime !== null;
-        if (!valid) {
-          return res.status(400).json({ message: "Invalid time format. Use HH:MM format" });
-        }
-      }
-      
-      const exception = await storage.createAvailabilityException(mappedData);
-      res.status(201).json(exception);
-    } catch (error) {
-      console.error('[ERROR] Failed to create availability exception:', error);
-      res.status(400).json({ message: "Failed to create availability exception" });
-    }
+    res.status(410).json({ 
+      message: "This endpoint is deprecated. Use /api/events with isAvailabilityBlock: true instead.",
+      deprecated: true,
+      migrationNote: "Create availability blocks using the events API with isAvailabilityBlock field set to true"
+    });
   });
 
+  // DEPRECATED: PUT availability-exceptions (Legacy - use events API instead)
   app.put("/api/availability-exceptions/:id", isAdminAuthenticated, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      
-      // Handle both camelCase and snake_case input (same as POST)
-      const requestData = req.body;
-      
-      // Load existing record so we can preserve values when fields are omitted
-      const existing = await storage.getAvailabilityException(id);
-      if (!existing) {
-        return res.status(404).json({ message: "Availability exception not found" });
-      }
-
-      // Direct property access to handle field name variations
-      const startTime = requestData.startTime || requestData.start_time;
-      const endTime = requestData.endTime || requestData.end_time;
-
-      // Normalize times (allow empty strings to become null)
-      const normalizedStart = normalizeTimeToHHMM(startTime);
-      const normalizedEnd = normalizeTimeToHHMM(endTime);
-
-      // Determine final allDay value (preserve if omitted)
-      const finalAllDay: boolean = (requestData.allDay ?? existing.allDay) ?? false;
-
-      // Determine final start/end times:
-      // - If allDay, omit both
-      // - If field omitted (undefined), keep existing value
-      // - If provided but invalid (normalize -> null) while non-empty string was sent, we'll catch in validation
-      const startWasProvided = typeof startTime !== 'undefined';
-      const endWasProvided = typeof endTime !== 'undefined';
-
-      const finalStartTime = finalAllDay
-        ? undefined
-        : (startWasProvided
-            ? (normalizedStart ?? undefined)
-            : existing.startTime || undefined);
-      const finalEndTime = finalAllDay
-        ? undefined
-        : (endWasProvided
-            ? (normalizedEnd ?? undefined)
-            : existing.endTime || undefined);
-
-      const mappedData = {
-        date: requestData.date ?? existing.date,
-        startTime: finalStartTime,
-        endTime: finalEndTime,
-        isAvailable: requestData.isAvailable ?? existing.isAvailable ?? false,
-        reason: (requestData.reason ?? existing.reason) || 'Blocked time',
-        title: requestData.title ?? existing.title,
-        category: requestData.category ?? existing.category,
-        notes: requestData.notes ?? existing.notes,
-        allDay: finalAllDay,
-        addressLine1: requestData.addressLine1 ?? existing.addressLine1,
-        addressLine2: requestData.addressLine2 ?? existing.addressLine2,
-        city: requestData.city ?? existing.city,
-        state: requestData.state ?? existing.state,
-        zipCode: requestData.zipCode ?? existing.zipCode,
-        country: requestData.country ?? existing.country ?? 'United States'
-      };
-      
-      // Validation
-      if (!mappedData.allDay) {
-        // Must have both times for a timed event
-        if (!mappedData.startTime || !mappedData.endTime) {
-          return res.status(400).json({ message: "Missing required fields for timed event: startTime and endTime" });
-        }
-        // If both present, ensure they are valid HH:MM (normalization already handled seconds/AMPM)
-        const timeRegex = /^\d{1,2}:\d{2}$/;
-        if (!timeRegex.test(mappedData.startTime) || !timeRegex.test(mappedData.endTime)) {
-          return res.status(400).json({ message: "Invalid time format. Use HH:MM format" });
-        }
-      }
-      
-      const exception = await storage.updateAvailabilityException(id, mappedData);
-      if (!exception) {
-        return res.status(404).json({ message: "Availability exception not found" });
-      }
-      res.json(exception);
-    } catch (error) {
-      console.error('Error updating availability exception:', error);
-      res.status(400).json({ message: "Failed to update availability exception" });
-    }
+    res.status(410).json({ 
+      message: "This endpoint is deprecated. Use /api/events/:id instead.",
+      deprecated: true,
+      migrationNote: "Update availability blocks using the events API"
+    });
   });
 
+  // DEPRECATED: DELETE availability-exceptions (Legacy - use events API instead)
   app.delete("/api/availability-exceptions/:id", isAdminAuthenticated, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const success = await storage.deleteAvailabilityException(id);
-      if (!success) {
-        return res.status(404).json({ message: "Availability exception not found" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete availability exception" });
-    }
+    res.status(410).json({ 
+      message: "This endpoint is deprecated. Use /api/events/:id instead.",
+      deprecated: true,
+      migrationNote: "Delete availability blocks using the events API"
+    });
   });
 
   // Admin: list site inquiries
@@ -9959,9 +9876,13 @@ setTimeout(async () => {
         return res.json({ slots: [] });
       }
       
-      // Get exceptions for this date
-      const exceptions = await storage.getAvailabilityExceptionsByDateRange(date as string, date as string);
-      const blockedTimes = exceptions.filter(ex => !ex.isAvailable);
+      // Get availability blocks for this date using events table
+      const startOfDay = new Date(`${date}T00:00:00Z`);
+      const endOfDay = new Date(`${date}T23:59:59Z`);
+      const events = await storage.listEventsByRange(startOfDay.toISOString(), endOfDay.toISOString());
+      const blockedEvents = events.filter(event => 
+        event.isAvailabilityBlock && !event.isDeleted
+      );
       
       // Get existing bookings for this date
       const existingBookings = await storage.getAllBookings();
@@ -9983,16 +9904,19 @@ setTimeout(async () => {
           
           let isAvailable = true;
           
-          // Check against blocked times
-          for (const blocked of blockedTimes) {
+          // Check against blocked events
+          for (const event of blockedEvents) {
             // Handle all-day blocks
-            if (blocked.allDay || !blocked.startTime || !blocked.endTime) {
+            if (event.isAllDay) {
               isAvailable = false;
               break;
             }
             
-            const blockedStart = timeToMinutes(blocked.startTime);
-            const blockedEnd = timeToMinutes(blocked.endTime);
+            // Parse event times for comparison
+            const eventStart = new Date(event.startAt);
+            const eventEnd = new Date(event.endAt);
+            const blockedStart = eventStart.getHours() * 60 + eventStart.getMinutes();
+            const blockedEnd = eventEnd.getHours() * 60 + eventEnd.getMinutes();
             
             if (!(endMinutes <= blockedStart || minutes >= blockedEnd)) {
               isAvailable = false;

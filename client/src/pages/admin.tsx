@@ -466,8 +466,8 @@ export default function Admin() {
   // Events queries - calculate date range for calendar expansion
   const calendarRange = useMemo(() => {
     const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1); // Start of last month
-    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0); // End of next month
+    const start = new Date(now.getFullYear(), 0, 1); // Start of current year
+    const end = new Date(now.getFullYear() + 1, 11, 31); // End of next year
     return {
       start: start.toISOString(),
       end: end.toISOString()

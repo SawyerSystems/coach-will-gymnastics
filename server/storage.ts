@@ -1808,11 +1808,15 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
 
   async deleteEvent(id: string): Promise<boolean> {
-    const existing = this.eventsMap.get(id);
+    // Extract base UUID from composite ID (for recurring event instances)
+    // Format: "uuid:timestamp" -> "uuid"
+    const baseId = id.includes(':') ? id.split(':')[0] : id;
+    
+    const existing = this.eventsMap.get(baseId);
     if (!existing) return false;
     existing.isDeleted = true;
     existing.updatedAt = new Date().toISOString() as any;
-    this.eventsMap.set(id, existing);
+    this.eventsMap.set(baseId, existing);
     return true;
   }
 
@@ -6009,10 +6013,14 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteEvent(id: string): Promise<boolean> {
+    // Extract base UUID from composite ID (for recurring event instances)
+    // Format: "uuid:timestamp" -> "uuid"
+    const baseId = id.includes(':') ? id.split(':')[0] : id;
+    
     const { error } = await supabaseAdmin
       .from('events')
       .update({ is_deleted: true, updated_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq('id', baseId);
 
     if (error) {
       console.error('Error deleting event:', error);

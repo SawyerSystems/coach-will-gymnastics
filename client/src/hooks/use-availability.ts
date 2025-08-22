@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Availability, InsertAvailability, AvailabilityException, InsertAvailabilityException } from "@shared/schema";
+import type { Availability, InsertAvailability } from "@shared/schema";
 
 // Availability hooks
 export function useAvailability() {
@@ -47,55 +47,6 @@ export function useDeleteAvailability() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/availability"] });
-    },
-  });
-}
-
-// Availability Exceptions hooks
-export function useAvailabilityExceptions() {
-  return useQuery<AvailabilityException[]>({
-    queryKey: ["/api/availability-exceptions"],
-    queryFn: () => apiRequest("GET", "/api/availability-exceptions").then(res => res.json()),
-  });
-}
-
-export function useCreateAvailabilityException() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (exception: InsertAvailabilityException) => {
-      const response = await apiRequest("POST", "/api/availability-exceptions", exception);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/availability-exceptions"] });
-    },
-  });
-}
-
-export function useUpdateAvailabilityException() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: InsertAvailabilityException }) => {
-      const response = await apiRequest("PUT", `/api/availability-exceptions/${id}`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/availability-exceptions"] });
-    },
-  });
-}
-
-export function useDeleteAvailabilityException() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/availability-exceptions/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/availability-exceptions"] });
     },
   });
 }
