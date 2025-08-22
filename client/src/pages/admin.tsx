@@ -53,6 +53,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
+import { buildRRuleFromUi } from "@/lib/recurrence";
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';

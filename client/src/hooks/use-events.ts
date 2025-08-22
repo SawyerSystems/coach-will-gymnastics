@@ -8,6 +8,13 @@ export interface EventRow {
   title: string;
   notes?: string | null;
   location?: string | null;
+  // Address fields
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  country?: string | null;
   isAllDay: boolean;
   timezone: string;
   startAt: string; // ISO
@@ -55,7 +62,21 @@ export function useUpdateEvent() {
 export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => apiRequest("DELETE", `/api/events/${id}`).then(r => r.json()),
+    mutationFn: async (params: string | { id: string; mode?: 'this' | 'future' | 'all'; instanceDate?: string }) => {
+      if (typeof params === 'string') {
+        // Legacy: simple ID string (defaults to 'all' mode)
+        return apiRequest("DELETE", `/api/events/${params}`).then(r => r.json());
+      } else {
+        // Enhanced: object with deletion mode
+        const { id, mode = 'all', instanceDate } = params;
+        const queryParams = new URLSearchParams();
+        if (mode) queryParams.set('mode', mode);
+        if (instanceDate) queryParams.set('instanceDate', instanceDate);
+        
+        const url = `/api/events/${id}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+        return apiRequest("DELETE", url).then(r => r.json());
+      }
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/events"] }),
   });
 }

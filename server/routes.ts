@@ -9184,9 +9184,20 @@ setTimeout(async () => {
   });
 
   app.delete("/api/events/:id", isAdminAuthenticated, async (req, res) => {
+    console.log("🚨🚨🚨 DELETE ENDPOINT DEFINITELY HIT!!! 🚨🚨🚨");
     try {
-      const ok = await storage.deleteEvent(req.params.id);
-      res.json({ success: ok });
+      const { mode, instanceDate } = req.query;
+      
+      // Support three deletion modes:
+      // - "this" (default): Delete only this instance (add to exceptions)
+      // - "future": Delete this and all future instances (set recurrence end)
+      // - "all": Delete entire series (soft delete master + overrides)
+      const deleteMode = (mode as 'this' | 'future' | 'all') || 'this';
+      
+      console.log(`🗑️ [DELETE] Event ${req.params.id}, mode: ${deleteMode}, instanceDate: ${instanceDate}`);
+      
+      const ok = await storage.deleteEventWithMode(req.params.id, deleteMode, instanceDate as string);
+      res.json({ success: ok, mode: deleteMode });
     } catch (err) {
       console.error('Error deleting event:', err);
       res.status(400).json({ message: 'Failed to delete event' });

@@ -122,7 +122,8 @@ export interface IStorage {
   listEventsByRange(startIso: string, endIso: string): Promise<Event[]>; // raw series/overrides rows
   createEvent(input: InsertEvent): Promise<Event>;
   updateEvent(id: string, input: Partial<InsertEvent>): Promise<Event | undefined>;
-  deleteEvent(id: string): Promise<boolean>;
+  deleteEvent(id: string): Promise<boolean>; // Legacy - use deleteEventWithMode
+  deleteEventWithMode(id: string, mode: 'this' | 'future' | 'all', instanceDate?: string): Promise<boolean>;
 
   // Admins
   getAllAdmins(): Promise<Admin[]>;
@@ -1808,15 +1809,83 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
 
   async deleteEvent(id: string): Promise<boolean> {
+    // Legacy method - defaults to "all" mode for backward compatibility
+    return this.deleteEventWithMode(id, 'all');
+  }
+
+  async deleteEventWithMode(id: string, mode: 'this' | 'future' | 'all', instanceDate?: string): Promise<boolean> {
     // Extract base UUID from composite ID (for recurring event instances)
     // Format: "uuid:timestamp" -> "uuid"
     const baseId = id.includes(':') ? id.split(':')[0] : id;
     
     const existing = this.eventsMap.get(baseId);
     if (!existing) return false;
-    existing.isDeleted = true;
-    existing.updatedAt = new Date().toISOString() as any;
-    this.eventsMap.set(baseId, existing);
+
+    console.log(`🗑️ [MEMSTORAGE] Delete mode: ${mode}, baseId: ${baseId}, instanceDate: ${instanceDate}`);
+
+    if (mode === 'all') {
+      // Delete entire series: soft delete master + all overrides
+      existing.isDeleted = true;
+      existing.updatedAt = new Date().toISOString() as any;
+      this.eventsMap.set(baseId, existing);
+      
+      // Also soft delete any overrides for this series
+      for (const [key, event] of Array.from(this.eventsMap.entries())) {
+        if (event.seriesId === existing.seriesId && event.parentEventId) {
+          event.isDeleted = true;
+          event.updatedAt = new Date().toISOString() as any;
+          this.eventsMap.set(key, event);
+        }
+      }
+      
+    } else if (mode === 'future' && instanceDate) {
+      // Delete this and future: set recurrence end date before this instance
+      const endDate = new Date(instanceDate);
+      endDate.setSeconds(endDate.getSeconds() - 1); // 1 second before instance
+      
+      existing.recurrenceEndAt = endDate.toISOString() as any;
+      existing.updatedAt = new Date().toISOString() as any;
+      this.eventsMap.set(baseId, existing);
+      
+      // Delete any overrides at or after this date
+      for (const [key, event] of Array.from(this.eventsMap.entries())) {
+        if (event.seriesId === existing.seriesId && event.parentEventId) {
+          const eventDate = new Date(event.startAt as unknown as string);
+          if (eventDate >= new Date(instanceDate)) {
+            event.isDeleted = true;
+            event.updatedAt = new Date().toISOString() as any;
+            this.eventsMap.set(key, event);
+          }
+        }
+      }
+      
+    } else if (mode === 'this' && instanceDate) {
+      // Delete only this instance: add to recurrence exceptions
+      const exceptions = Array.isArray(existing.recurrenceExceptions) 
+        ? [...existing.recurrenceExceptions] 
+        : [];
+      
+      if (!exceptions.includes(instanceDate)) {
+        exceptions.push(instanceDate);
+        existing.recurrenceExceptions = exceptions as any;
+        existing.updatedAt = new Date().toISOString() as any;
+        this.eventsMap.set(baseId, existing);
+      }
+      
+      // If there's an override for this specific instance, delete it
+      for (const [key, event] of Array.from(this.eventsMap.entries())) {
+        if (event.seriesId === existing.seriesId && event.parentEventId) {
+          const eventDate = new Date(event.startAt as unknown as string);
+          const targetDate = new Date(instanceDate);
+          if (Math.abs(eventDate.getTime() - targetDate.getTime()) < 60000) { // Within 1 minute
+            event.isDeleted = true;
+            event.updatedAt = new Date().toISOString() as any;
+            this.eventsMap.set(key, event);
+          }
+        }
+      }
+    }
+    
     return true;
   }
 
@@ -6013,20 +6082,178 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteEvent(id: string): Promise<boolean> {
+    // Legacy method - defaults to "all" mode for backward compatibility
+    return this.deleteEventWithMode(id, 'all');
+  }
+
+  async deleteEventWithMode(id: string, mode: 'this' | 'future' | 'all', instanceDate?: string): Promise<boolean> {
     // Extract base UUID from composite ID (for recurring event instances)
     // Format: "uuid:timestamp" -> "uuid"
     const baseId = id.includes(':') ? id.split(':')[0] : id;
     
-    const { error } = await supabaseAdmin
-      .from('events')
-      .update({ is_deleted: true, updated_at: new Date().toISOString() })
-      .eq('id', baseId);
+    console.log(`🗑️ [SUPABASE] Delete mode: ${mode}, baseId: ${baseId}, instanceDate: ${instanceDate}`);
 
-    if (error) {
-      console.error('Error deleting event:', error);
+    try {
+      if (mode === 'all') {
+        // Delete entire series: soft delete master + all overrides
+        const { error: masterError } = await supabaseAdmin
+          .from('events')
+          .update({ is_deleted: true, updated_at: new Date().toISOString() })
+          .eq('id', baseId);
+
+        if (masterError) {
+          console.error('Error deleting master event:', masterError);
+          return false;
+        }
+
+        // Get the series_id to delete all overrides
+        const { data: masterEvent } = await supabaseAdmin
+          .from('events')
+          .select('series_id')
+          .eq('id', baseId)
+          .single();
+
+        if (masterEvent?.series_id) {
+          const { error: overridesError } = await supabaseAdmin
+            .from('events')
+            .update({ is_deleted: true, updated_at: new Date().toISOString() })
+            .eq('series_id', masterEvent.series_id)
+            .not('parent_event_id', 'is', null);
+
+          if (overridesError) {
+            console.error('Error deleting override events:', overridesError);
+          }
+        }
+
+      } else if (mode === 'future' && instanceDate) {
+        // Delete this and future: set recurrence end date before this instance
+        const endDate = new Date(instanceDate);
+        endDate.setSeconds(endDate.getSeconds() - 1); // 1 second before instance
+
+        const { error: masterError } = await supabaseAdmin
+          .from('events')
+          .update({ 
+            recurrence_end_at: endDate.toISOString(), 
+            updated_at: new Date().toISOString() 
+          })
+          .eq('id', baseId);
+
+        if (masterError) {
+          console.error('Error updating recurrence end date:', masterError);
+          return false;
+        }
+
+        // Get the series_id to delete future overrides
+        const { data: masterEvent } = await supabaseAdmin
+          .from('events')
+          .select('series_id')
+          .eq('id', baseId)
+          .single();
+
+        if (masterEvent?.series_id) {
+          const { error: overridesError } = await supabaseAdmin
+            .from('events')
+            .update({ is_deleted: true, updated_at: new Date().toISOString() })
+            .eq('series_id', masterEvent.series_id)
+            .not('parent_event_id', 'is', null)
+            .gte('start_at', instanceDate);
+
+          if (overridesError) {
+            console.error('Error deleting future override events:', overridesError);
+          }
+        }
+
+      } else if (mode === 'this' && instanceDate) {
+        // Delete only this instance: add to recurrence exceptions
+        console.log(`🗑️ [SUPABASE] Mode 'this' - adding exception for ${instanceDate} to event ${baseId}`);
+        
+        // First get the current event to read existing exceptions
+        const { data: currentEvent, error: fetchError } = await supabaseAdmin
+          .from('events')
+          .select('recurrence_exceptions, recurrence_rule')
+          .eq('id', baseId)
+          .single();
+
+        if (fetchError) {
+          console.error('🚨 [SUPABASE] Error fetching current event:', fetchError);
+          return false;
+        }
+
+        console.log(`🗑️ [SUPABASE] Current event:`, {
+          id: baseId,
+          recurrenceRule: currentEvent?.recurrence_rule,
+          currentExceptions: currentEvent?.recurrence_exceptions
+        });
+
+        // Only add exception if this is actually a recurring event
+        if (!currentEvent?.recurrence_rule) {
+          console.log(`🗑️ [SUPABASE] Non-recurring event - should not use 'this' mode`);
+          return false;
+        }
+
+        const currentExceptions = Array.isArray(currentEvent?.recurrence_exceptions) 
+          ? currentEvent.recurrence_exceptions 
+          : [];
+        
+        if (!currentExceptions.includes(instanceDate)) {
+          const newExceptions = [...currentExceptions, instanceDate];
+          
+          console.log(`🗑️ [SUPABASE] Updating exceptions from:`, currentExceptions, `to:`, newExceptions);
+          
+          const { error: updateError } = await supabaseAdmin
+            .from('events')
+            .update({ 
+              recurrence_exceptions: newExceptions, 
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', baseId);
+
+          if (updateError) {
+            console.error('🚨 [SUPABASE] Error updating recurrence exceptions:', updateError);
+            return false;
+          }
+          
+          console.log(`✅ [SUPABASE] Successfully added exception ${instanceDate} to event ${baseId}`);
+        } else {
+          console.log(`🗑️ [SUPABASE] Exception ${instanceDate} already exists for event ${baseId}`);
+        }
+
+        // If there's an override for this specific instance, delete it
+        const { data: masterEvent } = await supabaseAdmin
+          .from('events')
+          .select('series_id')
+          .eq('id', baseId)
+          .single();
+
+        if (masterEvent?.series_id) {
+          // Delete overrides that match this instance time (within 1 minute tolerance)
+          const targetTime = new Date(instanceDate).getTime();
+          const { data: overrides } = await supabaseAdmin
+            .from('events')
+            .select('id, start_at')
+            .eq('series_id', masterEvent.series_id)
+            .not('parent_event_id', 'is', null)
+            .eq('is_deleted', false);
+
+          if (overrides) {
+            for (const override of overrides) {
+              const overrideTime = new Date(override.start_at).getTime();
+              if (Math.abs(overrideTime - targetTime) < 60000) { // Within 1 minute
+                await supabaseAdmin
+                  .from('events')
+                  .update({ is_deleted: true, updated_at: new Date().toISOString() })
+                  .eq('id', override.id);
+              }
+            }
+          }
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteEventWithMode:', error);
       return false;
     }
-    return true;
   }
 
   async updateWaiver(id: number, waiver: Partial<InsertWaiver>): Promise<Waiver | undefined> {
