@@ -5002,6 +5002,13 @@ export default function Admin() {
                     title: newEvent.title || (newEvent.isAvailabilityBlock ? "Blocked Time" : "Event"),
                     notes: newEvent.notes,
                     location: newEvent.location,
+                    // Address fields
+                    addressLine1: newEvent.addressLine1,
+                    addressLine2: newEvent.addressLine2,
+                    city: newEvent.city,
+                    state: newEvent.state,
+                    zipCode: newEvent.zipCode,
+                    country: newEvent.country,
                     isAllDay: newEvent.isAllDay || false,
                     timezone: newEvent.timezone || "America/Los_Angeles",
                     startAt: newEvent.startAt ? newEvent.startAt.toISOString() : new Date().toISOString(),

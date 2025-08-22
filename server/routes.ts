@@ -9105,6 +9105,7 @@ setTimeout(async () => {
 
   app.post("/api/events", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('🔧 [EVENT-CREATE] Received data:', JSON.stringify(req.body, null, 2));
       const created = await storage.createEvent(req.body);
       // Return camelCase for consistency
       const toCamel = (row: any) => ({
@@ -9144,6 +9145,7 @@ setTimeout(async () => {
 
   app.put("/api/events/:id", isAdminAuthenticated, async (req, res) => {
     try {
+      console.log('🔧 [EVENT-UPDATE] Received data:', JSON.stringify(req.body, null, 2));
       const updated = await storage.updateEvent(req.params.id, req.body);
       if (!updated) return res.status(404).json({ message: 'Event not found' });
       const toCamel = (row: any) => ({
