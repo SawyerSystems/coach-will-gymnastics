@@ -39,12 +39,15 @@ export function EventDeletionModal({
 
   const isRecurring = !!event.recurrenceRule;
   const isInstance = event.id.includes(':');
-  const instanceDate = isInstance ? event.id.split(':')[1] : event.instanceDate;
+  // Properly extract full instance timestamp after the first colon
+  const instanceDate = isInstance 
+    ? event.id.substring(event.id.indexOf(':') + 1) 
+    : event.instanceDate;
 
   const handleConfirm = () => {
     const deletion: DeletionMode = {
       mode: selectedMode,
-      instanceDate: selectedMode === "this" && instanceDate ? instanceDate : undefined,
+      instanceDate: (selectedMode === "this" || selectedMode === "future") && instanceDate ? instanceDate : undefined,
     };
     console.log("🗑️ [MODAL] Confirming deletion:", { 
       selectedMode, 

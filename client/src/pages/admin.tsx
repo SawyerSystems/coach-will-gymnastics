@@ -492,8 +492,10 @@ export default function Admin() {
   const handleEventDeletion = (deletion: DeletionMode) => {
     if (!deletingEvent) return;
     
-    const baseId = deletingEvent.id.includes(':') ? deletingEvent.id.split(':')[0] : deletingEvent.id;
-    const instanceDate = deletion.instanceDate || (deletingEvent.id.includes(':') ? deletingEvent.id.split(':')[1] : undefined);
+    const baseId = deletingEvent.id.includes(':') ? deletingEvent.id.substring(0, deletingEvent.id.indexOf(':')) : deletingEvent.id;
+    const instanceDate = deletion.instanceDate || (deletingEvent.id.includes(':') 
+      ? deletingEvent.id.substring(deletingEvent.id.indexOf(':') + 1) 
+      : undefined);
     
     const deleteParams = {
       id: baseId,

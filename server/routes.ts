@@ -9185,8 +9185,28 @@ setTimeout(async () => {
 
   app.delete("/api/events/:id", isAdminAuthenticated, async (req, res) => {
     console.log("🚨🚨🚨 DELETE ENDPOINT DEFINITELY HIT!!! 🚨🚨🚨");
+    console.log("🔍 [DELETE-DEBUG] req.query:", req.query);
+    console.log("🔍 [DELETE-DEBUG] req.body:", req.body);
     try {
-      const { mode, instanceDate } = req.query;
+      // Support reading from both query params and request body
+      const mode = req.query.mode || req.body.mode;
+      let instanceDate = (req.query.instanceDate || req.body.instanceDate) as string | undefined;
+      // Normalize truncated ISO variants we observed earlier like '2025-09-19T19' or '2025-09-19T19:00'
+      if (instanceDate) {
+        const originalInstanceDate = instanceDate;
+        if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$/.test(instanceDate)) {
+          instanceDate = instanceDate + ":00:00.000Z"; // assume UTC hour start
+        } else if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$/.test(instanceDate)) {
+          instanceDate = instanceDate + ":00.000Z"; // add seconds + ms
+        } else if (/Z$/.test(instanceDate) === false && /^[0-9]{4}-/.test(instanceDate) && instanceDate.length === 19) {
+          // Case like '2025-09-19T19:00:00' missing Z
+          instanceDate = instanceDate + ".000Z";
+        }
+        if (originalInstanceDate !== instanceDate) {
+          console.log("⚠️ [DELETE-DEBUG] Normalized truncated instanceDate", { originalInstanceDate, normalized: instanceDate });
+        }
+      }
+      console.log("🔍 [DELETE-DEBUG] Extracted mode:", mode, "instanceDate:", instanceDate);
       
       // Support three deletion modes:
       // - "this" (default): Delete only this instance (add to exceptions)
@@ -9196,7 +9216,7 @@ setTimeout(async () => {
       
       console.log(`🗑️ [DELETE] Event ${req.params.id}, mode: ${deleteMode}, instanceDate: ${instanceDate}`);
       
-      const ok = await storage.deleteEventWithMode(req.params.id, deleteMode, instanceDate as string);
+  const ok = await storage.deleteEventWithMode(req.params.id, deleteMode, instanceDate as string);
       res.json({ success: ok, mode: deleteMode });
     } catch (err) {
       console.error('Error deleting event:', err);

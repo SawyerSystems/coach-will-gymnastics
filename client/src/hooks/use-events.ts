@@ -70,14 +70,17 @@ export function useDeleteEvent() {
         // Legacy: simple ID string (defaults to 'all' mode)
         return apiRequest("DELETE", `/api/events/${params}`).then(r => r.json());
       } else {
-        // Enhanced: object with deletion mode
+        // Enhanced: object with deletion mode - send in request body
         const { id, mode = 'all', instanceDate } = params;
-        const queryParams = new URLSearchParams();
-        if (mode) queryParams.set('mode', mode);
-        if (instanceDate) queryParams.set('instanceDate', instanceDate);
         
-        const url = `/api/events/${id}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-        return apiRequest("DELETE", url).then(r => r.json());
+        const requestBody = {
+          mode,
+          ...(instanceDate && { instanceDate })
+        };
+        
+        console.log("🗑️ [HOOK] Sending DELETE request:", { id, body: requestBody });
+        
+        return apiRequest("DELETE", `/api/events/${id}`, requestBody).then(r => r.json());
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/events"] }),

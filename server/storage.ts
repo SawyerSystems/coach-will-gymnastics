@@ -1860,6 +1860,14 @@ With the right setup and approach, home practice can accelerate your child's gym
       }
       
     } else if (mode === 'this' && instanceDate) {
+      // Normalize truncated instanceDate variants before storing
+      if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$/.test(instanceDate)) {
+        instanceDate = instanceDate + ':00:00.000Z';
+      } else if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$/.test(instanceDate)) {
+        instanceDate = instanceDate + ':00.000Z';
+      } else if (/Z$/.test(instanceDate) === false && /^[0-9]{4}-/.test(instanceDate) && instanceDate.length === 19) {
+        instanceDate = instanceDate + '.000Z';
+      }
       // Delete only this instance: add to recurrence exceptions
       const exceptions = Array.isArray(existing.recurrenceExceptions) 
         ? [...existing.recurrenceExceptions] 
@@ -6164,6 +6172,19 @@ export class SupabaseStorage implements IStorage {
         }
 
       } else if (mode === 'this' && instanceDate) {
+        // Normalize truncated instanceDate forms before processing
+        let normalizedInstanceDate = instanceDate;
+        if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$/.test(normalizedInstanceDate)) {
+          normalizedInstanceDate = normalizedInstanceDate + ':00:00.000Z';
+        } else if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$/.test(normalizedInstanceDate)) {
+          normalizedInstanceDate = normalizedInstanceDate + ':00.000Z';
+        } else if (/Z$/.test(normalizedInstanceDate) === false && /^[0-9]{4}-/.test(normalizedInstanceDate) && normalizedInstanceDate.length === 19) {
+          normalizedInstanceDate = normalizedInstanceDate + '.000Z';
+        }
+        if (normalizedInstanceDate !== instanceDate) {
+          console.log('⚠️ [SUPABASE] Normalized truncated instanceDate', { original: instanceDate, normalized: normalizedInstanceDate });
+          instanceDate = normalizedInstanceDate;
+        }
         // Delete only this instance: add to recurrence exceptions
         console.log(`🗑️ [SUPABASE] Mode 'this' - adding exception for ${instanceDate} to event ${baseId}`);
         
