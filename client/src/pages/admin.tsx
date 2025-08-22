@@ -2904,17 +2904,66 @@ export default function Admin() {
                               let borderColor = legendColors['Default'].border;
                               
                               if (resource.type === 'event') {
-                                // First try to use category, then fall back to blockingReason
-                                const eventCategory = resource.category || resource.blockingReason;
+                                // Function to intelligently map categories and blocking reasons to legend colors
+                                const getCategoryKey = (category: string | null, blockingReason: string | null, isAvailabilityBlock: boolean): string => {
+                                  // Direct category match first
+                                  if (category && legendColors[category]) {
+                                    return category;
+                                  }
+                                  
+                                  // For availability blocks, map blocking reasons to categories
+                                  if (isAvailabilityBlock && blockingReason) {
+                                    const reason = blockingReason.toLowerCase();
+                                    
+                                    // Medical/health appointments
+                                    if (reason.includes('medical') || reason.includes('doctor') || reason.includes('health')) {
+                                      return 'Medical Appointment';
+                                    }
+                                    if (reason.includes('dental') || reason.includes('dentist')) {
+                                      return 'Dental Appointment';
+                                    }
+                                    
+                                    // Work-related
+                                    if (reason.includes('work') || reason.includes('meeting') || reason.includes('conference')) {
+                                      return 'Busy: Work';
+                                    }
+                                    
+                                    // Personal appointments
+                                    if (reason.includes('personal') || reason.includes('appointment')) {
+                                      return 'Busy: Personal';
+                                    }
+                                    
+                                    // Gymnastics-related
+                                    if (reason.includes('practice') || reason.includes('training')) {
+                                      if (reason.includes('coaching') || reason.includes('coach')) {
+                                        return 'Coaching: Practice';
+                                      } else {
+                                        return 'Own: Practice';
+                                      }
+                                    }
+                                    
+                                    // Competition/meet related
+                                    if (reason.includes('competition') || reason.includes('meet') || reason.includes('cup') || reason.includes('championship')) {
+                                      if (reason.includes('coaching') || reason.includes('coach')) {
+                                        return 'Coaching: Team Meet/Competition';
+                                      } else {
+                                        return 'Own: Team Meet/Competition';
+                                      }
+                                    }
+                                    
+                                    // Default for unknown blocking reasons - treat as personal busy time
+                                    return 'Busy: Personal';
+                                  }
+                                  
+                                  // For regular events without specific categories, use a neutral color
+                                  return 'Default';
+                                };
                                 
-                                if (eventCategory && legendColors[eventCategory]) {
-                                  // Use category/blockingReason color regardless of whether it's blocking or not
-                                  backgroundColor = legendColors[eventCategory].bg;
-                                  borderColor = legendColors[eventCategory].border;
-                                } else {
-                                  // Default non-categorized event color (blue aligned w/ Coaching Practice for now)
-                                  backgroundColor = legendColors['Coaching: Practice'].bg;
-                                  borderColor = legendColors['Coaching: Practice'].border;
+                                const categoryKey = getCategoryKey(resource.category, resource.blockingReason, resource.isAvailabilityBlock);
+                                
+                                if (legendColors[categoryKey]) {
+                                  backgroundColor = legendColors[categoryKey].bg;
+                                  borderColor = legendColors[categoryKey].border;
                                 }
                               } else if (resource.category && legendColors[resource.category]) {
                                 backgroundColor = legendColors[resource.category].bg;
