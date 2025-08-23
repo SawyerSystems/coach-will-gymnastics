@@ -5259,7 +5259,6 @@ export default function Admin() {
           event={deletingEvent}
           isLoading={deleteEventMutation.isPending}
         />
-        {console.log("🔍 DELETION MODAL STATE", { deletingEvent, isOpen: !!deletingEvent })}
           </div>
         </div>
       </div>

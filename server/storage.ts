@@ -2835,6 +2835,40 @@ export class SupabaseStorage implements IStorage {
   }
 
   async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> {
+    // Set display_date based on recordedAt in Pacific timezone, or current date as fallback
+    let displayDate: string;
+    if ((input as any).recordedAt) {
+      // Convert recordedAt to Pacific timezone date
+      const recordedDate = new Date((input as any).recordedAt);
+      displayDate = recordedDate.toLocaleDateString('en-CA', { 
+        timeZone: 'America/Los_Angeles' 
+      }); // en-CA gives YYYY-MM-DD format
+    } else {
+      // Fallback to current date in Pacific timezone
+      const today = new Date();
+      displayDate = today.toLocaleDateString('en-CA', { 
+        timeZone: 'America/Los_Angeles' 
+      });
+    }
+
+    // Determine sort_index - if not provided, get the next index for this athlete_skill_id + display_date
+    let sortIndex = (input as any).sortIndex;
+    if (sortIndex == null || isNaN(sortIndex)) {
+      // Get the highest sort_index for this athlete_skill_id + display_date combination
+      const { data: existingVideos } = await supabaseAdmin
+        .from('athlete_skill_videos')
+        .select('sort_index')
+        .eq('athlete_skill_id', (input as any).athleteSkillId)
+        .eq('display_date', displayDate)
+        .order('sort_index', { ascending: false })
+        .limit(1);
+      sortIndex = (existingVideos && existingVideos.length > 0 && typeof existingVideos[0].sort_index === 'number')
+        ? (existingVideos[0].sort_index + 1)
+        : 0;
+    }
+    // Ensure sortIndex is always a valid integer
+    sortIndex = Number.isInteger(sortIndex) ? sortIndex : 0;
+
     const payload: any = {
       athlete_skill_id: (input as any).athleteSkillId,
       url: (input as any).url,
@@ -2843,28 +2877,12 @@ export class SupabaseStorage implements IStorage {
       caption: (input as any).caption ?? null,
       is_visible: (input as any).isVisible ?? true,
       is_featured: (input as any).isFeatured ?? false,
-      sort_index: (input as any).sortIndex ?? null,
+      sort_index: sortIndex,
       thumbnail_url: (input as any).thumbnailUrl ?? null,
       optimized_url: (input as any).optimizedUrl ?? null,
       processing_status: (input as any).processingStatus ?? 'pending',
+      display_date: displayDate,
     };
-
-    // Set display_date based on recordedAt in Pacific timezone, or current date as fallback
-    if ((input as any).recordedAt) {
-      // Convert recordedAt to Pacific timezone date
-      const recordedDate = new Date((input as any).recordedAt);
-      const pacificDateString = recordedDate.toLocaleDateString('en-CA', { 
-        timeZone: 'America/Los_Angeles' 
-      }); // en-CA gives YYYY-MM-DD format
-      payload.display_date = pacificDateString;
-    } else {
-      // Fallback to current date in Pacific timezone
-      const today = new Date();
-      const pacificDateString = today.toLocaleDateString('en-CA', { 
-        timeZone: 'America/Los_Angeles' 
-      });
-      payload.display_date = pacificDateString;
-    }
 
     const { data, error } = await supabaseAdmin.from('athlete_skill_videos').insert(payload).select('*').single();
     if (error) throw error;
