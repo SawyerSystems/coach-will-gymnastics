@@ -1036,27 +1036,79 @@ export default function Admin() {
   // Helper functions - defined before use to prevent hoisting issues
   const sectionsToContent = (sections: ContentSection[]): string => {
     return sections.map(section => {
-      const typePrefix = section.type === 'heading' ? `### ${section.content}` :
-                         section.type === 'paragraph' ? section.content :
-                         section.type === 'list' ? `- ${section.content}` :
-                         section.content;
-      return typePrefix;
+      if (section.type === 'text') {
+        return section.content;
+      } else if (section.type === 'image') {
+        return `[IMAGE: ${section.content}]${section.caption ? `\nCaption: ${section.caption}` : ''}`;
+      } else if (section.type === 'video') {
+        return `[VIDEO: ${section.content}]${section.caption ? `\nCaption: ${section.caption}` : ''}`;
+      }
+      return '';
     }).join('\n\n');
   };
 
   const contentToSections = (content: string): ContentSection[] => {
     if (!content) return [];
     
-    const lines = content.split('\n\n');
-    return lines.map((line, index) => {
-      if (line.startsWith('### ')) {
-        return { id: `section-${index}`, type: 'heading' as const, content: line.replace('### ', '') };
-      } else if (line.startsWith('- ')) {
-        return { id: `section-${index}`, type: 'list' as const, content: line.replace('- ', '') };
+    const lines = content.split('\n');
+    const sections: ContentSection[] = [];
+    let currentText = '';
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      if (line.startsWith('[IMAGE:') && line.includes(']')) {
+        if (currentText.trim()) {
+          sections.push({
+            id: `section-${Date.now()}-${Math.random()}`,
+            type: 'text',
+            content: currentText.trim()
+          });
+          currentText = '';
+        }
+        
+        const imageUrl = line.substring(7, line.indexOf(']')).trim();
+        const caption = lines[i + 1]?.startsWith('Caption:') ? lines[i + 1].substring(8).trim() : undefined;
+        sections.push({
+          id: `section-${Date.now()}-${Math.random()}`,
+          type: 'image',
+          content: imageUrl,
+          caption
+        });
+        if (caption) i++;
+      } else if (line.startsWith('[VIDEO:') && line.includes(']')) {
+        if (currentText.trim()) {
+          sections.push({
+            id: `section-${Date.now()}-${Math.random()}`,
+            type: 'text',
+            content: currentText.trim()
+          });
+          currentText = '';
+        }
+        
+        const videoUrl = line.substring(7, line.indexOf(']')).trim();
+        const caption = lines[i + 1]?.startsWith('Caption:') ? lines[i + 1].substring(8).trim() : undefined;
+        sections.push({
+          id: `section-${Date.now()}-${Math.random()}`,
+          type: 'video',
+          content: videoUrl,
+          caption
+        });
+        if (caption) i++;
       } else {
-        return { id: `section-${index}`, type: 'paragraph' as const, content: line };
+        currentText += (currentText ? '\n' : '') + line;
       }
-    });
+    }
+    
+    if (currentText.trim()) {
+      sections.push({
+        id: `section-${Date.now()}-${Math.random()}`,
+        type: 'text',
+        content: currentText.trim()
+      });
+    }
+    
+    return sections;
   };
 
   // Recurrence Helper Functions
@@ -1070,7 +1122,7 @@ export default function Admin() {
 
   // Client-side RRULE builder
   const buildRRuleFromUi = (opts: {
-    frequency: 'NONE' | 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY';
+    frequency: 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY';
     weekdays?: number[]; // 0-6 Sun..Sat for WEEKLY
     monthlyMode?: 'DATE' | 'WEEKDAY_POS';
     byMonthDay?: number; // for DATE
@@ -1078,7 +1130,6 @@ export default function Admin() {
     until?: string | null; // ISO end date (inclusive of start)
     dtstart?: string; // ISO
   }): string | null => {
-    if (opts.frequency === 'NONE') return null;
     const parts: string[] = [];
     const mapIdxToByday = ['SU','MO','TU','WE','TH','FR','SA'];
     
@@ -1172,12 +1223,12 @@ export default function Admin() {
     setNewEvent(prev => ({
       ...prev,
       recurrenceRule: rule,
-      recurrenceEndAt: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate.toISOString() : null
+      recurrenceEndAt: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate : null
     }));
   };
 
   const getRecurrenceSummary = () => {
-    if (!recurrenceEnabled || !recurrenceFrequency || recurrenceFrequency === 'NONE') {
+    if (!recurrenceEnabled || !recurrenceFrequency) {
       return 'No recurrence';
     }
 
