@@ -53,7 +53,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
-import { buildRRuleFromUi } from "@/lib/recurrence";
 // Import EventDeletionModal separately to avoid potential circular dependencies
 import { EventDeletionModal, type DeletionMode } from "@/components/ui/event-deletion-modal";
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
@@ -1034,6 +1033,199 @@ export default function Admin() {
     },
   });
 
+  // Helper functions - defined before use to prevent hoisting issues
+  const sectionsToContent = (sections: ContentSection[]): string => {
+    return sections.map(section => {
+      const typePrefix = section.type === 'heading' ? `### ${section.content}` :
+                         section.type === 'paragraph' ? section.content :
+                         section.type === 'list' ? `- ${section.content}` :
+                         section.content;
+      return typePrefix;
+    }).join('\n\n');
+  };
+
+  const contentToSections = (content: string): ContentSection[] => {
+    if (!content) return [];
+    
+    const lines = content.split('\n\n');
+    return lines.map((line, index) => {
+      if (line.startsWith('### ')) {
+        return { id: `section-${index}`, type: 'heading' as const, content: line.replace('### ', '') };
+      } else if (line.startsWith('- ')) {
+        return { id: `section-${index}`, type: 'list' as const, content: line.replace('- ', '') };
+      } else {
+        return { id: `section-${index}`, type: 'paragraph' as const, content: line };
+      }
+    });
+  };
+
+  // Recurrence Helper Functions
+  const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const getOrdinalSuffix = (n: number) => {
+    const suffixes = ['th', 'st', 'nd', 'rd'];
+    const mod100 = n % 100;
+    return suffixes[(mod100 - 20) % 10] || suffixes[mod100] || suffixes[0];
+  };
+
+  // Client-side RRULE builder
+  const buildRRuleFromUi = (opts: {
+    frequency: 'NONE' | 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY';
+    weekdays?: number[]; // 0-6 Sun..Sat for WEEKLY
+    monthlyMode?: 'DATE' | 'WEEKDAY_POS';
+    byMonthDay?: number; // for DATE
+    bySetPos?: number; // for WEEKDAY_POS (1..5)
+    until?: string | null; // ISO end date (inclusive of start)
+    dtstart?: string; // ISO
+  }): string | null => {
+    if (opts.frequency === 'NONE') return null;
+    const parts: string[] = [];
+    const mapIdxToByday = ['SU','MO','TU','WE','TH','FR','SA'];
+    
+    if (opts.frequency === 'DAILY') {
+      parts.push('FREQ=DAILY');
+    } else if (opts.frequency === 'WEEKLY' || opts.frequency === 'BIWEEKLY') {
+      parts.push('FREQ=WEEKLY');
+      parts.push(`INTERVAL=${opts.frequency === 'BIWEEKLY' ? 2 : 1}`);
+      const days = (opts.weekdays && opts.weekdays.length > 0) ? opts.weekdays : undefined;
+      if (days) parts.push(`BYDAY=${days.map(i => mapIdxToByday[i]).join(',')}`);
+    } else if (opts.frequency === 'MONTHLY') {
+      parts.push('FREQ=MONTHLY');
+      if (opts.monthlyMode === 'DATE' && opts.byMonthDay) parts.push(`BYMONTHDAY=${opts.byMonthDay}`);
+      if (opts.monthlyMode === 'WEEKDAY_POS' && opts.bySetPos && opts.weekdays && opts.weekdays[0] != null) {
+        parts.push(`BYDAY=${mapIdxToByday[opts.weekdays[0]]}`);
+        parts.push(`BYSETPOS=${opts.bySetPos}`);
+      }
+    } else if (opts.frequency === 'YEARLY') {
+      parts.push('FREQ=YEARLY');
+    }
+    
+    if (opts.until) {
+      const d = new Date(opts.until);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const u = `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+      parts.push(`UNTIL=${u}`);
+    }
+    
+    return parts.join(';');
+  };
+
+  const initializeRecurrenceFromEvent = (event: Partial<InsertEvent>) => {
+    if (event.recurrenceRule) {
+      setRecurrenceEnabled(true);
+      // Parse basic recurrence rule - this is a simplified parser
+      if (event.recurrenceRule.includes('FREQ=DAILY')) {
+        setRecurrenceFrequency('DAILY');
+      } else if (event.recurrenceRule.includes('FREQ=WEEKLY')) {
+        const interval = event.recurrenceRule.match(/INTERVAL=(\d+)/);
+        setRecurrenceFrequency(interval && interval[1] === '2' ? 'BIWEEKLY' : 'WEEKLY');
+        
+        const byday = event.recurrenceRule.match(/BYDAY=([^;]+)/);
+        if (byday) {
+          const days = byday[1].split(',');
+          const dayMap: Record<string, number> = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+          const weekdays = days.map(d => dayMap[d.trim()]).filter(d => d !== undefined);
+          setSelectedWeekdays(weekdays);
+        }
+      } else if (event.recurrenceRule.includes('FREQ=MONTHLY')) {
+        setRecurrenceFrequency('MONTHLY');
+        if (event.recurrenceRule.includes('BYMONTHDAY=')) {
+          setMonthlyMode('DATE');
+        } else if (event.recurrenceRule.includes('BYSETPOS=')) {
+          setMonthlyMode('WEEKDAY_POS');
+        }
+      } else if (event.recurrenceRule.includes('FREQ=YEARLY')) {
+        setRecurrenceFrequency('YEARLY');
+      }
+      
+      if (event.recurrenceEndAt) {
+        setRecurrenceEndMode('ON_DATE');
+        setRecurrenceEndDate(new Date(event.recurrenceEndAt));
+      } else {
+        setRecurrenceEndMode('NEVER');
+        setRecurrenceEndDate(null);
+      }
+    }
+  };
+
+  const updateRecurrenceRule = () => {
+    if (!recurrenceEnabled) {
+      setNewEvent(prev => ({
+        ...prev,
+        recurrenceRule: null,
+        recurrenceEndAt: null
+      }));
+      return;
+    }
+
+    const startDate = newEvent.startAt || new Date();
+    const rule = buildRRuleFromUi({
+      frequency: recurrenceFrequency,
+      weekdays: selectedWeekdays.length > 0 ? selectedWeekdays : [startDate.getDay()],
+      monthlyMode,
+      byMonthDay: monthlyMode === 'DATE' ? startDate.getDate() : undefined,
+      bySetPos: monthlyMode === 'WEEKDAY_POS' ? Math.ceil(startDate.getDate() / 7) : undefined,
+      until: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate.toISOString() : null,
+      dtstart: startDate.toISOString()
+    });
+
+    setNewEvent(prev => ({
+      ...prev,
+      recurrenceRule: rule,
+      recurrenceEndAt: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate.toISOString() : null
+    }));
+  };
+
+  const getRecurrenceSummary = () => {
+    if (!recurrenceEnabled || !recurrenceFrequency || recurrenceFrequency === 'NONE') {
+      return 'No recurrence';
+    }
+
+    let summary = '';
+    const startDate = newEvent.startAt || new Date();
+
+    switch (recurrenceFrequency) {
+      case 'DAILY':
+        summary = 'Daily';
+        break;
+      case 'WEEKLY':
+        if (selectedWeekdays.length > 0) {
+          const dayNames = selectedWeekdays.map(d => weekdayNames[d]).join(', ');
+          summary = `Weekly on ${dayNames}`;
+        } else {
+          summary = `Weekly on ${weekdayNames[startDate.getDay()]}`;
+        }
+        break;
+      case 'BIWEEKLY':
+        if (selectedWeekdays.length > 0) {
+          const dayNames = selectedWeekdays.map(d => weekdayNames[d]).join(', ');
+          summary = `Every 2 weeks on ${dayNames}`;
+        } else {
+          summary = `Every 2 weeks on ${weekdayNames[startDate.getDay()]}`;
+        }
+        break;
+      case 'MONTHLY':
+        if (monthlyMode === 'DATE') {
+          const dayNum = startDate.getDate();
+          summary = `Monthly on the ${dayNum}${getOrdinalSuffix(dayNum)}`;
+        } else {
+          const weekPos = Math.ceil(startDate.getDate() / 7);
+          const dayName = weekdayNames[startDate.getDay()];
+          summary = `Monthly on the ${weekPos}${getOrdinalSuffix(weekPos)} ${dayName}`;
+        }
+        break;
+      case 'YEARLY':
+        summary = 'Yearly';
+        break;
+    }
+
+    if (recurrenceEndMode === 'ON_DATE' && recurrenceEndDate) {
+      summary += ` until ${recurrenceEndDate.toLocaleDateString()}`;
+    }
+
+    return summary;
+  };
+
   // MEMO VALUES
   const parentMapping = useMemo(() => {
     const mapping = new Map();
@@ -1342,256 +1534,6 @@ export default function Admin() {
       </div>
     );
   }
-
-  // FUNCTIONS
-  const sectionsToContent = (sections: ContentSection[]): string => {
-    return sections.map(section => {
-      if (section.type === 'text') {
-        return section.content;
-      } else if (section.type === 'image') {
-        return `[IMAGE: ${section.content}]${section.caption ? `\nCaption: ${section.caption}` : ''}`;
-      } else if (section.type === 'video') {
-        return `[VIDEO: ${section.content}]${section.caption ? `\nCaption: ${section.caption}` : ''}`;
-      }
-      return '';
-    }).join('\n\n');
-  };
-
-  const contentToSections = (content: string): ContentSection[] => {
-    if (!content) return [];
-    
-    const lines = content.split('\n');
-    const sections: ContentSection[] = [];
-    let currentText = '';
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      if (line.startsWith('[IMAGE:') && line.includes(']')) {
-        if (currentText.trim()) {
-          sections.push({
-            id: `section-${Date.now()}-${Math.random()}`,
-            type: 'text',
-            content: currentText.trim()
-          });
-          currentText = '';
-        }
-        
-        const imageUrl = line.substring(7, line.indexOf(']')).trim();
-        const caption = lines[i + 1]?.startsWith('Caption:') ? lines[i + 1].substring(8).trim() : undefined;
-        sections.push({
-          id: `section-${Date.now()}-${Math.random()}`,
-          type: 'image',
-          content: imageUrl,
-          caption
-        });
-        if (caption) i++;
-      } else if (line.startsWith('[VIDEO:') && line.includes(']')) {
-        if (currentText.trim()) {
-          sections.push({
-            id: `section-${Date.now()}-${Math.random()}`,
-            type: 'text',
-            content: currentText.trim()
-          });
-          currentText = '';
-        }
-        
-        const videoUrl = line.substring(7, line.indexOf(']')).trim();
-        const caption = lines[i + 1]?.startsWith('Caption:') ? lines[i + 1].substring(8).trim() : undefined;
-        sections.push({
-          id: `section-${Date.now()}-${Math.random()}`,
-          type: 'video',
-          content: videoUrl,
-          caption
-        });
-        if (caption) i++;
-      } else {
-        currentText += (currentText ? '\n' : '') + line;
-      }
-    }
-    
-    if (currentText.trim()) {
-      sections.push({
-        id: `section-${Date.now()}-${Math.random()}`,
-        type: 'text',
-        content: currentText.trim()
-      });
-    }
-    
-    return sections;
-  };
-
-  // Recurrence Helper Functions
-  const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-  const initializeRecurrenceFromEvent = (event: Partial<InsertEvent>) => {
-    if (event.recurrenceRule) {
-      setRecurrenceEnabled(true);
-      // Parse existing RRULE and set UI state
-      // This is a simplified parser for the UI state restoration
-      if (event.recurrenceRule.includes('FREQ=DAILY')) {
-        setRecurrenceFrequency('DAILY');
-      } else if (event.recurrenceRule.includes('FREQ=WEEKLY')) {
-        setRecurrenceFrequency(event.recurrenceRule.includes('INTERVAL=2') ? 'BIWEEKLY' : 'WEEKLY');
-      } else if (event.recurrenceRule.includes('FREQ=MONTHLY')) {
-        setRecurrenceFrequency('MONTHLY');
-        setMonthlyMode(event.recurrenceRule.includes('BYSETPOS') ? 'WEEKDAY_POS' : 'DATE');
-      } else if (event.recurrenceRule.includes('FREQ=YEARLY')) {
-        setRecurrenceFrequency('YEARLY');
-      }
-      
-      setRecurrenceEndDate(event.recurrenceEndAt ? new Date(event.recurrenceEndAt) : null);
-      setRecurrenceEndMode(event.recurrenceEndAt ? 'ON_DATE' : 'NEVER');
-    } else {
-      setRecurrenceEnabled(false);
-      setRecurrenceFrequency('WEEKLY');
-      setSelectedWeekdays([]);
-      setMonthlyMode('DATE');
-      setRecurrenceEndMode('NEVER');
-      setRecurrenceEndDate(null);
-    }
-  };
-
-  const updateRecurrenceRule = () => {
-    if (!recurrenceEnabled) {
-      setNewEvent(prev => ({
-        ...prev,
-        recurrenceRule: null,
-        recurrenceEndAt: null
-      }));
-      return;
-    }
-
-    const startDate = newEvent.startAt || new Date();
-    const rule = buildRRuleFromUi({
-      frequency: recurrenceFrequency,
-      weekdays: selectedWeekdays.length > 0 ? selectedWeekdays : [startDate.getDay()],
-      monthlyMode,
-      byMonthDay: monthlyMode === 'DATE' ? startDate.getDate() : undefined,
-      bySetPos: monthlyMode === 'WEEKDAY_POS' ? Math.ceil(startDate.getDate() / 7) : undefined,
-      until: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate.toISOString() : null,
-      dtstart: startDate.toISOString()
-    });
-
-    setNewEvent(prev => ({
-      ...prev,
-      recurrenceRule: rule,
-      recurrenceEndAt: recurrenceEndMode === 'ON_DATE' && recurrenceEndDate ? recurrenceEndDate : null
-    }));
-  };
-
-  const getRecurrenceSummary = () => {
-    if (!recurrenceEnabled) return '';
-    
-    const parts = [];
-    
-    // Frequency
-    if (recurrenceFrequency === 'DAILY') {
-      parts.push('Daily');
-    } else if (recurrenceFrequency === 'WEEKLY') {
-      if (selectedWeekdays.length > 0) {
-        const dayNames = selectedWeekdays.map(d => weekdayNames[d]).join(', ');
-        parts.push(`Weekly on ${dayNames}`);
-      } else {
-        parts.push('Weekly');
-      }
-    } else if (recurrenceFrequency === 'BIWEEKLY') {
-      if (selectedWeekdays.length > 0) {
-        const dayNames = selectedWeekdays.map(d => weekdayNames[d]).join(', ');
-        parts.push(`Bi-weekly on ${dayNames}`);
-      } else {
-        parts.push('Bi-weekly');
-      }
-    } else if (recurrenceFrequency === 'MONTHLY') {
-      if (monthlyMode === 'DATE') {
-        const date = newEvent.startAt ? new Date(newEvent.startAt).getDate() : 1;
-        parts.push(`Monthly on the ${date}${getOrdinalSuffix(date)}`);
-      } else {
-        const startDate = newEvent.startAt ? new Date(newEvent.startAt) : new Date();
-        const weekday = weekdayNames[startDate.getDay()];
-        const weekOfMonth = Math.ceil(startDate.getDate() / 7);
-        parts.push(`Monthly on the ${weekOfMonth}${getOrdinalSuffix(weekOfMonth)} ${weekday}`);
-      }
-    } else if (recurrenceFrequency === 'YEARLY') {
-      parts.push('Yearly');
-    }
-    
-    // End condition
-    if (recurrenceEndMode === 'ON_DATE' && recurrenceEndDate) {
-      parts.push(`until ${recurrenceEndDate.toLocaleDateString()}`);
-    } else {
-      parts.push('forever');
-    }
-    
-    // Duration
-    if (newEvent.startAt && newEvent.endAt) {
-      const start = new Date(newEvent.startAt);
-      const end = new Date(newEvent.endAt);
-      const diffMs = end.getTime() - start.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      
-      if (newEvent.isAllDay) {
-        parts.push('All-day');
-        if (diffDays > 1) {
-          parts.push(`${diffDays}-day span`);
-        }
-      } else {
-        if (diffDays > 1) {
-          parts.push(`${diffDays}-day span`);
-        }
-      }
-    }
-    
-    return parts.join(' • ');
-  };
-
-  const getOrdinalSuffix = (n: number) => {
-    const s = ["th", "st", "nd", "rd"];
-    const v = n % 100;
-    return s[(v - 20) % 10] || s[v] || s[0];
-  };
-
-  // Client-side RRULE builder
-  const buildRRuleFromUi = (opts: {
-    frequency: 'NONE' | 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY';
-    weekdays?: number[]; // 0-6 Sun..Sat for WEEKLY
-    monthlyMode?: 'DATE' | 'WEEKDAY_POS';
-    byMonthDay?: number; // for DATE
-    bySetPos?: number; // for WEEKDAY_POS (1..5)
-    until?: string | null; // ISO end date (inclusive of start)
-    dtstart?: string; // ISO
-  }): string | null => {
-    if (opts.frequency === 'NONE') return null;
-    const parts: string[] = [];
-    const mapIdxToByday = ['SU','MO','TU','WE','TH','FR','SA'];
-    
-    if (opts.frequency === 'DAILY') {
-      parts.push('FREQ=DAILY');
-    } else if (opts.frequency === 'WEEKLY' || opts.frequency === 'BIWEEKLY') {
-      parts.push('FREQ=WEEKLY');
-      parts.push(`INTERVAL=${opts.frequency === 'BIWEEKLY' ? 2 : 1}`);
-      const days = (opts.weekdays && opts.weekdays.length > 0) ? opts.weekdays : undefined;
-      if (days) parts.push(`BYDAY=${days.map(i => mapIdxToByday[i]).join(',')}`);
-    } else if (opts.frequency === 'MONTHLY') {
-      parts.push('FREQ=MONTHLY');
-      if (opts.monthlyMode === 'DATE' && opts.byMonthDay) parts.push(`BYMONTHDAY=${opts.byMonthDay}`);
-      if (opts.monthlyMode === 'WEEKDAY_POS' && opts.bySetPos && opts.weekdays && opts.weekdays[0] != null) {
-        parts.push(`BYDAY=${mapIdxToByday[opts.weekdays[0]]}`);
-        parts.push(`BYSETPOS=${opts.bySetPos}`);
-      }
-    } else if (opts.frequency === 'YEARLY') {
-      parts.push('FREQ=YEARLY');
-    }
-    
-    if (opts.until) {
-      const d = new Date(opts.until);
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      const u = `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
-      parts.push(`UNTIL=${u}`);
-    }
-    
-    return parts.join(';');
-  };
 
   // Developer Settings Handler Functions
   const handleClearTestData = () => {
