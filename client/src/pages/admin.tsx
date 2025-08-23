@@ -47,14 +47,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAvailability, useDeleteAvailability, useUpdateAvailability } from "@/hooks/use-availability";
-import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, type EventRow } from "@/hooks/use-events";
-import { EventDeletionModal, type DeletionMode } from "@/components/ui/event-deletion-modal";
+import { type EventRow } from "@/hooks/use-events"; // Import only the type to prevent circular reference
 import { useFixDialogAccessibility } from "@/hooks/use-fix-dialog-accessibility";
 import { useToast } from "@/hooks/use-toast";
 import { useMissingWaivers } from "@/hooks/use-waiver-status";
 import { calculateAge } from "@/lib/dateUtils";
 import { apiRequest } from "@/lib/queryClient";
 import { buildRRuleFromUi } from "@/lib/recurrence";
+// Import EventDeletionModal separately to avoid potential circular dependencies
+import { EventDeletionModal, type DeletionMode } from "@/components/ui/event-deletion-modal";
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -478,15 +479,54 @@ export default function Admin() {
     };
   }, []);
 
-  const { data: events = [] } = useEvents(calendarRange);
+  // Use events query with proper auth checks
+  const { data: events = [] } = useQuery<EventRow[]>({
+    queryKey: ["/api/events", calendarRange.start, calendarRange.end],
+    queryFn: async () => {
+      if (!authStatus?.loggedIn) {
+        // Return empty array if not authenticated to avoid 401 errors
+        return [];
+      }
+      const qs = calendarRange ? `?start=${encodeURIComponent(calendarRange.start)}&end=${encodeURIComponent(calendarRange.end)}&expand=true` : '?expand=true';
+      return apiRequest("GET", `/api/events${qs}`).then(r => r.json());
+    },
+    enabled: !!authStatus?.loggedIn,
+  });
 
   const { data: missingWaivers = [] } = useMissingWaivers(!!authStatus?.loggedIn) as { data: Athlete[] };
 
   // ALL MUTATIONS
-  // Events mutations
-  const createEventMutation = useCreateEvent();
-  const updateEventMutation = useUpdateEvent();
-  const deleteEventMutation = useDeleteEvent();
+  // Define event mutation hooks manually to avoid circular dependencies
+  const createEventMutation = useMutation({
+    mutationFn: async (input: Partial<EventRow>) => apiRequest("POST", "/api/events", input).then(r => r.json()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events"] }),
+  });
+  
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<EventRow> }) => 
+      apiRequest("PUT", `/api/events/${id}`, data).then(r => r.json()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events"] }),
+  });
+  
+  const deleteEventMutation = useMutation({
+    mutationFn: async (params: string | { id: string; mode?: 'this' | 'future' | 'all'; instanceDate?: string }) => {
+      if (typeof params === 'string') {
+        // Legacy: simple ID string (defaults to 'all' mode)
+        return apiRequest("DELETE", `/api/events/${params}`).then(r => r.json());
+      } else {
+        // Enhanced: object with deletion mode - send in request body
+        const { id, mode = 'all', instanceDate } = params;
+        
+        const requestBody = {
+          mode,
+          ...(instanceDate && { instanceDate })
+        };
+        
+        return apiRequest("DELETE", `/api/events/${id}`, requestBody).then(r => r.json());
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events"] }),
+  });
 
   // Enhanced deletion handler
   const handleEventDeletion = (deletion: DeletionMode) => {
@@ -1038,9 +1078,22 @@ export default function Admin() {
   // EFFECTS
   useEffect(() => {
     if (!authLoading && (!authStatus || !authStatus.loggedIn)) {
+      console.log("Admin not authenticated, redirecting to login");
       setLocation('/admin/login');
     }
   }, [authStatus, authLoading, setLocation]);
+  
+  // Add an additional effect to verify authentication status periodically
+  useEffect(() => {
+    // Check auth status every minute to ensure session hasn't expired
+    const checkInterval = setInterval(() => {
+      if (authStatus?.loggedIn) {
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
+      }
+    }, 60000);
+    
+    return () => clearInterval(checkInterval);
+  }, [authStatus?.loggedIn, queryClient]);
 
   useEffect(() => {
     if (editingPost) {
