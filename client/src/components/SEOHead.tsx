@@ -63,7 +63,15 @@ export const SEOHead: React.FC<SEOProps> = ({
   useEffect(() => {
     if (title) document.title = title;
     if (description) upsertMeta({ name: 'description' }, description);
-    if (robots) upsertMeta({ name: 'robots' }, robots);
+    if (robots) {
+      upsertMeta({ name: 'robots' }, robots);
+    } else {
+      // Ensure we have a default robots value if none provided
+      const existingRobots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
+      if (!existingRobots) {
+        upsertMeta({ name: 'robots' }, 'index,follow');
+      }
+    }
 
     if (canonicalUrl) setCanonical(canonicalUrl);
 

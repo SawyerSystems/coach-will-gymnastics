@@ -137,7 +137,12 @@ export default function Home() {
       <SEOHead
         title="Coach Will Tumbles | Private Gymnastics & Tumbling Lessons in Oceanside, CA"
         description="Book private gymnastics, tumbling, and cheer stunt lessons in Oceanside, CA. Personalized coaching for kids and teens by Coach Will Tumbles."
-        canonicalUrl={typeof window !== 'undefined' ? `${window.location.origin}/` : 'https://www.coachwilltumbles.com/'}
+        canonicalUrl={typeof window !== 'undefined' 
+          ? (window.location.pathname === '/index.html' 
+              ? `${window.location.origin}/index.html` 
+              : `${window.location.origin}/`)
+          : 'https://www.coachwilltumbles.com/'
+        }
         robots="index,follow"
         structuredData={[
           {

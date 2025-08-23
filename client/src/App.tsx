@@ -75,15 +75,19 @@ function Router() {
       <Suspense fallback={<PageLoadingSpinner />}>
         <Switch>
           <Route path="/" component={Home} />
+          <Route path="/index.html" component={Home} />
           <Route path="/about" component={About} />
           <Route path="/booking" component={Booking} />
+          <Route path="/booking/index.html" component={Booking} />
           <Route path="/blog" component={Blog} />
+          <Route path="/blog/index.html" component={Blog} />
           <Route path="/blog/:id" component={BlogPost} />
           <Route path="/tips" component={Tips} />
           <Route path="/tips/:id" component={TipDetail} />
           <Route path="/features" component={Features} />
           <Route path="/test-screenshots" component={TestScreenshots} />
           <Route path="/contact" component={Contact} />
+          <Route path="/contact/index.html" component={Contact} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/login" component={AdminLogin} />
           <Route path="/progress/:token" component={ProgressShare} />
