@@ -1267,7 +1267,27 @@ export default function Admin() {
   }
 
   if (!authStatus?.loggedIn) {
-    return null;
+    // Show a visible fallback instead of a blank screen while redirect effect runs
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#D8BD2A]/10 via-white to-[#0F0276]/5 dark:from-[#0F0276]/40 dark:via-[#0F0276]/20 dark:to-black p-6 text-center">
+        <img
+          src="/CWT_Circle_LogoSPIN.png"
+          alt="Redirecting"
+          className="animate-spin w-16 h-16 mb-6"
+        />
+        <h1 className="text-2xl font-semibold text-slate-800 dark:text-white mb-2">Admin Sign In Required</h1>
+        <p className="text-slate-600 dark:text-slate-300 mb-6 max-w-md">You're not logged in. Redirecting you to the admin login page…</p>
+        <a
+          href="/admin/login"
+          className="inline-flex items-center px-5 py-3 rounded-lg bg-[#0F0276] text-white font-medium shadow hover:bg-[#12038f] focus:outline-none focus:ring-2 focus:ring-[#D8BD2A] transition"
+        >
+          Go to Admin Login
+        </a>
+        <noscript>
+          <p className="mt-4 text-sm text-red-700">JavaScript is disabled; use the button above to continue.</p>
+        </noscript>
+      </div>
+    );
   }
 
   // FUNCTIONS
