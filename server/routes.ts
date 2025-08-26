@@ -10750,7 +10750,6 @@ setTimeout(async () => {
   // Get waiver status for athlete (handles both :id and :athleteId for compatibility)
   app.get("/api/athletes/:athleteId/waiver-status", async (req, res) => {
     try {
-      console.log('=== WAIVER STATUS ENDPOINT CALLED ===');
       const athleteId = parseInt(req.params.athleteId);
       
       if (isNaN(athleteId)) {
@@ -10763,13 +10762,9 @@ setTimeout(async () => {
         return res.status(404).json({ error: "Athlete not found" });
       }
 
-      console.log('🔍 Debug athlete object:', athlete);
-
       // Use camelCase field names as returned by storage layer
       const isWaiverSigned = athlete.waiverSigned;
       const latestWaiverId = athlete.latestWaiverId;
-      
-      console.log('🔍 Waiver signed:', isWaiverSigned, 'Latest waiver ID:', latestWaiverId);
       
       // Get waiver signer name and agreement details if waiver is signed
       let waiverSignatureName = '';
@@ -10778,59 +10773,37 @@ setTimeout(async () => {
       
       if (isWaiverSigned && latestWaiverId) {
         try {
-          console.log('🔍 Fetching waiver details for waiver ID:', latestWaiverId);
-          const { data: waiverData, error: waiverError } = await supabaseAdmin
-            .from('waivers')
-            .select(`
-              signed_at, 
-              relationship_to_athlete,
-              understands_risks,
-              agrees_to_policies,
-              authorizes_emergency_care,
-              allows_photo_video,
-              confirms_authority,
-              parents!waivers_parent_id_fkey(first_name, last_name)
-            `)
-            .eq('id', latestWaiverId)
-            .single();
-            
-          console.log('🔍 Waiver data response:', waiverData);
-          console.log('🔍 Waiver error:', waiverError);
-            
-          if (waiverData && waiverData.parents) {
-            const parent = waiverData.parents as any;
-            waiverSignatureName = `${parent.first_name} ${parent.last_name}`;
-            waiverSignedAt = waiverData.signed_at;
+          // Use the storage method instead of direct Supabase query to avoid foreign key issues
+          const allWaivers = await storage.getAllWaivers();
+          const waiver = allWaivers.find((w) => w.id === latestWaiverId);
+          
+          if (waiver) {
+            waiverSignatureName = waiver.signerName || '';
+            waiverSignedAt = waiver.signedAt;
             
             // Create human-readable agreement summary
             waiverAgreements = {
-              relationship: waiverData.relationship_to_athlete,
-              understands_risks: waiverData.understands_risks,
-              agrees_to_policies: waiverData.agrees_to_policies,
-              authorizes_emergency_care: waiverData.authorizes_emergency_care,
-              allows_photo_video: waiverData.allows_photo_video,
-              confirms_authority: waiverData.confirms_authority
+              relationship: waiver.relationshipToAthlete,
+              understandsRisks: waiver.understandsRisks,
+              agreesToPolicies: waiver.agreesToPolicies,
+              authorizesEmergencyCare: waiver.authorizesEmergencyCare,
+              allowsPhotoVideo: waiver.allowsPhotoVideo,
+              confirmsAuthority: waiver.confirmsAuthority
             };
-            
-            console.log('🔍 Final waiver signature name:', waiverSignatureName);
-            console.log('🔍 Final waiver agreements:', waiverAgreements);
           }
         } catch (error) {
           console.warn('Could not fetch waiver signer name:', error);
         }
       }
       
-      const responseData = {
+      res.json({
         hasWaiver: isWaiverSigned,
         waiverSigned: isWaiverSigned,
         waiverSignedAt,
         waiverSignatureName,
         waiverAgreements,
         latestWaiverId
-      };
-      
-      console.log('Waiver status response:', responseData);
-      res.json(responseData);
+      });
     } catch (error: any) {
       console.error("Error checking waiver status:", error);
       res.status(500).json({ error: "Failed to check waiver status" });
@@ -10852,25 +10825,32 @@ setTimeout(async () => {
         return res.status(404).json({ error: "Athlete not found" });
       }
 
-      // Get waiver signer name if waiver is signed
+      // Get waiver details if waiver is signed
       let waiverSignatureName = '';
       let waiverSignedAt = null;
+      let waiverAgreements = null;
       
       if (athlete.waiverSigned && athlete.latestWaiverId) {
         try {
-          const { data: waiverData } = await supabaseAdmin
-            .from('waivers')
-            .select('signed_at, parents!inner(first_name, last_name)')
-            .eq('id', athlete.latestWaiverId)
-            .single();
+          // Use getAllWaivers which avoids the problematic foreign key relationships
+          const allWaivers = await storage.getAllWaivers();
+          const waiver = allWaivers.find((w) => w.id === athlete.latestWaiverId);
+          
+          if (waiver) {
+            waiverSignatureName = waiver.signerName || '';
+            waiverSignedAt = waiver.signedAt;
             
-          if (waiverData && waiverData.parents) {
-            const parent = waiverData.parents as any;
-            waiverSignatureName = `${parent.first_name} ${parent.last_name}`;
-            waiverSignedAt = waiverData.signed_at;
+            waiverAgreements = {
+              relationship: waiver.relationshipToAthlete,
+              understandsRisks: waiver.understandsRisks,
+              agreesToPolicies: waiver.agreesToPolicies,
+              authorizesEmergencyCare: waiver.authorizesEmergencyCare,
+              allowsPhotoVideo: waiver.allowsPhotoVideo,
+              confirmsAuthority: waiver.confirmsAuthority
+            };
           }
         } catch (error) {
-          console.warn('Could not fetch waiver signer name:', error);
+          console.warn('Could not fetch waiver details:', error);
         }
       }
       
@@ -10879,6 +10859,7 @@ setTimeout(async () => {
         waiverSigned: athlete.waiverSigned,
         waiverSignedAt,
         waiverSignatureName,
+        waiverAgreements,
         latestWaiverId: athlete.latestWaiverId
       });
     } catch (error: any) {
@@ -10923,13 +10904,12 @@ setTimeout(async () => {
           try {
             const { data: waiverData } = await supabaseAdmin
               .from('waivers')
-              .select('signed_at, parents!inner(first_name, last_name)')
+              .select('signed_at, signer_name')
               .eq('id', athlete.latest_waiver_id)
               .single();
               
-            if (waiverData && waiverData.parents) {
-              const parent = waiverData.parents as any;
-              waiverSignatureName = `${parent.first_name} ${parent.last_name}`;
+            if (waiverData) {
+              waiverSignatureName = waiverData.signer_name || '';
               waiverSignedAt = waiverData.signed_at;
             }
           } catch (error) {
