@@ -1600,8 +1600,8 @@ export function AdminSiteContentManager() {
                           let userMessage = error.message;
                           
                           // Handle common error scenarios
-                          if (userMessage.includes('size') || userMessage.includes('limit') || file.size > 100 * 1024 * 1024) {
-                            userMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Videos must be under 100MB.`;
+                          if (userMessage.includes('size') || userMessage.includes('limit') || file.size > 500 * 1024 * 1024) {
+                            userMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Videos must be under 500MB.`;
                           } else if (userMessage.includes('type') || userMessage.includes('mime')) {
                             userMessage = `File type '${file.type}' not supported. Please use MP4, WebM, or MOV files.`;
                           } else if (userMessage.includes('bucket')) {

@@ -39,7 +39,7 @@ const activityLogger = getActivityLogger(storage);
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
+    fileSize: 500 * 1024 * 1024, // 500MB limit
   },
   fileFilter: (req, file, cb) => {
     // Allow videos and images
@@ -8625,7 +8625,7 @@ setTimeout(async () => {
           if (error.message?.includes('bucket')) {
             errorMessage = "Storage bucket 'site-media' not found. Please contact administrator.";
           } else if (error.message?.includes('size') || error.message?.includes('limit')) {
-            errorMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 100MB.`;
+            errorMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 500MB.`;
           } else if (error.message?.includes('type') || error.message?.includes('mime')) {
             errorMessage = `File type '${file.mimetype}' not allowed. Please use MP4, WebM, or MOV files.`;
           } else if ((error as any).statusCode) {
@@ -10524,8 +10524,14 @@ setTimeout(async () => {
       console.log(`🔍 [WAIVERS] Retrieved ${waivers.length} waivers from storage`);
       res.json(waivers);
     } catch (error: any) {
-      console.error("Error fetching waivers:", error);
-      res.status(500).json({ error: "Failed to fetch waivers" });
+      console.error("🚨 [WAIVERS] Error fetching waivers:", error);
+      console.error("🚨 [WAIVERS] Error message:", error.message);
+      console.error("🚨 [WAIVERS] Error stack:", error.stack);
+      res.status(500).json({ 
+        error: "Failed to fetch waivers", 
+        details: error.message,
+        type: error.constructor.name 
+      });
     }
   });
 

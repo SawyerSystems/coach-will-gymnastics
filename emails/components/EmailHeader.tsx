@@ -1,7 +1,8 @@
 import React from 'react';
 
 export function EmailHeader({ logoUrl }: { logoUrl?: string }) {
-  const defaultLogoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-media/1751370655067-o42c7ikqg5.svg';
+  // Use a more reliable logo URL - either provided or default to CoachWillTumbles text logo
+  const defaultLogoUrl = 'https://coachwilltumbles.com/assets/CoachWillTumblesText.png';
   
   return (
     <div style={{ textAlign: 'left', marginBottom: '20px' }}>
@@ -10,6 +11,14 @@ export function EmailHeader({ logoUrl }: { logoUrl?: string }) {
           src={logoUrl || defaultLogoUrl}
           alt="Coach Will Tumbles Logo"
           style={{ width: '150px', height: 'auto' }}
+          onError={(e) => {
+            // Fallback to text if image fails to load
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            const textNode = document.createElement('div');
+            textNode.innerHTML = '<strong style="color: #0F0276; font-size: 18px;">CoachWillTumbles.com</strong>';
+            target.parentNode?.appendChild(textNode);
+          }}
         />
       </a>
     </div>

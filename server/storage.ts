@@ -5971,39 +5971,86 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAllWaivers(): Promise<Waiver[]> {
-    const { data, error } = await supabaseAdmin
-      .from('waivers')
-      .select(`
-        *,
-        athletes!fk_waivers_athlete (
-          first_name,
-          last_name
-        ),
-        parents!fk_waivers_parent (
-          first_name,
-          last_name
-        )
-      `)
-      .order('signed_at', { ascending: false });
+    console.log('🔍 [getAllWaivers] Starting to fetch all waivers...');
+    
+    try {
+      // Direct query on waivers table - simplified approach
+      const { data, error } = await supabaseAdmin
+        .from('waivers')
+        .select('*')
+        .order('signed_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching waivers:', error);
-      throw new Error('Failed to fetch waivers');
-    }
+      if (error) {
+        console.error('Error fetching waivers:', error);
+        throw new Error(`Failed to fetch waivers: ${error.message}`);
+      }
 
-    if (!data) return [];
+      if (!data || data.length === 0) {
+        console.log('🔍 [getAllWaivers] No waivers found in database');
+        return [];
+      }
 
-    // Map all waivers from snake_case to camelCase with joined data
-    return data.map((waiver: any) => {
-      const athlete = waiver.athletes;
-      const parent = waiver.parents;
+      console.log(`🔍 [getAllWaivers] Found ${data.length} waivers in database`);
+
+      // For each waiver, fetch athlete and parent names separately
+      const waiversWithNames = await Promise.all(
+        data.map(async (waiver: any) => {
+          let athleteName = 'Unknown Athlete';
+          let signerName = 'Unknown Signer';
+          
+          // Get athlete name
+          if (waiver.athlete_id) {
+            try {
+              const { data: athlete, error: athleteError } = await supabaseAdmin
+                .from('athletes')
+                .select('first_name, last_name, name')
+                .eq('id', waiver.athlete_id)
+                .single();
+                
+              if (!athleteError && athlete) {
+                athleteName = `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || athlete.name || 'Unknown Athlete';
+              } else {
+                console.warn(`Could not fetch athlete ${waiver.athlete_id}:`, athleteError);
+              }
+            } catch (err) {
+              console.warn(`Error fetching athlete ${waiver.athlete_id}:`, err);
+            }
+          }
+          
+          // Get parent name
+          if (waiver.parent_id) {
+            try {
+              const { data: parent, error: parentError } = await supabaseAdmin
+                .from('parents')
+                .select('first_name, last_name')
+                .eq('id', waiver.parent_id)
+                .single();
+                
+              if (!parentError && parent) {
+                signerName = `${parent.first_name || ''} ${parent.last_name || ''}`.trim() || 'Unknown Signer';
+              } else {
+                console.warn(`Could not fetch parent ${waiver.parent_id}:`, parentError);
+              }
+            } catch (err) {
+              console.warn(`Error fetching parent ${waiver.parent_id}:`, err);
+            }
+          }
+          
+          return this.mapWaiverFromDb({
+            ...waiver,
+            athlete_name: athleteName,
+            signer_name: signerName
+          });
+        })
+      );
+
+      console.log(`🔍 [getAllWaivers] Successfully fetched ${waiversWithNames.length} waivers`);
+      return waiversWithNames;
       
-      return this.mapWaiverFromDb({
-        ...waiver,
-        athlete_name: athlete ? `${athlete.first_name} ${athlete.last_name}` : 'Unknown Athlete',
-        signer_name: parent ? `${parent.first_name} ${parent.last_name}` : 'Unknown Signer'
-      });
-    });
+    } catch (error) {
+      console.error('🚨 [getAllWaivers] Error:', error);
+      throw new Error(`Failed to fetch waivers: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
 

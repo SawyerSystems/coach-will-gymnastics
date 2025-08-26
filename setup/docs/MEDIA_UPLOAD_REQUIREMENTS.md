@@ -12,7 +12,7 @@ This document outlines the requirements and limitations for the banner video upl
 - **Permissions:** Service role must have upload/read permissions
 
 #### File Size Limitations
-- **Maximum Size:** 100 MB per file
+- **Maximum Size:** 500 MB per file
 - **Enforcement:** Both client-side validation and server-side limits
 - **Error Handling:** Provides specific error message with actual file size
 
@@ -48,8 +48,8 @@ Enhanced error handling provides:
    - User Message: "Storage configuration error. Please contact support."
 
 2. **File Too Large**
-   - Server Error: "File too large (XXMb). Maximum size is 100MB."
-   - User Message: "File too large (XXMb). Videos must be under 100MB."
+   - Server Error: "File too large (XXMb). Maximum size is 500MB."
+   - User Message: "File too large (XXMb). Videos must be under 500MB."
 
 3. **Unsupported Format**
    - Server Error: "File type 'video/avi' not allowed. Please use MP4, WebM, or MOV files."

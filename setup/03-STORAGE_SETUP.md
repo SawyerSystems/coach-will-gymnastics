@@ -15,7 +15,7 @@ This application requires a Supabase Storage bucket named `site-media` for stori
    - Click "New Bucket"
    - Bucket name: `site-media`
    - Public bucket: ✅ **Enable** (for public access to media files)
-   - File size limit: 50 MB
+   - File size limit: 500 MB
    - Allowed MIME types: `video/*`, `image/*`
 
 3. **Configure Bucket Policies (RLS)**
@@ -51,7 +51,7 @@ site-media/
 - **Upload Endpoint**: `POST /api/admin/media`
 - **Content-Type**: `multipart/form-data`
 - **File Field**: `file`
-- **Max Size**: 50MB
+- **Max Size**: 500MB
 - **Allowed Types**: Videos (mp4, mov, avi, etc.) and Images (jpg, png, gif, etc.)
 
 ### Response Format
