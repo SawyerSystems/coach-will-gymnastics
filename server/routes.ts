@@ -11022,46 +11022,115 @@ setTimeout(async () => {
         return res.status(404).json({ error: "Athlete not found" });
       }
 
-      // Get comprehensive booking history with all related data
-      // Use explicit foreign key relationship to avoid ambiguity
-    const { data: allBookings, error: bookingsError } = await supabaseAdmin
-        .from('bookings')
-        .select(`
-          *,
-      lesson_types(name, total_price, reservation_fee),
-          parents!bookings_parent_id_fkey(first_name, last_name)
-        `)
-        .order('preferred_date', { ascending: false });
+      console.log(`[BOOKING-HISTORY] Fetching history for athlete ID: ${athleteId}`);
 
-      if (bookingsError) {
-        console.error("Error fetching booking history:", bookingsError);
-        return res.status(500).json({ error: "Failed to fetch booking history" });
-      }
-
-      // Also get junction table data
+      // With the schema changes, there are no direct bookings associated with athlete_id
+      // All bookings are now linked through the booking_athletes junction table
+      // Get junction table data to find bookings for this athlete
       const { data: junctionData, error: junctionError } = await supabaseAdmin
         .from('booking_athletes')
-        .select('booking_id, athlete_id, slot_order')
+        .select('booking_id')
         .eq('athlete_id', athleteId);
 
       if (junctionError) {
-        console.error("Error fetching junction data:", junctionError);
-        return res.status(500).json({ error: "Failed to fetch booking athletes data" });
+        console.error("[BOOKING-HISTORY] Error fetching junction data:", junctionError);
+        return res.status(500).json({ error: "Failed to fetch booking history" });
       }
-
-      // Filter bookings to only those relevant to this athlete
-      const junctionBookingIds = junctionData?.map(ja => ja.booking_id) || [];
       
-      const relevantBookings = allBookings?.filter(booking => 
-        booking.athlete_id === athleteId || junctionBookingIds.includes(booking.id)
-      ) || [];
-
-      const uniqueBookings = relevantBookings;
+      const junctionBookingIds = junctionData?.map(ja => ja.booking_id) || [];
+      console.log(`[BOOKING-HISTORY] Found ${junctionBookingIds.length} junction bookings`);
+      
+      // Get the multi-athlete bookings if there are any
+      let multiAthleteBookings = [];
+      if (junctionBookingIds.length > 0) {
+        const { data: fetchedMultiBookings, error: multiBookingsError } = await supabaseAdmin
+          .from('bookings')
+          .select('*')
+          .in('id', junctionBookingIds)
+          .order('preferred_date', { ascending: false });
+          
+        if (multiBookingsError) {
+          console.error("[BOOKING-HISTORY] Error fetching multi-athlete bookings:", multiBookingsError);
+          // Continue with direct bookings only
+        } else {
+          multiAthleteBookings = fetchedMultiBookings || [];
+          console.log(`[BOOKING-HISTORY] Retrieved ${multiAthleteBookings.length} multi-athlete bookings`);
+        }
+      }
+      
+      // All bookings come from the junction table approach now
+      const allBookings = multiAthleteBookings;
+      console.log(`[BOOKING-HISTORY] Total bookings: ${allBookings.length}`);
+      
+      // Get lesson types separately for the bookings we found
+      // Define an interface for lesson type objects
+      interface LessonType {
+        id: number;
+        name: string;
+        total_price: number | null;
+        reservation_fee: number | null;
+      }
+      
+      // Extract unique lesson type IDs from the bookings
+      const lessonTypeIds = Array.from(new Set(
+        allBookings.filter(b => b.lesson_type_id).map(b => b.lesson_type_id)
+      ));
+      
+      console.log(`[BOOKING-HISTORY] Found ${lessonTypeIds.length} unique lesson type IDs`);
+      
+      let lessonTypes: LessonType[] = [];
+      if (lessonTypeIds.length > 0) {
+        const { data: lessonTypesData, error: lessonTypesError } = await supabaseAdmin
+          .from('lesson_types')
+          .select('id, name, total_price, reservation_fee')
+          .in('id', lessonTypeIds);
+          
+        if (!lessonTypesError) {
+          lessonTypes = lessonTypesData as LessonType[] || [];
+          console.log(`[BOOKING-HISTORY] Retrieved ${lessonTypes.length} lesson types`);
+        } else {
+          console.error("[BOOKING-HISTORY] Error fetching lesson types:", lessonTypesError);
+        }
+      }
+      
+      // Get junction table data for all relevant bookings to count athletes
+      // Get all booking IDs first
+      const allBookingIds = allBookings.map(b => b.id);
+      
+      let allJunctionData: { booking_id: number, athlete_id: number, slot_order: number | null }[] = [];
+      if (allBookingIds.length > 0) {
+        const { data, error } = await supabaseAdmin
+          .from('booking_athletes')
+          .select('booking_id, athlete_id, slot_order')
+          .in('booking_id', allBookingIds);
+          
+        if (error) {
+          console.error("[BOOKING-HISTORY] Error fetching all junction data:", error);
+        } else {
+          allJunctionData = data || [];
+          console.log(`[BOOKING-HISTORY] Retrieved ${allJunctionData.length} junction records`);
+        }
+      }
+      
+      // Create a map of lesson types for quick lookup
+      const lessonTypesMap = new Map<number, LessonType>();
+      lessonTypes.forEach(lt => {
+        lessonTypesMap.set(lt.id, lt);
+      });
 
       // Process and enhance booking data
-  const enhancedBookings = uniqueBookings?.map(booking => {
-        // Count total athletes in this booking (from junction table or default to 1)
-        const athleteCount = booking.booking_athletes?.length || 1;
+      const enhancedBookings = allBookings.map(booking => {
+        // Count total athletes in this booking (from junction table or direct)
+        let athleteCount = 0;
+        const junctionsForThisBooking = allJunctionData.filter(j => j.booking_id === booking.id);
+        
+        if (junctionsForThisBooking.length > 0) {
+          // Multi-athlete booking
+          athleteCount = junctionsForThisBooking.length;
+        } else if (booking.athlete_id) {
+          // Direct booking with single athlete
+          athleteCount = 1;
+        }
         
         // For now, we'll get other athlete names in a separate query if needed
         const otherAthleteNames: string[] = [];
@@ -11069,24 +11138,27 @@ setTimeout(async () => {
         // Determine waiver status (simplified for now)
         const waiverStatus = booking.waiver_id ? 'signed' : 'pending';
 
+        // Get lesson type details from our map
+        const lessonType = booking.lesson_type_id ? lessonTypesMap.get(booking.lesson_type_id) : null;
+        
         // Determine display price based on payment status
         let displayPaidAmount: string | null = null;
         const status = (booking.payment_status || '').toLowerCase();
-        const totalPrice = booking.lesson_types?.total_price;
-        const reservationFee = booking.lesson_types?.reservation_fee;
+        const totalPrice = lessonType?.total_price;
+        const reservationFee = lessonType?.reservation_fee;
         if (status.includes('reservation') && status.includes('paid')) {
-          displayPaidAmount = reservationFee ?? booking.paid_amount ?? null;
+          displayPaidAmount = reservationFee ? reservationFee.toString() : booking.paid_amount || null;
         } else if (status.includes('session') && status.includes('paid')) {
-          displayPaidAmount = totalPrice ?? booking.paid_amount ?? null;
+          displayPaidAmount = totalPrice ? totalPrice.toString() : booking.paid_amount || null;
         } else {
-          displayPaidAmount = booking.paid_amount ?? null;
+          displayPaidAmount = booking.paid_amount || null;
         }
 
         return {
           id: booking.id,
-          lessonTypeName: booking.lesson_types?.name || 'Gymnastics Session',
-          lessonTypeTotalPrice: booking.lesson_types?.total_price ?? null,
-          lessonTypeReservationFee: booking.lesson_types?.reservation_fee ?? null,
+          lessonTypeName: lessonType?.name || 'Gymnastics Session',
+          lessonTypeTotalPrice: lessonType?.total_price ?? null,
+          lessonTypeReservationFee: lessonType?.reservation_fee ?? null,
           preferredDate: booking.preferred_date,
           preferredTime: booking.preferred_time,
           status: booking.status,

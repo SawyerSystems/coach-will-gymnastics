@@ -152,10 +152,14 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
       // Import at function level to avoid circular dependencies and maintain ESM
       const mod = await import('../storage');
       const siteContent = await mod.storage.getSiteContent();
-      // Use the text logo if available, otherwise use default
-      finalLogoUrl = siteContent?.logo?.text || undefined;
+      // Try to use the circle logo first (better for emails), then text logo, or fallback to default
+      finalLogoUrl = siteContent?.logo?.circle || siteContent?.logo?.text || 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-media/CWT_Circle_LogoSPIN.png';
+      
+      console.log('Using logo URL in email:', finalLogoUrl);
     } catch (error) {
       console.warn('Could not fetch logo URL from site content:', error);
+      // Fallback to hardcoded logo URL
+      finalLogoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-media/CWT_Circle_LogoSPIN.png';
     }
   }
 
