@@ -4896,59 +4896,12 @@ setTimeout(async () => {
               
               console.log(`[CHECKOUT-ADMIN-DEBUG] 🚀 Calling sendAdminNewBooking function...`);
               try {
-                console.log(`[CHECKOUT-ADMIN-DEBUG] Using enhanced admin email function with fallback...`);
-                
-                // Import the enhanced email function with fallback mechanism
-                const { sendAdminNewBookingWithFallback } = await import('./lib/email-enhanced.js');
-                
-                const result = await sendAdminNewBookingWithFallback(finalAdminEmail, emailData);
+                const result = await sendAdminNewBooking(finalAdminEmail, emailData);
                 console.log(`[CHECKOUT-ADMIN-DEBUG] ✅ Admin email result:`, JSON.stringify(result || {}, null, 2));
                 console.log(`[CHECKOUT] ✅ Admin new booking notification sent for $0 reservation fee booking ${bookingId}.`);
               } catch (sendError) {
                 console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Error in admin email sending:`, sendError);
                 console.error(`[CHECKOUT-ADMIN-DEBUG] Error stack:`, (sendError as Error).stack || sendError);
-                
-                // Last resort: Try direct email sending through Resend API
-                console.log(`[CHECKOUT-ADMIN-DEBUG] 🔄 Attempting last-resort direct email send...`);
-                try {
-                  const { Resend } = await import('resend');
-                  const resend = new Resend(process.env.RESEND_API_KEY || '');
-                  
-                  // Create a simple HTML email as last resort
-                  const htmlContent = `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                      <h1>New Booking Alert!</h1>
-                      <p>A new booking has been made with $0 reservation fee:</p>
-                      <ul>
-                        <li><strong>Booking ID:</strong> ${emailData.bookingId}</li>
-                        <li><strong>Parent:</strong> ${emailData.parentName}</li>
-                        <li><strong>Email:</strong> ${emailData.parentEmail}</li>
-                        <li><strong>Phone:</strong> ${emailData.parentPhone || 'Not provided'}</li>
-                        <li><strong>Athlete(s):</strong> ${emailData.athleteNames.join(', ')}</li>
-                        <li><strong>Date:</strong> ${emailData.sessionDate}</li>
-                        <li><strong>Time:</strong> ${emailData.sessionTime}</li>
-                        <li><strong>Lesson Type:</strong> ${emailData.lessonType}</li>
-                        <li><strong>Amount:</strong> $${emailData.totalAmount}</li>
-                        <li><strong>Special Requests:</strong> ${emailData.specialRequests || 'None'}</li>
-                      </ul>
-                      <p><a href="${emailData.adminPanelLink}" style="background: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">View in Admin Panel</a></p>
-                      <p style="color: #666; font-size: 12px; margin-top: 30px;">
-                        This is a last-resort email notification. Previous email sending methods failed.
-                      </p>
-                    </div>
-                  `;
-                  
-                  const fallbackResult = await resend.emails.send({
-                    from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
-                    to: finalAdminEmail,
-                    subject: '🎉 New $0 Reservation Fee Booking (Last Resort)',
-                    html: htmlContent,
-                  });
-                  
-                  console.log(`[CHECKOUT-ADMIN-DEBUG] ✅ Last resort email sent successfully:`, fallbackResult);
-                } catch (fallbackError) {
-                  console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Last resort email also failed:`, fallbackError);
-                }
               }
             } else {
               console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Could not find booking with relations for ID ${bookingId}`);
