@@ -3770,12 +3770,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test email endpoint for Thomas Sawyer
   app.post("/api/test-email-thomas", async (req, res) => {
     try {
+      const baseUrl = getBaseUrl();
       await sendSessionConfirmation(
         "thomas.sawyer@gmail.com",
         "Thomas Sawyer",
         "Alex Sawyer",
         "Monday, July 15, 2025",
-        "10:00 AM"
+        "10:00 AM",
+        "male",
+        `${baseUrl}/parent/bookings/123`
       );
       res.json({ message: "Test email sent successfully to Thomas Sawyer" });
     } catch (error: any) {
@@ -4802,7 +4805,65 @@ setTimeout(async () => {
             fullLessonPrice,
             reservationFee
           });
-
+          
+          // Send session confirmation email for $0 reservations
+          try {
+            await sendSessionConfirmationIfNeeded(bookingId, storage);
+            console.log(`[CHECKOUT] ✅ Session confirmation email sent for $0 reservation fee booking ${bookingId}`);
+          } catch (emailErr) {
+            console.error(`[CHECKOUT] ❌ Failed to send session confirmation email for booking ${bookingId}:`, emailErr);
+          }
+          
+          // Send admin notification for $0 reservations
+          try {
+            const bookingWithRelations = await storage.getBookingWithRelations(bookingId);
+            if (bookingWithRelations) {
+              const adminEmail = process.env.ADMIN_EMAIL || '';
+              if (adminEmail) {
+                const parentRecord = bookingWithRelations.parent;
+                const parentName = parentRecord ? `${parentRecord.firstName} ${parentRecord.lastName}`.trim() : 
+                                 `${bookingWithRelations.parentFirstName || ''} ${bookingWithRelations.parentLastName || ''}`.trim() || 'Unknown Parent';
+                const parentEmail = parentRecord?.email || bookingWithRelations.parentEmail || 'No email';
+                const parentPhone = parentRecord?.phone || bookingWithRelations.parentPhone;
+                
+                const athleteNames = bookingWithRelations.athletes?.map(a => a.name) || 
+                                   [(bookingWithRelations.athlete1Name || 'Unnamed Athlete')];
+                
+                const sessionDate = bookingWithRelations.preferredDate ? new Date(bookingWithRelations.preferredDate).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) : 'Unknown Date';
+                
+                const sessionTime = bookingWithRelations.preferredTime || 'Unknown Time';
+                const lessonType = bookingWithRelations.lessonType || 'Unknown Lesson Type';
+                const totalAmount = bookingWithRelations.amount || '0';
+                const specialRequests = bookingWithRelations.specialRequests || undefined;
+                const baseUrl = getBaseUrl();
+                
+                await sendAdminNewBooking(adminEmail, {
+                  bookingId: bookingId.toString(),
+                  parentName,
+                  parentEmail,
+                  parentPhone,
+                  athleteNames,
+                  sessionDate,
+                  sessionTime,
+                  lessonType,
+                  paymentStatus: 'reservation-paid',
+                  totalAmount,
+                  specialRequests,
+                  adminPanelLink: `${baseUrl}/admin/bookings/${bookingId}`
+                });
+                
+                console.log(`[CHECKOUT] ✅ Admin new booking notification sent for $0 reservation fee booking ${bookingId}`);
+              }
+            }
+          } catch (adminEmailErr) {
+            console.error(`[CHECKOUT] ❌ Failed to send admin booking notification for booking ${bookingId}:`, adminEmailErr);
+          }
+          
           // Return direct success URL instead of Stripe session
           res.json({ 
             sessionId: null, 
@@ -7604,12 +7665,17 @@ setTimeout(async () => {
           console.error(`[EMAIL][SESSION-CONFIRM] Skipping send - no parent email for booking ${bookingId}`);
         } else {
             console.log(`[EMAIL][SESSION-CONFIRM] Sending manual confirmation -> to:${toEmail} booking:${bookingId} date:${sessionDate} time:${booking.preferredTime || 'TBD'}`);
+            const baseUrl = getBaseUrl();
+            const manageLink = `${baseUrl}/parent/bookings/${bookingId}`;
+            
             await sendSessionConfirmation(
               toEmail,
               parentName,
               booking.athlete1Name || 'Athlete',
               sessionDate,
-              booking.preferredTime || 'TBD'
+              booking.preferredTime || 'TBD',
+              booking.athletes?.[0]?.gender as 'male' | 'female' | 'other',
+              manageLink
             );
             console.log(`[EMAIL][SESSION-CONFIRM] ✅ Sent manual confirmation for booking ${bookingId}`);
         }
@@ -11024,8 +11090,7 @@ setTimeout(async () => {
 
       console.log(`[BOOKING-HISTORY] Fetching history for athlete ID: ${athleteId}`);
 
-      // With the schema changes, there are no direct bookings associated with athlete_id
-      // All bookings are now linked through the booking_athletes junction table
+      // All bookings are linked through the booking_athletes junction table
       // Get junction table data to find bookings for this athlete
       const { data: junctionData, error: junctionError } = await supabaseAdmin
         .from('booking_athletes')
@@ -11038,28 +11103,25 @@ setTimeout(async () => {
       }
       
       const junctionBookingIds = junctionData?.map(ja => ja.booking_id) || [];
-      console.log(`[BOOKING-HISTORY] Found ${junctionBookingIds.length} junction bookings`);
+      console.log(`[BOOKING-HISTORY] Found ${junctionBookingIds.length} bookings for this athlete`);
       
-      // Get the multi-athlete bookings if there are any
-      let multiAthleteBookings = [];
+      // Get the bookings
+      let allBookings = [];
       if (junctionBookingIds.length > 0) {
-        const { data: fetchedMultiBookings, error: multiBookingsError } = await supabaseAdmin
+        const { data: fetchedBookings, error: bookingsError } = await supabaseAdmin
           .from('bookings')
           .select('*')
           .in('id', junctionBookingIds)
           .order('preferred_date', { ascending: false });
           
-        if (multiBookingsError) {
-          console.error("[BOOKING-HISTORY] Error fetching multi-athlete bookings:", multiBookingsError);
-          // Continue with direct bookings only
+        if (bookingsError) {
+          console.error("[BOOKING-HISTORY] Error fetching bookings:", bookingsError);
+          return res.status(500).json({ error: "Failed to fetch booking data" });
         } else {
-          multiAthleteBookings = fetchedMultiBookings || [];
-          console.log(`[BOOKING-HISTORY] Retrieved ${multiAthleteBookings.length} multi-athlete bookings`);
+          allBookings = fetchedBookings || [];
+          console.log(`[BOOKING-HISTORY] Retrieved ${allBookings.length} bookings`);
         }
       }
-      
-      // All bookings come from the junction table approach now
-      const allBookings = multiAthleteBookings;
       console.log(`[BOOKING-HISTORY] Total bookings: ${allBookings.length}`);
       
       // Get lesson types separately for the bookings we found
@@ -11120,16 +11182,16 @@ setTimeout(async () => {
 
       // Process and enhance booking data
       const enhancedBookings = allBookings.map(booking => {
-        // Count total athletes in this booking (from junction table or direct)
+        // Count total athletes in this booking (from junction table)
         let athleteCount = 0;
         const junctionsForThisBooking = allJunctionData.filter(j => j.booking_id === booking.id);
         
         if (junctionsForThisBooking.length > 0) {
           // Multi-athlete booking
           athleteCount = junctionsForThisBooking.length;
-        } else if (booking.athlete_id) {
-          // Direct booking with single athlete
-          athleteCount = 1;
+        } else {
+          // Old booking with no athletes linked - should be rare
+          athleteCount = 0;
         }
         
         // For now, we'll get other athlete names in a separate query if needed
@@ -12498,12 +12560,34 @@ setTimeout(async () => {
     }
   });
 
+  // Test endpoint for the email logo fix is defined at the end of this file
+
   const httpServer = createServer(app);
   
   // Configure server timeouts for Render deployment
   // Recommended by Render docs for Node.js services experiencing timeouts
   httpServer.keepAliveTimeout = 120000; // 120 seconds
   httpServer.headersTimeout = 120000; // 120 seconds
+  
+  // Test endpoint for email logo fix
+  app.get("/api/test/email-logo", async (req, res) => {
+    try {
+      const baseUrl = getBaseUrl();
+      await sendSessionConfirmation(
+        "test@example.com", 
+        "Test Parent", 
+        "Test Athlete", 
+        "Monday, September 1, 2025", 
+        "3:00 PM",
+        "female", 
+        `${baseUrl}/parent/bookings/123`
+      );
+      res.json({ success: true, message: "Test email sent successfully to test@example.com" });
+    } catch (error) {
+      console.error("Error sending test email:", error);
+      res.status(500).json({ success: false, error: "Failed to send test email" });
+    }
+  });
   
   return httpServer;
 }

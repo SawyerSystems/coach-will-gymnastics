@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Test script for admin email templates
-import { sendAdminBookingCancellation, sendAdminBookingReschedule, sendAdminNewBooking, sendAdminNewParent, sendAdminNewAthlete, sendAdminWaiverSigned } from './server/lib/email.js';
+import { sendAdminBookingCancellation, sendAdminBookingReschedule, sendAdminNewBooking, sendAdminNewParent, sendAdminNewAthlete, sendAdminWaiverSigned } from './server/lib/email';
 
 async function testAllAdminEmails() {
   console.log('🧪 Testing all admin email templates...\n');
@@ -132,13 +132,16 @@ async function testAllAdminEmails() {
     await sendAdminWaiverSigned(adminEmail, {
       waiverId: "TEST-WAIVER-006",
       athleteName: "Lucas Garcia",
-      athleteAge: 11,
+      athleteId: "555",
       parentName: "Maria Garcia",
       parentEmail: "maria@example.com",
       signedDate: new Date().toISOString(),
-      emergencyContact: "Carlos Garcia - (555) 777-8888",
-      medicalInfo: "Mild asthma, uses inhaler as needed",
-      adminPanelLink: `${baseUrl}/admin/waivers/TEST-WAIVER-006`
+      ipAddress: "198.51.100.42",
+      emergencyContactName: "Carlos Garcia",
+      emergencyContactPhone: "(555) 777-8888",
+      medicalConditions: "Mild asthma, uses inhaler as needed",
+      adminPanelLink: `${baseUrl}/admin/waivers/TEST-WAIVER-006`,
+      waiverPdfLink: `${baseUrl}/api/waivers/TEST-WAIVER-006/pdf`
     });
     testResults.push("✅ Admin waiver signed sent");
     console.log("✅ Admin waiver signed sent successfully");

@@ -153,13 +153,13 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
       const mod = await import('../storage');
       const siteContent = await mod.storage.getSiteContent();
       // Try to use the circle logo first (better for emails), then text logo, or fallback to default
-      finalLogoUrl = siteContent?.logo?.circle || siteContent?.logo?.text || 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-media/CWT_Circle_LogoSPIN.png';
+      finalLogoUrl = siteContent?.logo?.circle || siteContent?.logo?.text || 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-logos/CWT_Circle_Logo.png';
       
       console.log('Using logo URL in email:', finalLogoUrl);
     } catch (error) {
       console.warn('Could not fetch logo URL from site content:', error);
-      // Fallback to hardcoded logo URL
-      finalLogoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-media/CWT_Circle_LogoSPIN.png';
+      // Fallback to hardcoded logo URL - Using same path as in EmailLogo component
+      finalLogoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-logos/CWT_Circle_Logo.png';
     }
   }
 
@@ -237,12 +237,14 @@ export async function sendSessionConfirmation(
   parentName: string,
   athleteName: string,
   sessionDate: string,
-  sessionTime: string
+  sessionTime: string,
+  athleteGender?: 'male' | 'female' | 'other',
+  manageLink?: string
 ) {
   return sendEmail({
     type: 'session-confirmation',
     to,
-    data: { parentName, athleteName, sessionDate, sessionTime }
+    data: { parentName, athleteName, sessionDate, sessionTime, athleteGender, manageLink }
   });
 }
 
@@ -299,7 +301,22 @@ export async function sendSessionConfirmationIfNeeded(bookingId: number, storage
     }
     console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Sending confirmation email for booking ${bookingId} to ${parentEmail}`);
     try {
-      await sendSessionConfirmation(parentEmail, parentName, athleteName, sessionDate, sessionTime);
+      // Get athlete gender from booking
+      const athleteGender = booking.athletes?.[0]?.gender;
+      
+      // Create a manage link
+      const manageLink = `${getBaseUrl()}/parent/bookings/${bookingId}`;
+      
+      await sendSessionConfirmation(
+        parentEmail, 
+        parentName, 
+        athleteName, 
+        sessionDate, 
+        sessionTime, 
+        athleteGender as 'male' | 'female' | 'other', 
+        manageLink
+      );
+      
       console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] ✅ Sent confirmation email for booking ${bookingId}`);
       return true;
     } catch (sendErr) {
