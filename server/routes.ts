@@ -4614,6 +4614,8 @@ setTimeout(async () => {
             // Send admin notification for new booking
             try {
               const adminEmail = process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
+              console.log(`[STRIPE WEBHOOK] 🔍 ADMIN_EMAIL environment variable: "${adminEmail}"`);
+              
               const baseUrl = getBaseUrl();
               
               // Get athlete names
@@ -4646,7 +4648,7 @@ setTimeout(async () => {
               const totalAmount = booking.amount || '0';
               const specialRequests = booking.specialRequests || undefined;
               
-              await sendAdminNewBooking(adminEmail, {
+              const emailData = {
                 bookingId: bookingId.toString(),
                 parentName,
                 parentEmail,
@@ -4659,11 +4661,26 @@ setTimeout(async () => {
                 totalAmount,
                 specialRequests,
                 adminPanelLink: `${baseUrl}/admin/bookings/${bookingId}`
-              });
+              };
               
-              console.log(`[STRIPE WEBHOOK] Admin new booking notification sent for booking ${bookingId}`);
+              console.log(`[STRIPE WEBHOOK] 📧 Admin email data:`, JSON.stringify(emailData, null, 2));
+              
+              console.log(`[STRIPE WEBHOOK] 🚀 Sending admin email with enhanced fallback...`);
+              try {
+                // Use the enhanced admin email function with fallback mechanism
+                const { sendAdminNewBookingWithFallback } = await import('./lib/email-enhanced.js');
+                const result = await sendAdminNewBookingWithFallback(adminEmail, emailData);
+                console.log(`[STRIPE WEBHOOK] ✅ Enhanced admin email sent successfully:`, result);
+              } catch (enhancedEmailError) {
+                console.error(`[STRIPE WEBHOOK] ❌ Enhanced admin email failed, trying standard method:`, enhancedEmailError);
+                
+                // Fallback to standard method if enhanced fails
+                const result = await sendAdminNewBooking(adminEmail, emailData);
+                console.log(`[STRIPE WEBHOOK] ✅ Standard admin email sent successfully:`, result);
+              }
             } catch (adminEmailError) {
-              console.error(`[STRIPE WEBHOOK] Failed to send admin new booking notification:`, adminEmailError);
+              console.error(`[STRIPE WEBHOOK] ❌ Failed to send admin new booking notification:`, adminEmailError);
+              console.error((adminEmailError as Error).stack || adminEmailError);
             }
             
           } catch (error) {
@@ -4816,52 +4833,129 @@ setTimeout(async () => {
           
           // Send admin notification for $0 reservations
           try {
+            console.log(`[CHECKOUT-ADMIN-DEBUG] 🚨 STARTING ADMIN EMAIL FLOW for booking ${bookingId}`);
+            console.log(`[CHECKOUT-ADMIN-DEBUG] Environment variables check:`);
+            console.log(`[CHECKOUT-ADMIN-DEBUG] - ADMIN_EMAIL: ${process.env.ADMIN_EMAIL || 'NOT SET'}`);
+            console.log(`[CHECKOUT-ADMIN-DEBUG] - RESEND_API_KEY present: ${Boolean(process.env.RESEND_API_KEY)}`);
+            
             const bookingWithRelations = await storage.getBookingWithRelations(bookingId);
+            console.log(`[CHECKOUT-ADMIN-DEBUG] Retrieved booking with relations: ${Boolean(bookingWithRelations)}`);
+            
             if (bookingWithRelations) {
               const adminEmail = process.env.ADMIN_EMAIL || '';
-              if (adminEmail) {
-                const parentRecord = bookingWithRelations.parent;
-                const parentName = parentRecord ? `${parentRecord.firstName} ${parentRecord.lastName}`.trim() : 
-                                 `${bookingWithRelations.parentFirstName || ''} ${bookingWithRelations.parentLastName || ''}`.trim() || 'Unknown Parent';
-                const parentEmail = parentRecord?.email || bookingWithRelations.parentEmail || 'No email';
-                const parentPhone = parentRecord?.phone || bookingWithRelations.parentPhone;
-                
-                const athleteNames = bookingWithRelations.athletes?.map(a => a.name) || 
-                                   [(bookingWithRelations.athlete1Name || 'Unnamed Athlete')];
-                
-                const sessionDate = bookingWithRelations.preferredDate ? new Date(bookingWithRelations.preferredDate).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                }) : 'Unknown Date';
-                
-                const sessionTime = bookingWithRelations.preferredTime || 'Unknown Time';
-                const lessonType = bookingWithRelations.lessonType || 'Unknown Lesson Type';
-                const totalAmount = bookingWithRelations.amount || '0';
-                const specialRequests = bookingWithRelations.specialRequests || undefined;
-                const baseUrl = getBaseUrl();
-                
-                await sendAdminNewBooking(adminEmail, {
-                  bookingId: bookingId.toString(),
-                  parentName,
-                  parentEmail,
-                  parentPhone,
-                  athleteNames,
-                  sessionDate,
-                  sessionTime,
-                  lessonType,
-                  paymentStatus: 'reservation-paid',
-                  totalAmount,
-                  specialRequests,
-                  adminPanelLink: `${baseUrl}/admin/bookings/${bookingId}`
-                });
-                
-                console.log(`[CHECKOUT] ✅ Admin new booking notification sent for $0 reservation fee booking ${bookingId}`);
+              console.log(`[CHECKOUT-ADMIN-DEBUG] 🔍 ADMIN_EMAIL environment variable: "${adminEmail}"`);
+              
+              if (!adminEmail) {
+                console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ ADMIN_EMAIL is empty or not set. Using default: "admin@coachwilltumbles.com"`);
               }
+              
+              // Always use a value for admin email, falling back to the default if needed
+              const finalAdminEmail = adminEmail || 'admin@coachwilltumbles.com';
+              console.log(`[CHECKOUT-ADMIN-DEBUG] Final admin email address: ${finalAdminEmail}`);
+              
+              const parentRecord = bookingWithRelations.parent;
+              const parentName = parentRecord ? `${parentRecord.firstName} ${parentRecord.lastName}`.trim() : 
+                               `${bookingWithRelations.parentFirstName || ''} ${bookingWithRelations.parentLastName || ''}`.trim() || 'Unknown Parent';
+              const parentEmail = parentRecord?.email || bookingWithRelations.parentEmail || 'No email';
+              const parentPhone = parentRecord?.phone || bookingWithRelations.parentPhone;
+              
+              const athleteNames = bookingWithRelations.athletes?.map(a => a.name) || 
+                                 [(bookingWithRelations.athlete1Name || 'Unnamed Athlete')];
+              
+              const sessionDate = bookingWithRelations.preferredDate ? new Date(bookingWithRelations.preferredDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              }) : 'Unknown Date';
+              
+              const sessionTime = bookingWithRelations.preferredTime || 'Unknown Time';
+              const lessonType = bookingWithRelations.lessonType || 'Unknown Lesson Type';
+              const totalAmount = bookingWithRelations.amount || '0';
+              const specialRequests = bookingWithRelations.specialRequests || undefined;
+              const baseUrl = getBaseUrl();
+              
+              console.log(`[CHECKOUT-ADMIN-DEBUG] 🔍 About to send admin email to: ${finalAdminEmail}`);
+              
+              const emailData = {
+                bookingId: bookingId.toString(),
+                parentName,
+                parentEmail,
+                parentPhone,
+                athleteNames,
+                sessionDate,
+                sessionTime,
+                lessonType,
+                paymentStatus: 'reservation-paid',
+                totalAmount,
+                specialRequests,
+                adminPanelLink: `${baseUrl}/admin/bookings/${bookingId}`
+              };
+              
+              console.log(`[CHECKOUT-ADMIN-DEBUG] 📧 Admin email data:`, JSON.stringify(emailData, null, 2));
+              
+              console.log(`[CHECKOUT-ADMIN-DEBUG] 🚀 Calling sendAdminNewBooking function...`);
+              try {
+                console.log(`[CHECKOUT-ADMIN-DEBUG] Using enhanced admin email function with fallback...`);
+                
+                // Import the enhanced email function with fallback mechanism
+                const { sendAdminNewBookingWithFallback } = await import('./lib/email-enhanced.js');
+                
+                const result = await sendAdminNewBookingWithFallback(finalAdminEmail, emailData);
+                console.log(`[CHECKOUT-ADMIN-DEBUG] ✅ Admin email result:`, JSON.stringify(result || {}, null, 2));
+                console.log(`[CHECKOUT] ✅ Admin new booking notification sent for $0 reservation fee booking ${bookingId}.`);
+              } catch (sendError) {
+                console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Error in admin email sending:`, sendError);
+                console.error(`[CHECKOUT-ADMIN-DEBUG] Error stack:`, (sendError as Error).stack || sendError);
+                
+                // Last resort: Try direct email sending through Resend API
+                console.log(`[CHECKOUT-ADMIN-DEBUG] 🔄 Attempting last-resort direct email send...`);
+                try {
+                  const { Resend } = await import('resend');
+                  const resend = new Resend(process.env.RESEND_API_KEY || '');
+                  
+                  // Create a simple HTML email as last resort
+                  const htmlContent = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                      <h1>New Booking Alert!</h1>
+                      <p>A new booking has been made with $0 reservation fee:</p>
+                      <ul>
+                        <li><strong>Booking ID:</strong> ${emailData.bookingId}</li>
+                        <li><strong>Parent:</strong> ${emailData.parentName}</li>
+                        <li><strong>Email:</strong> ${emailData.parentEmail}</li>
+                        <li><strong>Phone:</strong> ${emailData.parentPhone || 'Not provided'}</li>
+                        <li><strong>Athlete(s):</strong> ${emailData.athleteNames.join(', ')}</li>
+                        <li><strong>Date:</strong> ${emailData.sessionDate}</li>
+                        <li><strong>Time:</strong> ${emailData.sessionTime}</li>
+                        <li><strong>Lesson Type:</strong> ${emailData.lessonType}</li>
+                        <li><strong>Amount:</strong> $${emailData.totalAmount}</li>
+                        <li><strong>Special Requests:</strong> ${emailData.specialRequests || 'None'}</li>
+                      </ul>
+                      <p><a href="${emailData.adminPanelLink}" style="background: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px;">View in Admin Panel</a></p>
+                      <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                        This is a last-resort email notification. Previous email sending methods failed.
+                      </p>
+                    </div>
+                  `;
+                  
+                  const fallbackResult = await resend.emails.send({
+                    from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
+                    to: finalAdminEmail,
+                    subject: '🎉 New $0 Reservation Fee Booking (Last Resort)',
+                    html: htmlContent,
+                  });
+                  
+                  console.log(`[CHECKOUT-ADMIN-DEBUG] ✅ Last resort email sent successfully:`, fallbackResult);
+                } catch (fallbackError) {
+                  console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Last resort email also failed:`, fallbackError);
+                }
+              }
+            } else {
+              console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Could not find booking with relations for ID ${bookingId}`);
             }
           } catch (adminEmailErr) {
-            console.error(`[CHECKOUT] ❌ Failed to send admin booking notification for booking ${bookingId}:`, adminEmailErr);
+            console.error(`[CHECKOUT-ADMIN-DEBUG] ❌ Failed to send admin booking notification for booking ${bookingId}:`, adminEmailErr);
+            console.error(`[CHECKOUT-ADMIN-DEBUG] Error stack:`, (adminEmailErr as Error).stack || adminEmailErr);
           }
           
           // Return direct success URL instead of Stripe session
@@ -7668,13 +7762,23 @@ setTimeout(async () => {
             const baseUrl = getBaseUrl();
             const manageLink = `${baseUrl}/parent/bookings/${bookingId}`;
             
+            // Get gender safely with type checking
+            let athleteGender: 'male' | 'female' | 'other' = 'male'; // Default
+            if (booking.athletes && booking.athletes.length > 0 && typeof booking.athletes[0] === 'object') {
+              // Cast to any first to avoid TypeScript errors
+              const athlete = booking.athletes[0] as any;
+              if (athlete && athlete.gender) {
+                athleteGender = athlete.gender as 'male' | 'female' | 'other';
+              }
+            }
+            
             await sendSessionConfirmation(
               toEmail,
               parentName,
               booking.athlete1Name || 'Athlete',
               sessionDate,
               booking.preferredTime || 'TBD',
-              booking.athletes?.[0]?.gender as 'male' | 'female' | 'other',
+              athleteGender,
               manageLink
             );
             console.log(`[EMAIL][SESSION-CONFIRM] ✅ Sent manual confirmation for booking ${bookingId}`);
