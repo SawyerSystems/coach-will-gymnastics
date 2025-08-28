@@ -128,38 +128,38 @@ export default function About() {
               
               {/* Floating testimonial */}
               {siteContent?.testimonials?.find((t: any) => t.featured) ? (
-                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="flex space-x-1">
+                <Card className="absolute -top-4 -right-4 max-w-40 md:max-w-xs md:-bottom-6 md:-left-6 shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
+                  <CardContent className="p-2 md:p-4">
+                    <div className="flex items-center space-x-1 md:space-x-2 mb-1 md:mb-2">
+                      <div className="flex space-x-0.5">
                         {[...Array(siteContent.testimonials.find((t: any) => t.featured)?.rating || 5)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <Star key={i} className="h-2.5 w-2.5 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
                         ))}
                       </div>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Featured Review</span>
+                      <span className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">Featured Review</span>
                     </div>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <p className="text-xs md:text-sm text-slate-700 dark:text-slate-300 line-clamp-3">
                       "{siteContent.testimonials.find((t: any) => t.featured)?.text}"
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">- {siteContent.testimonials.find((t: any) => t.featured)?.name}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 md:mt-2">- {siteContent.testimonials.find((t: any) => t.featured)?.name}</p>
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="absolute -bottom-6 -left-6 max-w-xs shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="flex space-x-1">
+                <Card className="absolute -top-4 -right-4 max-w-40 md:max-w-xs md:-bottom-6 md:-left-6 shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
+                  <CardContent className="p-2 md:p-4">
+                    <div className="flex items-center space-x-1 md:space-x-2 mb-1 md:mb-2">
+                      <div className="flex space-x-0.5">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <Star key={i} className="h-2.5 w-2.5 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
                         ))}
                       </div>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Parent Review</span>
+                      <span className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">Parent Review</span>
                     </div>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <p className="text-xs md:text-sm text-slate-700 dark:text-slate-300 line-clamp-2">
                       "My daughter absolutely loves her lessons with Coach Will! 
                       She's gained so much confidence and skill."
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">- Sarah M.</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 md:mt-2">- Sarah M.</p>
                   </CardContent>
                 </Card>
               )}
