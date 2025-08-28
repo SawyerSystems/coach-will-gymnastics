@@ -8,12 +8,22 @@ export async function sendAdminNewBookingWithFallback(
 ) {
   console.log(`[ADMIN-EMAIL-ENHANCED] Sending booking notification to: ${to}`);
   
+  // Make a deep copy of the data to avoid modifying the original
+  const emailData = JSON.parse(JSON.stringify(data));
+  
+  // Fix lessonType format - ensure it's a string
+  if (emailData.lessonType && typeof emailData.lessonType === 'object' && emailData.lessonType !== null) {
+    console.log('[ADMIN-EMAIL-ENHANCED] Converting lessonType from object to string:', JSON.stringify(emailData.lessonType));
+    emailData.lessonType = emailData.lessonType.name || 'Unknown Lesson Type';
+    console.log('[ADMIN-EMAIL-ENHANCED] Converted lessonType:', emailData.lessonType);
+  }
+  
   try {
     // Try the standard email sending first
     const { sendAdminNewBooking } = await import('./email.ts');
     console.log('[ADMIN-EMAIL-ENHANCED] Using standard email function...');
     
-    const result = await sendAdminNewBooking(to, data);
+    const result = await sendAdminNewBooking(to, emailData);
     console.log('[ADMIN-EMAIL-ENHANCED] Standard email sent successfully:', result);
     return result;
   } catch (error) {

@@ -531,20 +531,39 @@ export async function sendAdminNewBooking(
     athleteNames: string[];
     sessionDate: string;
     sessionTime: string;
-    lessonType: string;
+    lessonType: string | { name: string; id: number; duration?: number; price?: number; description?: string; key?: string };
     paymentStatus: string;
     totalAmount: string;
     specialRequests?: string;
     adminPanelLink: string;
+    bookingMethod?: string;
   }
 ) {
   console.log(`[sendAdminNewBooking] Sending to: ${to}`);
-  console.log(`[sendAdminNewBooking] Data:`, JSON.stringify(data, null, 2));
+  console.log(`[sendAdminNewBooking] Original data:`, JSON.stringify(data, null, 2));
+  
+  // Create a deep copy to ensure we don't modify the original object
+  const emailData = JSON.parse(JSON.stringify(data));
+  
+  // CRITICAL FIX: Always convert lessonType to string regardless of input type
+  if (emailData.lessonType && typeof emailData.lessonType === 'object') {
+    console.log('[sendAdminNewBooking] Converting lessonType from object to string:', JSON.stringify(emailData.lessonType));
+    emailData.lessonType = emailData.lessonType.name || 'Unknown Lesson Type';
+    console.log('[sendAdminNewBooking] Converted lessonType:', emailData.lessonType);
+  } else if (typeof emailData.lessonType !== 'string') {
+    console.log('[sendAdminNewBooking] Converting non-string non-object lessonType:', emailData.lessonType);
+    emailData.lessonType = 'Unknown Lesson Type';
+  }
+
+  // Ensure lessonType is definitely a string
+  emailData.lessonType = String(emailData.lessonType);
+  
+  console.log(`[sendAdminNewBooking] Processed data:`, JSON.stringify(emailData, null, 2));
   
   return sendEmail({
     type: 'admin-new-booking',
     to,
-    data
+    data: emailData
   });
 }
 

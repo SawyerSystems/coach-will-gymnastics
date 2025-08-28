@@ -18,6 +18,17 @@ import { logger } from "./logger";
 import { isParentAuthenticated, parentAuthRouter } from "./parent-auth";
 import { passwordSetupRouter } from "./password-setup";
 import { SupabaseStorage } from "./storage";
+
+// Helper function to safely extract lesson type name
+function getLessonTypeName(lessonType: any): string {
+  if (typeof lessonType === 'string') {
+    return lessonType;
+  }
+  if (typeof lessonType === 'object' && lessonType !== null && 'name' in lessonType) {
+    return lessonType.name || 'Unknown Lesson Type';
+  }
+  return 'Unknown Lesson Type';
+}
 import { supabase, supabaseAdmin } from "./supabase-client";
 import { expandSeriesForRange } from './recurrence';
 import { timeSlotLocksRouter } from "./time-slot-locks";
@@ -415,13 +426,16 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
       
       // Check if time is in the past for today (Pacific Time)
       const now = new Date();
-      const nowPacific = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      const todayPacificISO = formatToPacificISO(nowPacific);
+      // Get current time in Pacific timezone properly
+      const nowPacificHours = parseInt(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit' }));
+      const nowPacificMinutes = parseInt(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles', minute: '2-digit' }));
+      const currentMinutesPacific = nowPacificHours * 60 + nowPacificMinutes;
+      
+      const todayPacificISO = formatToPacificISO(getTodayInPacific());
       let isPastTime = false;
       if (date === todayPacificISO) {
-        const currentMinutes = nowPacific.getHours() * 60 + nowPacific.getMinutes();
-        isPastTime = minutes <= currentMinutes + 60; // Give 1 hour buffer for bookings
-        logger.debug(`  Time check for ${timeStr}: currentMinutes=${currentMinutes}, slotMinutes=${minutes}, isPastTime=${isPastTime}`);
+        isPastTime = minutes <= currentMinutesPacific + 60; // Give 1 hour buffer for bookings
+        logger.debug(`  Time check for ${timeStr}: currentMinutesPacific=${currentMinutesPacific}, slotMinutes=${minutes}, isPastTime=${isPastTime}`);
       }
       
       // If no conflicts and not in the past, add this time
@@ -4644,7 +4658,8 @@ setTimeout(async () => {
               }) : 'Unknown Date';
               
               const sessionTime = booking.preferredTime || 'Unknown Time';
-              const lessonType = booking.lessonType || 'Unknown Lesson Type';
+              // Handle lessonType properly - extract name if it's an object, otherwise use the string value
+              const lessonType = getLessonTypeName(booking.lessonType);
               const totalAmount = booking.amount || '0';
               const specialRequests = booking.specialRequests || undefined;
               
@@ -4870,7 +4885,8 @@ setTimeout(async () => {
               }) : 'Unknown Date';
               
               const sessionTime = bookingWithRelations.preferredTime || 'Unknown Time';
-              const lessonType = bookingWithRelations.lessonType || 'Unknown Lesson Type';
+              // Handle lessonType properly - extract name if it's an object, otherwise use the string value
+              const lessonType = getLessonTypeName(bookingWithRelations.lessonType);
               const totalAmount = bookingWithRelations.amount || '0';
               const specialRequests = bookingWithRelations.specialRequests || undefined;
               const baseUrl = getBaseUrl();

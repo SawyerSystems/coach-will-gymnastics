@@ -15,7 +15,7 @@ async function testGetBookingWithRelations() {
     const { data: booking, error } = await supabase
       .from('bookings')
       .select('*')
-      .eq('id', 221)
+      .eq('id', 234)
       .single();
     
     if (error) {

@@ -9,7 +9,7 @@ interface AdminNewBookingProps {
   parentPhone?: string;
   sessionDate: string;
   sessionTime: string;
-  lessonType: string;
+  lessonType: string | { name: string; id: number; duration?: number; price?: number; description?: string; key?: string };
   athleteNames: string[];
   paymentStatus: string;
   bookingMethod: string;
@@ -164,7 +164,9 @@ export default function AdminNewBooking({
                         padding: '8px 12px', 
                         borderBottom: '1px solid #e5e7eb' 
                       }}>
-                        {lessonType}
+                        {typeof lessonType === 'object' && lessonType !== null ? 
+                          (lessonType.name || 'Unknown Lesson Type') : 
+                          (lessonType || 'Unknown Lesson Type')}
                       </td>
                     </tr>
                     <tr>
