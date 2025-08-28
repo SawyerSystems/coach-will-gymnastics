@@ -643,7 +643,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       <span className="flex items-center">
                         <Clock className="h-3 w-3 mr-1" />
                         {(() => {
-                          const d = (skill.athleteSkill.updatedAt ?? skill.athleteSkill.createdAt) as any;
+                          const d = (skill.athleteSkill.lastTestedAt ?? skill.athleteSkill.updatedAt ?? skill.athleteSkill.createdAt) as any;
                           return d ? new Date(d).toLocaleDateString() : '—';
                         })()}
                       </span>
@@ -1063,7 +1063,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
                         <CheckCircle className="h-3 w-3" />
                         Completed on {(() => {
-                          const d = (skill.athleteSkill.updatedAt ?? skill.athleteSkill.createdAt) as any;
+                          const d = (skill.athleteSkill.lastTestedAt ?? skill.athleteSkill.updatedAt ?? skill.athleteSkill.createdAt) as any;
                           return d ? new Date(d).toLocaleDateString() : 'Unknown date';
                         })()}
                       </div>
