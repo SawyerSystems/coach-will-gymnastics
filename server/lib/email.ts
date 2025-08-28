@@ -1,4 +1,6 @@
 import { Resend } from 'resend';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { PaymentStatusEnum } from '../../shared/schema';
 import { getBaseUrl } from './url';
 
@@ -134,13 +136,14 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
     console.error(`[EMAIL][${type}] Aborting send: empty 'to' address`, { dataPreview: Object.keys(data || {}) });
     return;
   }
-  
-  if (!resendApiKey) {
-    console.error('RESEND_API_KEY not found in environment variables');
+
+  const devPreviewEnabled = !resendApiKey && process.env.NODE_ENV !== 'production';
+  if (!resendApiKey && !devPreviewEnabled) {
+    console.error('RESEND_API_KEY not found in environment variables and not in dev preview mode');
     throw new Error('RESEND_API_KEY is required for sending emails');
   }
 
-  const resend = new Resend(resendApiKey);
+  const resend = resendApiKey ? new Resend(resendApiKey) : null as any;
   const template = emailTemplates[type];
   console.log(`[EMAIL][TEMPLATE] Resolved template for ${type}:`, !!template);
   
@@ -183,6 +186,21 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
   const html = await render((React as any).createElement(EmailComponent as any, componentData));
     
     // Send the email
+    if (devPreviewEnabled) {
+      try {
+        const previewDir = path.join(process.cwd(), 'data', 'email-previews');
+        await fs.mkdir(previewDir, { recursive: true });
+        const fileSafeTo = to.replace(/[^a-zA-Z0-9@._-]/g, '_');
+        const fileName = `${Date.now()}_${type}_${fileSafeTo}.html`;
+        await fs.writeFile(path.join(previewDir, fileName), html, 'utf8');
+        console.log(`[EMAIL][PREVIEW] Wrote preview to data/email-previews/${fileName}`);
+        return { simulated: true, previewFile: fileName } as any;
+      } catch (previewErr) {
+        console.error('[EMAIL][PREVIEW] Failed to write preview file', previewErr);
+        return { simulated: true, error: 'failed_to_write_preview' } as any;
+      }
+    }
+
     const result = await resend.emails.send({
       from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
       to,

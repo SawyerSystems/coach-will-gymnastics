@@ -112,11 +112,18 @@ parentAuthRouter.post('/register', [
       // Continue with registration even if email fails
     }
 
-    // Send admin notification for new parent self-registration (static import)
+    // Send admin notification for new parent self-registration BEFORE sending response
     try {
+      console.log('[PARENT-REGISTER] About to send admin notification...');
+      
       const adminEmail = process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
       const baseUrl = getBaseUrl();
-      console.log('[PARENT-REGISTER] Preparing admin new parent notification', { adminEmail, parentId: parent.id });
+      console.log('[PARENT-REGISTER] Preparing admin new parent notification', { 
+        adminEmail, 
+        parentId: parent.id, 
+        resendApiKeyPresent: !!process.env.RESEND_API_KEY 
+      });
+      
       await sendAdminNewParent(adminEmail, {
         parentId: parent.id.toString(),
         parentName: `${parent.firstName} ${parent.lastName}`.trim(),
@@ -126,9 +133,11 @@ parentAuthRouter.post('/register', [
         athletes: [],
         adminPanelLink: `${baseUrl}/admin/parents/${parent.id}`
       });
+      
       console.log(`[PARENT-REGISTER] Admin new parent notification sent for parent ${parent.id}`);
     } catch (adminNotifyErr) {
       console.error(`[PARENT-REGISTER] Failed to send admin new parent notification for parent ${parent.id}:`, adminNotifyErr);
+      // Continue with registration even if admin notification fails
     }
 
     res.status(201).json({ 
