@@ -5533,6 +5533,35 @@ setTimeout(async () => {
               } else {
                 throw new Error('Booking ID is missing when trying to link athlete');
               }
+
+              // Send admin notification for each newly created athlete (parity with /api/athletes & Stripe webhook flows)
+              try {
+                const adminEmail = process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
+                const baseUrl = getBaseUrl();
+                // Compute age if DOB present
+                let athleteAge: number | undefined;
+                if (newAthlete.dateOfBirth) {
+                  try {
+                    athleteAge = Math.floor((Date.now() - new Date(newAthlete.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+                  } catch {}
+                }
+                await sendAdminNewAthlete(adminEmail, {
+                  athleteId: newAthlete.id.toString(),
+                  athleteName: newAthlete.name || `${newAthlete.firstName || athlete.firstName} ${newAthlete.lastName || athlete.lastName}`.trim(),
+                  athleteAge,
+                  athleteGender: newAthlete.gender || undefined,
+                  athleteExperience: newAthlete.experience,
+                  parentName: `${parent.firstName} ${parent.lastName}`.trim(),
+                  parentEmail: parent.email,
+                  parentPhone: parent.phone,
+                  registrationDate: new Date().toISOString(),
+                  waiverStatus: 'pending',
+                  adminPanelLink: `${baseUrl}/admin/athletes/${newAthlete.id}`
+                });
+                console.log(`[ADMIN-BOOKING] Admin new athlete notification sent for athlete ${newAthlete.id}`);
+              } catch (adminEmailErr) {
+                console.error(`[ADMIN-BOOKING] Failed to send admin new athlete notification for athlete ${newAthlete.id}:`, adminEmailErr);
+              }
             }
           } else if (bookingData.selectedAthletes && Array.isArray(bookingData.selectedAthletes) && bookingData.selectedAthletes.length > 0) {
             // For existing athletes
@@ -11524,6 +11553,38 @@ setTimeout(async () => {
       } catch (logError) {
         console.error('🚨 CRITICAL: Failed to log parent athlete creation activity:', logError);
         console.error('🚨 Athlete ID:', athlete.id, 'Parent ID:', parentId);
+      }
+
+      // Send admin notification for new athlete created via parent portal
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
+        const baseUrl = getBaseUrl();
+        // Fetch parent details for email (ensure we have names/email)
+        let parentRecord = await storage.getParentById(parentId);
+        if (!parentRecord) {
+          console.warn(`[PARENT-ATHLETE] Parent record ${parentId} not found when sending admin new athlete email.`);
+        }
+        // Compute age
+        let athleteAge: number | undefined;
+        if (athlete.dateOfBirth) {
+          try { athleteAge = Math.floor((Date.now() - new Date(athlete.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)); } catch {}
+        }
+        await sendAdminNewAthlete(adminEmail, {
+          athleteId: athlete.id.toString(),
+          athleteName: athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || 'Unknown Athlete',
+          athleteAge,
+          athleteGender: athlete.gender || undefined,
+          athleteExperience: athlete.experience,
+          parentName: parentRecord ? `${parentRecord.firstName} ${parentRecord.lastName}`.trim() : 'Unknown Parent',
+          parentEmail: parentRecord?.email || 'unknown',
+          parentPhone: parentRecord?.phone,
+          registrationDate: new Date().toISOString(),
+          waiverStatus: waiverData ? 'signed' : 'pending',
+          adminPanelLink: `${baseUrl}/admin/athletes/${athlete.id}`
+        });
+        console.log(`[PARENT-ATHLETE] Admin new athlete notification sent for athlete ${athlete.id}`);
+      } catch (adminEmailErr) {
+        console.error(`[PARENT-ATHLETE] Failed to send admin new athlete notification for athlete ${athlete.id}:`, adminEmailErr);
       }
       
       res.status(201).json(athlete);
