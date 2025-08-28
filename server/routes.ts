@@ -10335,11 +10335,41 @@ setTimeout(async () => {
         const userAgent = req.get('User-Agent') || 'unknown';
         
         // Create waiver record
-        const waiver = await storage.createWaiver({
+        let waiver = await storage.createWaiver({
           ...parsedWaiverData,
           ipAddress,
           userAgent,
         } as any);
+
+  // --- Fallback enrichment: if name fields missing try to resolve now (defensive in case storage.createWaiver didn't attach names) ---
+  console.log('🧩 Entering waiver fallback enrichment block. Current names:', { athleteName: waiver.athleteName, signerName: waiver.signerName });
+        try {
+          const needsAthleteName = (!waiver.athleteName || waiver.athleteName === 'Unknown Athlete') && !!waiver.athleteId;
+          if (needsAthleteName) {
+            const athlete = await storage.getAthlete(waiver.athleteId!);
+            if (athlete) {
+              const resolvedAthleteName = `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || athlete.name || 'Unknown Athlete';
+              if (resolvedAthleteName && resolvedAthleteName !== 'Unknown Athlete') {
+                waiver = { ...waiver, athleteName: resolvedAthleteName };
+                console.log('🧩 Fallback resolved athleteName:', resolvedAthleteName);
+              }
+            }
+          }
+
+            const needsSignerName = (!waiver.signerName || waiver.signerName === 'Unknown Signer') && !!waiver.parentId;
+            if (needsSignerName) {
+              const parent = await storage.getParentById(waiver.parentId!);
+              if (parent) {
+                const resolvedSignerName = `${parent.firstName || ''} ${parent.lastName || ''}`.trim() || 'Unknown Signer';
+                if (resolvedSignerName && resolvedSignerName !== 'Unknown Signer') {
+                  waiver = { ...waiver, signerName: resolvedSignerName };
+                  console.log('🧩 Fallback resolved signerName:', resolvedSignerName);
+                }
+              }
+            }
+        } catch (enrichErr) {
+          console.warn('⚠️ Waiver name enrichment failed (non-fatal):', enrichErr);
+        }
       
         // Generate PDF
         let pdfPath = null;
@@ -10433,27 +10463,32 @@ setTimeout(async () => {
               const parentName = parent ? `${parent.firstName} ${parent.lastName}`.trim() : waiver.signerName || 'Unknown Parent';
               const parentEmail = parent?.email || 'No email available';
 
-              // Get athlete information to calculate age
+              // Get athlete information to calculate age and get name
               let athleteAge: number | undefined;
-              try {
-                const athlete = await storage.getAthlete(waiver.athleteId);
-                if (athlete?.dateOfBirth) {
-                  const birthDate = new Date(athlete.dateOfBirth);
-                  const today = new Date();
-                  athleteAge = today.getFullYear() - birthDate.getFullYear();
-                  const monthDiff = today.getMonth() - birthDate.getMonth();
-                  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                    athleteAge--;
+              // Prefer already enriched waiver.athleteName first
+              let athleteName = waiver.athleteName && waiver.athleteName !== 'Unknown Athlete' ? waiver.athleteName : 'Unknown Athlete';
+              if (athleteName === 'Unknown Athlete' && waiver.athleteId) {
+                try {
+                  const athlete = await storage.getAthlete(waiver.athleteId);
+                  if (athlete) {
+                    athleteName = `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || athlete.name || athleteName;
+                    if (athlete.dateOfBirth) {
+                      const birthDate = new Date(athlete.dateOfBirth);
+                      const today = new Date();
+                      athleteAge = today.getFullYear() - birthDate.getFullYear();
+                      const monthDiff = today.getMonth() - birthDate.getMonth();
+                      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) athleteAge--;
+                    }
                   }
+                } catch (err) {
+                  console.warn('Could not get athlete information (async admin notify):', err);
                 }
-              } catch (err) {
-                console.warn('Could not calculate athlete age:', err);
               }
 
               console.log('🚨 [ASYNC] About to call sendAdminWaiverSigned with data:', {
                 adminEmail,
                 waiverId: waiver.id.toString(),
-                athleteName: waiver.athleteName || 'Unknown Athlete',
+                athleteName,
                 athleteId: waiver.athleteId.toString(),
                 athleteAge,
                 parentName,
@@ -10464,7 +10499,7 @@ setTimeout(async () => {
 
               await sendAdminWaiverSigned(adminEmail, {
                 waiverId: waiver.id.toString(),
-                athleteName: waiver.athleteName || 'Unknown Athlete',
+                athleteName,
                 athleteId: waiver.athleteId.toString(),
                 athleteAge,
                 parentName,

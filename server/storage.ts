@@ -5903,10 +5903,11 @@ export class SupabaseStorage implements IStorage {
 
       console.log('📝 Inserting waiver with fields:', Object.keys(dbWaiver));
 
+      // First create the waiver without JOIN to avoid foreign key relationship issues
       const { data: insertData, error: insertError } = await supabaseAdmin
         .from('waivers')
         .insert(dbWaiver)
-        .select()
+        .select('*')
         .single();
 
       if (insertError) {
@@ -5914,7 +5915,72 @@ export class SupabaseStorage implements IStorage {
         throw new Error(`Failed to create waiver: ${insertError.message}`);
       }
 
-      const createdWaiver = this.mapWaiverFromDb(insertData);
+      console.log('💎 Waiver created successfully with ID:', insertData.id);
+      console.log('🔍 DEBUG: Full insertData response:', JSON.stringify(insertData, null, 2));
+
+      // Separately fetch athlete & parent data to get display names
+      let athleteName = 'Unknown Athlete';
+      let signerName = 'Unknown Signer';
+      const athleteId = insertData.athlete_id || waiver.athleteId;
+      const parentId = insertData.parent_id || waiver.parentId;
+      console.log('🔍 DEBUG: Checking athlete ID - insertData.athlete_id:', insertData.athlete_id, 'waiver.athleteId:', waiver.athleteId);
+      console.log('🔍 DEBUG: Checking parent ID - insertData.parent_id:', insertData.parent_id, 'waiver.parentId:', waiver.parentId);
+      console.log('🔍 DEBUG: Final athleteId value:', athleteId, 'parentId value:', parentId);
+
+      // Athlete name
+      if (athleteId) {
+        try {
+          console.log('🔍 Fetching athlete data for ID:', athleteId);
+          const { data: athleteData, error: athleteError } = await supabaseAdmin
+            .from('athletes')
+            .select('first_name, last_name')
+            .eq('id', athleteId)
+            .single();
+          if (athleteData && !athleteError) {
+            athleteName = `${athleteData.first_name} ${athleteData.last_name || ''}`.trim();
+            console.log('✅ Successfully constructed athlete name:', athleteName);
+          } else {
+            console.error('⚠️ Could not fetch athlete data:', athleteError);
+          }
+        } catch (athleteErr) {
+          console.error('❌ Exception while fetching athlete data:', athleteErr);
+        }
+      } else {
+        console.log('⚠️ No athlete ID found - insertData.athlete_id:', insertData.athlete_id, 'waiver.athleteId:', waiver.athleteId);
+      }
+
+      // Parent (signer) name
+      if (parentId) {
+        try {
+          console.log('🔍 Fetching parent data for ID:', parentId);
+          const { data: parentData, error: parentError } = await supabaseAdmin
+            .from('parents')
+            .select('first_name, last_name')
+            .eq('id', parentId)
+            .single();
+          if (parentData && !parentError) {
+            signerName = `${parentData.first_name || ''} ${parentData.last_name || ''}`.trim() || signerName;
+            console.log('✅ Successfully constructed signer (parent) name:', signerName);
+          } else {
+            console.error('⚠️ Could not fetch parent data:', parentError);
+          }
+        } catch (parentErr) {
+          console.error('❌ Exception while fetching parent data:', parentErr);
+        }
+      } else {
+        console.log('⚠️ No parent ID found - insertData.parent_id:', insertData.parent_id, 'waiver.parentId:', waiver.parentId);
+      }
+
+      console.log('🎯 Final athlete name being used:', athleteName, '| Final signer name:', signerName);
+
+      // Transform the data with names
+      const transformedData = {
+        ...insertData,
+        athlete_name: athleteName,
+        signer_name: signerName
+      };
+
+      const createdWaiver = this.mapWaiverFromDb(transformedData);
       console.log('💎 Waiver created successfully with ID:', createdWaiver.id);
 
       // ✅ AUTOMATICALLY UPDATE ATHLETE'S WAIVER_SIGNED STATUS
@@ -5947,13 +6013,26 @@ export class SupabaseStorage implements IStorage {
     if (!data) throw new Error('No data returned from waiver creation');
 
     // Map snake_case back to camelCase for return
+    let athleteName = data.athlete_name;
+    let signerName = data.signer_name;
+
+    // Attempt reconstruction if missing
+    if ((!athleteName || athleteName === 'Unknown Athlete') && data.athletes) {
+      const a = data.athletes;
+      athleteName = `${a.first_name || ''} ${a.last_name || ''}`.trim();
+    }
+    if ((!signerName || signerName === 'Unknown Signer') && data.parents) {
+      const p = data.parents;
+      signerName = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+    }
+
     return {
       id: data.id,
       bookingId: data.booking_id,
       athleteId: data.athlete_id,
       parentId: data.parent_id,
-      athleteName: data.athlete_name || 'Unknown Athlete',
-      signerName: data.signer_name || 'Unknown Signer',
+      athleteName: athleteName && athleteName.trim() ? athleteName : 'Unknown Athlete',
+      signerName: signerName && signerName.trim() ? signerName : 'Unknown Signer',
       relationshipToAthlete: data.relationship_to_athlete,
       signature: data.signature,
       emergencyContactNumber: data.emergency_contact_number,

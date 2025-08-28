@@ -823,19 +823,38 @@ export async function sendSignedWaiverConfirmation(
   const resend = new Resend(resendApiKey);
   
   try {
-    // Import the component here to avoid circular imports
-    const { SignedWaiverConfirmation } = await import('../../emails/SignedWaiverConfirmation');
-    const { render } = await import('@react-email/render');
-  // Ensure React is available in this scope for createElement
-  const React = await import('react');
-    
-    // Render the email component to HTML
-  const html = await render((React as any).createElement(SignedWaiverConfirmation as any, { 
-      parentName, 
-      athleteName 
+    // Dynamically import dependencies to avoid circular/SSR issues
+    const [{ SignedWaiverConfirmation }, { render }, React] = await Promise.all([
+      import('../../emails/SignedWaiverConfirmation'),
+      import('@react-email/render'),
+      import('react')
+    ]);
+
+    // Make React globally available (some react-email components expect global React)
+    if (!(global as any).React) {
+      (global as any).React = React as any;
+    }
+
+    // Resolve logo URL similar to generic sendEmail helper for consistent branding
+    let finalLogoUrl: string | undefined;
+    try {
+      const mod = await import('../storage');
+      const siteContent = await mod.storage.getSiteContent();
+      finalLogoUrl = siteContent?.logo?.circle || siteContent?.logo?.text || undefined;
+    } catch (e) {
+      console.warn('[SIGNED-WAIVER-EMAIL] Could not load site logo, using fallback.', e);
+    }
+    if (!finalLogoUrl) {
+      finalLogoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-logos/CWT_Circle_Logo.png';
+    }
+
+    // Render component
+    const html = await render((React as any).createElement(SignedWaiverConfirmation as any, {
+      parentName,
+      athleteName,
+      logoUrl: finalLogoUrl
     }));
-    
-    // Prepare email data
+
     const emailData: any = {
       from: 'Coach Will Tumbles <noreply@coachwilltumbles.com>',
       to,
@@ -843,17 +862,13 @@ export async function sendSignedWaiverConfirmation(
       html,
     };
 
-    // Attach PDF if provided
     if (pdfBuffer) {
-      emailData.attachments = [{
-        filename: `${athleteName}_waiver.pdf`,
-        content: pdfBuffer,
-      }];
+      emailData.attachments = [
+        { filename: `${athleteName}_waiver.pdf`, content: pdfBuffer }
+      ];
     }
-    
-    // Send the email
-    const result = await resend.emails.send(emailData);
 
+    const result = await resend.emails.send(emailData);
     console.log(`Signed waiver confirmation email sent successfully to ${to}`, result);
     return result;
   } catch (error) {
