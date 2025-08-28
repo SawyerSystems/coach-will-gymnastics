@@ -2840,9 +2840,19 @@ export class SupabaseStorage implements IStorage {
     if ((input as any).recordedAt) {
       // Convert recordedAt to Pacific timezone date
       const recordedDate = new Date((input as any).recordedAt);
-      displayDate = recordedDate.toLocaleDateString('en-CA', { 
-        timeZone: 'America/Los_Angeles' 
-      }); // en-CA gives YYYY-MM-DD format
+      
+      // Extract just the date portion to avoid timezone conversion issues
+      // If the recordedAt is already set to noon UTC (from frontend fix), this will work correctly
+      // If it's at midnight UTC, we still convert to Pacific to get the intended date
+      if (recordedDate.getUTCHours() >= 12) {
+        // If time is noon or later UTC, use the date as-is to avoid day shifts
+        displayDate = recordedDate.toISOString().split('T')[0];
+      } else {
+        // If time is before noon UTC (like midnight), convert to Pacific timezone
+        displayDate = recordedDate.toLocaleDateString('en-CA', { 
+          timeZone: 'America/Los_Angeles' 
+        }); // en-CA gives YYYY-MM-DD format
+      }
     } else {
       // Fallback to current date in Pacific timezone
       const today = new Date();

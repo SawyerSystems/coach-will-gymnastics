@@ -56,7 +56,9 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
           athleteSkillId: saved.id,
           url,
           title: videoTitle || null,
-          recordedAt: recordedAt ? new Date(recordedAt).toISOString() : new Date().toISOString(),
+          // Fix: Use noon UTC to prevent timezone shifts when server converts to Pacific
+          // Previously: new Date(recordedAt).toISOString() created midnight UTC, which shifted to previous day in Pacific
+          recordedAt: recordedAt ? `${recordedAt}T12:00:00.000Z` : new Date().toISOString(),
         });
       }
       setVideoFiles([]);
@@ -69,7 +71,9 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
           athleteSkillId: saved.id,
           url: finalUrl,
           title: videoTitle || null,
-          recordedAt: recordedAt ? new Date(recordedAt).toISOString() : new Date().toISOString(),
+          // Fix: Use noon UTC to prevent timezone shifts when server converts to Pacific
+          // Previously: new Date(recordedAt).toISOString() created midnight UTC, which shifted to previous day in Pacific
+          recordedAt: recordedAt ? `${recordedAt}T12:00:00.000Z` : new Date().toISOString(),
         });
         setVideoUrl("");
         setVideoTitle("");
