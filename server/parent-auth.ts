@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { sendEmailVerificationLink, sendParentWelcomeEmail } from './lib/email';
+import { sendEmailVerificationLink, sendParentWelcomeEmail, sendAdminNewParent } from './lib/email';
 import { getBaseUrl } from './lib/url';
 
 import * as crypto from 'crypto';
@@ -112,11 +112,12 @@ parentAuthRouter.post('/register', [
       // Continue with registration even if email fails
     }
 
-    // Send admin notification for new parent self-registration
+    // Send admin notification for new parent self-registration (static import)
     try {
       const adminEmail = process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
       const baseUrl = getBaseUrl();
-      await (await import('./lib/email')).sendAdminNewParent(adminEmail, {
+      console.log('[PARENT-REGISTER] Preparing admin new parent notification', { adminEmail, parentId: parent.id });
+      await sendAdminNewParent(adminEmail, {
         parentId: parent.id.toString(),
         parentName: `${parent.firstName} ${parent.lastName}`.trim(),
         parentEmail: parent.email,

@@ -121,11 +121,13 @@ interface SendEmailOptions<T extends EmailType> {
 }
 
 export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }: SendEmailOptions<T>) {
+  console.log(`[EMAIL][INIT] type=${type} to=${to}`);
   // Lazy-load heavy/SSR-oriented deps only when actually sending a templated email
   const [{ render }, React] = await Promise.all([
     import('@react-email/render'),
     import('react')
   ]);
+  console.log(`[EMAIL][LOADED-DEPS] type=${type}`);
   // Get Resend API key from environment
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!to) {
@@ -140,6 +142,7 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
 
   const resend = new Resend(resendApiKey);
   const template = emailTemplates[type];
+  console.log(`[EMAIL][TEMPLATE] Resolved template for ${type}:`, !!template);
   
   if (!template) {
     throw new Error(`Invalid email type: ${type}`);
@@ -173,6 +176,7 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
   try {
   // Make React available globally for email components (react-email requirement)
   (global as any).React = React as any;
+  console.log(`[EMAIL][RENDER] Rendering template for ${type}`);
     
     // Render the email component to HTML
   const EmailComponent = await template.loader();
