@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ParentModal, ParentModalSection, ParentModalGrid } from "@/components/parent-ui/ParentModal";
@@ -86,18 +86,37 @@ export function SafetyInformationDialog({
   const form = useForm<SafetyInfoData>({
     resolver: zodResolver(safetyInfoSchema),
     defaultValues: {
-      dropoffPersonName: parentInfo?.dropoffPersonName || parentInfo?.firstName + " " + parentInfo?.lastName || "",
-      dropoffPersonRelationship: parentInfo?.dropoffPersonRelationship || "Parent",
-      dropoffPersonPhone: parentInfo?.dropoffPersonPhone || parentInfo?.phone || "",
-      pickupPersonName: parentInfo?.pickupPersonName || parentInfo?.firstName + " " + parentInfo?.lastName || "",
-      pickupPersonRelationship: parentInfo?.pickupPersonRelationship || "Parent",
-      pickupPersonPhone: parentInfo?.pickupPersonPhone || parentInfo?.phone || "",
-      altPickupPersonName: parentInfo?.altPickupPersonName || "",
-      altPickupPersonRelationship: parentInfo?.altPickupPersonRelationship || "",
-      altPickupPersonPhone: parentInfo?.altPickupPersonPhone || "",
+      dropoffPersonName: "",
+      dropoffPersonRelationship: "Parent",
+      dropoffPersonPhone: "",
+      pickupPersonName: "",
+      pickupPersonRelationship: "Parent",
+      pickupPersonPhone: "",
+      altPickupPersonName: "",
+      altPickupPersonRelationship: "",
+      altPickupPersonPhone: "",
       updateCurrentBookings: false,
     },
   });
+
+  // Reset form with parent info when parentInfo changes or dialog opens
+  useEffect(() => {
+    if (open && parentInfo) {
+      const fullName = `${parentInfo.firstName || ''} ${parentInfo.lastName || ''}`.trim();
+      form.reset({
+        dropoffPersonName: parentInfo.dropoffPersonName || fullName,
+        dropoffPersonRelationship: parentInfo.dropoffPersonRelationship || "Parent",
+        dropoffPersonPhone: parentInfo.dropoffPersonPhone || parentInfo.phone || "",
+        pickupPersonName: parentInfo.pickupPersonName || fullName,
+        pickupPersonRelationship: parentInfo.pickupPersonRelationship || "Parent",
+        pickupPersonPhone: parentInfo.pickupPersonPhone || parentInfo.phone || "",
+        altPickupPersonName: parentInfo.altPickupPersonName || "",
+        altPickupPersonRelationship: parentInfo.altPickupPersonRelationship || "",
+        altPickupPersonPhone: parentInfo.altPickupPersonPhone || "",
+        updateCurrentBookings: false,
+      });
+    }
+  }, [open, parentInfo, form]);
 
   const onSubmit = async (data: SafetyInfoData) => {
     try {

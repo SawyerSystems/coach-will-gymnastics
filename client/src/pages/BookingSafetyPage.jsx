@@ -10,6 +10,7 @@ export default function BookingSafetyPage() {
   const { id } = useParams(); // Get booking ID from URL
   const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
+  const [parentInfo, setParentInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,6 +41,20 @@ export default function BookingSafetyPage() {
 
         const data = await response.json();
         setBooking(data);
+
+        // Also fetch parent information for prefilling
+        try {
+          const parentResponse = await fetch(`${API_BASE_URL}/api/parent/profile`, {
+            credentials: 'include',
+          });
+          if (parentResponse.ok) {
+            const parentData = await parentResponse.json();
+            setParentInfo(parentData);
+          }
+        } catch (parentErr) {
+          console.warn('Could not fetch parent info for prefilling:', parentErr);
+          // Continue without parent info - not critical
+        }
       } catch (err) {
         console.error('Error fetching booking:', err);
         setError(err.message);
@@ -114,7 +129,7 @@ export default function BookingSafetyPage() {
         </p>
       </div>
       
-      <BookingSafetyForm booking={booking} onSuccess={handleUpdateSuccess} />
+      <BookingSafetyForm booking={booking} parentInfo={parentInfo} onSuccess={handleUpdateSuccess} />
     </div>
   );
 }

@@ -557,6 +557,8 @@ export async function sendAdminNewBooking(
     paymentStatus: string;
     totalAmount: string;
     specialRequests?: string;
+  // Newly exposed so AdminNewBooking template can show selected focus areas
+  focusAreas?: string[];
     adminPanelLink: string;
     bookingMethod?: string;
   }

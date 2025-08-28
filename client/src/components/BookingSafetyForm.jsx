@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -11,26 +11,40 @@ import { updateBookingSafetyInfo } from '../lib/booking-safety';
  * Component for editing booking safety information
  * This can be used on the parent dashboard to update pickup/dropoff information
  */
-export function BookingSafetyForm({ booking, onSuccess }) {
+export function BookingSafetyForm({ booking, parentInfo, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    dropoffPerson: {
-      name: booking?.dropoffPersonName || '',
-      relationship: booking?.dropoffPersonRelationship || 'Parent',
-      phone: booking?.dropoffPersonPhone || '',
-    },
-    pickupPerson: {
-      name: booking?.pickupPersonName || '',
-      relationship: booking?.pickupPersonRelationship || 'Parent',
-      phone: booking?.pickupPersonPhone || '',
-    },
-    altPickupPerson: {
-      name: booking?.altPickupPersonName || '',
-      relationship: booking?.altPickupPersonRelationship || '',
-      phone: booking?.altPickupPersonPhone || '',
-    },
-    hasAltPickupPerson: !!(booking?.altPickupPersonName),
-  });
+  
+  // Helper function to get default values for safety info
+  const getDefaultSafetyValues = () => {
+    const parentFullName = parentInfo ? `${parentInfo.firstName || ''} ${parentInfo.lastName || ''}`.trim() : '';
+    const parentPhone = parentInfo?.phone || '';
+    
+    return {
+      dropoffPerson: {
+        name: booking?.dropoffPersonName || parentFullName,
+        relationship: booking?.dropoffPersonRelationship || 'Parent',
+        phone: booking?.dropoffPersonPhone || parentPhone,
+      },
+      pickupPerson: {
+        name: booking?.pickupPersonName || parentFullName,
+        relationship: booking?.pickupPersonRelationship || 'Parent',
+        phone: booking?.pickupPersonPhone || parentPhone,
+      },
+      altPickupPerson: {
+        name: booking?.altPickupPersonName || '',
+        relationship: booking?.altPickupPersonRelationship || '',
+        phone: booking?.altPickupPersonPhone || '',
+      },
+      hasAltPickupPerson: !!(booking?.altPickupPersonName),
+    };
+  };
+
+  const [formData, setFormData] = useState(getDefaultSafetyValues);
+
+  // Reset form data when booking or parentInfo changes
+  useEffect(() => {
+    setFormData(getDefaultSafetyValues());
+  }, [booking, parentInfo]);
 
   const handleInputChange = (section, field, value) => {
     setFormData(prev => ({
