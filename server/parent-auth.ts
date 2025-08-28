@@ -112,6 +112,24 @@ parentAuthRouter.post('/register', [
       // Continue with registration even if email fails
     }
 
+    // Send admin notification for new parent self-registration
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com';
+      const baseUrl = getBaseUrl();
+      await (await import('./lib/email')).sendAdminNewParent(adminEmail, {
+        parentId: parent.id.toString(),
+        parentName: `${parent.firstName} ${parent.lastName}`.trim(),
+        parentEmail: parent.email,
+        parentPhone: parent.phone,
+        registrationDate: new Date().toISOString(),
+        athletes: [],
+        adminPanelLink: `${baseUrl}/admin/parents/${parent.id}`
+      });
+      console.log(`[PARENT-REGISTER] Admin new parent notification sent for parent ${parent.id}`);
+    } catch (adminNotifyErr) {
+      console.error(`[PARENT-REGISTER] Failed to send admin new parent notification for parent ${parent.id}:`, adminNotifyErr);
+    }
+
     res.status(201).json({ 
       success: true, 
       parentId: parent.id, 
