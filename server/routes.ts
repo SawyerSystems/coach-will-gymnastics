@@ -617,6 +617,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/admin/athlete-skills/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const success = await storage.deleteAthleteSkill(id);
+      res.json({ success });
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILLS] delete error:', err);
+      res.status(500).json({ error: 'Failed to delete athlete skill' });
+    }
+  });
+
   app.post('/api/admin/athlete-skill-videos', isAdminAuthenticated, async (req, res) => {
     try {
       const created = await storage.addAthleteSkillVideo(req.body);
@@ -647,6 +658,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error('[ROUTES][ADMIN][ATHLETE-SKILL-VIDEOS] delete error:', err);
       res.status(500).json({ error: 'Failed to delete video' });
+    }
+  });
+
+  app.put('/api/admin/athlete-skill-videos/:id', isAdminAuthenticated, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updated = await storage.updateAthleteSkillVideo(id, req.body);
+      res.json(updated);
+    } catch (err) {
+      console.error('[ROUTES][ADMIN][ATHLETE-SKILL-VIDEOS] update error:', err);
+      res.status(500).json({ error: 'Failed to update video' });
     }
   });
 

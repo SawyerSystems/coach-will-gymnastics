@@ -180,9 +180,11 @@ export interface IStorage {
 
   getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>>;
   upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill>;
+  deleteAthleteSkill(id: number): Promise<boolean>;
 
   addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo>;
   listAthleteSkillVideos(athleteSkillId: number): Promise<AthleteSkillVideo[]>;
+  updateAthleteSkillVideo(id: number, input: Partial<AthleteSkillVideo>): Promise<AthleteSkillVideo>;
   deleteAthleteSkillVideo(id: number): Promise<boolean>;
 
   createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink>;
@@ -1945,8 +1947,10 @@ With the right setup and approach, home practice can accelerate your child's gym
   }
   async getAthleteSkills(athleteId: number): Promise<Array<AthleteSkill & { skill?: Skill | null }>> { return []; }
   async upsertAthleteSkill(input: InsertAthleteSkill): Promise<AthleteSkill> { return { id: Date.now(), ...input } as any; }
+  async deleteAthleteSkill(id: number): Promise<boolean> { return true; }
   async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> { return { id: Date.now(), ...input } as any; }
   async listAthleteSkillVideos(athleteSkillId: number): Promise<AthleteSkillVideo[]> { return []; }
+  async updateAthleteSkillVideo(id: number, input: Partial<AthleteSkillVideo>): Promise<AthleteSkillVideo> { return { id, ...input } as any; }
   async deleteAthleteSkillVideo(id: number): Promise<boolean> { return false; }
   async createProgressShareLink(input: InsertProgressShareLink): Promise<ProgressShareLink> { return { id: Date.now(), ...input } as any; }
   async getProgressByToken(token: string): Promise<{ athlete: Athlete | null; skills: { athleteSkill: AthleteSkill; skill?: Skill | null; videos: AthleteSkillVideo[]; }[]; link: ProgressShareLink | null; } | null> { return null; }
@@ -2834,6 +2838,40 @@ export class SupabaseStorage implements IStorage {
     return result;
   }
 
+  async deleteAthleteSkill(id: number): Promise<boolean> {
+    try {
+      // First delete all associated videos
+      const { data: videos } = await supabaseAdmin
+        .from('athlete_skill_videos')
+        .select('id')
+        .eq('athlete_skill_id', id);
+      
+      if (videos && videos.length > 0) {
+        const videoIds = videos.map(v => v.id);
+        await supabaseAdmin
+          .from('athlete_skill_videos')
+          .delete()
+          .in('id', videoIds);
+      }
+      
+      // Then delete the athlete skill
+      const { error } = await supabaseAdmin
+        .from('athlete_skills')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        console.error('[STORAGE] Delete athlete skill error:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('[STORAGE] Delete athlete skill error:', error);
+      return false;
+    }
+  }
+
   async addAthleteSkillVideo(input: InsertAthleteSkillVideo): Promise<AthleteSkillVideo> {
     // Set display_date based on recordedAt in Pacific timezone, or current date as fallback
     let displayDate: string;
@@ -2944,6 +2982,45 @@ export class SupabaseStorage implements IStorage {
       processingStatus: row.processing_status,
       processingError: row.processing_error,
     }));
+  }
+
+  async updateAthleteSkillVideo(id: number, input: Partial<AthleteSkillVideo>): Promise<AthleteSkillVideo> {
+    const updateData: any = {};
+    
+    if (input.title !== undefined) updateData.title = input.title;
+    if (input.url !== undefined) updateData.url = input.url;
+    if ((input as any).recordedAt !== undefined) updateData.recorded_at = (input as any).recordedAt;
+    
+    const { data, error } = await supabaseAdmin
+      .from('athlete_skill_videos')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .single();
+      
+    if (error) {
+      console.error('[STORAGE][ATHLETE-SKILL-VIDEOS] update error:', error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      athleteSkillId: data.athlete_skill_id,
+      url: data.url,
+      title: data.title,
+      recordedAt: data.recorded_at,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      caption: data.caption,
+      isVisible: data.is_visible,
+      isFeatured: data.is_featured,
+      displayDate: data.display_date,
+      sortIndex: data.sort_index,
+      thumbnailUrl: data.thumbnail_url,
+      optimizedUrl: data.optimized_url,
+      processingStatus: data.processing_status,
+      processingError: data.processing_error,
+    };
   }
 
   async deleteAthleteSkillVideo(id: number): Promise<boolean> {

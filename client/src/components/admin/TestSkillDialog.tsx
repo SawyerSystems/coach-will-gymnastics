@@ -1,21 +1,23 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAddAthleteSkillVideo, useAthleteSkillVideos, useUpsertAthleteSkill, useUploadMedia, useDeleteAthleteSkillVideo } from "@/hooks/useAthleteProgress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
+import { useUpsertAthleteSkill, useAddAthleteSkillVideo, useAthleteSkillVideos, useUploadMedia, useDeleteAthleteSkillVideo, useUpdateAthleteSkillVideo } from "@/hooks/useAthleteProgress";
 import type { InsertAthleteSkill, Skill } from "@shared/schema";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, FileVideo, Link, Upload, Video, Trash2, Target } from "lucide-react";
+import { Calendar, FileVideo, Link, Upload, Video, Trash2, Target, Edit, Save, X } from "lucide-react";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   athleteId: number;
   skill: Skill;
-  existing?: { athleteSkillId?: number; status?: string | null; notes?: string | null };
+  existing?: { athleteSkillId?: number; status?: string | null; notes?: string | null; lastTestedAt?: string | null };
 }
 
 export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing }: Props) {
@@ -25,12 +27,19 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
   const [videoTitle, setVideoTitle] = useState("");
   const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [recordedAt, setRecordedAt] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [lastTestedAt, setLastTestedAt] = useState<string>(
+    existing?.athleteSkillId 
+      ? (existing.lastTestedAt ? new Date(existing.lastTestedAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
+      : new Date().toISOString().slice(0, 10)
+  );
+  const [editingVideo, setEditingVideo] = useState<{ id: number; title: string; recordedAt: string } | null>(null);
   const notesRef = useRef<HTMLTextAreaElement | null>(null);
 
   const upsert = useUpsertAthleteSkill();
   const addVideo = useAddAthleteSkillVideo();
   const uploadMedia = useUploadMedia();
   const delVideo = useDeleteAthleteSkillVideo();
+  const updateVideo = useUpdateAthleteSkillVideo();
 
   // Only fetch videos if we know an athleteSkillId
   const athleteSkillId = existing?.athleteSkillId;
@@ -42,8 +51,8 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
       skillId: skill.id,
       status,
       notes,
-      lastTestedAt: new Date().toISOString() as any,
-      firstTestedAt: existing?.athleteSkillId ? undefined : (new Date().toISOString() as any),
+      lastTestedAt: lastTestedAt ? `${lastTestedAt}T12:00:00.000Z` : new Date().toISOString(),
+      firstTestedAt: existing?.athleteSkillId ? undefined : (lastTestedAt ? `${lastTestedAt}T12:00:00.000Z` : new Date().toISOString()),
     } as any;
     const saved = await upsert.mutateAsync(payload);
 
@@ -81,6 +90,34 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
     }
 
     onOpenChange(false);
+  };
+
+  const startEditingVideo = (video: any) => {
+    setEditingVideo({
+      id: video.id,
+      title: video.title || '',
+      recordedAt: video.recordedAt ? new Date(video.recordedAt).toISOString().slice(0, 10) : ''
+    });
+  };
+
+  const saveVideoEdit = async () => {
+    if (!editingVideo) return;
+    
+    try {
+      await updateVideo.mutateAsync({
+        id: editingVideo.id,
+        title: editingVideo.title || null,
+        recordedAt: editingVideo.recordedAt ? `${editingVideo.recordedAt}T12:00:00.000Z` : null
+      });
+      setEditingVideo(null);
+    } catch (error) {
+      console.error('Failed to update video:', error);
+      alert('Failed to update video. Please try again.');
+    }
+  };
+
+  const cancelVideoEdit = () => {
+    setEditingVideo(null);
   };
 
   useEffect(() => {
@@ -161,6 +198,27 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
                       {opt.label}
                     </Button>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Last Tested Date */}
+            <Card className="bg-white/60 backdrop-blur-sm border-slate-200/60 dark:bg-white/10 dark:border-white/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-[#0F0276] dark:text-white">Assessment Date</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <Label htmlFor="lastTestedAt" className="text-[#0F0276] dark:text-white font-medium">
+                    Last Tested Date
+                  </Label>
+                  <Input
+                    id="lastTestedAt"
+                    type="date"
+                    value={lastTestedAt}
+                    onChange={(e) => setLastTestedAt(e.target.value)}
+                    className="bg-white/70 border-slate-200/60 focus:border-[#0F0276] focus:ring-[#0F0276]/20 dark:bg-white/10 dark:border-white/20 dark:focus:border-white/40"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -264,34 +322,90 @@ export function TestSkillDialog({ open, onOpenChange, athleteId, skill, existing
                   <div className="space-y-3">
                     {videos.map((video) => (
                       <div key={video.id} className="p-3 rounded-lg border border-slate-200/60 dark:border-white/20 bg-white/50 dark:bg-white/5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-[#0F0276] dark:text-white text-sm">
-                              {video.title || "Untitled Clip"}
+                        {editingVideo?.id === video.id ? (
+                          // Editing mode
+                          <div className="space-y-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs font-medium text-[#0F0276] dark:text-white">Title</Label>
+                              <Input
+                                value={editingVideo.title}
+                                onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })}
+                                placeholder="Video title"
+                                className="text-sm"
+                              />
                             </div>
-                            {video.recordedAt && (
-                              <div className="text-xs text-[#0F0276]/70 dark:text-white/70 mt-1">
-                                {new Date(video.recordedAt as any).toLocaleDateString()}
-                              </div>
-                            )}
-                            <a 
-                              className="text-blue-600 dark:text-blue-400 hover:underline text-xs break-all mt-1 inline-block" 
-                              href={video.url ?? undefined} 
-                              target="_blank" 
-                              rel="noreferrer"
-                            >
-                              {video.url}
-                            </a>
+                            <div className="space-y-2">
+                              <Label className="text-xs font-medium text-[#0F0276] dark:text-white">Recorded Date</Label>
+                              <Input
+                                type="date"
+                                value={editingVideo.recordedAt}
+                                onChange={(e) => setEditingVideo({ ...editingVideo, recordedAt: e.target.value })}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={saveVideoEdit}
+                                disabled={updateVideo.isPending}
+                                className="flex items-center gap-1"
+                              >
+                                <Save className="h-3 w-3" />
+                                Save
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={cancelVideoEdit}
+                                className="flex items-center gap-1"
+                              >
+                                <X className="h-3 w-3" />
+                                Cancel
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => delVideo.mutate({ id: video.id, athleteSkillId: video.athleteSkillId ?? undefined })}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        ) : (
+                          // Display mode
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-[#0F0276] dark:text-white text-sm">
+                                {video.title || "Untitled Clip"}
+                              </div>
+                              {video.recordedAt && (
+                                <div className="text-xs text-[#0F0276]/70 dark:text-white/70 mt-1">
+                                  {new Date(video.recordedAt as any).toLocaleDateString()}
+                                </div>
+                              )}
+                              <a 
+                                className="text-blue-600 dark:text-blue-400 hover:underline text-xs break-all mt-1 inline-block" 
+                                href={video.url ?? undefined} 
+                                target="_blank" 
+                                rel="noreferrer"
+                              >
+                                {video.url}
+                              </a>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => startEditingVideo(video)}
+                                className="text-[#0F0276] hover:text-[#0F0276]/80 hover:bg-[#0F0276]/10 dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => delVideo.mutate({ id: video.id, athleteSkillId: video.athleteSkillId ?? undefined })}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

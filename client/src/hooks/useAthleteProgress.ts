@@ -38,6 +38,22 @@ export function useUpsertAthleteSkill() {
   });
 }
 
+export function useDeleteAthleteSkill() {
+  return useMutation({
+    mutationFn: async (input: { id: number; athleteId?: number }) => {
+      const res = await apiRequest("DELETE", `/api/admin/athlete-skills/${input.id}`);
+      return res.json() as Promise<{ success: boolean }>;
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.athleteId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/admin/athletes/${variables.athleteId}/skills`] });
+      }
+      // Also invalidate progress data
+      queryClient.invalidateQueries({ queryKey: ["/api/progress"], exact: false });
+    },
+  });
+}
+
 export function useAthleteSkillVideos(athleteSkillId?: number) {
   const key = athleteSkillId ? `/api/admin/athlete-skill-videos?athleteSkillId=${athleteSkillId}` : undefined;
   return useQuery<AthleteSkillVideo[]>({
@@ -58,6 +74,20 @@ export function useAddAthleteSkillVideo() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/admin/athlete-skill-videos?athleteSkillId=${data.athleteSkillId}`] });
+    },
+  });
+}
+
+export function useUpdateAthleteSkillVideo() {
+  return useMutation({
+    mutationFn: async (input: { id: number; title?: string | null; url?: string; recordedAt?: string | null }) => {
+      const res = await apiRequest("PUT", `/api/admin/athlete-skill-videos/${input.id}`, input);
+      return res.json() as Promise<AthleteSkillVideo>;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/athlete-skill-videos?athleteSkillId=${data.athleteSkillId}`] });
+      // Also invalidate progress data to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ["/api/progress"], exact: false });
     },
   });
 }

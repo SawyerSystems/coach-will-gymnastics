@@ -10,15 +10,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft, User } from 'lucide-react';
+import { AlertCircle, Award, BookOpen, Calendar, CheckCircle, Clock, Download, Filter, Play, Search, Star, Trophy, Target, TrendingUp, Eye, BarChart3, Shield, Settings, ArrowLeft, User, Edit, Trash2, MoreVertical } from 'lucide-react';
 import AddAthleteSkillDialog from '@/components/admin/AddAthleteSkillDialog';
 import { TestSkillDialog } from '@/components/admin/TestSkillDialog';
 import { VideoStack } from '@/components/progress/VideoStack';
 import { VideoGalleryModal } from '@/components/progress/VideoGalleryModal';
 import { DayVideoModal } from '@/components/progress/DayVideoModal';
 import { groupVideosByDay, getVisibleGroups, shouldShowSeeMore, formatDateLabel, getLocalDayKey, type VideoGroup } from '@/utils/videoGrouping';
+import { useDeleteAthleteSkill } from '@/hooks/useAthleteProgress';
 import type { Skill as SharedSkill } from '@shared/schema';
 
 type ProgressVideo = {
@@ -59,6 +61,33 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
   const [selectedSkillForTest, setSelectedSkillForTest] = React.useState<any>(null);
   const [showAddSkillDialog, setShowAddSkillDialog] = React.useState(false);
   
+  // Delete functionality
+  const deleteAthleteSkill = useDeleteAthleteSkill();
+  
+  const handleDeleteSkill = async (skillId: number) => {
+    if (window.confirm('Are you sure you want to delete this skill assessment? This will also delete all associated videos.')) {
+      try {
+        await deleteAthleteSkill.mutateAsync({ 
+          id: skillId, 
+          athleteId: data.athlete?.id 
+        });
+      } catch (error) {
+        console.error('Failed to delete skill:', error);
+        alert('Failed to delete skill assessment. Please try again.');
+      }
+    }
+  };
+
+  const handleEditSkill = (skill: ProgressSkill) => {
+    setTestingSkill({
+      skill: skill.skill as unknown as SharedSkill,
+      athleteSkillId: skill.athleteSkill.id,
+      status: skill.athleteSkill.status,
+      notes: skill.athleteSkill.notes,
+      lastTestedAt: skill.athleteSkill.lastTestedAt
+    });
+  };
+  
   // URL-based route protection for videos tab
   React.useEffect(() => {
     // Check if parent user is trying to access videos tab via URL hash or direct link
@@ -93,7 +122,7 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
     skillName: string;
     groups: VideoGroup[];
   }>({ isOpen: false, skillName: '', groups: [] });
-  const [testingSkill, setTestingSkill] = React.useState<{ skill: SharedSkill; athleteSkillId?: number; status?: string | null; notes?: string | null } | null>(null);
+  const [testingSkill, setTestingSkill] = React.useState<{ skill: SharedSkill; athleteSkillId?: number; status?: string | null; notes?: string | null; lastTestedAt?: string | null } | null>(null);
 
   // Typed helpers
   const isMastered = React.useCallback((s: ProgressSkill) => s.athleteSkill?.status?.toLowerCase() === 'mastered', []);
@@ -625,19 +654,50 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
                       <CardTitle className="text-lg font-bold text-[#0F0276] dark:text-white">
                         {skill.skill?.name || `Skill #${skill.athleteSkill.skillId}`}
                       </CardTitle>
-                      {skill.athleteSkill.status && (
-                        <Badge className={
-                          skill.athleteSkill.status.toLowerCase() === 'mastered' 
-                            ? 'bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300' 
-                            : skill.athleteSkill.status.toLowerCase() === 'consistent' 
-                            ? 'bg-purple-100 text-purple-800 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300'
-                            : (skill.athleteSkill.status.toLowerCase() === 'working' || skill.athleteSkill.status.toLowerCase() === 'prepping') 
-                            ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300'
-                            : 'bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300'
-                        }>
-                          {skill.athleteSkill.status.toLowerCase() === 'working' ? 'Prepping' : skill.athleteSkill.status}
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {skill.athleteSkill.status && (
+                          <Badge className={
+                            skill.athleteSkill.status.toLowerCase() === 'mastered' 
+                              ? 'bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300' 
+                              : skill.athleteSkill.status.toLowerCase() === 'consistent' 
+                              ? 'bg-purple-100 text-purple-800 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300'
+                              : (skill.athleteSkill.status.toLowerCase() === 'working' || skill.athleteSkill.status.toLowerCase() === 'prepping') 
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300'
+                              : 'bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300'
+                          }>
+                            {skill.athleteSkill.status.toLowerCase() === 'working' ? 'Prepping' : skill.athleteSkill.status}
+                          </Badge>
+                        )}
+                        {isAdmin && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-[#0F0276]/60 hover:text-[#0F0276] hover:bg-[#0F0276]/10 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem 
+                                onClick={() => handleEditSkill(skill)}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4" />
+                                Edit Assessment
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteSkill(skill.athleteSkill.id)}
+                                className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete Assessment
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center mt-2 text-xs text-[#0F0276]/70 dark:text-white/70 space-x-4">
                       <span className="flex items-center">
@@ -1261,7 +1321,12 @@ export default function ProgressView({ data, isAdmin = false }: { data: any; isA
           onOpenChange={(open) => !open && setTestingSkill(null)}
           athleteId={data.athlete.id}
           skill={testingSkill.skill}
-          existing={{ athleteSkillId: testingSkill.athleteSkillId, status: testingSkill.status, notes: testingSkill.notes }}
+          existing={{ 
+            athleteSkillId: testingSkill.athleteSkillId, 
+            status: testingSkill.status, 
+            notes: testingSkill.notes,
+            lastTestedAt: testingSkill.lastTestedAt 
+          }}
         />
       )}
     </div>
