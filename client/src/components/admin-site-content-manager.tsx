@@ -1534,6 +1534,18 @@ export function AdminSiteContentManager() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
+                        // Client-side size validation
+                        const maxSize = 500 * 1024 * 1024; // 500MB limit (Multer limit)
+                        if (file.size > maxSize) {
+                          toast({
+                            title: "File Too Large",
+                            description: `Video file is ${Math.round(file.size / 1024 / 1024)}MB. Maximum size is 500MB. Please compress your video.`,
+                            variant: "destructive",
+                          });
+                          e.target.value = ''; // Clear the input
+                          return;
+                        }
+
                         try {
                           setSaving(true);
                           toast({

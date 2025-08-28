@@ -12,7 +12,7 @@ This document outlines the requirements and limitations for the banner video upl
 - **Permissions:** Service role must have upload/read permissions
 
 #### File Size Limitations
-- **Maximum Size:** 500 MB per file
+- **Maximum Size:** 500 MB per file (limited by application, storage supports up to 1GB)
 - **Enforcement:** Both client-side validation and server-side limits
 - **Error Handling:** Provides specific error message with actual file size
 

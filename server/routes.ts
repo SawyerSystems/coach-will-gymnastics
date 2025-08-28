@@ -8764,7 +8764,7 @@ setTimeout(async () => {
           if (error.message?.includes('bucket')) {
             errorMessage = "Storage bucket 'site-media' not found. Please contact administrator.";
           } else if (error.message?.includes('size') || error.message?.includes('limit')) {
-            errorMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 500MB.`;
+            errorMessage = `File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 1GB for videos.`;
           } else if (error.message?.includes('type') || error.message?.includes('mime')) {
             errorMessage = `File type '${file.mimetype}' not allowed. Please use MP4, WebM, or MOV files.`;
           } else if ((error as any).statusCode) {
