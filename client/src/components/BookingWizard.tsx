@@ -106,16 +106,8 @@ export function BookingWizard({ onClose }: BookingWizardProps) {
       parentInfo: state.parentInfo ? { email: state.parentInfo.email } : null
     });
 
-    // CRITICAL: ParentSelectionStep should NEVER render for logged-in parents
-    if (stepName === 'parentSelection' && state.parentInfo) {
-      console.error('🚨 CRITICAL BUG: ParentSelectionStep rendering for logged-in parent!', {
-        stepName,
-        parentInfo: state.parentInfo ? { email: state.parentInfo.email } : null,
-        flowType: state.flowType,
-        currentStep: state.currentStep,
-        expectedSteps: BOOKING_FLOWS[state.flowType]
-      });
-    }
+    // NOTE: ParentSelectionStep is valid for admin-new-athlete flows even with parentInfo
+    // This can happen when admin is logged in but still needs to select a different parent
     
     switch (stepName) {
       case 'lessonType':

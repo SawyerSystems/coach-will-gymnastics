@@ -251,7 +251,17 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   console.log("ParentInfoStep state:", {
     parentId: state.parentId,
     flowType: state.flowType,
-    parentInfo: state.parentInfo
+    parentInfo: state.parentInfo,
+    selectedParent: state.selectedParent
+  });
+
+  console.log("ParentInfoStep validation debug:", {
+    firstName: state.parentInfo?.firstName,
+    lastName: state.parentInfo?.lastName,
+    email: state.parentInfo?.email,
+    phone: state.parentInfo?.phone,
+    emergencyContactName: state.parentInfo?.emergencyContactName,
+    emergencyContactPhone: state.parentInfo?.emergencyContactPhone,
   });
 
   const parentInfo = state.parentInfo || {
@@ -331,6 +341,18 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   const isValid = parentInfo.firstName && parentInfo.lastName && 
                   parentInfo.email && parentInfo.phone && 
                   parentInfo.emergencyContactName && parentInfo.emergencyContactPhone;
+                  
+  console.log("ParentInfoStep isValid check:", {
+    isValid,
+    hasFirstName: !!parentInfo.firstName,
+    hasLastName: !!parentInfo.lastName,
+    hasEmail: !!parentInfo.email,
+    hasPhone: !!parentInfo.phone,
+    hasEmergencyName: !!parentInfo.emergencyContactName,
+    hasEmergencyPhone: !!parentInfo.emergencyContactPhone,
+    emergencyContactName: parentInfo.emergencyContactName,
+    emergencyContactPhone: parentInfo.emergencyContactPhone
+  });
 
   // Show loading state when fetching data
   const isLoading = isManuallyFetchingParent || isLoadingParentForExistingAthlete || 
@@ -427,11 +449,19 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
               </div>
             </dl>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-between items-center mt-6">
+              <Button 
+                type="button" 
+                onClick={() => nextStep()}
+                className="bg-gradient-to-r from-[#0F0276] to-blue-600 hover:from-[#0F0276]/90 hover:to-blue-600/90 text-white font-semibold shadow-lg"
+              >
+                Continue
+              </Button>
               <Button 
                 type="button" 
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1 bg-[#D8BD2A] text-[#0F0276] hover:bg-[#D8BD2A]/90 border-0"
+                variant="outline"
+                className="flex items-center gap-1"
               >
                 <Edit2 className="h-4 w-4" />
                 Edit Information

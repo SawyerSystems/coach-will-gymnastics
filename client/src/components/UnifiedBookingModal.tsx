@@ -88,19 +88,7 @@ export function UnifiedBookingModal({
       parentEmail: parentData?.email
     });
 
-    // Check logged-in parent status FIRST (this was the fix)
-    if (loggedInParent) {
-      console.log('✅ FLOW: parent-portal (logged-in parent)', { hasParentData: !!parentData });
-      return 'parent-portal';
-    }
-
-    // Athlete-specific flow for admin or existing athlete selection
-    if (selectedAthletes && selectedAthletes.length > 0) {
-      console.log('✅ FLOW: athlete-modal (selected athletes)');
-      return 'athlete-modal';
-    }
-
-    // Admin flows - check adminContext to determine correct flow
+    // Admin flows should take precedence over logged-in parent status
     if (isAdmin) {
       switch (adminContext) {
         case 'existing-athlete':
@@ -114,6 +102,18 @@ export function UnifiedBookingModal({
           console.log('✅ FLOW: admin-new-athlete (admin - new athlete)');
           return 'admin-new-athlete';
       }
+    }
+
+    // Check logged-in parent status AFTER admin flows
+    if (loggedInParent) {
+      console.log('✅ FLOW: parent-portal (logged-in parent)', { hasParentData: !!parentData });
+      return 'parent-portal';
+    }
+
+    // Athlete-specific flow for admin or existing athlete selection
+    if (selectedAthletes && selectedAthletes.length > 0) {
+      console.log('✅ FLOW: athlete-modal (selected athletes)');
+      return 'athlete-modal';
     }
 
     // Default: New user flow
