@@ -1,30 +1,20 @@
-import fs from 'fs';
+import { execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Simple script to copy the icon files to the expected favicon locations
-// This is a temporary solution until proper image resizing can be implemented
+// Script to generate all favicons and icons from the main CWT_Circle_LogoSPIN.png logo
+// This script uses the generate-favicons.sh script which uses ImageMagick for proper resizing
 
-const sourceDir = path.join(__dirname, '../client/public/icons');
-const targetDir = path.join(__dirname, '../client/public/icons');
-
-// Copy icon-192.png to favicon-32x32.png and favicon-16x16.png
-// In a real implementation, these would be properly resized
-const source192 = path.join(sourceDir, 'icon-192.png');
-const favicon32 = path.join(targetDir, 'favicon-32x32.png');
-const favicon16 = path.join(targetDir, 'favicon-16x16.png');
+const scriptPath = path.join(__dirname, 'generate-favicons.sh');
 
 try {
-  if (fs.existsSync(source192)) {
-    fs.copyFileSync(source192, favicon32);
-    fs.copyFileSync(source192, favicon16);
-    console.log('Created favicon-32x32.png and favicon-16x16.png');
-  } else {
-    console.error('Source icon-192.png not found');
-  }
+  console.log('Generating favicons and icons from updated CWT_Circle_LogoSPIN.png...');
+  execSync(`bash "${scriptPath}"`, { stdio: 'inherit' });
+  console.log('✅ All favicons and icons have been updated successfully!');
 } catch (error) {
-  console.error('Error creating favicon files:', error);
+  console.error('Error generating favicon files:', error);
+  process.exit(1);
 }
