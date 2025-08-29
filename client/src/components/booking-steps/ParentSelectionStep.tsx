@@ -470,8 +470,8 @@ export function ParentSelectionStep() {
         <Card className="max-w-md mx-auto">
           <CardContent className="p-6 space-y-4">
             <div className="text-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-full w-12 h-12 mx-auto mb-2">
-                <Lock className="h-6 w-6 text-blue-600" />
+              <div className="bg-blue-100 dark:bg-blue-900/60 p-3 rounded-full w-12 h-12 mx-auto mb-2">
+                <Lock className="h-6 w-6 text-blue-600 dark:text-blue-300" />
               </div>
               <h3 className="font-semibold">Sign In</h3>
             </div>
@@ -540,12 +540,12 @@ export function ParentSelectionStep() {
 
       {/* Create New Parent Option */}
       <Card 
-        className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-500 max-w-md mx-auto"
+        className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-500 dark:hover:border-blue-400 max-w-md mx-auto"
         onClick={handleNewParent}
       >
         <CardContent className="flex items-center gap-4 p-4">
-          <div className="bg-blue-100 p-3 rounded-full">
-            <UserPlus className="h-6 w-6 text-blue-600" />
+          <div className="bg-blue-100 dark:bg-blue-900/60 p-3 rounded-full">
+            <UserPlus className="h-6 w-6 text-blue-600 dark:text-blue-300" />
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">Create New Parent</h3>
@@ -558,12 +558,12 @@ export function ParentSelectionStep() {
 
       {/* Login as Existing Parent Option */}
       <Card 
-        className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-500 max-w-md mx-auto"
+        className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-500 dark:hover:border-blue-400 max-w-md mx-auto"
         onClick={handleExistingParentLogin}
       >
         <CardContent className="flex items-center gap-4 p-4">
-          <div className="bg-green-100 p-3 rounded-full">
-            <Lock className="h-6 w-6 text-green-600" />
+          <div className="bg-green-100 dark:bg-green-900/60 p-3 rounded-full">
+            <Lock className="h-6 w-6 text-green-600 dark:text-green-300" />
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">Login as Existing Parent</h3>
@@ -614,18 +614,26 @@ export function ParentSelectionStep() {
                   key={parent.id}
                   className={`cursor-pointer hover:shadow-md transition-all border-2 ${
                     selectedParent?.id === parent.id 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'hover:border-green-500'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-400' 
+                      : 'hover:border-green-500 dark:hover:border-green-400'
                   }`}
                   onClick={() => handleSelectParent(parent)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h4 className="font-semibold text-lg">
+                        <h4 className={`font-semibold text-lg ${
+                          selectedParent?.id === parent.id 
+                            ? 'text-green-800 dark:text-green-100' 
+                            : ''
+                        }`}>
                           {parent.firstName} {parent.lastName}
                         </h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                        <div className={`flex items-center gap-4 text-sm mt-1 ${
+                          selectedParent?.id === parent.id 
+                            ? 'text-green-700 dark:text-green-200' 
+                            : 'text-muted-foreground'
+                        }`}>
                           {parent.email && (
                             <div className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />
@@ -640,14 +648,18 @@ export function ParentSelectionStep() {
                           )}
                         </div>
                         {parent.createdAt && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className={`text-xs mt-1 ${
+                            selectedParent?.id === parent.id 
+                              ? 'text-green-600 dark:text-green-300' 
+                              : 'text-muted-foreground'
+                          }`}>
                             Member since: {new Date(parent.createdAt).toLocaleDateString()}
                           </p>
                         )}
                       </div>
                       {selectedParent?.id === parent.id && (
-                        <div className="bg-green-100 p-2 rounded-full">
-                          <Users className="h-4 w-4 text-green-600" />
+                        <div className="bg-green-100 dark:bg-green-800/60 p-2 rounded-full">
+                          <Users className="h-4 w-4 text-green-600 dark:text-green-300" />
                         </div>
                       )}
                     </div>
