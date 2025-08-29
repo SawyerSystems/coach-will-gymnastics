@@ -1,6 +1,7 @@
 import { Html, Head, Preview, Body, Container, Section, Row, Column, Heading, Text, Link, Hr } from '@react-email/components';
 import { EmailHeader } from './components/EmailHeader';
 import { EmailFooter } from './components/EmailFooter';
+import { formatAthleteList } from './utils/athleteNameFormatters';
 
 interface AdminBookingRescheduleProps {
   bookingId: string;
@@ -165,7 +166,7 @@ export default function AdminBookingReschedule({
                         padding: '8px 12px', 
                         borderBottom: '1px solid #e5e7eb' 
                       }}>
-                        {athleteNames.length > 0 ? athleteNames.join(', ') : 'Not specified'}
+                        {formatAthleteList(athleteNames)}
                       </td>
                     </tr>
                   </tbody>

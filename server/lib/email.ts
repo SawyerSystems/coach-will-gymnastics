@@ -397,7 +397,7 @@ export async function sendSessionCancellationIfNeeded(bookingId: number, storage
     const sessionData = {
       sessionDate: booking.preferredDate,
       sessionTime: booking.preferredTime,
-      athleteNames: booking.athletes?.map((athlete: any) => athlete.firstName || athlete.name) || [],
+      athleteNames: booking.athletes?.map((athlete: any) => athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || 'Unnamed Athlete') || [],
       lessonType: booking.lessonType?.name
     };
     
@@ -1083,7 +1083,7 @@ async function sendCompletedSessionEmail(bookingId: number, storage: EmailStorag
     // Get athlete name
     let athleteName = 'Athlete';
     if (booking.athletes && booking.athletes.length > 0) {
-      athleteName = booking.athletes[0].firstName || booking.athletes[0].name || 'Athlete';
+      athleteName = booking.athletes[0].name || `${booking.athletes[0].firstName || ''} ${booking.athletes[0].lastName || ''}`.trim() || 'Athlete';
     } else if (booking.athlete1Name) {
       athleteName = booking.athlete1Name;
     }
@@ -1126,7 +1126,7 @@ async function sendNoShowSessionEmail(bookingId: number, storage: EmailStorage, 
     const sessionData = {
       sessionDate: booking.preferredDate,
       sessionTime: booking.preferredTime,
-      athleteNames: booking.athletes?.map((athlete: any) => athlete.firstName || athlete.name) || [],
+      athleteNames: booking.athletes?.map((athlete: any) => athlete.name || `${athlete.firstName || ''} ${athlete.lastName || ''}`.trim() || 'Unnamed Athlete') || [],
       lessonType: booking.lessonType?.name
     };
     

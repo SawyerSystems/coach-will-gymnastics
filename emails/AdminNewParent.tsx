@@ -1,6 +1,7 @@
 import { Html, Head, Preview, Body, Container, Section, Row, Column, Heading, Text, Link, Hr } from '@react-email/components';
 import { EmailHeader } from './components/EmailHeader';
 import { EmailFooter } from './components/EmailFooter';
+import { formatAthleteList } from './utils/athleteNameFormatters';
 
 interface AdminNewParentProps {
   parentId: string;

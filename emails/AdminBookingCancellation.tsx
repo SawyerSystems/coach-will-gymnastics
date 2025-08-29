@@ -1,6 +1,7 @@
 import { Html, Head, Preview, Body, Container, Section, Row, Column, Heading, Text, Link, Hr } from '@react-email/components';
 import { EmailHeader } from './components/EmailHeader';
 import { EmailFooter } from './components/EmailFooter';
+import { formatAthleteList } from './utils/athleteNameFormatters';
 
 interface AdminBookingCancellationProps {
   bookingId: string;
@@ -143,7 +144,7 @@ export default function AdminBookingCancellation({
                 </Column>
                 <Column style={valueColumn}>
                   <Text style={value}>
-                    {athleteNames.length > 0 ? athleteNames.join(', ') : 'Not specified'}
+                    {formatAthleteList(athleteNames)}
                   </Text>
                 </Column>
               </Row>
