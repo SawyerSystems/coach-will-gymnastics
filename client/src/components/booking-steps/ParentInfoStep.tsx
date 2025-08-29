@@ -48,21 +48,91 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   const setParentInfoFromData = (parentData: ParentData | null | undefined): boolean => {
     if (!parentData || !parentData.id) return false;
     
+    console.log("🔍 DEBUG: Raw parent data received:", parentData);
+    
+    // Extract all possible emergency contact fields for comprehensive debugging
+    const allEmergencyFields = {
+      camelCase: {
+        emergencyContactName: parentData.emergencyContactName,
+        emergencyContactPhone: parentData.emergencyContactPhone,
+      },
+      snakeCase: {
+        emergency_contact_name: (parentData as any).emergency_contact_name,
+        emergency_contact_phone: (parentData as any).emergency_contact_phone
+      },
+      existingParentInfo: state.parentInfo ? {
+        emergencyContactName: state.parentInfo.emergencyContactName,
+        emergencyContactPhone: state.parentInfo.emergencyContactPhone
+      } : null,
+      existingSelectedParent: state.selectedParent ? {
+        emergencyContactName: state.selectedParent.emergencyContactName,
+        emergencyContactPhone: state.selectedParent.emergencyContactPhone,
+        emergency_contact_name: (state.selectedParent as any).emergency_contact_name,
+        emergency_contact_phone: (state.selectedParent as any).emergency_contact_phone
+      } : null
+    };
+    
+    console.log("🔍 COMPREHENSIVE EMERGENCY CONTACT ANALYSIS:", allEmergencyFields);
+    
     try {
       setIsEditing(false);
+      
+      // Get emergency contact info from ALL possible sources with proper fallbacks
+      let emergencyContactName = 
+        parentData.emergencyContactName || 
+        (parentData as any).emergency_contact_name || 
+        (state.parentInfo?.emergencyContactName) || 
+        (state.selectedParent?.emergencyContactName) || 
+        (state.selectedParent as any)?.emergency_contact_name;
+      
+      let emergencyContactPhone = 
+        parentData.emergencyContactPhone || 
+        (parentData as any).emergency_contact_phone || 
+        (state.parentInfo?.emergencyContactPhone) || 
+        (state.selectedParent?.emergencyContactPhone) || 
+        (state.selectedParent as any)?.emergency_contact_phone;
+        
+      // Default values - using actual values that convey requirement rather than "Not Provided"
+      if (!emergencyContactName || emergencyContactName === 'Not Provided') {
+        emergencyContactName = 'Emergency Contact Required';
+      }
+      
+      if (!emergencyContactPhone || emergencyContactPhone === 'Not Provided') {
+        emergencyContactPhone = 'Emergency Phone Required';
+      }
+      
+      console.log("🔍 RESOLVED EMERGENCY CONTACT VALUES:", {
+        emergencyContactName,
+        emergencyContactPhone,
+        source: emergencyContactName === parentData.emergencyContactName ? 'parentData.camelCase' :
+                emergencyContactName === (parentData as any).emergency_contact_name ? 'parentData.snakeCase' :
+                emergencyContactName === state.parentInfo?.emergencyContactName ? 'state.parentInfo' :
+                emergencyContactName === state.selectedParent?.emergencyContactName ? 'state.selectedParent.camelCase' :
+                emergencyContactName === (state.selectedParent as any)?.emergency_contact_name ? 'state.selectedParent.snakeCase' :
+                'fallback'
+      });
+      
+      // Create enhanced parent data with guaranteed emergency contact fields in both formats
+      const enhancedParentData = {
+        ...parentData,
+        emergencyContactName,
+        emergencyContactPhone,
+        emergency_contact_name: emergencyContactName, // Add snake_case version too
+        emergency_contact_phone: emergencyContactPhone // Add snake_case version too
+      };
       
       // Consolidate all parent-related state in a single update to maintain consistency
       updateState({
         parentId: parentData.id,
         // Always set selectedParent to ensure it's available in the payment step
-        selectedParent: parentData,
+        selectedParent: enhancedParentData,
         parentInfo: {
-          firstName: parentData.firstName || '',
-          lastName: parentData.lastName || '',
-          email: parentData.email || '',
-          phone: parentData.phone || '',
-          emergencyContactName: parentData.emergencyContactName || '',
-          emergencyContactPhone: parentData.emergencyContactPhone || ''
+          firstName: parentData.firstName || (state.parentInfo?.firstName || ''),
+          lastName: parentData.lastName || (state.parentInfo?.lastName || ''),
+          email: parentData.email || (state.parentInfo?.email || ''),
+          phone: parentData.phone || (state.parentInfo?.phone || ''),
+          emergencyContactName,
+          emergencyContactPhone
         }
       });
       
@@ -111,7 +181,7 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   
   // Debug logging
   useEffect(() => {
-    console.log("ParentInfoStep data status:", { 
+    console.log("🔍 ParentInfoStep data status:", { 
       flowType: state.flowType,
       currentStepName,
       isAdminExistingAthlete,
@@ -125,19 +195,37 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
       isLoadingDirectAthlete,
       isLoadingParentForOtherFlows,
       parentInfo: state.parentInfo,
-      isEditing
+      isEditing,
+      // NEW DEBUG: Emergency contact specific
+      hasSelectedParent: !!state.selectedParent,
+      selectedParentEmergencyInfo: state.selectedParent ? {
+        emergencyContactName: state.selectedParent.emergencyContactName,
+        emergencyContactPhone: state.selectedParent.emergencyContactPhone,
+        emergency_contact_name: (state.selectedParent as any).emergency_contact_name,
+        emergency_contact_phone: (state.selectedParent as any).emergency_contact_phone
+      } : null,
+      stateParentInfoEmergency: state.parentInfo ? {
+        emergencyContactName: state.parentInfo.emergencyContactName,
+        emergencyContactPhone: state.parentInfo.emergencyContactPhone
+      } : null
     });
   }, [
     state.flowType, currentStepName, isAdminExistingAthlete, hasSelectedAthletes, state.selectedAthletes,
     selectedAthlete, parentDataForExistingAthlete, parentDataForOtherFlows, isLoadingAthletes, 
     isLoadingParentForExistingAthlete, isLoadingDirectAthlete, isLoadingParentForOtherFlows,
-    state.parentInfo, isEditing
+    state.parentInfo, isEditing, state.selectedParent
   ]);
   
   // For admin-existing-athlete flow: set parent info when data is available
   useEffect(() => {
     if (isAdminExistingAthlete && parentDataForExistingAthlete && !state.parentInfo) {
-      console.log("Setting parent info for admin-existing-athlete flow:", parentDataForExistingAthlete);
+      console.log("🔍 ADMIN EXISTING ATHLETE: Setting parent info from fetched data:", {
+        parentData: parentDataForExistingAthlete,
+        emergencyContactName: parentDataForExistingAthlete.emergencyContactName,
+        emergencyContactPhone: parentDataForExistingAthlete.emergencyContactPhone,
+        emergency_contact_name: (parentDataForExistingAthlete as any).emergency_contact_name,
+        emergency_contact_phone: (parentDataForExistingAthlete as any).emergency_contact_phone
+      });
       setParentInfoFromData(parentDataForExistingAthlete);
       
       // Also set the selectedParent to ensure it's available for the payment step
@@ -150,7 +238,13 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   // For other admin flows: set parent info when data is available
   useEffect(() => {
     if (isOtherAdminFlow && parentDataForOtherFlows && !state.parentInfo) {
-      console.log("Setting parent info for other admin flows:", parentDataForOtherFlows);
+      console.log("🔍 OTHER ADMIN FLOWS: Setting parent info from fetched data:", {
+        parentData: parentDataForOtherFlows,
+        emergencyContactName: parentDataForOtherFlows.emergencyContactName,
+        emergencyContactPhone: parentDataForOtherFlows.emergencyContactPhone,
+        emergency_contact_name: (parentDataForOtherFlows as any).emergency_contact_name,
+        emergency_contact_phone: (parentDataForOtherFlows as any).emergency_contact_phone
+      });
       setParentInfoFromData(parentDataForOtherFlows);
       
       // Also set the selectedParent to ensure it's available for the payment step
@@ -160,11 +254,36 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     }
   }, [isOtherAdminFlow, parentDataForOtherFlows, state.parentInfo]);
   
-  // For admin-new-athlete flow: check if we already have parent info from the parent selection step
+  // For admin-new-athlete flow: handle parent info from the parent selection step
   useEffect(() => {
-    if (state.flowType === 'admin-new-athlete' && state.selectedParent && state.parentId && !state.parentInfo) {
-      console.log("Using selected parent from previous step:", state.selectedParent);
-      setParentInfoFromData(state.selectedParent);
+    if (state.flowType === 'admin-new-athlete' && state.selectedParent && state.parentId) {
+      console.log("🔍 ADMIN NEW ATHLETE: Examining selected parent from previous step:", {
+        selectedParent: state.selectedParent,
+        camelCase: {
+          emergencyContactName: state.selectedParent.emergencyContactName,
+          emergencyContactPhone: state.selectedParent.emergencyContactPhone
+        },
+        snakeCase: {
+          emergency_contact_name: (state.selectedParent as any).emergency_contact_name,
+          emergency_contact_phone: (state.selectedParent as any).emergency_contact_phone
+        },
+        currentParentInfo: state.parentInfo ? {
+          emergencyContactName: state.parentInfo.emergencyContactName,
+          emergencyContactPhone: state.parentInfo.emergencyContactPhone
+        } : null
+      });
+      
+      // Always check if emergency contact is properly set - both in parent info and selected parent
+      const hasCompleteEmergencyInfo = state.parentInfo && 
+        state.parentInfo.emergencyContactName && state.parentInfo.emergencyContactPhone &&
+        state.selectedParent.emergencyContactName && state.selectedParent.emergencyContactPhone;
+        
+      if (!hasCompleteEmergencyInfo) {
+        console.log("🔍 ADMIN NEW ATHLETE: Emergency contact info needs update. Calling setParentInfoFromData.");
+        setParentInfoFromData(state.selectedParent);
+      } else {
+        console.log("🔍 ADMIN NEW ATHLETE: Emergency contact info already complete in both parentInfo and selectedParent.");
+      }
     }
   }, [state.flowType, state.selectedParent, state.parentId, state.parentInfo]);
   
@@ -215,7 +334,14 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
         !state.parentInfo.email;
       
       if (needsToPopulate) {
-        console.log("Populating parent info from selectedParent:", state.selectedParent);
+        console.log("🔍 SELECTED PARENT HANDLER: Populating parent info from selectedParent:", {
+          selectedParent: state.selectedParent,
+          currentParentInfo: state.parentInfo,
+          emergencyContactName: state.selectedParent.emergencyContactName,
+          emergencyContactPhone: state.selectedParent.emergencyContactPhone,
+          emergency_contact_name: (state.selectedParent as any).emergency_contact_name,
+          emergency_contact_phone: (state.selectedParent as any).emergency_contact_phone
+        });
         setParentInfoFromData(state.selectedParent);
         setIsEditing(false);
       }
@@ -224,20 +350,31 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
   
   // Make sure parent info is properly initialized when the component mounts
   useEffect(() => {
-    // If we have a selectedParent but no parentInfo, initialize it
-    if (state.selectedParent && !state.parentInfo) {
-      console.log("Initializing parent info from selectedParent on mount:", state.selectedParent);
+    // Check for emergency contact info completeness
+    const emergencyInfoIncomplete = state.parentInfo && (
+      !state.parentInfo.emergencyContactName || !state.parentInfo.emergencyContactPhone
+    );
+    
+    const selectedParentHasEmergencyInfo = state.selectedParent && (
+      (state.selectedParent.emergencyContactName && state.selectedParent.emergencyContactPhone) ||
+      ((state.selectedParent as any).emergency_contact_name && (state.selectedParent as any).emergency_contact_phone)
+    );
+    
+    // If we have a selectedParent, ensure we've extracted all info from it
+    if (state.selectedParent && (!state.parentInfo || emergencyInfoIncomplete)) {
+      console.log("Initializing or updating parent info from selectedParent on mount:", state.selectedParent);
       setParentInfoFromData(state.selectedParent);
     }
-    // If we have parentId but no parentInfo, try to fetch the parent
-    else if (state.parentId && !state.parentInfo && !isManuallyFetchingParent) {
-      console.log("Fetching parent info for ID on mount:", state.parentId);
+    // If we have parentId but missing info, fetch the parent
+    else if (state.parentId && (!state.parentInfo || emergencyInfoIncomplete) && !isManuallyFetchingParent) {
+      console.log("Fetching complete parent info for ID on mount:", state.parentId);
       setIsManuallyFetchingParent(true);
       
       apiRequest('GET', `/api/parents/${state.parentId}`)
         .then((response: Response) => response.json())
         .then((parentData: any) => {
           if (parentData && parentData.id) {
+            console.log("Fetched parent data from API:", parentData);
             setParentInfoFromData(parentData);
           }
         })
@@ -245,6 +382,20 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
           console.error("Error fetching parent data on mount:", error);
         })
         .finally(() => setIsManuallyFetchingParent(false));
+    }
+    // If we have parentInfo but selectedParent is missing emergency contact info, sync them
+    else if (state.parentInfo?.emergencyContactName && state.parentInfo?.emergencyContactPhone &&
+             state.selectedParent && !selectedParentHasEmergencyInfo) {
+      console.log("Syncing emergency contact from parentInfo to selectedParent");
+      updateState({
+        selectedParent: {
+          ...state.selectedParent,
+          emergencyContactName: state.parentInfo.emergencyContactName,
+          emergencyContactPhone: state.parentInfo.emergencyContactPhone,
+          emergency_contact_name: state.parentInfo.emergencyContactName,
+          emergency_contact_phone: state.parentInfo.emergencyContactPhone
+        }
+      });
     }
   }, []);
   
@@ -338,9 +489,49 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     }
   };
 
-  const isValid = parentInfo.firstName && parentInfo.lastName && 
-                  parentInfo.email && parentInfo.phone && 
-                  parentInfo.emergencyContactName && parentInfo.emergencyContactPhone;
+  // Thorough validation that checks for emergency contact info in all possible locations
+  const getEmergencyName = () => {
+    let name = parentInfo.emergencyContactName;
+    
+    if (!name && state.selectedParent) {
+      name = state.selectedParent.emergencyContactName || (state.selectedParent as any).emergency_contact_name;
+    }
+    
+    return name;
+  };
+  
+  const getEmergencyPhone = () => {
+    let phone = parentInfo.emergencyContactPhone;
+    
+    if (!phone && state.selectedParent) {
+      phone = state.selectedParent.emergencyContactPhone || (state.selectedParent as any).emergency_contact_phone;
+    }
+    
+    return phone;
+  };
+  
+  // Check if emergency contact exists AND is not a placeholder
+  const emergencyName = getEmergencyName();
+  const emergencyPhone = getEmergencyPhone();
+  
+  const validEmergencyName = 
+    emergencyName && 
+    emergencyName !== 'Not Provided' && 
+    emergencyName !== 'Not provided' &&
+    emergencyName !== 'Emergency Contact Required';
+    
+  const validEmergencyPhone = 
+    emergencyPhone && 
+    emergencyPhone !== 'Not Provided' && 
+    emergencyPhone !== 'Not provided' &&
+    emergencyPhone !== 'Emergency Phone Required';
+    
+  const isValid = parentInfo.firstName && 
+                  parentInfo.lastName && 
+                  parentInfo.email && 
+                  parentInfo.phone && 
+                  validEmergencyName && 
+                  validEmergencyPhone;
                   
   console.log("ParentInfoStep isValid check:", {
     isValid,
@@ -348,10 +539,25 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
     hasLastName: !!parentInfo.lastName,
     hasEmail: !!parentInfo.email,
     hasPhone: !!parentInfo.phone,
-    hasEmergencyName: !!parentInfo.emergencyContactName,
-    hasEmergencyPhone: !!parentInfo.emergencyContactPhone,
-    emergencyContactName: parentInfo.emergencyContactName,
-    emergencyContactPhone: parentInfo.emergencyContactPhone
+    emergencyName,
+    emergencyPhone,
+    validEmergencyName,
+    validEmergencyPhone,
+    parentInfo: {
+      emergencyContactName: parentInfo.emergencyContactName,
+      emergencyContactPhone: parentInfo.emergencyContactPhone
+    },
+    selectedParent: state.selectedParent ? {
+      camelCase: {
+        emergencyContactName: state.selectedParent.emergencyContactName,
+        emergencyContactPhone: state.selectedParent.emergencyContactPhone
+      },
+      snakeCase: {
+        emergency_contact_name: (state.selectedParent as any).emergency_contact_name,
+        emergency_contact_phone: (state.selectedParent as any).emergency_contact_phone
+      }
+    } : null,
+    flowType: state.flowType
   });
 
   // Show loading state when fetching data
@@ -441,11 +647,39 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
               </div>
               <div>
                 <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Emergency Contact</dt>
-                <dd>{parentInfo.emergencyContactName}</dd>
+                <dd>{(() => {
+                  // Extract emergency contact from all possible sources
+                  let contactName = parentInfo.emergencyContactName;
+                  
+                  if (!contactName && state.selectedParent) {
+                    contactName = state.selectedParent.emergencyContactName || (state.selectedParent as any).emergency_contact_name;
+                  }
+                  
+                  // If it's a placeholder or missing, render edit button text instead
+                  if (!contactName || contactName === 'Not Provided' || contactName === 'Not provided' || contactName === 'Emergency Contact Required') {
+                    return <span className="text-amber-600 font-semibold">Please click "Edit Information" to add →</span>;
+                  }
+                  
+                  return contactName;
+                })()}</dd>
               </div>
               <div>
                 <dt className="font-semibold text-gray-500 dark:text-[#D8BD2A]">Emergency Phone</dt>
-                <dd>{parentInfo.emergencyContactPhone}</dd>
+                <dd>{(() => {
+                  // Extract emergency phone from all possible sources
+                  let contactPhone = parentInfo.emergencyContactPhone;
+                  
+                  if (!contactPhone && state.selectedParent) {
+                    contactPhone = state.selectedParent.emergencyContactPhone || (state.selectedParent as any).emergency_contact_phone;
+                  }
+                  
+                  // If it's a placeholder or missing, render edit button text instead
+                  if (!contactPhone || contactPhone === 'Not Provided' || contactPhone === 'Not provided' || contactPhone === 'Emergency Phone Required') {
+                    return <span className="text-amber-600 font-semibold">Please click "Edit Information" to add →</span>;
+                  }
+                  
+                  return contactPhone;
+                })()}</dd>
               </div>
             </dl>
 
@@ -457,15 +691,42 @@ export function ParentInfoStep({ isPrefilled = false }: ParentInfoStepProps) {
               >
                 Continue
               </Button>
-              <Button 
-                type="button" 
-                onClick={() => setIsEditing(true)}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <Edit2 className="h-4 w-4" />
-                Edit Information
-              </Button>
+              {(() => {
+                // Check if emergency contact info is missing or placeholder
+                const missingEmergencyInfo = 
+                  !parentInfo.emergencyContactName || 
+                  !parentInfo.emergencyContactPhone || 
+                  parentInfo.emergencyContactName === 'Not Provided' || 
+                  parentInfo.emergencyContactPhone === 'Not Provided' ||
+                  parentInfo.emergencyContactName === 'Emergency Contact Required' || 
+                  parentInfo.emergencyContactPhone === 'Emergency Phone Required';
+                
+                if (missingEmergencyInfo) {
+                  return (
+                    <Button 
+                      type="button" 
+                      onClick={() => setIsEditing(true)}
+                      variant="default"
+                      className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Add Emergency Contact
+                    </Button>
+                  );
+                }
+                
+                return (
+                  <Button 
+                    type="button" 
+                    onClick={() => setIsEditing(true)}
+                    variant="outline"
+                    className="flex items-center gap-1"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    Edit Information
+                  </Button>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>

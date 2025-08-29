@@ -68,27 +68,46 @@ export function ParentSelectionStep() {
       
       const response = await apiRequest('GET', `/api/parents?${params.toString()}`);
       const data = await response.json();
+      
+      // Debug the API response format
+      if (data.parents && data.parents.length > 0) {
+        console.log("Parent API response format sample:", {
+          firstParent: data.parents[0],
+          hasEmergencyContactName: 'emergency_contact_name' in data.parents[0],
+          emergencyContactName: data.parents[0].emergency_contact_name,
+          emergencyContactPhone: data.parents[0].emergency_contact_phone,
+        });
+      }
+      
       return data.parents || [];
     },
     enabled: !showCreateForm, // Don't fetch when showing create form
   });
 
   // Convert API response to Parent type with proper field mapping
-  const parents: Parent[] = (parentsResponse || []).map((apiParent) => ({
-    id: apiParent.id,
-    firstName: apiParent.first_name || "",
-    lastName: apiParent.last_name || "",
-    email: apiParent.email,
-    phone: apiParent.phone || "",
-    passwordHash: apiParent.password_hash || "",
-    emergencyContactName: apiParent.emergency_contact_name || "",
-    emergencyContactPhone: apiParent.emergency_contact_phone || "",
-    isVerified: apiParent.is_verified || false,
-    blogEmails: apiParent.blog_emails || false,
-    lastLoginAt: apiParent.last_login_at ? new Date(apiParent.last_login_at) : null,
-    createdAt: apiParent.created_at ? new Date(apiParent.created_at) : null,
-    updatedAt: apiParent.updated_at ? new Date(apiParent.updated_at) : null,
-  }));
+  const parents: Parent[] = (parentsResponse || []).map((apiParent) => {
+    // Debug emergency contact fields in the API response
+    console.log(`Processing parent ${apiParent.id}: ${apiParent.first_name} ${apiParent.last_name}`, {
+      emergency_contact_name: apiParent.emergency_contact_name,
+      emergency_contact_phone: apiParent.emergency_contact_phone,
+    });
+    
+    return {
+      id: apiParent.id,
+      firstName: apiParent.first_name || "",
+      lastName: apiParent.last_name || "",
+      email: apiParent.email,
+      phone: apiParent.phone || "",
+      passwordHash: apiParent.password_hash || "",
+      emergencyContactName: apiParent.emergency_contact_name || "",
+      emergencyContactPhone: apiParent.emergency_contact_phone || "",
+      isVerified: apiParent.is_verified || false,
+      blogEmails: apiParent.blog_emails || false,
+      lastLoginAt: apiParent.last_login_at ? new Date(apiParent.last_login_at) : null,
+      createdAt: apiParent.created_at ? new Date(apiParent.created_at) : null,
+      updatedAt: apiParent.updated_at ? new Date(apiParent.updated_at) : null,
+    };
+  });
 
   const handleBackToSelection = () => {
     setShowCreateForm(false);
@@ -112,17 +131,35 @@ export function ParentSelectionStep() {
 
     setIsCreatingParent(true);
     try {
+      // Validate emergency contact info
+      const emergencyContactName = newParentForm.emergencyContactName?.trim();
+      const emergencyContactPhone = newParentForm.emergencyContactPhone?.trim();
+      
+      if (!emergencyContactName || !emergencyContactPhone) {
+        console.error("Missing emergency contact information!");
+        console.log("Emergency contact data:", {
+          name: emergencyContactName,
+          phone: emergencyContactPhone,
+          formData: newParentForm
+        });
+      }
+      
       // Prepare data for API call - match InsertParent schema requirements
+      const emergencyName = emergencyContactName || 'Emergency Contact Required';
+      const emergencyPhone = emergencyContactPhone || 'Emergency Phone Required';
+
       const parentData = {
         firstName: newParentForm.firstName.trim(),
         lastName: newParentForm.lastName.trim(),
         email: newParentForm.email.trim(),
         phone: newParentForm.phone.trim(),
-        emergencyContactName: (newParentForm.emergencyContactName || 'Not Provided').trim(),
-        emergencyContactPhone: (newParentForm.emergencyContactPhone || 'Not Provided').trim(),
+        emergencyContactName: emergencyName,
+        emergencyContactPhone: emergencyPhone,
         passwordHash: '', // Will be set by backend if needed
         isVerified: false,
       };
+      
+      console.log("Creating parent with data:", parentData);
 
       const response = await apiRequest('POST', '/api/parents', {
         body: JSON.stringify(parentData),
@@ -133,23 +170,63 @@ export function ParentSelectionStep() {
 
       if (response.ok) {
         const createdParent = await response.json();
+        console.log("API response for created parent:", createdParent);
+        
+        // Check for camel case vs snake case format in the server response
+        const responseEmergencyName = createdParent.emergencyContactName || createdParent.emergency_contact_name;
+        const responseEmergencyPhone = createdParent.emergencyContactPhone || createdParent.emergency_contact_phone;
+        
+        // Log the emergency contact info from all possible sources
+        console.log("Emergency contact info analysis:", {
+          fromCreatedParent: {
+            camelCase: {
+              emergencyContactName: createdParent.emergencyContactName,
+              emergencyContactPhone: createdParent.emergencyContactPhone,
+            },
+            snakeCase: {
+              emergency_contact_name: createdParent.emergency_contact_name,
+              emergency_contact_phone: createdParent.emergency_contact_phone,
+            }
+          },
+          fromForm: {
+            emergencyContactName: newParentForm.emergencyContactName,
+            emergencyContactPhone: newParentForm.emergencyContactPhone,
+          }
+        });
+        
+        // Use form data as backup if not provided in response
+        // IMPORTANT: Never use 'Not Provided' as this causes issues in the next steps
+        const emergencyContactName = responseEmergencyName || newParentForm.emergencyContactName || 'Emergency Contact Required';
+        const emergencyContactPhone = responseEmergencyPhone || newParentForm.emergencyContactPhone || 'Emergency Phone Required';
+        
+        console.log("Final emergency contact values:", { emergencyContactName, emergencyContactPhone });
+        
+        // Create a properly formatted parent object
         const newParent: Parent = {
           id: createdParent.id,
-          firstName: createdParent.firstName || newParentForm.firstName,
-          lastName: createdParent.lastName || newParentForm.lastName,
+          firstName: createdParent.firstName || createdParent.first_name || newParentForm.firstName,
+          lastName: createdParent.lastName || createdParent.last_name || newParentForm.lastName,
           email: createdParent.email || newParentForm.email,
           phone: createdParent.phone || newParentForm.phone,
           passwordHash: "",
-          emergencyContactName: createdParent.emergencyContactName || newParentForm.emergencyContactName,
-          emergencyContactPhone: createdParent.emergencyContactPhone || newParentForm.emergencyContactPhone,
+          emergencyContactName,
+          emergencyContactPhone,
           isVerified: false,
           blogEmails: false,
           lastLoginAt: null,
-          createdAt: new Date(createdParent.createdAt || Date.now()),
-          updatedAt: new Date(createdParent.updatedAt || Date.now()),
+          createdAt: new Date(createdParent.createdAt || createdParent.created_at || Date.now()),
+          updatedAt: new Date(createdParent.updatedAt || createdParent.updated_at || Date.now()),
+        };
+        
+        // Create an enhanced parent object with both camelCase and snake_case properties for compatibility
+        const enhancedParent = {
+          ...newParent,
+          // Add snake_case versions to ensure compatibility with any code expecting snake_case
+          emergency_contact_name: emergencyContactName,
+          emergency_contact_phone: emergencyContactPhone
         };
 
-        // Update booking state with new parent - set all necessary parent state
+        // Update booking state with new parent - all necessary parent state
         // This ensures the parent info persists through the whole flow
         updateState({
           parentInfo: {
@@ -157,15 +234,15 @@ export function ParentSelectionStep() {
             lastName: newParent.lastName,
             email: newParent.email,
             phone: newParent.phone,
-            emergencyContactName: newParent.emergencyContactName,
-            emergencyContactPhone: newParent.emergencyContactPhone,
+            emergencyContactName,
+            emergencyContactPhone,
           },
           parentId: newParent.id,
-          selectedParent: newParent,
+          selectedParent: enhancedParent,
           isNewParentCreated: true,  // Set flag to identify new parent creation
         });
-
-        console.log("Created and selected new parent:", newParent);
+        
+        console.log("Created and selected new parent with emergency contacts:", enhancedParent);
         nextStep();
       }
     } catch (error) {
@@ -253,38 +330,219 @@ export function ParentSelectionStep() {
     }
   };
 
-  const handleSelectParent = (parent: Parent) => {
+  const handleSelectParent = async (parent: Parent) => {
     setSelectedParent(parent);
-    updateState({
-      parentId: parent.id,
-      selectedParent: parent,
-      parentInfo: {
-        firstName: parent.firstName || '',
-        lastName: parent.lastName || '',
-        email: parent.email || '',
-        phone: parent.phone || '',
-        emergencyContactName: parent.emergencyContactName || '',
-        emergencyContactPhone: parent.emergencyContactPhone || ''
+    
+    console.log("Initial parent selection:", parent);
+    
+    try {
+      // Fetch the complete parent data directly from the API to ensure we have all fields
+      console.log("Fetching complete parent data for ID:", parent.id);
+      const response = await apiRequest('GET', `/api/parents/${parent.id}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch complete parent data: ${response.status}`);
       }
-    });
+      
+      const completeParent = await response.json();
+      console.log("Complete parent data fetched:", completeParent);
+      
+      // Extract emergency contact info from all possible sources
+      const emergencyContactName = 
+        completeParent.emergencyContactName || 
+        completeParent.emergency_contact_name || 
+        parent.emergencyContactName || 
+        (parent as any).emergency_contact_name || '';
+      
+      const emergencyContactPhone = 
+        completeParent.emergencyContactPhone || 
+        completeParent.emergency_contact_phone || 
+        parent.emergencyContactPhone || 
+        (parent as any).emergency_contact_phone || '';
+      
+      console.log("Selected parent emergency contact info:", { 
+        emergencyContactName,
+        emergencyContactPhone,
+        sources: {
+          completeParent_camelCase: {
+            emergencyContactName: completeParent.emergencyContactName,
+            emergencyContactPhone: completeParent.emergencyContactPhone,
+          },
+          completeParent_snakeCase: {
+            emergency_contact_name: completeParent.emergency_contact_name,
+            emergency_contact_phone: completeParent.emergency_contact_phone,
+          },
+          originalParent_camelCase: {
+            emergencyContactName: parent.emergencyContactName,
+            emergencyContactPhone: parent.emergencyContactPhone,
+          },
+          originalParent_snakeCase: {
+            emergency_contact_name: (parent as any).emergency_contact_name,
+            emergency_contact_phone: (parent as any).emergency_contact_phone,
+          }
+        }
+      });
+      
+      // Create enhanced parent object with all fields in both formats
+      const enhancedParent = {
+        ...completeParent,
+        // Ensure we have both camelCase and snake_case versions
+        emergencyContactName,
+        emergencyContactPhone,
+        emergency_contact_name: emergencyContactName,
+        emergency_contact_phone: emergencyContactPhone
+      };
+      
+      updateState({
+        parentId: parent.id,
+        selectedParent: enhancedParent,
+        parentInfo: {
+          firstName: completeParent.firstName || completeParent.first_name || parent.firstName || '',
+          lastName: completeParent.lastName || completeParent.last_name || parent.lastName || '',
+          email: completeParent.email || parent.email || '',
+          phone: completeParent.phone || parent.phone || '',
+          emergencyContactName,
+          emergencyContactPhone
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching complete parent data:", error);
+      
+      // Fallback to using the original parent data if API fetch fails
+      const emergencyContactName = parent.emergencyContactName || 
+                                  (parent as any).emergency_contact_name || '';
+      const emergencyContactPhone = parent.emergencyContactPhone || 
+                                   (parent as any).emergency_contact_phone || '';
+      
+      console.log("Using original parent data as fallback:", { 
+        emergencyContactName,
+        emergencyContactPhone
+      });
+      
+      updateState({
+        parentId: parent.id,
+        selectedParent: {
+          ...parent,
+          emergencyContactName,
+          emergencyContactPhone,
+          emergency_contact_name: emergencyContactName,
+          emergency_contact_phone: emergencyContactPhone
+        },
+        parentInfo: {
+          firstName: parent.firstName || '',
+          lastName: parent.lastName || '',
+          email: parent.email || '',
+          phone: parent.phone || '',
+          emergencyContactName,
+          emergencyContactPhone
+        }
+      });
+    }
   };
 
-  const handleContinueWithSelected = () => {
+  const handleContinueWithSelected = async () => {
     if (selectedParent) {
-      // Update booking state with selected parent
-      updateState({
-        parentInfo: {
-          firstName: selectedParent.firstName,
-          lastName: selectedParent.lastName,
-          email: selectedParent.email,
-          phone: selectedParent.phone,
-          emergencyContactName: selectedParent.emergencyContactName,
-          emergencyContactPhone: selectedParent.emergencyContactPhone,
-        },
-        parentId: selectedParent.id,
-        selectedParent: selectedParent,
-      });
-      nextStep();
+      try {
+        // Fetch the complete parent data directly from the API before continuing
+        console.log("Fetching complete parent data before continuing for ID:", selectedParent.id);
+        const response = await apiRequest('GET', `/api/parents/${selectedParent.id}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch complete parent data: ${response.status}`);
+        }
+        
+        const completeParent = await response.json();
+        console.log("Complete parent data fetched for continuation:", completeParent);
+        
+        // Extract emergency contact info from all possible sources
+        const emergencyContactName = 
+          completeParent.emergencyContactName || 
+          completeParent.emergency_contact_name || 
+          selectedParent.emergencyContactName || 
+          (selectedParent as any).emergency_contact_name || '';
+        
+        const emergencyContactPhone = 
+          completeParent.emergencyContactPhone || 
+          completeParent.emergency_contact_phone || 
+          selectedParent.emergencyContactPhone || 
+          (selectedParent as any).emergency_contact_phone || '';
+        
+        console.log("Continue with selected parent emergency contact info:", { 
+          emergencyContactName,
+          emergencyContactPhone,
+          sources: {
+            completeParent_camelCase: {
+              emergencyContactName: completeParent.emergencyContactName,
+              emergencyContactPhone: completeParent.emergencyContactPhone,
+            },
+            completeParent_snakeCase: {
+              emergency_contact_name: completeParent.emergency_contact_name,
+              emergency_contact_phone: completeParent.emergency_contact_phone,
+            }
+          }
+        });
+        
+        // Create enhanced parent object with all fields in both formats
+        const enhancedParent = {
+          ...completeParent,
+          // Ensure we have both camelCase and snake_case versions
+          emergencyContactName,
+          emergencyContactPhone,
+          emergency_contact_name: emergencyContactName,
+          emergency_contact_phone: emergencyContactPhone
+        };
+        
+        // Update booking state with selected parent
+        updateState({
+          parentInfo: {
+            firstName: completeParent.firstName || completeParent.first_name || selectedParent.firstName,
+            lastName: completeParent.lastName || completeParent.last_name || selectedParent.lastName,
+            email: completeParent.email || selectedParent.email,
+            phone: completeParent.phone || selectedParent.phone,
+            emergencyContactName,
+            emergencyContactPhone,
+          },
+          parentId: selectedParent.id,
+          selectedParent: enhancedParent,
+        });
+        
+        nextStep();
+      } catch (error) {
+        console.error("Error fetching complete parent data before continuing:", error);
+        
+        // Fallback to using the current selected parent data
+        const emergencyContactName = selectedParent.emergencyContactName || 
+                                    (selectedParent as any).emergency_contact_name || '';
+        const emergencyContactPhone = selectedParent.emergencyContactPhone || 
+                                     (selectedParent as any).emergency_contact_phone || '';
+        
+        console.log("Using original parent data as fallback for continuation:", { 
+          emergencyContactName,
+          emergencyContactPhone
+        });
+        
+        // Update booking state with selected parent
+        updateState({
+          parentInfo: {
+            firstName: selectedParent.firstName,
+            lastName: selectedParent.lastName,
+            email: selectedParent.email,
+            phone: selectedParent.phone,
+            emergencyContactName,
+            emergencyContactPhone,
+          },
+          parentId: selectedParent.id,
+          selectedParent: {
+            ...selectedParent,
+            emergencyContactName,
+            emergencyContactPhone,
+            emergency_contact_name: emergencyContactName,
+            emergency_contact_phone: emergencyContactPhone
+          },
+        });
+        
+        nextStep();
+      }
     }
   };
 
