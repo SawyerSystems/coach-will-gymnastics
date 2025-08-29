@@ -4,6 +4,7 @@ import { EmailLayout } from './components/EmailLayout';
 import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
 import { formatPossessivePronoun, type Gender } from './utils/pronouns';
+import { formatTime } from './utils/timeFormat';
 
 export const SUBJECT = 'Your session is booked ✅';
 export const PREHEADER = 'Date, time, and quick prep tips inside — manage your booking anytime.';
@@ -29,7 +30,7 @@ export function SessionConfirmation({
     <EmailLayout logoUrl={logoUrl} title="✅ Session Confirmed!" preheader={PREHEADER}>
 
       <Text style={{ color: theme.colors.text }}>
-        Hi {parentName}, big news — {athleteName}'s session is officially booked for <strong>{sessionDate}</strong> at <strong>{sessionTime}</strong>.
+        Hi {parentName}, big news — {athleteName}'s session is officially booked for <strong>{sessionDate}</strong> at <strong>{formatTime(sessionTime)}</strong>.
       </Text>
       <Text style={{ color: theme.colors.text }}>
         Here's how to get the most out of {formatPossessivePronoun(athleteGender)} training:

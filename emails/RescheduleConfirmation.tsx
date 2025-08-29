@@ -3,6 +3,7 @@ import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { theme } from './components/theme';
 import { EmailFooter } from './components/EmailFooter';
+import { formatTime } from './utils/timeFormat';
 
 export const SUBJECT = 'Your session has been rescheduled';
 export const PREHEADER = 'Here are your updated date and time — see you soon!';
@@ -41,7 +42,7 @@ export function RescheduleConfirmation({
 
       <Text style={{ color: theme.colors.text }}>{formatAthleteNames(athleteNames)} session has been successfully rescheduled.</Text>
       <Text style={{ color: theme.colors.text }}>📅 New Date: {newSessionDate}</Text>
-      <Text style={{ color: theme.colors.text }}>🕓 New Time: {newSessionTime}</Text>
+      <Text style={{ color: theme.colors.text }}>🕓 New Time: {formatTime(newSessionTime)}</Text>
 
       <EmailFooter />
     </EmailLayout>

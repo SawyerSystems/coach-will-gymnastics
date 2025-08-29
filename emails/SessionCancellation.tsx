@@ -3,6 +3,7 @@ import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { theme } from './components/theme';
 import { EmailFooter } from './components/EmailFooter';
+import { formatTime } from './utils/timeFormat';
 
 export const SUBJECT = 'Your session has been canceled';
 export const PREHEADER = 'No worries — you can reschedule in seconds with the link inside.';
@@ -33,22 +34,6 @@ export function SessionCancellation({
       });
     } catch {
       return dateStr;
-    }
-  };
-
-  const formatTime = (timeStr?: string) => {
-    if (!timeStr) return '';
-    try {
-      const [hours, minutes] = timeStr.split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      return date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-    } catch {
-      return timeStr;
     }
   };
 

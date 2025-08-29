@@ -3,6 +3,7 @@ import { Text } from '@react-email/components';
 import { EmailLayout } from './components/EmailLayout';
 import { theme } from './components/theme';
 import { EmailFooter } from './components/EmailFooter';
+import { formatTime } from './utils/timeFormat';
 
 export const SUBJECT = 'Friendly reminder: Session tomorrow';
 export const PREHEADER = 'Quick prep tips and details inside — see you soon!';
@@ -12,7 +13,7 @@ export function SessionReminder({ athleteName, sessionDate, sessionTime, manageL
   <EmailLayout title="⏰ Session Reminder" preheader={PREHEADER}>
 
       <Text style={{ color: theme.colors.text }}>
-        Quick heads‑up — {athleteName} has a session on <strong>{sessionDate}</strong> at <strong>{sessionTime}</strong>.
+        Quick heads‑up — {athleteName} has a session on <strong>{sessionDate}</strong> at <strong>{formatTime(sessionTime)}</strong>.
       </Text>
       <ul style={{ color: theme.colors.text, paddingLeft: '18px', marginTop: 0 }}>
         <li>Pack water and athletic wear</li>
