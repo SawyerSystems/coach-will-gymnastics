@@ -11,7 +11,7 @@ interface AdminBookingRescheduleProps {
   oldSessionTime: string;
   newSessionDate: string;
   newSessionTime: string;
-  lessonType: string;
+  lessonType: string | { name: string; id?: number; [key: string]: any };
   athleteNames: string[];
   rescheduleReason?: string;
   adminPanelLink: string;
@@ -149,7 +149,7 @@ export default function AdminBookingReschedule({
                         padding: '8px 12px', 
                         borderBottom: '1px solid #e5e7eb' 
                       }}>
-                        {lessonType}
+                        {typeof lessonType === 'string' ? lessonType : (lessonType?.name || 'Unknown Lesson Type')}
                       </td>
                     </tr>
                     <tr>

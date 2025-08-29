@@ -8,7 +8,7 @@ interface AdminBookingCancellationProps {
   parentEmail: string;
   sessionDate: string;
   sessionTime: string;
-  lessonType: string;
+  lessonType: string | { name: string; id?: number; [key: string]: any };
   athleteNames: string[];
   cancellationReason: string;
   wantsReschedule: boolean;
@@ -171,7 +171,7 @@ export default function AdminBookingCancellation({
                   <Text style={label}>Lesson Type:</Text>
                 </Column>
                 <Column style={valueColumn}>
-                  <Text style={value}>{lessonType}</Text>
+                  <Text style={value}>{typeof lessonType === 'string' ? lessonType : ((lessonType as any)?.name || 'Unknown Lesson Type')}</Text>
                 </Column>
               </Row>
 

@@ -128,12 +128,12 @@ export default function About() {
               
               {/* Floating testimonial */}
               {siteContent?.testimonials?.find((t: any) => t.featured) ? (
-                <Card className="absolute -top-4 -right-4 max-w-40 md:max-w-xs md:-bottom-6 md:-left-6 shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
-                  <CardContent className="p-2 md:p-4">
+                <Card className="absolute -top-4 -right-4 max-w-40 md:max-w-48 shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
+                  <CardContent className="p-2 md:p-3">
                     <div className="flex items-center space-x-1 md:space-x-2 mb-1 md:mb-2">
-                      <div className="flex space-x-0.5">
+                      <div className="flex space-x-0.5 md:space-x-1">
                         {[...Array(siteContent.testimonials.find((t: any) => t.featured)?.rating || 5)].map((_, i) => (
-                          <Star key={i} className="h-2.5 w-2.5 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
+                          <Star key={i} className="h-2.5 w-2.5 md:h-3 md:w-3 fill-yellow-400 text-yellow-400" />
                         ))}
                       </div>
                       <span className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">Featured Review</span>
@@ -145,12 +145,12 @@ export default function About() {
                   </CardContent>
                 </Card>
               ) : (
-                <Card className="absolute -top-4 -right-4 max-w-40 md:max-w-xs md:-bottom-6 md:-left-6 shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
-                  <CardContent className="p-2 md:p-4">
+                <Card className="absolute -top-4 -right-4 max-w-40 md:max-w-48 shadow-xl glass-surface glass-card glass-gradient dark:bg-[#D8BD2A]/20 dark:border dark:border-[#D8BD2A]/40 border border-slate-200 dark:border-[#D8BD2A]/40">
+                  <CardContent className="p-2 md:p-3">
                     <div className="flex items-center space-x-1 md:space-x-2 mb-1 md:mb-2">
-                      <div className="flex space-x-0.5">
+                      <div className="flex space-x-0.5 md:space-x-1">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-2.5 w-2.5 md:h-4 md:w-4 fill-yellow-400 text-yellow-400" />
+                          <Star key={i} className="h-2.5 w-2.5 md:h-3 md:w-3 fill-yellow-400 text-yellow-400" />
                         ))}
                       </div>
                       <span className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:inline">Parent Review</span>
