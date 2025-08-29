@@ -136,7 +136,7 @@ export default function BookingSuccess() {
             You should receive a confirmation email shortly. If you have any questions, please contact us.
           </p>
           <Button asChild className="bg-orange-500 hover:bg-orange-600 dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]">
-            <Link href="/">Return to Home</Link>
+            <Link href="/parent-dashboard">Return to Portal</Link>
           </Button>
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function BookingSuccess() {
             No booking information found. Please check your booking confirmation email or contact us for assistance.
           </p>
           <Button asChild className="bg-orange-500 hover:bg-orange-600 dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]">
-            <Link href="/">Return to Home</Link>
+            <Link href="/parent-dashboard">Return to Portal</Link>
           </Button>
         </div>
       </div>
@@ -333,7 +333,7 @@ export default function BookingSuccess() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild className="bg-orange-500 hover:bg-orange-600 dark:bg-[#D8BD2A] dark:hover:bg-[#D8BD2A]/90 dark:text-[#0F0276]">
-            <Link href="/">Return to Home</Link>
+            <Link href="/parent-dashboard">Return to Portal</Link>
           </Button>
           <Button asChild variant="outline" className="dark:border-[#D8BD2A]/40 dark:text-[#D8BD2A] dark:hover:bg-[#D8BD2A]/10">
             <Link href="/contact">Contact Us</Link>
