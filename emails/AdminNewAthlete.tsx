@@ -16,19 +16,23 @@ interface AdminNewAthleteProps {
   adminPanelLink: string;
 }
 
-export default function AdminNewAthlete({
-  athleteId,
-  athleteName,
-  athleteAge,
-  athleteGender,
-  athleteExperience,
-  parentName,
-  parentEmail,
-  parentPhone,
-  registrationDate,
-  waiverStatus,
-  adminPanelLink,
-}: AdminNewAthleteProps) {
+export default function AdminNewAthlete(allProps: AdminNewAthleteProps & Record<string, any>) {
+  const {
+    athleteId,
+    athleteName,
+    athleteAge,
+    athleteGender,
+    athleteExperience,
+    parentName,
+    parentEmail,
+    parentPhone,
+    registrationDate,
+    waiverStatus,
+    adminPanelLink,
+    contactEmail,
+    contactPhone
+  } = allProps;
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Not specified';
     try {
@@ -437,7 +441,7 @@ export default function AdminNewAthlete({
             </Row>
           </Section>
 
-          <EmailFooter />
+          <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
         </Container>
       </Body>
     </Html>

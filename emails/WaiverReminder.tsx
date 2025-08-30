@@ -7,7 +7,8 @@ import { theme } from './components/theme';
 export const SUBJECT = 'Reminder: Please complete your waiver';
 export const PREHEADER = 'It only takes a minute — waiver is required before the first session.';
 
-export function WaiverReminder({ parentName, waiverLink }: { parentName: string; waiverLink: string }) {
+export function WaiverReminder(allProps: { parentName: string; waiverLink: string } & Record<string, any>) {
+  const { parentName, waiverLink, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="📜 One quick step before the fun!" preheader={PREHEADER}>
 
@@ -35,7 +36,7 @@ export function WaiverReminder({ parentName, waiverLink }: { parentName: string;
         It only takes a minute, and then you’re all set. I can’t wait to welcome you!
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

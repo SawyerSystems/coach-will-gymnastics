@@ -7,7 +7,8 @@ import { EmailFooter } from './components/EmailFooter';
 export const SUBJECT = 'Happy Birthday! 🎉 Keep shining';
 export const PREHEADER = 'A quick birthday cheer from Coach Will — keep exploring and tumbling.';
 
-export function BirthdayEmail({ athleteName, logoUrl }: { athleteName: string; logoUrl?: string }) {
+export function BirthdayEmail(allProps: { athleteName: string; logoUrl?: string } & Record<string, any>) {
+  const { athleteName, logoUrl, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title={`🎉 Happy Birthday, ${athleteName}!`} preheader={PREHEADER}>
 
@@ -21,7 +22,7 @@ export function BirthdayEmail({ athleteName, logoUrl }: { athleteName: string; l
         I'm cheering for you loud from the Tumbleverse 🥳
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

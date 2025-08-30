@@ -13,7 +13,8 @@ interface PasswordSetupEmailProps {
 export const SUBJECT = 'Welcome to Coach Will Tumbles! Set up your password to get started';
 export const PREHEADER = 'Welcome to our gymnastics family! Create your password to access your parent portal.';
 
-export function PasswordSetupEmail({ firstName = 'Gymnastics Parent', resetToken = 'xyz123', resetUrl = 'https://coachwilltumbles.com/parent/set-password?token=xyz123', logoUrl }: PasswordSetupEmailProps) {
+export function PasswordSetupEmail(allProps: PasswordSetupEmailProps & Record<string, any>) {
+  const { firstName = 'Gymnastics Parent', resetToken = 'xyz123', resetUrl = 'https://coachwilltumbles.com/parent/set-password?token=xyz123', logoUrl, contactEmail, contactPhone } = allProps;
   return (
       <EmailLayout logoUrl={logoUrl} title="Welcome to Coach Will Tumbles!" preheader={PREHEADER}>
 
@@ -61,7 +62,7 @@ export function PasswordSetupEmail({ firstName = 'Gymnastics Parent', resetToken
           Welcome to our gymnastics family! We can't wait to help your gymnast soar to new heights! 🤸‍♀️✨
         </Text>
 
-        <EmailFooter />
+        <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
       </EmailLayout>
   );
 }

@@ -17,15 +17,18 @@ interface ReservationPaymentLinkProps {
   paymentLink: string;
 }
 
-export function ReservationPaymentLink({
-  parentName,
-  athleteName,
-  lessonType,
-  lessonDate,
-  lessonTime,
-  amount,
-  paymentLink
-}: ReservationPaymentLinkProps) {
+export function ReservationPaymentLink(allProps: ReservationPaymentLinkProps & Record<string, any>) {
+  const {
+    parentName,
+    athleteName,
+    lessonType,
+    lessonDate,
+    lessonTime,
+    amount,
+    paymentLink,
+    contactEmail,
+    contactPhone
+  } = allProps;
   return (
     <EmailLayout title="Complete Your Reservation" preheader={PREHEADER}>
 
@@ -79,7 +82,7 @@ export function ReservationPaymentLink({
         </Text>
       </Section>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

@@ -18,20 +18,23 @@ interface AdminBookingRescheduleProps {
   adminPanelLink: string;
 }
 
-export default function AdminBookingReschedule({
-  bookingId,
-  parentName,
-  parentEmail,
-  parentPhone,
-  oldSessionDate,
-  oldSessionTime,
-  newSessionDate,
-  newSessionTime,
-  lessonType,
-  athleteNames = [],
-  rescheduleReason,
-  adminPanelLink,
-}: AdminBookingRescheduleProps) {
+export default function AdminBookingReschedule(allProps: AdminBookingRescheduleProps & Record<string, any>) {
+  const {
+    bookingId,
+    parentName,
+    parentEmail,
+    parentPhone,
+    oldSessionDate,
+    oldSessionTime,
+    newSessionDate,
+    newSessionTime,
+    lessonType,
+    athleteNames = [],
+    rescheduleReason,
+    adminPanelLink,
+    contactEmail,
+    contactPhone
+  } = allProps;
   const formatTime = (timeStr?: string) => {
     if (!timeStr) return 'Not specified';
     try {
@@ -407,7 +410,7 @@ export default function AdminBookingReschedule({
             </Row>
           </Section>
 
-          <EmailFooter />
+          <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
         </Container>
       </Body>
     </Html>

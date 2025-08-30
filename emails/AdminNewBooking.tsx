@@ -1,6 +1,7 @@
 import { Html, Head, Preview, Body, Container, Section, Row, Column, Heading, Text, Link, Hr } from '@react-email/components';
 import { EmailHeader } from './components/EmailHeader';
 import { EmailFooter } from './components/EmailFooter';
+import { formatAthleteList } from './utils/athleteNameFormatters';
 
 interface AdminNewBookingProps {
   bookingId: string;
@@ -14,23 +15,39 @@ interface AdminNewBookingProps {
   paymentStatus: string;
   bookingMethod: string;
   specialRequests?: string;
+  focusAreas?: string[];
   adminPanelLink: string;
 }
 
-export default function AdminNewBooking({
-  bookingId,
-  parentName,
-  parentEmail,
-  parentPhone,
-  sessionDate,
-  sessionTime,
-  lessonType,
-  athleteNames = [],
-  paymentStatus,
-  bookingMethod,
-  specialRequests,
-  adminPanelLink,
-}: AdminNewBookingProps) {
+export default function AdminNewBooking(allProps: AdminNewBookingProps & Record<string, any>) {
+  // Destructure known props (keep reference to allProps for fallback lookups)
+  const {
+    bookingId,
+    parentName,
+    parentEmail,
+    parentPhone,
+    sessionDate,
+    sessionTime,
+    lessonType,
+    athleteNames = [],
+    paymentStatus,
+    bookingMethod,
+    specialRequests,
+    adminPanelLink,
+    logoUrl,
+    contactEmail,
+    contactPhone
+  } = allProps;
+
+  // Robust focus areas detection:
+  // 1. Provided as focusAreas (camelCase) from server code we updated
+  // 2. Possibly sent as focus_areas (snake_case) directly from DB row
+  // 3. Fallback to empty array
+  const finalFocusAreas: string[] = Array.isArray(allProps.focusAreas)
+    ? allProps.focusAreas
+    : Array.isArray(allProps.focus_areas)
+      ? allProps.focus_areas
+      : [];
   const formatTime = (timeStr?: string) => {
     if (!timeStr) return 'Not specified';
     try {
@@ -176,13 +193,31 @@ export default function AdminNewBooking({
                         borderBottom: '1px solid #e5e7eb',
                         fontWeight: 'bold'
                       }}>
+                        Focus Areas:
+                      </td>
+                      <td style={{ 
+                        padding: '8px 12px', 
+                        borderBottom: '1px solid #e5e7eb',
+                        color: finalFocusAreas.length ? '#111827' : '#6b7280',
+                        fontStyle: finalFocusAreas.length ? 'normal' : 'italic'
+                      }}>
+                        {finalFocusAreas.length ? finalFocusAreas.join(', ') : 'None selected'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ 
+                        padding: '8px 12px', 
+                        backgroundColor: '#f9fafb',
+                        borderBottom: '1px solid #e5e7eb',
+                        fontWeight: 'bold'
+                      }}>
                         Athletes:
                       </td>
                       <td style={{ 
                         padding: '8px 12px', 
                         borderBottom: '1px solid #e5e7eb' 
                       }}>
-                        {athleteNames.length > 0 ? athleteNames.join(', ') : 'Not specified'}
+                        {formatAthleteList(athleteNames)}
                       </td>
                     </tr>
                     <tr>
@@ -416,7 +451,7 @@ export default function AdminNewBooking({
             </Row>
           </Section>
 
-          <EmailFooter />
+          <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
         </Container>
       </Body>
     </Html>

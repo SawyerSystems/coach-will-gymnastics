@@ -16,7 +16,8 @@ interface SafetyInformationLinkProps {
 export const SUBJECT = 'Set your safety authorization';
 export const PREHEADER = 'Add who can pick up and drop off — this keeps your athlete safe.';
 
-export function SafetyInformationLink({ parentName, athleteName, athleteGender, loginLink, logoUrl }: SafetyInformationLinkProps) {
+export function SafetyInformationLink(allProps: SafetyInformationLinkProps & Record<string, any>) {
+  const { parentName, athleteName, athleteGender, loginLink, logoUrl, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="Important: Safety Authorization Required 🛡️" preheader={PREHEADER}>
 
@@ -72,7 +73,7 @@ export function SafetyInformationLink({ parentName, athleteName, athleteGender, 
         </Text>
       </Section>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

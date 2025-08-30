@@ -18,33 +18,24 @@ interface AdminBookingCancellationProps {
   adminPanelLink: string;
 }
 
-export default function AdminBookingCancellation({
-  bookingId,
-  parentName,
-  parentEmail,
-  sessionDate,
-  sessionTime,
-  lessonType,
-  athleteNames = [],
-  cancellationReason,
-  wantsReschedule,
-  preferredRescheduleDate,
-  preferredRescheduleTime,
-  adminPanelLink,
-}: {
-  bookingId: string;
-  parentName: string;
-  parentEmail: string;
-  sessionDate?: string;
-  sessionTime?: string;
-  lessonType: string;
-  athleteNames: string[];
-  cancellationReason: string;
-  wantsReschedule: boolean;
-  preferredRescheduleDate?: string;
-  preferredRescheduleTime?: string;
-  adminPanelLink: string;
-}) {
+export default function AdminBookingCancellation(allProps: AdminBookingCancellationProps & Record<string, any>) {
+  const {
+    bookingId,
+    parentName,
+    parentEmail,
+    sessionDate,
+    sessionTime,
+    lessonType,
+    athleteNames = [],
+    cancellationReason,
+    wantsReschedule,
+    preferredRescheduleDate,
+    preferredRescheduleTime,
+    adminPanelLink,
+    contactEmail,
+    contactPhone
+  } = allProps;
+
   const formatTime = (timeStr?: string) => {
     if (!timeStr) return 'Not specified';
     try {
@@ -236,7 +227,7 @@ export default function AdminBookingCancellation({
             </Text>
           </Section>
 
-          <EmailFooter />
+          <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
         </Container>
       </Body>
     </Html>

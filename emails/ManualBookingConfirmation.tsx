@@ -6,7 +6,8 @@ export const SUBJECT = 'Confirm your session — one quick step';
 export const PREHEADER = 'Tap to confirm and secure your athlete’s spot; details inside.';
 import { theme } from './components/theme';
 
-export function ManualBookingConfirmation({ parentName, confirmLink, logoUrl }: { parentName: string; confirmLink: string; logoUrl?: string }) {
+export function ManualBookingConfirmation(allProps: { parentName: string; confirmLink: string; logoUrl?: string } & Record<string, any>) {
+  const { parentName, confirmLink, logoUrl, contactEmail, contactPhone } = allProps;
   return (
     <EmailLayout logoUrl={logoUrl} title="🔒 Action Needed: Confirm Your Session" preheader={PREHEADER}>
 
@@ -34,7 +35,7 @@ export function ManualBookingConfirmation({ parentName, confirmLink, logoUrl }: 
         If you didn’t request this, no worries — you can ignore it.
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

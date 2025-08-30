@@ -6,7 +6,8 @@ import { theme } from './components/theme';
 export const SUBJECT = 'Welcome to Coach Will Tumbles 👋';
 export const PREHEADER = 'Here’s how to get started, log in, and make the most of training.';
 
-export function ParentWelcome({ parentName, loginLink }: { parentName: string; loginLink: string }) {
+export function ParentWelcome(allProps: { parentName: string; loginLink: string } & Record<string, any>) {
+  const { parentName, loginLink, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="Welcome to Coach Will Tumbles! 🤸‍♀️" preheader={PREHEADER}>
 
@@ -39,7 +40,7 @@ export function ParentWelcome({ parentName, loginLink }: { parentName: string; l
         Questions? Just reply here — I’m happy to help. I can’t wait to see your athlete grow in strength and confidence!
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

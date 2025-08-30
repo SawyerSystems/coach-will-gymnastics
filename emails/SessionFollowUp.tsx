@@ -8,15 +8,12 @@ import { formatPossessivePronoun, type Gender } from './utils/pronouns';
 export const SUBJECT = 'How did training go?';
 export const PREHEADER = 'Ready for the next step? Book again when you’re ready — link inside.';
 
-export function SessionFollowUp({ 
-  athleteName, 
-  athleteGender,
-  bookingLink 
-}: { 
+export function SessionFollowUp(allProps: { 
   athleteName: string; 
   athleteGender?: Gender;
   bookingLink: string; 
-}) {
+} & Record<string, any>) {
+  const { athleteName, athleteGender, bookingLink, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="🏆 Great work today!" preheader={PREHEADER}>
 
@@ -46,7 +43,7 @@ export function SessionFollowUp({
         Questions or goals to share? Reply to this email — I love partnering with parents.
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

@@ -8,7 +8,8 @@ import { formatTime } from './utils/timeFormat';
 export const SUBJECT = 'Friendly reminder: Session tomorrow';
 export const PREHEADER = 'Quick prep tips and details inside — see you soon!';
 
-export function SessionReminder({ athleteName, sessionDate, sessionTime, manageLink }: { athleteName: string; sessionDate: string; sessionTime: string; manageLink?: string }) {
+export function SessionReminder(allProps: { athleteName: string; sessionDate: string; sessionTime: string; manageLink: string } & Record<string, any>) {
+  const { athleteName, sessionDate, sessionTime, manageLink, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="⏰ Session Reminder" preheader={PREHEADER}>
 
@@ -42,7 +43,7 @@ export function SessionReminder({ athleteName, sessionDate, sessionTime, manageL
         I'm excited for a great session — see you soon!
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

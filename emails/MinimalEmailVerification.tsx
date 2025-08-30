@@ -6,7 +6,8 @@ import { EmailFooter } from './components/EmailFooter';
 export const SUBJECT = 'Verify your email';
 export const PREHEADER = 'Quick tap to verify — takes just a second.';
 
-export function MinimalEmailVerification({ firstName, verificationUrl, logoUrl }: { firstName: string; verificationUrl: string; logoUrl?: string }) {
+export function MinimalEmailVerification(allProps: { firstName: string; verificationUrl: string; logoUrl?: string } & Record<string, any>) {
+  const { firstName, verificationUrl, logoUrl, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout logoUrl={logoUrl} title="Verify Your Email Address" preheader={PREHEADER}>
 
@@ -28,7 +29,7 @@ export function MinimalEmailVerification({ firstName, verificationUrl, logoUrl }
             Verify Email
           </a>
         </div>
-        <EmailFooter />
+        <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
       </EmailLayout>
   );
 }

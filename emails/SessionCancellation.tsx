@@ -8,21 +8,8 @@ import { formatTime } from './utils/timeFormat';
 export const SUBJECT = 'Your session has been canceled';
 export const PREHEADER = 'No worries — you can reschedule in seconds with the link inside.';
 
-export function SessionCancellation({ 
-  parentName, 
-  rescheduleLink,
-  sessionDate,
-  sessionTime,
-  athleteNames,
-  lessonType
-}: { 
-  parentName: string; 
-  rescheduleLink: string;
-  sessionDate?: string;
-  sessionTime?: string;
-  athleteNames?: string[];
-  lessonType?: string;
-}) {
+export function SessionCancellation(allProps: { parentName: string; rescheduleLink: string; sessionDate: string; sessionTime: string; athleteNames: string[]; lessonType: string } & Record<string, any>) {
+  const { parentName, rescheduleLink, sessionDate, sessionTime, athleteNames, lessonType, contactEmail, contactPhone } = allProps;
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
@@ -98,7 +85,7 @@ export function SessionCancellation({
         Need help finding a time? Just reply and I'll help you pick a great slot.
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

@@ -7,7 +7,8 @@ import { EmailFooter } from './components/EmailFooter';
 export const SUBJECT = 'Your parent access code 🔐';
 export const PREHEADER = 'Use this one-time code to access your portal and manage your athlete.';
 
-export function ParentAuthorization({ parentName, authCode, logoUrl }: { parentName: string; authCode: string; logoUrl?: string }) {
+export function ParentAuthorization(allProps: { parentName: string; authCode: string; logoUrl?: string } & Record<string, any>) {
+  const { parentName, authCode, logoUrl, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="🗝️ Access Code to Begin Your Journey" preheader={PREHEADER}>
 
@@ -18,7 +19,7 @@ export function ParentAuthorization({ parentName, authCode, logoUrl }: { parentN
       <Text style={{ fontSize: '18px', fontWeight: 700, color: theme.colors.text }}>Your Access Code: {authCode}</Text>
       <Text style={{ color: theme.colors.muted }}>This code expires in 10 minutes. Let the journey begin!</Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

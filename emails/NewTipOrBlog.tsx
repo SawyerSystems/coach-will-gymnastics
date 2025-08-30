@@ -7,7 +7,8 @@ import { theme } from './components/theme';
 export const SUBJECT = 'New training tip just dropped ✨';
 export const PREHEADER = 'A quick, practical read to help your athlete level up — open for the tip.';
 
-export function NewTipOrBlog({ blogTitle, blogLink, logoUrl }: { blogTitle: string; blogLink: string; logoUrl?: string }) {
+export function NewTipOrBlog(allProps: { blogTitle: string; blogLink: string; logoUrl?: string } & Record<string, any>) {
+  const { blogTitle, blogLink, logoUrl, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout title="✨ New Tip Unlocked!" preheader={PREHEADER}>
 
@@ -34,7 +35,7 @@ export function NewTipOrBlog({ blogTitle, blogLink, logoUrl }: { blogTitle: stri
         Want more like this? Reply and tell me what you're training!
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

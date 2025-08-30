@@ -28,7 +28,7 @@ export const emailTemplates = {
   },
   'session-confirmation': {
     subject: '✅ Session Confirmed! — Coach Will Tumbles',
-    loader: async () => (await import('../../emails/SessionConfirmation')).SessionConfirmation,
+    loader: async () => (await import('../../emails/SessionConfirmation')).default,
   },
   'manual-booking': {
     subject: '⚠️ Confirm Your Session Booking',
@@ -153,6 +153,9 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
 
   // If no logoUrl was provided, try to get it from site content
   let finalLogoUrl = logoUrl;
+  let contactEmail = '';
+  let contactPhone = '';
+  
   if (!finalLogoUrl) {
     try {
       // Import at function level to avoid circular dependencies and maintain ESM
@@ -161,19 +164,44 @@ export async function sendEmail<T extends EmailType>({ type, to, data, logoUrl }
       // Try to use the circle logo first (better for emails), then text logo, or fallback to default
       finalLogoUrl = siteContent?.logo?.circle || siteContent?.logo?.text || 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-logos/CWT_Circle_Logo.png';
       
+      // Get contact information for email footers
+      contactEmail = siteContent?.contact?.email || 'admin@coachwilltumbles.com';
+      contactPhone = siteContent?.contact?.phone || '(585) 755-8122';
+      
       console.log('Using logo URL in email:', finalLogoUrl);
+      console.log('Using contact info in email:', { contactEmail, contactPhone });
     } catch (error) {
       console.warn('Could not fetch logo URL from site content:', error);
       // Fallback to hardcoded logo URL - Using same path as in EmailLogo component
       finalLogoUrl = 'https://nwdgtdzrcyfmislilucy.supabase.co/storage/v1/object/public/site-media/site-logos/CWT_Circle_Logo.png';
+      // Use fallback contact info
+      contactEmail = 'admin@coachwilltumbles.com';
+      contactPhone = '(585) 755-8122';
+    }
+  } else {
+    // Even if logoUrl is provided, we still want to fetch contact information
+    try {
+      const mod = await import('../storage');
+      const siteContent = await mod.storage.getSiteContent();
+      contactEmail = siteContent?.contact?.email || 'admin@coachwilltumbles.com';
+      contactPhone = siteContent?.contact?.phone || '(585) 755-8122';
+      console.log('Using contact info in email:', { contactEmail, contactPhone });
+    } catch (error) {
+      console.warn('Could not fetch contact info from site content:', error);
+      // Use fallback contact info
+      contactEmail = 'admin@coachwilltumbles.com';
+      contactPhone = '(585) 755-8122';
     }
   }
 
-  // Add the logo URL to the component props if the property exists on the component
+  // Add the logo URL and contact info to the component props
   const componentData = {
     ...data,
     // Best-effort pass-through of logoUrl; many components accept it
-    ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {})
+    ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {}),
+    // Pass contact information for email footers
+    contactEmail,
+    contactPhone
   };
 
   try {

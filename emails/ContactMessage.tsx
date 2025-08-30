@@ -7,21 +7,8 @@ import { EmailFooter } from './components/EmailFooter';
 export const SUBJECT = 'New contact form submission';
 export const PREHEADER = 'A parent just reached out — details inside.';
 
-export function ContactMessage({
-  name,
-  email,
-  phone,
-  athleteInfo,
-  message,
-  logoUrl,
-}: {
-  name: string;
-  email: string;
-  phone: string;
-  athleteInfo: string;
-  message: string;
-  logoUrl?: string;
-}) {
+export function ContactMessage(allProps: { name: string; email: string; phone: string; athleteInfo: string; message: string; logoUrl?: string } & Record<string, any>) {
+  const { name, email, phone, athleteInfo, message, logoUrl, contactEmail, contactPhone } = allProps;
   return (
     <EmailLayout title="📬 New Contact Form Message" preheader={PREHEADER}>
 
@@ -56,7 +43,7 @@ export function ContactMessage({
         Reply directly to the sender's email above to continue the conversation.
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

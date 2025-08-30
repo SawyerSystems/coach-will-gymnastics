@@ -4697,6 +4697,7 @@ setTimeout(async () => {
                 paymentStatus: 'reservation-paid',
                 totalAmount,
                 specialRequests,
+                focusAreas: booking.focusAreas || [],
                 adminPanelLink: `${baseUrl}/admin/bookings/${bookingId}`
               };
               
@@ -4927,6 +4928,7 @@ setTimeout(async () => {
                 paymentStatus: 'reservation-paid',
                 totalAmount,
                 specialRequests,
+                focusAreas: bookingWithRelations.focusAreas || [],
                 adminPanelLink: `${baseUrl}/admin/bookings/${bookingId}`
               };
               
@@ -6531,6 +6533,7 @@ setTimeout(async () => {
               .from('booking_athletes')
               .select(`
                 athletes:athlete_id (
+                  name,
                   first_name,
                   last_name
                 )
@@ -6541,7 +6544,7 @@ setTimeout(async () => {
               console.error('[RESCHEDULE DEBUG] Error fetching booking athletes:', bookingAthletesError);
             } else if (bookingAthletesData) {
               athleteNames = bookingAthletesData
-                .map((ba: any) => ba.athletes?.first_name)
+                .map((ba: any) => ba.athletes?.name || `${ba.athletes?.first_name || ''} ${ba.athletes?.last_name || ''}`.trim() || 'Unnamed Athlete')
                 .filter((name: string) => name); // Filter out null/undefined names
               console.log(`[RESCHEDULE DEBUG] Found athlete names:`, athleteNames);
             }
@@ -6565,12 +6568,19 @@ setTimeout(async () => {
               
               const parentName = parentData ? `${parentData.firstName || ''} ${parentData.lastName || ''}`.trim() : 'Unknown Parent';
               
+              // Get booking with relations to access lesson type
+              const bookingWithRelations = await storage.getBookingWithRelations(id);
+              const lessonTypeName = getLessonTypeName(bookingWithRelations?.lessonType);
+              
+              console.log('[RESCHEDULE EMAIL] Booking with relations:', !!bookingWithRelations);
+              console.log('[RESCHEDULE EMAIL] Lesson type from relations:', lessonTypeName);
+
               await sendAdminBookingReschedule(adminEmail, {
                 bookingId: id.toString(),
                 parentName,
                 parentEmail,
                 athleteNames: athleteNames.length > 0 ? athleteNames : ['Unknown Athlete'],
-                lessonType: updatedBooking.lessonType || 'Unknown Lesson Type',
+                lessonType: lessonTypeName,
                 oldSessionDate: originalDate || 'Unknown Date',
                 oldSessionTime: originalTime || 'Unknown Time',
                 newSessionDate,
@@ -7676,12 +7686,13 @@ setTimeout(async () => {
         console.log(`[PARENT-CANCEL-EMAIL] Parent email: ${parentEmail}, name: ${parentName}`);
         
         if (parentEmail) {
-          // Extract session information for email
+          // Extract session information for email  
+          const lessonTypeName = getLessonTypeName(bookingWithRelations?.lessonType);
           const sessionData = {
             sessionDate: updatedBooking.preferredDate || 'Unknown Date',
             sessionTime: updatedBooking.preferredTime || 'Unknown Time',
             athleteNames: bookingWithRelations?.athletes?.map((athlete: any) => athlete.name) || [],
-            lessonType: updatedBooking.lessonType || 'Unknown Lesson Type'
+            lessonType: lessonTypeName
           };
           
           console.log(`[DEBUG-EMAIL] About to call sendSessionCancellation`);
@@ -7707,6 +7718,10 @@ setTimeout(async () => {
         
         const athleteNames = bookingWithRelations?.athletes?.map((athlete: any) => athlete.name) || [];
         
+        // Get lesson type name from booking with relations
+        const lessonTypeName = getLessonTypeName(bookingWithRelations?.lessonType);
+        console.log('[CANCELLATION EMAIL] Lesson type from relations:', lessonTypeName);
+        
         await sendAdminBookingCancellation(
           process.env.ADMIN_EMAIL || 'admin@coachwilltumbles.com',
           {
@@ -7715,7 +7730,7 @@ setTimeout(async () => {
             parentEmail,
             sessionDate: updatedBooking.preferredDate || '',
             sessionTime: updatedBooking.preferredTime || '',
-            lessonType: updatedBooking.lessonType || 'Unknown Lesson Type',
+            lessonType: lessonTypeName,
             athleteNames,
             cancellationReason: reason || 'No reason provided',
             wantsReschedule: wantsReschedule,
@@ -8320,6 +8335,7 @@ setTimeout(async () => {
             paymentStatus: "reservation-paid",
             totalAmount: "$75.00",
             specialRequests: "Please focus on cartwheel technique",
+            focusAreas: ["Cartwheel", "Handstand", "Forward Roll"],
             adminPanelLink: `${baseUrl}/admin/bookings/TEST-789`
           });
           break;
@@ -8435,6 +8451,7 @@ setTimeout(async () => {
               paymentStatus: "reservation-paid",
               totalAmount: "$90.00",
               specialRequests: "Focus on handstand progression",
+              focusAreas: ["Handstand", "Bridge", "Flexibility"],
               adminPanelLink: `${baseUrl}/admin/bookings/TEST-NEW-BOOKING-003`
             });
             testResults.push("✅ Admin new booking sent");

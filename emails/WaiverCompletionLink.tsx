@@ -15,7 +15,8 @@ interface WaiverCompletionLinkProps {
   logoUrl?: string;
 }
 
-export function WaiverCompletionLink({ parentName, athleteName, athleteGender, loginLink, logoUrl }: WaiverCompletionLinkProps) {
+export function WaiverCompletionLink(allProps: WaiverCompletionLinkProps & Record<string, any>) {
+  const { parentName, athleteName, athleteGender, loginLink, logoUrl, contactEmail, contactPhone } = allProps;
   return (
     <EmailLayout logoUrl={logoUrl} title="📝 Complete Your Waiver" preheader={PREHEADER}>
 
@@ -62,7 +63,7 @@ export function WaiverCompletionLink({ parentName, athleteName, athleteGender, l
         </Text>
       </Section>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
   </EmailLayout>
   );
 }

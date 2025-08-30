@@ -4,12 +4,11 @@ import { EmailLayout } from './components/EmailLayout';
 import { EmailFooter } from './components/EmailFooter';
 import { theme } from './components/theme';
 import { formatPossessivePronoun, type Gender } from './utils/pronouns';
-import { formatTime } from './utils/timeFormat';
 
-export const SUBJECT = 'Your session is booked ✅';
-export const PREHEADER = 'Date, time, and quick prep tips inside — manage your booking anytime.';
+export const SUBJECT = 'Session confirmed! See you soon';
+export const PREHEADER = 'Your lesson details and what to expect.';
 
-export function SessionConfirmation({
+export default function SessionConfirmation({
   parentName,
   athleteName,
   athleteGender,
@@ -17,6 +16,8 @@ export function SessionConfirmation({
   sessionTime,
   manageLink,
   logoUrl,
+  contactEmail,
+  contactPhone,
 }: {
   parentName: string;
   athleteName: string;
@@ -25,7 +26,22 @@ export function SessionConfirmation({
   sessionTime: string;
   manageLink?: string;
   logoUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }) {
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return '';
+    try {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    } catch {
+      return timeStr || '';
+    }
+  };
+
   return (
     <EmailLayout logoUrl={logoUrl} title="✅ Session Confirmed!" preheader={PREHEADER}>
 
@@ -63,7 +79,7 @@ export function SessionConfirmation({
         I can't wait to see {athleteName} shine! If plans change, you can reschedule anytime.
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

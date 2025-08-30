@@ -12,7 +12,8 @@ interface EmailVerificationProps {
 export const SUBJECT = 'Verify your email to continue';
 export const PREHEADER = 'Tap the button to verify your address and secure your account.';
 
-export function EmailVerification({ firstName = 'Gymnastics Parent', verificationUrl = 'https://example.com/verify', logoUrl }: EmailVerificationProps) {
+export function EmailVerification(allProps: EmailVerificationProps & Record<string, any>) {
+  const { firstName = 'Gymnastics Parent', verificationUrl = 'https://example.com/verify', logoUrl, contactEmail, contactPhone } = allProps;
   return (
       <EmailLayout logoUrl={logoUrl} title="Verify Your Email Address" preheader={PREHEADER}>
 
@@ -43,7 +44,7 @@ export function EmailVerification({ firstName = 'Gymnastics Parent', verificatio
           {verificationUrl}
         </Text>
 
-        <EmailFooter />
+        <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
       </EmailLayout>
   );
 }

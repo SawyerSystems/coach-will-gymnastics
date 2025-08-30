@@ -8,17 +8,8 @@ import { formatTime } from './utils/timeFormat';
 export const SUBJECT = 'Your session has been rescheduled';
 export const PREHEADER = 'Here are your updated date and time — see you soon!';
 
-export function RescheduleConfirmation({ 
-  newSessionDate, 
-  newSessionTime, 
-  athleteNames, 
-  logoUrl 
-}: { 
-  newSessionDate: string; 
-  newSessionTime: string; 
-  athleteNames?: string[]; 
-  logoUrl?: string;
-}) {
+export function RescheduleConfirmation(allProps: { newSessionDate: string; newSessionTime: string; athleteNames: string[]; logoUrl?: string } & Record<string, any>) {
+  const { newSessionDate, newSessionTime, athleteNames, logoUrl, contactEmail, contactPhone } = allProps;
   const formatAthleteNames = (names?: string[]) => {
     if (!names || names.length === 0) return "Your";
     
@@ -44,7 +35,7 @@ export function RescheduleConfirmation({
       <Text style={{ color: theme.colors.text }}>📅 New Date: {newSessionDate}</Text>
       <Text style={{ color: theme.colors.text }}>🕓 New Time: {formatTime(newSessionTime)}</Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

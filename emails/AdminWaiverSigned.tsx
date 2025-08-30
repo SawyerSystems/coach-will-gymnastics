@@ -17,20 +17,23 @@ interface AdminWaiverSignedProps {
   waiverPdfLink?: string;
 }
 
-export default function AdminWaiverSigned({
-  waiverId,
-  athleteName,
-  athleteId,
-  parentName,
-  parentEmail,
-  signedDate,
-  ipAddress,
-  emergencyContactName,
-  emergencyContactPhone,
-  medicalConditions,
-  adminPanelLink,
-  waiverPdfLink,
-}: AdminWaiverSignedProps) {
+export default function AdminWaiverSigned(allProps: AdminWaiverSignedProps & Record<string, any>) {
+  const {
+    waiverId,
+    athleteName,
+    athleteId,
+    parentName,
+    parentEmail,
+    signedDate,
+    ipAddress,
+    emergencyContactName,
+    emergencyContactPhone,
+    medicalConditions,
+    adminPanelLink,
+    waiverPdfLink,
+    contactEmail,
+    contactPhone
+  } = allProps;
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Not specified';
     try {
@@ -462,7 +465,7 @@ export default function AdminWaiverSigned({
             </Row>
           </Section>
 
-          <EmailFooter />
+          <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
         </Container>
       </Body>
     </Html>

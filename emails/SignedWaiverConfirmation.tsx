@@ -7,7 +7,8 @@ import { EmailFooter } from './components/EmailFooter';
 export const SUBJECT = 'Waiver complete — you’re all set ✅';
 export const PREHEADER = 'Thanks! Your waiver is on file. Quick tips and the PDF are inside.';
 
-export function SignedWaiverConfirmation({ parentName, athleteName, logoUrl }: { parentName: string; athleteName: string; logoUrl?: string }) {
+export function SignedWaiverConfirmation(allProps: { parentName: string; athleteName: string; logoUrl?: string } & Record<string, any>) {
+  const { parentName, athleteName, logoUrl, contactEmail, contactPhone } = allProps;
   return (
   <EmailLayout logoUrl={logoUrl} title="🏆 Adventure Waiver Complete!" preheader={PREHEADER}>
 
@@ -53,7 +54,7 @@ export function SignedWaiverConfirmation({ parentName, athleteName, logoUrl }: {
         </a>
       </Section>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

@@ -8,21 +8,8 @@ import { formatTime } from './utils/timeFormat';
 export const SUBJECT = 'We missed you at your session';
 export const PREHEADER = 'No worries — let\'s get you rescheduled for your next tumbling adventure.';
 
-export function SessionNoShow({ 
-  parentName, 
-  rescheduleLink,
-  sessionDate,
-  sessionTime,
-  athleteNames,
-  lessonType
-}: { 
-  parentName: string; 
-  rescheduleLink: string;
-  sessionDate?: string;
-  sessionTime?: string;
-  athleteNames?: string[];
-  lessonType?: string;
-}) {
+export function SessionNoShow(allProps: { parentName: string; rescheduleLink: string; sessionDate: string; sessionTime: string; athleteNames: string[]; lessonType: string } & Record<string, any>) {
+  const { parentName, rescheduleLink, sessionDate, sessionTime, athleteNames, lessonType, contactEmail, contactPhone } = allProps;
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
@@ -103,7 +90,7 @@ export function SessionNoShow({
         Have questions or need help finding a time? Just reply to this email and I'll personally help you get back on track!
       </Text>
 
-      <EmailFooter />
+      <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
     </EmailLayout>
   );
 }

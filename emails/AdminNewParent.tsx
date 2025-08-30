@@ -13,16 +13,19 @@ interface AdminNewParentProps {
   adminPanelLink: string;
 }
 
-export default function AdminNewParent({
-  parentId,
-  parentName,
-  parentEmail,
-  parentPhone,
-  registrationMethod,
-  athleteNames = [],
-  registrationDate,
-  adminPanelLink,
-}: AdminNewParentProps) {
+export default function AdminNewParent(allProps: AdminNewParentProps & Record<string, any>) {
+  const {
+    parentId,
+    parentName,
+    parentEmail,
+    parentPhone,
+    registrationMethod,
+    athleteNames = [],
+    registrationDate,
+    adminPanelLink,
+    contactEmail,
+    contactPhone
+  } = allProps;
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Not specified';
     try {
@@ -349,7 +352,7 @@ export default function AdminNewParent({
             </Row>
           </Section>
 
-          <EmailFooter />
+          <EmailFooter contactEmail={contactEmail} contactPhone={contactPhone} />
         </Container>
       </Body>
     </Html>
