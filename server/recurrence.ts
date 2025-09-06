@@ -62,18 +62,49 @@ export function expandSeries(opts: {
   rangeEnd: string;   // ISO
 }): Array<{ startAt: string; endAt: string }> {
   const zone = opts.timezone || 'America/Los_Angeles';
-  const durationMs = new Date(opts.endAt).getTime() - new Date(opts.startAt).getTime();
+  // Coerce to ISO strings if Dates are passed in
+  const startIso = typeof (opts as any).startAt === 'string' ? (opts as any).startAt : new Date((opts as any).startAt).toISOString();
+  const endIso = typeof (opts as any).endAt === 'string' ? (opts as any).endAt : new Date((opts as any).endAt).toISOString();
+  const recurEndIso = (opts as any).recurrenceEndAt
+    ? (typeof (opts as any).recurrenceEndAt === 'string'
+        ? (opts as any).recurrenceEndAt
+        : new Date((opts as any).recurrenceEndAt).toISOString())
+    : null;
+
+  const durationMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+  
+  // Validate duration - if negative, use the original event duration (likely a data issue)
+  if (durationMs < 0) {
+    console.log(`⚠️ [EXPAND] Invalid duration detected for event: ${opts.title}, start: ${startIso}, end: ${endIso}, using original duration`);
+    // For invalid durations, use the original timespan as-is rather than calculating occurrences
+    const results = [];
+    const dtStartLocal = DateTime.fromISO(startIso, { zone });
+    const dtEndLocal = DateTime.fromISO(endIso, { zone });
+    const range = Interval.fromDateTimes(DateTime.fromISO(opts.rangeStart).toUTC(), DateTime.fromISO(opts.rangeEnd).toUTC());
+    const eventInterval = Interval.fromDateTimes(dtStartLocal.toUTC(), dtEndLocal.toUTC());
+    
+    if (eventInterval.overlaps(range) || dtStartLocal.toUTC() >= range.start && dtStartLocal.toUTC() <= range.end) {
+      results.push({ 
+        startAt: new Date(dtStartLocal.toUTC().toMillis()).toISOString(), 
+        endAt: new Date(dtEndLocal.toUTC().toMillis()).toISOString()
+      });
+      console.log(`✅ [EXPAND] Added invalid duration event as single occurrence: ${dtStartLocal.toUTC().toISO()}`);
+    } else {
+      console.log(`❌ [EXPAND] Invalid duration event outside range, skipping`);
+    }
+    return results;
+  }
   const exceptionMillis = new Set((opts.exceptions || []).map(s => DateTime.fromISO(s).toUTC().toMillis()));
   const range = Interval.fromDateTimes(DateTime.fromISO(opts.rangeStart).toUTC(), DateTime.fromISO(opts.rangeEnd).toUTC());
 
-  const dtStartLocal = DateTime.fromISO(opts.startAt, { zone });
+  const dtStartLocal = DateTime.fromISO(startIso, { zone });
   const rule = opts.recurrenceRule ? parseRRule(opts.recurrenceRule) : null;
-  const untilLocal = (opts.recurrenceEndAt ? DateTime.fromISO(opts.recurrenceEndAt, { zone }) : null) || null;
+  const untilLocal = (recurEndIso ? DateTime.fromISO(recurEndIso, { zone }) : null) || null;
 
   const results: Array<{ startAt: string; endAt: string }> = [];
 
   const pushIfInRange = (occStartLocal: any) => {
-    const occEndLocal = occStartLocal.plus({ milliseconds: durationMs });
+  const occEndLocal = occStartLocal.plus({ milliseconds: durationMs });
     const occStartUtc = occStartLocal.toUTC();
     const occEndUtc = occEndLocal.toUTC();
     const occInterval = Interval.fromDateTimes(occStartUtc, occEndUtc);
@@ -195,9 +226,10 @@ export function buildRRuleFromUi(opts: {
 
 export function expandSeriesForRange(events: Event[], startIso: string, endIso: string) {
   console.log(`🔍 [EXPAND] Starting expansion with ${events.length} events, range: ${startIso} to ${endIso}`);
-  const masters = events.filter(e => e.parentEventId === null && !e.isDeleted);
+  // Treat both null and undefined parentEventId as masters (root events)
+  const masters = events.filter(e => (e as any).parentEventId == null && !(e as any).isDeleted);
   console.log(`🔍 [EXPAND] Found ${masters.length} master events`);
-  const overrides = events.filter(e => e.parentEventId && !e.isDeleted);
+  const overrides = events.filter(e => (e as any).parentEventId != null && !(e as any).isDeleted);
   console.log(`🔍 [EXPAND] Found ${overrides.length} override events`);
   
   for (const m of masters) {

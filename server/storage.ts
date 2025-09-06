@@ -6229,7 +6229,8 @@ export class SupabaseStorage implements IStorage {
     const { data, error } = await supabaseAdmin
       .from('events')
       .select('*')
-      .eq('is_deleted', false)
+      // Include events where is_deleted is either false or null (legacy rows)
+      .or('is_deleted.is.null,is_deleted.eq.false')
       .lte('start_at', endIso)
       .gte('end_at', startIso)
       .order('start_at', { ascending: true });
