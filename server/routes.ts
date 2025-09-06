@@ -9427,7 +9427,8 @@ setTimeout(async () => {
       
       console.log(`🗑️ [DELETE] Event ${req.params.id}, mode: ${deleteMode}, instanceDate: ${instanceDate}`);
       
-  const ok = await storage.deleteEventWithMode(req.params.id, deleteMode, instanceDate as string);
+      const ok = await storage.deleteEventWithMode(req.params.id, deleteMode, instanceDate as string);
+      console.log(`🗑️ [DELETE] Result from storage.deleteEventWithMode: ${ok}`);
       res.json({ success: ok, mode: deleteMode });
     } catch (err) {
       console.error('Error deleting event:', err);

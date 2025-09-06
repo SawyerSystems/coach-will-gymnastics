@@ -37,7 +37,8 @@ export function EventDeletionModal({
 
   if (!event) return null;
 
-  const isRecurring = !!event.recurrenceRule;
+  // An event is part of a recurring series if it has a recurrence rule OR belongs to a series
+  const isRecurring = !!event.recurrenceRule || !!event.seriesId;
   const isInstance = event.id.includes(':');
   // Properly extract full instance timestamp after the first colon
   const instanceDate = isInstance 

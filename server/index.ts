@@ -13,6 +13,9 @@ import { startDigestScheduler } from './lib/notifications';
 import { storage } from "./storage";
 import { serveStatic, setupVite } from "./vite";
 
+// 🔥🔥🔥 SERVER STARTUP VERIFICATION - This should appear on fresh restart
+console.log(`🔥🔥🔥 SERVER STARTING UP - ${new Date().toISOString()} - CODE VERSION: ${Math.random()}`);
+
 // Set Pacific timezone for the server
 process.env.TZ = 'America/Los_Angeles';
 
@@ -88,6 +91,12 @@ app.use(express.urlencoded({
   extended: false, 
   limit: process.env.NODE_ENV === 'development' ? '5mb' : '10mb' 
 }));
+
+// GLOBAL REQUEST TRACER - Should be FIRST middleware
+app.use((req, res, next) => {
+  console.log(`🌐 GLOBAL TRACER: ${req.method} ${req.url} from ${req.ip}`);
+  next();
+});
 
 // Configure CORS and session middleware using our environment-aware module
 configureSessionAndCors(app);

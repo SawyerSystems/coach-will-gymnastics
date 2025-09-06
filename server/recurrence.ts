@@ -75,7 +75,7 @@ export function expandSeries(opts: {
   
   // Validate duration - if negative, use the original event duration (likely a data issue)
   if (durationMs < 0) {
-    console.log(`⚠️ [EXPAND] Invalid duration detected for event: ${opts.title}, start: ${startIso}, end: ${endIso}, using original duration`);
+    console.log(`⚠️ [EXPAND] Invalid duration detected for event, start: ${startIso}, end: ${endIso}, using original duration`);
     // For invalid durations, use the original timespan as-is rather than calculating occurrences
     const results = [];
     const dtStartLocal = DateTime.fromISO(startIso, { zone });

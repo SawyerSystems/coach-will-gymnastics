@@ -6396,6 +6396,7 @@ export class SupabaseStorage implements IStorage {
     const baseId = id.includes(':') ? id.split(':')[0] : id;
     
     console.log(`🗑️ [SUPABASE] Delete mode: ${mode}, baseId: ${baseId}, instanceDate: ${instanceDate}`);
+    console.log(`🔥🔥🔥 [SUPABASE] About to start delete process - entry point reached!`);
 
     try {
       if (mode === 'all') {
@@ -6467,7 +6468,53 @@ export class SupabaseStorage implements IStorage {
           }
         }
 
-      } else if (mode === 'this' && instanceDate) {
+      } else if (mode === 'this') {
+        console.log(`🗑️ [SUPABASE] Mode 'this' - instanceDate: ${instanceDate}`);
+        
+        // First check if this is a standalone series event (no recurrence rule)
+        const { data: currentEvent, error: fetchError } = await supabaseAdmin
+          .from('events')
+          .select('recurrence_exceptions, recurrence_rule, series_id')
+          .eq('id', baseId)
+          .single();
+
+        if (fetchError) {
+          console.error('🚨 [SUPABASE] Error fetching current event:', fetchError);
+          return false;
+        }
+
+        console.log(`🗑️ [SUPABASE] Current event for 'this' mode:`, {
+          id: baseId,
+          recurrenceRule: currentEvent?.recurrence_rule,
+          seriesId: currentEvent?.series_id,
+          instanceDate,
+          hasInstanceDate: !!instanceDate
+        });
+
+        // Handle standalone series events (no recurrence rule, but has series_id)
+        if (currentEvent?.series_id && !currentEvent?.recurrence_rule && !instanceDate) {
+          console.log(`🗑️ [SUPABASE] Standalone series event - soft deleting directly`);
+          const { error: deleteError } = await supabaseAdmin
+            .from('events')
+            .update({ is_deleted: true, updated_at: new Date().toISOString() })
+            .eq('id', baseId);
+
+          if (deleteError) {
+            console.error('🚨 [SUPABASE] Error soft-deleting standalone series event:', deleteError);
+            console.error('🚨 [SUPABASE] Delete error details:', JSON.stringify(deleteError, null, 2));
+            return false;
+          }
+          
+          console.log(`✅ [SUPABASE] Successfully soft-deleted standalone series event ${baseId}`);
+          return true;
+        }
+        
+        // For recurring events or series events with instanceDate, we need an instanceDate
+        if (!instanceDate) {
+          console.log(`🗑️ [SUPABASE] Mode 'this' requires instanceDate for recurring events`);
+          return false;
+        }
+        
         // Normalize truncated instanceDate forms before processing
         let normalizedInstanceDate = instanceDate;
         if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$/.test(normalizedInstanceDate)) {
@@ -6481,31 +6528,32 @@ export class SupabaseStorage implements IStorage {
           console.log('⚠️ [SUPABASE] Normalized truncated instanceDate', { original: instanceDate, normalized: normalizedInstanceDate });
           instanceDate = normalizedInstanceDate;
         }
+        
         // Delete only this instance: add to recurrence exceptions
         console.log(`🗑️ [SUPABASE] Mode 'this' - adding exception for ${instanceDate} to event ${baseId}`);
-        
-        // First get the current event to read existing exceptions
-        const { data: currentEvent, error: fetchError } = await supabaseAdmin
-          .from('events')
-          .select('recurrence_exceptions, recurrence_rule')
-          .eq('id', baseId)
-          .single();
 
-        if (fetchError) {
-          console.error('🚨 [SUPABASE] Error fetching current event:', fetchError);
+        // Only add exception if this is actually a recurring event (has recurrence_rule) or series event (has series_id)
+        if (!currentEvent?.recurrence_rule && !currentEvent?.series_id) {
+          console.log(`🗑️ [SUPABASE] Non-recurring/non-series event - should not use 'this' mode`);
           return false;
         }
 
-        console.log(`🗑️ [SUPABASE] Current event:`, {
-          id: baseId,
-          recurrenceRule: currentEvent?.recurrence_rule,
-          currentExceptions: currentEvent?.recurrence_exceptions
-        });
+        // Handle recurring series events differently than recurring events
+        if (currentEvent?.series_id && currentEvent?.recurrence_rule) {
+          // This is a series event instance - soft delete it directly
+          console.log(`🗑️ [SUPABASE] Series event instance - soft deleting directly`);
+          const { error: deleteError } = await supabaseAdmin
+            .from('events')
+            .update({ is_deleted: true, updated_at: new Date().toISOString() })
+            .eq('id', baseId);
 
-        // Only add exception if this is actually a recurring event
-        if (!currentEvent?.recurrence_rule) {
-          console.log(`🗑️ [SUPABASE] Non-recurring event - should not use 'this' mode`);
-          return false;
+          if (deleteError) {
+            console.error('🚨 [SUPABASE] Error soft-deleting series event:', deleteError);
+            return false;
+          }
+          
+          console.log(`✅ [SUPABASE] Successfully soft-deleted series event ${baseId}`);
+          return true;
         }
 
         const currentExceptions = Array.isArray(currentEvent?.recurrence_exceptions) 
