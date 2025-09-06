@@ -6377,52 +6377,54 @@ export class SupabaseStorage implements IStorage {
       
       // If becoming all-day or already all-day with new times
       if ((input.isAllDay === true || (input.isAllDay === undefined && startAt)) && startAt) {
-        // Use a simple approach: create exact times in Pacific timezone
+        // Use DST-aware timezone conversion for all-day events
+        const startDate = new Date(startAt);
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth() + 1;
+        const startDay = startDate.getDate();
         
-        const startDateString = new Date(startAt).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-        const [startYear, startMonth, startDay] = startDateString.split('-').map(Number);
+        // Create a test date in Pacific timezone to check if DST is active
+        const testDate = new Date();
+        testDate.setFullYear(startYear, startMonth - 1, startDay);
+        testDate.setHours(12, 0, 0, 0); // Noon Pacific
         
-        // Create start time: 00:01 Pacific (12:01 AM)
+        const pacificOffset = testDate.toLocaleString('en-US', { 
+          timeZone: 'America/Los_Angeles', 
+          timeZoneName: 'short' 
+        }).includes('PDT') ? -7 : -8;
+        
+        // Create start time: 00:01 Pacific
         const startOfDayUTC = new Date();
-        if (startMonth >= 3 && startMonth <= 11) {
-          // DST period (March-November): Pacific = UTC-7
-          startOfDayUTC.setUTCFullYear(startYear, startMonth - 1, startDay);
-          startOfDayUTC.setUTCHours(7, 1, 0, 0); // 07:01 UTC = 00:01 PDT
-        } else {
-          // Standard time period: Pacific = UTC-8  
-          startOfDayUTC.setUTCFullYear(startYear, startMonth - 1, startDay);
-          startOfDayUTC.setUTCHours(8, 1, 0, 0); // 08:01 UTC = 00:01 PST
-        }
+        startOfDayUTC.setUTCFullYear(startYear, startMonth - 1, startDay);
+        startOfDayUTC.setUTCHours(-pacificOffset, 1, 0, 0); // Convert Pacific 00:01 to UTC
         
         let endOfDayUTC;
         if (endAt) {
           // For multi-day events, preserve the original end date
-          const endDateString = new Date(endAt).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-          const [endYear, endMonth, endDay] = endDateString.split('-').map(Number);
+          const endDate = new Date(endAt);
+          const endYear = endDate.getFullYear();
+          const endMonth = endDate.getMonth() + 1;
+          const endDay = endDate.getDate();
           
-          // Create end time: 23:59 Pacific (11:59 PM) on the end date
+          // Test DST for end date
+          const testEndDate = new Date();
+          testEndDate.setFullYear(endYear, endMonth - 1, endDay);
+          testEndDate.setHours(12, 0, 0, 0);
+          
+          const endPacificOffset = testEndDate.toLocaleString('en-US', { 
+            timeZone: 'America/Los_Angeles', 
+            timeZoneName: 'short' 
+          }).includes('PDT') ? -7 : -8;
+          
+          // Create end time: 23:59 Pacific on the end date
           endOfDayUTC = new Date();
-          if (endMonth >= 3 && endMonth <= 11) {
-            // DST period: Pacific = UTC-7
-            endOfDayUTC.setUTCFullYear(endYear, endMonth - 1, endDay);
-            endOfDayUTC.setUTCHours(6, 59, 0, 0); // 06:59 UTC = 23:59 PDT
-          } else {
-            // Standard time: Pacific = UTC-8
-            endOfDayUTC.setUTCFullYear(endYear, endMonth - 1, endDay);
-            endOfDayUTC.setUTCHours(7, 59, 0, 0); // 07:59 UTC = 23:59 PST
-          }
+          endOfDayUTC.setUTCFullYear(endYear, endMonth - 1, endDay);
+          endOfDayUTC.setUTCHours(-endPacificOffset + 23, 59, 0, 0); // Convert Pacific 23:59 to UTC
         } else {
           // Single day event - end at 23:59 on the same day
           endOfDayUTC = new Date();
-          if (startMonth >= 3 && startMonth <= 11) {
-            // DST period: Pacific = UTC-7
-            endOfDayUTC.setUTCFullYear(startYear, startMonth - 1, startDay);
-            endOfDayUTC.setUTCHours(6, 59, 0, 0); // 06:59 UTC = 23:59 PDT
-          } else {
-            // Standard time: Pacific = UTC-8
-            endOfDayUTC.setUTCFullYear(startYear, startMonth - 1, startDay);
-            endOfDayUTC.setUTCHours(7, 59, 0, 0); // 07:59 UTC = 23:59 PST
-          }
+          endOfDayUTC.setUTCFullYear(startYear, startMonth - 1, startDay);
+          endOfDayUTC.setUTCHours(-pacificOffset + 23, 59, 0, 0); // Convert Pacific 23:59 to UTC
         }
         
         updateData.start_at = startOfDayUTC.toISOString();

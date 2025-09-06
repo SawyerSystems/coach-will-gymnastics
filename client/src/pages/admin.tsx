@@ -5138,8 +5138,14 @@ export default function Admin() {
                     country: newEvent.country,
                     isAllDay: newEvent.isAllDay || false,
                     timezone: newEvent.timezone || "America/Los_Angeles",
-                    startAt: newEvent.startAt ? newEvent.startAt.toISOString() : new Date().toISOString(),
-                    endAt: newEvent.endAt ? newEvent.endAt.toISOString() : new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                    startAt: (() => {
+                      if (!newEvent.startAt) return new Date().toISOString();
+                      return newEvent.startAt.toISOString();
+                    })(),
+                    endAt: (() => {
+                      if (!newEvent.endAt) return new Date(Date.now() + 60 * 60 * 1000).toISOString();
+                      return newEvent.endAt.toISOString();
+                    })(),
                     // Persist recurrence configuration (previously always null)
                     recurrenceRule: newEvent.recurrenceRule || null,
                     recurrenceEndAt: newEvent.recurrenceEndAt ? (newEvent.recurrenceEndAt instanceof Date ? newEvent.recurrenceEndAt.toISOString() : String(newEvent.recurrenceEndAt)) : null,
@@ -5245,8 +5251,14 @@ export default function Admin() {
                         country: eventData.country || 'United States',
                         isAllDay: eventData.isAllDay || false,
                         timezone: eventData.timezone || 'America/Los_Angeles',
-                        startAt: new Date(eventData.startAt),
-                        endAt: new Date(eventData.endAt),
+                        startAt: (() => {
+                          const date = new Date(eventData.startAt);
+                          return date;
+                        })(),
+                        endAt: (() => {
+                          const date = new Date(eventData.endAt);
+                          return date;
+                        })(),
                         recurrenceRule: eventData.recurrenceRule,
                         recurrenceEndAt: eventData.recurrenceEndAt ? new Date(eventData.recurrenceEndAt) : null,
                         recurrenceExceptions: eventData.recurrenceExceptions || [],
