@@ -28,6 +28,8 @@ interface AnalyticsTabProps {
   analyticsHeaderMetrics: MetricCard[];
   allBookings: Booking[];
   lessonTypes: any[];
+  lessonTypesById: Map<number, any>;
+  lessonTypesByName: Map<string, any>;
   analyticsDateRange: { start: string; end: string };
   setAnalyticsDateRange: (range: { start: string; end: string } | ((prev: { start: string; end: string }) => { start: string; end: string })) => void;
   analyticsLessonType: string;
@@ -38,17 +40,61 @@ export default function AdminAnalyticsTab({
   analyticsHeaderMetrics,
   allBookings,
   lessonTypes,
+  lessonTypesById,
+  lessonTypesByName,
   analyticsDateRange,
   setAnalyticsDateRange,
   analyticsLessonType,
   setAnalyticsLessonType
 }: AnalyticsTabProps) {
+  
+  // Parse a YYYY-MM-DD into a local Date (avoid UTC shift)
+  const parseYMDLocal = (dateStr: string) => {
+    if (!dateStr) return null as unknown as Date;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+    if (!m) return new Date(dateStr);
+    const [, y, mo, d] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(d));
+  };
+
+  // Helper function to check if a booking falls within the date range (inclusive)
+  const isBookingInDateRange = (booking: any, startDate: string, endDate: string) => {
+    if (!booking.preferredDate) return false;
+    
+    const bookingDate = parseYMDLocal(booking.preferredDate);
+    const start = parseYMDLocal(startDate);
+    const end = parseYMDLocal(endDate);
+    
+    // Set start to beginning of day, end to end of day for inclusive comparison
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    
+    return bookingDate >= start && bookingDate <= end;
+  };
   // Filter bookings based on current filters
   const filteredBookings = useMemo(() => {
     return allBookings.filter(booking => {
-      // Date range filter
-      if (analyticsDateRange.start && booking.preferredDate && booking.preferredDate < analyticsDateRange.start) return false;
-      if (analyticsDateRange.end && booking.preferredDate && booking.preferredDate > analyticsDateRange.end) return false;
+      // Date range filter - use inclusive date range logic
+      if (analyticsDateRange.start && analyticsDateRange.end) {
+        if (!isBookingInDateRange(booking, analyticsDateRange.start, analyticsDateRange.end)) {
+          return false;
+        }
+      } else {
+        // Handle partial date ranges
+        if (analyticsDateRange.start && booking.preferredDate) {
+          const bookingDate = parseYMDLocal(booking.preferredDate);
+          const startDate = parseYMDLocal(analyticsDateRange.start);
+          startDate.setHours(0, 0, 0, 0);
+          if (bookingDate < startDate) return false;
+        }
+        
+        if (analyticsDateRange.end && booking.preferredDate) {
+          const bookingDate = parseYMDLocal(booking.preferredDate);
+          const endDate = parseYMDLocal(analyticsDateRange.end);
+          endDate.setHours(23, 59, 59, 999);
+          if (bookingDate > endDate) return false;
+        }
+      }
       
       // Lesson type filter
       if (analyticsLessonType !== 'all') {
@@ -132,14 +178,48 @@ export default function AdminAnalyticsTab({
     let completedRevenue = 0;
     let pendingRevenue = 0;
 
-    filteredBookings.forEach(booking => {
-      const amount = Number(booking.amount) || 0;
-      totalRevenue += amount;
+    // Helper function to calculate revenue per booking (matches header logic)
+    const getBookingRevenue = (booking: any) => {
+      const toNumber = (v: any) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      // First try paidAmount
+      const paidAmountNum = toNumber(booking?.paidAmount);
+      if (paidAmountNum > 0) return paidAmountNum;
       
+      // Fallback to amount field
+      const amountNum = toNumber(booking?.amount);
+      if (amountNum > 0) return amountNum;
+      
+      // Fallback to lesson type price
+      if (booking?.lessonTypeId && lessonTypesById.has(booking.lessonTypeId)) {
+        const lessonType: any = lessonTypesById.get(booking.lessonTypeId);
+        return toNumber(lessonType?.price);
+      }
+      
+      // Check if lessonType is embedded
+      const lt: any = booking?.lessonType;
+      if (lt && typeof lt === 'object' && 'price' in lt) return toNumber(lt.price);
+      
+      // Try lesson type by name
+      const name = typeof lt === 'string' ? lt : undefined;
+      if (name && lessonTypesByName.has(name)) {
+        const lessonType: any = lessonTypesByName.get(name);
+        return toNumber(lessonType?.price);
+      }
+      
+      return 0;
+    };
+
+    filteredBookings.forEach(booking => {
+      const revenue = getBookingRevenue(booking);
+      totalRevenue += revenue;
       if (booking.status === 'completed') {
-        completedRevenue += amount;
+        completedRevenue += revenue;
       } else if (booking.status === 'pending' || booking.status === 'confirmed') {
-        pendingRevenue += amount;
+        pendingRevenue += revenue;
       }
     });
 
@@ -179,7 +259,7 @@ export default function AdminAnalyticsTab({
         color: 'blue'
       }
     ];
-  }, [filteredBookings]);
+  }, [filteredBookings, lessonTypesById, lessonTypesByName]);
 
   // Customer insights
   const customerMetrics: MetricCard[] = useMemo(() => {

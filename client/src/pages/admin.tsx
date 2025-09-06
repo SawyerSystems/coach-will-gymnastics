@@ -324,8 +324,9 @@ export default function Admin() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleteUsersConfirmOpen, setIsDeleteUsersConfirmOpen] = useState(false);
   
-  // Month metric toggle state
-  const [isShowingCurrentMonth, setIsShowingCurrentMonth] = useState(true);
+  // Multi-state metric toggles
+  const [bookingsMetricState, setBookingsMetricState] = useState<'total' | 'currentMonth' | 'lastMonth'>('total');
+  const [revenueMetricState, setRevenueMetricState] = useState<'total' | 'currentMonth' | 'lastMonth'>('total');
   
   // ALL UTILITY HOOKS
   const { toast } = useToast();
@@ -333,6 +334,30 @@ export default function Admin() {
   
   // Fix dialog accessibility issues
   useFixDialogAccessibility();
+
+  // Helpers: month date range and formatting for filters
+  const toYMD = (d: Date) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const getMonthRange = (offsetFromCurrent: number) => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth() + offsetFromCurrent, 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + offsetFromCurrent + 1, 0);
+    return { start: toYMD(firstDay), end: toYMD(lastDay) };
+  };
+
+  // Parse a YYYY-MM-DD into a local Date (avoid UTC shift)
+  const parseYMDLocal = (dateStr: string) => {
+    if (!dateStr) return null as unknown as Date;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+    if (!m) return new Date(dateStr);
+    const [, y, mo, d] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(d));
+  };
 
   // Keep membership toggle in sync with selected athlete when edit opens/changes
   useEffect(() => {
@@ -1421,22 +1446,189 @@ export default function Admin() {
   const confirmedBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "confirmed").length, [allBookings]);
 
   // Shared analytics/header computed values
-  const monthBookings = useMemo(() => {
+  // Revenue calculations for 3-state metrics
+  const totalRevenue = useMemo(() => {
+    const toNumber = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    
+    return allBookings.reduce((sum, booking: any) => {
+      // First try paidAmount
+      const paidAmountNum = toNumber(booking?.paidAmount);
+      if (paidAmountNum > 0) return sum + paidAmountNum;
+      
+      // Fallback to amount field
+      const amountNum = toNumber(booking?.amount);
+      if (amountNum > 0) return sum + amountNum;
+      
+      // Fallback to lesson type price
+      if (booking?.lessonTypeId && lessonTypesById.has(booking.lessonTypeId)) {
+        const lessonType: any = lessonTypesById.get(booking.lessonTypeId);
+        return sum + toNumber(lessonType?.price);
+      }
+      
+      // Check if lessonType is embedded
+      const lt: any = booking?.lessonType;
+      if (lt && typeof lt === 'object' && 'price' in lt) return sum + toNumber(lt.price);
+      
+      // Try lesson type by name
+      const name = typeof lt === 'string' ? lt : undefined;
+      if (name && lessonTypesByName.has(name)) {
+        const lessonType: any = lessonTypesByName.get(name);
+        return sum + toNumber(lessonType?.price);
+      }
+      
+      return sum;
+    }, 0);
+  }, [allBookings, lessonTypesById, lessonTypesByName]);
+
+  const currentMonthRevenue = useMemo(() => {
+    const now = new Date();
+    const toNumber = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    
     return allBookings.filter(b => {
       if (!b.preferredDate) return false;
-      const bookingDate = new Date(b.preferredDate);
-      const now = new Date();
+      const bookingDate = parseYMDLocal(b.preferredDate as any);
+      return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
+    }).reduce((sum, booking: any) => {
+      // First try paidAmount
+      const paidAmountNum = toNumber(booking?.paidAmount);
+      if (paidAmountNum > 0) return sum + paidAmountNum;
       
-      if (isShowingCurrentMonth) {
-        // This month
-        return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
-      } else {
-        // Last month
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        return bookingDate.getMonth() === lastMonth.getMonth() && bookingDate.getFullYear() === lastMonth.getFullYear();
+      // Fallback to amount field
+      const amountNum = toNumber(booking?.amount);
+      if (amountNum > 0) return sum + amountNum;
+      
+      // Fallback to lesson type price
+      if (booking?.lessonTypeId && lessonTypesById.has(booking.lessonTypeId)) {
+        const lessonType: any = lessonTypesById.get(booking.lessonTypeId);
+        return sum + toNumber(lessonType?.price);
       }
+      
+      // Check if lessonType is embedded
+      const lt: any = booking?.lessonType;
+      if (lt && typeof lt === 'object' && 'price' in lt) return sum + toNumber(lt.price);
+      
+      // Try lesson type by name
+      const name = typeof lt === 'string' ? lt : undefined;
+      if (name && lessonTypesByName.has(name)) {
+        const lessonType: any = lessonTypesByName.get(name);
+        return sum + toNumber(lessonType?.price);
+      }
+      
+      return sum;
+    }, 0);
+  }, [allBookings, lessonTypesById, lessonTypesByName]);
+
+  const lastMonthRevenue = useMemo(() => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const toNumber = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    
+    return allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const bookingDate = parseYMDLocal(b.preferredDate as any);
+      return bookingDate.getMonth() === lastMonth.getMonth() && bookingDate.getFullYear() === lastMonth.getFullYear();
+  }).reduce((sum, booking: any) => {
+      // First try paidAmount
+      const paidAmountNum = toNumber(booking?.paidAmount);
+      if (paidAmountNum > 0) return sum + paidAmountNum;
+      
+      // Fallback to amount field
+      const amountNum = toNumber(booking?.amount);
+      if (amountNum > 0) return sum + amountNum;
+      
+      // Fallback to lesson type price
+      if (booking?.lessonTypeId && lessonTypesById.has(booking.lessonTypeId)) {
+        const lessonType: any = lessonTypesById.get(booking.lessonTypeId);
+        return sum + toNumber(lessonType?.price);
+      }
+      
+      // Check if lessonType is embedded
+      const lt: any = booking?.lessonType;
+      if (lt && typeof lt === 'object' && 'price' in lt) return sum + toNumber(lt.price);
+      
+      // Try lesson type by name
+      const name = typeof lt === 'string' ? lt : undefined;
+      if (name && lessonTypesByName.has(name)) {
+        const lessonType: any = lessonTypesByName.get(name);
+        return sum + toNumber(lessonType?.price);
+      }
+      
+      return sum;
+    }, 0);
+  }, [allBookings, lessonTypesById, lessonTypesByName]);
+
+  const currentMonthBookings = useMemo(() => {
+    const now = new Date();
+    return allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const bookingDate = parseYMDLocal(b.preferredDate as any);
+      return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
     }).length;
-  }, [allBookings, isShowingCurrentMonth]);
+  }, [allBookings]);
+
+  const lastMonthBookings = useMemo(() => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const bookingDate = parseYMDLocal(b.preferredDate as any);
+      return bookingDate.getMonth() === lastMonth.getMonth() && bookingDate.getFullYear() === lastMonth.getFullYear();
+    }).length;
+  }, [allBookings]);
+
+  // Dev-only diagnostic: when viewing Last Month, list any bookings included by header month calc but excluded by date-range filter and vice versa
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    const { start, end } = getMonthRange(-1);
+    const isLastMonthRange = analyticsDateRange.start === start && analyticsDateRange.end === end;
+    if (!isLastMonthRange) return;
+
+    // Header-based month set
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const headerSet = allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const d = parseYMDLocal(b.preferredDate as any);
+      return d.getMonth() === lastMonth.getMonth() && d.getFullYear() === lastMonth.getFullYear();
+    });
+
+    // Filter-range-based set (inclusive)
+    const startD = parseYMDLocal(start);
+    const endD = parseYMDLocal(end);
+    startD.setHours(0,0,0,0);
+    endD.setHours(23,59,59,999);
+    const rangeSet = allBookings.filter(b => {
+      if (!b.preferredDate) return false;
+      const d = parseYMDLocal(b.preferredDate as any);
+      return d >= startD && d <= endD;
+    });
+
+    const headerIds = new Set(headerSet.map((b: any) => b.id));
+    const rangeIds = new Set(rangeSet.map((b: any) => b.id));
+
+    const inHeaderNotRange = headerSet.filter((b: any) => !rangeIds.has(b.id));
+    const inRangeNotHeader = rangeSet.filter((b: any) => !headerIds.has(b.id));
+
+    if (inHeaderNotRange.length || inRangeNotHeader.length) {
+      // eslint-disable-next-line no-console
+      console.groupCollapsed('[Diagnostics] Last Month revenue mismatch details');
+      // eslint-disable-next-line no-console
+      console.log('Header-only bookings (count):', inHeaderNotRange.length, inHeaderNotRange.map((b: any) => ({ id: b.id, preferredDate: b.preferredDate, amount: b.amount, paidAmount: b.paidAmount })));
+      // eslint-disable-next-line no-console
+      console.log('Filter-only bookings (count):', inRangeNotHeader.length, inRangeNotHeader.map((b: any) => ({ id: b.id, preferredDate: b.preferredDate, amount: b.amount, paidAmount: b.paidAmount })));
+      // eslint-disable-next-line no-console
+      console.groupEnd();
+    }
+  }, [allBookings, analyticsDateRange.start, analyticsDateRange.end]);
 
   const conversionRate = useMemo(() => {
     if (!allBookings.length) return 0;
@@ -1542,32 +1734,74 @@ export default function Admin() {
 
   // Analytics tab key metrics
   const analyticsHeaderMetrics = useMemo(() => {
+    // Helper functions for 3-state metric cycling
+    const getBookingsDisplay = () => {
+      switch (bookingsMetricState) {
+        case 'total': return { label: 'Total Bookings', value: totalBookingsAll, hint: 'All time' };
+        case 'currentMonth': return { label: 'This Month', value: currentMonthBookings, hint: 'Current month bookings' };
+        case 'lastMonth': return { label: 'Last Month', value: lastMonthBookings, hint: 'Previous month bookings' };
+      }
+    };
+
+    const getRevenueDisplay = () => {
+      switch (revenueMetricState) {
+        case 'total': return { label: 'Total Revenue', value: `$${totalRevenue.toFixed(0)}`, hint: 'All time' };
+        case 'currentMonth': return { label: 'This Month Revenue', value: `$${currentMonthRevenue.toFixed(0)}`, hint: 'Current month revenue' };
+        case 'lastMonth': return { label: 'Last Month Revenue', value: `$${lastMonthRevenue.toFixed(0)}`, hint: 'Previous month revenue' };
+      }
+    };
+
+    const bookingsDisplay = getBookingsDisplay();
+    const revenueDisplay = getRevenueDisplay();
+
     const metrics = [
       {
-        key: 'total-all',
-        label: 'Total Bookings',
-        value: totalBookingsAll,
-        hint: 'All time',
+        key: 'bookings-3state',
+        label: bookingsDisplay.label,
+        value: bookingsDisplay.value,
+        hint: bookingsDisplay.hint,
         icon: <Calendar className="h-5 w-5 text-slate-700" />,
         color: 'slate' as const,
+        clickable: true,
+        onClick: () => {
+          const nextState = bookingsMetricState === 'total' ? 'currentMonth' : 
+                          bookingsMetricState === 'currentMonth' ? 'lastMonth' : 'total';
+          setBookingsMetricState(nextState);
+        },
       },
       {
-        key: 'this-month',
-        label: isShowingCurrentMonth ? 'This Month' : 'Last Month',
-        value: monthBookings,
-        hint: isShowingCurrentMonth ? 'Current month bookings' : 'Previous month bookings',
-        icon: <CalendarDays className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
-        color: 'indigo' as const,
+        key: 'revenue-3state',
+        label: revenueDisplay.label,
+        value: revenueDisplay.value,
+        hint: revenueDisplay.hint,
+        icon: <DollarSign className="h-5 w-5 text-green-700" />,
+        color: 'green' as const,
         clickable: true,
-        onClick: () => setIsShowingCurrentMonth(!isShowingCurrentMonth),
+        onClick: () => {
+          const nextState = revenueMetricState === 'total' ? 'currentMonth' : 
+                          revenueMetricState === 'currentMonth' ? 'lastMonth' : 'total';
+          setRevenueMetricState(nextState);
+
+          // Keep filters in sync with header metric state
+          if (nextState === 'currentMonth') {
+            const { start, end } = getMonthRange(0);
+            setAnalyticsDateRange({ start, end });
+          } else if (nextState === 'lastMonth') {
+            const { start, end } = getMonthRange(-1);
+            setAnalyticsDateRange({ start, end });
+          } else {
+            // Total: clear filters
+            setAnalyticsDateRange({ start: '', end: '' });
+          }
+        },
       },
       {
         key: 'conversion',
         label: 'Conversion Rate',
         value: `${conversionRate}%`,
         hint: 'Form to payment',
-        icon: <CheckCircle className="h-5 w-5 text-green-700" />,
-        color: 'green' as const,
+        icon: <CheckCircle className="h-5 w-5 text-blue-700" />,
+        color: 'blue' as const,
       },
       {
         key: 'avg-value',
@@ -1579,7 +1813,9 @@ export default function Admin() {
       },
     ];
     return metrics;
-  }, [totalBookingsAll, monthBookings, conversionRate, avgBookingValue, isShowingCurrentMonth]);
+  }, [totalBookingsAll, conversionRate, avgBookingValue, 
+      bookingsMetricState, revenueMetricState, currentMonthBookings, lastMonthBookings, 
+      totalRevenue, currentMonthRevenue, lastMonthRevenue]);
 
   // EARLY RETURNS AFTER ALL HOOKS
   if (authLoading) {
@@ -3563,6 +3799,8 @@ export default function Admin() {
                 analyticsHeaderMetrics={analyticsHeaderMetrics}
                 allBookings={allBookings}
                 lessonTypes={lessonTypes}
+                lessonTypesById={lessonTypesById}
+                lessonTypesByName={lessonTypesByName}
                 analyticsDateRange={analyticsDateRange}
                 setAnalyticsDateRange={setAnalyticsDateRange}
                 analyticsLessonType={analyticsLessonType}
