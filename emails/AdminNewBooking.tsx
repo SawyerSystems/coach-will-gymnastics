@@ -43,7 +43,7 @@ export default function AdminNewBooking(allProps: AdminNewBookingProps & Record<
   // 1. Provided as focusAreas (camelCase) from server code we updated
   // 2. Possibly sent as focus_areas (snake_case) directly from DB row
   // 3. Fallback to empty array
-  const finalFocusAreas: string[] = Array.isArray(allProps.focusAreas)
+  const focusAreas: string[] = Array.isArray(allProps.focusAreas)
     ? allProps.focusAreas
     : Array.isArray(allProps.focus_areas)
       ? allProps.focus_areas
@@ -198,10 +198,10 @@ export default function AdminNewBooking(allProps: AdminNewBookingProps & Record<
                       <td style={{ 
                         padding: '8px 12px', 
                         borderBottom: '1px solid #e5e7eb',
-                        color: finalFocusAreas.length ? '#111827' : '#6b7280',
-                        fontStyle: finalFocusAreas.length ? 'normal' : 'italic'
+                        color: focusAreas.length ? '#111827' : '#6b7280',
+                        fontStyle: focusAreas.length ? 'normal' : 'italic'
                       }}>
-                        {finalFocusAreas.length ? finalFocusAreas.join(', ') : 'None selected'}
+                        {focusAreas.length ? focusAreas.join(', ') : 'None selected'}
                       </td>
                     </tr>
                     <tr>

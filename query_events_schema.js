@@ -1,8 +1,10 @@
 /**
  * Query the database to check events table schema
  */
-const { Client } = require('pg');
-require('dotenv').config();
+import pkg from 'pg';
+const { Client } = pkg;
+import dotenv from 'dotenv';
+dotenv.config();
 
 async function queryDatabase() {
     console.log('=== Database Schema Query ===');

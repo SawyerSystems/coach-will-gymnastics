@@ -6222,21 +6222,59 @@ export class SupabaseStorage implements IStorage {
 
   // Events (recurrence series) - Supabase implementation
   async listEventsByRange(startIso: string, endIso: string): Promise<Event[]> {
-    // For now, return all non-deleted rows; range filtering can be added later
+    console.log(`🔍 [STORAGE] listEventsByRange called with range: ${startIso} to ${endIso}`);
+
+    // Query events that overlap the given range [startIso, endIso]
+    // Overlap condition: event.start_at <= endIso AND event.end_at >= startIso
     const { data, error } = await supabaseAdmin
       .from('events')
       .select('*')
       .eq('is_deleted', false)
+      .lte('start_at', endIso)
+      .gte('end_at', startIso)
       .order('start_at', { ascending: true });
 
     if (error) {
       console.error('Error listing events:', error);
       throw new Error('Failed to list events');
     }
-    return (data || []) as unknown as Event[];
+
+    const rows = data || [];
+    console.log(`🔍 [STORAGE] Found ${rows.length} events in range before mapping`);
+
+    // Map snake_case rows to Event (camelCase + Date instances)
+    const events: Event[] = rows.map((row: any) => this.mapEventFromDb(row));
+    console.log(`🔍 [STORAGE] Mapped ${events.length} events to domain objects`);
+    return events;
   }
 
   async createEvent(input: InsertEvent): Promise<Event> {
+    // Handle all-day event timing
+    let startAt = input.startAt as any;
+    let endAt = input.endAt as any;
+    
+    if (input.isAllDay && startAt) {
+      // For all-day events, set start to 00:00 and end to 23:59:59 of the same day in Pacific timezone
+      const eventDate = new Date(startAt);
+      const timezone = input.timezone ?? 'America/Los_Angeles';
+      
+      // For Pacific timezone (UTC-7 in PDT, UTC-8 in PST)
+      // All-day Sep 6th Pacific = Sep 6th 07:00 UTC to Sep 7th 06:59:59 UTC (during PDT)
+      const year = eventDate.getFullYear();
+      const month = eventDate.getMonth(); // 0-based
+      const day = eventDate.getDate();
+      
+      // Create start and end times in UTC that represent all-day in Pacific
+      // During PDT (March-November): Pacific midnight = UTC 07:00 next day
+      const startOfDayUTC = new Date(Date.UTC(year, month, day, 7, 0, 0, 0)); // Pacific midnight = UTC 7am same day
+      const endOfDayUTC = new Date(Date.UTC(year, month, day + 1, 6, 59, 59, 999)); // Pacific 11:59pm = UTC 6:59am next day
+      
+      startAt = startOfDayUTC.toISOString();
+      endAt = endOfDayUTC.toISOString();
+      
+      console.log(`🔧 [ALL-DAY-EVENT] Adjusted for Pacific timezone: ${startAt} to ${endAt}`);
+    }
+
     const insertData: any = {
       // Map camelCase to snake_case where needed
       id: input.id,
@@ -6254,8 +6292,8 @@ export class SupabaseStorage implements IStorage {
       country: (input as any).country ?? 'United States',
       is_all_day: input.isAllDay ?? false,
       timezone: input.timezone ?? 'America/Los_Angeles',
-      start_at: input.startAt as any,
-      end_at: input.endAt as any,
+      start_at: startAt,
+      end_at: endAt,
       recurrence_rule: (input as any).recurrenceRule ?? null,
       recurrence_end_at: (input as any).recurrenceEndAt ?? null,
       recurrence_exceptions: (input as any).recurrenceExceptions ?? [],
@@ -6295,8 +6333,34 @@ export class SupabaseStorage implements IStorage {
     if ((input as any).country !== undefined) updateData.country = (input as any).country;
     if (input.isAllDay !== undefined) updateData.is_all_day = input.isAllDay;
     if (input.timezone !== undefined) updateData.timezone = input.timezone;
-    if (input.startAt !== undefined) updateData.start_at = input.startAt as any;
-    if (input.endAt !== undefined) updateData.end_at = input.endAt as any;
+    
+    // Handle all-day event timing for updates
+    if (input.startAt !== undefined || input.endAt !== undefined || input.isAllDay !== undefined) {
+      let startAt = input.startAt as any;
+      let endAt = input.endAt as any;
+      
+      // If becoming all-day or already all-day with new times
+      if ((input.isAllDay === true || (input.isAllDay === undefined && startAt)) && startAt) {
+        const eventDate = new Date(startAt);
+        const year = eventDate.getFullYear();
+        const month = eventDate.getMonth();
+        const day = eventDate.getDate();
+        
+        // Create start and end times in UTC that represent all-day in Pacific
+        const startOfDayUTC = new Date(Date.UTC(year, month, day, 7, 0, 0, 0)); // Pacific midnight = UTC 7am same day
+        const endOfDayUTC = new Date(Date.UTC(year, month, day + 1, 6, 59, 59, 999)); // Pacific 11:59pm = UTC 6:59am next day
+        
+        updateData.start_at = startOfDayUTC.toISOString();
+        updateData.end_at = endOfDayUTC.toISOString();
+        
+        console.log(`🔧 [ALL-DAY-UPDATE] Adjusted for Pacific timezone: ${updateData.start_at} to ${updateData.end_at}`);
+      } else {
+        // Regular timed event
+        if (input.startAt !== undefined) updateData.start_at = startAt;
+        if (input.endAt !== undefined) updateData.end_at = endAt;
+      }
+    }
+    
     if ((input as any).recurrenceRule !== undefined) updateData.recurrence_rule = (input as any).recurrenceRule;
     if ((input as any).recurrenceEndAt !== undefined) updateData.recurrence_end_at = (input as any).recurrenceEndAt;
     if ((input as any).recurrenceExceptions !== undefined) updateData.recurrence_exceptions = (input as any).recurrenceExceptions;

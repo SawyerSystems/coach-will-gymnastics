@@ -342,9 +342,13 @@ async function getAvailableTimeSlots(date: string, lessonDuration: number = 30):
   );
   
   // Get availability blocks for this date using events table
-  const startOfDay = new Date(`${date}T00:00:00Z`);
-  const endOfDay = new Date(`${date}T23:59:59Z`);
-  const events = await storage.listEventsByRange(startOfDay.toISOString(), endOfDay.toISOString());
+  // Convert Pacific date to UTC range to match how events are stored
+  const [year, month, day] = date.split('-').map(Number);
+  const pacificStartUTC = new Date(Date.UTC(year, month - 1, day, 7, 0, 0, 0)); // Pacific midnight = UTC 07:00
+  const pacificEndUTC = new Date(Date.UTC(year, month - 1, day + 1, 6, 59, 59, 999)); // Pacific 11:59 PM = UTC 06:59 next day
+  console.log(`[DEBUG] Calling listEventsByRange with: start=${pacificStartUTC.toISOString()}, end=${pacificEndUTC.toISOString()}`);
+  const events = await storage.listEventsByRange(pacificStartUTC.toISOString(), pacificEndUTC.toISOString());
+  console.log(`[DEBUG] listEventsByRange returned ${events.length} events:`, events.map(e => `${e.id}: ${e.title} ${e.startAt}-${e.endAt} block=${e.isAvailabilityBlock}`));
   
   // Filter for availability blocks only
   const blockedEvents = events.filter(event => 
