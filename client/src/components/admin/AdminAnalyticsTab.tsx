@@ -291,6 +291,64 @@ export default function AdminAnalyticsTab({
         metrics={analyticsHeaderMetrics} 
         columns={{ base: 2, sm: 3, lg: 4 }} 
       />
+
+      {/* Date Range + Filters */}
+      <AdminCard className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md">
+        <AdminCardHeader className="pb-4">
+          <AdminCardTitle className="text-[#0F0276] dark:text-white flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-[#D8BD2A]" />
+            Filters
+          </AdminCardTitle>
+        </AdminCardHeader>
+        <AdminCardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700 dark:text-white">Start Date</Label>
+              <Input
+                type="date"
+                value={analyticsDateRange.start}
+                onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700 dark:text-white">End Date</Label>
+              <Input
+                type="date"
+                value={analyticsDateRange.end}
+                onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700 dark:text-white">Lesson Type</Label>
+              <Select value={analyticsLessonType} onValueChange={setAnalyticsLessonType}>
+                <SelectTrigger className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white">
+                  <SelectValue placeholder="All lesson types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Lesson Types</SelectItem>
+                  {(lessonTypes || []).map((lt: any) => (
+                    <SelectItem key={lt.id} value={lt.name}>{lt.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                className="w-full bg-white dark:bg-[#0F0276] border-0 dark:border-[#2A4A9B] shadow-md hover:shadow-lg transition-all duration-200 rounded-lg dark:text-white"
+                onClick={() => {
+                  setAnalyticsDateRange({ start: '', end: '' });
+                  setAnalyticsLessonType('all');
+                }}
+              >
+                Reset Filters
+              </Button>
+            </div>
+          </div>
+        </AdminCardContent>
+      </AdminCard>
       
       {/* Revenue Analytics */}
       <AdminCard className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md">
@@ -428,64 +486,6 @@ export default function AdminAnalyticsTab({
               <div className="text-sm text-slate-600 dark:text-slate-400">
                 Most bookings at {timeAnalytics.peakHour === 0 ? '12' : timeAnalytics.peakHour > 12 ? timeAnalytics.peakHour - 12 : timeAnalytics.peakHour}:00 {timeAnalytics.peakHour >= 12 ? 'PM' : 'AM'}
               </div>
-            </div>
-          </div>
-        </AdminCardContent>
-      </AdminCard>
-
-      {/* Date Range + Filters */}
-      <AdminCard className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-md">
-        <AdminCardHeader className="pb-4">
-          <AdminCardTitle className="text-[#0F0276] dark:text-white flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-[#D8BD2A]" />
-            Filters
-          </AdminCardTitle>
-        </AdminCardHeader>
-        <AdminCardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-slate-700 dark:text-white">Start Date</Label>
-              <Input
-                type="date"
-                value={analyticsDateRange.start}
-                onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, start: e.target.value }))}
-                className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-slate-700 dark:text-white">End Date</Label>
-              <Input
-                type="date"
-                value={analyticsDateRange.end}
-                onChange={(e) => setAnalyticsDateRange(prev => ({ ...prev, end: e.target.value }))}
-                className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-[#0F0276] dark:focus:ring-[#D8BD2A] transition-all duration-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-slate-700 dark:text-white">Lesson Type</Label>
-              <Select value={analyticsLessonType} onValueChange={setAnalyticsLessonType}>
-                <SelectTrigger className="rounded-lg border-0 bg-slate-50 dark:bg-slate-800 dark:text-white">
-                  <SelectValue placeholder="All lesson types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Lesson Types</SelectItem>
-                  {(lessonTypes || []).map((lt: any) => (
-                    <SelectItem key={lt.id} value={lt.name}>{lt.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                className="w-full bg-white dark:bg-[#0F0276] border-0 dark:border-[#2A4A9B] shadow-md hover:shadow-lg transition-all duration-200 rounded-lg dark:text-white"
-                onClick={() => {
-                  setAnalyticsDateRange({ start: '', end: '' });
-                  setAnalyticsLessonType('all');
-                }}
-              >
-                Reset Filters
-              </Button>
             </div>
           </div>
         </AdminCardContent>

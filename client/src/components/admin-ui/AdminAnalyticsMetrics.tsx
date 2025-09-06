@@ -8,6 +8,8 @@ export interface MetricCard {
   hint?: string;
   icon?: React.ReactNode;
   color?: "blue" | "green" | "orange" | "slate" | "indigo" | "red" | "amber";
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
     const colorMap = {
@@ -76,8 +78,18 @@ export function AdminAnalyticsMetrics({ metrics, columns, className, ...props }:
     <div className={cn(colClasses, className)} {...props}>
       {metrics.map((m) => {
         const c = colorMap[m.color || "slate"];
+        const isClickable = m.clickable && m.onClick;
+        
         return (
-          <div key={m.key} className={cn("relative rounded-xl border-0 bg-gradient-to-br shadow-lg hover:shadow-xl transition-all duration-300", c.wrapper)}>
+          <div 
+            key={m.key} 
+            className={cn(
+              "relative rounded-xl border-0 bg-gradient-to-br shadow-lg hover:shadow-xl transition-all duration-300", 
+              c.wrapper,
+              isClickable && "cursor-pointer hover:scale-105"
+            )}
+            onClick={isClickable ? m.onClick : undefined}
+          >
             <div className="flex flex-row items-center justify-between space-y-0 p-4 sm:p-5">
               <div>
                 <div className={cn("text-sm font-semibold", c.title)}>{m.label}</div>
@@ -92,6 +104,12 @@ export function AdminAnalyticsMetrics({ metrics, columns, className, ...props }:
             <div className="absolute top-2 right-2">
               <div className="w-2 h-2 bg-gray-400/70 rounded-full"></div>
             </div>
+            {/* Click indicator for clickable metrics */}
+            {isClickable && (
+              <div className="absolute bottom-2 right-2">
+                <div className="text-xs text-gray-500/70 font-medium">click</div>
+              </div>
+            )}
           </div>
         );
       })}

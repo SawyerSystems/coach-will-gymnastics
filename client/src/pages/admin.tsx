@@ -324,6 +324,9 @@ export default function Admin() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeleteUsersConfirmOpen, setIsDeleteUsersConfirmOpen] = useState(false);
   
+  // Month metric toggle state
+  const [isShowingCurrentMonth, setIsShowingCurrentMonth] = useState(true);
+  
   // ALL UTILITY HOOKS
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1418,14 +1421,22 @@ export default function Admin() {
   const confirmedBookings = useMemo(() => allBookings.filter(b => b.attendanceStatus === "confirmed").length, [allBookings]);
 
   // Shared analytics/header computed values
-  const thisMonthBookings = useMemo(() => {
+  const monthBookings = useMemo(() => {
     return allBookings.filter(b => {
       if (!b.preferredDate) return false;
       const bookingDate = new Date(b.preferredDate);
       const now = new Date();
-      return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
+      
+      if (isShowingCurrentMonth) {
+        // This month
+        return bookingDate.getMonth() === now.getMonth() && bookingDate.getFullYear() === now.getFullYear();
+      } else {
+        // Last month
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return bookingDate.getMonth() === lastMonth.getMonth() && bookingDate.getFullYear() === lastMonth.getFullYear();
+      }
     }).length;
-  }, [allBookings]);
+  }, [allBookings, isShowingCurrentMonth]);
 
   const conversionRate = useMemo(() => {
     if (!allBookings.length) return 0;
@@ -1542,11 +1553,13 @@ export default function Admin() {
       },
       {
         key: 'this-month',
-        label: 'This Month',
-        value: thisMonthBookings,
-        hint: 'Monthly bookings',
+        label: isShowingCurrentMonth ? 'This Month' : 'Last Month',
+        value: monthBookings,
+        hint: isShowingCurrentMonth ? 'Current month bookings' : 'Previous month bookings',
         icon: <CalendarDays className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />,
         color: 'indigo' as const,
+        clickable: true,
+        onClick: () => setIsShowingCurrentMonth(!isShowingCurrentMonth),
       },
       {
         key: 'conversion',
@@ -1566,7 +1579,7 @@ export default function Admin() {
       },
     ];
     return metrics;
-  }, [totalBookingsAll, thisMonthBookings, conversionRate, avgBookingValue]);
+  }, [totalBookingsAll, monthBookings, conversionRate, avgBookingValue, isShowingCurrentMonth]);
 
   // EARLY RETURNS AFTER ALL HOOKS
   if (authLoading) {
