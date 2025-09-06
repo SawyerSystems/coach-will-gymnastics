@@ -509,8 +509,11 @@ export default function Admin() {
   
   const deleteEventMutation = useMutation({
     mutationFn: async (params: string | { id: string; mode?: 'this' | 'future' | 'all'; instanceDate?: string }) => {
+      console.log("🚀 [MUTATION] deleteEventMutation.mutationFn called with:", params);
+      
       if (typeof params === 'string') {
         // Legacy: simple ID string (defaults to 'all' mode)
+        console.log("🚀 [MUTATION] Using legacy string mode, making DELETE request:", `/api/events/${params}`);
         return apiRequest("DELETE", `/api/events/${params}`).then(r => r.json());
       } else {
         // Enhanced: object with deletion mode - send in request body
@@ -521,15 +524,28 @@ export default function Admin() {
           ...(instanceDate && { instanceDate })
         };
         
+        console.log("🚀 [MUTATION] Using object mode, making DELETE request:", `/api/events/${id}`, "with body:", requestBody);
         return apiRequest("DELETE", `/api/events/${id}`, requestBody).then(r => r.json());
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events"] }),
+    onSuccess: (data) => {
+      console.log("✅ [MUTATION] deleteEventMutation succeeded:", data);
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    },
+    onError: (error) => {
+      console.error("❌ [MUTATION] deleteEventMutation failed:", error);
+    },
   });
 
   // Enhanced deletion handler
   const handleEventDeletion = (deletion: DeletionMode) => {
-    if (!deletingEvent) return;
+    console.log("🗑️ [ADMIN] handleEventDeletion called with:", deletion);
+    console.log("🗑️ [ADMIN] deletingEvent:", deletingEvent);
+    
+    if (!deletingEvent) {
+      console.error("🗑️ [ADMIN] No deletingEvent - aborting");
+      return;
+    }
     
     const baseId = deletingEvent.id.includes(':') ? deletingEvent.id.substring(0, deletingEvent.id.indexOf(':')) : deletingEvent.id;
     const instanceDate = deletion.instanceDate || (deletingEvent.id.includes(':') 
@@ -543,9 +559,11 @@ export default function Admin() {
     };
     
     console.log("🗑️ [ADMIN] Deletion params:", deleteParams);
+    console.log("🗑️ [ADMIN] About to call deleteEventMutation.mutate");
     
     deleteEventMutation.mutate(deleteParams, {
       onSuccess: () => {
+        console.log("🗑️ [ADMIN] Delete mutation succeeded");
         toast({
           title: "Event deleted successfully",
           description: `Event deleted using "${deletion.mode}" mode`,
@@ -553,6 +571,7 @@ export default function Admin() {
         setDeletingEvent(null);
       },
       onError: (error: any) => {
+        console.error("🗑️ [ADMIN] Delete mutation failed:", error);
         toast({
           title: "Failed to delete event", 
           description: error.message || "An error occurred while deleting the event",
