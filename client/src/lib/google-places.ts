@@ -154,6 +154,56 @@ export const createAddressAutocomplete = (
     onPlaceSelected(addressComponents);
   });
 
+  // Fix Google Places click selection issues - use pointerdown instead of click
+  // and whitelist the dropdown to prevent input blur
+  setTimeout(() => {
+    const pacContainers = document.querySelectorAll('.pac-container');
+    pacContainers.forEach(container => {
+      // Set up ignoreBlur flag for this input
+      let ignoreNextBlur = false;
+      
+      // Handle pointerdown on the container to set ignoreBlur flag
+      container.addEventListener('pointerdown', (e) => {
+        ignoreNextBlur = true;
+        e.preventDefault(); // Prevent blur
+        
+        // Reset flag after a short delay
+        setTimeout(() => {
+          ignoreNextBlur = false;
+        }, 200);
+      }, true);
+      
+      // Handle pointerdown on individual suggestions for immediate selection
+      container.addEventListener('pointerdown', (e) => {
+        const target = e.target as HTMLElement;
+        const pacItem = target.closest('.pac-item');
+        
+        if (pacItem) {
+          e.preventDefault(); // Prevent blur
+          e.stopPropagation(); // Don't bubble
+          
+          // Trigger Google's selection mechanism
+          const event = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          });
+          pacItem.dispatchEvent(event);
+        }
+      }, true);
+      
+      // Override input blur to respect ignoreBlur flag
+      const originalBlur = input.onblur;
+      input.onblur = (e) => {
+        if (ignoreNextBlur) {
+          ignoreNextBlur = false;
+          return; // Don't process blur
+        }
+        if (originalBlur) originalBlur.call(input, e);
+      };
+    });
+  }, 100);
+
   return autocomplete;
 };
 
