@@ -4,7 +4,8 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MapPin, Phone, Mail, Clock, Instagram, Youtube, MessageCircle, Facebook } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Instagram, Youtube, Facebook } from "lucide-react";
+import { siTiktok } from "simple-icons";
 import cwtLogo from "/CWT_Circle_LogoSPIN.png";
 
 interface HourSchedule {
@@ -185,17 +186,19 @@ export function Footer() {
             Where athletics meets adventure! Building confident champions one flip at a time, turning every lesson into a quest for greatness and every athlete into their own superhero.
           </p>
           <div className="flex justify-center space-x-4">
-            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">
+            <a href="https://www.facebook.com/coachwilltumbles" target="_blank" rel="noopener noreferrer" className="text-slate-600 dark:text-slate-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">
               <Facebook className="w-6 h-6" />
             </a>
             <a href="https://www.instagram.com/coachwilltumbles/" target="_blank" rel="noopener noreferrer" className="text-slate-600 dark:text-slate-400 hover:text-[#E4405F] transition-colors" aria-label="Instagram">
               <Instagram className="w-6 h-6" />
             </a>
-            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0000] transition-colors" aria-label="YouTube">
+            <a href="https://www.youtube.com/@coachwilltumbles" target="_blank" rel="noopener noreferrer" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0000] transition-colors" aria-label="YouTube">
               <Youtube className="w-6 h-6" />
             </a>
-            <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0050] transition-colors" aria-label="TikTok">
-              <MessageCircle className="w-6 h-6" />
+            <a href="https://www.tiktok.com/@coachwilltumbles" target="_blank" rel="noopener noreferrer" className="text-slate-600 dark:text-slate-400 hover:text-[#FF0050] transition-colors" aria-label="TikTok">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d={siTiktok.path} />
+              </svg>
             </a>
           </div>
         </div>
