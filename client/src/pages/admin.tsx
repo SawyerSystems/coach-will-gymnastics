@@ -1257,9 +1257,20 @@ export default function Admin() {
     }
 
     const startDate = newEvent.startAt || new Date();
+    // Debug logging for timezone issues
+    if (selectedWeekdays.length === 0) {
+      console.log('🔍 [RECURRENCE DEBUG] startDate:', startDate);
+      console.log('🔍 [RECURRENCE DEBUG] startDate.getDay():', startDate.getDay());
+      console.log('🔍 [RECURRENCE DEBUG] startDate.toString():', startDate.toString());
+      console.log('🔍 [RECURRENCE DEBUG] startDate.toISOString():', startDate.toISOString());
+    }
+    
+    // Ensure we get the local day of the week, not affected by timezone conversions
+    const localWeekday = startDate.getDay();
+    
     const rule = buildRRuleFromUi({
       frequency: recurrenceFrequency,
-      weekdays: selectedWeekdays.length > 0 ? selectedWeekdays : [startDate.getDay()],
+      weekdays: selectedWeekdays.length > 0 ? selectedWeekdays : [localWeekday],
       monthlyMode,
       byMonthDay: monthlyMode === 'DATE' ? startDate.getDate() : undefined,
       bySetPos: monthlyMode === 'WEEKDAY_POS' ? Math.ceil(startDate.getDate() / 7) : undefined,
@@ -5032,8 +5043,17 @@ export default function Admin() {
                       onChange={(e) => {
                         const timeValue = e.target.value;
                         const currentStart = newEvent.startAt ? new Date(newEvent.startAt) : new Date();
-                        const dateStr = currentStart.toISOString().split('T')[0];
-                        const newStart = new Date(dateStr + 'T' + timeValue + ':00');
+                        // Build date using local components to avoid UTC date shifts
+                        const [hh, mm] = timeValue.split(':').map(Number);
+                        const newStart = new Date(
+                          currentStart.getFullYear(),
+                          currentStart.getMonth(),
+                          currentStart.getDate(),
+                          Number.isFinite(hh) ? hh : 0,
+                          Number.isFinite(mm) ? mm : 0,
+                          0,
+                          0
+                        );
                         
                         setNewEvent({
                           ...newEvent,
@@ -5052,8 +5072,17 @@ export default function Admin() {
                       onChange={(e) => {
                         const timeValue = e.target.value;
                         const currentEnd = newEvent.endAt ? new Date(newEvent.endAt) : new Date();
-                        const dateStr = currentEnd.toISOString().split('T')[0];
-                        const newEnd = new Date(dateStr + 'T' + timeValue + ':00');
+                        // Build date using local components to avoid UTC date shifts
+                        const [hh, mm] = timeValue.split(':').map(Number);
+                        const newEnd = new Date(
+                          currentEnd.getFullYear(),
+                          currentEnd.getMonth(),
+                          currentEnd.getDate(),
+                          Number.isFinite(hh) ? hh : 0,
+                          Number.isFinite(mm) ? mm : 0,
+                          0,
+                          0
+                        );
                         
                         setNewEvent({
                           ...newEvent,

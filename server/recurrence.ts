@@ -125,7 +125,17 @@ export function expandSeries(opts: {
 
   const interval = Math.max(1, rule.interval || 1);
   const hardEndLocal = DateTime.fromISO(opts.rangeEnd, { zone });
-  const byweekday = rule.byweekday && rule.byweekday.length > 0 ? rule.byweekday : [dtStartLocal.weekday % 7];
+  
+  // Handle byweekday: if provided by rule, use it directly (already in JS format 0=Sun...6=Sat)
+  // If not provided, convert Luxon weekday to JS weekday as fallback
+  let byweekday: number[];
+  if (rule.byweekday && rule.byweekday.length > 0) {
+    byweekday = rule.byweekday; // Already in JavaScript format from frontend
+  } else {
+    // Convert Luxon weekday (1=Mon...7=Sun) to JS weekday (0=Sun...6=Sat) for consistency
+    const jsWeekday = dtStartLocal.weekday === 7 ? 0 : dtStartLocal.weekday;
+    byweekday = [jsWeekday];
+  }
 
   if (rule.freq === 'DAILY') {
     let cursor = dtStartLocal;
@@ -135,8 +145,9 @@ export function expandSeries(opts: {
       if (untilLocal && cursor > untilLocal.endOf('day')) break;
     }
   } else if (rule.freq === 'WEEKLY') {
-    let cursorWeek = dtStartLocal.startOf('week');
-    if (cursorWeek > dtStartLocal) cursorWeek = cursorWeek.minus({ weeks: 1 });
+    // Anchor the week to Sunday to align with JS weekday indices (0=Sun..6=Sat)
+    const sundayOffset = dtStartLocal.weekday % 7; // Luxon: 1=Mon..7=Sun -> %7 maps Sun=>0, Mon=>1, ... Sat=>6
+    let cursorWeek = dtStartLocal.minus({ days: sundayOffset }).startOf('day');
     while (cursorWeek <= hardEndLocal) {
       for (const wd of byweekday) {
         const day = cursorWeek.plus({ days: wd });
