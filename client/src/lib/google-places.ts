@@ -154,55 +154,85 @@ export const createAddressAutocomplete = (
     onPlaceSelected(addressComponents);
   });
 
-  // Fix Google Places click selection issues - use pointerdown instead of click
-  // and whitelist the dropdown to prevent input blur
-  setTimeout(() => {
-    const pacContainers = document.querySelectorAll('.pac-container');
-    pacContainers.forEach(container => {
-      // Set up ignoreBlur flag for this input
-      let ignoreNextBlur = false;
-      
-      // Handle pointerdown on the container to set ignoreBlur flag
-      container.addEventListener('pointerdown', (e) => {
+  // Fix Google Places click selection issues using MutationObserver
+  // Attach handlers to any .pac-container that appears under <body>
+  const attached = new WeakSet<Element>();
+  let ignoreNextBlur = false; // shared per-input flag
+
+  const attachHandlers = (container: Element) => {
+    if (attached.has(container)) return;
+    attached.add(container);
+
+    // Intercept pointerdown in the dropdown to prevent input blur
+    container.addEventListener(
+      'pointerdown',
+      (e: Event) => {
         ignoreNextBlur = true;
-        e.preventDefault(); // Prevent blur
-        
-        // Reset flag after a short delay
+        (e as PointerEvent).preventDefault();
+        // Reset the flag shortly after to allow normal blurs
         setTimeout(() => {
           ignoreNextBlur = false;
         }, 200);
-      }, true);
-      
-      // Handle pointerdown on individual suggestions for immediate selection
-      container.addEventListener('pointerdown', (e) => {
-        const target = e.target as HTMLElement;
+      },
+      true
+    );
+
+    // Handle selection with pointerdown on .pac-item and dispatch a synthetic click
+    container.addEventListener(
+      'pointerdown',
+      (e: Event) => {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
         const pacItem = target.closest('.pac-item');
-        
         if (pacItem) {
-          e.preventDefault(); // Prevent blur
-          e.stopPropagation(); // Don't bubble
-          
-          // Trigger Google's selection mechanism
-          const event = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-          });
-          pacItem.dispatchEvent(event);
+          (e as PointerEvent).preventDefault();
+          (e as PointerEvent).stopPropagation();
+          const evt = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+          pacItem.dispatchEvent(evt);
         }
-      }, true);
-      
-      // Override input blur to respect ignoreBlur flag
-      const originalBlur = input.onblur;
-      input.onblur = (e) => {
-        if (ignoreNextBlur) {
-          ignoreNextBlur = false;
-          return; // Don't process blur
+      },
+      true
+    );
+  };
+
+  // Override input blur to respect ignoreNextBlur
+  const originalBlur = input.onblur;
+  input.onblur = (e) => {
+    if (ignoreNextBlur) {
+      ignoreNextBlur = false;
+      return; // suppress blur when selecting from dropdown
+    }
+    if (originalBlur) originalBlur.call(input, e as any);
+  };
+
+  // Observe body for pac-container insertions and attach handlers
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      m.addedNodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        if (node.classList.contains('pac-container')) {
+          attachHandlers(node);
+        } else {
+          node.querySelectorAll?.('.pac-container')?.forEach((el) => attachHandlers(el));
         }
-        if (originalBlur) originalBlur.call(input, e);
-      };
-    });
-  }, 100);
+      });
+    }
+  });
+  try {
+    observer.observe(document.body, { childList: true, subtree: true });
+  } catch {
+    // In very rare cases document.body may be unavailable momentarily
+    // Fallback: attempt once body is ready
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, subtree: true });
+      }, { once: true });
+    }
+  }
+  // Attach to any existing containers immediately
+  document.querySelectorAll('.pac-container').forEach((el) => attachHandlers(el));
+  // Expose observer on input for cleanup by caller
+  (input as any).__cwtPacObserver = observer;
 
   return autocomplete;
 };
