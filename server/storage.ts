@@ -4072,19 +4072,77 @@ export class SupabaseStorage implements IStorage {
             gender: athleteData.gender,
             allergies: athleteData.allergies,
             experience: athleteData.experience as "beginner" | "intermediate" | "advanced",
-            photo: athleteData.photo
+            photo: athleteData.photo,
+            // Snapshot current membership from the booking flow if provided
+            isGymMember: (athleteData as any).isGymMember ?? false,
           });
           athleteId = newAthlete.id;
         }
         
-        // Create booking_athletes relationship
+        // Create booking_athletes relationship with payout snapshot fields
         try {
+          // Determine membership status at booking time
+          let isMemberAtBooking: boolean = false;
+          if ((athleteData as any).isGymMember !== undefined) {
+            isMemberAtBooking = !!(athleteData as any).isGymMember;
+          } else if (athleteId) {
+            try {
+              const { data: athRow } = await supabaseAdmin
+                .from('athletes')
+                .select('is_gym_member')
+                .eq('id', athleteId)
+                .maybeSingle();
+              isMemberAtBooking = !!(athRow as any)?.is_gym_member;
+            } catch {}
+          }
+
+          // Resolve lesson duration
+          let durationMinutes: number | null = null;
+          if (booking.lessonTypeId) {
+            try {
+              const { data: lt } = await supabaseAdmin
+                .from('lesson_types')
+                .select('duration_minutes')
+                .eq('id', booking.lessonTypeId)
+                .maybeSingle();
+              durationMinutes = (lt as any)?.duration_minutes ?? null;
+            } catch {}
+          }
+
+          // Compute applicable gym payout rate
+          let rateCents: number | null = null;
+          const effectiveIso = booking.preferredDate || new Date().toISOString();
+          if (durationMinutes != null) {
+            try {
+              const { data: rate } = await supabaseAdmin
+                .from('gym_payout_rates')
+                .select('rate_cents')
+                .eq('duration_minutes', durationMinutes)
+                .eq('is_member', isMemberAtBooking)
+                .lte('effective_from', effectiveIso)
+                .or('effective_to.is.null,effective_to.gte.' + effectiveIso)
+                .order('effective_from', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              rateCents = (rate as any)?.rate_cents ?? null;
+            } catch (e) {
+              console.warn('[BOOKING] Failed to resolve gym payout rate:', e);
+            }
+          }
+
+          const nowIso = new Date().toISOString();
           const { error: athleteInsertError } = await supabaseAdmin
             .from('booking_athletes')
             .insert({
               booking_id: booking.id,
               athlete_id: athleteId,
-              slot_order: athleteData.slotOrder || (i + 1)
+              slot_order: athleteData.slotOrder || (i + 1),
+              // Payout snapshot fields (should not be left null for parent/admin bookings)
+              gym_member_at_booking: isMemberAtBooking,
+              duration_minutes: durationMinutes,
+              gym_rate_applied_cents: rateCents,
+              gym_payout_owed_cents: rateCents ?? null, // no override at creation time
+              gym_payout_computed_at: rateCents != null ? nowIso : null,
             });
             
           if (athleteInsertError) {
