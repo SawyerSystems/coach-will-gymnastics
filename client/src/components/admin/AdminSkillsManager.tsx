@@ -1143,7 +1143,20 @@ export default function AdminSkillsManager() {
                             // Invalidate to reflect new order
                             qc.invalidateQueries({ queryKey: ["/api/admin/skills"], exact: false });
                           } : undefined}
-                          className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.levelId === levelGroup.level && dragOver.index === idx && !selectedSkillId ? 'ring-2 ring-[#D8BD2A] shadow-xl' : ''} ${expandedIds.has(s.id) ? 'col-span-2 md:col-span-4' : ''} rounded-xl border border-slate-200/60 bg-white/80 supports-[backdrop-filter]:bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/80 overflow-hidden group ${selectedSkillId ? 'cursor-default' : 'cursor-pointer'}`}
+                          onTouchStart={(e) => {
+                            // Prevent mobile text selection and let drag take precedence
+                            if (!selectedSkillId) {
+                              e.preventDefault();
+                            }
+                          }}
+                          onPointerDown={(e) => {
+                            // Hint that this is a drag interaction
+                            if (!selectedSkillId) {
+                              (e.currentTarget as HTMLElement).style.touchAction = 'none';
+                              (e.currentTarget as HTMLElement).style.userSelect = 'none';
+                            }
+                          }}
+                          className={`${dragOver && dragOver.groupId === group.apparatusId && dragOver.levelId === levelGroup.level && dragOver.index === idx && !selectedSkillId ? 'ring-2 ring-[#D8BD2A] shadow-xl' : ''} ${expandedIds.has(s.id) ? 'col-span-2 md:col-span-4' : ''} rounded-xl border border-slate-200/60 bg-white/80 supports-[backdrop-filter]:bg-white/50 backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 dark:border-[#2A4A9B]/60 dark:bg-[#0F0276]/80 overflow-hidden group ${selectedSkillId ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} select-none touch-none`}
                         >
                           <CardContent className="p-0 overflow-hidden">
                             {(!expandedIds.has(s.id)) ? (
