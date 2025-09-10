@@ -2628,12 +2628,78 @@ export class SupabaseStorage implements IStorage {
   }
 
   async deleteSkill(id: number): Promise<boolean> {
-    const { error } = await supabaseAdmin.from('skills').delete().eq('id', id);
-    if (error) {
-      console.error('[STORAGE][SKILLS] delete error:', error);
+    try {
+      // 1) Remove relations (ignore if tables missing)
+      const delPrereq1 = await supabaseAdmin
+        .from('skills_prerequisites')
+        .delete()
+        .eq('skill_id', id);
+      if (delPrereq1.error && (delPrereq1.error as any)?.code !== '42P01') {
+        console.error('[STORAGE][SKILLS] deleteSkill -> delete prerequisites by skill_id error:', delPrereq1.error);
+        return false;
+      }
+      const delPrereq2 = await supabaseAdmin
+        .from('skills_prerequisites')
+        .delete()
+        .eq('prerequisite_skill_id', id);
+      if (delPrereq2.error && (delPrereq2.error as any)?.code !== '42P01') {
+        console.error('[STORAGE][SKILLS] deleteSkill -> delete prerequisites by prerequisite_skill_id error:', delPrereq2.error);
+        return false;
+      }
+
+      const delComp1 = await supabaseAdmin
+        .from('skill_components')
+        .delete()
+        .eq('parent_skill_id', id);
+      if (delComp1.error && (delComp1.error as any)?.code !== '42P01') {
+        console.error('[STORAGE][SKILLS] deleteSkill -> delete components by parent_skill_id error:', delComp1.error);
+        return false;
+      }
+      const delComp2 = await supabaseAdmin
+        .from('skill_components')
+        .delete()
+        .eq('component_skill_id', id);
+      if (delComp2.error && (delComp2.error as any)?.code !== '42P01') {
+        console.error('[STORAGE][SKILLS] deleteSkill -> delete components by component_skill_id error:', delComp2.error);
+        return false;
+      }
+
+      // 2) Remove athlete progress referencing this skill (videos -> athlete_skills)
+      const athleteSkills = await supabaseAdmin
+        .from('athlete_skills')
+        .select('id')
+        .eq('skill_id', id);
+      if (!athleteSkills.error && Array.isArray(athleteSkills.data) && athleteSkills.data.length > 0) {
+        const ids = (athleteSkills.data as any[]).map(r => r.id);
+        const delVideos = await supabaseAdmin
+          .from('athlete_skill_videos')
+          .delete()
+          .in('athlete_skill_id', ids);
+        if (delVideos.error && (delVideos.error as any)?.code !== '42P01') {
+          console.error('[STORAGE][SKILLS] deleteSkill -> delete athlete_skill_videos error:', delVideos.error);
+          return false;
+        }
+        const delAthleteSkills = await supabaseAdmin
+          .from('athlete_skills')
+          .delete()
+          .in('id', ids);
+        if (delAthleteSkills.error && (delAthleteSkills.error as any)?.code !== '42P01') {
+          console.error('[STORAGE][SKILLS] deleteSkill -> delete athlete_skills error:', delAthleteSkills.error);
+          return false;
+        }
+      }
+
+      // 3) Finally, delete the skill itself
+      const { error } = await supabaseAdmin.from('skills').delete().eq('id', id);
+      if (error) {
+        console.error('[STORAGE][SKILLS] delete error:', error);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error('[STORAGE][SKILLS] unexpected deleteSkill error:', e);
       return false;
     }
-    return true;
   }
 
   

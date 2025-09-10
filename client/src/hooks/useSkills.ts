@@ -81,6 +81,10 @@ export function useDeleteSkill() {
   return useMutation({
     mutationFn: async (id: number) => {
       const res = await apiRequest("DELETE", `/api/admin/skills/${id}`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Failed to delete skill ${id}`);
+      }
       return res.json();
     },
     onSuccess: () => {
