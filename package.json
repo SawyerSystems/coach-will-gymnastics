@@ -40,7 +40,8 @@
     "db:check-origin": "tsx scripts/check-db-origin.ts",
     "db:apply-lesson-types": "bash ./apply-lesson-types-schema-update.sh",
   "import:skills": "tsx scripts/import-skills.ts",
-  "payouts:backfill": "tsx scripts/backfill-gym-payouts.ts"
+  "payouts:backfill": "tsx --require dotenv/config scripts/backfill-gym-payouts.ts",
+  "payouts:repair": "tsx --require dotenv/config scripts/repair-gym-payouts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
