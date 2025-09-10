@@ -913,6 +913,14 @@ export default function AdminSkillsManager() {
     return result;
   }, [filteredSkills, apparatus, sortWithin, makeSorted]);
 
+  // Initially collapse all apparatus groups
+  useEffect(() => {
+    if (groups.length > 0 && collapsedGroups.size === 0) {
+      setCollapsedGroups(new Set(groups.map(g => g.apparatusId)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups]);
+
   if (!auth?.loggedIn) {
     return (
       <AdminCard>
