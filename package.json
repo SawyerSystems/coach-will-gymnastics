@@ -39,7 +39,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:check-origin": "tsx scripts/check-db-origin.ts",
     "db:apply-lesson-types": "bash ./apply-lesson-types-schema-update.sh",
-    "import:skills": "tsx scripts/import-skills.ts"
+  "import:skills": "tsx scripts/import-skills.ts",
+  "payouts:backfill": "tsx scripts/backfill-gym-payouts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

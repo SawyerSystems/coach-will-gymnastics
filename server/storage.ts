@@ -4761,7 +4761,7 @@ export class SupabaseStorage implements IStorage {
       // Load booking_athletes rows needing computation joined with bookings for date and status
       const { data: rows, error } = await supabaseAdmin
         .from('booking_athletes')
-        .select('id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, lesson_type_id)')
+        .select('id, athlete_id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, lesson_type_id)')
         .is('gym_payout_owed_cents', null)
         .gte('bookings.preferred_date', periodStart)
         .lte('bookings.preferred_date', periodEnd);
@@ -4774,7 +4774,19 @@ export class SupabaseStorage implements IStorage {
           results.skipped++;
           continue;
         }
-        const isMember = !!row.gym_member_at_booking;
+        // Ensure membership snapshot present; if null, resolve from athlete
+        let isMember: boolean = !!row.gym_member_at_booking;
+        if (row.gym_member_at_booking == null && row.athlete_id != null) {
+          try {
+            const { data: athRow } = await supabaseAdmin
+              .from('athletes')
+              .select('is_gym_member')
+              .eq('id', row.athlete_id)
+              .maybeSingle();
+            if (athRow) isMember = !!(athRow as any).is_gym_member;
+          } catch {}
+        }
+
         let duration: number | null = row.duration_minutes ?? null;
         // Fallback: look up lesson type duration if missing
         if (duration == null && row.bookings?.lesson_type_id) {
@@ -4813,6 +4825,9 @@ export class SupabaseStorage implements IStorage {
           const { error: updErr } = await supabaseAdmin
             .from('booking_athletes')
             .update({
+              // Also fill missing snapshots so future queries don't need fallbacks
+              gym_member_at_booking: row.gym_member_at_booking == null ? isMember : row.gym_member_at_booking,
+              duration_minutes: row.duration_minutes == null ? (duration ?? row.duration_minutes) : row.duration_minutes,
               gym_rate_applied_cents: rateCents ?? row.gym_rate_applied_cents ?? null,
               gym_payout_owed_cents: owed,
               gym_payout_computed_at: nowIso,
