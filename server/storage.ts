@@ -4681,8 +4681,9 @@ export class SupabaseStorage implements IStorage {
     // Compute totals from booking_athletes joined to bookings by preferred_date
     const { data, error } = await supabaseAdmin
       .from('booking_athletes')
-      .select('id, gym_payout_owed_cents, bookings!inner(preferred_date)')
+      .select('id, gym_payout_owed_cents, bookings!inner(preferred_date, attendance_status)')
       .not('gym_payout_owed_cents', 'is', null)
+      .not('bookings.attendance_status', 'eq', 'cancelled') // Exclude cancelled bookings from payouts
       .gte('bookings.preferred_date', periodStart)
       .lte('bookings.preferred_date', periodEnd);
 
@@ -4761,8 +4762,9 @@ export class SupabaseStorage implements IStorage {
       // Load booking_athletes rows needing computation joined with bookings for date and status
       const { data: rows, error } = await supabaseAdmin
         .from('booking_athletes')
-        .select('id, athlete_id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, lesson_type_id)')
+        .select('id, athlete_id, gym_member_at_booking, duration_minutes, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, lesson_type_id, attendance_status)')
         .is('gym_payout_owed_cents', null)
+        .not('bookings.attendance_status', 'eq', 'cancelled') // Exclude cancelled bookings from payouts
         .gte('bookings.preferred_date', periodStart)
         .lte('bookings.preferred_date', periodEnd);
       if (error) throw error;
@@ -5006,6 +5008,28 @@ export class SupabaseStorage implements IStorage {
         }
       } catch (e) {
         console.error('[STORAGE] Failed to auto-update payment_status to session-paid:', e);
+      }
+    }
+
+    // When cancelled, clear any existing payout calculations since no service was provided
+    if (attendanceStatus === AttendanceStatusEnum.CANCELLED) {
+      try {
+        // Clear payout calculations for all athletes in this booking
+        const { error: clearErr } = await supabaseAdmin
+          .from('booking_athletes')
+          .update({
+            gym_rate_applied_cents: null,
+            gym_payout_owed_cents: null,
+            gym_payout_computed_at: null,
+          })
+          .eq('booking_id', id);
+        if (clearErr) {
+          console.error('[PAYOUT] Failed to clear payout calculations for cancelled booking:', clearErr);
+        } else {
+          console.log('[PAYOUT] Cleared payout calculations for cancelled booking', { id });
+        }
+      } catch (e) {
+        console.error('[PAYOUT] Exception clearing payouts for cancelled booking:', e);
       }
     }
 

@@ -2670,7 +2670,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   let query = supabaseAdmin
         .from('booking_athletes')
         .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, attendance_status)')
-        .not('gym_payout_owed_cents', 'is', null);
+        .not('gym_payout_owed_cents', 'is', null)
+        .not('bookings.attendance_status', 'eq', 'cancelled'); // Exclude cancelled bookings from payouts
 
       if (start) {
         query = query.gte('bookings.preferred_date', String(start));
@@ -2715,7 +2716,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   let query = supabaseAdmin
         .from('booking_athletes')
   .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, preferred_time, attendance_status), athletes!inner(first_name, last_name, name)')
-        .not('gym_payout_owed_cents', 'is', null);
+        .not('gym_payout_owed_cents', 'is', null)
+        .not('bookings.attendance_status', 'eq', 'cancelled'); // Exclude cancelled bookings from payouts
 
       if (start) query = query.gte('bookings.preferred_date', String(start));
       if (end) query = query.lte('bookings.preferred_date', String(end));
@@ -2757,8 +2759,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/payouts/export.csv', isAdminAuthenticated, async (req, res) => {
     try {
-      const params = new URLSearchParams(req.query as any).toString();
-  const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,duration_minutes,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,bookings(preferred_date,attendance_status),athletes(first_name,last_name,name)&${params}`, {
+      const params = new URLSearchParams(req.query as any);
+      // Add filter to exclude cancelled bookings
+      params.append('gym_payout_owed_cents', 'not.is.null');
+      params.append('bookings.attendance_status', 'not.eq.cancelled');
+      
+      const resp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/booking_athletes?select=id,booking_id,athlete_id,duration_minutes,gym_payout_owed_cents,gym_rate_applied_cents,gym_member_at_booking,bookings(preferred_date,attendance_status),athletes(first_name,last_name,name)&${params.toString()}`, {
         headers: {
           apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '',
           Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || ''}`,
@@ -2783,7 +2789,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let query = supabaseAdmin
         .from('booking_athletes')
         .select('id, booking_id, athlete_id, duration_minutes, gym_payout_owed_cents, gym_rate_applied_cents, gym_member_at_booking, bookings!inner(preferred_date, preferred_time, attendance_status, lesson_type_id, lesson_types(total_price)), athletes!inner(first_name, last_name, name)')
-        .not('gym_payout_owed_cents', 'is', null);
+        .not('gym_payout_owed_cents', 'is', null)
+        .not('bookings.attendance_status', 'eq', 'cancelled'); // Exclude cancelled bookings from payouts
 
       if (start) query = query.gte('bookings.preferred_date', String(start));
       if (end) query = query.lte('bookings.preferred_date', String(end));
@@ -2961,10 +2968,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isoDateTime = bookingRel?.preferred_date || '';
         const datePart = isoDateTime ? isoDateTime.slice(0, 10) : '';
         let timePart = '';
-        if (isoDateTime) {
-          const d = new Date(isoDateTime);
-          if (!isNaN(d.getTime())) {
-            timePart = d.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit' });
+        // Use the preferred_time field instead of trying to extract time from preferred_date
+        const preferredTime = bookingRel?.preferred_time || '';
+        if (preferredTime) {
+          // preferred_time is stored as HH:MM format, convert to 12-hour format
+          const [hours, minutes] = preferredTime.split(':').map(Number);
+          if (!isNaN(hours) && !isNaN(minutes)) {
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+            timePart = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
           }
         }
   const athleteName = athleteRel?.name || [athleteRel?.first_name, athleteRel?.last_name].filter(Boolean).join(' ') || `#${row.athlete_id}`;
