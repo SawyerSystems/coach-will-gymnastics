@@ -3691,7 +3691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 let sessionDate = 'Unknown Date';
                 if (rawDate) {
                   try {
-                    sessionDate = new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    sessionDate = new Date(rawDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                   } catch {}
                 }
                 console.log(`[BOOKING-SESSION][EMAIL-FALLBACK] Idempotent confirmation email trigger for booking ${booking.id}`);
@@ -3975,7 +3975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const booking of upcomingBookings) {
           try {
             if (booking.parentEmail) {
-              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
+              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate + 'T00:00:00').toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -4611,7 +4611,7 @@ setTimeout(async () => {
                 }
               }
               
-              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
+              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate + 'T00:00:00').toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -4688,7 +4688,7 @@ setTimeout(async () => {
               const parentEmail = parentRecord?.email || booking.parentEmail || 'No email';
               const parentPhone = parentRecord?.phone || booking.parentPhone;
               
-              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString('en-US', {
+              const sessionDate = booking.preferredDate ? new Date(booking.preferredDate + 'T00:00:00').toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -4916,7 +4916,7 @@ setTimeout(async () => {
               const athleteNames = bookingWithRelations.athletes?.map(a => a.name) || 
                                  [(bookingWithRelations.athlete1Name || 'Unnamed Athlete')];
               
-              const sessionDate = bookingWithRelations.preferredDate ? new Date(bookingWithRelations.preferredDate).toLocaleDateString('en-US', {
+              const sessionDate = bookingWithRelations.preferredDate ? new Date(bookingWithRelations.preferredDate + 'T00:00:00').toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -6526,7 +6526,7 @@ setTimeout(async () => {
       if (isReschedule && updatedBooking && (originalDate !== updatedBooking.preferredDate || originalTime !== updatedBooking.preferredTime)) {
         console.log(`[RESCHEDULE DEBUG] Email condition met - sending reschedule email`);
         try {
-          const newSessionDate = updatedBooking.preferredDate ? new Date(updatedBooking.preferredDate).toLocaleDateString('en-US', {
+          const newSessionDate = updatedBooking.preferredDate ? new Date(updatedBooking.preferredDate + 'T00:00:00').toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -7797,7 +7797,7 @@ setTimeout(async () => {
         let sessionDate = 'Unknown Date';
         if (rawDate) {
           try {
-            sessionDate = new Date(rawDate).toLocaleDateString('en-US', {
+            sessionDate = new Date(rawDate + 'T00:00:00').toLocaleDateString('en-US', {
               weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             });
           } catch (e) {

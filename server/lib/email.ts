@@ -335,7 +335,7 @@ export async function sendSessionConfirmationIfNeeded(bookingId: number, storage
     const athleteName = booking.athletes?.[0]?.name || booking.athlete1Name || 'Athlete';
     let sessionDate = 'Unknown Date';
     if (booking.preferredDate) {
-      try { sessionDate = new Date(booking.preferredDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); } catch {}
+      try { sessionDate = new Date(booking.preferredDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); } catch {}
     }
     const sessionTime = booking.preferredTime || 'TBD';
     if (!parentEmail) {
