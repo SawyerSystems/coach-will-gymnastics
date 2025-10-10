@@ -5302,6 +5302,59 @@ setTimeout(async () => {
       console.log("Admin booking request body:", JSON.stringify(req.body, null, 2));
       
       const bookingData = req.body;
+
+      const incomingFocusAreas: string[] = Array.isArray(bookingData.focusAreas)
+        ? bookingData.focusAreas.filter((area: unknown): area is string => typeof area === 'string')
+        : [];
+
+      let focusAreaOtherText = typeof bookingData.focusAreaOther === 'string'
+        ? bookingData.focusAreaOther.trim()
+        : '';
+
+      if (focusAreaOtherText.toLowerCase().startsWith('other:')) {
+        focusAreaOtherText = focusAreaOtherText.slice(6).trim();
+      }
+
+      const normalizedFocusAreaNames: string[] = [];
+      const focusAreaIds: number[] = [];
+
+      if (incomingFocusAreas.length > 0) {
+        try {
+          const catalog = await storage.getAllFocusAreas();
+          const lookup = new Map<string, { id: number; name: string }>(
+            catalog.map((fa: any) => [String(fa.name).toLowerCase(), { id: fa.id, name: fa.name }])
+          );
+          const seenIds = new Set<number>();
+
+          for (const rawName of incomingFocusAreas) {
+            const trimmedName = rawName.trim();
+            if (!trimmedName) continue;
+
+            if (trimmedName.toLowerCase().startsWith('other:')) {
+              const custom = trimmedName.slice(6).trim();
+              if (custom && !focusAreaOtherText) {
+                focusAreaOtherText = custom;
+              }
+              continue;
+            }
+
+            const match = lookup.get(trimmedName.toLowerCase());
+            if (match && !seenIds.has(match.id)) {
+              seenIds.add(match.id);
+              focusAreaIds.push(match.id);
+              normalizedFocusAreaNames.push(match.name);
+            } else if (!match && !focusAreaOtherText) {
+              focusAreaOtherText = trimmedName;
+            }
+          }
+        } catch (focusAreaErr) {
+          console.error('[ADMIN-BOOKING] Failed to fetch focus area catalog:', focusAreaErr);
+        }
+      }
+
+      if (focusAreaOtherText) {
+        normalizedFocusAreaNames.push(`Other: ${focusAreaOtherText}`);
+      }
       
       // Resolve lesson type to ID
       let lessonTypeId: number | null = null;
@@ -5434,7 +5487,7 @@ setTimeout(async () => {
       };
       
       // Create booking
-      const booking = await storage.createBooking({
+      const bookingPayload: any = {
         parentId: parent.id,
         lessonTypeId: lessonTypeId as number,
         preferredDate: new Date(bookingData.selectedTimeSlot?.date || new Date()),
@@ -5446,7 +5499,7 @@ setTimeout(async () => {
         // Add missing required fields with defaults
         attendanceStatus: AttendanceStatusEnum.PENDING,
         apparatusIds: [],
-        focusAreaIds: [],
+        focusAreaIds,
         sideQuestIds: [],
         // Safety information - use NULL for empty fields in admin bookings
         dropoffPersonName: safetyInfo.willDropOff 
@@ -5468,7 +5521,47 @@ setTimeout(async () => {
           ? parent.phone 
           : (safetyInfo.pickupPersonPhone || ''),
         safetyVerificationSignedAt: new Date()
-      });
+      };
+
+      if (focusAreaOtherText) {
+        bookingPayload.focusAreaOther = focusAreaOtherText;
+      }
+
+      let booking = await storage.createBooking(bookingPayload);
+
+      if (booking?.id) {
+        const focusAreaUpdate: any = {};
+        if (normalizedFocusAreaNames.length > 0) {
+          focusAreaUpdate.focusAreas = normalizedFocusAreaNames;
+        }
+        if (focusAreaOtherText || bookingData.focusAreaOther === '') {
+          focusAreaUpdate.focusAreaOther = focusAreaOtherText || '';
+        }
+
+        if (Object.keys(focusAreaUpdate).length > 0) {
+          try {
+            const updatedBooking = await storage.updateBooking(booking.id, focusAreaUpdate);
+            if (updatedBooking) {
+              booking = updatedBooking;
+            } else {
+              if (focusAreaUpdate.focusAreas) {
+                booking.focusAreas = focusAreaUpdate.focusAreas;
+              }
+              if ('focusAreaOther' in focusAreaUpdate) {
+                (booking as any).focusAreaOther = focusAreaUpdate.focusAreaOther || null;
+              }
+            }
+          } catch (focusPersistErr) {
+            console.error('[ADMIN-BOOKING] Failed to persist focus area selection:', focusPersistErr);
+            if (focusAreaUpdate.focusAreas) {
+              booking.focusAreas = focusAreaUpdate.focusAreas;
+            }
+            if ('focusAreaOther' in focusAreaUpdate) {
+              (booking as any).focusAreaOther = focusAreaUpdate.focusAreaOther || null;
+            }
+          }
+        }
+      }
 
       // Debug log the booking object
       console.log('[DEBUG] Created admin booking:', booking);
@@ -5626,16 +5719,6 @@ setTimeout(async () => {
             success: false,
             message: `Failed to process athletes: ${error instanceof Error ? error.message : 'Unknown error'}`
           });
-        }
-        // Process focus areas if provided
-        if (bookingData.focusAreas && bookingData.focusAreas.length > 0 && booking.id) {
-          const focusAreas = await storage.getAllFocusAreas();
-          for (const focusAreaName of bookingData.focusAreas) {
-            const focusArea = focusAreas.find(fa => fa.name === focusAreaName);
-            if (focusArea && focusArea.id) {
-              await storage.addBookingFocusArea(booking.id, focusArea.id);
-            }
-          }
         }
       }
 
@@ -6370,20 +6453,19 @@ setTimeout(async () => {
         if (focusAreas !== undefined) {
           console.log('🚀 [START] Focus areas validation started for:', focusAreas);
           
-          // Get lesson type name for validation - need to fetch the lesson type details
+          // Get lesson type name for validation - prefer lessonTypeId from request (user changed it)
           let lessonTypeName = '';
-          console.log('🔍 [LESSON_TYPE_FETCH] currentBooking.lessonTypeId:', currentBooking.lessonTypeId);
-          if (currentBooking.lessonTypeId) {
+          const lessonTypeIdFromReq = req.body.lessonTypeId !== undefined ? Number(req.body.lessonTypeId) : undefined;
+          const lessonTypeIdToUse = lessonTypeIdFromReq ?? currentBooking.lessonTypeId;
+          console.log('🔍 [LESSON_TYPE_FETCH] Using lessonTypeId:', lessonTypeIdToUse, ' (from request:', lessonTypeIdFromReq, ')');
+          if (lessonTypeIdToUse) {
             try {
-              console.log('🔍 [LESSON_TYPE_FETCH] Calling storage.getLessonType...');
-              const lessonType = await storage.getLessonType(currentBooking.lessonTypeId);
-              console.log('🔍 [LESSON_TYPE_FETCH] lessonType from storage:', lessonType);
+              const lessonType = await storage.getLessonType(lessonTypeIdToUse);
               lessonTypeName = lessonType?.name || '';
-              console.log('🔍 [LESSON_TYPE_FETCH] lessonTypeName set to:', lessonTypeName);
+              console.log('🔍 [LESSON_TYPE_FETCH] lessonType from storage:', lessonType);
             } catch (error) {
               console.error('🚨 CRITICAL: Failed to fetch lesson type for focus area validation:', error);
               lessonTypeName = 'Quick Journey'; // Fallback to default
-              console.log('🔍 [LESSON_TYPE_FETCH] Using fallback lessonTypeName:', lessonTypeName);
             }
           }
           
@@ -6431,6 +6513,12 @@ setTimeout(async () => {
             updateData.focusAreas = filteredAreas;
           }
         }
+      }
+
+      // If the request explicitly included a lesson type change, persist it
+      if (lessonTypeId !== undefined) {
+        updateData.lessonTypeId = Number(lessonTypeId);
+        console.log('🔧 [UPDATE] lessonTypeId set on updateData:', updateData.lessonTypeId);
       }
       
       // Update safety information if provided

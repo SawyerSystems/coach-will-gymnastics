@@ -15,6 +15,7 @@ import { apiRequest } from '@/lib/queryClient';
 import type { Athlete, Booking, LessonType, Parent } from '@shared/schema';
 import { AttendanceStatusEnum, BookingStatusEnum, PaymentStatusEnum } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLessonTypes } from '@/hooks/useLessonTypes';
 import {
     AlertTriangle,
     Bookmark,
@@ -102,10 +103,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Fetch all lesson types
-  const { data: lessonTypes = [] } = useQuery<LessonType[]>({
-    queryKey: ['/api/lesson-types'],
-  });
+  // Fetch all lesson types (normalized by hook to ensure numeric fields)
+  const { data: lessonTypes = [], byKey: lessonByKey, formatDuration: ltFormatDuration, maxFocusAreasFor: ltMaxFocusAreasFor } = useLessonTypes();
 
   // Fetch all parents for athlete selection
   const { data: parents = [] } = useQuery<Parent[]>({
@@ -285,9 +284,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       
       // Set lesson type from the lessonType object or fallback to lessonTypeId
       if (bookingDetails.lessonType && bookingDetails.lessonType.id) {
-        setSelectedLessonTypeId(bookingDetails.lessonType.id);
+        setSelectedLessonTypeId(Number(bookingDetails.lessonType.id));
       } else if (bookingDetails.lessonTypeId) {
-        setSelectedLessonTypeId(bookingDetails.lessonTypeId);
+        setSelectedLessonTypeId(Number(bookingDetails.lessonTypeId));
       }
       
       // Set focus areas - handling both array of strings and array of objects
@@ -392,7 +391,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     setPaidAmount(booking.paidAmount?.toString() || '0.00');
     setAdminNotes(booking.adminNotes || '');
     setSpecialRequests(booking.specialRequests || '');
-    setSelectedLessonTypeId(booking.lessonTypeId || 0);
+  setSelectedLessonTypeId(Number(booking.lessonTypeId || 0));
     setFocusAreas(booking.focusAreas || []);
     setTempFocusArea('');
     setFocusAreaOther(booking.focusAreaOther || '');
@@ -588,9 +587,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   };
 
   const handleLessonTypeChange = (lessonTypeId: string) => {
-    const newLessonTypeId = parseInt(lessonTypeId);
-    const newLessonType = lessonTypes.find(lt => lt.id === newLessonTypeId);
-    const currentLessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
+    const newLessonTypeId = Number.parseInt(lessonTypeId, 10);
+    const newLessonType = lessonTypes.find(lt => Number(lt.id) === newLessonTypeId);
+    const currentLessonType = lessonTypes.find(lt => Number(lt.id) === Number(selectedLessonTypeId));
     
     if (!newLessonType || !currentLessonType) return;
     
@@ -607,8 +606,10 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     }
     
     // Handle duration change and focus areas
-    if (currentLessonType.durationMinutes !== newLessonType.durationMinutes) {
-      if (newLessonType.durationMinutes > currentLessonType.durationMinutes) {
+    const currentDur = Number((currentLessonType as any)?.durationMinutes ?? (currentLessonType as any)?.duration ?? 0);
+    const newDur = Number((newLessonType as any)?.durationMinutes ?? (newLessonType as any)?.duration ?? 0);
+    if (currentDur !== newDur) {
+      if (newDur > currentDur) {
         // Going from short to long session - allow more focus areas
       } else {
         // Going from long to short session - limit focus areas
@@ -618,7 +619,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       }
     }
     
-    setSelectedLessonTypeId(newLessonTypeId);
+    setSelectedLessonTypeId(Number.isFinite(newLessonTypeId) ? newLessonTypeId : 0);
   };
   
   const addFocusArea = () => {
@@ -628,7 +629,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     const newLessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
     if (!newLessonType) return;
     
-    const maxFocusAreas = newLessonType.durationMinutes >= 60 ? 4 : 2;
+  const newLessonTypeDur = Number((newLessonType as any)?.durationMinutes ?? (newLessonType as any)?.duration ?? 0);
+  const maxFocusAreas = newLessonTypeDur >= 60 ? 4 : 2;
     
     // Determine if this is a known predefined area
     const isKnownArea = dynamicFocusAreas.some((fa: any) => fa?.name?.toLowerCase() === raw.toLowerCase());
@@ -971,18 +973,24 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
 
   // Calculate total price
   const calculatePrice = () => {
-    const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-  return lessonType ? Number(lessonType.totalPrice) : 0;
+    const lessonType = lessonTypes.find(lt => Number(lt.id) === Number(selectedLessonTypeId));
+    if (!lessonType) return 0;
+    const p = Number((lessonType as any).price ?? (lessonType as any).totalPrice ?? 0);
+    return Number.isFinite(p) ? p : 0;
   };
 
   const getMaxAthletes = () => {
-    const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-  return lessonType ? (lessonType.isPrivate ? 1 : 2) : 1;
+    const lessonType = lessonTypes.find(lt => Number(lt.id) === Number(selectedLessonTypeId));
+    if (!lessonType) return 1;
+    if (typeof (lessonType as any).maxAthletes === 'number') return (lessonType as any).maxAthletes;
+    return Boolean((lessonType as any).isPrivate) ? 1 : 2;
   };
 
   const getMaxFocusAreas = () => {
-    const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-  return lessonType ? (lessonType.durationMinutes >= 60 ? 4 : 2) : 2;
+    const lessonType = lessonTypes.find(lt => Number(lt.id) === Number(selectedLessonTypeId));
+    if (!lessonType) return 2;
+    const dur = Number((lessonType as any).durationMinutes ?? (lessonType as any).duration ?? 0);
+    return (dur >= 60) ? 4 : 2;
   };
   
   // Filter focus areas based on athlete experience levels
@@ -1004,13 +1012,15 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   };
 
   const getLessonTypeDuration = () => {
-    const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-  return lessonType ? `${lessonType.durationMinutes} minutes` : '';
+    const lessonType = lessonTypes.find(lt => Number(lt.id) === Number(selectedLessonTypeId));
+    if (!lessonType) return '';
+    const dur = Number((lessonType as any).durationMinutes ?? (lessonType as any).duration ?? 0);
+    return dur > 0 ? `${dur} minutes` : '';
   };
 
   const isPrivateLessonType = () => {
     const lessonType = lessonTypes.find(lt => lt.id === selectedLessonTypeId);
-    return lessonType ? lessonType.isPrivate : true;
+    return lessonType ? Boolean((lessonType as any).isPrivate) : true;
   };
 
   const footer = (
@@ -1231,7 +1241,7 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     <SelectContent>
                       {lessonTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name} - {type.durationMinutes} min ({type.isPrivate ? 'Private' : `Semi-private (2)`}) - ${Number(type.totalPrice)}
+                  {type.name} - {Number((type as any).durationMinutes ?? (type as any).duration ?? 0)} min ({type.isPrivate ? 'Private' : `Semi-private (2)`}) - ${Number((type as any).totalPrice ?? (type as any).price ?? 0)}
                         </SelectItem>
                       ))}
                     </SelectContent>

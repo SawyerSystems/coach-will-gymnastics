@@ -177,6 +177,30 @@ export function AdminPaymentStep() {
     
     setIsProcessing(true);
     try {
+      const rawFocusAreas = Array.isArray(state.focusAreas)
+        ? state.focusAreas.filter((area): area is string => typeof area === 'string' && area.trim().length > 0)
+        : [];
+
+      let focusAreaOtherText = (state.focusAreaOther || '').trim();
+      if (!focusAreaOtherText) {
+        const existingOther = rawFocusAreas.find((area) => area.toLowerCase().startsWith('other:'));
+        if (existingOther) {
+          focusAreaOtherText = existingOther.slice(6).trim();
+        }
+      }
+
+      const normalizedFocusAreas = Array.from(
+        new Set(
+          rawFocusAreas
+            .map((area) => area.trim())
+            .filter((area) => !area.toLowerCase().startsWith('other:'))
+        )
+      );
+
+      if (focusAreaOtherText) {
+        normalizedFocusAreas.push(`Other: ${focusAreaOtherText}`);
+      }
+
       // Create a clean copy of the data - this helps avoid any unexpected reference issues
       const bookingData = {
         lessonType: state.lessonType,
@@ -206,7 +230,8 @@ export function AdminPaymentStep() {
           isNewParentCreated: state.isNewParentCreated || false
         } : null,
         selectedTimeSlot: state.selectedTimeSlot ? { ...state.selectedTimeSlot } : null,
-        focusAreas: Array.isArray(state.focusAreas) ? [...state.focusAreas] : [],
+  focusAreas: normalizedFocusAreas,
+  focusAreaOther: focusAreaOtherText || undefined,
         // Include safety information with defaults
         safetyContact: state.safetyContact ? {
           ...state.safetyContact

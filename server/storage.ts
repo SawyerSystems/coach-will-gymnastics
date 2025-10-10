@@ -4541,6 +4541,16 @@ export class SupabaseStorage implements IStorage {
       dbUpdate.focus_area_other = data.focusAreaOther;
     }
 
+    // Allow updating lesson type via API (map camelCase -> snake_case) with numeric coercion
+    if ((data as any).lessonTypeId !== undefined) {
+      const coercedLt = Number((data as any).lessonTypeId);
+      if (Number.isFinite(coercedLt) && coercedLt > 0) {
+        dbUpdate.lesson_type_id = coercedLt;
+      } else {
+        console.warn('⚠️ [STORAGE] Ignoring invalid lessonTypeId value on update:', (data as any).lessonTypeId);
+      }
+    }
+
     // ENHANCED FIX: Make sure focusAreas are synchronized with the junction table
     if (data.focusAreas !== undefined) {
       console.log('🔧 [FOCUS SYNC] Processing focusAreas:', data.focusAreas);
