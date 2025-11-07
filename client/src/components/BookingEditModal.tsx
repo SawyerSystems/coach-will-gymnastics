@@ -381,40 +381,46 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
 
   // Note: Booking data initialization is now handled by the useEffect above
 
-  // Reset all form fields to initial state
-  const resetForm = () => {
-    console.log("Resetting form state");
-    
+  // Reset all form fields to initial state, optionally using an updated booking object (after successful save)
+  const resetForm = (updated?: Partial<Booking>) => {
+    const source = updated || booking; // Prefer freshly updated booking data
+    console.log("Resetting form state", { usingUpdated: Boolean(updated), source });
+
     // Reset general booking info
-    setPaymentStatus(booking.paymentStatus || 'unpaid');
-    setAttendanceStatus(booking.attendanceStatus || 'pending');
-    setPaidAmount(booking.paidAmount?.toString() || '0.00');
-    setAdminNotes(booking.adminNotes || '');
-    setSpecialRequests(booking.specialRequests || '');
-  setSelectedLessonTypeId(Number(booking.lessonTypeId || 0));
-    setFocusAreas(booking.focusAreas || []);
+    setPaymentStatus(source.paymentStatus || 'unpaid');
+    setAttendanceStatus(source.attendanceStatus || 'pending');
+    setPaidAmount(source.paidAmount?.toString() || '0.00');
+    setAdminNotes(source.adminNotes || '');
+    setSpecialRequests(source.specialRequests || '');
+    setSelectedLessonTypeId(Number(source.lessonTypeId || 0)); // IMPORTANT: use updated lessonTypeId if present
+    setFocusAreas(source.focusAreas || []);
     setTempFocusArea('');
-    setFocusAreaOther(booking.focusAreaOther || '');
+    setFocusAreaOther(source.focusAreaOther || '');
     setSelectedApparatusId(null);
-    
-    // Reset athletes
-    setBookingAthletes([]);
-    
+
+    // Reset athletes (keep existing athlete selection after save if available)
+    if (updated && Array.isArray((updated as any).athletes) && (updated as any).athletes.length > 0) {
+      const mapped = (updated as any).athletes.map((a: any) => ({ athleteId: a.athleteId || a.id }));
+      setBookingAthletes(mapped);
+    } else {
+      setBookingAthletes([]);
+    }
+
     // Reset safety information
-    setDropoffPersonName(booking.dropoffPersonName || '');
-    setDropoffPersonRelationship(booking.dropoffPersonRelationship || '');
-    setDropoffPersonPhone(booking.dropoffPersonPhone || '');
-    setPickupPersonName(booking.pickupPersonName || '');
-    setPickupPersonRelationship(booking.pickupPersonRelationship || '');
-    setPickupPersonPhone(booking.pickupPersonPhone || '');
-    setAltPickupPersonName(booking.altPickupPersonName || '');
-    setAltPickupPersonRelationship(booking.altPickupPersonRelationship || '');
-    setAltPickupPersonPhone(booking.altPickupPersonPhone || '');
-    
+    setDropoffPersonName(source.dropoffPersonName || '');
+    setDropoffPersonRelationship(source.dropoffPersonRelationship || '');
+    setDropoffPersonPhone(source.dropoffPersonPhone || '');
+    setPickupPersonName(source.pickupPersonName || '');
+    setPickupPersonRelationship(source.pickupPersonRelationship || '');
+    setPickupPersonPhone(source.pickupPersonPhone || '');
+    setAltPickupPersonName(source.altPickupPersonName || '');
+    setAltPickupPersonRelationship(source.altPickupPersonRelationship || '');
+    setAltPickupPersonPhone(source.altPickupPersonPhone || '');
+
     // Reset validation state
     setIsValidationError(false);
     setValidationMessage('');
-    
+
     // Reset tab
     setTab('general');
   };
@@ -463,8 +469,8 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       queryClient.invalidateQueries({ queryKey: ['/api/bookings'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookings', booking.id, 'details'] });
       
-      // Reset form state
-      resetForm();
+      // Reset form state with the updated booking so the lesson type reflects changes before closing
+      resetForm(data);
       
       // Format updated fields for success message
       const updatedFields = [];
