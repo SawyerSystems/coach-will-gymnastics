@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { AdminTabButtonsRow } from '@/components/admin-ui/AdminTabButtons';
 import { AdminContentTabs } from '@/components/admin-ui/AdminContentTabs';
 import { AdminCard, AdminCardContent, AdminCardHeader, AdminCardTitle } from '@/components/admin-ui/AdminCard';
@@ -20,7 +22,9 @@ import {
   Calendar, 
   FileText,
   Monitor,
-  Database
+  Database,
+  Lock,
+  CheckCircle
 } from 'lucide-react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
@@ -391,6 +395,8 @@ export default function AdminSettingsTab({
             </AdminCardHeader>
             <AdminCardContent className="p-6">
               <p className="text-gray-600 dark:text-slate-300 mb-4">Configure platform-wide preferences.</p>
+              {/* Booking controls configuration */}
+              <BookingControlsCollapsible />
               {/* Apparatus availability configuration */}
               <ApparatusCollapsible />
               {/* Notifications configuration */}
@@ -461,6 +467,351 @@ function NotificationsCollapsible() {
       {open && (
         <div id="notifications-section" className="px-4 pb-4">
           <NotificationsSettingsSlot />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Collapsible wrapper for Booking Controls (collapsed by default)
+function BookingControlsCollapsible() {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  
+  // Fetch current booking settings
+  const { data: settings = [], refetch, isLoading } = useQuery<Array<{ key: string; value: string; description: string }>>({
+    queryKey: ['/api/site-settings'],
+  });
+  
+  const bookingsPausedSetting = settings.find(s => s.key === 'bookings_paused');
+  const pausedMessageSetting = settings.find(s => s.key === 'bookings_paused_message');
+  const pauseStartSetting = settings.find(s => s.key === 'bookings_pause_start');
+  const pauseEndSetting = settings.find(s => s.key === 'bookings_pause_end');
+  
+  const [pauseMode, setPauseMode] = useState<'active' | 'inactive'>('inactive');
+  const [startMode, setStartMode] = useState<'immediate' | 'scheduled'>('immediate');
+  const [endMode, setEndMode] = useState<'indefinite' | 'scheduled'>('indefinite');
+  const [pausedMessage, setPausedMessage] = useState('');
+  const [pauseStart, setPauseStart] = useState('');
+  const [pauseEnd, setPauseEnd] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Update local state when data loads
+  useEffect(() => {
+    if (!isLoading && settings.length > 0) {
+      const isPaused = bookingsPausedSetting?.value === 'true';
+      setPauseMode(isPaused ? 'active' : 'inactive');
+      setPausedMessage(pausedMessageSetting?.value || 'We are not accepting new bookings at this time. Please check back later or contact us directly.');
+      
+      const startValue = pauseStartSetting?.value || '';
+      setPauseStart(startValue);
+      setStartMode(startValue ? 'scheduled' : 'immediate');
+      
+      const endValue = pauseEndSetting?.value || '';
+      setPauseEnd(endValue);
+      setEndMode(endValue ? 'scheduled' : 'indefinite');
+    }
+  }, [isLoading, settings, bookingsPausedSetting, pausedMessageSetting, pauseStartSetting, pauseEndSetting]);
+  
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const response = await apiRequest('PATCH', `/api/admin/site-settings/${key}`, { value });
+      
+      // Check if response is OK
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Failed to update setting: ${text}`);
+      }
+      
+      // Only parse JSON if we got a successful response
+      const data = await response.json();
+      return data;
+    },
+  });
+  
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    try {
+      // Determine values based on modes
+      const isPaused = pauseMode === 'active';
+      const startValue = startMode === 'scheduled' ? pauseStart : '';
+      const endValue = endMode === 'scheduled' ? pauseEnd : '';
+      
+      console.log('Saving settings:', {
+        isPaused,
+        startValue,
+        endValue,
+        pausedMessage
+      });
+      
+      // Update all settings one by one with better error handling
+      try {
+        await updateSettingMutation.mutateAsync({
+          key: 'bookings_paused',
+          value: isPaused ? 'true' : 'false',
+        });
+      } catch (error) {
+        console.error('Error updating bookings_paused:', error);
+        throw error;
+      }
+      
+      try {
+        await updateSettingMutation.mutateAsync({
+          key: 'bookings_paused_message',
+          value: pausedMessage,
+        });
+      } catch (error) {
+        console.error('Error updating bookings_paused_message:', error);
+        throw error;
+      }
+      
+      try {
+        await updateSettingMutation.mutateAsync({
+          key: 'bookings_pause_start',
+          value: startValue,
+        });
+      } catch (error) {
+        console.error('Error updating bookings_pause_start:', error);
+        throw error;
+      }
+      
+      try {
+        await updateSettingMutation.mutateAsync({
+          key: 'bookings_pause_end',
+          value: endValue,
+        });
+      } catch (error) {
+        console.error('Error updating bookings_pause_end:', error);
+        throw error;
+      }
+      
+      console.log('All settings saved successfully, refetching...');
+      await refetch();
+      
+      toast({
+        title: 'Settings Saved',
+        description: `Bookings are now ${isPaused ? 'paused' : 'active'}.`,
+      });
+    } catch (error: any) {
+      console.error('Failed to save settings:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: error.message || 'Failed to update booking settings. Please check the console for details.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  return (
+    <div className="mb-4 border rounded-lg bg-white/40 dark:bg-white/5">
+      <button
+        type="button"
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-controls="booking-controls-section"
+      >
+        <div className="flex items-center gap-2">
+          {open ? (
+            <ChevronDown className="h-5 w-5 text-[#0F0276] dark:text-slate-200" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-[#0F0276] dark:text-slate-200" />
+          )}
+          <Lock className="h-4 w-4 text-[#D8BD2A]" />
+          <span className="font-medium text-[#0F0276] dark:text-white">Booking Controls</span>
+        </div>
+        <span className="text-xs text-gray-500">{open ? 'Hide' : 'Show'}</span>
+      </button>
+      {open && (
+        <div id="booking-controls-section" className="px-4 pb-4 space-y-6">
+          <p className="text-sm text-gray-600 dark:text-slate-300">
+            Control when parents can book lessons online.
+          </p>
+          
+          {/* Step 1: Pause or Active */}
+          <div className="space-y-3 p-4 bg-white/60 dark:bg-white/5 rounded-lg border">
+            <Label className="text-base font-semibold">Step 1: Booking Status</Label>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setPauseMode('active')}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                  pauseMode === 'active'
+                    ? 'border-[#D8BD2A] bg-[#D8BD2A]/10'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Lock className="h-5 w-5 text-red-600" />
+                  <span className="font-semibold text-red-900 dark:text-red-400">Pause Bookings</span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-slate-400">
+                  Disable online booking temporarily
+                </p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setPauseMode('inactive')}
+                className={`flex-1 p-4 rounded-lg border-2 transition-all ${
+                  pauseMode === 'inactive'
+                    ? 'border-[#D8BD2A] bg-[#D8BD2A]/10'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold text-green-900 dark:text-green-400">Allow Bookings</span>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-slate-400">
+                  Parents can book normally
+                </p>
+              </button>
+            </div>
+          </div>
+          
+          {pauseMode === 'active' && (
+            <>
+              {/* Step 2: When to start */}
+              <div className="space-y-3 p-4 bg-white/60 dark:bg-white/5 rounded-lg border">
+                <Label className="text-base font-semibold">Step 2: When Should Pause Start?</Label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setStartMode('immediate')}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      startMode === 'immediate'
+                        ? 'border-[#D8BD2A] bg-[#D8BD2A]/10'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">Immediately</span>
+                    <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                      Pause as soon as you save
+                    </p>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setStartMode('scheduled')}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      startMode === 'scheduled'
+                        ? 'border-[#D8BD2A] bg-[#D8BD2A]/10'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">Scheduled</span>
+                    <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                      Set a future start date/time
+                    </p>
+                  </button>
+                </div>
+                
+                {startMode === 'scheduled' && (
+                  <div className="mt-3">
+                    <Label htmlFor="pause-start" className="text-sm mb-2 block">
+                      Start Date & Time
+                    </Label>
+                    <Input
+                      id="pause-start"
+                      type="datetime-local"
+                      value={pauseStart}
+                      onChange={(e) => setPauseStart(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Step 3: When to end */}
+              <div className="space-y-3 p-4 bg-white/60 dark:bg-white/5 rounded-lg border">
+                <Label className="text-base font-semibold">Step 3: When Should Bookings Resume?</Label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setEndMode('indefinite')}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      endMode === 'indefinite'
+                        ? 'border-[#D8BD2A] bg-[#D8BD2A]/10'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">Indefinite</span>
+                    <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                      Resume manually when ready
+                    </p>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setEndMode('scheduled')}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      endMode === 'scheduled'
+                        ? 'border-[#D8BD2A] bg-[#D8BD2A]/10'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium">Scheduled</span>
+                    <p className="text-xs text-gray-600 dark:text-slate-400 mt-1">
+                      Auto-resume at specific time
+                    </p>
+                  </button>
+                </div>
+                
+                {endMode === 'scheduled' && (
+                  <div className="mt-3">
+                    <Label htmlFor="pause-end" className="text-sm mb-2 block">
+                      End Date & Time
+                    </Label>
+                    <Input
+                      id="pause-end"
+                      type="datetime-local"
+                      value={pauseEnd}
+                      onChange={(e) => setPauseEnd(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Step 4: Message to parents */}
+              <div className="space-y-3 p-4 bg-white/60 dark:bg-white/5 rounded-lg border">
+                <Label className="text-base font-semibold">Step 4: Message to Parents</Label>
+                <Textarea
+                  id="paused-message"
+                  value={pausedMessage}
+                  onChange={(e) => setPausedMessage(e.target.value)}
+                  placeholder="Enter the message parents will see when bookings are paused..."
+                  rows={4}
+                  className="resize-none"
+                />
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  This message will be displayed on the booking page when paused.
+                </p>
+              </div>
+            </>
+          )}
+          
+          {/* Save Button */}
+          <Button
+            onClick={handleSaveSettings}
+            disabled={isSaving}
+            className="w-full bg-[#0F0276] hover:bg-[#0F0276]/90"
+            size="lg"
+          >
+            {isSaving ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                Save Booking Settings
+              </>
+            )}
+          </Button>
         </div>
       )}
     </div>

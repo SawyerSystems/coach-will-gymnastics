@@ -9,7 +9,7 @@ import { useLessonTypes } from "@/hooks/useLessonTypes";
 import { apiRequest } from "@/lib/queryClient";
 import type { Athlete, Parent } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, CheckCircle, Clock, Mail, MapPin, Phone, User, Users } from "lucide-react";
+import { Calendar, CheckCircle, Clock, Mail, MapPin, Phone, User, Users, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import SEOHead from "@/components/SEOHead";
 
@@ -22,6 +22,61 @@ export default function Booking() {
   
   // Define ordered days for consistent display
   const orderedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  
+  // Check if bookings are paused
+  const { data: bookingsPausedSetting } = useQuery({
+    queryKey: ['/api/site-settings?key=bookings_paused'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-settings?key=bookings_paused");
+      return response.json();
+    },
+  });
+
+  const { data: pausedMessageSetting } = useQuery({
+    queryKey: ['/api/site-settings?key=bookings_paused_message'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-settings?key=bookings_paused_message");
+      return response.json();
+    },
+  });
+
+  const { data: pauseStartSetting } = useQuery({
+    queryKey: ['/api/site-settings?key=bookings_pause_start'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-settings?key=bookings_pause_start");
+      return response.json();
+    },
+  });
+
+  const { data: pauseEndSetting } = useQuery({
+    queryKey: ['/api/site-settings?key=bookings_pause_end'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/site-settings?key=bookings_pause_end");
+      return response.json();
+    },
+  });
+
+  // Determine if bookings are currently paused (accounting for scheduled pause times)
+  const now = new Date();
+  let isBookingsPaused = bookingsPausedSetting?.value === 'true';
+  
+  if (isBookingsPaused) {
+    const startTime = pauseStartSetting?.value ? new Date(pauseStartSetting.value) : null;
+    const endTime = pauseEndSetting?.value ? new Date(pauseEndSetting.value) : null;
+    
+    // If start time is set and we haven't reached it yet, not paused yet
+    if (startTime && now < startTime) {
+      isBookingsPaused = false;
+    }
+    
+    // If end time is set and we've passed it, no longer paused
+    if (endTime && now > endTime) {
+      isBookingsPaused = false;
+    }
+  }
+  
+  const pausedMessage = pausedMessageSetting?.value || 'Online bookings are temporarily unavailable. Please contact us for assistance.';
+  const pauseEnd = pauseEndSetting?.value ? new Date(pauseEndSetting.value) : null;
   
   // Fetch site content for hours of operation
   const { data: siteContent } = useQuery({
@@ -78,6 +133,11 @@ export default function Booking() {
   const { data: lessonTypes } = useLessonTypes();
 
   const handleBookNow = (lessonType?: string) => {
+    // Check if bookings are paused
+    if (isBookingsPaused) {
+      return; // Bookings are disabled
+    }
+    
     console.log("handleBookNow called with:", {
       parentAuth,
       parentInfo,
@@ -231,18 +291,35 @@ export default function Booking() {
               }
             ]}
           />
-          <Button 
-            size="lg"
-            className="gym-gradient-blue text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-200 shadow-lg"
-            onClick={() => {
-              console.log("Begin Journey button clicked");
-              handleBookNow();
-            }}
-            disabled={parentAuth?.loggedIn && parentInfoLoading}
-          >
-            <Calendar className="h-5 w-5 mr-2" />
-            {parentAuth?.loggedIn && parentInfoLoading ? "Loading..." : "Begin Journey"}
-          </Button>
+          {isBookingsPaused ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-2xl mx-auto">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-yellow-900 mb-2">Bookings Temporarily Unavailable</h3>
+                  <p className="text-yellow-800 whitespace-pre-line">{pausedMessage}</p>
+                  {pauseEnd && (
+                    <p className="text-yellow-700 text-sm mt-2">
+                      Bookings will resume on {pauseEnd.toLocaleDateString()} at {pauseEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Button 
+              size="lg"
+              className="gym-gradient-blue text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-200 shadow-lg"
+              onClick={() => {
+                console.log("Begin Journey button clicked");
+                handleBookNow();
+              }}
+              disabled={parentAuth?.loggedIn && parentInfoLoading}
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              {parentAuth?.loggedIn && parentInfoLoading ? "Loading..." : "Begin Journey"}
+            </Button>
+          )}
         </div>
       </section>
 
@@ -317,12 +394,18 @@ export default function Booking() {
                       </div>
                     </div>
                     
-                    <Button 
-                      className={`w-full ${buttonClasses[color]} text-white py-3 rounded-full font-medium transform transition-all duration-200`}
-                      onClick={() => handleBookNow(key)}
-                    >
-                      Start This Path
-                    </Button>
+                    {isBookingsPaused ? (
+                      <div className="w-full bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                        <p className="text-sm text-yellow-800 font-medium">Bookings Currently Unavailable</p>
+                      </div>
+                    ) : (
+                      <Button 
+                        className={`w-full ${buttonClasses[color]} text-white py-3 rounded-full font-medium transform transition-all duration-200`}
+                        onClick={() => handleBookNow(key)}
+                      >
+                        Start This Path
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -563,14 +646,31 @@ export default function Booking() {
             We believe in building confident, strong athletes—and it all starts here.  
             No pressure. No hard sales. Just a conversation and a first step forward.
           </p>
-          <Button 
-            size="lg"
-            className="bg-white text-teal-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-200 shadow-lg hover:bg-gray-100"
-            onClick={() => handleBookNow()}
-          >
-            <Calendar className="h-5 w-5 mr-2" />
-            Start Your Athlete's Journey
-          </Button>
+          {isBookingsPaused ? (
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-6 max-w-2xl mx-auto">
+              <div className="flex items-start gap-3 justify-center">
+                <AlertCircle className="h-6 w-6 text-white flex-shrink-0 mt-0.5" />
+                <div className="text-left">
+                  <h3 className="font-bold text-white mb-2">Bookings Temporarily Unavailable</h3>
+                  <p className="text-teal-100 whitespace-pre-line">{pausedMessage}</p>
+                  {pauseEnd && (
+                    <p className="text-teal-200 text-sm mt-2">
+                      Bookings will resume on {pauseEnd.toLocaleDateString()} at {pauseEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Button 
+              size="lg"
+              className="bg-white text-teal-600 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transform transition-all duration-200 shadow-lg hover:bg-gray-100"
+              onClick={() => handleBookNow()}
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              Start Your Athlete's Journey
+            </Button>
+          )}
         </div>
       </section>
 

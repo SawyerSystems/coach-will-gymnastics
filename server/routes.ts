@@ -1378,6 +1378,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { date, lessonType } = req.params;
+      
+      // Check if bookings are paused
+      const { data: pausedSetting } = await supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'bookings_paused')
+        .maybeSingle();
+      
+      // Get start/end times for scheduled pauses
+      const { data: startSetting } = await supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'bookings_pause_start')
+        .maybeSingle();
+      
+      const { data: endSetting } = await supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'bookings_pause_end')
+        .maybeSingle();
+      
+      // Determine if bookings are currently paused
+      let isPaused = pausedSetting?.value === 'true';
+      
+      // Parse the requested date (format: YYYY-MM-DD) and normalize to start of day
+      const requestedDate = new Date(date + 'T00:00:00');
+      
+      // Check if we're within a scheduled pause period
+      if (isPaused) {
+        const startTime = startSetting?.value ? new Date(startSetting.value) : null;
+        const endTime = endSetting?.value ? new Date(endSetting.value) : null;
+        
+        // If start time is set and requested date is before it, bookings are not paused yet
+        if (startTime && requestedDate < startTime) {
+          isPaused = false;
+        }
+        
+        // If end time is set and requested date is after it, bookings are no longer paused
+        if (endTime && requestedDate > endTime) {
+          isPaused = false;
+        }
+      }
+      
+      // If paused, return empty array (no available times)
+      if (isPaused) {
+        logger.debug(`Bookings are paused, returning no available times for ${date}`);
+        res.json({ availableTimes: [] });
+        perfTimer.end(200);
+        return;
+      }
+      
       const lessonDuration = getLessonDurationMinutes(lessonType);
       
       logger.debug(`Available times API called for ${date}, ${lessonType} (${lessonDuration}min)`);
@@ -3353,6 +3404,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ error: 'Recompute failed' });
       }
     });
+
+  // --- Site Settings Management ---
+  // Get all site settings or a specific setting by key
+  app.get('/api/site-settings', async (req, res) => {
+    try {
+      const { key } = req.query;
+      
+      if (key) {
+        const { data, error } = await supabaseAdmin
+          .from('site_settings')
+          .select('*')
+          .eq('key', String(key))
+          .maybeSingle();
+        
+        if (error) {
+          console.error('[SITE-SETTINGS][GET] Error:', error);
+          return res.status(500).json({ error: 'Failed to fetch setting' });
+        }
+        return res.json(data || null);
+      }
+      
+      const { data, error } = await supabaseAdmin
+        .from('site_settings')
+        .select('*')
+        .order('key', { ascending: true });
+      
+      if (error) {
+        console.error('[SITE-SETTINGS][LIST] Error:', error);
+        return res.status(500).json({ error: 'Failed to fetch settings' });
+      }
+      res.json(data || []);
+    } catch (e) {
+      console.error('[SITE-SETTINGS][GET] Exception:', e);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  // Update a site setting (admin only)
+  app.patch('/api/admin/site-settings/:key', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { key } = req.params;
+      const { value } = req.body;
+      
+      if (typeof value !== 'string') {
+        return res.status(400).json({ error: 'Value must be a string' });
+      }
+
+      const adminId = (req.session as any).adminId;
+      const { data, error } = await supabaseAdmin
+        .from('site_settings')
+        .update({ 
+          value, 
+          updated_by: adminId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('key', key)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[SITE-SETTINGS][UPDATE] Error:', error);
+        return res.status(500).json({ error: 'Failed to update setting' });
+      }
+
+      res.json(data);
+    } catch (e) {
+      console.error('[SITE-SETTINGS][UPDATE] Exception:', e);
+      res.status(500).json({ error: 'Failed to update setting' });
+    }
+  });
 
   // --- Gym Payout Rate Management (no schema changes) ---
   // List payout rates (active by default, include=all for history)
@@ -6150,6 +6271,64 @@ setTimeout(async () => {
     
     try {
       console.log("Booking request body:", JSON.stringify(req.body, null, 2));
+      
+      // Check if bookings are paused
+      const { data: pausedSetting } = await supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'bookings_paused')
+        .maybeSingle();
+      
+      // Also get start/end times for scheduled pauses
+      const { data: startSetting } = await supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'bookings_pause_start')
+        .maybeSingle();
+      
+      const { data: endSetting } = await supabaseAdmin
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'bookings_pause_end')
+        .maybeSingle();
+      
+      // Determine if bookings are currently paused
+      let isPaused = pausedSetting?.value === 'true';
+      const now = new Date();
+      
+      // Get the scheduled date from the booking to check against pause period
+      const scheduledDate = req.body.preferredDate ? new Date(req.body.preferredDate + 'T00:00:00') : now;
+      
+      // Check if we're within a scheduled pause period
+      if (isPaused) {
+        const startTime = startSetting?.value ? new Date(startSetting.value) : null;
+        const endTime = endSetting?.value ? new Date(endSetting.value) : null;
+        
+        // Check against the SCHEDULED DATE, not just current time
+        // If start time is set and scheduled date is before it, bookings are not paused for that date
+        if (startTime && scheduledDate < startTime) {
+          isPaused = false;
+        }
+        
+        // If end time is set and scheduled date is after it, bookings are no longer paused for that date
+        if (endTime && scheduledDate > endTime) {
+          isPaused = false;
+        }
+      }
+      
+      if (isPaused) {
+        const { data: messageSetting } = await supabaseAdmin
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'bookings_paused_message')
+          .maybeSingle();
+        
+        const message = messageSetting?.value || 'Online bookings are currently unavailable. Please contact us directly.';
+        return res.status(503).json({
+          message,
+          bookingsPaused: true
+        });
+      }
       
       const validatedData = insertBookingSchema.parse(req.body);
       

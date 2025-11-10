@@ -558,6 +558,19 @@ export const admins = pgTable("admins", {
   adminsEmailKey: unique("admins_email_key").on(table.email),
 }));
 
+export const siteSettings = pgTable("site_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  description: text("description"),
+  updatedBy: integer("updated_by").references(() => admins.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type InsertSiteSetting = typeof siteSettings.$inferInsert;
+
 
 export const insertParentSchema = createInsertSchema(parents).omit({
   id: true,
