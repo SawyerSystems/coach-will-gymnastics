@@ -310,16 +310,17 @@ export default function AdminPayoutsTab() {
 									<th className="text-left px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Duration</th>
 									<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Owed</th>
 									<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Rate</th>
+									<th className="text-right px-4 py-3 text-xs font-bold text-[#0F0276] dark:text-white uppercase tracking-wider bg-transparent">Edit</th>
 								</tr>
 							</thead>
 							<tbody>
 								{loadingList ? (
 									<tr>
-										<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent" colSpan={6}>Loading…</td>
+										<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent" colSpan={7}>Loading…</td>
 									</tr>
 								) : list.length === 0 ? (
 									<tr>
-										<td className="py-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276]/80 border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white/80 dark:border-transparent" colSpan={6}>No payout rows for the selected filters.</td>
+										<td className="py-6 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276]/80 border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white/80 dark:border-transparent" colSpan={7}>No payout rows for the selected filters.</td>
 									</tr>
 								) : (
 									list.map((row) => {
@@ -331,8 +332,37 @@ export default function AdminPayoutsTab() {
 												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{athleteName || `Athlete #${row.athlete_id}`}</td>
 												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{row.gym_member_at_booking ? 'Member' : 'Non-member'}</td>
 												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent">{row.duration_minutes ? `${row.duration_minutes} min` : '—'}</td>
-												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right font-semibold">{formatCents(row.gym_payout_owed_cents)}</td>
-												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right text-[#0F0276]/80 dark:text-white/80">{formatCents(row.gym_rate_applied_cents)}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right font-semibold">{row.gym_payout_owed_cents == null ? '—' : formatCents(row.gym_payout_owed_cents)}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right text-[#0F0276]/80 dark:text-white/80">{row.gym_rate_applied_cents == null ? '—' : formatCents(row.gym_rate_applied_cents)}</td>
+												<td className="py-4 bg-white/70 supports-[backdrop-filter]:bg-white/40 backdrop-blur-md text-[#0F0276] border border-slate-200/60 first:rounded-l-xl last:rounded-r-xl dark:bg-[#2A4A9B] dark:text-white dark:border-transparent text-right">
+													<Switch
+														checked={!!row.gym_member_at_booking}
+														onCheckedChange={async (checked) => {
+															try {
+																const res = await apiRequest('PATCH', `/api/admin/payouts/booking-athletes/${row.id}/membership`, { gymMemberAtBooking: Boolean(checked) });
+																if (!res.ok) throw new Error((await res.json())?.error || 'Update failed');
+																await Promise.all([refetchSummary(), refetchList()]);
+																toast({ title: 'Membership updated', description: checked ? 'Marked as member' : 'Marked as non-member' });
+															} catch (e: any) {
+																toast({ title: 'Update failed', description: e?.message || 'Could not update membership', variant: 'destructive' });
+															}
+														}}
+													/>
+													{(row.gym_payout_owed_cents == null) && (
+														<Button size="sm" className="ml-2" variant="secondary" onClick={async () => {
+															try {
+																const res = await apiRequest('POST', `/api/admin/payouts/booking-athletes/${row.id}/recompute`, {});
+																if (!res.ok) throw new Error((await res.json())?.error || 'Recompute failed');
+																await Promise.all([refetchSummary(), refetchList()]);
+																toast({ title: 'Recomputed', description: 'Payout recalculated for row' });
+															} catch (e: any) {
+																toast({ title: 'Recompute failed', description: e?.message || 'Could not recompute payout', variant: 'destructive' });
+															}
+														}}>
+															Fix
+														</Button>
+													)}
+												</td>
 											</tr>
 										);
 									})
@@ -340,7 +370,7 @@ export default function AdminPayoutsTab() {
 							</tbody>
 			    <tfoot className="bg-[#0F0276]/10 dark:bg-slate-800/50 border-t border-slate-200/60 dark:border-slate-600/60">
 								<tr>
-				    <td className="px-4 py-3 font-semibold text-[#0F0276] dark:text-white" colSpan={4}>Totals (visible)</td>
+				    <td className="px-4 py-3 font-semibold text-[#0F0276] dark:text-white" colSpan={5}>Totals (visible)</td>
 									<td className="px-4 py-3 text-right font-bold text-[#0F0276] dark:text-white">{formatCents(totals.all)}</td>
 									<td className="px-4 py-3 text-right text-[#0F0276]/80 dark:text-white/80">
 										<span className="mr-2">Members: {formatCents(totals.members)}</span>
