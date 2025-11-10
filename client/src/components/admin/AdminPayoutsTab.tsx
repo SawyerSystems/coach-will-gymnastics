@@ -351,11 +351,19 @@ export default function AdminPayoutsTab() {
 													{(row.gym_payout_owed_cents == null) && (
 														<Button size="sm" className="ml-2" variant="secondary" onClick={async () => {
 															try {
+																console.log('[FIX] Recomputing row', row.id);
 																const res = await apiRequest('POST', `/api/admin/payouts/booking-athletes/${row.id}/recompute`, {});
-																if (!res.ok) throw new Error((await res.json())?.error || 'Recompute failed');
+																if (!res.ok) {
+																	const errData = await res.json();
+																	console.error('[FIX] Response error:', errData);
+																	throw new Error(errData?.error || 'Recompute failed');
+																}
+																const result = await res.json();
+																console.log('[FIX] Recompute result:', result);
 																await Promise.all([refetchSummary(), refetchList()]);
 																toast({ title: 'Recomputed', description: 'Payout recalculated for row' });
 															} catch (e: any) {
+																console.error('[FIX] Exception:', e);
 																toast({ title: 'Recompute failed', description: e?.message || 'Could not recompute payout', variant: 'destructive' });
 															}
 														}}>

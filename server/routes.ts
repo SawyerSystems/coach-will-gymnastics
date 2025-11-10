@@ -3159,8 +3159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoint to update gym membership snapshot for a booking_athletes row
-  // Recomputes payout rate & owed if the booking is completed; otherwise clears computed values for future backfill
-  app.patch('/api/admin/payouts/booking-athletes/:id/membership', isAdminAuthenticated, async (req, res) => {
+  // ALWAYS resolves configured rate (if duration known) so UI can show projected rate.
+  // Only sets owed/computed_at when session is completed.
+  app.patch('/api/admin/payouts/booking-athletes/:id/membership', isAdminAuthenticated, async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -3243,19 +3244,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Persist update
-      const { data: updated, error: updErr } = await supabaseAdmin
+      const { error: updErr } = await supabaseAdmin
         .from('booking_athletes')
         .update(updatePayload)
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
       if (updErr) {
         console.error('[MEMBERSHIP-UPDATE] Update error:', updErr);
         return res.status(500).json({ error: 'Failed to update membership' });
       }
 
-    // Recompute a single payout row: resolve missing duration from lesson type and compute rate/owed when possible
-    app.post('/api/admin/payouts/booking-athletes/:id/recompute', isAdminAuthenticated, async (req, res) => {
+      // pass through to recompute handler to return fresh row payload consistently
+      ;(req as any).recomputeForwardId = id;
+      return next();
+    } catch (e) {
+      console.error('[MEMBERSHIP-UPDATE] Exception:', e);
+      return res.status(500).json({ error: 'Unexpected server error' });
+    }
+  },
+  // chained handler executes recompute logic to provide unified response shape
+  async (req, res) => {
+    try {
+      const id = (req as any).recomputeForwardId ? Number((req as any).recomputeForwardId) : Number(req.params.id);
+      if (!id || isNaN(id)) return res.status(400).json({ error: 'Invalid id (chained)' });
+
+      const { data: row, error: loadErr } = await supabaseAdmin
+        .from('booking_athletes')
+        .select('id, booking_id, athlete_id, duration_minutes, gym_member_at_booking, gym_rate_applied_cents, gym_payout_override_cents, gym_payout_owed_cents, gym_payout_computed_at, bookings!inner(preferred_date, attendance_status, lesson_type_id)')
+        .eq('id', id)
+        .maybeSingle();
+      if (loadErr || !row) return res.status(404).json({ error: 'Row not found after update' });
+
+      return res.json(row);
+    } catch (e) {
+      console.error('[MEMBERSHIP-UPDATE][CHAIN] Exception', e);
+      return res.status(500).json({ error: 'Failed to load updated row' });
+    }
+  });
+
+  // Recompute a single payout row: resolve missing duration from lesson type and compute rate/owed when possible
+  app.post('/api/admin/payouts/booking-athletes/:id/recompute', isAdminAuthenticated, async (req, res) => {
       try {
         const id = parseInt(req.params.id);
         if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
@@ -3285,39 +3312,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let updates: any = { duration_minutes: duration ?? row.duration_minutes ?? null };
         let recomputed = false;
 
-        if (attendanceStatus === 'completed') {
-          const effectiveIso = preferredDate || new Date().toISOString();
-          const isMember = !!row.gym_member_at_booking;
-          let rateCents: number | null = row.gym_rate_applied_cents ?? null;
-          if (rateCents == null && duration != null) {
-            const { data: rate } = await supabaseAdmin
-              .from('gym_payout_rates')
-              .select('rate_cents')
-              .eq('duration_minutes', duration)
-              .eq('is_member', isMember)
-              .lte('effective_from', effectiveIso)
-              .or('effective_to.is.null,effective_to.gte.' + effectiveIso)
-              .order('effective_from', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            rateCents = rate?.rate_cents ?? null;
-          }
-          const owed = row.gym_payout_override_cents ?? rateCents ?? null;
-          updates = {
-            ...updates,
-            gym_rate_applied_cents: rateCents,
-            gym_payout_owed_cents: owed,
-            gym_payout_computed_at: owed != null ? new Date().toISOString() : null
-          };
-          recomputed = true;
-        } else {
-          // Not completed: keep owed/rate null but preserve duration if we found it
-          updates = {
-            ...updates,
-            gym_rate_applied_cents: null,
-            gym_payout_owed_cents: null,
-          };
+        // Always compute rate if we have duration
+        const effectiveIso = preferredDate || new Date().toISOString();
+        const isMember = !!row.gym_member_at_booking;
+        let rateCents: number | null = row.gym_rate_applied_cents ?? null;
+        if (rateCents == null && duration != null) {
+          const { data: rate } = await supabaseAdmin
+            .from('gym_payout_rates')
+            .select('rate_cents')
+            .eq('duration_minutes', duration)
+            .eq('is_member', isMember)
+            .lte('effective_from', effectiveIso)
+            .or('effective_to.is.null,effective_to.gte.' + effectiveIso)
+            .order('effective_from', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          rateCents = rate?.rate_cents ?? null;
         }
+
+        // Always compute owed from rate (or override) when we have a rate
+        const owed = row.gym_payout_override_cents ?? rateCents ?? null;
+        updates = {
+          ...updates,
+          gym_rate_applied_cents: rateCents,
+          gym_payout_owed_cents: owed,
+          gym_payout_computed_at: owed != null ? new Date().toISOString() : null
+        };
+        recomputed = true;
 
         const { data: updated, error: updErr } = await supabaseAdmin
           .from('booking_athletes')
@@ -3332,24 +3353,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ error: 'Recompute failed' });
       }
     });
-
-      res.json({
-        id: updated.id,
-        booking_id: updated.booking_id,
-        athlete_id: updated.athlete_id,
-        gym_member_at_booking: updated.gym_member_at_booking,
-        gym_rate_applied_cents: updated.gym_rate_applied_cents,
-        gym_payout_owed_cents: updated.gym_payout_owed_cents,
-        gym_payout_computed_at: updated.gym_payout_computed_at,
-        attendance_status: attendanceStatus,
-        duration_minutes: updated.duration_minutes,
-        recomputed: attendanceStatus === 'completed'
-      });
-    } catch (e) {
-      console.error('[MEMBERSHIP-UPDATE] Exception:', e);
-      res.status(500).json({ error: 'Unexpected server error' });
-    }
-  });
 
   // --- Gym Payout Rate Management (no schema changes) ---
   // List payout rates (active by default, include=all for history)
