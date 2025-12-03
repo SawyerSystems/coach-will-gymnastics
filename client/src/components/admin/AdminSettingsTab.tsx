@@ -32,6 +32,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { Select } from '@/components/ui/select';
+import { BookingStatusEnum, PaymentStatusEnum, AttendanceStatusEnum } from '@shared/schema';
 
 interface AdminSettingsTabProps {
   // Developer Settings props
@@ -397,6 +399,7 @@ export default function AdminSettingsTab({
               <p className="text-gray-600 dark:text-slate-300 mb-4">Configure platform-wide preferences.</p>
               {/* Booking controls configuration */}
               <BookingControlsCollapsible />
+              {/* Retro Lesson Creation removed; now available in Booking Management tab */}
               {/* Apparatus availability configuration */}
               <ApparatusCollapsible />
               {/* Notifications configuration */}
@@ -848,3 +851,5 @@ function ApparatusCollapsible() {
     </div>
   );
 }
+
+// Retro lesson creation UI removed (now handled in Booking Management via UnifiedBookingModal)

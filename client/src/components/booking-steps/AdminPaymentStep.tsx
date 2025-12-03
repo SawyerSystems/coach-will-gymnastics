@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useBookingFlow } from "@/contexts/BookingFlowContext";
 import { useToast } from "@/hooks/use-toast";
 // import { LESSON_TYPES } from "@/lib/constants";
@@ -23,6 +24,8 @@ export function AdminPaymentStep() {
   const { byKey } = useLessonTypes();
   const lessonData = byKey(state.lessonType);
   const lessonPrice = lessonData?.price || 0;
+
+  // No useEffect defaulting; initial defaults are set in UnifiedBookingModal
 
   const createAdminBooking = useMutation({
     mutationFn: async (bookingData: any) => {
@@ -69,6 +72,14 @@ export function AdminPaymentStep() {
         title: "Booking Created Successfully",
         description: `Booking #${data.booking?.id || 'New'} has been created.`,
       });
+      // For retro-completed entries, enforce statuses explicitly post-create
+      if (state.retroCompletedLesson && data?.booking?.id) {
+        const bookingId = data.booking.id as number;
+        // Ensure payment is session-paid
+        apiRequest('PATCH', `/api/bookings/${bookingId}/payment-status`, { paymentStatus: 'session-paid' }).catch(() => {});
+        // Ensure attendance is completed
+        apiRequest('PATCH', `/api/bookings/${bookingId}/attendance-status`, { attendanceStatus: 'completed' }).catch(() => {});
+      }
       
       // Update global state to reflect booking creation
       updateState({
@@ -165,14 +176,16 @@ export function AdminPaymentStep() {
       return;
     }
     
-    // Validate payment method selection
-    if (!state.adminPaymentMethod) {
-      toast({
-        title: "Payment Method Required",
-        description: "Please select a payment method before creating the booking.",
-        variant: "destructive",
-      });
-      return;
+    // Validate payment inputs based on parent paid choice
+    if (state.adminParentPaid) {
+      if (!state.adminPaymentMethod) {
+        toast({
+          title: "Payment Method Required",
+          description: "Select how the parent paid.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     setIsProcessing(true);
@@ -247,12 +260,23 @@ export function AdminPaymentStep() {
         adminNotes: state.adminNotes || '',
         amount: lessonPrice,
         status: 'confirmed',
-        // Set payment status based on payment method
-        paymentStatus: ['cash', 'check'].includes(state.adminPaymentMethod || '') ? 'unpaid' : 
-                      state.adminPaymentMethod === 'stripe' ? 'paid' : 'unpaid',
-        // Set attendance status based on payment method
-        attendanceStatus: ['cash', 'check'].includes(state.adminPaymentMethod || '') ? 'pending' : 'confirmed',
+        // Payment: if parent paid, mark as paid appropriately; retro always session-paid
+        paymentStatus: state.retroCompletedLesson ? 'session-paid' : (
+          state.adminParentPaid ? (
+            state.adminPaymentMethod === 'stripe' ? 'reservation-paid' : 'session-paid'
+          ) : 'unpaid'
+        ),
+        // Attendance: mark completed for retro-completed flow, else based on payment method
+        attendanceStatus: state.retroCompletedLesson ? 'completed' : (
+          state.adminParentPaid ? 'confirmed' : 'pending'
+        ),
         bookingMethod: 'admin',
+        // Retroactive entries should not trigger emails
+        ...(state.retroCompletedLesson ? {
+          suppressEmails: true,
+          sendConfirmationEmail: false,
+          skipEmailNotifications: true
+        } : {}),
         // Flag to indicate if a new parent was created
         isNewParentCreated: state.isNewParentCreated || false
       };
@@ -276,6 +300,10 @@ export function AdminPaymentStep() {
         setLocation(`/parent-setup-success?email=${emailParam}`);
         return true;
       }
+      // Do not send any follow-up emails for retro-completed flow
+      if (state.retroCompletedLesson) {
+        return true;
+      }
       
       // Return success from the function to allow the modal to close
       return true;
@@ -293,6 +321,10 @@ export function AdminPaymentStep() {
     updateState({ 
       adminPaymentMethod: method as 'stripe' | 'cash' | 'check' | 'pending'
     });
+  };
+
+  const handleParentPaidToggle = (paid: boolean) => {
+    updateState({ adminParentPaid: paid, adminPaymentMethod: paid ? (state.adminPaymentMethod || 'cash') : undefined });
   };
 
   const handleNotesChange = (notes: string) => {
@@ -376,65 +408,74 @@ export function AdminPaymentStep() {
         </CardContent>
       </Card>
 
-      {/* Payment Method Selection */}
+      {/* Payment Confirmation */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Payment Method
+            Payment Confirmation
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>How will this booking be paid?</Label>
-            <Select 
-              value={state.adminPaymentMethod || 'pending'} 
-              onValueChange={handlePaymentMethodChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending Payment</SelectItem>
-                <SelectItem value="stripe">Credit Card (Stripe)</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="check">Check</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>Did the parent already pay?</Label>
+            <div className="flex items-center gap-3">
+              <Switch checked={!!state.adminParentPaid} onCheckedChange={(v) => handleParentPaidToggle(!!v)} />
+              <span>{state.adminParentPaid ? 'Yes' : 'No'}</span>
+            </div>
           </div>
 
-          {state.adminPaymentMethod === 'stripe' && (
+          {state.adminParentPaid && (
+            <div className="space-y-2">
+              <Label>How did they pay?</Label>
+              <Select 
+                value={state.adminPaymentMethod || 'cash'} 
+                onValueChange={handlePaymentMethodChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stripe">Credit Card (Stripe)</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="check">Check</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {state.adminParentPaid && state.adminPaymentMethod === 'stripe' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-2 text-blue-800">
                 <CreditCard className="h-4 w-4" />
                 <span className="font-medium">Credit Card Payment (Stripe)</span>
               </div>
               <p className="text-blue-700 text-sm mt-1">
-                The booking will be marked as <b>paid</b> and <b>confirmed</b> immediately. The parent will receive a booking confirmation email.
+                The booking will be marked as <b>paid</b> and <b>confirmed</b> immediately.
               </p>
             </div>
           )}
 
-          {(state.adminPaymentMethod === 'cash' || state.adminPaymentMethod === 'check') && (
+          {state.adminParentPaid && (state.adminPaymentMethod === 'cash' || state.adminPaymentMethod === 'check') && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-2 text-green-800">
                 <CheckCircle className="h-4 w-4" />
                 <span className="font-medium">In-Person Payment ({state.adminPaymentMethod === 'cash' ? 'Cash' : 'Check'})</span>
               </div>
               <p className="text-green-700 text-sm mt-1">
-                The booking will be marked as <b>unpaid</b> and attendance status as <b>pending</b>. An email will be sent to the parent with a confirmation link they must click to confirm their attendance. After they confirm, the attendance status will update to <b>confirmed</b>.
+                The booking will be marked as <b>session paid</b> and <b>confirmed</b>.
               </p>
             </div>
           )}
           
-          {state.adminPaymentMethod === 'pending' && (
+          {!state.adminParentPaid && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center gap-2 text-yellow-800">
                 <AlertCircle className="h-4 w-4" />
                 <span className="font-medium">Pending Payment</span>
               </div>
               <p className="text-yellow-700 text-sm mt-1">
-                The booking will be marked as <b>unpaid</b>. No confirmation email will be sent to the parent yet. You'll need to update the payment method later.
+                The booking will be marked as <b>unpaid</b>. You'll need to update the payment later.
               </p>
             </div>
           )}

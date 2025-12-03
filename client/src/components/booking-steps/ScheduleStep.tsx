@@ -117,7 +117,9 @@ export function ScheduleStep() {
                 disabled={(date) => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0); // Reset time to start of day
-                  return date < today || date.getDay() === 0; // Block past dates and Sundays
+                  // Allow past dates when creating retro-completed lessons via admin flow
+                  const allowPast = !!state.retroCompletedLesson;
+                  return (!allowPast && date < today) || date.getDay() === 0; // Block past dates (unless retro) and Sundays
                 }}
                 initialFocus
               />

@@ -27,6 +27,8 @@ export interface BookingFlowState {
   parentId?: number;
   selectedParent?: any; // Parent object when selected from existing parents
   isNewParentCreated?: boolean; // Flag to track if a new parent was created
+  // Flag to mark retro entry as already completed
+  retroCompletedLesson?: boolean;
   lessonType: string;
   selectedAthletes: number[];
   selectedTimeSlot: { date: string; time: string } | null;
@@ -63,6 +65,7 @@ export interface BookingFlowState {
   focusAreaOther: string; // Custom focus area text when "Other" is selected
   // Admin-specific properties
   isAdminFlow?: boolean;
+  adminParentPaid?: boolean; // Whether parent has already paid (admin confirmation)
   adminPaymentMethod?: 'stripe' | 'cash' | 'check' | 'pending';
   adminNotes?: string;
   skipWaiver?: boolean;
@@ -147,6 +150,7 @@ const initialState: BookingFlowState = {
   flowType: 'new-user',
   currentStep: 0,
   selectedParent: undefined,
+  retroCompletedLesson: false,
   lessonType: '',
   selectedAthletes: [],
   selectedTimeSlot: null,
@@ -156,6 +160,7 @@ const initialState: BookingFlowState = {
   waiverStatus: { signed: false },
   focusAreas: [],
   focusAreaOther: '',
+  adminParentPaid: false,
 };
 
 interface BookingFlowProviderProps {

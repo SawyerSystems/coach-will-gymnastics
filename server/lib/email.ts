@@ -313,6 +313,11 @@ export async function sendSessionConfirmationIfNeeded(bookingId: number, storage
       console.warn(`[SESSION-CONFIRMATION][IDEMPOTENT] Booking ${bookingId} not found`);
       return false;
     }
+    // Skip retroactive bookings (marked in admin notes or via suppressEmails flag)
+    if (booking.adminNotes?.includes('[RETROACTIVE]') || (booking as any).suppressEmails === true) {
+      console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Booking ${bookingId} is retroactive/suppressed, skipping email.`);
+      return false;
+    }
     // Only send if payment indicates success AND not already sent
     if (booking.sessionConfirmationEmailSent) {
       console.log(`[SESSION-CONFIRMATION][IDEMPOTENT] Already sent for booking ${bookingId}, skipping.`);
@@ -1024,6 +1029,17 @@ export async function scheduleStatusChangeEmail(
   rescheduleLink?: string
 ) {
   console.log(`[STATUS-EMAIL-DELAY] Scheduling email for booking ${bookingId}: ${originalStatus} -> ${newStatus}`);
+  
+  // Skip retroactive bookings
+  try {
+    const booking = await storage.getBooking(bookingId);
+    if (booking && (booking.adminNotes?.includes('[RETROACTIVE]') || (booking as any).suppressEmails === true)) {
+      console.log(`[STATUS-EMAIL-DELAY] Booking ${bookingId} is retroactive/suppressed, skipping status change email.`);
+      return;
+    }
+  } catch (err) {
+    console.error(`[STATUS-EMAIL-DELAY] Error checking retroactive flag for booking ${bookingId}:`, err);
+  }
   
   // Clear any existing delayed email for this booking
   const existing = delayedStatusEmails.get(bookingId);

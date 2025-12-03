@@ -17,6 +17,8 @@ interface UnifiedBookingModalProps {
   isNewParent?: boolean;
   isAdminFlow?: boolean;
   adminContext?: 'new-athlete' | 'existing-athlete' | 'from-athlete';
+  // Retro-completed lesson: mark attendance completed at creation
+  retroCompletedLesson?: boolean;
   
   // Legacy support
   initialLessonType?: string;
@@ -33,7 +35,8 @@ export function UnifiedBookingModal({
   isAdminFlow = false,
   adminContext,
   initialLessonType,
-  suggestedFocusAreas = []
+  suggestedFocusAreas = [],
+  retroCompletedLesson = false
 }: UnifiedBookingModalProps) {
   
   console.log('🚀 UNIFIED BOOKING MODAL MOUNTED/OPENED:', {
@@ -142,6 +145,10 @@ export function UnifiedBookingModal({
       focusAreaOther: '',
       isAdminFlow,
       adminNotes: '',
+      retroCompletedLesson,
+      // For retro-completed bookings, default parent paid confirmation
+      adminParentPaid: retroCompletedLesson ? true : false,
+      adminPaymentMethod: retroCompletedLesson ? 'cash' : undefined,
     };
 
     // Set parent info based on priority: explicit parentData > auth status > none

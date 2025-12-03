@@ -69,7 +69,7 @@ if (!stripeKey) {
 }
 
 const stripe = new Stripe(stripeKey || 'dummy_key_for_startup', {
-  apiVersion: '2025-07-30.basil',
+  apiVersion: '2025-08-27.basil',
 });
 console.log('✅ Stripe client initialized');
 

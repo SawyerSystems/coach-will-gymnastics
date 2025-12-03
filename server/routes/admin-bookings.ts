@@ -118,6 +118,8 @@ export function initAdminBookingRoutes(app: Express) {
       };
 
       // Create booking
+      const isRetroactive = bookingData.retroCompletedLesson === true || bookingData.suppressEmails === true;
+      const retroMarker = isRetroactive ? '[RETROACTIVE] ' : '';
       const booking = await storage.createBooking({
         parentId: parent.id,
         lessonTypeId: lessonTypeId as number,  // Type assertion since we've validated it's not null above
@@ -126,12 +128,12 @@ export function initAdminBookingRoutes(app: Express) {
         bookingMethod: BookingMethodEnum.ADMIN,
         status: bookingData.status || BookingStatusEnum.CONFIRMED,
         paymentStatus: bookingData.paymentStatus || PaymentStatusEnum.UNPAID,
-        adminNotes: bookingData.adminNotes || '',
+        adminNotes: retroMarker + (bookingData.adminNotes || ''),
         ...dropoffInfo,
         ...pickupInfo,
         safetyVerificationSignedAt: new Date(),
         // Add missing required fields with defaults
-        attendanceStatus: AttendanceStatusEnum.PENDING,
+        attendanceStatus: bookingData.attendanceStatus || AttendanceStatusEnum.PENDING,
         apparatusIds: [],
         focusAreaIds: [],
         sideQuestIds: []
@@ -190,8 +192,15 @@ export function initAdminBookingRoutes(app: Express) {
         }
       }
       
-      // Send email confirmation for cash/check payments
-      if (bookingData.adminPaymentMethod && ["cash", "check"].includes(bookingData.adminPaymentMethod.toLowerCase())) {
+      // Send email confirmation for cash/check payments unless suppressed
+      const emailSuppressed = (
+        bookingData?.suppressEmails === true ||
+        bookingData?.skipEmailNotifications === true ||
+        bookingData?.sendConfirmationEmail === false ||
+        bookingData?.retroCompletedLesson === true // client may include this flag
+      );
+
+      if (!emailSuppressed && bookingData.adminPaymentMethod && ["cash", "check"].includes(bookingData.adminPaymentMethod.toLowerCase())) {
         try {
           console.log(`[EMAIL] Preparing to send confirmation email for ${bookingData.adminPaymentMethod} payment`);
           console.log(`[EMAIL] Parent email: ${parent.email}, Parent name: ${parent.firstName || 'Parent'}`);
@@ -213,7 +222,7 @@ export function initAdminBookingRoutes(app: Express) {
           // Don't fail the booking creation if email fails
         }
       } else {
-        console.log(`[EMAIL] No confirmation email sent - Payment method: ${bookingData.adminPaymentMethod}`);
+        console.log(`[EMAIL] No confirmation email sent - ${emailSuppressed ? 'suppressed by flags' : 'payment method condition not met'} (${bookingData.adminPaymentMethod})`);
       }
       
       perfTimer.end();

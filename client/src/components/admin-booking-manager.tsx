@@ -402,6 +402,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
   const [showManualForm, setShowManualForm] = useState(!!prefilledData);
   const [showUnifiedBooking, setShowUnifiedBooking] = useState(false);
   const [adminBookingContext, setAdminBookingContext] = useState<'new-athlete' | 'existing-athlete' | 'from-athlete'>('new-athlete');
+  const [retroCompleted, setRetroCompleted] = useState<boolean>(false);
   const [preSelectedAthleteId, setPreSelectedAthleteId] = useState<number | undefined>();
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -834,6 +835,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   onClick={() => {
                     setAdminBookingContext('new-athlete');
                     setPreSelectedAthleteId(undefined);
+                    setRetroCompleted(false);
                     setShowUnifiedBooking(true);
                   }}
                   variant="primary"
@@ -846,12 +848,27 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
                   onClick={() => {
                     setAdminBookingContext('existing-athlete');
                     setPreSelectedAthleteId(undefined);
+                    setRetroCompleted(false);
                     setShowUnifiedBooking(true);
                   }}
                   className="font-semibold"
                 >
                   <User className="h-4 w-4 mr-2" />
                   Existing Athlete
+                </AdminButton>
+                <AdminButton
+                  variant="secondary"
+                  onClick={() => {
+                    // Retro-completed lesson creation with rich selector flow
+                    setAdminBookingContext('existing-athlete');
+                    setPreSelectedAthleteId(undefined);
+                    setRetroCompleted(true);
+                    setShowUnifiedBooking(true);
+                  }}
+                  className="font-semibold"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Add Completed Lesson
                 </AdminButton>
               </div>
             </div>
@@ -1277,6 +1294,7 @@ export function AdminBookingManager({ prefilledData, onClose, openAthleteModal, 
             isAdminFlow={true}
             adminContext={adminBookingContext}
             preSelectedAthleteId={preSelectedAthleteId}
+            retroCompletedLesson={retroCompleted}
           />
           </div>
         </TabsContent>
