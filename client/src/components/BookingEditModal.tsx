@@ -81,6 +81,9 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
   const [adminNotes, setAdminNotes] = useState(booking.adminNotes || '');
   const [specialRequests, setSpecialRequests] = useState(booking.specialRequests || '');
   const [selectedLessonTypeId, setSelectedLessonTypeId] = useState<number>(booking.lessonTypeId || 0);
+  const [preferredTime, setPreferredTime] = useState<string>(booking.preferredTime || '');
+  // Duration is tied to lesson type; no separate duration editing
+  const [durationMinutes] = useState<number>(Number((booking as any).durationMinutes ?? 0) || 0);
   const [focusAreas, setFocusAreas] = useState<string[]>(booking.focusAreas || []);
   const [tempFocusArea, setTempFocusArea] = useState('');
   const [focusAreaOther, setFocusAreaOther] = useState(booking.focusAreaOther || '');
@@ -288,6 +291,12 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
       } else if (bookingDetails.lessonTypeId) {
         setSelectedLessonTypeId(Number(bookingDetails.lessonTypeId));
       }
+
+      // Session timing fields
+      if (bookingDetails.preferredTime) {
+        setPreferredTime(bookingDetails.preferredTime);
+      }
+      // Duration derives from lesson type; no separate state update needed
       
       // Set focus areas - handling both array of strings and array of objects
       if (bookingDetails.focusAreas && Array.isArray(bookingDetails.focusAreas)) {
@@ -397,6 +406,10 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
     setTempFocusArea('');
     setFocusAreaOther(source.focusAreaOther || '');
     setSelectedApparatusId(null);
+
+    // Reset session timing
+    setPreferredTime(source.preferredTime || '');
+    // Duration shown from lesson type; no separate reset
 
     // Reset athletes (keep existing athlete selection after save if available)
     if (updated && Array.isArray((updated as any).athletes) && (updated as any).athletes.length > 0) {
@@ -946,6 +959,10 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
         focusAreaOther: normalizedOther,
         athletes: cleanedAthletes,
         parentId: selectedParentId,
+        // Session timing edits (not a reschedule)
+        preferredTime: preferredTime ? `${preferredTime.length === 5 ? preferredTime + ':00' : preferredTime}` : undefined,
+        // Do not send durationMinutes; it derives from lesson type
+        scheduleEdit: true,
         
         // Safety information
         dropoffPersonName,
@@ -1491,13 +1508,29 @@ export function BookingEditModal({ booking, open, onClose, onSuccess }: BookingE
                     <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg dark:bg-[#0F0276]/30 dark:border dark:border-[#2A4A9B]/30">
                       <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                       <span className="font-medium text-gray-700 dark:text-blue-200">Duration:</span>
-                      <span className="ml-auto dark:text-blue-200">{getLessonTypeDuration()}</span>
+                      <span className="ml-auto dark:text-blue-200">{durationMinutes || parseInt(getLessonTypeDuration()) || ''} minutes</span>
                     </div>
                     <div className="flex items-center gap-1.5 bg-white bg-opacity-70 p-2 rounded-lg dark:bg-[#0F0276]/30 dark:border dark:border-[#2A4A9B]/30">
                       <Users className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                       <span className="font-medium text-gray-700 dark:text-blue-200">Capacity:</span>
                       <span className="ml-auto dark:text-blue-200">{getMaxAthletes()} Athlete{getMaxAthletes() > 1 ? 's' : ''}</span>
                     </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="bg-white bg-opacity-70 p-3 rounded-lg dark:bg-[#0F0276]/30 dark:border dark:border-[#2A4A9B]/30">
+                      <Label className="text-sm font-medium text-gray-700 dark:text-blue-200 flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                        Lesson Time (edit)
+                      </Label>
+                      <Input
+                        type="time"
+                        value={preferredTime || ''}
+                        onChange={(e) => setPreferredTime(e.target.value)}
+                      />
+                      <p className="text-xs text-gray-500 mt-1 dark:text-blue-300">Minor time adjustment without reschedule email.</p>
+                    </div>
+                    {/* Duration is determined by lesson type; no separate field */}
                   </div>
                 </CardContent>
               </Card>

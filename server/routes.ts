@@ -7007,7 +7007,7 @@ setTimeout(async () => {
       if (altPickupPersonPhone !== undefined) updateData.altPickupPersonPhone = altPickupPersonPhone;
       
       // Check if this is a reschedule (date or time changed)
-      const isReschedule = req.body.preferredDate !== undefined || req.body.preferredTime !== undefined;
+      const isReschedule = (req.body.preferredDate !== undefined || req.body.preferredTime !== undefined) && req.body.scheduleEdit !== true;
       let originalDate: string | null | undefined;
       let originalTime: string | null | undefined;
       
@@ -7022,6 +7022,10 @@ setTimeout(async () => {
         
         if (req.body.preferredDate !== undefined) updateData.preferredDate = req.body.preferredDate;
         if (req.body.preferredTime !== undefined) updateData.preferredTime = req.body.preferredTime;
+      } else {
+        // Schedule edit: allow minor time/duration updates without triggering reschedule emails
+        if (req.body.preferredTime !== undefined) updateData.preferredTime = req.body.preferredTime;
+        if (req.body.durationMinutes !== undefined) updateData.durationMinutes = req.body.durationMinutes;
       }
       
       // Update athletes relationship if provided

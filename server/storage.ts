@@ -4535,6 +4535,7 @@ export class SupabaseStorage implements IStorage {
     // Add missing fields for reschedule functionality
     if (data.preferredDate !== undefined) dbUpdate.preferred_date = data.preferredDate;
     if (data.preferredTime !== undefined) dbUpdate.preferred_time = data.preferredTime;
+    if ((data as any).durationMinutes !== undefined) dbUpdate.duration_minutes = (data as any).durationMinutes;
     
     // Persist custom "Other" focus area text
     if (data.focusAreaOther !== undefined) {
