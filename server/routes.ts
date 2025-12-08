@@ -1698,6 +1698,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===============================
+  // Admin Custom Email Broadcast
+  // ===============================
+  // POST /api/admin/custom-email
+  // Sends a branded custom email to a single parent, selected parents, or all parents.
+  // Reuses Resend helper and branded layout via 'admin-custom' template.
+  app.post('/api/admin/custom-email', isAdminAuthenticated, async (req, res) => {
+    try {
+      const { recipientMode, recipientIds, usePersonalizedGreeting, subject, body } = req.body || {};
+
+      // Validate inputs
+      if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {
+        return res.status(400).json({ error: 'Subject is required' });
+      }
+      if (!body || typeof body !== 'string' || body.trim().length === 0) {
+        return res.status(400).json({ error: 'Body is required' });
+      }
+      const mode = String(recipientMode || '').toLowerCase();
+      if (!['single','selected','all'].includes(mode)) {
+        return res.status(400).json({ error: 'recipientMode must be one of single | selected | all' });
+      }
+      if ((mode === 'single' || mode === 'selected') && (!Array.isArray(recipientIds) || recipientIds.length === 0)) {
+        return res.status(400).json({ error: 'recipientIds are required for single/selected mode' });
+      }
+
+      // Resolve recipients from parents table
+      let recipients: Array<{ id: number; first_name?: string; last_name?: string; email?: string }> = [];
+      if (mode === 'all') {
+        const { data, error } = await supabaseAdmin
+          .from('parents')
+          .select('id, first_name, last_name, email')
+          .not('email', 'is', null); // exclude null emails
+        if (error) {
+          console.error('[CUSTOM-EMAIL] Failed to fetch all parents:', error);
+          return res.status(500).json({ error: 'Failed to load parents' });
+        }
+        recipients = (data || []).filter(p => p && typeof p.email === 'string' && p.email.trim() !== '');
+      } else {
+        const ids = (recipientIds || []).map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n));
+        if (ids.length === 0) {
+          return res.status(400).json({ error: 'No valid recipient IDs provided' });
+        }
+        const { data, error } = await supabaseAdmin
+          .from('parents')
+          .select('id, first_name, last_name, email')
+          .in('id', ids);
+        if (error) {
+          console.error('[CUSTOM-EMAIL] Failed to fetch selected parents:', error);
+          return res.status(500).json({ error: 'Failed to load selected parents' });
+        }
+        recipients = (data || []).filter(p => p && typeof p.email === 'string' && p.email.trim() !== '');
+      }
+
+      // Build greeting helper
+      const personalize = Boolean(usePersonalizedGreeting);
+      const buildGreeting = (p: any) => {
+        if (!personalize) return '';
+        const first = (p?.first_name || '').trim();
+        return first ? `Hi ${first},` : 'Hi there,';
+      };
+
+      // Send emails individually using branded template
+      let sentCount = 0;
+      const failures: Array<{ recipientId: number; email?: string; error: string }> = [];
+
+      // Batch in chunks to avoid timeouts for large sends (documented future improvement)
+      const chunkSize = 100;
+      for (let i = 0; i < recipients.length; i += chunkSize) {
+        const chunk = recipients.slice(i, i + chunkSize);
+        // Fire sends sequentially inside chunk to keep logs readable
+        for (const p of chunk) {
+          try {
+            // NOTE: Reusing branded layout by invoking sendEmail with 'admin-custom' type.
+            await sendEmail({
+              type: 'admin-custom',
+              to: p.email!,
+              data: {
+                subject,
+                greetingLine: buildGreeting(p),
+                bodyText: body,
+              },
+            });
+            sentCount++;
+          } catch (err: any) {
+            console.error('[CUSTOM-EMAIL] Failed to send to', p.id, p.email, err);
+            failures.push({ recipientId: p.id, email: p.email, error: err?.message || 'send_failed' });
+          }
+        }
+      }
+
+      // Optional: log admin activity (using activity logger if available)
+      try {
+        const context = ActivityLogger.createContext(req, ActivityActorType.ADMIN, req.session.adminId);
+        await activityLogger.logActivity(context, {
+          actionType: ActivityActionType.EMAIL_SENT,
+          actionCategory: ActivityCategory.COMMUNICATION,
+          actionDescription: `Custom email broadcast: subject="${subject}"`,
+          targetType: ActivityTargetType.PARENT,
+          targetId: undefined,
+          targetIdentifier: `Recipients: ${recipients.length}`,
+          metadata: { sentCount, failedCount: failures.length, mode },
+        });
+      } catch (logErr) {
+        console.warn('[CUSTOM-EMAIL] Failed to log admin activity', logErr);
+      }
+
+      return res.json({ sentCount, failedCount: failures.length, failures });
+    } catch (error: any) {
+      console.error('[CUSTOM-EMAIL] Unexpected error:', error);
+      return res.status(500).json({ error: error?.message || 'Unexpected error' });
+    }
+  });
+
   app.get("/api/parents/:id", isAdminAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);

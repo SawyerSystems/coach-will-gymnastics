@@ -110,6 +110,11 @@ export const emailTemplates = {
     subject: '📬 New Contact Form Message',
     loader: async () => (await import('../../emails/ContactMessage')).ContactMessage,
   },
+  // Admin custom broadcast email (branded layout, arbitrary subject/body)
+  'admin-custom': {
+    subject: '📣 Message from Coach Will Tumbles',
+    loader: async () => (await import('../../emails/AdminCustomEmail')).default,
+  },
 } as const;
 
 export type EmailType = keyof typeof emailTemplates;

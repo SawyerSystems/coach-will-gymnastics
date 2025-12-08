@@ -32,7 +32,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Select } from '@/components/ui/select';
+import { Dialog as UIDialog, DialogFooter as UIDialogFooter } from '@/components/ui/dialog';
 import { BookingStatusEnum, PaymentStatusEnum, AttendanceStatusEnum } from '@shared/schema';
 
 interface AdminSettingsTabProps {

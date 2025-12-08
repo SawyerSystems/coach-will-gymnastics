@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Mail, MessageCircle, Inbox, Trash2, Search } from "lucide-react";
 import { useState } from "react";
+import CustomEmailPanel from "@/components/admin/CustomEmailPanel";
 
 export type SiteInquiry = {
   id: number;
@@ -100,7 +101,10 @@ export default function AdminMessagesTab() {
               <AdminCardTitle className="text-[#0F0276] dark:text-white">Email Messages</AdminCardTitle>
             </AdminCardHeader>
             <AdminCardContent>
-              <p className="text-sm text-slate-600 dark:text-white/80">Email logs overview coming soon. We'll surface recent sends and failures.</p>
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600 dark:text-white/80">Send a custom email to parents.</p>
+                <CustomEmailPanel />
+              </div>
             </AdminCardContent>
           </AdminCard>
         </TabsContent>
