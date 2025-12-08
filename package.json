@@ -39,9 +39,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:check-origin": "tsx scripts/check-db-origin.ts",
     "db:apply-lesson-types": "bash ./apply-lesson-types-schema-update.sh",
-  "import:skills": "tsx scripts/import-skills.ts",
-  "payouts:backfill": "tsx --require dotenv/config scripts/backfill-gym-payouts.ts",
-  "payouts:repair": "tsx --require dotenv/config scripts/repair-gym-payouts.ts"
+    "import:skills": "tsx scripts/import-skills.ts",
+    "payouts:backfill": "tsx --require dotenv/config scripts/backfill-gym-payouts.ts",
+    "payouts:repair": "tsx --require dotenv/config scripts/repair-gym-payouts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -126,6 +126,7 @@
     "pg": "^8.16.3",
     "postcss": "^8.4.47",
     "postgres": "^3.4.7",
+    "quill": "^2.0.3",
     "react": "^18.3.1",
     "react-big-calendar": "^1.19.4",
     "react-day-picker": "^8.10.1",
@@ -133,6 +134,7 @@
     "react-email": "^4.0.17",
     "react-hook-form": "^7.55.0",
     "react-icons": "^5.4.0",
+    "react-quill": "^2.0.0",
     "react-resizable-panels": "^2.1.7",
     "react-signature-canvas": "^1.1.0-alpha.2",
     "recharts": "^2.15.2",

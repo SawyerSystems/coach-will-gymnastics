@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +17,7 @@ export default function CustomEmailPanel() {
   const [usePersonalized, setUsePersonalized] = useState<boolean>(true);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [htmlBody, setHtmlBody] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
@@ -55,7 +58,7 @@ export default function CustomEmailPanel() {
   const validate = () => {
     const nextErrors: {subject?: string; body?: string; recipients?: string} = {};
     if (!subject.trim()) nextErrors.subject = 'Please enter an email subject.';
-    if (!body.trim()) nextErrors.body = 'Please enter an email body.';
+    if (!htmlBody.trim()) nextErrors.body = 'Please enter an email body.';
     if (recipientMode !== 'all' && selectedIds.length === 0) nextErrors.recipients = 'Please select at least one parent.';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
@@ -73,7 +76,7 @@ export default function CustomEmailPanel() {
         recipientIds: recipientMode === 'all' ? [] : selectedIds,
         usePersonalizedGreeting: usePersonalized,
         subject,
-        body,
+        htmlBody,
       };
       const res = await apiRequest('POST', '/api/admin/custom-email', payload);
       const json = await res.json();
@@ -115,7 +118,13 @@ export default function CustomEmailPanel() {
       </div>
       <div>
         <Label>Body</Label>
-        <Textarea value={body} onChange={e=>setBody(e.target.value)} rows={6} placeholder="Message body" className={`dark:bg-white/10 dark:text-white ${errors.body?'border-red-500':''}`} />
+        <div className={`rounded-md overflow-hidden ${errors.body?'ring-1 ring-red-500':''}`}>
+          <ReactQuill theme="snow" value={htmlBody} onChange={setHtmlBody} modules={{ toolbar: [
+            ['bold','italic','underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['clean']
+          ] }} />
+        </div>
         {errors.body && (<p className="text-xs text-red-600 mt-1">{errors.body}</p>)}
       </div>
 
@@ -146,7 +155,8 @@ export default function CustomEmailPanel() {
           <Button type="button" variant="outline" size="sm"
             onClick={() => {
               const previewName = sampleGreeting();
-              toast({ title: 'Preview', description: `${previewName}\n\n${body.substring(0,120)}${body.length>120?'...':''}`, variant: 'default' });
+              const plain = htmlBody.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+              toast({ title: 'Preview', description: `${previewName}\n\n${plain.substring(0,120)}${plain.length>120?'...':''}`, variant: 'default' });
             }}
           >Preview</Button>
         </div>

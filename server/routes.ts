@@ -1706,14 +1706,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reuses Resend helper and branded layout via 'admin-custom' template.
   app.post('/api/admin/custom-email', isAdminAuthenticated, async (req, res) => {
     try {
-      const { recipientMode, recipientIds, usePersonalizedGreeting, subject, body } = req.body || {};
+      const { recipientMode, recipientIds, usePersonalizedGreeting, subject, htmlBody, body } = req.body || {};
 
       // Validate inputs
       if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {
         return res.status(400).json({ error: 'Subject is required' });
       }
-      if (!body || typeof body !== 'string' || body.trim().length === 0) {
-        return res.status(400).json({ error: 'Body is required' });
+      if (!htmlBody || typeof htmlBody !== 'string' || htmlBody.trim().length === 0) {
+        return res.status(400).json({ error: 'Body (HTML) is required' });
       }
       const mode = String(recipientMode || '').toLowerCase();
       if (!['single','selected','all'].includes(mode)) {
@@ -1777,7 +1777,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               data: {
                 subject,
                 greetingLine: buildGreeting(p),
-                bodyText: body,
+                htmlBody,
+                bodyText: (htmlBody as string).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(),
               },
             });
             sentCount++;

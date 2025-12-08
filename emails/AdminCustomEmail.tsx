@@ -8,12 +8,13 @@ type Props = {
   logoUrl?: string;
   subject: string;
   greetingLine?: string; // e.g., "Hi Sarah," or generic
-  bodyText: string;      // plain text from admin
+  bodyText?: string;      // optional plain text fallback
+  htmlBody?: string;      // rich HTML body
   contactEmail?: string;
   contactPhone?: string;
 };
 
-export default function AdminCustomEmail({ logoUrl, subject, greetingLine, bodyText, contactEmail, contactPhone }: Props) {
+export default function AdminCustomEmail({ logoUrl, subject, greetingLine, bodyText, htmlBody, contactEmail, contactPhone }: Props) {
   return (
     <html>
       <head>
@@ -48,8 +49,17 @@ export default function AdminCustomEmail({ logoUrl, subject, greetingLine, bodyT
               <div className="title">{subject}</div>
             </div>
             <div className="content">
-              {greetingLine ? <p className="greeting">{greetingLine}</p> : null}
-              <div className="body">{bodyText}</div>
+              {greetingLine && (
+                <p style={{ margin: 0 }}>{greetingLine}</p>
+              )}
+              {/* Line 2 intentionally left as visual spacer */}
+              <div style={{ height: 16 }} />
+              {/* Line 3: HTML body injected without escaping */}
+              {htmlBody ? (
+                <div dangerouslySetInnerHTML={{ __html: htmlBody }} />
+              ) : (
+                <div className="body">{bodyText || ''}</div>
+              )}
             </div>
             <div className="footer">
               <div>Sent by Coach Will Tumbles</div>
