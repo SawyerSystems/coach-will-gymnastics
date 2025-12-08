@@ -1,25 +1,27 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery as useRQQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function CustomEmailPanel() {
   const { toast } = useToast();
-  const [recipientMode, setRecipientMode] = useState<'single'|'selected'|'all'>('single');
+  const [recipientMode, setRecipientMode] = useState<'selected'|'all'>('selected');
   const [usePersonalized, setUsePersonalized] = useState<boolean>(true);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [errors, setErrors] = useState<{subject?: string; body?: string; recipients?: string}>({});
+  const [search, setSearch] = useState('');
 
-  const { data: parents = [], isLoading } = useRQQuery<any[]>({
+  const { data: parents = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/parents', { page: 1, limit: 1000 }],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/parents?page=1&limit=1000');
@@ -39,19 +41,25 @@ export default function CustomEmailPanel() {
     return first ? `Hi ${first},` : 'Hi there,';
   };
 
-  const totalRecipients = recipientMode === 'all' ? (parents?.length || 0) : (recipientMode === 'single' ? (selectedIds.length ? 1 : 0) : selectedIds.length);
+  const totalRecipients = recipientMode === 'all' ? (parents?.length || 0) : selectedIds.length;
+
+  const filteredParents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return parents;
+    return parents.filter((p: any) =>
+      `${p.first_name||''} ${p.last_name||''}`.toLowerCase().includes(q) ||
+      (p.email||'').toLowerCase().includes(q)
+    );
+  }, [parents, search]);
 
   const validate = () => {
-    if (!subject.trim()) {
-      toast({ title: 'Subject required', description: 'Please enter an email subject.', variant: 'destructive' });
-      return false;
-    }
-    if (!body.trim()) {
-      toast({ title: 'Body required', description: 'Please enter an email body.', variant: 'destructive' });
-      return false;
-    }
-    if (recipientMode !== 'all' && selectedIds.length === 0) {
-      toast({ title: 'Select recipients', description: 'Please select at least one parent.', variant: 'destructive' });
+    const nextErrors: {subject?: string; body?: string; recipients?: string} = {};
+    if (!subject.trim()) nextErrors.subject = 'Please enter an email subject.';
+    if (!body.trim()) nextErrors.body = 'Please enter an email body.';
+    if (recipientMode !== 'all' && selectedIds.length === 0) nextErrors.recipients = 'Please select at least one parent.';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      toast({ title: 'Missing required fields', description: 'Please fix the highlighted inputs.', variant: 'destructive' });
       return false;
     }
     return true;
@@ -59,6 +67,7 @@ export default function CustomEmailPanel() {
 
   const sendRequest = async () => {
     try {
+      setSending(true);
       const payload: any = {
         recipientMode,
         recipientIds: recipientMode === 'all' ? [] : selectedIds,
@@ -73,8 +82,11 @@ export default function CustomEmailPanel() {
       }
       toast({ title: 'Emails sent', description: `Sent: ${json.sentCount}, Failed: ${json.failedCount}`, variant: 'default' });
       setConfirmOpen(false);
+      setErrors({});
     } catch (e: any) {
       toast({ title: 'Send failed', description: e?.message || 'Error sending emails', variant: 'destructive' });
+    } finally {
+      setSending(false);
     }
   };
 
@@ -82,12 +94,8 @@ export default function CustomEmailPanel() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <Label>Recipient Mode</Label>
-          <Select value={recipientMode} onValueChange={(v: any) => setRecipientMode(v)}>
-            <select className="hidden" />
-          </Select>
+          <Label>Recipients</Label>
           <div className="flex gap-2 mt-2">
-            <Button variant={recipientMode==='single'?'default':'outline'} size="sm" onClick={() => setRecipientMode('single')}>Single</Button>
             <Button variant={recipientMode==='selected'?'default':'outline'} size="sm" onClick={() => setRecipientMode('selected')}>Selected</Button>
             <Button variant={recipientMode==='all'?'default':'outline'} size="sm" onClick={() => setRecipientMode('all')}>All</Button>
           </div>
@@ -101,22 +109,27 @@ export default function CustomEmailPanel() {
         </div>
         <div>
           <Label>Subject</Label>
-          <Input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Subject" className="dark:bg-white/10 dark:text-white" />
+          <Input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Subject" className={`dark:bg-white/10 dark:text-white ${errors.subject?'border-red-500':''}`} />
+          {errors.subject && (<p className="text-xs text-red-600 mt-1">{errors.subject}</p>)}
         </div>
       </div>
       <div>
         <Label>Body</Label>
-        <Textarea value={body} onChange={e=>setBody(e.target.value)} rows={6} placeholder="Message body" className="dark:bg-white/10 dark:text-white" />
+        <Textarea value={body} onChange={e=>setBody(e.target.value)} rows={6} placeholder="Message body" className={`dark:bg-white/10 dark:text-white ${errors.body?'border-red-500':''}`} />
+        {errors.body && (<p className="text-xs text-red-600 mt-1">{errors.body}</p>)}
       </div>
 
-      {(recipientMode==='single' || recipientMode==='selected') && (
+      {(recipientMode==='selected') && (
         <div className="bg-white/60 dark:bg-[#0F0276]/30 border rounded-lg p-3">
           <Label>Select Parents</Label>
+          <div className="mt-2 flex items-center gap-2">
+            <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name or email" className="dark:bg-white/10 dark:text-white" />
+          </div>
           <div className="max-h-48 overflow-auto mt-2 space-y-1">
             {isLoading ? (
               <div className="text-sm text-gray-500 dark:text-white/70">Loading parents...</div>
             ) : (
-              parents.map((p:any)=> (
+              filteredParents.map((p:any)=> (
                 <label key={p.id} className="flex items-center gap-2 text-sm py-1 dark:text-white">
                   <input type="checkbox" checked={selectedIds.includes(p.id)} onChange={()=>toggleId(p.id)} />
                   <span>{(p.first_name||'') + ' ' + (p.last_name||'')} ({p.email || 'no-email'})</span>
@@ -124,6 +137,7 @@ export default function CustomEmailPanel() {
               ))
             )}
           </div>
+          {errors.recipients && (<p className="text-xs text-red-600 mt-2">{errors.recipients}</p>)}
         </div>
       )}
 
@@ -138,7 +152,8 @@ export default function CustomEmailPanel() {
         </div>
         <div className="flex items-center gap-3">
           <div className="text-sm text-gray-600 dark:text-white/70">Recipients: {totalRecipients}</div>
-          <Button type="button" onClick={() => { if (validate()) setConfirmOpen(true); }}>
+          {sending && <span className="text-sm text-blue-600 dark:text-blue-300">Sending...</span>}
+          <Button type="button" disabled={sending} onClick={() => { if (validate()) setConfirmOpen(true); }}>
             Send Email
           </Button>
         </div>
@@ -154,7 +169,7 @@ export default function CustomEmailPanel() {
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={()=>setConfirmOpen(false)}>Cancel</Button>
-            <Button onClick={sendRequest}>Confirm & Send</Button>
+            <Button onClick={sendRequest} disabled={sending}>{sending ? 'Sending...' : 'Confirm & Send'}</Button>
           </div>
         </DialogContent>
       </Dialog>
